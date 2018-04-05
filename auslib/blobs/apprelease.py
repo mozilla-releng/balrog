@@ -1,8 +1,12 @@
-from auslib.global_state import dbo
+import itertools
+
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
-from auslib.blobs.base import Blob
+from auslib.blobs.base import Blob, BlobValidationError
+from auslib.global_state import dbo
 from auslib.errors import BadDataError
-from auslib.util.versions import MozillaVersion
+from auslib.util.rulematching import matchChannel, matchVersion
+from auslib.util.comparison import has_operator, strip_operator
+from auslib.util.versions import MozillaVersion, decrement_version, increment_version
 
 
 class ReleaseBlobBase(Blob):
@@ -128,9 +132,7 @@ class ReleaseBlobBase(Blob):
         return patchXML
 
     def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        buildTarget = updateQuery["buildTarget"]
-        locale = updateQuery["locale"]
-        return self._getUpdateLineXML(buildTarget, locale, update_type)
+        return self._getUpdateLineXML(updateQuery, update_type)
 
     def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         return '    </update>'
@@ -386,7 +388,9 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
             self.log.debug('%s\n%s' % (s, snippets[s].rstrip()))
         return snippets
 
-    def _getUpdateLineXML(self, buildTarget, locale, update_type):
+    def _getUpdateLineXML(self, updateQuery, update_type):
+        buildTarget = updateQuery["buildTarget"]
+        locale = updateQuery["locale"]
         appv = self.getAppv(buildTarget, locale)
         extv = self.getExtv(buildTarget, locale)
         buildid = self.getBuildID(buildTarget, locale)
@@ -453,7 +457,10 @@ class NewStyleVersionsMixin(object):
         """ For v2 schema, appVersion really is the app version """
         return self.getAppVersion(platform, locale)
 
-    def _getUpdateLineXML(self, buildTarget, locale, update_type):
+    def _getUpdateLineXML(self, updateQuery, update_type):
+        buildTarget = updateQuery["buildTarget"]
+        locale = updateQuery["locale"]
+
         displayVersion = self.getDisplayVersion(buildTarget, locale)
         appVersion = self.getAppVersion(buildTarget, locale)
         platformVersion = self.getPlatformVersion(buildTarget, locale)
@@ -885,7 +892,7 @@ class ProofXMLMixin(object):
 
 
 class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
-    """
+    """  Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
 
     Changes from ReleaseBlobV6:
         * Adds support for ProofXMLMixin (placed as first parameter for inheritance preference)
@@ -909,6 +916,191 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 8
+
+    def getReferencedReleases(self):
+        """
+        :return: Returns set of names of partially referenced releases that the current
+        release references
+        """
+        referencedReleases = set()
+        for platform in self.get('platforms', {}):
+            for locale in self['platforms'][platform].get('locales', {}):
+                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
+                    referencedReleases.add(
+                        partial['from']
+                    )
+        for fileUrlKey in self.get('fileUrls', {}):
+            for partial in self['fileUrls'][fileUrlKey].get('partials', {}):
+                referencedReleases.add(partial)
+
+        return referencedReleases
+
+
+class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+    """  Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
+
+    Changes from ReleaseBlobV8:
+        * Moved most <update> properties into new updateLine data structure
+
+    For further information:
+        * https://bugzilla.mozilla.org/show_bug.cgi?id=1400016
+
+    """
+    jsonschema = "apprelease-v9.yml"
+
+    # params that can have %LOCALE% interpolated
+    interpolable_ = ('openURL', 'notificationURL', 'alertURL', 'detailsURL',)
+
+    def __init__(self, **kwargs):
+        Blob.__init__(self, **kwargs)
+        if 'schema_version' not in self.keys():
+            self['schema_version'] = 9
+
+    def _getUpdateLineXML(self, updateQuery, update_type):
+        attrs = {
+            "appVersion": self.getLocaleOrTopLevelParam(updateQuery["buildTarget"], updateQuery["locale"], "appVersion"),
+            "displayVersion": self.getLocaleOrTopLevelParam(updateQuery["buildTarget"], updateQuery["locale"], "displayVersion"),
+            "buildID": self.getBuildID(updateQuery["buildTarget"], updateQuery["locale"]),
+            # This is set to the update_type specified in the Rule, but will be
+            # overridden by one in an updateLine object, if it exists/applies.
+            # In the medium/long term we should remove update_type from the
+            # Rules table to avoid confusion.
+            "type": update_type,
+        }
+        for group in self.get("updateLine", []):
+            condition_results = []
+            for condition, values in group["for"].items():
+                matches = False
+                if condition == "channels":
+                    if any(map(lambda c: matchChannel(c, updateQuery["channel"], getFallbackChannel(updateQuery["channel"])), values)):
+                        matches = True
+                elif condition == "locales":
+                    if updateQuery["locale"] in values:
+                        matches = True
+                elif condition == "versions":
+                    if any(map(lambda v: matchVersion(v, updateQuery["version"]), values)):
+                        matches = True
+                condition_results.append(matches)
+
+            if all(condition_results):
+                # matched everything!
+                attrs.update(group["fields"])
+
+        for attr in self.interpolable_:
+            if attr in attrs:
+                attrs[attr] = attrs[attr].replace("%LOCALE%", updateQuery["locale"])
+                attrs[attr] = attrs[attr].replace("%locale%", updateQuery["locale"])
+
+        updateLine = "    <update"
+        for key in sorted(attrs.keys()):
+            value = attrs[key]
+            if isinstance(value, bool):
+                value = str(value).lower()
+            updateLine += ' {}="{}"'.format(key, value)
+        updateLine += ">"
+
+        return updateLine
+
+    def getApplicationVersion(self, platform, locale):
+        return self.getLocaleOrTopLevelParam(platform, locale, 'appVersion')
+
+    def validate(self, *args, **kwargs):
+        super(ReleaseBlobV9, self).validate(*args, **kwargs)
+
+        # In addition to all of the normal schema validation, we need to ensure
+        # that there's no case where a single update request could get
+        # conflicting updateLine properties. Eg: if openURL is defined in
+        # multiple groups, we need to ensure there's no way that one request
+        # could match multiple groups. This largely means simulating rule
+        # matching for each property in the "for" section of an updateLine
+        # group.
+        conflicts = []
+        conflicting_values = set()
+
+        for (group1, group2) in itertools.product(self.get("updateLine", []), self.get("updateLine", [])):
+            # Skip over groups that are identical - they can't conflict
+            if group1 == group2:
+                continue
+            # If there are no overlapping fields between the groups, there can't be a conflict
+            field_dupes = set(group1["fields"].keys()).intersection(group2["fields"].keys())
+            if len(field_dupes) == 0:
+                continue
+            # If there are overlapping fields, we need to see if what they apply to overlap in any way
+            condition_results = []
+            for cond in ("channels", "locales", "versions"):
+                matches = False
+                # If a condition is not specified for a group, it always matches anything
+                if cond not in group1["for"] or cond not in group2["for"]:
+                    matches = True
+                    continue
+
+                if cond == "channels":
+                    for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
+                        # Exact match of concrete channel or two globs
+                        if value1 == value2:
+                            matches = True
+                            break
+                        # Logical match in either direction, which takes into account
+                        # globbing and fallback channels
+                        elif matchChannel(value1, value2.rstrip("*"), getFallbackChannel(value2.rstrip("*"))):
+                            matches = True
+                            break
+                        elif matchChannel(value2, value1.rstrip("*"), getFallbackChannel(value1.rstrip("*"))):
+                            matches = True
+                            break
+                elif cond == "locales":
+                    if set(group1["for"][cond]).intersection(set(group2["for"][cond])):
+                        matches = True
+                elif cond == "versions":
+                    for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
+                        # Any exact match between two concrete versions or two
+                        # comparisons means we have version overlap.
+                        if value1 == value2:
+                            matches = True
+                            break
+                        # If only one version has an operator we can easily
+                        # see if it matches the other, concrete version.
+                        elif has_operator(value1) and not has_operator(value2):
+                            if matchVersion(value1, value2):
+                                matches = True
+                                break
+                        elif has_operator(value2) and not has_operator(value1):
+                            if matchVersion(value2, value1):
+                                matches = True
+                                break
+                        # Finally, check for matches if both versions have operators
+                        else:
+                            # We need to find a precise version from each version comparison
+                            # to know whether or not there is overlap.
+                            comparable_values = []
+                            for v in (value1, value2):
+                                # If the comparison is <= or >=, we can simple use the version
+                                # in the string as the comparable version.
+                                if "=" in v:
+                                    comparable_values.append(strip_operator(v))
+                                # If it's a plain < or > comparison, we need to use the "next"
+                                # or "previous" version.
+                                elif v.startswith("<"):
+                                    comparable_values.append(decrement_version(strip_operator(v)))
+                                elif v.startswith(">"):
+                                    comparable_values.append(increment_version(strip_operator(v)))
+                            if len(comparable_values) != 2:
+                                raise BlobValidationError("Couldn't find a comparable value for one of: %s, %s".format(value1, value2))
+
+                            # Once we have comparable versions, we can check them!
+                            if matchVersion(value1, comparable_values[1]) or matchVersion(value2, comparable_values[0]):
+                                matches = True
+                                break
+
+                condition_results.append(matches)
+
+            if all(condition_results):
+                conflicts.append((group1["for"], group2["for"], field_dupes))
+                conflicting_values.update(field_dupes)
+
+        if conflicts:
+            conflicting_values = ", ".join(conflicting_values)
+            raise BlobValidationError("Multiple values found for updateLine items: {}".format(conflicting_values), conflicts)
 
     def getReferencedReleases(self):
         """

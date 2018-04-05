@@ -320,7 +320,7 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         with mock.patch('sqlalchemy.engine.base.Connection.close') as close:
             try:
                 self.test.insert(changed_by='bob', id=1, foo=1)
-            except:
+            except Exception:
                 pass
             self.assertTrue(close.called, "Connection.close() never called by insert()")
 
@@ -714,7 +714,7 @@ class ScheduledChangesTableMixin(object):
             def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
                 for row in affected_rows:
                     if row["foo"] == "signofftest":
-                        return [{"role": "releng", "signoffs_required": 1}]
+                        return {"rs": [{"role": "releng", "signoffs_required": 1}]}
 
             def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
                 if not self.db.hasPermission(changed_by, "test", "create", transaction=transaction):
@@ -915,7 +915,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         what = {"fooid": 3, "foo": "signofftest", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
         self.sc_table.insert(changed_by="mary", **what)
         user_role_rows = self.table.scheduled_changes.signoffs.select(where={"username": "mary", "sc_id": 7})
-        self.assertEquals(len(user_role_rows), 0)
+        self.assertEquals(len(user_role_rows), 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertRecordSignOffUnneededRole(self):
@@ -3082,9 +3082,9 @@ class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):
             fallbackChannel=''
         )
         expected = set([
-            ":a::::False",
-            "c:a::::False",
-            "b:e::::True",
+            ":a:::False",
+            "c:a:::False",
+            "b:e:::True",
         ])
         self.assertEquals(set(cache.caches["rules"].data.keys()), expected)
 
@@ -4398,13 +4398,16 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
                                 self.permissions.revokeRole, "bob", "dev", "bill", old_data_version=1)
 
     def testGetAllUsers(self):
-        self.assertEquals(set(self.permissions.getAllUsers()), set(["bill",
-                                                                    "bob",
-                                                                    "cathy",
-                                                                    "fred",
-                                                                    "george",
-                                                                    "janet",
-                                                                    "sean"]))
+        self.assertEquals(self.permissions.getAllUsers(), ({
+            'bill': {'roles': []},
+            'bob': {'roles': [
+                {'data_version': 1, 'role': 'dev'},
+                {'data_version': 1, 'role': 'releng'}]},
+            'cathy': {'roles': [{'data_version': 1, 'role': 'releng'}]},
+            'fred': {'roles': []},
+            'george': {'roles': []},
+            'janet': {'roles': [{'data_version': 1, 'role': 'releng'}]},
+            'sean': {'roles': []}}))
 
     def testCountAllUsers(self):
         self.assertEquals(self.permissions.countAllUsers(), 7)
@@ -4718,6 +4721,14 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             "rules_scheduled_changes_signoffs_history",
             "user_roles",
             "user_roles_history",
+            "emergency_shutoffs",
+            "emergency_shutoffs_history",
+            "emergency_shutoffs_scheduled_changes",
+            "emergency_shutoffs_scheduled_changes_history",
+            "emergency_shutoffs_scheduled_changes_conditions",
+            "emergency_shutoffs_scheduled_changes_conditions_history",
+            "emergency_shutoffs_scheduled_changes_signoffs",
+            "emergency_shutoffs_scheduled_changes_signoffs_history",
         ])
 
         # autoincrement isn't tested as Sqlite does not support this outside of INTEGER PRIMARY KEYS.
@@ -4955,6 +4966,23 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             for table_name in base_jaws_tables:
                 self.assertNotIn("base_jaws", metadata.tables[table_name].c)
 
+    def _add_emergency_shutoff_tables(self, db, upgrade=True):
+        metadata = self._get_reflected_metadata(db)
+        shutoff_tables = ["emergency_shutoffs",
+                          "emergency_shutoffs_history",
+                          "emergency_shutoffs_scheduled_changes",
+                          "emergency_shutoffs_scheduled_changes_history",
+                          "emergency_shutoffs_scheduled_changes_conditions",
+                          "emergency_shutoffs_scheduled_changes_conditions_history",
+                          "emergency_shutoffs_scheduled_changes_signoffs",
+                          "emergency_shutoffs_scheduled_changes_signoffs_history"]
+        if upgrade:
+            for table in shutoff_tables:
+                self.assertIn(table, metadata.tables)
+        else:
+            for table in shutoff_tables:
+                self.assertNotIn(table, metadata.tables)
+
     def _fix_column_attributes_migration_test(self, db, upgrade=True):
         """
         Tests the upgrades and downgrades for version 22 work properly.
@@ -4992,6 +5020,23 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             for table_name in when_nullable_tables:
                 self.assertFalse(meta_data.tables[table_name].c.when.nullable)
 
+    def _test_rules_longer_distribution(self, db, upgrade=True):
+        upgraded_length = 2000
+        downgrade_length = 100
+        meta_data = self._get_reflected_metadata(db)
+        tables_list = ["rules", "rules_history"]
+        scheduled_changes_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
+        if upgrade:
+            for table_name in tables_list:
+                self.assertEquals(upgraded_length, meta_data.tables[table_name].c.distribution.type.length)
+            for table_name in scheduled_changes_tables:
+                self.assertEquals(upgraded_length, meta_data.tables[table_name].c.base_distribution.type.length)
+        else:
+            for table_name in tables_list:
+                self.assertEquals(downgrade_length, meta_data.tables[table_name].c.distribution.type.length)
+            for table_name in scheduled_changes_tables:
+                self.assertEquals(downgrade_length, meta_data.tables[table_name].c.base_distribution.type.length)
+
     def testVersionChangesWorkAsExpected(self):
         """
         Tests that downgrades and upgrades work as expected. Since the DB will never
@@ -5007,6 +5052,8 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             pass
 
         versions_migrate_tests_dict = {
+            31: self._test_rules_longer_distribution,
+            30: self._add_emergency_shutoff_tables,
             29: self._add_jaws_test,
             28: self._add_mig64_test,
             27: self._remove_systemCapabilities_test,

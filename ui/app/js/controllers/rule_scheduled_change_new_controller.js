@@ -40,6 +40,10 @@ function($scope, $http, $modalInstance, CSRF, Releases, Rules, scheduled_changes
     }
   }, true);
 
+  $scope.removeWhiteSpaces = function(field) {
+    $scope.sc[field] = Helpers.replaceChar($scope.sc[field], ' ', '');
+  };
+
   $scope.toggleType = function(newType) {
     $scope.sc_type = newType;
     $("#btn_telemetry").toggleClass("active");

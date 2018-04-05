@@ -20,8 +20,26 @@
     Schedule a new Rule
     <i class="glyphicon glyphicon-plus"></i>
   </button>
+  <button class="btn btn-danger btn-sm" style="float: right"
+          ng-show="!current_emergency_shutoff && pr_ch_selected && pr_ch_selected.length > 1"
+          ng-click="openDisableUpdatesModal()">
+    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        &nbsp;<b>Disable updates on the {{pr_ch_selected[0]}} {{pr_ch_selected[1]}} channel</b>&nbsp;
+    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+  </button>
 
 </h2>
+
+<div class="row">
+  <div class="col-sm-12 text-right">
+    <div>
+      <label>Product/Channel filter:</label>
+      <select ng-model="pr_ch_filter" name="pr_ch_filter"
+        ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair" ng-change="locationChanger()">
+      </select>
+    </div>
+  </div>
+</div>
 
 <div class="row">
   <div class="col-sm-7">
@@ -32,22 +50,16 @@
         ng-model="currentPage"
         items-per-page="pageSize"
         max-size="maxSize"
-        boundary-links="true"
-      ></pagination>
+        boundary-links="true"></pagination>
     </div>
   </div>
+
   <div class="col-sm-5 text-right">
-    <div class="row" ng-show="!rule_id">
-      <label>Product/Channel filter:</label>
-      <select ng-model="pr_ch_filter" name="pr_ch_filter"
-        ng-options="pr_ch_pair for pr_ch_pair in pr_ch_options track by pr_ch_pair" ng-change="locationChanger()">
-      </select>
-    </div>
-    <div class="row" ng-show="!rule_id">
+    <div ng-show="!rule_id">
       <label for="include_sc">Include Scheduled Changes?</label>
       <input type="checkbox" id="include_sc" ng-model="show_sc" checked>
     </div>
-    <div class="row page-size" ng-show="rules_count > 20">
+    <div class="page-size" ng-show="rules_count > 20">
       <label>Page Size: </label>
       <select ng-model="page_size" ng-name="page_size"
         ng-options="page_size.name for page_size in page_size_pair track by page_size.id"
@@ -55,6 +67,61 @@
     </div>
   </div>
 </div>
+
+<div class="panel panel-default" ng-show="current_emergency_shutoff && pr_ch_selected && pr_ch_selected.length > 1" style="border-color: #d9534f !important">
+  <div class="panel-heading" style="background-color: #d9534f">
+    <h3 class="panel-title" style="color: white">
+      Updates on the <b>{{pr_ch_selected[0]}} {{pr_ch_selected[1]}}</b> channel are disabled
+    </h3>
+  </div>
+  <div class="panel-body">
+    <div ng-show="current_emergency_shutoff.sc && !isEmpty(current_emergency_shutoff.sc.required_signoffs)">
+      <span style="float: left">
+        <h4>Before this change can be enacted, it must be signed off on by:</h4>
+        <ul>
+          <li ng-repeat="(rs_role, signoffs_required) in current_emergency_shutoff.sc.required_signoffs">
+             {{ signoffs_required }} member(s) of {{ rs_role }}
+          </li>
+        </ul>
+      </span>
+      <span style="float: right" ng-show="current_emergency_shutoff.sc && !isEmpty(current_emergency_shutoff.sc.signoffs)">
+        <h4>This change has already been signed off by:</h4>
+        <ul>
+          <li ng-repeat="(username, signoff_role) in current_emergency_shutoff.sc.signoffs">
+            {{ username }} ({{ signoff_role }})
+          </li>
+        </ul>
+      </span>
+    </div>
+    <hr ng-show="current_emergency_shutoff.sc && !isEmpty(current_emergency_shutoff.sc.required_signoffs)" />
+
+    <div class="row">
+      <div class="col-sm-12">
+        <button class="btn btn-md btn-danger"
+                ng-show="current_emergency_shutoff.sc && !isEmpty(current_emergency_shutoff.sc.required_signoffs) && current_emergency_shutoff.sc.signoffs.hasOwnProperty(current_user)"
+                ng-click="openEnableUpdateRevokeSignoffModal()">
+            Revoke your Signoff
+        </button>
+        <button class="btn btn-primary btn-md"
+                ng-show="current_emergency_shutoff.sc && !isEmpty(current_emergency_shutoff.sc.required_signoffs) && !current_emergency_shutoff.sc.signoffs.hasOwnProperty(current_user)"
+                ng-click="openEnableUpdateSignoffModal()">
+            Signoff as...
+        </button>
+        <button class="btn btn-success btn-md"
+                ng-show="!current_emergency_shutoff.sc"
+                ng-click="openEnableUpdatesModal()">
+            Enable updates
+        </button>
+        <button class="btn btn-success btn-danger"
+                ng-show="current_emergency_shutoff.sc"
+                ng-click="deleteScheduledEnableUpdates()">
+            Keep Updates Disabled
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="panel panel-default" style="clear:right"
      ng-repeat="rule in filtered_items = (rules | filter: filterScheduledChanges | filter: filterBySelect) | orderBy:orderRules | startFrom:(disableFilter || !rule_id) && ((currentPage - 1)*pageSize) | limitTo:pageSize">
   <div class="panel-heading">
@@ -77,6 +144,10 @@
         <button ng-show="show_sc && rule.scheduled_change.change_type === 'insert'" class="btn btn-info btn-xs"
                 ng-click="openEditScheduledRuleChangeModal(rule)">
             Modify Pending Rule
+        </button>
+        <button class="btn btn-info btn-xs"
+                ng-click="openNewScheduledDuplicateModal(rule)">
+            Schedule Duplication
         </button>
         <button ng-show="show_sc && rule.scheduled_change.change_type === 'update'" class="btn btn-warning btn-xs"
                 ng-click="openEditScheduledRuleChangeModal(rule)">
@@ -231,14 +302,14 @@
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="buildID" fieldtitle="Build ID"></rulefield>
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="buildTarget" fieldtitle="Build Target"></rulefield>
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="locale" fieldtitle="Locale(s)"></rulefield>
-        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="distribution" fieldtitle="Distribution"></rulefield>
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="distribution" fieldtitle="Distribution" limittextto="20"></rulefield>
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="distVersion" fieldtitle="Distribution Version"></rulefield>
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="osVersion" fieldtitle="OS Version"></rulefield>
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="instructionSet" fieldtitle="Instruction Set"></rulefield>
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="memory" fieldtitle="Memory"></rulefield>
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="mig64" fieldtitle="64-bit Migration Opt-in"
                    help='Whether or not to check a client&#39;s 32 -> 64-bit migration opt-in status.'></rulefield>
-        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="jaws" fieldtitle="JAWS Screen Reader Compatibility"
+        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="jaws" fieldtitle="Incompatible JAWS Screen Reader"
                    help='Whether or not to match incoming queries that indicate a client that has an incompatible version of the JAWS screen reader installed. "Ignore" is usually what you want.'></rulefield>
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="update_type" fieldtitle="Update type"></rulefield>
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="headerArchitecture" fieldtitle="Header Architecture"></rulefield>

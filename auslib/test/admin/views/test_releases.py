@@ -1062,6 +1062,29 @@ class TestReleasesAPI_JSON(ViewTest):
 """))
         self.assertStatusCode(ret, 400)
 
+    def testNewAppReleaseV9BadVersion(self):
+        ret = self._put("/releases/bad", data=dict(name="ueohueo", product="aa", blob="""
+{
+    "name": "bad",
+    "schema_version": 9,
+    "hashFunction": "sha512",
+    "appVersion": "31.0.2",
+    "displayVersion": "31.0.2",
+    "updateLine": [
+        {
+            "for": {
+                "versions": ["<49"]
+            },
+            "fields": {
+                "detailsURL": "http://example.org/details/%LOCALE%",
+                "type": "minor"
+            }
+        }
+    ]
+}
+"""))
+        self.assertStatusCode(ret, 400)
+
     def testNewReleasePutMismatchedName(self):
         ret = self._put("/releases/aaaa", data=dict(name="ueohueo", product="aa", blob="""
 {
@@ -1666,6 +1689,77 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         self.assertEquals(ret, expected)
 
+    def testGetReleaseHistoryWithinTimeRange(self):
+        ret = self._get("/releases/history", qs={"timestamp_from": 15, "timestamp_to": 33})
+        self.assertEquals(ret.status_code, 200, ret.data)
+        data = json.loads(ret.data)
+        expected = {
+            'Releases scheduled change': {
+                'revisions': [
+                    {
+                        'change_id': 9,
+                        'read_only': False,
+                        'name': 'ab',
+                        'scheduled_by': 'bill',
+                        'when': 230000000,
+                        'changed_by': 'bill',
+                        'data_version': 1,
+                        'sc_id': 4,
+                        'product': None,
+                        'complete': False,
+                        'data': None,
+                        'timestamp': 26,
+                        'change_type': 'delete',
+                        'sc_data_version': 1
+                    },
+                    {
+                        'change_id': 7,
+                        'read_only': False,
+                        'name': 'b',
+                        'scheduled_by': 'bill',
+                        'when': 10000000,
+                        'changed_by': 'bill',
+                        'data_version': 1,
+                        'sc_id': 3,
+                        'product': 'b',
+                        'complete': True,
+                        'data': {'hashFunction': 'sha512', 'schema_version': 1, 'name': 'b'},
+                        'timestamp': 25,
+                        'change_type': 'update',
+                        'sc_data_version': 2
+                    }
+                ],
+                'count': 2
+            },
+            'Releases': {
+                'revisions': [
+                    {
+                        'change_id': 6,
+                        'read_only': 'False',
+                        'name': 'b',
+                        '_different': [],
+                        'changed_by': 'bill',
+                        'data_version': 1,
+                        'product': 'b',
+                        'timestamp': 16,
+                        '_time_ago': '48 years and 585 months ago'
+                    }
+                ],
+                'count': 1
+            }
+        }
+        history_data = data["Releases"]
+        revisions = history_data["revisions"]
+        expected_data = expected["Releases"]
+        expected_revisions = expected_data["revisions"]
+        for index in range(len(revisions)):
+            self.assertEquals(revisions[index]['product'], expected_revisions[index]['product'])
+            self.assertEquals(revisions[index]['timestamp'], expected_revisions[index]['timestamp'])
+            self.assertEquals(revisions[index]['read_only'], expected_revisions[index]['read_only'])
+            self.assertEquals(revisions[index]['data_version'], expected_revisions[index]['data_version'])
+            self.assertEquals(revisions[index]['changed_by'], expected_revisions[index]['changed_by'])
+        self.assertEquals(len(history_data["revisions"]), 1)
+
     @mock.patch("time.time", mock.MagicMock(return_value=100))
     def testSignoffWithPermission(self):
         ret = self._post("/scheduled_changes/releases/1/signoffs", data=dict(role="qa"), username="bill")
@@ -1728,6 +1822,76 @@ class TestReleaseHistoryView(ViewTest):
 
         with self.assertRaises(KeyError):
             data['data']
+
+    def testGetHistory(self):
+        url = '/releases/history'
+        ret = self._get(url)
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        data = json.loads(ret.data)
+        expected = {
+            'Releases': {
+                'count': 2,
+                'revisions': [
+                    {
+                        'name': 'b',
+                        'change_id': 6,
+                        'read_only': 'False',
+                        '_time_ago': '48 years and 584 months ago',
+                        'data_version': 1,
+                        '_different': [],
+                        'timestamp': 16,
+                        'product': 'b',
+                        'changed_by': 'bill'
+                    },
+                    {
+                        'name': 'd',
+                        'change_id': 4,
+                        'read_only': 'False',
+                        '_time_ago': '48 years and 584 months ago',
+                        'data_version': 1,
+                        '_different': ['name', 'data', 'product'],
+                        'timestamp': 10, 'product': 'd', 'changed_by': 'bill'
+                    },
+                    {
+                        'name': 'ab',
+                        'change_id': 2,
+                        'read_only': 'False',
+                        '_time_ago': '48 years and 584 months ago',
+                        'data_version': 1,
+                        '_different': ['name', 'data', 'product'],
+                        'timestamp': 6,
+                        'product': 'a',
+                        'changed_by': 'bill'
+                    }
+                ]
+            },
+            "Releases Scheduled Change": {
+                'count': 2,
+                'revisions': [
+                    {
+                        'product': 'a', 'changed_by': 'bill', 'data': {'name': 'a', 'extv': '2.0', 'hashFunction': 'sha512', 'schema_version': 1},
+                        'sc_id': 2, 'sc_data_version': 1, 'scheduled_by': 'bill', 'data_version': 1, 'complete': False, 'when': 6000000000,
+                        'change_type': 'update', 'name': 'a', 'timestamp': 71, 'change_id': 4, 'read_only': False
+                    },
+                    {
+                        'product': 'm', 'changed_by': 'bill', 'data': {'name': 'm', 'hashFunction': 'sha512', 'schema_version': 1},
+                        'sc_id': 1, 'sc_data_version': 1, 'scheduled_by': 'bill', 'data_version': None, 'complete': False,
+                        'when': 4000000000, 'change_type': 'insert', 'name': 'm', 'timestamp': 51, 'change_id': 2, 'read_only': False
+                    },
+                ],
+            }
+        }
+        history_data = data["Releases"]
+        revisions = history_data["revisions"]
+        expected_data = expected["Releases"]
+        expected_revisions = expected_data["revisions"]
+        for index in range(len(revisions)):
+            self.assertEquals(revisions[index]['product'], expected_revisions[index]['product'])
+            self.assertEquals(revisions[index]['timestamp'], expected_revisions[index]['timestamp'])
+            self.assertEquals(revisions[index]['read_only'], expected_revisions[index]['read_only'])
+            self.assertEquals(revisions[index]['data_version'], expected_revisions[index]['data_version'])
+            self.assertEquals(revisions[index]['changed_by'], expected_revisions[index]['changed_by'])
+        self.assertEquals(len(history_data["revisions"]), 3)
 
     def testPostRevisionRollback(self):
         # Make some changes to a release

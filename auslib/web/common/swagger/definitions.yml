@@ -95,6 +95,18 @@ definitions:
         maxLength: 15
         example: Firefox
 
+  ChannelModel:
+    title: Channel
+    description: "model to define 'channel' field in request body."
+    type: object
+    properties:
+      channel:
+        description: The update channel of the application request an update.
+        type: string
+        minLength: 1
+        maxLength: 75
+        example: beta
+
   ReleaseName:
     title: Release Name
     description: name of release
@@ -262,10 +274,10 @@ definitions:
         example: 'Windows_NT 5.0'
 
       distribution:
-        description: The partner distribution name that the application must send in order for the rule to match.
+        description: The partner distributions names that the application must send in order for the rule to match. A comma separated list may be used to list multiple distributions.
         type: ["string", "null"]
         minLength: 0
-        maxLength: 100
+        maxLength: 2000
         example: default
 
       distVersion:
@@ -400,3 +412,31 @@ definitions:
                 update_type: "minor"
                 version: null
                 whitelist: null
+
+  EmergencyShutOffModel:
+    title: Emergency shut off data.
+    description: Emergency shut off data.
+    type: object
+    allOf:
+      - $ref: '#/definitions/ProductModel'
+      - $ref: '#/definitions/ChannelModel'
+      - $ref: '#/definitions/DataVersionModel'
+    required:
+      - product
+      - channel
+
+  EmergencyShutoffListGET:
+    title: List of emergency shut offs.
+    description: Product/Channels available to shut off updates.
+    type: object
+    required:
+      - shutoffs
+    allOf:
+      - $ref: '#/definitions/CountModel'
+      - type: object
+        properties:
+          shutoffs:
+            description: List of emergency shutoffs.
+            type: array
+            items:
+              $ref: '#/definitions/EmergencyShutOffModel'

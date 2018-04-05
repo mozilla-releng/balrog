@@ -1,4 +1,21 @@
 describe("controller: RulesController", function() {
+  //https://stackoverflow.com/questions/38721298/jasmine-karma-array-find-is-not-a-function
+  if (typeof Array.prototype.find !== 'function') {
+    Array.prototype.find = function(iterator) {
+      var list = Object(this);
+      var length = list.length >>> 0;
+      var thisArg = arguments[1];
+      var value;
+
+      for (var i = 0; i < length; i++) {
+          value = list[i];
+          if (iterator.call(thisArg, value, i, list)) {
+              return value;
+          }
+      }
+      return undefined;
+    };
+  }
 
   beforeEach(function() {
     module("app");
@@ -89,8 +106,12 @@ describe("controller: RulesController", function() {
       .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.$httpBackend.expectGET('/api/required_signoffs/product')
       .respond(200, '{"required_signoffs": [], "count": 0}');
+      this.$httpBackend.expectGET('/api/emergency_shutoff')
+      .respond(200, JSON.stringify({count: 0, shutoffs: []}));
       this.$httpBackend.expectGET('/api/rules/columns/channel')
       .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
+      this.$httpBackend.expectGET('/api/scheduled_changes/emergency_shutoff')
+      .respond(200, JSON.stringify({count: 0, scheduled_changes: []}));
       this.$httpBackend.flush();
       expect(this.scope.rules).toEqual([]);
     });
@@ -106,8 +127,12 @@ describe("controller: RulesController", function() {
       .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.$httpBackend.expectGET('/api/required_signoffs/product')
       .respond(200, '{"required_signoffs": [], "count": 0}');
+      this.$httpBackend.expectGET('/api/emergency_shutoff')
+      .respond(200, JSON.stringify({count: 1, shutoffs: [{product: 'Firefox', channel: 'release', data_version: 1}]}));
       this.$httpBackend.expectGET('/api/rules/columns/channel')
       .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
+      this.$httpBackend.expectGET('/api/scheduled_changes/emergency_shutoff')
+      .respond(200, JSON.stringify({count: 0, scheduled_changes: []}));
       this.$httpBackend.flush();
       expect(this.scope.rules.length).toEqual(2);
       expect(this.scope.rules).toEqual(sample_rules.rules);
@@ -127,8 +152,12 @@ describe("controller: RulesController", function() {
       .respond(200, JSON.stringify({product: ['Product1', 'Product2'], count: 2}));
       this.$httpBackend.expectGET('/api/required_signoffs/product')
       .respond(200, '{"required_signoffs": [], "count": 0}');
+      this.$httpBackend.expectGET('/api/emergency_shutoff')
+      .respond(200, JSON.stringify({count: 1, shutoffs: [{product: 'Firefox', channel: 'release', data_version: 1}]}));
       this.$httpBackend.expectGET('/api/rules/columns/channel')
       .respond(200, JSON.stringify({channel: ['Channel1', 'Channel2'], count: 2}));
+      this.$httpBackend.expectGET('/api/scheduled_changes/emergency_shutoff')
+      .respond(200, JSON.stringify({count: 0, scheduled_changes: []}));
       this.$httpBackend.flush();
 
       var $scope = this.scope;

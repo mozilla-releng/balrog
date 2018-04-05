@@ -143,20 +143,6 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEquals(ret[0].get("version"), version)
         self.assertEquals(len(ret[0].get("version")), len(version))
 
-    def testNewRulePostJSON(self):
-        data = dict(
-            backgroundRate=31, mapping="c", priority=33, product="Firefox",
-            update_type="minor", channel="nightly"
-        )
-        ret = self._post("/rules", data=data)
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
-        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mapping'], 'c')
-        self.assertEquals(r[0]['backgroundRate'], 31)
-        self.assertEquals(r[0]['priority'], 33)
-        self.assertEquals(r[0]['data_version'], 1)
-
     def testNewRuleWithoutProductAdminPermission(self):
         data = dict(
             backgroundRate=31, mapping="a", priority=33, product="Firefox",
@@ -180,6 +166,21 @@ class TestRulesAPI_JSON(ViewTest):
         )
         ret = self._post("/rules", data=data, username="jack")
         self.assertEquals(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
+    def testNewRuleWithWhitespaceInLocale(self):
+        data = dict(
+            backgroundRate=31, mapping="a", priority=33, product="a",
+            update_type="minor", channel="nightly", locale="de, en-US, hu, it, zh-TW"
+        )
+        ret = self._post("/rules", data=data, username="billy")
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['mapping'], "a")
+        self.assertEquals(r[0]['backgroundRate'], 31)
+        self.assertEquals(r[0]['priority'], 33)
+        self.assertEquals(r[0]['data_version'], 1)
+        self.assertEquals(r[0]['locale'], "de,en-US,hu,it,zh-TW")
 
     # A POST without the required fields shouldn't be valid
     def testMissingFields(self):
@@ -211,6 +212,17 @@ class TestRulesAPI_JSON(ViewTest):
             r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
             self.assertEquals(len(r), 1)
             self.assertEquals(r[0]['version'], '%s4.0' % op)
+
+    def testVersionValidationRequiresAtLeastTwoPartVersion(self):
+        ret = self._post("/rules", data=dict(backgroundRate=42, mapping="d", priority=50, product="Firefox",
+                                             channel="nightly", update_type="minor", version="5"))
+        self.assertEquals(ret.status_code, 400)
+
+    def testVersionValidationRequiresAtLeastTwoPartVersionWithOperator(self):
+        for op in operators:
+            ret = self._post("/rules", data=dict(backgroundRate=42, mapping="d", priority=50, product="Firefox",
+                                                 channel="nightly", update_type="minor", version="%s5" % op))
+            self.assertEquals(ret.status_code, 400)
 
     def testBuildIDValidation(self):
         for op in operators:
@@ -276,6 +288,17 @@ class TestRulesAPI_JSON(ViewTest):
                                              priority=33, product='Firefox',
                                              update_type='minor', channel='nightly', alias='test'))
         self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
+    def testNewRulePostWithDistributionList(self):
+        data = dict(
+            backgroundRate=31, mapping="c", priority=33, product="Firefox",
+            update_type="minor", channel="nightly", distribution="  mozilla1, mozilla2, mozilla3,mozilla4 "
+        )
+        ret = self._post("/rules", data=data)
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['distribution'], 'mozilla1,mozilla2,mozilla3,mozilla4')
 
 
 class TestSingleRuleView_JSON(ViewTest):
@@ -767,6 +790,53 @@ class TestRuleHistoryView(ViewTest):
         self.assertTrue(u"rule_id" in got["rules"][0])
         self.assertTrue(u"backgroundRate" in got["rules"][0])
 
+    def testGetHistory(self):
+        # Make some changes to a rule
+        ret = self._post(
+            '/rules/1',
+            data=dict(
+                backgroundRate=71,
+                mapping='d',
+                priority=73,
+                data_version=1,
+                product='Firefox',
+                update_type='minor',
+                channel='nightly',
+            )
+        )
+        self.assertEquals(
+            ret.status_code,
+            200,
+            "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
+        )
+        # and again
+        ret = self._post(
+            '/rules/1',
+            data=dict(
+                backgroundRate=72,
+                mapping='d',
+                priority=73,
+                data_version=2,
+                product='Firefux',
+                update_type='minor',
+                channel='nightly',
+            )
+        )
+        self.assertEquals(
+            ret.status_code,
+            200,
+            "Status Code: %d, Data: %s" % (ret.status_code, ret.data)
+        )
+
+        url = '/rules/history'
+        ret = self._get(url)
+        got = json.loads(ret.data)
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertEquals(got["Rules"]["count"], 2)
+        self.assertTrue(u"rule_id" in got["Rules"]["revisions"][0])
+        self.assertTrue(u"backgroundRate" in got["Rules"]["revisions"][0])
+        self.assertTrue(u"timestamp" in got["Rules"]["revisions"][0])
+
     def testVersionMaxFieldLength(self):
         # Max field length of rules.version is 75
         version = '3.3,3.4,3.5,3.6,3.8,3.9,3.10,3.11'
@@ -1216,7 +1286,7 @@ class TestRuleScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 8, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 8, "signoffs": {"bill": "releng"}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 8).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1242,7 +1312,7 @@ class TestRuleScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 8, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 8, "signoffs": {"bill": "releng"}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 8).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1603,6 +1673,16 @@ class TestRuleScheduledChanges(ViewTest):
             ],
         }
         self.assertEquals(json.loads(ret.data), expected)
+
+    def testGetRulesHistory(self):
+        ret = self._get("/rules/history")
+        got = json.loads(ret.data)
+        self.assertEquals(ret.status_code, 200)
+        self.assertEquals(ret.status_code, 200, msg=ret.data)
+        self.assertEquals(got["Rules scheduled change"]["count"], 8)
+        self.assertTrue(u"rule_id" in got["Rules scheduled change"]["revisions"][0])
+        self.assertTrue(u"backgroundRate" in got["Rules scheduled change"]["revisions"][0])
+        self.assertTrue(u"timestamp" in got["Rules scheduled change"]["revisions"][0])
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testRevertScheduledChange(self):

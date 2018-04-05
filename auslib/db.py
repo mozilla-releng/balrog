@@ -19,7 +19,9 @@ import migrate.versioning.api
 
 from auslib.global_state import cache
 from auslib.blobs.base import createBlob, merge_dicts
-from auslib.util.comparison import string_compare, version_compare, int_compare
+from auslib.util.rulematching import matchChannel, matchVersion, matchBuildID, \
+    matchMemory, matchSimpleExpression, matchCsv, matchLocale, matchBoolean, \
+    matchRegex
 from auslib.util.timestamp import getMillisecondTimestamp
 
 import logging
@@ -33,6 +35,26 @@ def rows_to_dicts(rows):
     (SQLAlchemy rows get confused if you try to serialize them).
     """
     return map(dict, rows)
+
+
+def _matchesRegex(foo, bar):
+    # Expand wildcards and use ^/$ to make sure we don't succeed on partial
+    # matches. Eg, 3.6* matches 3.6, 3.6.1, 3.6b3, etc.
+    # Channel length must be strictly greater than two
+    # And globbing is allowed at the end of channel-name only
+    if foo.endswith('*'):
+        if(len(foo) >= 3):
+            test = foo.replace('.', '\.').replace('*', '\*', foo.count('*') - 1)
+            test = '^{}.*$'.format(test[:-1])
+            if re.match(test, bar):
+                return True
+            return False
+        else:
+            return False
+    elif (foo == bar):
+        return True
+    else:
+        return False
 
 
 class AlreadySetupError(Exception):
@@ -200,7 +222,7 @@ class AUSTransaction(object):
             # Also need to check for exceptions during commit!
             try:
                 self.commit()
-            except:
+            except Exception:
                 self.rollback()
                 raise
         finally:
@@ -216,7 +238,7 @@ class AUSTransaction(object):
         try:
             self.log.debug("Attempting to execute %s" % statement)
             return self.conn.execute(statement)
-        except:
+        except Exception:
             self.log.debug("Caught exception")
             # We want to raise our own Exception, so that errors are easily
             # caught by consumers. The dance below lets us do that without
@@ -230,7 +252,7 @@ class AUSTransaction(object):
     def commit(self):
         try:
             self.trans.commit()
-        except:
+        except Exception:
             klass, e, tb = sys.exc_info()
             self.rollback()
             e = TransactionError(e.args)
@@ -937,7 +959,7 @@ class ConditionsTable(AUSTable):
         if "when" in conditions:
             try:
                 time.gmtime(conditions["when"] / 1000)
-            except:
+            except Exception:
                 raise ValueError("Cannot parse 'when' as a unix timestamp.")
 
             if conditions["when"] < getMillisecondTimestamp():
@@ -1110,19 +1132,20 @@ class ScheduledChangeTable(AUSTable):
         self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)
 
     def auto_signoff(self, changed_by, transaction, sc_id, dryrun, columns):
-        # - If the User scheduling a change only holds one Role, record a signoff with it.
-        # - If the User scheduling a change holds more than one Role, we cannot a Signoff, because
+        # - If the User scheduling a change only holds one of the required Roles, record a signoff with it.
+        # - If the User scheduling a change holds more than one of the required Roles, we cannot a Signoff, because
         #   we don't know which Role we'd want to signoff with. The user will need to signoff
         #   manually in these cases.
         user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
-        if len(user_roles) == 1:
+        if len(user_roles):
             required_roles = set()
             required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
             if required_signoffs:
-                required_roles.update([rs["role"] for rs in required_signoffs])
-                if user_roles[0]["role"] in required_roles:
-                    self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
-                                         sc_id=sc_id, role=user_roles[0].get("role"))
+                required_roles.update([rs["role"] for rs in [obj for v in required_signoffs.values() for obj in v]])
+            possible_signoffs = list(filter(lambda role: role["role"] in required_roles, user_roles))
+            if len(possible_signoffs) == 1:
+                self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun,
+                                     sc_id=sc_id, role=possible_signoffs[0].get("role"))
 
     def select(self, where=None, transaction=None, **kwargs):
         ret = []
@@ -1351,12 +1374,12 @@ class RequiredSignoffsTable(AUSTable):
         super(RequiredSignoffsTable, self).__init__(db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        potential_required_signoffs = []
+        potential_required_signoffs = {'rs': []}
         for row in affected_rows:
             if not row:
                 continue
             where = {col: row[col] for col in self.decisionColumns}
-            potential_required_signoffs.extend(self.select(where=where, transaction=transaction))
+            potential_required_signoffs['rs'].extend(self.select(where=where, transaction=transaction))
         return potential_required_signoffs
 
     def validate(self, columns, transaction=None):
@@ -1385,7 +1408,7 @@ class RequiredSignoffsTable(AUSTable):
             raise PermissionDeniedError("{} is not allowed to create new Required Signoffs.".format(changed_by))
 
         if not dryrun:
-            potential_required_signoffs = self.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
             verify_signoffs(potential_required_signoffs, signoffs)
 
         return super(RequiredSignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
@@ -1400,7 +1423,7 @@ class RequiredSignoffsTable(AUSTable):
                 raise PermissionDeniedError("{} is not allowed to modify Required Signoffs.".format(changed_by))
 
             if not dryrun:
-                potential_required_signoffs = self.getPotentialRequiredSignoffs([rs, new_rs], transaction=transaction)
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([rs, new_rs], transaction=transaction).values() for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         return super(RequiredSignoffsTable, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
@@ -1412,7 +1435,7 @@ class RequiredSignoffsTable(AUSTable):
 
         if not dryrun:
             for rs in self.select(where=where, transaction=transaction):
-                potential_required_signoffs = self.getPotentialRequiredSignoffs([rs], transaction=transaction)
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([rs], transaction=transaction).values() for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         return super(RequiredSignoffsTable, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version,
@@ -1510,7 +1533,7 @@ class Rules(AUSTable):
                            Column('instructionSet', String(1000)),
                            Column('jaws', CompatibleBooleanColumn),
                            Column('mig64', CompatibleBooleanColumn),
-                           Column('distribution', String(100)),
+                           Column('distribution', String(2000)),
                            Column('distVersion', String(100)),
                            Column('headerArchitecture', String(10)),
                            Column('comment', String(500)),
@@ -1519,170 +1542,46 @@ class Rules(AUSTable):
         AUSTable.__init__(self, db, dialect, scheduled_changes=True)
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        potential_required_signoffs = []
+        potential_required_signoffs = {}
+        rows = []
         # The new row may change the product or channel, so we must look for
         # Signoffs for both.
         for row in affected_rows:
             if not row:
                 continue
-            where = {}
-            # If product isn't present, or is None, it means the Rule affects
-            # all products, and we must leave it out of the where clause. If
-            # we included it, the query would only match rows where product is
-            # NULL.
-            if row.get("product"):
-                where["product"] = row["product"]
-            for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
+            rows.append(row)
+
+        where = {}
+        cond = []
+        for row in rows:
+            if not row.get('product'):
+                # If product isn't present, or is None, it means the Rule affects
+                # all products, and we must leave it out of the where clause. If
+                # we included it, the query would only match rows where product is
+                # NULL. Since we are returning all rs, we can safely breakout of this loop
+                break
+            cond.append(row["product"])
+        else:  # nobreak
+            where = [self.product.in_(tuple(cond))]
+
+        q = self.db.productRequiredSignoffs.select(where=where, transaction=transaction)
+
+        # map query result using product as the key
+        q_map = {}
+        for rs in q:
+            if rs["product"] in q_map:
+                q_map[rs["product"]].append(rs)
+            else:
+                q_map[rs["product"]] = [rs]
+
+        for row in rows:
+            potential_required_signoffs[(row.get("product"), row.get("channel"))] = []
+            for rs in q_map.get(row["product"], []) if row.get("product") else q:
                 # Channel supports globbing, so we must take that into account
                 # before deciding whether or not this is a match.
-                if not row.get("channel") or self._matchesRegex(row["channel"], rs["channel"]):
-                    potential_required_signoffs.append(rs)
+                if not row.get("channel") or matchRegex(row.get("channel"), rs["channel"]):
+                    potential_required_signoffs[(row.get("product"), row.get("channel"))].append(rs)
         return potential_required_signoffs
-
-    def _matchesRegex(self, foo, bar):
-        # Expand wildcards and use ^/$ to make sure we don't succeed on partial
-        # matches. Eg, 3.6* matches 3.6, 3.6.1, 3.6b3, etc.
-        # Channel length must be strictly greater than two
-        # And globbing is allowed at the end of channel-name only
-        if foo.endswith('*'):
-            if(len(foo) >= 3):
-                test = foo.replace('.', '\.').replace('*', '\*', foo.count('*') - 1)
-                test = '^{}.*$'.format(test[:-1])
-                if re.match(test, bar):
-                    return True
-                return False
-            else:
-                return False
-        elif (foo == bar):
-            return True
-        else:
-            return False
-
-    def _channelMatchesRule(self, ruleChannel, queryChannel, fallbackChannel):
-        """Decides whether a channel from the rules matches an incoming one.
-           If the ruleChannel is null, we match any queryChannel. We also match
-           if the channels match exactly, or match after wildcards in ruleChannel
-           are resolved. Channels may have a fallback specified, too, so we must
-           check if the fallback version of the queryChannel matches the ruleChannel."""
-        if ruleChannel is None:
-            return True
-        if self._matchesRegex(ruleChannel, queryChannel):
-            return True
-        if self._matchesRegex(ruleChannel, fallbackChannel):
-            return True
-
-    def _versionMatchesRule(self, ruleVersion, queryVersion):
-        """Decides whether a version from the rules matches an incoming version.
-           If the ruleVersion is null, we match any queryVersion. If it's not
-           null, we must either match exactly, or match a comparison operator."""
-        self.log.debug('ruleVersion: %s, queryVersion: %s', ruleVersion, queryVersion)
-        if ruleVersion is None:
-            return True
-        rulesVersionList = ruleVersion.split(",")
-        for rule in rulesVersionList:
-            if version_compare(queryVersion, rule):
-                return True
-        return False
-
-    def _buildIDMatchesRule(self, ruleBuildID, queryBuildID):
-        """Decides whether a buildID from the rules matches an incoming one.
-           If the ruleBuildID is null, we match any queryBuildID. If it's not
-           null, we must either match exactly, or match with a camparison
-           operator."""
-        if ruleBuildID is None:
-            return True
-        return string_compare(queryBuildID, ruleBuildID)
-
-    def _memoryMatchesRule(self, ruleMemory, queryMemory):
-        """Decides whether a memory value from the rules matches an incoming one.
-           If the ruleMemory is null, we match any queryMemory. If it's not
-           null, we must either match exactly, or match with a camparison
-           operator."""
-        if ruleMemory is None:
-            return True
-        return int_compare(queryMemory, ruleMemory)
-
-    def _csvMatchesRule(self, ruleString, queryString, substring=True):
-        """Decides whether a column from a rule matches an incoming one.
-           Some columns in a rule may specify multiple values delimited by a
-           comma. Once split we do a full or substring match against the query
-           string. Because we support substring matches, there's no need
-           to support globbing as well."""
-        if ruleString is None:
-            return True
-        for part in ruleString.split(','):
-            if substring and part in queryString:
-                return True
-            elif part == queryString:
-                return True
-        return False
-
-    def _booleanMatchesRule(self, ruleValue, queryValue):
-        """As with all other columns, if the value isn't present in the Rule, the Rule matches.
-        Unlike other columns, the non-existence of a boolean field in the updateQuery evaluates
-        to False, so we need to handle True, False, and None explicitly. Note that None in the
-        updateQuery is treated as "unknown", and will cause any Rule without an explicit value
-        for the field to match.
-        The full truth table is:
-        rule | query | matches?
-          F      0        Y
-          F      1        N
-          F     null      N
-          T      0        N
-          T      1        Y
-          T     null      N
-        null     0        Y
-        null     1        Y
-        null    null      Y
-
-        Additional context in https://bugzilla.mozilla.org/show_bug.cgi?id=1386756"""
-
-        if ruleValue is not None:
-            if queryValue is None or ruleValue != queryValue:
-                return False
-        return True
-
-    def _simpleExpressionMatchesSubRule(self, subRuleString, queryString, substring):
-        """Performs the actual logical 'AND' operation on a rule as well as partial/full string matching
-           for each section of a rule.
-           If all parts of the subRuleString match the queryString, then we have successfully resolved the
-           logical 'AND' operation and return True.
-           Partial matching makes use of Python's "<substring> in <string>" functionality, giving us the ability
-           for an incoming rule to match only a substring of a rule.
-           Full matching makes use of Python's "<string> in <list>" functionality, giving us the ability for
-           an incoming rule to exactly match the whole rule. Currently, incoming rules are comma-separated strings."""
-        for rule in subRuleString:
-            if substring and rule not in queryString:
-                return False
-            elif not substring and rule not in queryString.split(','):
-                return False
-        return True
-
-    def _simpleExpressionMatchesRule(self, ruleString, queryString, substring=True):
-        """Decides whether a column from a rule matches an incoming one using simplified boolean logic.
-           Only two operators are supported: '&&' (and), ',' (or). A rule like 'AMD,SSE' will match incoming
-           rules that contain either 'AMD' or 'SSE'. A rule like 'AMD&&SSE' will only match incoming rules
-           that contain both 'AMD' and 'SSE'.
-           This function can do substring matching or full string matching. When doing substring matching, a rule
-           specifying 'AMD,Windows 10' WILL match an incoming rule such as 'Windows 10.1.2'. When doing full string
-           matching, a rule specifying 'AMD,SSE' will NOT match an incoming rule that contains 'SSE3', but WILL match
-           an incoming rule that contains either 'AMD' or 'SSE3'."""
-        if ruleString is None:
-            return True
-
-        decomposedRules = [[rule.strip() for rule in subRule.split('&&')] for subRule in ruleString.split(',')]
-
-        for subRule in decomposedRules:
-            if self._simpleExpressionMatchesSubRule(subRule, queryString, substring):
-                # We can immediately return True on the first match because this loop is iterating over an OR expression
-                # so we need just one match to pass.
-                return True
-        return False
-
-    def _localeMatchesRule(self, ruleLocales, queryLocale):
-        """Decides if a comma seperated list of locales in a rule matches an
-        update request"""
-        return self._csvMatchesRule(ruleLocales, queryLocale, substring=False)
 
     def _isAlias(self, id_or_alias):
         if re.match("^[a-zA-Z][a-zA-Z0-9-]*$", str(id_or_alias)):
@@ -1694,7 +1593,7 @@ class Rules(AUSTable):
             raise PermissionDeniedError("%s is not allowed to create new rules for product %s" % (changed_by, columns.get("product")))
 
         if not dryrun:
-            potential_required_signoffs = self.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
             verify_signoffs(potential_required_signoffs, signoffs)
 
         ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
@@ -1724,18 +1623,13 @@ class Rules(AUSTable):
                 ((self.buildTarget == updateQuery['buildTarget']) | (self.buildTarget == null())) &
                 ((self.headerArchitecture == updateQuery['headerArchitecture']) | (self.headerArchitecture == null()))
             ]
-            # Query version 2 doesn't have distribution information, and to keep
-            # us maximally flexible, we won't match any rules that have
-            # distribution update set.
-            if updateQuery['queryVersion'] == 2:
-                where.extend([(self.distribution == null()) & (self.distVersion == null())])
-            # Only query versions 3 and 4 have distribution information, so we
-            # need to consider it.
-            if updateQuery['queryVersion'] in (3, 4):
+
+            if "distVersion" in updateQuery:
                 where.extend([
-                    ((self.distribution == updateQuery['distribution']) | (self.distribution == null())) &
                     ((self.distVersion == updateQuery['distVersion']) | (self.distVersion == null()))
                 ])
+            else:
+                where.extend([(self.distVersion == null())])
 
             self.log.debug("where: %s" % where)
             return self.select(where=where, transaction=transaction)
@@ -1745,9 +1639,9 @@ class Rules(AUSTable):
         # part, product and buildTarget will be the only applicable ones which
         # means we should get very high cache hit rates, as there's not a ton
         # of variability of possible combinations for those.
-        cache_key = "%s:%s:%s:%s:%s:%s" % \
+        cache_key = "%s:%s:%s:%s:%s" % \
             (updateQuery["product"], updateQuery["buildTarget"], updateQuery["headerArchitecture"],
-             updateQuery.get("distribution"), updateQuery.get("distVersion"), updateQuery["force"])
+             updateQuery.get("distVersion"), updateQuery["force"])
         rules = cache.get("rules", cache_key, getRawMatches)
 
         self.log.debug("Raw matches:")
@@ -1758,36 +1652,39 @@ class Rules(AUSTable):
 
             # Resolve special means for channel, version, and buildID - dropping
             # rules that don't match after resolution.
-            if not self._channelMatchesRule(rule['channel'], updateQuery['channel'], fallbackChannel):
+            if not matchChannel(rule['channel'], updateQuery['channel'], fallbackChannel):
                 self.log.debug("%s doesn't match %s", rule['channel'], updateQuery['channel'])
                 continue
-            if not self._versionMatchesRule(rule['version'], updateQuery['version']):
+            if not matchVersion(rule['version'], updateQuery['version']):
                 self.log.debug("%s doesn't match %s", rule['version'], updateQuery['version'])
                 continue
-            if not self._buildIDMatchesRule(rule['buildID'], updateQuery['buildID']):
+            if not matchBuildID(rule['buildID'], updateQuery['buildID']):
                 self.log.debug("%s doesn't match %s", rule['buildID'], updateQuery['buildID'])
                 continue
-            if not self._memoryMatchesRule(rule['memory'], updateQuery.get("memory", "")):
+            if not matchMemory(rule['memory'], updateQuery.get("memory", "")):
                 self.log.debug("%s doesn't match %s", rule['memory'], updateQuery.get("memory"))
                 continue
             # To help keep the rules table compact, multiple OS versions may be
             # specified in a single rule. They are comma delimited, so we need to
             # break them out and create clauses for each one.
-            if not self._simpleExpressionMatchesRule(rule['osVersion'], updateQuery['osVersion']):
+            if not matchSimpleExpression(rule['osVersion'], updateQuery['osVersion']):
                 self.log.debug("%s doesn't match %s", rule['osVersion'], updateQuery['osVersion'])
                 continue
-            if not self._csvMatchesRule(rule['instructionSet'], updateQuery.get('instructionSet', ""), substring=False):
+            if not matchCsv(rule['instructionSet'], updateQuery.get('instructionSet', ""), substring=False):
                 self.log.debug("%s doesn't match %s", rule['instructionSet'], updateQuery.get('instructionSet'))
                 continue
+            if not matchCsv(rule['distribution'], updateQuery.get('distribution', ""), substring=False):
+                self.log.debug("%s doesn't match %s", rule['distribution'], updateQuery.get('distribution'))
+                continue
             # Locales may be a comma delimited rule too, exact matches only
-            if not self._localeMatchesRule(rule['locale'], updateQuery['locale']):
+            if not matchLocale(rule['locale'], updateQuery['locale']):
                 self.log.debug("%s doesn't match %s", rule['locale'], updateQuery['locale'])
                 continue
-            if not self._booleanMatchesRule(rule["mig64"], updateQuery.get("mig64")):
-                self.log.debug("%s doesn't match %s", rule['mig64'], updateQuery['mig64'])
+            if not matchBoolean(rule["mig64"], updateQuery.get("mig64")):
+                self.log.debug("%s doesn't match %s", rule['mig64'], updateQuery.get('mig64'))
                 continue
-            if not self._booleanMatchesRule(rule["jaws"], updateQuery.get("jaws")):
-                self.log.debug("%s doesn't match %s", rule['jaws'], updateQuery['jaws'])
+            if not matchBoolean(rule["jaws"], updateQuery.get("jaws")):
+                self.log.debug("%s doesn't match %s", rule['jaws'], updateQuery.get('jaws'))
                 continue
 
             matchingRules.append(rule)
@@ -1836,7 +1733,8 @@ class Rules(AUSTable):
             new_rule = current_rule.copy()
             new_rule.update(what)
             if not dryrun:
-                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_rule, new_rule], transaction=transaction)
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([current_rule, new_rule], transaction=transaction).values(
+                ) for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         return super(Rules, self).update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version,
@@ -1853,7 +1751,7 @@ class Rules(AUSTable):
 
         if not dryrun:
             for current_rule in self.select(where=where, transaction=transaction):
-                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_rule], transaction=transaction)
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([current_rule], transaction=transaction).values() for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
@@ -1878,20 +1776,38 @@ class Releases(AUSTable):
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        potential_required_signoffs = []
+        potential_required_signoffs = {}
+        rows = []
         for row in affected_rows:
             if not row:
                 continue
-            # Releases do not affect live updates on their own, only the
-            # product+channel combinations specified in Rules that point
-            # to them. We need to find these Rules, and then return _their_
-            # Required Signoffs.
-            info = self.getReleaseInfo(name=row["name"], transaction=transaction)
-            if info:
-                info = info[0]
-                for rule_id in info["rule_ids"]:
-                    rule = self.db.rules.select(where=[self.db.rules.rule_id == rule_id], transaction=transaction)[0]
-                    potential_required_signoffs.extend(self.db.rules.getPotentialRequiredSignoffs([rule], transaction=transaction))
+            rows.append(row)
+        info = self.getReleaseInfo(names=[row['name'] for row in rows], transaction=transaction)
+        # Releases do not affect live updates on their own, only the
+        # product+channel combinations specified in Rules that point
+        # to them. We need to find these Rules, and then return _their_
+        # Required Signoffs.
+        if info:
+            # get all rules as one query
+            q_rules = [self.db.rules.rule_id.in_(tuple([rule_id for row in info for rule_id in row['rule_ids']]))]
+            all_rules = self.db.rules.select(where=q_rules, transaction=transaction)
+
+            # map rules according to rule_id
+            rules_map = {rule['rule_id']: rule for rule in all_rules}
+
+            # get all rs as one query
+            all_rs = self.db.rules.getPotentialRequiredSignoffs(all_rules, transaction=transaction)
+
+            for row in info:
+                rs = []
+                potential_required_signoffs[row['name']] = []
+                for rule_id in row["rule_ids"]:
+                    rule = rules_map[rule_id]
+                    _rs = all_rs[(rule["product"], rule["channel"])]
+                    rs.extend(_rs)
+                potential_required_signoffs[row['name']] = rs
+        else:
+            potential_required_signoffs['rs'] = []
         return potential_required_signoffs
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -1923,11 +1839,11 @@ class Releases(AUSTable):
             count, = self.getEngine().execute(self.t.count()).fetchone()
         return count
 
-    def getReleaseInfo(self, name=None, product=None, limit=None,
+    def getReleaseInfo(self, names=None, product=None, limit=None,
                        transaction=None, nameOnly=False, name_prefix=None):
         where = []
-        if name:
-            where.append(self.name == name)
+        if names:
+            where.append(self.name.in_(tuple(names)))
         if product:
             where.append(self.product == product)
         if name_prefix:
@@ -2021,7 +1937,7 @@ class Releases(AUSTable):
             raise PermissionDeniedError("%s is not allowed to create releases for product %s" % (changed_by, columns["product"]))
 
         if not dryrun:
-            potential_required_signoffs = self.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
             verify_signoffs(potential_required_signoffs, signoffs)
 
         ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
@@ -2077,7 +1993,8 @@ class Releases(AUSTable):
             new_release = current_release.copy()
             new_release.update(what)
             if not dryrun:
-                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_release, new_release], transaction=transaction)
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([current_release, new_release], transaction=transaction).values(
+                ) for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         for release in current_releases:
@@ -2209,7 +2126,7 @@ class Releases(AUSTable):
             raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, release["product"]))
 
         if not dryrun:
-            potential_required_signoffs = self.getPotentialRequiredSignoffs([release], transaction=transaction)
+            potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([release], transaction=transaction).values() for obj in v]
             verify_signoffs(potential_required_signoffs, signoffs)
 
         super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction,
@@ -2252,6 +2169,7 @@ class Permissions(AUSTable):
        to ["GMP"] allows the user to modify GMP releases, but not Firefox."""
     allPermissions = {
         "admin": ["products"],
+        "emergency_shutoff": ["actions", "products"],
         "release": ["actions", "products"],
         "release_locale": ["actions", "products"],
         "release_read_only": ["actions", "products"],
@@ -2271,7 +2189,7 @@ class Permissions(AUSTable):
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        potential_required_signoffs = []
+        potential_required_signoffs = {'rs': []}
         for row in affected_rows:
             if not row:
                 continue
@@ -2280,9 +2198,9 @@ class Permissions(AUSTable):
             # don't support them.
             if "products" in self.allPermissions[row["permission"]] and row.get("options") and row["options"].get("products"):
                 for product in row["options"]["products"]:
-                    potential_required_signoffs.extend(self.db.permissionsRequiredSignoffs.select(where={"product": product}, transaction=transaction))
+                    potential_required_signoffs['rs'].extend(self.db.permissionsRequiredSignoffs.select(where={"product": product}, transaction=transaction))
             else:
-                potential_required_signoffs.extend(self.db.permissionsRequiredSignoffs.select(transaction=transaction))
+                potential_required_signoffs['rs'].extend(self.db.permissionsRequiredSignoffs.select(transaction=transaction))
         return potential_required_signoffs
 
     def assertPermissionExists(self, permission):
@@ -2295,10 +2213,16 @@ class Permissions(AUSTable):
                 raise ValueError('Unknown option "%s" for permission "%s"' % (opt, permission))
 
     def getAllUsers(self, transaction=None):
-        res_permissions = self.select(columns=[self.username], distinct=True, transaction=transaction)
-        res_roles = self.user_roles.select(columns=[self.user_roles.username], transaction=transaction)
-        res = res_roles + res_permissions
-        return list(set([r['username'] for r in res]))
+        res_users = self.select(columns=[self.username], distinct=True, transaction=transaction)
+        users_list = list([r['username'] for r in res_users])
+        users = {}
+        for user in users_list:
+            res_roles = self.user_roles.select(where=[
+                self.user_roles.username == user],
+                columns=[self.user_roles.role, self.user_roles.data_version],
+                transaction=transaction)
+            users[user] = {"roles": res_roles}
+        return users
 
     def getAllPermissions(self, transaction=None):
         ret = defaultdict(dict)
@@ -2322,7 +2246,7 @@ class Permissions(AUSTable):
             raise PermissionDeniedError("%s is not allowed to grant permissions" % changed_by)
 
         if not dryrun:
-            potential_required_signoffs = self.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
             verify_signoffs(potential_required_signoffs, signoffs)
 
         self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"],
@@ -2355,7 +2279,8 @@ class Permissions(AUSTable):
             new_permission = current_permission.copy()
             new_permission.update(what)
             if not dryrun:
-                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_permission, new_permission], transaction=transaction)
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([
+                    current_permission, new_permission], transaction=transaction).values() for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         super(Permissions, self).update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version,
@@ -2369,7 +2294,8 @@ class Permissions(AUSTable):
         for current_permission in self.select(where=where, transaction=transaction):
             usernames.add(current_permission["username"])
             if not dryrun:
-                potential_required_signoffs = self.getPotentialRequiredSignoffs([current_permission], transaction=transaction)
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([current_permission], transaction=transaction).values(
+                ) for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
         if not dryrun:
@@ -2422,10 +2348,6 @@ class Permissions(AUSTable):
                                      columns=[self.user_roles.role, self.user_roles.data_version],
                                      distinct=True, transaction=transaction)
         return [{"role": r["role"], "data_version": r["data_version"]} for r in res]
-
-    def getAllRoles(self, transaction=None):
-        res = self.user_roles.select(columns=[self.user_roles.role], distinct=True, transaction=transaction)
-        return [r["role"] for r in res]
 
     def isAdmin(self, username, transaction=None):
         return bool(self.getPermission(username, "admin", transaction))
@@ -2490,6 +2412,44 @@ class Dockerflow(AUSTable):
             super(Dockerflow, self).update(where=where, what=value, changed_by=changed_by, transaction=transaction, dryrun=dryrun)
 
 
+class EmergencyShutoffs(AUSTable):
+    def __init__(self, db, metadata, dialect):
+        self.table = Table('emergency_shutoffs', metadata,
+                           Column('product', String(15), nullable=False, primary_key=True),
+                           Column('channel', String(75), nullable=False, primary_key=True))
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
+
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        if not self.db.hasPermission(changed_by, "emergency_shutoff", "create", columns.get("product"), transaction):
+            raise PermissionDeniedError(
+                "{} is not allowed to shut off updates for product {}".format(changed_by, columns.get("product")))
+
+        ret = super(EmergencyShutoffs, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        if not dryrun:
+            return ret.last_updated_params()
+
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+        potential_required_signoffs = {'rs': []}
+        row = affected_rows[-1]
+        where = {"product": row["product"]}
+        for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
+            if not row.get("channel") or _matchesRegex(row["channel"], rs["channel"]):
+                potential_required_signoffs['rs'].append(rs)
+        return potential_required_signoffs
+
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "emergency_shutoff", "delete", product, transaction):
+            raise PermissionDeniedError("%s is not allowed to delete shutoffs for product %s" % (changed_by, product))
+
+        if not dryrun:
+            for current_rule in self.select(where=where, transaction=transaction):
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([current_rule], transaction=transaction).values() for obj in v]
+                verify_signoffs(potential_required_signoffs, signoffs)
+
+        super(EmergencyShutoffs, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
+
+
 class UTF8PrettyPrinter(pprint.PrettyPrinter):
     """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
     Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
@@ -2520,14 +2480,14 @@ def send_email(relayhost, port, username, password, to_addr, from_addr, table, s
         if use_tls:
             conn.starttls()
             conn.ehlo()
-    except:
+    except Exception:
         table.log.exception("Failed to connect to SMTP server:")
         return
     try:
         if username and password:
             conn.login(username, password)
         conn.sendmail(from_addr, to_addr, msg.as_string())
-    except:
+    except Exception:
         table.log.exception("Failed to send change notification:")
     finally:
         conn.quit()
@@ -2646,6 +2606,7 @@ class AUSDatabase(object):
         self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
         self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)
         self.permissionsRequiredSignoffsTable = PermissionsRequiredSignoffsTable(self, self.metadata, dialect)
+        self.emergencyShutoffsTable = EmergencyShutoffs(self, self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def setDomainWhitelist(self, domainWhitelist):
@@ -2749,3 +2710,7 @@ class AUSDatabase(object):
     @property
     def dockerflow(self):
         return self.dockerflowTable
+
+    @property
+    def emergencyShutoffs(self):
+        return self.emergencyShutoffsTable

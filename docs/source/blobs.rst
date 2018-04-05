@@ -9,14 +9,80 @@ This page documents the Blobs we have in Balrog, what they're used for, and what
 App Release
 -----------
 
-App Release blobs are used for Gecko Application updates - generally anything that receives updates through MAR files (eg: Firefox, Fennec, B2G, Thunderbird).
+App Release blobs are used for Gecko Application updates - generally anything that receives updates through MAR files (eg: Firefox, Fennec, Thunderbird).
 Each App Release Blob contains all of the metadata for all platforms and locales of a particular release.
+There are many versions of the App Release blob to support the various Firefox versions, and implement various Balrog features.
+
+Schema 1
+********
+Legacy format to support Firefox 1.5 through 3.6.x and Thunderbird 1.5 to 3.1.y.
+
+Schema 2
+********
+Compatible with Firefox and Thunderbird 4.0 and above.
+
+Supports client side changes from https://bugzilla.mozilla.org/show_bug.cgi?id=530872
+
+Changes from V1:
+
+* appv and extv become appVersion, platformVersion, and displayVersion
+* Added actions, billboardURL, openURL, notificationURL, alertURL, showPrompt, showNeverForVersion, isOSUpdate
+* Removed oldVersionSpecialCases
+
+Schema 3
+********
+Compatible with Firefox and Thunderbird 4.0 and above.
+
+This was an internal change to add multiple partials support to Balrog. It replaces the "partial" and "complete"
+properties at the local level with new "partials" and "completes" properties.
+
+Schema 4
+********
+Compatible with Firefox and Thunderbird 4.0 and above.
+
+This was an internal change to add support for pushing release channel builds to the beta channel. It replaces the
+top level "fileUrls", "bouncerProducts", and "ftpFilenames" properties with a single, unified "fileUrls" properties.
+
 Here is an example that shows the :ref:`appreleaseExample`, with all of its platforms and locales.
+
+Schema 5
+********
+Compatible with Firefox and Thunderbird 19.0 and above.
+
+Driven by a client side change made in https://bugzilla.mozilla.org/show_bug.cgi?id=813322 that added support for
+the optional "promptWaitTime" attribute.
+
+Schema 6
+********
+Compatible with Firefox and Thunderbird 51.0 and above.
+
+This version removes support for platformVersion, billboardURL, licenseURL, version, and extensionVersion which are
+no longer supported by the client.
+
+Schema 7
+********
+This schema was never used and no longer exists. It was briefly added to support the backgroundInterval attribute
+which was never used.
+
+Schema 8
+********
+Compatible with Firefox and Thunderbird 51.0 and above.
+
+This was an internal change to add support for the binary transparency attributes (https://bugzilla.mozilla.org/show_bug.cgi?id=1384296).
+
+Schema 9
+********
+Compatible with Firefox and Thunderbird 51.0 and above.
+
+This was an internal change to allow the App Release blob to make decisions about when to return most <update> parameters. Most notably,
+it allows us to return (or not) What's New Pages based on incoming client information. This work happened in https://bugzilla.mozilla.org/show_bug.cgi?id=1400016.
+
+Here is an example that shows a single :ref:`appreleasev9Example` that supports both WNP and no-WNP updates.
 
 Response Format
 ***************
 
-The response for App Releases is as follows:
+The response for App Releases is as follows (different versions of the App Release blob use different <update> line parameters, but the general structure is consistent):
 
 .. code-block:: xml
 

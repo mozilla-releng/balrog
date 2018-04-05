@@ -124,7 +124,7 @@
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.jaws}">
           <label for="id_jaws">
-            JAWS Screen Reader Compatibility
+            Incompatible JAWS Screen Reader
             <span class="glyphicon glyphicon-question-sign"
                   title='Whether or not to match incoming queries that indicate a client that has an incompatible version of the JAWS screen reader installed. "Ignore" is usually what you want.'>
             </span>
@@ -143,7 +143,7 @@
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.distribution}">
           <label for="id_distribution">Distribution</label>
-          <input type="text" class="form-control" id="id_distribution" ng-model="rule.distribution">
+          <input type="text" class="form-control" id="id_distribution" ng-model="rule.distribution" ng-blur="removeWhiteSpaces('distribution')">
           <p class="help-block" ng-show="errors.distribution">{{ errors.distribution.join(', ') }}</p>
         </div>
       </div>

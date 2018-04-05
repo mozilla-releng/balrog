@@ -7,7 +7,9 @@ htmlcov
 cef.log
 .cache
 .tox
+.swp
 *.egg-info
+.pytest_cache
 
 build
 generated

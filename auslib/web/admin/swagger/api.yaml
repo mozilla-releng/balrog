@@ -164,6 +164,7 @@ parameters:
     type: string
     enum:
       - admin
+      - emergency_shutoff
       - rule
       - release
       - release_read_only
@@ -250,6 +251,62 @@ parameters:
       # and 'permission path parameter' respectively, getting passed in request body
       # No need to validate the duplicate values again.
       additionalProperties: true
+
+  changedByParam:
+    name: changed_by
+    in: query
+    description: The username who made the requested changes.
+    type: string
+    x-nullable: true
+    required: false
+
+  changeIdParam:
+    name: change_id
+    in: query
+    description: The change_id value to filter hsitory by.
+    type: integer
+    x-nullable: true
+    required: false
+
+  historyDataVersionParam:
+    name: data_version
+    in: query
+    description: data_version field value to filter history by.
+    type: integer
+    x-nullable: true
+    required: false
+
+  timestampParam:
+    name: timestamp
+    in: query
+    description: timestamp at which the requested change was made.
+    type: integer
+    x-nullable: true
+    required: false
+
+  timestampFromParam:
+    name: timestamp_from
+    in: query
+    description: timestamp from/above which to filter history.
+    type: integer
+    x-nullable: true
+    required: false
+
+  timestampToParam:
+    name: timestamp_to
+    in: query
+    description: timestamp to/below which history is filtered.
+    type: integer
+    x-nullable: true
+    required: false
+
+  channelParam:
+    name: channel
+    in: query
+    description: channel stirng for filtering history.
+    type: string
+    x-nullable: true
+    required: false
 
 responses:
   updateExistingObject:
@@ -349,6 +406,160 @@ paths:
               type: string
           examples:
             text/html: "csrf_token: 1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
+  
+  /rules/history:
+    get:
+      summary: Returns a list of all rules and it's scheduled change history.
+      description: >
+        Returns a list of rules and it's scheduled change history.
+      tags:
+        - "History Rules"
+      operationId: auslib.web.common.history_all.rules_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of rules and rules scheduled change history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+        - $ref: '#/parameters/channelParam'
+      responses:
+        '200':
+          description: Successfully fetched rules and it's scheduled change history
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /releases/history:
+    get:
+      summary: Returns a list of releases and it's scheduled change history.
+      description: >
+        Returns a list of releases and it's scheduled change history.
+      tags:
+        - "History Histories Releases"
+      operationId: auslib.web.common.history_all.releases_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of releases and releases scheduled change history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+      responses:
+        '200':
+          description: Successfully fetched releases and it's scheduled change histories
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /permissions/history:
+    get:
+      summary: Returns a list of permissions and it's scheduled change history.
+      description: >
+        Returns a list of permissions and it's scheduled change history.
+      tags:
+        - "History Permissions"
+      operationId: auslib.web.common.history_all.permissions_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of permissions and permissions scheduled change history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+      responses:
+        '200':
+          description: Successfully fetched permissions and it's scheduled change history
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /required_signoffs/product/history:
+    get:
+      summary: Returns a list of product required signoff and it's scheduled change history.
+      description: >
+        Returns product required signoff and it's scheduled change history.
+      tags:
+        - "History Signoff Product"
+      operationId: auslib.web.common.history_all.product_required_signoffs_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of product required signoff and it's scheduled change history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+        - $ref: '#/parameters/channelParam'
+        - name: role
+          in: query
+          description: The role(s) required for product signoff
+          type: string
+          x-nullable: true
+          required: false
+      responses:
+        '200':
+          description: Successfully fetched product required signoffs and it's scheduled change history
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /required_signoffs/permissions/history:
+    get:
+      summary: Returns a list of permissions required signoffs and it's scheduled change history.
+      description: >
+        Returns permissions required signoff and it's scheduled change history.
+      tags:
+        - "History Permissions Signoff"
+      operationId: auslib.web.common.history_all.permissions_required_signoffs_history
+      consumes: []
+      produces: [application/json]
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
+        description: "Returns a list of permissions required signoff and it's scheduled change history"
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/limitParam'
+        - $ref: '#/parameters/pageParam'
+        - $ref: '#/parameters/changedByParam'
+        - $ref: '#/parameters/changeIdParam'
+        - $ref: '#/parameters/historyDataVersionParam'
+        - $ref: '#/parameters/timestampFromParam'
+        - $ref: '#/parameters/timestampToParam'
+        - name: role
+          in: query
+          description: The role(s) required for permission signoff
+          type: string
+          x-nullable: true
+          required: false
+      responses:
+        '200':
+          description: Successfully fetched permissions required signoff and it's scheduled change history
+        '400':
+          $ref: '#/responses/invalidFormData'
 
   /history/diff/release/{change_id}/{field}:
     get:
@@ -1230,34 +1441,6 @@ paths:
                   type: string
                 example: ["balrogadmin"]
 
-  /users/roles:
-    get:
-      summary: Returns all distinct user roles
-      description: >
-        Returns all unique roles defined for all users. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-roles).
-      tags:
-        - Users
-      operationId: auslib.web.admin.views.mapper.all_users_roles_get
-      consumes: []
-      produces:
-        - application/json
-      externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#user-roles"
-        description: Returns all distinct user roles
-      responses:
-        '200':
-          description: Successfully fetched all user roles.
-          schema:
-            type: object
-            properties:
-              roles:
-                description: list of roles
-                type: array
-                uniqueItems: true
-                minItems: 0
-                items:
-                  type: string
-                example: ["releng", "qa"]
 
   /users/{username}:
     get:
@@ -1346,41 +1529,6 @@ paths:
                 data_version: 2
                 options:
                   actions: ['create', 'modify']
-
-  /users/{username}/roles:
-    get:
-      summary: Returns list of user roles
-      description: >
-        Returns list of user roles as a json object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-roles).
-      tags:
-        - Users
-      operationId: auslib.web.admin.views.mapper.user_get_roles
-      consumes: []
-      produces:
-        - application/json
-      externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id26"
-        description: Returns list of user roles
-      parameters:
-        - $ref: '#/parameters/usernameParam'
-      responses:
-        '200':
-          description: Successfully fetched the list of user roles.
-          schema:
-            type: object
-            properties:
-              roles:
-                description: list of roles
-                type: array
-                uniqueItems: true
-                minItems: 0
-                items:
-                  allOf:
-                    - $ref: '#/definitions/DataVersionModel'
-                    - $ref: '#/definitions/RoleModel'
-                  required:
-                    - data_version
-                    - role
 
   /users/{username}/roles/{role}:
     put:
@@ -1782,7 +1930,6 @@ paths:
                   fallbackMapping: null
                   headerArchitecture: null
                   instructionSet: null
-                  jaws: null
                   locale: null
                   mapping: "Firefox-45.7.0esr-build1"
                   memory: null
@@ -3430,6 +3577,289 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
+  /emergency_shutoff:
+    get:
+      summary: List of emergency shut off.
+      description: >
+        Products/Channels that updates are disabled.
+      tags:
+        - Emergency Shutoff
+      operationId: auslib.web.common.emergency_shutoff.get
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: Emergency shut off list.
+          schema:
+            $ref: '#/definitions/EmergencyShutoffListGET'
+
+    post:
+      summary: Creates an emergency shut off.
+      description: Creates an emergency shut off for given product/channel.
+      tags:
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.post
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: emergency_shutoff
+          in: body
+          description: Emergency shut off data.
+          schema:
+            allOf:
+              - $ref: '#/definitions/EmergencyShutOffModel'
+      responses:
+        '201':
+          description: Successfully created an emergency shut off.
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /emergency_shutoff/{product}/{channel}:
+    get:
+      summary: Emergency shut off.
+      description: >
+        Get emergency shut off by Id.
+      tags:
+        - Emergency Shutoff
+      operationId: auslib.web.common.emergency_shutoff.get_by_id
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/productPathParam'
+        - $ref: '#/parameters/channelPathParam'
+      responses:
+        '200':
+          description: Shut off information.
+          schema:
+            $ref: "#/definitions/EmergencyShutOffModel"
+          headers:
+            X-Data-Version:
+              description: data version of the shut off
+              type: integer
+              format: int32
+              minimum: 1
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+    delete:
+      summary: Deletes an emergency shut off.
+      description: Deletes an emergency shut off.
+      tags:
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.delete
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/productPathParam'
+        - $ref: '#/parameters/channelPathParam'
+        - $ref: '#/parameters/csrfTokenParam'
+        - $ref: '#/parameters/dataVersionParam'
+      responses:
+        '200':
+          description: Successfully deleted the shut off.
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /scheduled_changes/emergency_shutoff:
+    get:
+      summary: Returns scheduled changes for emergency shut off.
+      description: >
+        Returns changes that was automatically scheduled when updates for a product/channel was disabled.
+      tags:
+        - Scheduled Changes
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.scheduled_changes
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/allSCParam'
+      responses:
+        '200':
+          description: JSON object with scheduled changes for emergency shut off.
+          schema:
+            type: object
+            required:
+              - scheduled_changes
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  scheduled_changes:
+                    description: Array where each element is a scheduled change for a emergency shut off.
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: '#/definitions/SCSignoffsModel'
+                        - $ref: '#/definitions/EmergencyShutOffModel'
+                        - properties:
+                            original_row:
+                              $ref: '#/definitions/EmergencyShutOffModel'
+
+    post:
+      summary: Create scheduled change for emergency shut off.
+      description: >
+        Create scheduled change for a emergency shut off. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
+      tags:
+        - Scheduled Changes
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.schedule_deletion
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: "create scheduled change for emergency shut off."
+      parameters:
+        - name: sc_emergency_shutoff
+          in: body
+          description: Request body for sc emergency shut off
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/EmergencyShutOffModel'
+            properties:
+              change_type:
+                description: type of change
+                type: string
+                enum:
+                  - delete
+                minLength: 1
+                maxLength: 50
+                example: update
+      responses:
+        '200':
+          description: Returns sc_id of change
+          schema:
+            $ref: '#/definitions/SCIdModel'
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+  /scheduled_changes/emergency_shutoff/{sc_id}:
+    post:
+      summary: Modifies existing scheduled change for a Emergency shut off.
+      description: >
+        Modifies existing scheduled change for a Emergency shut off. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.update_scheduled_deletion
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id"
+        description: "Modifies existing scheduled change for a Emergency shut off."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - name: sc_emergency_shutoff
+          in: body
+          description: Request body for editing sc Emergency shut off.
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/SCDataVersion'
+      responses:
+        '200':
+          $ref: '#/responses/updateExistingObject'
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+    delete:
+      summary: Deletes the given Scheduled Change for Emergency Shutoff.
+      description: >
+        Deletes the given Scheduled Change for Emergency Shutoff. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.delete_scheduled_deletion
+      consumes: []
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/dataVersionParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the given scheduled change.
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /scheduled_changes/emergency_shutoff/{sc_id}/enact:
+    post:
+      summary: Execute the scheduled change for the emergency shut off.
+      description: >
+        Execute the scheduled change for the emergency shut off and reenables the updates for the product/channel.
+      tags:
+        - Scheduled Changes
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.enact_updates_scheduled_for_reactivation
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+      responses:
+        '200':
+          description: Successfully enacted the scheduled change.
+
+  /scheduled_changes/emergency_shutoff/{sc_id}/signoffs:
+    post:
+      summary: Signs off on the given emergency shut off.
+      description: Signs off on the given emergency shut off.
+      tags:
+        - Scheduled Changes
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.scheduled_changes_signoffs
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/sc_signoff_post_body_param'
+      responses:
+        '200':
+          description: Successfully signed off on the given scheduled change.
+        '400':
+          $ref: '#/responses/invalidFormData'
+
+    delete:
+      summary: Removes an existing Signoff from the emergency shut off Scheduled Change.
+      description: Removes an existing Signoff from the emergency shut off Scheduled Change.
+      tags:
+        - Scheduled Changes
+        - Emergency Shutoff
+      operationId: auslib.web.admin.emergency_shutoff.scheduled_changes_signoffs_delete
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/usernameQueryParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the signoff on the given scheduled change.
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
 definitions:
   CSRFModel:
     title: CSRF Token
@@ -3500,18 +3930,6 @@ definitions:
         minLength: 1
         maxLength: 50
         example: releng
-
-  ChannelModel:
-    title: Channel
-    description: "model to define 'channel' field in request body."
-    type: object
-    properties:
-      channel:
-        description: The update channel of the application request an update.
-        type: string
-        minLength: 1
-        maxLength: 75
-        example: beta
 
   ProductNullable:
     title: Product Nullable
@@ -3890,7 +4308,6 @@ definitions:
       - fallbackMapping
       - headerArchitecture
       - instructionSet
-      - jaws
       - locale
       - mapping
       - memory

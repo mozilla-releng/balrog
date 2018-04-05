@@ -2,7 +2,7 @@
 set -e
 set -x
 
-LOCAL_DUMP="/app/scripts/prod_db_dump.sql"
+export LOCAL_DUMP="/app/scripts/prod_db_dump.sql"
 
 DBURI=$1
 MAGIC_WORD=$2
@@ -36,7 +36,7 @@ echo "Download prod dump..."
 python scripts/get-prod-db-dump.py
 
 echo "Overriding current database with production dump..."
-cat $LOCAL_DUMP | mysql -h "$host" -u "$username" --password="$password" "$database"
+xz -d -c $LOCAL_DUMP | mysql -h "$host" -u "$username" --password="$password" "$database"
 
 echo "Upgrading database to the latest version..."
 python scripts/manage-db.py -d $DBURI upgrade

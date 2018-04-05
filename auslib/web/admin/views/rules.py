@@ -23,6 +23,12 @@ def process_rule_form(form_data):
 
     mapping_choices = [(item['name'], item['name']) for item in release_names]
 
+    csv_columns = ['locale', 'distribution']
+    for column in csv_columns:
+        column_data = form_data.get(column)
+        if column_data:
+            form_data[column] = ''.join(column_data.split())
+
     # Replaces wtfForms validations
     rule_form_dict = dict()
     for key in form_data:

@@ -11,8 +11,15 @@ class TestUsersAPI_JSON(ViewTest):
         ret = self._get('/users')
         self.assertEqual(ret.status_code, 200)
         data = json.loads(ret.data)
-        data['users'] = set(data['users'])
-        self.assertEqual(data, dict(users=set(['bill', 'billy', 'bob', 'ashanti', 'mary', 'julie'])))
+        self.assertEqual(data, ({
+            'ashanti': {'roles': []},
+            'bill': {'roles': [
+                {'role': 'qa', 'data_version': 1},
+                {'role': 'releng', 'data_version': 1}]},
+            'billy': {'roles': []},
+            'bob': {'roles': [{'role': 'relman', 'data_version': 1}]},
+            'julie': {'roles': [{'role': 'releng', 'data_version': 1}]},
+            'mary': {'roles': [{'role': 'relman', 'data_version': 1}]}}))
 
 
 class TestCurrentUserAPI_JSON(ViewTest):
@@ -482,7 +489,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {"bill": "releng"}})
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -524,7 +531,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {"bill": "releng"}})
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -545,7 +552,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {"bill": "releng"}})
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -763,6 +770,155 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         self.assertEquals(json.loads(ret.data), expected)
 
+    def testGetPermissionsHistory(self):
+        ret = self._get("/permissions/history")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        expected = {
+            'Permissions': {
+                'count': 0,
+                'revisions': []
+            },
+            'Permissions Scheduled Change': {
+                'count': 7,
+                'revisions': [
+                    {
+                        'change_id': 13,
+                        'change_type': 'update',
+                        'changed_by': 'bill',
+                        'complete': False,
+                        'data_version': 1,
+                        'options': {'products': ['a', 'b']},
+                        'permission': 'release',
+                        'sc_data_version': 1,
+                        'sc_id': 6,
+                        'scheduled_by': 'bill',
+                        'timestamp': 405,
+                        'username': 'bob',
+                        'when': 38000000
+                    },
+                    {
+                        'change_id': 11,
+                        'change_type': 'insert',
+                        'changed_by': 'bill',
+                        'complete': False,
+                        'data_version': None,
+                        'options': {'products': ['fake']},
+                        'permission': 'rule',
+                        'sc_data_version': 1,
+                        'sc_id': 5,
+                        'scheduled_by': 'bill',
+                        'timestamp': 205,
+                        'username': 'joe',
+                        'when': 98000000
+                    },
+                    {
+                        'change_id': 9,
+                        'change_type': 'delete',
+                        'changed_by': 'bill',
+                        'complete': False,
+                        'data_version': None,
+                        'options': None,
+                        'permission': 'scheduled_change',
+                        'sc_data_version': 1,
+                        'sc_id': 4,
+                        'scheduled_by': 'bill',
+                        'timestamp': 201,
+                        'username': 'mary',
+                        'when': 76000000
+                    },
+                    {
+                        'change_id': 7,
+                        'change_type': 'insert',
+                        'changed_by': 'bill',
+                        'complete': True,
+                        'data_version': None,
+                        'options': None,
+                        'permission': 'permission',
+                        'sc_data_version': 2,
+                        'sc_id': 3,
+                        'scheduled_by': 'bill',
+                        'timestamp': 100,
+                        'username': 'bob',
+                        'when': 30000000
+                    },
+                    {
+                        'change_id': 6,
+                        'change_type': 'insert',
+                        'changed_by': 'bill',
+                        'complete': False,
+                        'data_version': None,
+                        'options': None,
+                        'permission': 'permission',
+                        'sc_data_version': 1,
+                        'sc_id': 3,
+                        'scheduled_by': 'bill',
+                        'timestamp': 61,
+                        'username': 'bob',
+                        'when': 30000000
+                    },
+                    {
+                        'change_id': 4,
+                        'change_type': 'update',
+                        'changed_by': 'bill',
+                        'complete': False,
+                        'data_version': 1,
+                        'options': None,
+                        'permission': 'release_locale',
+                        'sc_data_version': 1,
+                        'sc_id': 2,
+                        'scheduled_by': 'bill',
+                        'timestamp': 41,
+                        'username': 'ashanti',
+                        'when': 20000000
+                    },
+                    {
+                        'change_id': 2,
+                        'change_type': 'insert',
+                        'changed_by': 'bill',
+                        'complete': False,
+                        'data_version': None,
+                        'options': {'products': ['foo']},
+                        'permission': 'rule',
+                        'sc_data_version': 1,
+                        'sc_id': 1,
+                        'scheduled_by': 'bill',
+                        'timestamp': 21,
+                        'username': 'janet',
+                        'when': 10000000
+                    }
+                ]
+            }
+        }
+
+        self.assertEquals(json.loads(ret.data), expected)
+
+    def testGetPermissionsRequiredSignoffsHistory(self):
+        ret = self._get("/required_signoffs/permissions/history")
+        self.assertEquals(ret.status_code, 200, ret.data)
+        expected = {
+            "count": 2,
+            "required_signoffs": [
+                {
+                    "data_version": 2, "changed_by": "bill", "product": "doop", "change_id": 3, "role": "releng",
+                    "signoffs_required": 1, "timestamp": 25},
+                {
+                    "data_version": 1, "changed_by": "bill", "product": "doop", "change_id": 2, "role": "releng",
+                    "signoffs_required": 2, "timestamp": 11
+                },
+            ],
+        }
+        data = json.loads(ret.data)
+        revisions = data["Permissions Required Signoffs"]["required_signoffs"]
+        expected_revisions = expected["required_signoffs"]
+        for index in range(len(revisions)):
+            self.assertEquals(revisions[index]['product'], expected_revisions[index]['product'])
+            self.assertEquals(revisions[index]['timestamp'], expected_revisions[index]['timestamp'])
+            self.assertEquals(revisions[index]['change_id'], expected_revisions[index]['change_id'])
+            self.assertEquals(revisions[index]['data_version'], expected_revisions[index]['data_version'])
+            self.assertEquals(revisions[index]['changed_by'], expected_revisions[index]['changed_by'])
+        self.assertEquals(len(data["Permissions Required Signoffs"]["required_signoffs"]), 2)
+        self.assertEquals(json.loads(ret.data)["Permissions Required Signoffs"], expected)
+
     @mock.patch("time.time", mock.MagicMock(return_value=100))
     def testSignoffWithPermission(self):
         ret = self._post("/scheduled_changes/permissions/2/signoffs", data=dict(role="relman"), username="bob")
@@ -803,7 +959,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         }
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {}})
+        self.assertEquals(json.loads(ret.data), {"sc_id": 7, "signoffs": {"bill": "releng"}})
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -847,23 +1003,6 @@ class TestPermissionsScheduledChanges(ViewTest):
 
 
 class TestUserRolesAPI_JSON(ViewTest):
-
-    def testGetRoles(self):
-        ret = self._get("/users/bill/roles")
-        self.assertStatusCode(ret, 200)
-        got = json.loads(ret.data)["roles"]
-        self.assertEquals(got, [{"role": "qa", "data_version": 1},
-                          {"role": "releng", "data_version": 1}])
-
-    def testGetAllRoles(self):
-        ret = self._get("/users/roles")
-        self.assertStatusCode(ret, 200)
-        got = json.loads(ret.data)["roles"]
-        self.assertEqual(got, ['releng', 'qa', 'relman'])
-
-    def testGetRolesMissingUserReturnsEmptyList(self):
-        ret = self.client.get("/users/dean/roles")
-        self.assertStatusCode(ret, 200)
 
     def testGrantRole(self):
         ret = self._put("/users/ashanti/roles/dev")

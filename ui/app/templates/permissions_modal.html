@@ -26,6 +26,7 @@
               <select name="singleSelect" class="form-control" id="id_permission" ng-model="permission.permission">
                   <option value="">---Please select---</option>
                   <option value="admin">Admin</option>
+                  <option value="emergency_shutoff">Emergency Shutoff</option>
                   <option value="rule">Rule</option>
                   <option value="release">Release</option>
                   <option value="release_read_only">Release Read Only</option>
@@ -54,7 +55,7 @@
           </div>
         <h4>Current Permissions</h4>
         <div class="panel panel-default"
-             ng-repeat="permission in user.permissions">
+             ng-repeat="permission in user.permissions track by $index">
           <div class="panel-heading">
               <div style="float: right">
                 <button class="btn btn-primary btn-xs" ng-show="!saving && !userPermissionsSignoffRequirements[$index].signoffRequirements.length" ng-click="updatePermission(permission)">Save changes</button>

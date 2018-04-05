@@ -11,8 +11,8 @@ from urllib2 import urlopen, HTTPError, URLError
 
 
 HOST = 'https://balrog-public-dump-prod.s3.amazonaws.com'
-PATH = '/dump.sql.txt'
-LOCAL_DB_PATH = os.getenv('LOCAL_DUMP', '/app/scripts/prod_db_dump.sql')
+PATH = '/dump.sql.txt.xz'
+LOCAL_DB_PATH = os.getenv('LOCAL_DUMP', '/app/scripts/prod_db_dump.sql.xz')
 TIMEOUT = 10
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s: %(message)s')

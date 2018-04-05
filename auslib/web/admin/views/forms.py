@@ -126,7 +126,7 @@ def version_validator():
             except ValueError:
                 raise ValidationError("ValueError. Couldn't parse version for %s. Invalid '%s' input value"
                                       % (field.name, field.name))
-            except:
+            except Exception:
                 raise ValidationError('Invalid input for %s . No Operator or Match found.' % field.name)
             # MozillaVersion doesn't error on empty strings
             if not hasattr(version, 'version'):

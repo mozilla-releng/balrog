@@ -103,7 +103,7 @@ class ClientTestBase(ClientTestCommon):
         app.config['DEBUG'] = True
         app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
         app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'f', 'response-a', 'response-b', 's', 'responseblob-a',
-                                                       'responseblob-b', 'q', 'fallback')}
+                                                       'responseblob-b', 'q', 'fallback', 'distTest')}
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
             f.write("""
@@ -115,7 +115,7 @@ class ClientTestBase(ClientTestCommon):
 """)
         dbo.setDb('sqlite:///:memory:')
         dbo.create()
-        dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e')})
+        dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e', 'distTest')})
         self.client = app.test_client()
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='b', update_type='minor', product='b',
@@ -229,7 +229,6 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """))
-
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='c', update_type='minor', product='c',
                                      distribution='default', data_version=1)
         dbo.releases.t.insert().execute(name='c', product='c', data_version=1, data=createBlob("""
@@ -249,6 +248,59 @@ class ClientTestBase(ClientTestCommon):
                         "from": "*",
                         "hashValue": "13",
                         "fileUrl": "http://a.com/y"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='distTest', update_type='minor', product='distTest',
+                                     distribution='mozilla1,mozilla2,mozilla3', data_version=1)
+        dbo.releases.t.insert().execute(name='distTest', product='distTest', data_version=1, data=createBlob("""
+{
+    "name": "distTest",
+    "schema_version": 1,
+    "appv": "10.0",
+    "extv": "10.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "11",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "12",
+                        "from": "*",
+                        "hashValue": "13",
+                        "fileUrl": "http://a.com/distTest"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+
+        dbo.rules.t.insert().execute(priority=80, backgroundRate=100, mapping='c2', update_type='minor', product='c',
+                                     data_version=1)
+        dbo.releases.t.insert().execute(name='c2', product='c', data_version=1, data=createBlob("""
+{
+    "name": "c2",
+    "schema_version": 1,
+    "appv": "15.0",
+    "extv": "15.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "51",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "52",
+                        "from": "*",
+                        "hashValue": "53",
+                        "fileUrl": "http://a.com/x"
                     }
                 }
             }
@@ -656,7 +708,13 @@ class ClientTest(ClientTestBase):
 
     def testVersion2GetIgnoresRuleWithDistribution(self):
         ret = self.client.get('/update/2/c/10.0/1/p/l/a/a/update.xml')
-        self.assertUpdatesAreEmpty(ret)
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="15.0" extensionVersion="15.0" buildID="51">
+        <patch type="complete" URL="http://a.com/x" hashFunction="sha512" hashValue="53" size="52"/>
+    </update>
+</updates>
+""")
 
     def testVersion3Get(self):
         ret = self.client.get('/update/3/a/1.0/1/a/a/a/a/a/a/update.xml')
@@ -668,6 +726,64 @@ class ClientTest(ClientTestBase):
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+""")
+
+    def testVersion3GetWithDistribution(self):
+        ret = self.client.get('/update/3/c/1.0/1/p/l/a/a/default/a/update.xml')
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="10.0" extensionVersion="10.0" buildID="11">
+        <patch type="complete" URL="http://a.com/y" hashFunction="sha512" hashValue="13" size="12"/>
+    </update>
+</updates>
+""")
+
+    def testVersion4GetWithDistribution(self):
+        ret = self.client.get('/update/4/c/1.0/1/p/l/a/a/default/a/a/update.xml')
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="10.0" extensionVersion="10.0" buildID="11">
+        <patch type="complete" URL="http://a.com/y" hashFunction="sha512" hashValue="13" size="12"/>
+    </update>
+</updates>
+""")
+
+    def testVersion6GetWithDistribution(self):
+        ret = self.client.get('/update/6/c/1.0/1/p/l/a/a/SSE/default/a/update.xml')
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="10.0" extensionVersion="10.0" buildID="11">
+        <patch type="complete" URL="http://a.com/y" hashFunction="sha512" hashValue="13" size="12"/>
+    </update>
+</updates>
+""")
+
+    def testVersion6GetWithDistributionInList(self):
+        ret = self.client.get('/update/6/distTest/1.0/1/p/l/a/a/SSE/mozilla2/a/update.xml')
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="10.0" extensionVersion="10.0" buildID="11">
+        <patch type="complete" URL="http://a.com/distTest" hashFunction="sha512" hashValue="13" size="12"/>
+    </update>
+</updates>
+""")
+
+    def testVersion6GetWithDistributionNotInList(self):
+        ret = self.client.get('/update/6/distTest/1.0/1/p/l/a/a/SSE/notinlist/a/update.xml')
+        self.assertUpdatesAreEmpty(ret)
+
+    def testVersion6GetNotMatchSubstringDistribution(self):
+        ret = self.client.get('/update/6/distTest/1.0/1/p/l/a/a/SSE/zilla/a/update.xml')
+        self.assertUpdatesAreEmpty(ret)
+
+    def testVersion6GetDoesntMatchWrongDistribution(self):
+        ret = self.client.get('/update/6/c/1.0/1/p/l/a/a/SSE/a/a/update.xml')
+        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="15.0" extensionVersion="15.0" buildID="51">
+        <patch type="complete" URL="http://a.com/x" hashFunction="sha512" hashValue="53" size="52"/>
     </update>
 </updates>
 """)
@@ -734,10 +850,7 @@ class ClientTest(ClientTestBase):
 
     def testShouldNotServeUpdateForOldVersion(self):
         ret = self.client.get('/update/6/q/2.0/1/p/l/a/a/a/a/1/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
-<updates>
-</updates>
-""")
+        self.assertUpdatesAreEmpty(ret)
 
     def testVersion6GetWithoutInstructionSetMatch(self):
         ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE2/a/a/update.xml')
@@ -1285,6 +1398,40 @@ class ClientTestJaws(ClientTestCommon):
     </update>
 </updates>
 """)
+
+
+class ClientTestEmergencyShutoff(ClientTestBase):
+    def setUp(self):
+        super(ClientTestEmergencyShutoff, self).setUp()
+        self.update_xml = """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>
+"""
+
+    def testShutoffUpdates(self):
+        update_query = '/update/3/b/1.0/1/p/l/a/a/a/a/update.xml'
+        ret = self.client.get(update_query)
+        self.assertUpdateEqual(ret, self.update_xml)
+
+        dbo.emergencyShutoffs.t.insert().execute(
+            product='b', channel='a', data_version=1)
+
+        ret = self.client.get(update_query)
+        self.assertUpdatesAreEmpty(ret)
+
+    def testShutoffUpdatesFallbackChannel(self):
+        update_query = '/update/3/b/1.0/1/p/l/a-cck-foo/a/a/a/update.xml'
+        ret = self.client.get(update_query)
+        self.assertUpdateEqual(ret, self.update_xml)
+
+        dbo.emergencyShutoffs.t.insert().execute(
+            product='b', channel='a', data_version=1)
+
+        ret = self.client.get(update_query)
+        self.assertUpdatesAreEmpty(ret)
 
 
 class ClientTestWithErrorHandlers(ClientTestCommon):

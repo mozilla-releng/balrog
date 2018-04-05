@@ -7,6 +7,7 @@ from auslib.web.admin.views.base import AdminView, requirelogin, serialize_signo
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import is_when_present_and_in_past_validator
+from auslib.web.common.history import get_input_dict
 
 
 class ScheduledChangesView(AdminView):
@@ -58,7 +59,7 @@ class ScheduledChangesView(AdminView):
                 # enacted.
                 if row["change_type"] != "delete":
                     affected_rows.append(base_row)
-                signoff_requirements = self.table.getPotentialRequiredSignoffs(affected_rows)
+                signoff_requirements = [obj for v in self.table.getPotentialRequiredSignoffs(affected_rows).values() for obj in v]
                 scheduled_change["required_signoffs"] = serialize_signoff_requirements(signoff_requirements)
 
             ret["scheduled_changes"].append(scheduled_change)
@@ -200,6 +201,23 @@ class ScheduledChangeHistoryView(HistoryView):
         return [self.history_table.sc_id == sc['sc_id'],
                 self.history_table.data_version != null()]
 
+    def _get_filters_all(self, obj):
+        query = get_input_dict()
+        where = [False, False]
+        where = [getattr(self.history_table, f) == query.get(f) for f in query]
+        where.append(self.history_table.data_version != null())
+        request = connexion.request
+        if hasattr(self.history_table, 'product' or ' channel'):
+            if request.args.get('product'):
+                where.append(self.history_table.base_product == request.args.get('product'))
+            if request.args.get('channel'):
+                where.append(self.history_table.base_channel == request.args.get('channel'))
+        if request.args.get('timestamp_from'):
+            where.append(self.history_table.timestamp >= int(request.args.get('timestamp_from')))
+        if request.args.get('timestamp_to'):
+            where.append(self.history_table.timestamp <= int(request.args.get('timestamp_to')))
+        return where
+
     def _get_what(self, change, changed_by, transaction):
         # There's a big 'ol assumption here that the primary Scheduled Changes
         # table and the conditions table always keep their data version in sync.
@@ -234,6 +252,18 @@ class ScheduledChangeHistoryView(HistoryView):
             return self.get_revisions(
                 get_object_callback=lambda: self._get_sc(sc_id),
                 history_filters_callback=self._get_filters,
+                process_revisions_callback=self._process_revisions,
+                revisions_order_by=[self.history_table.timestamp.desc()],
+                obj_not_found_msg='Scheduled change does not exist')
+        except (ValueError, AssertionError) as msg:
+            self.log.warning("Bad input: %s", msg)
+            return problem(400, "Bad Request", "Error in fetching revisions", ext={"exception": msg})
+
+    def get_all(self):
+        try:
+            return self.get_revisions(
+                get_object_callback=lambda: ScheduledChangesView.get,
+                history_filters_callback=self._get_filters_all,
                 process_revisions_callback=self._process_revisions,
                 revisions_order_by=[self.history_table.timestamp.desc()],
                 obj_not_found_msg='Scheduled change does not exist')
