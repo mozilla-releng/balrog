@@ -661,8 +661,8 @@ class ScheduledReleaseDiffView(ScheduledReleaseFieldView):
         result = difflib.unified_diff(
             previous.splitlines(),
             value.splitlines(),
-            fromfile="Data Version {}".format(release["data_version"]),
-            tofile="Data Version {}".format(sc["data_version"]),
+            fromfile="Current Version (Data Version {})".format(release["data_version"]),
+            tofile="Scheduled Update (sc_id {})".format(sc["sc_id"]),
             lineterm=""
         )
 
