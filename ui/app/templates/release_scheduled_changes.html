@@ -102,6 +102,7 @@
       <h5 title="Data Version">
         Data version: <b>{{ sc.sc_data_version }}</b>
       </h5>
+      <button ng-if="sc.change_type==='update'" class="btn btn-default btn-xs" ng-click="openDiffModal(sc)">View Diff</button>
     </div>
 
     <dl class="dl-horizontal" style="float:right">

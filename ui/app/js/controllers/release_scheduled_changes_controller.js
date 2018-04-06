@@ -56,6 +56,23 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
   };
   /* End openDataModal */
 
+  $scope.openDiffModal = function(sc) {
+        var modalInstance = $modal.open({
+          templateUrl: 'release_data_modal.html',
+          controller: 'ScheduledReleaseDiffCtrl',
+          size: 'lg',
+          backdrop: 'static',
+          resolve: {
+            sc: function () {
+              return sc;
+            },
+            diff: function() {
+              return true;
+            }
+          }
+        });
+      };
+
   if ($scope.sc_id) {
     $scope.$watch("currentPage", function(newPage) {
       loadPage(newPage);
