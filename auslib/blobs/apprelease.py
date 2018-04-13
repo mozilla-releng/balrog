@@ -80,7 +80,7 @@ class ReleaseBlobBase(Blob):
     def has_wnp(self, field):
         # check for What's new page for Blobs < v9
         for group in self.get(field, []):
-            if isinstance(group, dict) and '/whatsnew/' in group['fields'].get('openURL', ''):
+            if isinstance(group, dict) and 'openURL' in group['fields']:
                 return True
         else:
             return False
