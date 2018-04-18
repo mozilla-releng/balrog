@@ -23,7 +23,7 @@ class TestCreateBlob(unittest.TestCase):
 "schema_version": 2,
 "name": "blah"}"""
         blob = createBlob(data)
-        self.assertEquals(blob, dict(schema_version=2, name="blah", has_wnp=False))
+        self.assertEquals(blob, dict(schema_version=2, name="blah"))
 
     def testLoadDict(self):
         data = dict(

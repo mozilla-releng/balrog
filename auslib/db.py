@@ -1920,17 +1920,17 @@ class Releases(AUSTable):
             if get_data_version(cached_blob["data_version"]) > get_data_version(data_version):
                 cache.put("blob_version", name, data_version)
             blob = cached_blob["blob"]
-
+            
         return blob
 
-    def getReleaseBlobs(self, names, transaction=None):
-        dataVersions = self.select(where=[self.name.in_(names)], columns=[self.name, self.data_version], transaction=transaction)
-        blobs = {version['name']: version for version in dataVersions}
-
-        q = self.select(where=[self.name.in_(names)], columns=[self.data], transaction=transaction)
-        for blob in q:
-            blobs[blob['data']['name']].update({'data': blob['data']})
-        return blobs
+#    def getReleaseBlobs(self, names, transaction=None):
+#        dataVersions = self.select(where=[self.name.in_(names)], columns=[self.name, self.data_version], transaction=transaction)
+#        blobs = {version['name']: version for version in dataVersions}
+#
+#        q = self.select(where=[self.name.in_(names)], columns=[self.data], transaction=transaction)
+#        for blob in q:
+#            blobs[blob['data']['name']].update({'data': blob['data']})
+#        return blobs
 
     def insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
         if "name" not in columns or "product" not in columns or "data" not in columns:

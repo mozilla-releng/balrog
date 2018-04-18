@@ -77,9 +77,10 @@ class ReleaseBlobBase(Blob):
                 raise BadDataError("No buildID for platform '%s'" % (platform))
             return self['platforms'][platform]['buildID']
 
-    def has_wnp(self, field):
+    @property
+    def has_wnp(self):
         # check for What's new page for Blobs < v9
-        for group in self.get(field, []):
+        for group in self.get('openURL', []):
             if isinstance(group, dict) and 'openURL' in group['fields']:
                 return True
         else:
@@ -320,7 +321,6 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 1
-        self['has_wnp'] = self.has_wnp(field='openURL')
 
     def getAppv(self, platform, locale):
         return self.getLocaleOrTopLevelParam(platform, locale, 'appv')
@@ -537,7 +537,6 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 2
-        self['has_wnp'] = self.has_wnp(field="openURL")
 
     # TODO: kill me when aus3.m.o is dead, and snippet tests have been
     # converted to unit tests.
@@ -647,7 +646,6 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 3
-        self['has_wnp'] = self.has_wnp(field='openURL')
 
     def _getFtpFilename(self, patchKey, from_):
         return self.get("ftpFilenames", {}).get(patchKey, {}).get(from_, "")
@@ -745,7 +743,6 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 4
-        self['has_wnp'] = self.has_wnp(field='openURL')
 
     @classmethod
     def fromV3(cls, v3Blob):
@@ -830,7 +827,6 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 5
-        self['has_wnp'] = self.has_wnp(field='openURL')
 
     def getReferencedReleases(self):
         """
@@ -875,7 +871,6 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 6
-        self['has_wnp'] = self.has_wnp(field='openURL')
 
     def getReferencedReleases(self):
         """
@@ -932,7 +927,6 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 8
-        self['has_wnp'] = self.has_wnp(field='openURL')
 
     def getReferencedReleases(self):
         """
@@ -972,7 +966,14 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         Blob.__init__(self, **kwargs)
         if 'schema_version' not in self.keys():
             self['schema_version'] = 9
-        self['has_wnp'] = self.has_wnp(field='updateLine')
+
+    @property
+    def has_wnp(self):
+        for group in self.get('updateLine', []):
+            if isinstance(group, dict) and 'openURL' in group['fields']:
+                return True
+        else:
+            return False
 
     def _getUpdateLineXML(self, updateQuery, update_type):
         attrs = {

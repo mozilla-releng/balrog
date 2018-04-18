@@ -18,7 +18,6 @@ class TestReleasesAPI_JSON(ViewTest):
 {
     "name": "b",
     "hashFunction": "sha512",
-    "has_wnp": false,
     "schema_version": 1
 }
 """))
@@ -313,7 +312,6 @@ class TestReleasesAPI_JSON(ViewTest):
             "detailsUrl": "blah",
             "fakePartials": true,
             "hashFunction": "sha512",
-            "has_wnp": false,
             "platforms": {
                 "p": {
                     "locales": {
@@ -351,7 +349,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEqual(history_rows[0]["data"], None)
         self.assertEqual(history_rows[0]["data_version"], None)
         self.assertEqual(history_rows[0]["read_only"], False)
-        self.assertEqual(history_rows[1]["data"], {"name": "ee", "schema_version": 1, "hashFunction": "sha512", "has_wnp": False})
+        self.assertEqual(history_rows[1]["data"], {"name": "ee", "schema_version": 1, "hashFunction": "sha512"})
         self.assertEqual(history_rows[1]["data_version"], 1)
         self.assertEqual(history_rows[1]["read_only"], False)
         self.assertEqual(history_rows[2]["data"], blob)
@@ -503,7 +501,6 @@ class TestReleasesAPI_JSON(ViewTest):
     "name": "ab",
     "schema_version": 1,
     "hashFunction": "sha512",
-    "has_wnp": false,
     "platforms": {
         "p": {
             "locales": {
@@ -524,7 +521,7 @@ class TestReleasesAPI_JSON(ViewTest):
         history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "ab").execute().fetchall()
         self.assertEqual(len(history_rows), 3)
         self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512", "has_wnp": False})
+        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
         self.assertEqual(history_rows[2]["data"], expected)
 
     def testLocalePutOutdatedDataError(self):
@@ -539,7 +536,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
 
         expected = {
-            "name": "ab", "schema_version": 1, "hashFunction": "sha512", "has_wnp": False,
+            "name": "ab", "schema_version": 1, "hashFunction": "sha512",
             "platforms": {
                 "p": {
                     "locales": {
@@ -556,7 +553,7 @@ class TestReleasesAPI_JSON(ViewTest):
         history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "ab").execute().fetchall()
         self.assertEqual(len(history_rows), 3)
         self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512", "has_wnp": False})
+        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
         self.assertEqual(history_rows[2]["data"], expected)
 
         data = json.dumps({
@@ -574,7 +571,7 @@ class TestReleasesAPI_JSON(ViewTest):
         history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "ab").execute().fetchall()
         self.assertEqual(len(history_rows), 3)
         self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512", "has_wnp": False})
+        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
         self.assertEqual(history_rows[2]["data"], expected)
 
     def testLocalePutSpecificPermission(self):
@@ -594,7 +591,6 @@ class TestReleasesAPI_JSON(ViewTest):
     "name": "ab",
     "schema_version": 1,
     "hashFunction": "sha512",
-    "has_wnp": false,
     "platforms": {
         "p": {
             "locales": {
@@ -615,7 +611,7 @@ class TestReleasesAPI_JSON(ViewTest):
         history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "ab").execute().fetchall()
         self.assertEqual(len(history_rows), 3)
         self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512", "has_wnp": False})
+        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
         self.assertEqual(history_rows[2]["data"], expected)
 
     def testLocalePutWithBadHashFunction(self):
@@ -657,7 +653,6 @@ class TestReleasesAPI_JSON(ViewTest):
     "name": "e",
     "schema_version": 1,
     "hashFunction": "sha512",
-    "has_wnp": false,
     "platforms": {
         "p": {
             "locales": {
@@ -678,7 +673,7 @@ class TestReleasesAPI_JSON(ViewTest):
         history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "e").execute().fetchall()
         self.assertEqual(len(history_rows), 3)
         self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "e", "schema_version": 1, "hashFunction": "sha512", "has_wnp": False})
+        self.assertEqual(history_rows[1]["data"], {"name": "e", "schema_version": 1, "hashFunction": "sha512"})
         self.assertEqual(history_rows[2]["data"], expected)
 
     def testLocalePutAppend(self):
@@ -769,7 +764,6 @@ class TestReleasesAPI_JSON(ViewTest):
     "name": "e",
     "hashFunction": "sha512",
     "schema_version": 1,
-    "has_wnp": false,
     "platforms": {
         "p": {
             "locales": {
@@ -793,7 +787,7 @@ class TestReleasesAPI_JSON(ViewTest):
         history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "e").execute().fetchall()
         self.assertEqual(len(history_rows), 3)
         self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "e", "schema_version": 1, "hashFunction": "sha512", "has_wnp": False})
+        self.assertEqual(history_rows[1]["data"], {"name": "e", "schema_version": 1, "hashFunction": "sha512"})
         self.assertEqual(history_rows[2]["data"], expected)
 
     def testLocalePutAppendWithAlias(self):
@@ -890,7 +884,6 @@ class TestReleasesAPI_JSON(ViewTest):
     "name": "ab",
     "schema_version": 1,
     "hashFunction": "sha512",
-    "has_wnp": false,
     "platforms": {
         "p": {
             "locales": {
@@ -910,7 +903,7 @@ class TestReleasesAPI_JSON(ViewTest):
 
         history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "ab").execute().fetchall()
         self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512", "has_wnp": False})
+        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
         self.assertEqual(history_rows[2]["data"], expected)
 
         ret = select([dbo.releases.data]).where(dbo.releases.name == 'b').execute().fetchone()[0]
@@ -919,7 +912,6 @@ class TestReleasesAPI_JSON(ViewTest):
     "name": "b",
     "schema_version": 1,
     "hashFunction": "sha512",
-    "has_wnp": false,
     "platforms": {
         "p": {
             "locales": {
@@ -940,7 +932,7 @@ class TestReleasesAPI_JSON(ViewTest):
         history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "b").execute().fetchall()
         self.assertEqual(len(history_rows), 3)
         self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "b", "schema_version": 1, "hashFunction": "sha512", "has_wnp": False})
+        self.assertEqual(history_rows[1]["data"], {"name": "b", "schema_version": 1, "hashFunction": "sha512"})
         self.assertEqual(history_rows[2]["data"], expected)
 
     def testLocalePutBadJSON(self):
@@ -1345,12 +1337,12 @@ class TestReleasesScheduledChanges(ViewTest):
             "scheduled_changes": [
                 {
                     "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
-                    "name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1, "has_wnp": False}, "read_only": False,
+                    "name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
                     "data_version": None, "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
-                    "name": "a", "product": "a", "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "has_wnp": False, "extv": "2.0"},
+                    "name": "a", "product": "a", "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
                     "read_only": False, "data_version": 1, "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
                     "original_row": dbo.releases.select({'name': 'a'})[0],
                 },
@@ -1371,18 +1363,18 @@ class TestReleasesScheduledChanges(ViewTest):
             "scheduled_changes": [
                 {
                     "sc_id": 1, "when": 4000000000, "scheduled_by": "bill", "change_type": "insert", "complete": False, "sc_data_version": 1,
-                    "name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1, "has_wnp": False}, "read_only": False,
+                    "name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
                     "data_version": None, "signoffs": {}, "required_signoffs": {},
                 },
                 {
                     "sc_id": 2, "when": 6000000000, "scheduled_by": "bill", "change_type": "update", "complete": False, "sc_data_version": 1,
-                    "name": "a", "product": "a", "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "has_wnp": False, "extv": "2.0"},
+                    "name": "a", "product": "a", "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
                     "read_only": False, "data_version": 1, "signoffs": {"bill": "releng"}, "required_signoffs": {"releng": 1},
                     "original_row": dbo.releases.select({'name': 'a'})[0],
                 },
                 {
                     "sc_id": 3, "when": 10000000, "scheduled_by": "bill", "change_type": "update", "complete": True, "sc_data_version": 2,
-                    "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1, "has_wnp": False}, "read_only": False,
+                    "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
                     "data_version": 1, "signoffs": {}, "required_signoffs": {},
                     # No original_row for complete changes.
                 },
@@ -1410,7 +1402,7 @@ class TestReleasesScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 5, "scheduled_by": "bill", "change_type": "update", "complete": False, "data_version": 1, "base_product": "d", "base_read_only": False,
-            "base_name": "d", "base_data": {"name": "d", "hashFunction": "sha256", "schema_version": 1, "has_wnp": False}, "base_data_version": 1
+            "base_name": "d", "base_data": {"name": "d", "hashFunction": "sha256", "schema_version": 1}, "base_data_version": 1
         }
         self.assertEquals(db_data, expected)
         cond = dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 5).execute().fetchall()
@@ -1453,7 +1445,7 @@ class TestReleasesScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 5, "scheduled_by": "bill", "change_type": "insert", "complete": False, "data_version": 1, "base_product": "q", "base_read_only": False,
-            "base_name": "q", "base_data": {"name": "q", "hashFunction": "sha512", "schema_version": 1, "has_wnp": False}, "base_data_version": None,
+            "base_name": "q", "base_data": {"name": "q", "hashFunction": "sha512", "schema_version": 1}, "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
         cond = dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 5).execute().fetchall()
@@ -1473,7 +1465,7 @@ class TestReleasesScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeExistingRelease(self):
         data = {
-            "data": '{"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1, "has_wnp": "false"}', "name": "a",
+            "data": '{"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}', "name": "a",
             "data_version": 1, "sc_data_version": 1, "when": 78900000000, "change_type": "update",
         }
         ret = self._post("/scheduled_changes/releases/2", data=data)
@@ -1485,7 +1477,7 @@ class TestReleasesScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 2, "complete": False, "change_type": "update", "data_version": 2, "scheduled_by": "bill", "base_name": "a", "base_product": "a",
-            "base_read_only": False, "base_data": {"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1, "has_wnp": False},
+            "base_read_only": False, "base_data": {"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1},
             "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
@@ -1525,7 +1517,7 @@ class TestReleasesScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduleChangeExistingReleaseDiffUserResetSignOffs(self):
         data = {
-            "data": '{"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1, "has_wnp": false}', "name": "a",
+            "data": '{"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}', "name": "a",
             "data_version": 1, "sc_data_version": 1, "when": 78900000000, "change_type": "update"
         }
         rows = dbo.releases.scheduled_changes.signoffs.t.select(). \
@@ -1543,7 +1535,7 @@ class TestReleasesScheduledChanges(ViewTest):
             "sc_id": 2, "complete": False, "change_type": "update", "data_version": 2, "scheduled_by": "julie",
             "base_name": "a", "base_product": "a",
             "base_read_only": False,
-            "base_data": {"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1, "has_wnp": False},
+            "base_data": {"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1},
             "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
@@ -1581,7 +1573,7 @@ class TestReleasesScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeNewRelease(self):
         data = {
-            "data": '{"name": "m", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1, "has_wnp": "false"}', "name": "m", "product": "m",
+            "data": '{"name": "m", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1}', "name": "m", "product": "m",
             "sc_data_version": 1, "change_type": "insert",
         }
         ret = self._post("/scheduled_changes/releases/1", data=data)
@@ -1593,7 +1585,7 @@ class TestReleasesScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 1, "complete": False, "change_type": "insert", "data_version": 2, "scheduled_by": "bill", "base_name": "m", "base_product": "m",
-            "base_read_only": False, "base_data": {"name": "m", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1, "has_wnp": False},
+            "base_read_only": False, "base_data": {"name": "m", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1},
             "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
@@ -1605,7 +1597,7 @@ class TestReleasesScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeNewReleaseChangeName(self):
         data = {
-            "data": '{"name": "mm", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1, "has_wnp": "false"}', "name": "mm", "product": "mm",
+            "data": '{"name": "mm", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1}', "name": "mm", "product": "mm",
             "sc_data_version": 1, "change_type": "insert",
 
         }
@@ -1618,7 +1610,7 @@ class TestReleasesScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 1, "complete": False, "change_type": "insert", "data_version": 2, "scheduled_by": "bill", "base_name": "mm", "base_product": "mm",
-            "base_read_only": False, "base_data": {"name": "mm", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1, "has_wnp": False},
+            "base_read_only": False, "base_data": {"name": "mm", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1},
             "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
@@ -1646,7 +1638,7 @@ class TestReleasesScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 2, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "update", "base_name": "a", "base_product": "a",
-            "base_read_only": False, "base_data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "has_wnp": False, "extv": "2.0"},
+            "base_read_only": False, "base_data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
             "base_data_version": 1,
         }
         self.assertEquals(db_data, expected)
@@ -1654,7 +1646,7 @@ class TestReleasesScheduledChanges(ViewTest):
         base_row = dict(dbo.releases.t.select().where(dbo.releases.name == "a").execute().fetchall()[0])
         base_expected = {
             "name": "a", "product": "a", "read_only": False,
-            "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "has_wnp": False, "extv": "2.0"}, "data_version": 2,
+            "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"}, "data_version": 2,
         }
         self.assertEquals(base_row, base_expected)
 
@@ -1668,7 +1660,7 @@ class TestReleasesScheduledChanges(ViewTest):
         db_data = dict(r[0])
         expected = {
             "sc_id": 1, "complete": True, "data_version": 2, "scheduled_by": "bill", "change_type": "insert", "base_name": "m", "base_product": "m",
-            "base_read_only": False, "base_data": {"name": "m", "hashFunction": "sha512", "schema_version": 1, "has_wnp": False},
+            "base_read_only": False, "base_data": {"name": "m", "hashFunction": "sha512", "schema_version": 1},
             "base_data_version": None,
         }
         self.assertEquals(db_data, expected)
@@ -1676,7 +1668,7 @@ class TestReleasesScheduledChanges(ViewTest):
         base_row = dict(dbo.releases.t.select().where(dbo.releases.name == "m").execute().fetchall()[0])
         base_expected = {
             "name": "m", "product": "m", "read_only": False,
-            "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1, "has_wnp": False}, "data_version": 1,
+            "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "data_version": 1,
         }
         self.assertEquals(base_row, base_expected)
 
@@ -1706,12 +1698,12 @@ class TestReleasesScheduledChanges(ViewTest):
             "revisions": [
                 {
                     "change_id": 7, "changed_by": "bill", "timestamp": 25, "sc_id": 3, "scheduled_by": "bill", "change_type": "update", "data_version": 1,
-                    "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1, "has_wnp": False}, "read_only": False,
+                    "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
                     "complete": True, "when": 10000000, "sc_data_version": 2,
                 },
                 {
                     "change_id": 6, "changed_by": "bill", "timestamp": 7, "sc_id": 3, "scheduled_by": "bill", "change_type": "update", "data_version": 1,
-                    "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1, "has_wnp": False}, "read_only": False,
+                    "name": "b", "product": "b", "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1}, "read_only": False,
                     "complete": False, "when": 10000000, "sc_data_version": 1,
                 },
             ],
