@@ -102,9 +102,9 @@ snowballstemmer==1.2.1 \
 contextlib2==0.5.5 \
     --hash=sha256:f5260a6e679d2ff42ec91ec5252f4eeffdcf21053db9113bd0a8e4d953769c00 \
     --hash=sha256:509f9419ee91cdd00ba34443217d5ca51f5a364a404e1dce9e8979cea969ca48
-sphinx==1.7.2 \
-    --hash=sha256:7a606d77618a753adb79e13605166e3cf6a0e5678526e044236fc1ac43650910 \
-    --hash=sha256:5a1c9a0fec678c24b9a2f5afba240c04668edb7f45c67ce2ed008996b3f21ae2
+sphinx==1.7.3 \
+    --hash=sha256:3aded1a355f662547b8a948131f3faecbc3dea8951847fe0ee4c59689f8220b2 \
+    --hash=sha256:9495a1f78c13d0a725ab8104e923e9663519ecc04552aa4a8f684c2da355443d
 sqlalchemy==0.7.1 \
     --hash=sha256:5ef95d19c31a8cd3905c697be0a7e94e70ab1926ecd4159c3e6c1cf01fc3c492 # pyup:ignore
 sqlalchemy-migrate==0.7.2 \
