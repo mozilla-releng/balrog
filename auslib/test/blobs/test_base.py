@@ -29,7 +29,6 @@ class TestCreateBlob(unittest.TestCase):
         data = dict(
             schema_version=1,
             name="foo",
-            has_wnp=False
         )
         blob = createBlob(data)
         self.assertEquals(blob, data)

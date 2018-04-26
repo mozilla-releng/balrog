@@ -228,13 +228,14 @@
           Mapping:
             <span ng-show="rule.mapping">
               <b ng-style="!rule_id && show_sc && rule.scheduled_change !== null && rule.mapping !== rule.scheduled_change.mapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
-                {{ rule.mapping }}
+                {{ rule.mapping.release }}
               </b>
-              <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.mapping)">
+              <span ng-show="rule.mapping.has_wnp" class="badge progress-bar-info">WNP</span>
+              <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.mapping.release)">
                   <i class="glyphicon glyphicon-eye-open"></i>
                   View
               </a>
-              <a class="btn btn-default btn-xs" href="/releases/#{{ rule.mapping }}">
+              <a class="btn btn-default btn-xs" href="/releases/#{{ rule.mapping.release }}">
                   <i class="glyphicon glyphicon-pencil"></i>
                   Edit
               </a>
@@ -257,13 +258,14 @@
           Fallback Mapping:
             <span ng-show="rule.fallbackMapping">
               <b ng-style="!rule_id && show_sc && rule.scheduled_change !== null && rule.fallbackMapping !== rule.scheduled_change.fallbackMapping ? {'text-decoration': 'line-through', 'color': 'red'}: ''">
-                {{ rule.fallbackMapping }}
+                {{ rule.fallbackMapping.release }}
               </b>
-              <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.fallbackMapping)">
+              <span ng-show="rule.fallbackMapping.has_wnp" class="badge progress-bar-info">WNP</span>
+              <a class="btn btn-default btn-xs" href="" ng-click="openReleaseDataModal(rule.fallbackMapping.release)">
                   <i class="glyphicon glyphicon-eye-open"></i>
                   View
               </a>
-              <a class="btn btn-default btn-xs" href="/releases/#{{ rule.fallbackMapping }}">
+              <a class="btn btn-default btn-xs" href="/releases/#{{ rule.fallbackMapping.release }}">
                   <i class="glyphicon glyphicon-pencil"></i>
                   Edit
               </a>
@@ -287,7 +289,6 @@
             <strong>Note!</strong> Fallback Mapping is unused when Background Rate is 100
           </span>
         </span>
-        <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="has_wnp" fieldtitle="WNP?"></rulefield>
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="data_version" fieldtitle="Data Version"></rulefield>
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="rule_id" fieldtitle="Rule ID"></rulefield>
         <rulefield showdiff="!rule_id" showsc="show_sc" rule="rule" fieldname="comment" fieldtitle="Comment"></rulefield>
