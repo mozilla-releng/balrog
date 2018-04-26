@@ -92,7 +92,7 @@ class ReleaseBlobBase(Blob):
         # even attempt to look it up.
         if patch["from"] != "*":
             try:
-                return dbo.releases.getReleaseBlob(name=patch["from"])
+                return next(iter(dbo.releases.getReleaseBlobs(names=[patch["from"]]).values()))
             except KeyError:
                 # Release doesn't exist
                 return None

@@ -6,6 +6,7 @@ from flask import jsonify, Response
 from auslib.web.common.csrf import get_csrf_headers
 from auslib.web.common.history import HistoryHelper
 from sqlalchemy.sql.expression import null
+from itertools import chain
 
 
 log = logging.getLogger(__name__)
@@ -20,9 +21,15 @@ def get_rules():
             where[field] = request.args[field]
 
     rules = dbo.rules.getOrderedRules(where=where)
+
+    names = set(chain.from_iterable((rule['mapping'], rule['fallbackMapping']) for rule in rules))
+    blobs = dbo.releases.getReleaseBlobs(names=names)
+
     for rule in rules:
-        blob = dbo.releases.getReleaseBlob(name=rule['mapping'])
-        rule.update({'has_wnp': blob.has_wnp if hasattr(blob, 'has_wnp') else False})
+        if rule['mapping'] and rule['mapping'] in blobs:
+            b = blobs[rule['mapping']]
+            if hasattr(b, 'has_wnp'):
+                rule.update({'has_wnp': b.has_wnp})
 
     return jsonify(count=len(rules), rules=rules)
 

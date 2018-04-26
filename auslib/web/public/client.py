@@ -171,7 +171,7 @@ def get_update_blob(**url):
                 product_query = query.copy()
                 product = dbo.releases.getReleases(name=blob_name, limit=1)[0]['product']
                 product_query["product"] = product
-                response_release = dbo.releases.getReleaseBlob(name=blob_name)
+                response_release = next(iter(dbo.releases.getReleaseBlobs(names=[blob_name]).values()))
                 if not response_release:
                     LOG.warning("No release found with name: %s", blob_name)
                     continue
