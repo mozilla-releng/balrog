@@ -6,7 +6,7 @@ class TestPublicRulesAPI(CommonTestBase):
         ret = self.public_client.get("/api/v1/rules")
         got = ret.get_json()
         self.assertEquals(got["count"], 4)
-        rules = [(rule["mapping"], rule["product"]) for rule in got["rules"]]
+        rules = [(rule["mapping"]["release"], rule["product"]) for rule in got["rules"]]
         self.assertIn(("Fennec.55.0a1", "Fennec"), rules)
         self.assertIn(("Firefox.55.0a1", "Firefox"), rules)
         self.assertIn(("q", "q"), rules)

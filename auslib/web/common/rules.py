@@ -26,10 +26,19 @@ def get_rules():
     blobs = dbo.releases.getReleaseBlobs(names=names)
 
     for rule in rules:
-        if rule['mapping'] and rule['mapping'] in blobs:
-            b = blobs[rule['mapping']]
-            if hasattr(b, 'has_wnp'):
-                rule.update({'has_wnp': b.has_wnp})
+        if rule['mapping']:
+            b = blobs.get(rule['mapping'], {})
+            rule['mapping'] = {
+                'release': rule['mapping'],
+                'has_wnp': b.has_wnp if hasattr(b, 'has_wnp') else False
+            }
+
+        if rule['fallbackMapping']:
+            b = blobs.get(rule['fallbackMapping'], {})
+            rule['fallbackMapping'] = {
+                'release': rule['fallbackMapping'],
+                'has_wnp': b.has_wnp if hasattr(b, 'has_wnp') else False
+            }
 
     return jsonify(count=len(rules), rules=rules)
 

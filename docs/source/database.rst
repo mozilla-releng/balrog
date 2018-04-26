@@ -125,12 +125,12 @@ Following tables show columns according to different Categories:
   |                        |                    |                                                  | one against                     |                            |
   +------------------------+--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   | Response               | Fallback Mapping   | The Release to construct an update out of when   | N/A                             | Any valid release          |
-  |                        |                    | the user is on the wrong side of a background    |                                 | name, or NULL              |
+  |                        |                    | the user is on the wrong side of a background    |                                 | name, dict or NULL              |
   |                        |                    | rate dice roll. This is a foreign key to the     |                                 |                            |
   |                        |                    | "name" column of the Releases table.             |                                 |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | Mapping            | The Release to construct an update out of if the | N/A                             | Any valid release          |
-  |                        |                    | user is on the right side of a background rate   |                                 | name, or NULL              |
+  |                        |                    | user is on the right side of a background rate   |                                 | name, dict or NULL              |
   |                        |                    | dice roll, or if the background rate is 100. This|                                 |                            |
   |                        |                    | is a foreign key to the "name" column of the     |                                 |                            |
   |                        |                    | Releases table.                                  |                                 |                            |
