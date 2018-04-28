@@ -2434,7 +2434,7 @@ class EmergencyShutoffs(AUSTable):
 
         ret = super(EmergencyShutoffs, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
-            return ret.last_updated_params()
+            return ret.last_inserted_params()
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = {'rs': []}
