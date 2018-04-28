@@ -562,7 +562,9 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.sql.expression.Update
         """
-        query = self.t.update(values=what)
+        # migration-ref: http://docs.sqlalchemy.org/en/rel_0_9/changelog/changelog_08.html#change-f0476d1e752c1114226c2f7b1733e959
+        table_what = {k: what[k] for k in what.keys() if k in self.table.c}
+        query = self.t.update(values=table_what)
         if where:
             for cond in where:
                 query = query.where(cond)
@@ -728,8 +730,11 @@ class History(AUSTable):
         """Deletes cause a single row to be created, which only contains the
            primary key data. This represents that the row no longer exists."""
         row = {}
-        for k in rowData:
-            row[str(k)] = rowData[k]
+
+        # migration-ref: http://docs.sqlalchemy.org/en/rel_0_9/changelog/changelog_08.html#change-f0476d1e752c1114226c2f7b1733e959
+        table_row_data = {k: rowData[k] for k in rowData.keys() if k in self.table.c}
+        for k in table_row_data:
+            row[str(k)] = table_row_data[k]
         # Tack on history table information to the row
         row['changed_by'] = changed_by
         row['timestamp'] = getMillisecondTimestamp()
@@ -739,8 +744,11 @@ class History(AUSTable):
         """Updates cause a single row to be created, which contains the full,
            new data of the row at the time of the update."""
         row = {}
-        for k in rowData:
-            row[str(k)] = rowData[k]
+
+        # migration-ref: http://docs.sqlalchemy.org/en/rel_0_9/changelog/changelog_08.html#change-f0476d1e752c1114226c2f7b1733e959
+        table_row_data = {k: rowData[k] for k in rowData.keys() if k in self.table.c}
+        for k in table_row_data:
+            row[str(k)] = table_row_data[k]
         row['changed_by'] = changed_by
         row['timestamp'] = getMillisecondTimestamp()
         return self._insertStatement(**row)

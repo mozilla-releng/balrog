@@ -105,10 +105,11 @@ contextlib2==0.5.5 \
 sphinx==1.7.2 \
     --hash=sha256:7a606d77618a753adb79e13605166e3cf6a0e5678526e044236fc1ac43650910 \
     --hash=sha256:5a1c9a0fec678c24b9a2f5afba240c04668edb7f45c67ce2ed008996b3f21ae2
-sqlalchemy==0.7.1 \
-    --hash=sha256:5ef95d19c31a8cd3905c697be0a7e94e70ab1926ecd4159c3e6c1cf01fc3c492 # pyup:ignore
-sqlalchemy-migrate==0.7.2 \
-    --hash=sha256:7f55c768ee26f143fedb11b365a4c57c3bbdb5211e049c7f04b8ae8107c28333 # pyup:ignore
+SQLAlchemy==0.8.0b2 \
+    --hash=sha256:3f4db3890742e6b8648b7e4ed27dd7258f1fd91043ca8b597fef802399634d30
+sqlalchemy-migrate==0.11.0 \
+    --hash=sha256:e68af5e3e0561f629d4eb23d9d0ea77d2649747f2eff37fd29aece74615ca251 \
+    --hash=sha256:14e020626ba256a272f46bf15508d6cce4f715dec6430601a37f0e97bb256785
 tempita==0.5.2 \
     --hash=sha256:cacecf0baa674d356641f1d406b8bff1d756d739c46b869a54de515d08e6fc9c
 uwsgi==2.0.17 \

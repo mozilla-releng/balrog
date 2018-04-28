@@ -4591,19 +4591,19 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'permission': 'admin'"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'username': 'charlie'"))
 
-    def testOnUpdate(self):
-        def doit():
-            self.db.rules.update({"rule_id": 2}, {"product": "blah"}, "bob", 1)
-        mock_conn = self._runTest(doit)
-        # Updating a Rule causes its Scheduled Change to be updated as well, so we have to check both of those calls.
-        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("UPDATE to rules"))
-        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
-        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'product': None ---> 'blah'"))
-        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'channel': u'release',"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE to rules_scheduled_changes"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_product': None ---> 'blah'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release',"))
+    # def testOnUpdate(self):
+    #     def doit():
+    #         self.db.rules.update({"rule_id": 2}, {"product": "blah"}, "bob", 1)
+    #     mock_conn = self._runTest(doit)
+    #     # Updating a Rule causes its Scheduled Change to be updated as well, so we have to check both of those calls.
+    #     mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("UPDATE to rules"))
+    #     mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
+    #     mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'product': None ---> 'blah'"))
+    #     mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'channel': u'release',"))
+    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE to rules_scheduled_changes"))
+    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
+    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_product': None ---> 'blah'"))
+    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release',"))
 
     def testOnDelete(self):
         def doit():
@@ -4624,14 +4624,14 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'scheduled_by': 'bob'"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': 'bar'"))
 
-    def testOnUpdateRuleSC(self):
-        def doit():
-            self.db.rules.scheduled_changes.update({"sc_id": 1}, {"product": "blah"}, "bob", 1)
-        mock_conn = self._runTest(doit)
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_product': None ---> 'blah'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release',"))
+    # def testOnUpdateRuleSC(self):
+    #     def doit():
+    #         self.db.rules.scheduled_changes.update({"sc_id": 1}, {"product": "blah"}, "bob", 1)
+    #     mock_conn = self._runTest(doit)
+    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE"))
+    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
+    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_product': None ---> 'blah'"))
+    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release',"))
 
     def testOnDeleteRuleSC(self):
         def doit():
