@@ -1897,8 +1897,8 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                                       update_type="z", product="foo", channel="foo", data_version=1)
 
         self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
-        self.db.permissions.user_roles.t.insert(username="bill", role="bar", data_version=1)
-        self.db.permissions.user_roles.t.insert(username="jane", role="bar", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="bill", role="bar", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="jane", role="bar", data_version=1)
         self.db.productRequiredSignoffs.t.insert().execute(product="foo", channel="foo", role="bar", signoffs_required=2, data_version=1)
 
     def testAllTablesCreated(self):
@@ -2806,8 +2806,8 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
         self.permissions.t.insert().execute(permission="release", username="bob", options=dict(products=["c"]), data_version=1)
-        self.permissions.user_roles.t.insert(username="bill", role="bar", data_version=1)
-        self.permissions.user_roles.t.insert(username="me", role="bar", data_version=1)
+        self.permissions.user_roles.t.insert().execute(username="bill", role="bar", data_version=1)
+        self.permissions.user_roles.t.insert().execute(username="me", role="bar", data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="b", channel="h", role="bar", signoffs_required=2, data_version=1)
 
     def tearDown(self):
