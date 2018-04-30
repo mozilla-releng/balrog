@@ -253,8 +253,9 @@ class TestMultiplePrimaryTableMixin(object):
         class TestTable(AUSTable):
 
             def __init__(self, db, metadata):
-                self.table = Table('test', metadata, Column('id1', Integer, primary_key=True),
-                                   Column('id2', Integer, primary_key=True),
+                self.table = Table('test', metadata,
+                                   Column('id1', Integer, primary_key=True, autoincrement=False),
+                                   Column('id2', Integer, primary_key=True, autoincrement=False),
                                    Column('foo', Integer))
                 AUSTable.__init__(self, db, 'sqlite')
 
