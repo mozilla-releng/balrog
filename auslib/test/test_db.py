@@ -980,7 +980,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         class TestTable2(AUSTable):
 
             def __init__(self, db, metadata):
-                self.table = Table("test_table2", metadata, Column("fooid", Integer, primary_key=True, autoincrement=True),
+                self.table = Table("test_table2", metadata, Column("fooid", Integer, primary_key=True),
                                    Column("foo", String(15), primary_key=True),
                                    Column("bar", String(15)))
                 super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
@@ -1042,7 +1042,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         class TestTable2(AUSTable):
             def __init__(self, db, metadata):
                 self.table = Table("test_table2", metadata,
-                                   Column("fooid", Integer, primary_key=True, autoincrement=True),
+                                   Column("fooid", Integer, primary_key=True),
                                    Column("foo", String(15), primary_key=True),
                                    Column("bar", String(15)))
                 super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
