@@ -67,7 +67,6 @@ class TestReleasesAPI_JSON(ViewTest):
             "detailsUrl": "blah",
             "fakePartials": true,
             "hashFunction": "sha512",
-            "has_wnp": false,
             "platforms": {
                 "p": {
                     "locales": {
@@ -89,7 +88,6 @@ class TestReleasesAPI_JSON(ViewTest):
             "detailsUrl": "blah",
             "fakePartials": true,
             "hashFunction": "sha512",
-            "has_wnp": false,
             "platforms": {
                 "p": {
                     "locales": {
@@ -118,7 +116,6 @@ class TestReleasesAPI_JSON(ViewTest):
             "detailsUrl": "blah",
             "fakePartials": true,
             "hashFunction": "sha512",
-            "has_wnp": false,
             "platforms": {
                 "p": {
                     "locales": {
@@ -147,7 +144,6 @@ class TestReleasesAPI_JSON(ViewTest):
             "detailsUrl": "blah",
             "fakePartials": true,
             "hashFunction": "sha512",
-            "has_wnp": false,
             "platforms": {
                 "p": {
                     "locales": {
@@ -214,7 +210,6 @@ class TestReleasesAPI_JSON(ViewTest):
             "detailsUrl": "blah",
             "fakePartials": true,
             "hashFunction": "sha512",
-            "has_wnp": false,
             "platforms": {
                 "p": {
                     "locales": {
@@ -236,7 +231,6 @@ class TestReleasesAPI_JSON(ViewTest):
             "detailsUrl": "blah",
             "fakePartials": true,
             "hashFunction": "sha512",
-            "has_wnp": false,
             "platforms": {
                 "p": {
                     "locales": {
@@ -258,7 +252,6 @@ class TestReleasesAPI_JSON(ViewTest):
             "detailsUrl": "blah",
             "fakePartials": true,
             "hashFunction": "sha512",
-            "has_wnp": false,
             "platforms": {
                 "p": {
                     "locales": {
