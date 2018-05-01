@@ -80,11 +80,8 @@ class ReleaseBlobBase(Blob):
     @property
     def has_wnp(self):
         # check for What's new page for Blobs < v9
-        for group in self.get('openURL', []):
-            if isinstance(group, dict) and 'openURL' in group['fields']:
-                return True
-        else:
-            return False
+        openURL = self.get('openURL', '')
+        return True if len(openURL) else False
 
     def _getFromRelease(self, patch):
         # "*" is a special case for the "from" field that means "any release".
