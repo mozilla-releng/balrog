@@ -360,7 +360,8 @@ class AUSTable(object):
            @rtype: sqlalchemy.sql.expression.Select
         """
         if columns:
-            query = select(columns, order_by=order_by, limit=limit, offset=offset, distinct=distinct)
+            table_columns = [(self.t.c[col] if isinstance(col, basestring) else col) for col in columns]
+            query = select(table_columns, order_by=order_by, limit=limit, offset=offset, distinct=distinct)
         else:
             query = self.t.select(order_by=order_by, limit=limit, offset=offset, distinct=distinct)
         if where:
