@@ -406,7 +406,6 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.sql.express.Insert
         """
-        # migration-ref: http://docs.sqlalchemy.org/en/rel_0_9/changelog/changelog_08.html#change-f0476d1e752c1114226c2f7b1733e959
         table_columns = {k: columns[k] for k in columns.keys() if k in self.table.c}
         unconsumed_columns = {k: columns[k] for k in columns.keys() if k not in table_columns}
         return self.t.insert(values=table_columns), unconsumed_columns
@@ -567,7 +566,6 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.sql.expression.Update
         """
-        # migration-ref: http://docs.sqlalchemy.org/en/rel_0_9/changelog/changelog_08.html#change-f0476d1e752c1114226c2f7b1733e959
         table_what = {k: what[k] for k in what.keys() if k in self.table.c}
         unconsumed_columns = {k: what[k] for k in what.keys() if k not in table_what}
         query = self.t.update(values=table_what)
@@ -738,8 +736,6 @@ class History(AUSTable):
         """Deletes cause a single row to be created, which only contains the
            primary key data. This represents that the row no longer exists."""
         row = {}
-
-        # migration-ref: http://docs.sqlalchemy.org/en/rel_0_9/changelog/changelog_08.html#change-f0476d1e752c1114226c2f7b1733e959
         table_row_data = {k: rowData[k] for k in rowData.keys() if k in self.table.c}
         for k in table_row_data:
             row[str(k)] = table_row_data[k]
@@ -753,8 +749,6 @@ class History(AUSTable):
         """Updates cause a single row to be created, which contains the full,
            new data of the row at the time of the update."""
         row = {}
-
-        # migration-ref: http://docs.sqlalchemy.org/en/rel_0_9/changelog/changelog_08.html#change-f0476d1e752c1114226c2f7b1733e959
         table_row_data = {k: rowData[k] for k in rowData.keys() if k in self.table.c}
         for k in table_row_data:
             row[str(k)] = table_row_data[k]
