@@ -406,7 +406,10 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.sql.express.Insert
         """
-        return self.t.insert(values=columns)
+        # migration-ref: http://docs.sqlalchemy.org/en/rel_0_9/changelog/changelog_08.html#change-f0476d1e752c1114226c2f7b1733e959
+        table_columns = {k: columns[k] for k in columns.keys() if k in self.table.c}
+        unconsumed_columns = {k: columns[k] for k in columns.keys() if k not in table_columns}
+        return self.t.insert(values=table_columns), unconsumed_columns
 
     def _prepareInsert(self, trans, changed_by, **columns):
         """Prepare an INSERT statement for commit. If this table has versioning enabled,
@@ -419,7 +422,7 @@ class AUSTable(object):
         data = columns.copy()
         if self.versioned:
             data['data_version'] = 1
-        query = self._insertStatement(**data)
+        query, unconsumed_columns = self._insertStatement(**data)
         ret = trans.execute(query)
         if self.history:
             for q in self.history.forInsert(ret.inserted_primary_key, data, changed_by):
@@ -428,7 +431,8 @@ class AUSTable(object):
             pk_columns = self.t.primary_key.columns.keys()
             pk_values = ret.inserted_primary_key
             pk_args = dict(zip(pk_columns, pk_values))
-            self.onInsert(self, "INSERT", changed_by, query, trans, **pk_args)
+            self.onInsert(self, "INSERT", changed_by, query, trans,
+                          additional_columns=unconsumed_columns, pk_args=pk_args)
         return ret
 
     def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
@@ -565,11 +569,12 @@ class AUSTable(object):
         """
         # migration-ref: http://docs.sqlalchemy.org/en/rel_0_9/changelog/changelog_08.html#change-f0476d1e752c1114226c2f7b1733e959
         table_what = {k: what[k] for k in what.keys() if k in self.table.c}
+        unconsumed_columns = {k: what[k] for k in what.keys() if k not in table_what}
         query = self.t.update(values=table_what)
         if where:
             for cond in where:
                 query = query.where(cond)
-        return query
+        return query, unconsumed_columns
 
     def _prepareUpdate(self, trans, where, what, changed_by, old_data_version):
         """Prepare an UPDATE statement for commit. If this table has versioning enabled,
@@ -593,10 +598,10 @@ class AUSTable(object):
         for col in what:
             new_row[col] = what[col]
 
-        query = self._updateStatement(where, new_row)
+        query, unconsumed_columns = self._updateStatement(where, new_row)
 
         if self.onUpdate:
-            self.onUpdate(self, "UPDATE", changed_by, query, trans)
+            self.onUpdate(self, "UPDATE", changed_by, query, trans, additional_columns=unconsumed_columns)
 
         ret = trans.execute(query)
         # It's important that OutdatedDataError is raised as early as possible
@@ -723,8 +728,10 @@ class History(AUSTable):
             columns[name] = insertedKeys[i]
 
         ts = getMillisecondTimestamp()
-        queries.append(self._insertStatement(changed_by=changed_by, timestamp=ts - 1, **primary_key_data))
-        queries.append(self._insertStatement(changed_by=changed_by, timestamp=ts, **columns))
+        query, _ = self._insertStatement(changed_by=changed_by, timestamp=ts - 1, **primary_key_data)
+        queries.append(query)
+        query, _ = self._insertStatement(changed_by=changed_by, timestamp=ts, **columns)
+        queries.append(query)
         return queries
 
     def forDelete(self, rowData, changed_by):
@@ -739,7 +746,8 @@ class History(AUSTable):
         # Tack on history table information to the row
         row['changed_by'] = changed_by
         row['timestamp'] = getMillisecondTimestamp()
-        return self._insertStatement(**row)
+        query, _ = self._insertStatement(**row)
+        return query
 
     def forUpdate(self, rowData, changed_by):
         """Updates cause a single row to be created, which contains the full,
@@ -752,7 +760,8 @@ class History(AUSTable):
             row[str(k)] = table_row_data[k]
         row['changed_by'] = changed_by
         row['timestamp'] = getMillisecondTimestamp()
-        return self._insertStatement(**row)
+        query, _ = self._insertStatement(**row)
+        return query
 
     def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
         """ Returns the unique change that matches the give change_id or
@@ -2503,7 +2512,7 @@ def send_email(relayhost, port, username, password, to_addr, from_addr, table, s
 
 
 def make_change_notifier(relayhost, port, username, password, to_addr, from_addr, use_tls):
-    def bleet(table, type_, changed_by, query, transaction, **pk_args):
+    def bleet(table, type_, changed_by, query, transaction, additional_columns=None, pk_args=None):
         body = ["Changed by: %s" % changed_by]
         if type_ == "UPDATE":
             body.append("Row(s) to be updated as follows:")
@@ -2512,8 +2521,11 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
             unchanged = {}
             for row in table.select(where=where, transaction=transaction):
                 for k in row:
-                    if query.parameters[k] != row[k]:
-                        changed[k] = UnquotedStr("%s ---> %s" % (repr(row[k]), repr(query.parameters[k])))
+                    parameters = copy(query.parameters)
+                    if additional_columns:
+                        parameters.update(additional_columns)
+                    if parameters[k] != row[k]:
+                        changed[k] = UnquotedStr("%s ---> %s" % (repr(row[k]), repr(parameters[k])))
                     else:
                         unchanged[k] = UnquotedStr("%s" % repr(row[k]))
                 body.append('Changed values:')
@@ -2528,8 +2540,11 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
                 body.append(UTF8PrettyPrinter().pformat(row))
         elif type_ == "INSERT":
             body.append("Row to be inserted:")
-            query.parameters.update(pk_args)
-            body.append(UTF8PrettyPrinter().pformat(query.parameters))
+            parameters = copy(query.parameters)
+            parameters.update(pk_args)
+            if additional_columns:
+                parameters.update(additional_columns)
+            body.append(UTF8PrettyPrinter().pformat(parameters))
 
         subj = "%s to %s detected %s" % (type_, table.t.name, generate_random_string(6))
         send_email(relayhost, port, username, password, to_addr, from_addr,
@@ -2547,7 +2562,7 @@ def generate_random_string(length):
 
 
 def make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr, use_tls):
-    def bleet(table, type_, changed_by, query, transaction):
+    def bleet(table, type_, changed_by, query, transaction, additional_columns=None):
         body = ["Changed by: %s" % changed_by]
         where = [c for c in query._whereclause.get_children()]
         # TODO: How are we sometimes (always?) getting no rows for this. It shouldn't be possible...

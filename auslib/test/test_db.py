@@ -382,9 +382,15 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
 
     def testUpdateWithChangeCallback(self):
         shared = []
-        self.test.onUpdate = lambda *x: shared.extend(x)
+
+        def onUpdate(*args, **kwargs):
+            shared.extend(args)
+            for _, v in kwargs.items():
+                shared.append(v)
+
+        self.test.onUpdate = onUpdate
         where = [self.test.id == 1]
-        what = dict(foo=123)
+        what = dict(foo=123, bar=42)
         self.test.update(changed_by='bob', where=where, what=what, old_data_version=1)
         # update adds data_version and id to the query, so we need to add that before comparing
         what["data_version"] = 2
@@ -392,7 +398,10 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertEquals(shared[0], self.test)
         self.assertEquals(shared[1], "UPDATE")
         self.assertEquals(shared[2], "bob")
+        what.pop('bar')
         self.assertEquals(shared[3].parameters, what)
+        self.assertIsInstance(shared[4], AUSTransaction)
+        self.assertEquals(shared[5], {'bar': 42})
         # There should be two WHERE clauses, because AUSTable adds a data_version one in addition
         # to the id condition above.
         self.assertEquals(len(shared[3]._whereclause.get_children()), 2)
@@ -4592,19 +4601,19 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'permission': 'admin'"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'username': 'charlie'"))
 
-    # def testOnUpdate(self):
-    #     def doit():
-    #         self.db.rules.update({"rule_id": 2}, {"product": "blah"}, "bob", 1)
-    #     mock_conn = self._runTest(doit)
-    #     # Updating a Rule causes its Scheduled Change to be updated as well, so we have to check both of those calls.
-    #     mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("UPDATE to rules"))
-    #     mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
-    #     mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'product': None ---> 'blah'"))
-    #     mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'channel': u'release',"))
-    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE to rules_scheduled_changes"))
-    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
-    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_product': None ---> 'blah'"))
-    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release',"))
+    def testOnUpdate(self):
+        def doit():
+            self.db.rules.update({"rule_id": 2}, {"product": "blah"}, "bob", 1)
+        mock_conn = self._runTest(doit)
+        # Updating a Rule causes its Scheduled Change to be updated as well, so we have to check both of those calls.
+        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("UPDATE to rules"))
+        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
+        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'product': None ---> 'blah'"))
+        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'channel': u'release',"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE to rules_scheduled_changes"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_product': None ---> 'blah'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release',"))
 
     def testOnDelete(self):
         def doit():
@@ -4625,14 +4634,14 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'scheduled_by': 'bob'"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': 'bar'"))
 
-    # def testOnUpdateRuleSC(self):
-    #     def doit():
-    #         self.db.rules.scheduled_changes.update({"sc_id": 1}, {"product": "blah"}, "bob", 1)
-    #     mock_conn = self._runTest(doit)
-    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE"))
-    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
-    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_product': None ---> 'blah'"))
-    #     mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release',"))
+    def testOnUpdateRuleSC(self):
+        def doit():
+            self.db.rules.scheduled_changes.update({"sc_id": 1}, {"product": "blah"}, "bob", 1)
+        mock_conn = self._runTest(doit)
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_product': None ---> 'blah'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_channel': u'release',"))
 
     def testOnDeleteRuleSC(self):
         def doit():
