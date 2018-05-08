@@ -2857,7 +2857,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetReleaseBlob(self):
         expected = createBlob(dict(name="c", schema_version=1, hashFunction="sha512"))
-        self.assertEquals(next(iter(self.releases.getReleaseBlobs(names=['c']).values())), expected)
+        self.assertEquals(self.releases.getReleaseBlob(name='c'), expected)
 
     def testGetReleaseBlobNonExistentRelease(self):
         self.assertRaises(KeyError, self.releases.getReleaseBlobs, names=['z'])

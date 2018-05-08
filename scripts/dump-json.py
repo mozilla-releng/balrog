@@ -26,7 +26,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     db = AUSDatabase(options.db)
-    blob = next(iter(db.releases.getReleaseBlobs(names=[options.release]).values()))
+    blob = db.releases.getReleaseBlob(options.release)
     if options.ugly:
         print(json.dumps(blob))
     else:

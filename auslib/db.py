@@ -1823,6 +1823,7 @@ class Releases(AUSTable):
         rows = self.select(columns=[self.name, self.product, self.data_version],
                            where=where, limit=limit, transaction=transaction)
         for row in rows:
+            row["data"] = self.getReleaseBlob(row["name"], transaction)
             row["data"] = next(iter(self.getReleaseBlobs(names=[row["name"]], transaction=transaction).values()))
         return rows
 
@@ -2061,7 +2062,7 @@ class Releases(AUSTable):
         if not self.db.hasPermission(changed_by, "release_locale", "modify", product, transaction):
             raise PermissionDeniedError("%s is not allowed to add builds for product %s" % (changed_by, product))
 
-        releaseBlob = next(iter(self.getReleaseBlobs(names=[name], transaction=transaction).values()))
+        releaseBlob = self.getReleaseBlob(name, transaction=transaction)
         if 'platforms' not in releaseBlob:
             releaseBlob['platforms'] = {}
 
