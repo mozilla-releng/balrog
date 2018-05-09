@@ -8,6 +8,8 @@ from tempfile import mkstemp
 import unittest
 import re
 
+from itertools import chain
+
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select, String
 from sqlalchemy.engine.reflection import Inspector
 
@@ -390,18 +392,18 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
 
         self.test.onUpdate = onUpdate
         where = [self.test.id == 1]
-        what = dict(foo=123, bar=42)
-        self.test.update(changed_by='bob', where=where, what=what, old_data_version=1)
+        what = dict(foo=123)
+        additional_columns = dict(bar=42)
+        self.test.update(changed_by='bob', where=where, what=dict(chain(what.items(), additional_columns.items())), old_data_version=1)
         # update adds data_version and id to the query, so we need to add that before comparing
         what["data_version"] = 2
         what["id"] = 1
         self.assertEquals(shared[0], self.test)
         self.assertEquals(shared[1], "UPDATE")
         self.assertEquals(shared[2], "bob")
-        what.pop('bar')
         self.assertEquals(shared[3].parameters, what)
         self.assertIsInstance(shared[4], AUSTransaction)
-        self.assertEquals(shared[5], {'bar': 42})
+        self.assertEquals(shared[5], additional_columns)
         # There should be two WHERE clauses, because AUSTable adds a data_version one in addition
         # to the id condition above.
         self.assertEquals(len(shared[3]._whereclause.get_children()), 2)
