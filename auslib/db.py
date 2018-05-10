@@ -1926,8 +1926,18 @@ class Releases(AUSTable):
 
     def getReleaseBlobs(self, names, transaction=None):
         blobs = {}
-        q = self.select(where=[self.name.in_(tuple(names))], columns=[self.name, self.data, self.data_version], transaction=transaction)
+        uncached = []
+        for name in names:
+            cached_blob = cache.get('blob', name)
+            if cached_blob:
+                blobs.update({name: cached_blob})
+            else:
+                uncached.append(name)
+
+        q = self.select(where=[self.name.in_(tuple(uncached))], columns=[self.name, self.data, self.data_version], transaction=transaction)
         for row in q:
+# TODO: investigate what's slowing down cache.put
+#            cache.put('blob', row['name'], row['data'])
             blobs.update({row['name']: row['data']})
         if not blobs:
             raise KeyError("Coudn't find releases with names {}".format(",".join(names)))
@@ -2097,7 +2107,7 @@ class Releases(AUSTable):
 
     def getLocale(self, name, platform, locale, transaction=None):
         try:
-            blob = next(iter(self.getReleaseBlobs(names=[name], transaction=transaction).values()))
+            blob = self.getReleaseBlob(name=name, transaction=transaction)
             return blob['platforms'][platform]['locales'][locale]
         except KeyError:
             raise KeyError("Couldn't find locale identified by: %s, %s, %s" % (name, platform, locale))
