@@ -1589,31 +1589,38 @@ class TestRuleScheduledChanges(ViewTest):
     def testDeleteRuleWithScheduledChange(self):
         ret = self._delete("/rules/1", qs=dict(data_version=1))
         self.assertEquals(ret.status_code, 400, ret.data)
+        self.assertEquals(ret.mimetype, "application/json")
         self.assertIn("Cannot delete rows that have", ret.data)
 
     def testDeleteScheduledChange(self):
         ret = self._delete("/scheduled_changes/rules/1", qs=dict(data_version=1))
+        self.assertEquals(ret.mimetype, "application/json")
         self.assertEquals(ret.status_code, 200, msg=ret.data)
 
     def testDeleteCompletedScheduledChange(self):
         ret = self._delete("/scheduled_changes/rules/4", qs=dict(data_version=1))
+        self.assertEquals(ret.mimetype, "application/json")
         self.assertEquals(ret.status_code, 400, msg=ret.data)
 
     def testDeleteScheduledChangeWrongDataVersion(self):
         ret = self._delete("/scheduled_changes/rules/1", qs=dict(data_version=5))
         self.assertEquals(ret.status_code, 400, msg=ret.data)
+        self.assertEquals(ret.mimetype, "application/json")
         self.assertIn("Outdated Data Version", ret.data)
 
     def testDeleteScheduledChangeWithoutPermission(self):
         ret = self._delete("/scheduled_changes/rules/1", username="rex", qs=dict(data_version=1))
+        self.assertEquals(ret.mimetype, "application/json")
         self.assertEquals(ret.status_code, 403, msg=ret.data)
 
     def testDeleteNonExistentScheduledChange(self):
         ret = self._delete("/scheduled_changes/rules/62", qs=dict(data_version=1))
+        self.assertEquals(ret.mimetype, "application/json")
         self.assertEquals(ret.status_code, 404, msg=ret.data)
 
     def testEnactScheduledChangeExistingRule(self):
         ret = self._post("/scheduled_changes/rules/1/enact", username="mary")
+        self.assertEquals(ret.mimetype, "application/json")
         self.assertEquals(ret.status_code, 200, ret.data)
 
         sc_row = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 1).execute().fetchall()[0]
@@ -1630,6 +1637,7 @@ class TestRuleScheduledChanges(ViewTest):
 
     def testEnactScheduledChangeNewRule(self):
         ret = self._post("/scheduled_changes/rules/2/enact", username="mary")
+        self.assertEquals(ret.mimetype, "application/json")
         self.assertEquals(ret.status_code, 200, ret.data)
 
         sc_row = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 2).execute().fetchall()[0]
@@ -1646,6 +1654,7 @@ class TestRuleScheduledChanges(ViewTest):
 
     def testEnactScheduledChangeNoPermissions(self):
         ret = self._post("/scheduled_changes/rules/2/enact", username="bob")
+        self.assertEquals(ret.mimetype, "application/json")
         self.assertEquals(ret.status_code, 403, ret.data)
 
     def testGetScheduledChangeHistoryRevisions(self):
@@ -1717,6 +1726,7 @@ class TestRuleScheduledChanges(ViewTest):
 
     def testSignoffWithPermission(self):
         ret = self._post("/scheduled_changes/rules/2/signoffs", data=dict(role="qa"), username="bill")
+        self.assertEquals(ret.mimetype, "application/json")
         self.assertEquals(ret.status_code, 200, ret.data)
         r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -1725,11 +1735,13 @@ class TestRuleScheduledChanges(ViewTest):
 
     def testSignoffWithoutPermission(self):
         ret = self._post("/scheduled_changes/rules/2/signoffs", data=dict(role="relman"), username="bill")
+        self.assertEquals(ret.mimetype, "application/json")
         self.assertEquals(ret.status_code, 403, ret.data)
 
     def testSignoffASecondTimeWithSameRole(self):
         ret = self._post("/scheduled_changes/rules/3/signoffs", data=dict(role="releng"), username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.mimetype, "application/json")
         r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
         self.assertEquals(len(r), 2)
         db_data = [dict(row) for row in r]
@@ -1739,14 +1751,17 @@ class TestRuleScheduledChanges(ViewTest):
     def testSignoffWithSecondRole(self):
         ret = self._post("/scheduled_changes/rules/3/signoffs", data=dict(role="qa"), username="bill")
         self.assertEquals(ret.status_code, 403, ret.data)
+        self.assertEquals(ret.mimetype, "application/json")
 
     def testSignoffWithoutRole(self):
         ret = self._post("/scheduled_changes/rules/3/signoffs", data=dict(lorem_ipso="random"), username="bill")
         self.assertEquals(ret.status_code, 400, ret.data)
+        self.assertEquals(ret.mimetype, "application/problem+json")
 
     def testRevokeSignoff(self):
         ret = self._delete("/scheduled_changes/rules/3/signoffs", username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.mimetype, "application/json")
         r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
         self.assertEquals(len(r), 1)
 
@@ -1755,9 +1770,11 @@ class TestRuleScheduledChanges(ViewTest):
         # The username in the query string is the person who's signoff we want to revoke.
         ret = self._delete("/scheduled_changes/rules/3/signoffs", username="bill", qs={"username": "mary"})
         self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.mimetype, "application/json")
 
     def testCannotRevokeOtherUsersSignoffAsNormalUser(self):
         # The username passed to _delete is the user performing the action.
         # The username in the query string is the person who's signoff we want to revoke.
         ret = self._delete("/scheduled_changes/rules/3/signoffs", username="julie", qs={"username": "mary"})
         self.assertEquals(ret.status_code, 403, ret.data)
+        self.assertEquals(ret.mimetype, "application/json")

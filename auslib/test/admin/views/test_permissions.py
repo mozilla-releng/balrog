@@ -681,6 +681,7 @@ class TestPermissionsScheduledChanges(ViewTest):
     def testDeleteScheduledChange(self):
         ret = self._delete("/scheduled_changes/permissions/1", qs={"data_version": 1})
         self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.mimetype, "application/json")
         got = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(got, [])
         cond_got = dbo.permissions.scheduled_changes.conditions.t.select().where(dbo.permissions.scheduled_changes.conditions.sc_id == 1).execute().fetchall()
@@ -689,10 +690,12 @@ class TestPermissionsScheduledChanges(ViewTest):
     def testDeleteCompletedScheduledChange(self):
         ret = self._delete("/scheduled_changes/permissions/3", qs={"data_version": 1})
         self.assertEquals(ret.status_code, 400, ret.data)
+        self.assertEquals(ret.mimetype, "application/json")
 
     def testEnactScheduledChangeExistingPermission(self):
         ret = self._post("/scheduled_changes/permissions/2/enact")
         self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.mimetype, "application/json")
 
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -714,6 +717,7 @@ class TestPermissionsScheduledChanges(ViewTest):
     def testEnactScheduledChangeNewPermission(self):
         ret = self._post("/scheduled_changes/permissions/1/enact")
         self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.mimetype, "application/json")
 
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -735,6 +739,7 @@ class TestPermissionsScheduledChanges(ViewTest):
     def testEnactScheduledChangeDeletePermission(self):
         ret = self._post("/scheduled_changes/permissions/4/enact")
         self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.mimetype, "application/json")
 
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 4).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -923,6 +928,7 @@ class TestPermissionsScheduledChanges(ViewTest):
     def testSignoffWithPermission(self):
         ret = self._post("/scheduled_changes/permissions/2/signoffs", data=dict(role="relman"), username="bob")
         self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.mimetype, "application/json")
         r = dbo.permissions.scheduled_changes.signoffs.t.select().where(dbo.permissions.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
         r = [dict(rs) for rs in r]
         self.assertEquals(len(r), 3)
@@ -938,14 +944,17 @@ class TestPermissionsScheduledChanges(ViewTest):
     def testSignoffWithoutPermission(self):
         ret = self._post("/scheduled_changes/permissions/2/signoffs", data=dict(role="relman"), username="bill")
         self.assertEquals(ret.status_code, 403, ret.data)
+        self.assertEquals(ret.mimetype, "application/json")
 
     def testSignoffWithoutRole(self):
         ret = self._post("/scheduled_changes/permissions/2/signoffs", data=dict(lorem="random"), username="bill")
         self.assertEquals(ret.status_code, 400, ret.data)
+        self.assertEquals(ret.mimetype, "application/problem+json")
 
     def testRevokeSignoff(self):
         ret = self._delete("/scheduled_changes/permissions/1/signoffs", username="bill")
         self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.mimetype, "application/json")
         r = dbo.permissions.scheduled_changes.signoffs.t.select().where(dbo.permissions.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 0)
 
