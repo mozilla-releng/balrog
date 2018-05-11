@@ -1,7 +1,7 @@
 import connexion
 from sqlalchemy.sql.expression import null
 
-from flask import jsonify, Response
+from flask import jsonify
 
 from auslib.web.admin.views.base import AdminView, requirelogin, serialize_signoff_requirements
 from auslib.web.admin.views.history import HistoryView
@@ -114,7 +114,7 @@ class ScheduledChangeView(AdminView):
             return problem(400, "Bad Request", "data_version is missing")
 
         self.sc_table.delete(where, changed_by, int(connexion.request.args.get("data_version")), transaction)
-        return Response(status=200)
+        return jsonify({})
 
 
 class EnactScheduledChangeView(AdminView):
@@ -129,7 +129,7 @@ class EnactScheduledChangeView(AdminView):
 
     def _post(self, sc_id, transaction, changed_by):
         self.sc_table.enactChange(sc_id, changed_by, transaction)
-        return Response(status=200)
+        return jsonify({})
 
 
 class SignoffsView(AdminView):
@@ -145,7 +145,7 @@ class SignoffsView(AdminView):
     def _post(self, sc_id, transaction, changed_by):
         what = {"role": connexion.request.get_json().get("role")}
         self.signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **what)
-        return Response(status=200)
+        return jsonify({})
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
@@ -153,10 +153,10 @@ class SignoffsView(AdminView):
         where = {"sc_id": sc_id, "username": username}
         signoff = self.signoffs_table.select(where, transaction)
         if not signoff:
-            return Response(status=404, response="{} has no signoff to revoke".format(changed_by))
+            return jsonify({"error": "{} has no signoff to revoke".format(changed_by)})
 
         self.signoffs_table.delete(where, changed_by=changed_by, transaction=transaction)
-        return Response(status=200)
+        return jsonify({})
 
 
 class ScheduledChangeHistoryView(HistoryView):
