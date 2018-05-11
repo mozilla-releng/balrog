@@ -29,7 +29,7 @@
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.mapping}">
           <label for="id_mapping">Mapping</label>
-          <input type="text" class="form-control" id="id_mapping" ng-model="rule.mapping" autocomplete="off"
+          <input type="text" class="form-control" id="id_mapping" ng-model="rule.mapping.release" autocomplete="off"
            typeahead="name for name in names | filter:$viewValue | limitTo:16">
           <p class="help-block" ng-show="errors.mapping">{{ errors.mapping.join(', ') }}</p>
         </div>
@@ -37,7 +37,7 @@
       <div class="col-md-6">
         <div class="form-group" ng-class="{'has-error': errors.fallbackMapping}">
           <label for="id_fallbackMapping">Fallback Mapping</label>
-          <input type="text" class="form-control" id="id_mapping" ng-model="rule.fallbackMapping" autocomplete="off"
+          <input type="text" class="form-control" id="id_mapping" ng-model="rule.fallbackMapping.release" autocomplete="off"
            typeahead="name for name in names | filter:$viewValue | limitTo:16">
           <p class="help-block" ng-show="errors.fallbackMapping">{{ errors.fallbackMapping.join(', ') }}</p>
         </div>

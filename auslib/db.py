@@ -1824,7 +1824,6 @@ class Releases(AUSTable):
                            where=where, limit=limit, transaction=transaction)
         for row in rows:
             row["data"] = self.getReleaseBlob(row["name"], transaction)
-            row["data"] = next(iter(self.getReleaseBlobs(names=[row["name"]], transaction=transaction).values()))
         return rows
 
     def countReleases(self, transaction=None):
