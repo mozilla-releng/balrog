@@ -19,6 +19,7 @@ if os.environ.get("STAGING"):
     SYSTEM_ACCOUNTS.extend(["stage-ffxbld", "stage-tbirdbld", "stage-seabld"])
     DOMAIN_WHITELIST.update({
         "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird")
+        "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird")
     })
 
 # Logging needs to be set-up before importing the application to make sure that
