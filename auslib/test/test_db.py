@@ -8,6 +8,8 @@ from tempfile import mkstemp
 import unittest
 import re
 
+from itertools import chain
+
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select, String
 from sqlalchemy.engine.reflection import Inspector
 
@@ -253,8 +255,9 @@ class TestMultiplePrimaryTableMixin(object):
         class TestTable(AUSTable):
 
             def __init__(self, db, metadata):
-                self.table = Table('test', metadata, Column('id1', Integer, primary_key=True),
-                                   Column('id2', Integer, primary_key=True),
+                self.table = Table('test', metadata,
+                                   Column('id1', Integer, primary_key=True, autoincrement=False),
+                                   Column('id2', Integer, primary_key=True, autoincrement=False),
                                    Column('foo', Integer))
                 AUSTable.__init__(self, db, 'sqlite')
 
@@ -381,10 +384,17 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
 
     def testUpdateWithChangeCallback(self):
         shared = []
-        self.test.onUpdate = lambda *x: shared.extend(x)
+
+        def onUpdate(*args, **kwargs):
+            shared.extend(args)
+            for _, v in kwargs.items():
+                shared.append(v)
+
+        self.test.onUpdate = onUpdate
         where = [self.test.id == 1]
         what = dict(foo=123)
-        self.test.update(changed_by='bob', where=where, what=what, old_data_version=1)
+        additional_columns = dict(bar=42)
+        self.test.update(changed_by='bob', where=where, what=dict(chain(what.items(), additional_columns.items())), old_data_version=1)
         # update adds data_version and id to the query, so we need to add that before comparing
         what["data_version"] = 2
         what["id"] = 1
@@ -392,6 +402,8 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertEquals(shared[1], "UPDATE")
         self.assertEquals(shared[2], "bob")
         self.assertEquals(shared[3].parameters, what)
+        self.assertIsInstance(shared[4], AUSTransaction)
+        self.assertEquals(shared[5], additional_columns)
         # There should be two WHERE clauses, because AUSTable adds a data_version one in addition
         # to the id condition above.
         self.assertEquals(len(shared[3]._whereclause.get_children()), 2)
@@ -979,7 +991,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         class TestTable2(AUSTable):
 
             def __init__(self, db, metadata):
-                self.table = Table("test_table2", metadata, Column("fooid", Integer, primary_key=True, autoincrement=True),
+                self.table = Table("test_table2", metadata, Column("fooid", Integer, primary_key=True),
                                    Column("foo", String(15), primary_key=True),
                                    Column("bar", String(15)))
                 super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
@@ -1041,7 +1053,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         class TestTable2(AUSTable):
             def __init__(self, db, metadata):
                 self.table = Table("test_table2", metadata,
-                                   Column("fooid", Integer, primary_key=True, autoincrement=True),
+                                   Column("fooid", Integer, primary_key=True),
                                    Column("foo", String(15), primary_key=True),
                                    Column("bar", String(15)))
                 super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
@@ -1897,8 +1909,8 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
                                       update_type="z", product="foo", channel="foo", data_version=1)
 
         self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
-        self.db.permissions.user_roles.t.insert(username="bill", role="bar", data_version=1)
-        self.db.permissions.user_roles.t.insert(username="jane", role="bar", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="bill", role="bar", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="jane", role="bar", data_version=1)
         self.db.productRequiredSignoffs.t.insert().execute(product="foo", channel="foo", role="bar", signoffs_required=2, data_version=1)
 
     def testAllTablesCreated(self):
@@ -2806,8 +2818,8 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
         self.permissions.t.insert().execute(permission="release", username="bob", options=dict(products=["c"]), data_version=1)
-        self.permissions.user_roles.t.insert(username="bill", role="bar", data_version=1)
-        self.permissions.user_roles.t.insert(username="me", role="bar", data_version=1)
+        self.permissions.user_roles.t.insert().execute(username="bill", role="bar", data_version=1)
+        self.permissions.user_roles.t.insert().execute(username="me", role="bar", data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="b", channel="h", role="bar", signoffs_required=2, data_version=1)
 
     def tearDown(self):
