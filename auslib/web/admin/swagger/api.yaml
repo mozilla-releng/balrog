@@ -406,7 +406,7 @@ paths:
               type: string
           examples:
             text/html: "csrf_token: 1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
-  
+
   /rules/history:
     get:
       summary: Returns a list of all rules and it's scheduled change history.
@@ -787,6 +787,8 @@ paths:
           description: successfully created a new release
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
         '403':
           $ref: '#/responses/unauthorizedUser'
 
@@ -820,6 +822,8 @@ paths:
           $ref: '#/responses/modifiedDataVersion'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
         '403':
           $ref: '#/responses/unauthorizedUser'
 
@@ -844,6 +848,8 @@ paths:
       responses:
         '200':
           description: Successfully deleted the release
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
         '403':
           $ref: '#/responses/unauthorizedUser'
         '404':
@@ -1008,6 +1014,8 @@ paths:
           $ref: '#/responses/modifiedDataVersion'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
         '403':
           $ref: '#/responses/unauthorizedUser'
 
@@ -1498,6 +1506,8 @@ paths:
               username: balrogadmin
         '404':
           $ref: '#/responses/resourceNotFound'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
         '403':
           $ref: '#/responses/unauthorizedUser'
 

@@ -1,10 +1,10 @@
-from flask import request, Response
+from flask import request
 from flask.views import MethodView
-from auslib.global_state import dbo, cache
+from auslib.global_state import dbo
 from auslib.web.admin.views.problem import problem
 from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError, \
     SignoffRequiredError
-import logging  
+import logging
 
 
 log = logging.getLogger(__name__)
@@ -13,9 +13,12 @@ log = logging.getLogger(__name__)
 def requirelogin(f):
     def decorated(*args, **kwargs):
         username = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
-        if not dbo.isKnowUser(username):
+        if not username:
             log.warning("Login Required")
-            return Response(status=401)
+            return problem(401, 'Unauthenticated', 'Login Required')
+        elif not dbo.isKnowUser(username):
+            log.warning("Authorization Required")
+            return problem(403, 'Forbidden', 'Authorization Required')
         return f(*args, changed_by=username, **kwargs)
     return decorated
 
