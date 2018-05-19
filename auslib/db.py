@@ -2398,7 +2398,7 @@ class Permissions(AUSTable):
         roles_list = [r['role'] for r in self.getUserRoles(username, transaction)]
         return role in roles_list
 
-    def isKnowUser(self, username):
+    def isKnownUser(self, username):
         if not username:
             return False
         cache_column = 'username'
@@ -2675,8 +2675,8 @@ class AUSDatabase(object):
                                                                use_tls)
         self.releases.onUpdate = read_only_bleeter
 
-    def isKnowUser(self, username):
-        return self.permissions.isKnowUser(username)
+    def isKnownUser(self, username):
+        return self.permissions.isKnownUser(username)
 
     def isAdmin(self, *args, **kwargs):
         return self.permissions.isAdmin(*args, **kwargs)

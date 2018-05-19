@@ -16,7 +16,7 @@ def requirelogin(f):
         if not username:
             log.warning("Login Required")
             return problem(401, 'Unauthenticated', 'Login Required')
-        elif not dbo.isKnowUser(username):
+        elif not dbo.isKnownUser(username):
             log.warning("Authorization Required")
             return problem(403, 'Forbidden', 'Authorization Required')
         return f(*args, changed_by=username, **kwargs)
