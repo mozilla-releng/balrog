@@ -2,6 +2,7 @@ import json
 import time
 from connexion import request
 from flask import Response, jsonify
+from six import text_type, string_types
 from sqlalchemy import and_
 from auslib.util.timesince import timesince
 
@@ -92,9 +93,9 @@ def annotateRevisionDifferences(revisions):
                 except ValueError:
                     pass
             elif isinstance(value, int):
-                value = unicode(str(value), 'utf8')
-            elif not isinstance(value, basestring):
-                value = unicode(value, 'utf8')
+                value = text_type(str(value), 'utf8')
+            elif not isinstance(value, string_types):
+                value = text_type(value, 'utf8')
             rev[key] = value
 
         rev['_different'] = different

@@ -4,6 +4,8 @@ from os import path
 import simplejson as json
 import yaml
 
+from six import string_types, text_type
+
 from auslib.AUS import isSpecialURL
 from auslib.global_state import cache
 # To enable shared jsonschema validators
@@ -43,7 +45,7 @@ def createBlob(data):
         5000: SystemAddonsBlob
     }
 
-    if isinstance(data, basestring):
+    if isinstance(data, string_types):
         data = json.loads(data)
     schema_version = data.get("schema_version")
 
@@ -81,7 +83,7 @@ def merge_dicts(ancestor, left, right):
     for key in set(key for d in dicts for key in d.keys()):
         key_types = set([type(d.get(key)) for d in dicts])
         key_types.discard(type(None))
-        if len(key_types) > 1 and not key_types.issubset([str, unicode]):
+        if len(key_types) > 1 and not key_types.issubset([str, text_type]):
             raise ValueError("Cannot merge blobs: type mismatch for '{}'".format(key.encode('ascii', 'replace')))
 
         if any(isinstance(d.get(key), dict) for d in dicts):

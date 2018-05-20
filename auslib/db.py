@@ -8,6 +8,8 @@ import simplejson as json
 import sys
 import time
 
+from six import string_types, reraise, text_type
+
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
     create_engine, select, BigInteger, Boolean, join
 from sqlalchemy.exc import SQLAlchemyError
@@ -211,14 +213,14 @@ class AUSTransaction(object):
     def __enter__(self):
         return self
 
-    def __exit__(self, *exc):
+    def __exit__(self, exc_type, exc_value, exc_traceback):
         try:
             # If something that executed in the context raised an Exception,
             # rollback and re-raise it.
-            if exc[0]:
+            if exc_type:
                 self.log.debug("exc is:", exc_info=True)
                 self.rollback()
-                raise exc[0], exc[1], exc[2]
+                reraise(exc_type, exc_value, exc_traceback)
             # Also need to check for exceptions during commit!
             try:
                 self.commit()
@@ -247,7 +249,7 @@ class AUSTransaction(object):
             klass, e, tb = sys.exc_info()
             self.rollback()
             e = TransactionError(e.args)
-            raise TransactionError, e, tb
+            reraise(TransactionError, e, tb)
 
     def commit(self):
         try:
@@ -256,7 +258,7 @@ class AUSTransaction(object):
             klass, e, tb = sys.exc_info()
             self.rollback()
             e = TransactionError(e.args)
-            raise TransactionError, e, tb
+            reraise(TransactionError, e, tb)
 
     def rollback(self):
         self.trans.rollback()
@@ -360,7 +362,7 @@ class AUSTable(object):
            @rtype: sqlalchemy.sql.expression.Select
         """
         if columns:
-            table_columns = [(self.t.c[col] if isinstance(col, basestring) else col) for col in columns]
+            table_columns = [(self.t.c[col] if isinstance(col, string_types) else col) for col in columns]
             query = select(table_columns, order_by=order_by, limit=limit, offset=offset, distinct=distinct)
         else:
             query = self.t.select(order_by=order_by, limit=limit, offset=offset, distinct=distinct)
@@ -2466,7 +2468,7 @@ class UTF8PrettyPrinter(pprint.PrettyPrinter):
     """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
     Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
     def format(self, object, context, maxlevels, level):
-        if isinstance(object, unicode):
+        if isinstance(object, text_type):
             return pprint._safe_repr(object.encode('utf8'), context, maxlevels, level)
         return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
 

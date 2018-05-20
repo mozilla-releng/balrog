@@ -76,7 +76,7 @@ def setLocalDBTimestamp(prod_db_ts):
 
 
 def setLocalDBPermissions():
-    os.chmod(LOCAL_DB_PATH, 0666)
+    os.chmod(LOCAL_DB_PATH, 0o666)
 
 
 if __name__ == '__main__':

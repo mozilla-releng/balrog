@@ -369,7 +369,7 @@ if __name__ == "__main__":
                 fn(options.walkdir, d, options.version, options.partial, options.exclude_partials, options.locales, relData)
 
     if options.verbose:
-        print json.dumps(relData, sort_keys=True, indent=4)
+        print(json.dumps(relData, sort_keys=True, indent=4))
     if options.db:
         current = db.releases.select(columns=[db.releases.data_version], where=[db.releases.name == options.name])
         if current:

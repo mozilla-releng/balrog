@@ -1,3 +1,6 @@
+from six import integer_types
+
+
 # Language constants
 MINUTE = 'minute'
 MINUTES = 'minutes'
@@ -27,8 +30,8 @@ def timesince(firstdate, seconddate,
             return result
 
     if (
-        isinstance(firstdate, (int, long)) and
-        isinstance(seconddate, (int, long))
+        isinstance(firstdate, (int, integer_types)) and
+        isinstance(seconddate, (int, integer_types))
     ):
         # two timestamps
         seconds = seconddate - firstdate

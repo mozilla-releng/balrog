@@ -10,6 +10,8 @@ import re
 
 from itertools import chain
 
+from six.moves import xrange
+
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select, String
 from sqlalchemy.engine.reflection import Inspector
 
