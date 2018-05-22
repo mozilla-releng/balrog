@@ -9,6 +9,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.user_roles = [];
 
   $scope.sc_id = parseInt($routeParams.sc_id, 10);
+  console.log($scope);
 
   Permissions.getCurrentUser()
   .success(function(response) {
