@@ -87,19 +87,29 @@ services:
     depends_on:
       balrogadmin:
         condition: service_healthy
+    expose:
+      - 6060
+    volumes:
+      - ./ui:/app
+      - .cache:/cache
+    environment:
+      - WEB_PORT=6060
+    entrypoint:
+      - /bin/bash
+      - /app/docker-entrypoint.sh
+
+  nginx:
+    image: openresty/openresty:centos
     ports:
       - "8080:8080"
     links:
       - balrogadmin
     volumes:
-      - ./ui:/app
-      - .cache:/cache
+      - ./scripts/nginx.conf:/etc/nginx/conf.d/http_balrog.conf.template
     environment:
-      - WEB_PORT=8080
-    entrypoint:
-      - /bin/bash
-      - /app/docker-entrypoint.sh
-
+      - NGINX_PORT=8080
+      - BALROG_ADMIN_ROOT=http://balrogadmin:7070
+    command: /bin/bash -c "envsubst '$$NGINX_PORT $$BALROG_ADMIN_ROOT' < /etc/nginx/conf.d/http_balrog.conf.template > /etc/nginx/conf.d/http_balrog.conf && nginx -g 'daemon off;'"
 
   balrogdb:
     build:
