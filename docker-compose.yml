@@ -13,7 +13,7 @@ services:
     entrypoint:
       - bash
       - scripts/initdb_and_run.sh
-    command: admin-dev
+    command: admin
     expose:
       - "7070"
     volumes:
