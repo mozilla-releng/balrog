@@ -17,6 +17,11 @@ def requirelogin(f):
             log.warning("Login Required")
             return problem(401, 'Unauthenticated', 'Login Required')
         elif not dbo.isKnownUser(username):
+            # Was identified some situations where a REMOTE_USER can be changed through
+            # the 'Remote-User' header.
+            # This check prevents the request reaches database layer when the user is not
+            # in permissions table.
+            # https://bugzilla.mozilla.org/show_bug.cgi?id=1457905
             log.warning("Authorization Required")
             return problem(403, 'Forbidden', 'Authorization Required')
         return f(*args, changed_by=username, **kwargs)

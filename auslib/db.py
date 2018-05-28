@@ -2401,18 +2401,14 @@ class Permissions(AUSTable):
     def isKnownUser(self, username):
         if not username:
             return False
+
         cache_column = 'username'
-        cache_name = 'users'
-        cache_key = 'usernames'
 
         def user_getter():
             permissions = self.select(columns=[cache_column], distinct=True)
             return [permission[cache_column] for permission in permissions]
 
-        if cache_name not in cache.caches:
-            cache.make_cache(cache_name, 1, 300)
-
-        usernames = cache.get(cache_name, cache_key, value_getter=user_getter)
+        usernames = cache.get('users', 'usernames', value_getter=user_getter)
         return username in usernames
 
 
