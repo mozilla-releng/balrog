@@ -588,7 +588,7 @@ paths:
           $ref: '#/responses/resourceNotFound'
 
   /scheduled_change/diff/release/{sc_id}:
-    get:
+  get:
       summary: Returns a diff of the sc for the provided id
       description: >
         Returns a diff of the value of the named field from the named object at the specified sc_id vs the current version of that object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#sc-view-object-change-id)
@@ -1229,6 +1229,10 @@ paths:
       responses:
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /required_signoffs/product/revisions:
     get:
@@ -1384,6 +1388,10 @@ paths:
       responses:
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /required_signoffs/permissions/revisions:
     get:
