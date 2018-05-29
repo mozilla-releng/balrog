@@ -1,5 +1,7 @@
 import json
 import logging
+
+from six import iteritems
 from auslib.global_state import dbo
 from connexion import problem, request
 from flask import jsonify, Response
@@ -20,7 +22,7 @@ def strip_data(release):
     data, which is of no use except when serving clients.
     """
     return dict(
-        (k, v) for (k, v) in release.iteritems() if k != 'data'
+        (k, v) for (k, v) in iteritems(release) if k != 'data'
     )
 
 

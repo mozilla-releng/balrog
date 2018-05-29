@@ -8,7 +8,7 @@ import simplejson as json
 import sys
 import time
 
-from six import string_types, reraise, text_type
+from six import iteritems, string_types, reraise, text_type
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
     create_engine, select, BigInteger, Boolean, join
@@ -192,7 +192,7 @@ def verify_signoffs(potential_required_signoffs, signoffs):
         signoffs_given[signoff["role"]] += 1
     for rs in potential_required_signoffs:
         required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
-    for role, signoffs_required in required_signoffs.iteritems():
+    for role, signoffs_required in iteritems(required_signoffs):
         if signoffs_given[role] < signoffs_required:
             raise SignoffRequiredError("Not enough signoffs for role '{}'".format(role))
 
@@ -388,7 +388,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in where.iteritems()]
+            where = [getattr(self, k) == v for k, v in iteritems(where)]
 
         query = self._selectStatement(where=where, **kwargs)
 
@@ -541,7 +541,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in where.iteritems()]
+            where = [getattr(self, k) == v for k, v in iteritems(where)]
 
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
@@ -647,7 +647,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in where.iteritems()]
+            where = [getattr(self, k) == v for k, v in iteritems(where)]
 
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
@@ -930,7 +930,7 @@ class ConditionsTable(AUSTable):
         if set(conditions) - set(self.condition_groups):
             raise ValueError("Unknown conditions in: {}".format(conditions))
 
-        self.enabled_condition_groups = {k: v for k, v in self.condition_groups.iteritems() if k in conditions}
+        self.enabled_condition_groups = {k: v for k, v in iteritems(self.condition_groups) if k in conditions}
 
         self.table = Table("{}_conditions".format(baseName), metadata,
                            Column("sc_id", Integer, primary_key=True),
@@ -950,12 +950,12 @@ class ConditionsTable(AUSTable):
         super(ConditionsTable, self).__init__(db, dialect, history=history, versioned=True)
 
     def validate(self, conditions):
-        conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
+        conditions = {k: v for k, v in iteritems(conditions) if conditions[k]}
         if not conditions:
             raise ValueError("No conditions found")
 
         for c in conditions:
-            for condition, args in self.condition_groups.iteritems():
+            for condition, args in iteritems(self.condition_groups):
                 if c in args:
                     if c in itertools.chain(*self.enabled_condition_groups.values()):
                         break
@@ -1046,7 +1046,7 @@ class ScheduledChangeTable(AUSTable):
         with the base table ones prefixed."""
         ret = {}
         base_columns = [c.name for c in self.baseTable.t.get_children()]
-        for k, v in columns.iteritems():
+        for k, v in iteritems(columns):
             if k in base_columns:
                 ret["base_%s" % k] = v
             else:

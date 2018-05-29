@@ -11,6 +11,8 @@ except Exception:
     import simplejson as json
 
 from auslib.db import AUSDatabase
+from six import iteritems
+
 
 SCHEMA_VERSION = 1
 IGNORE_PLATFORMS = ('WINCE_arm-msvc',)
@@ -104,7 +106,7 @@ def getPlatforms(platform, version):
     # they want.
     def findPlatforms(pmap, p):
         r = []
-        for k, v in pmap.iteritems():
+        for k, v in iteritems(pmap):
             if p in k or p in v.values():
                 r.append((k, v))
         if r:

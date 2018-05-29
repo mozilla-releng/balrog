@@ -1,7 +1,8 @@
 import connexion
-from sqlalchemy.sql.expression import null
 
 from flask import jsonify
+from six import iteritems
+from sqlalchemy.sql.expression import null
 
 from auslib.web.admin.views.base import AdminView, requirelogin, serialize_signoff_requirements
 from auslib.web.admin.views.history import HistoryView
@@ -31,7 +32,7 @@ class ScheduledChangesView(AdminView):
             base_row = {}
             base_pk = {}
 
-            for k, v in row.iteritems():
+            for k, v in iteritems(row):
                 if k == "data_version":
                     scheduled_change["sc_data_version"] = v
                 else:
@@ -188,7 +189,7 @@ class ScheduledChangeHistoryView(HistoryView):
 
         for rev in revisions:
             r = {}
-            for k, v in rev.iteritems():
+            for k, v in iteritems(rev):
                 if k == "data_version":
                     r["sc_data_version"] = v
                 else:
