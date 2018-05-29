@@ -1229,10 +1229,6 @@ paths:
       responses:
         '400':
           $ref: '#/responses/invalidFormData'
-        '401':
-          $ref: '#/responses/unauthenticatedUser'
-        '403':
-          $ref: '#/responses/unauthorizedUser'
 
   /required_signoffs/product/revisions:
     get:
@@ -1388,10 +1384,6 @@ paths:
       responses:
         '400':
           $ref: '#/responses/invalidFormData'
-        '401':
-          $ref: '#/responses/unauthenticatedUser'
-        '403':
-          $ref: '#/responses/unauthorizedUser'
 
   /required_signoffs/permissions/revisions:
     get:
