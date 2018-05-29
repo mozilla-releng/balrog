@@ -36,7 +36,8 @@ def rows_to_dicts(rows):
     are immutable), or if you want to serialize them to JSON
     (SQLAlchemy rows get confused if you try to serialize them).
     """
-    return map(dict, rows)
+    # In Python 3, map returns an iterable instead a list.
+    return [dict(row) for row in rows]
 
 
 def _matchesRegex(foo, bar):

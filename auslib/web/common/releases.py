@@ -45,7 +45,7 @@ def serialize_releases(request, releases):
         data = {'names': names}
     else:
         data = {
-            'releases': map(strip_data, releases),
+            'releases': [strip_data(release) for release in releases],
         }
     return jsonify(data)
 
@@ -86,8 +86,7 @@ def _get_filters(release, history_table):
 
 def process_release_revisions(revisions):
     annotateRevisionDifferences(revisions)
-
-    return map(strip_data, revisions)
+    return [strip_data(revision) for revision in revisions]
 
 
 def get_release_history(release):
