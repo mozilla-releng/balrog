@@ -1,6 +1,10 @@
 import functools
 from random import randint
-from urlparse import urlparse
+
+try:
+    from urlparse import urlparse
+except:
+    from urllib import parse as urlparse
 
 import logging
 

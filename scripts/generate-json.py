@@ -86,7 +86,7 @@ def isMac64(platform, version):
 def cmpVersions(left, right):
     left = StrictVersion(re.sub('rc(\d+)', 'b9999999\\1', left))
     right = StrictVersion(re.sub('rc(\d+)', 'b9999999\\1', right))
-    return cmp(left, right)
+    return (left > right) - (left < right)
 
 
 def versionLt(left, right):
