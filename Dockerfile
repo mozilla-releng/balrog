@@ -3,11 +3,11 @@ FROM python:2.7-slim
 MAINTAINER bhearsum@mozilla.com
 
 # Some versions of the python:2.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
-# Node and npm are to build the frontend. nodejs-legacy is needed by this version of npm. These will get removed after building.
-# libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
+# libmariadbclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
+# mysql-client is needed to import sample data, which we do in dev & stage.
 # xz-utils is needed to compress production database dumps
 RUN apt-get -q update \
-    && apt-get -q --yes install libpcre3 libpcre3-dev libmysqlclient-dev mysql-client xz-utils \
+    && apt-get -q --yes install libpcre3 libpcre3-dev libmariadbclient-dev mysql-client xz-utils \
     && apt-get clean
 
 WORKDIR /app
@@ -34,10 +34,15 @@ COPY version.json /app/
 WORKDIR /app
 
 RUN cd ui && \
-    apt-get -q --yes install nodejs nodejs-legacy npm && \
+    # gnupg and curl are needed temporarily to enable the node apt repository.
+    apt-get -q --yes install curl gnupg && \
+    curl -sL https://deb.nodesource.com/setup_8.x | bash - && \
+    apt-get -q update && \
+    # Node is needed to build the frontend. It will get removed after building.
+    apt-get -q --yes install nodejs && \
     npm install && \
     npm run build && \
-    apt-get -q --yes remove nodejs nodejs-legacy npm && \
+    apt-get -q --yes remove nodejs gnupg curl && \
     apt-get -q --yes autoremove && \
     apt-get clean && \
     rm -rf /root/.npm /tmp/phantomjs && \

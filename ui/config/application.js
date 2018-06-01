@@ -25,7 +25,10 @@ module.exports = function(lineman) {
 
     jshint: {
       options: {
-        esnext: true
+        esnext: true,
+        // I don't understand why, but this can't be null:
+        // https://github.com/jshint/jshint/issues/2922
+        reporterOutput: "",
       },
     },
 
