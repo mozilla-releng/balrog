@@ -831,7 +831,7 @@ class History(AUSTable):
         # We know a bunch of columns are going to be empty...easier to strip them out
         # than to be super verbose (also should let this test continue to work even
         # if the schema changes).
-        for key in change.keys():
+        for key in change.copy().keys():
             if change[key] is None:
                 del change[key]
         return change
@@ -1912,13 +1912,18 @@ class Releases(AUSTable):
             except IndexError:
                 raise KeyError("Couldn't find release with name '%s'" % name)
 
+        def get_data_version(obj):
+            if isinstance(obj, int):
+                return obj
+            return obj["data_version"]
+
         cached_blob = cache.get("blob", name, getBlob)
 
         # Even though we may have retrieved a cached blob, we need to make sure
         # that it's not older than the one in the database. If the data version
         # of the cached blob and the latest data version don't match, we need
         # to update the cache with the latest blob.
-        if data_version > cached_blob["data_version"]:
+        if get_data_version(data_version) > get_data_version(cached_blob["data_version"]):
             blob_info = getBlob()
             cache.put("blob", name, blob_info)
             blob = blob_info["blob"]
@@ -1932,7 +1937,7 @@ class Releases(AUSTable):
             # data version, the blob version cache would've expired as well.
             # If we hit one of these cases, we should bring the blob version
             # cache up to date since we have it.
-            if cached_blob["data_version"] > data_version:
+            if get_data_version(cached_blob["data_version"]) > get_data_version(data_version):
                 cache.put("blob_version", name, data_version)
             blob = cached_blob["blob"]
 

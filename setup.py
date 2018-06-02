@@ -1,3 +1,4 @@
+import six
 from os import path
 from setuptools import find_packages, setup
 
@@ -6,7 +7,12 @@ here = path.abspath(path.dirname(__file__))
 # of the packages in it. However, setuptools doesn't support parsing this type
 # of file, so we need to strip those out before passing the requirements along
 # to it.
-with open(path.join(here, "requirements.txt")) as f:
+if six.PY2:
+    requirements = 'requirements.txt'
+else:
+    requirements = 'requirements-py3.txt'
+
+with open(path.join(here, requirements)) as f:
     requirements = []
     for line in f:
         # Skip lines with hash values

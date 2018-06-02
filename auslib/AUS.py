@@ -3,7 +3,7 @@ from random import randint
 
 try:
     from urlparse import urlparse
-except:
+except ImportError:
     from urllib import parse as urlparse
 
 import logging

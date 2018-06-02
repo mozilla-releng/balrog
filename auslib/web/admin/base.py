@@ -12,7 +12,7 @@ from specsynthase.specbuilder import SpecBuilder
 
 try:
     from urllib import unquote
-except:
+except ImportError:
     from urllib.parse import unquote
 
 
