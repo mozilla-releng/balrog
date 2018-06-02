@@ -1,5 +1,6 @@
 import json
 import logging
+import six
 import socket
 import sys
 import traceback
@@ -34,6 +35,8 @@ class BalrogLogger(logging.Logger):
             except RuntimeError:
                 pass
             extra['requestid'] = requestid
+        if six.PY2:
+            return logging.Logger.makeRecord(self, name, level, fn, lno, msg, args, exc_info, func, extra)
         return logging.Logger.makeRecord(self, name, level, fn, lno, msg, args, exc_info, func, extra, sinfo)
 
 
