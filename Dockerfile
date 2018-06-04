@@ -5,7 +5,7 @@ MAINTAINER bhearsum@mozilla.com
 # Some versions of the python:2.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
 # libmariadbclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 # mysql-client is needed to import sample data, which we do in dev & stage.
-# xz-utils is needed to compress production database dumps
+# xz-utils is needed to compress production database dumps.
 RUN apt-get -q update \
     && apt-get -q --yes install libpcre3 libpcre3-dev libmariadbclient-dev mysql-client xz-utils \
     && apt-get clean
