@@ -8,14 +8,21 @@ FROM python:2.7-slim
 MAINTAINER bhearsum@mozilla.com
 
 # Some versions of the python:2.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
-# Node and npm are to build the frontend. nodejs-legacy is needed by this version of npm.
+# Nodejs is needed to build the frontend.
 # mysql-client is needed to import sample data
-# libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
+# libmariadbclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 # libfontconfig1 is required by phantomjs
 # git is needed to send coverage information
+# gcc is needed to build the mysql-connector python package
+# gnupg is needed to enable the nodejs repo (and then removed after that's done)
 RUN apt-get -q update \
-    && apt-get -q --yes install netcat libpcre3 libpcre3-dev nodejs nodejs-legacy npm libmysqlclient-dev mysql-client \
-                                libfontconfig1 netcat git curl \
+    && apt-get -q --yes install netcat libpcre3 libpcre3-dev libmariadbclient-dev mysql-client \
+                                libfontconfig1 git curl gnupg gcc \
+    && curl -sL https://deb.nodesource.com/setup_8.x | bash - \
+    && apt-get -q update \
+    && apt-get -q --yes install nodejs \
+    && apt-get -q --yes remove gnupg \
+    && apt-get -q --yes autoremove \
     && apt-get clean
 
 WORKDIR /app
