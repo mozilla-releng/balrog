@@ -3,26 +3,19 @@
 # system locations (some system packages and some python packages).
 # Things that are fully local to /app (such as npm requirements and the built UI)
 # are done as needed in the entrypoint.
-FROM python:2.7-slim
+FROM python:2.7-slim-jessie
 
 MAINTAINER bhearsum@mozilla.com
 
 # Some versions of the python:2.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
-# Nodejs is needed to build the frontend.
+# Node and npm are to build the frontend. nodejs-legacy is needed by this version of npm.
 # mysql-client is needed to import sample data
-# libmariadbclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
+# libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 # libfontconfig1 is required by phantomjs
 # git is needed to send coverage information
-# gcc is needed to build the mysql-connector python package
-# gnupg is needed to enable the nodejs repo (and then removed after that's done)
 RUN apt-get -q update \
-    && apt-get -q --yes install netcat libpcre3 libpcre3-dev libmariadbclient-dev mysql-client \
-                                libfontconfig1 git curl gnupg gcc \
-    && curl -sL https://deb.nodesource.com/setup_8.x | bash - \
-    && apt-get -q update \
-    && apt-get -q --yes install nodejs \
-    && apt-get -q --yes remove gnupg \
-    && apt-get -q --yes autoremove \
+    && apt-get -q --yes install netcat libpcre3 libpcre3-dev nodejs nodejs-legacy npm libmysqlclient-dev mysql-client \
+                                libfontconfig1 netcat git curl \
     && apt-get clean
 
 WORKDIR /app
