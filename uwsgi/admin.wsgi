@@ -37,7 +37,7 @@ configure_logging(**logging_kwargs)
 from auslib.web.admin.base import app as application
 from auslib.global_state import cache, dbo
 
-cache.make_copies = True
+cache.make_copies = False
 # We explicitly don't want a blob_version cache here because it will cause
 # issues where we run multiple instances of the admin app. Even though each
 # app will update its caches when it updates the db, the others would still
