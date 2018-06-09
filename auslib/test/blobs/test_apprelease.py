@@ -6,10 +6,11 @@ except ImportError:
 
 import logging
 import mock
-import six
 import unittest
 
 import pytest
+
+from six import assertCountEqual
 
 from auslib.AUS import SUCCEED, FAIL
 from auslib.global_state import dbo
@@ -293,16 +294,7 @@ class TestReleaseBlobV1(unittest.TestCase):
                                                      self.whitelistedDomains))
 
 
-class Py3CompatibleTestCase(unittest.TestCase):
-    def __init__(self, *args, **kwargs):
-        super(Py3CompatibleTestCase, self).__init__(*args, **kwargs)
-        # The six compatible function not working as expected
-        # Raises AttributeError: 'list' object has no attribute 'assertCountEqual'
-        if six.PY3:
-            self.assertItemsEqual = self.assertCountEqual
-
-
-class TestOldVersionSpecialCases(Py3CompatibleTestCase):
+class TestOldVersionSpecialCases(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -358,7 +350,7 @@ class TestOldVersionSpecialCases(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def test3_0(self):
@@ -381,7 +373,7 @@ class TestOldVersionSpecialCases(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def test3_5(self):
@@ -404,7 +396,7 @@ class TestOldVersionSpecialCases(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def test3_6(self):
@@ -427,7 +419,7 @@ class TestOldVersionSpecialCases(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
@@ -456,7 +448,7 @@ class TestNewStyleVersionBlob(unittest.TestCase):
         self.assertEquals(blob.getAppVersion('f', 'g'), blob.getApplicationVersion('f', 'g'))
 
 
-class TestSpecialQueryParams(Py3CompatibleTestCase):
+class TestSpecialQueryParams(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -516,7 +508,7 @@ class TestSpecialQueryParams(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSpecialQueryParamForced(self):
@@ -539,7 +531,7 @@ class TestSpecialQueryParams(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSpecialQueryParamForcedFail(self):
@@ -562,7 +554,7 @@ class TestSpecialQueryParams(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testNonSpecialQueryParam(self):
@@ -585,7 +577,7 @@ class TestSpecialQueryParams(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testNonSpecialQueryParamForced(self):
@@ -608,7 +600,7 @@ class TestSpecialQueryParams(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testNoSpecialDefined(self):
@@ -631,11 +623,11 @@ class TestSpecialQueryParams(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
-class TestSchema2Blob(Py3CompatibleTestCase):
+class TestSchema2Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -862,7 +854,7 @@ class TestSchema2Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema2WithPartial(self):
@@ -887,7 +879,7 @@ class TestSchema2Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema2WithOptionalAttributes(self):
@@ -912,7 +904,7 @@ class TestSchema2Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema2WithIsOSUpdate(self):
@@ -937,7 +929,7 @@ class TestSchema2Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testAllowedDomain(self):
@@ -951,7 +943,7 @@ class TestSchema2Blob(Py3CompatibleTestCase):
                                                      self.whitelistedDomains))
 
 
-class TestSchema2BlobNightlyStyle(Py3CompatibleTestCase):
+class TestSchema2BlobNightlyStyle(unittest.TestCase):
 
     maxDiff = 2000
 
@@ -1033,7 +1025,7 @@ class TestSchema2BlobNightlyStyle(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testCompleteAndPartial(self):
@@ -1058,7 +1050,7 @@ class TestSchema2BlobNightlyStyle(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testForbiddenDomainInLocale(self):
@@ -1075,7 +1067,7 @@ class TestSchema2BlobNightlyStyle(Py3CompatibleTestCase):
                                                      self.whitelistedDomains))
 
 
-class TestSchema3Blob(Py3CompatibleTestCase):
+class TestSchema3Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -1394,7 +1386,7 @@ class TestSchema3Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
@@ -1418,7 +1410,7 @@ class TestSchema3Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema3NoPartial(self):
@@ -1441,7 +1433,7 @@ class TestSchema3Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema3NoPartialBlock(self):
@@ -1464,7 +1456,7 @@ class TestSchema3Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema3FtpSubstitutions(self):
@@ -1489,7 +1481,7 @@ class TestSchema3Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema3BouncerSubstitutions(self):
@@ -1514,7 +1506,7 @@ class TestSchema3Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testAllowedDomain(self):
@@ -1539,7 +1531,7 @@ class TestSchema3Blob(Py3CompatibleTestCase):
                                                      self.whitelistedDomains))
 
 
-class TestSchema4Blob(Py3CompatibleTestCase):
+class TestSchema4Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -1914,7 +1906,7 @@ class TestSchema4Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
@@ -1938,7 +1930,7 @@ class TestSchema4Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
@@ -1962,7 +1954,7 @@ class TestSchema4Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema4NoPartials(self):
@@ -1985,7 +1977,7 @@ class TestSchema4Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
@@ -2007,7 +1999,7 @@ class TestSchema4Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
@@ -2029,7 +2021,7 @@ class TestSchema4Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema4MismatchedLocalePartialsAndFileUrls(self):
@@ -2188,7 +2180,7 @@ class TestSchema4Blob(Py3CompatibleTestCase):
                                                      self.whitelistedDomains))
 
 
-class TestSchema5Blob(Py3CompatibleTestCase):
+class TestSchema5Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -2463,11 +2455,11 @@ class TestSchema5Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
-class TestSchema6Blob(Py3CompatibleTestCase):
+class TestSchema6Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -2664,7 +2656,7 @@ class TestSchema6Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testCheckFailForUnsuportedAttributes(self):
@@ -2735,7 +2727,7 @@ class TestSchema6Blob(Py3CompatibleTestCase):
         self.assertRaises(BlobValidationError, self.blobH3.validate, 'h', self.whitelistedDomains)
 
 
-class TestSchema8Blob(Py3CompatibleTestCase):
+class TestSchema8Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -2856,11 +2848,11 @@ class TestSchema8Blob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
-class TestSchema9Blob(Py3CompatibleTestCase):
+class TestSchema9Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -3012,7 +3004,7 @@ class TestSchema9Blob(Py3CompatibleTestCase):
             '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>'
         ]
         expected = [x.strip() for x in expected]
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
 
         returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         expected_footer = "</update>"
@@ -3037,7 +3029,7 @@ class TestSchema9Blob(Py3CompatibleTestCase):
             '<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>'
         ]
         expected = [x.strip() for x in expected]
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
 
         returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         expected_footer = "</update>"
@@ -3062,7 +3054,7 @@ class TestSchema9Blob(Py3CompatibleTestCase):
             '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>'
         ]
         expected = [x.strip() for x in expected]
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
 
         returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         expected_footer = "</update>"
@@ -3087,7 +3079,7 @@ class TestSchema9Blob(Py3CompatibleTestCase):
             '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>'
         ]
         expected = [x.strip() for x in expected]
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
 
         returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         expected_footer = "</update>"
@@ -3266,7 +3258,7 @@ def testSchema9CannotCreateBlobWithConflictingFields(for1, for2):
     assert "Multiple values found for updateLine items: detailsURL" in str(excinfo.value)
 
 
-class TestDesupportBlob(Py3CompatibleTestCase):
+class TestDesupportBlob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -3299,7 +3291,7 @@ class TestDesupportBlob(Py3CompatibleTestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testBrokenDesupport(self):
