@@ -93,7 +93,7 @@ def annotateRevisionDifferences(revisions):
                 except ValueError:
                     pass
             elif isinstance(value, int):
-                value = text_type(str(value), 'utf8')
+                value = text_type(value)
             elif not isinstance(value, string_types):
                 value = text_type(value, 'utf8')
             rev[key] = value

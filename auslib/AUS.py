@@ -4,7 +4,7 @@ from random import randint
 try:
     from urlparse import urlparse
 except ImportError:
-    from urllib import parse as urlparse
+    from urllib.parse import urlparse
 
 import logging
 

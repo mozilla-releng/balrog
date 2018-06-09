@@ -6,6 +6,7 @@ except ImportError:
 
 import logging
 import mock
+import six
 import unittest
 
 import pytest
@@ -292,7 +293,16 @@ class TestReleaseBlobV1(unittest.TestCase):
                                                      self.whitelistedDomains))
 
 
-class TestOldVersionSpecialCases(unittest.TestCase):
+class Py3CompatibleTestCase(unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super(Py3CompatibleTestCase, self).__init__(*args, **kwargs)
+        # The six compatible function not working as expected
+        # Raises AttributeError: 'list' object has no attribute 'assertCountEqual'
+        if six.PY3:
+            self.assertItemsEqual = self.assertCountEqual
+
+
+class TestOldVersionSpecialCases(Py3CompatibleTestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -446,7 +456,7 @@ class TestNewStyleVersionBlob(unittest.TestCase):
         self.assertEquals(blob.getAppVersion('f', 'g'), blob.getApplicationVersion('f', 'g'))
 
 
-class TestSpecialQueryParams(unittest.TestCase):
+class TestSpecialQueryParams(Py3CompatibleTestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -625,7 +635,7 @@ class TestSpecialQueryParams(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
-class TestSchema2Blob(unittest.TestCase):
+class TestSchema2Blob(Py3CompatibleTestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -941,7 +951,8 @@ class TestSchema2Blob(unittest.TestCase):
                                                      self.whitelistedDomains))
 
 
-class TestSchema2BlobNightlyStyle(unittest.TestCase):
+class TestSchema2BlobNightlyStyle(Py3CompatibleTestCase):
+
     maxDiff = 2000
 
     def setUp(self):
@@ -1064,7 +1075,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
                                                      self.whitelistedDomains))
 
 
-class TestSchema3Blob(unittest.TestCase):
+class TestSchema3Blob(Py3CompatibleTestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -1528,7 +1539,7 @@ class TestSchema3Blob(unittest.TestCase):
                                                      self.whitelistedDomains))
 
 
-class TestSchema4Blob(unittest.TestCase):
+class TestSchema4Blob(Py3CompatibleTestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -2177,7 +2188,7 @@ class TestSchema4Blob(unittest.TestCase):
                                                      self.whitelistedDomains))
 
 
-class TestSchema5Blob(unittest.TestCase):
+class TestSchema5Blob(Py3CompatibleTestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -2456,7 +2467,7 @@ class TestSchema5Blob(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
-class TestSchema6Blob(unittest.TestCase):
+class TestSchema6Blob(Py3CompatibleTestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -2724,7 +2735,7 @@ class TestSchema6Blob(unittest.TestCase):
         self.assertRaises(BlobValidationError, self.blobH3.validate, 'h', self.whitelistedDomains)
 
 
-class TestSchema8Blob(unittest.TestCase):
+class TestSchema8Blob(Py3CompatibleTestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -2849,7 +2860,7 @@ class TestSchema8Blob(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
-class TestSchema9Blob(unittest.TestCase):
+class TestSchema9Blob(Py3CompatibleTestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
@@ -3252,10 +3263,10 @@ def testSchema9CannotCreateBlobWithConflictingFields(for1, for2):
     blob = ReleaseBlobV9(**bad_blob)
     with pytest.raises(BlobValidationError) as excinfo:
         blob.validate("h", {'a.com': ('h',)})
-    assert "Multiple values found for updateLine items: detailsURL" in excinfo.value
+    assert "Multiple values found for updateLine items: detailsURL" in str(excinfo.value)
 
 
-class TestDesupportBlob(unittest.TestCase):
+class TestDesupportBlob(Py3CompatibleTestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]

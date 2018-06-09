@@ -75,6 +75,8 @@ def generic(error):
     # Escape exception messages before replying with them, because they may
     # contain user input.
     # See https://bugzilla.mozilla.org/show_bug.cgi?id=1332829 for background.
+    if not hasattr(error, 'message'):
+        error.message = str(error)
     error.message = cgi.escape(error.message)
     if isinstance(error, BadDataError):
         return Response(status=400, mimetype="text/plain", response=error.message)

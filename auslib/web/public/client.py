@@ -1,4 +1,3 @@
-import urllib
 import re
 import sys
 
@@ -10,6 +9,12 @@ from auslib.AUS import AUS, SUCCEED, FAIL
 from auslib.global_state import dbo
 
 import logging
+
+try:
+    from urllib import unquote
+except ImportError:
+    from urllib.parse import unquote
+
 
 AUS = AUS()
 LOG = logging.getLogger(__name__)
@@ -84,7 +89,7 @@ def getQueryFromURL(url):
     if "systemCapabilities" in query:
         query.update(getSystemCapabilities(url["systemCapabilities"]))
         del query["systemCapabilities"]
-    query['osVersion'] = urllib.unquote(query['osVersion'])
+    query['osVersion'] = unquote(query['osVersion'])
     ua = request.headers.get('User-Agent')
     query['headerArchitecture'] = getHeaderArchitecture(query['buildTarget'], ua)
     force = query.get('force')
