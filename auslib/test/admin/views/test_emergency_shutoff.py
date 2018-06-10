@@ -60,6 +60,12 @@ class TestEmergencyShutoff(ViewTest):
         for key in data.keys():
             self.assertEquals(data[key], shutoffs[0][key])
 
+    def test_create_no_permission(self):
+        data = {'product': 'Thunderbird',
+                'channel': 'release'}
+        resp = self._post('/emergency_shutoff', data=data.copy(), username='mary')
+        self.assertStatusCode(resp, 403)
+
     def test_try_create_for_existent_product_channel(self):
         data = {'product': 'Fennec',
                 'channel': 'beta'}
@@ -69,6 +75,11 @@ class TestEmergencyShutoff(ViewTest):
     def test_delete(self):
         resp = self._delete('/emergency_shutoff/Fennec/beta', qs=dict(data_version=1))
         self.assertStatusCode(resp, 200)
+
+    def test_delete_no_permission(self):
+        resp = self._delete('/emergency_shutoff/Fennec/beta',
+                            qs=dict(data_version=1), username='ashanti')
+        self.assertStatusCode(resp, 403)
 
     def test_delete_notfound(self):
         resp = self._delete('/emergency_shutoff/Foo/bar', qs=dict(data_version=1))

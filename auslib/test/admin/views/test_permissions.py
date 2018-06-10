@@ -264,7 +264,7 @@ class TestPermissionsAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 400)
 
     def testPermissionPutWithoutPermission(self):
-        ret = self._put('/users/bob/permissions/admin', username="joseph")
+        ret = self._put('/users/bob/permissions/admin', username="julie")
         self.assertStatusCode(ret, 403)
 
     def testPermissionDelete(self):
@@ -284,7 +284,7 @@ class TestPermissionsAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 400)
 
     def testPermissionDeleteWithoutPermission(self):
-        ret = self._delete("/users/bob/permissions/permission", qs=dict(data_version=1), username="anna")
+        ret = self._delete("/users/bob/permissions/permission", qs=dict(data_version=1), username="ashanti")
         self.assertStatusCode(ret, 403)
 
     def testPermissionDeleteRequiresSignoff(self):

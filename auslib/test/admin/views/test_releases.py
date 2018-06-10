@@ -397,9 +397,14 @@ class TestReleasesAPI_JSON(ViewTest):
 }
 """))
 
-    def testReleasePostCreatesNewReleaseNopermission(self):
+    def testReleasePostCreatesNewReleaseNoAuthentication(self):
         data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='e', hashFunction="sha512"))
-        ret = self._post('/releases/e', data=dict(data=data, product='e', schema_version=1), username="kate")
+        ret = self._post('/releases/e', data=dict(data=data, product='e', schema_version=1), username=None)
+        self.assertStatusCode(ret, 401)
+
+    def testReleasePostCreatesNewReleaseNoPermission(self):
+        data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='e', hashFunction="sha512"))
+        ret = self._post('/releases/e', data=dict(data=data, product='e', schema_version=1), username="mary")
         self.assertStatusCode(ret, 403)
 
     def testReleasePostCreatesNewReleasev2(self):
@@ -606,6 +611,11 @@ class TestReleasesAPI_JSON(ViewTest):
         data = json.dumps(dict(complete=dict(filesize='435')))
         ret = self._put('/releases/ab/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 400)
+
+    def testLocalePutWithoutAuthentication(self):
+        data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}'
+        ret = self._put('/releases/ab/builds/p/l', username=None, data=dict(data=data, product='a', data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 401)
 
     def testLocalePutWithoutPermission(self):
         data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}'
