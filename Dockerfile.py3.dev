@@ -1,5 +1,5 @@
 
-FROM python:3.6-slim
+FROM python:3.6-slim-jessie
 
 MAINTAINER bhearsum@mozilla.com
 
