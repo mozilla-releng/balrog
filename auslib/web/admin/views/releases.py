@@ -1,5 +1,6 @@
 import difflib
 import simplejson as json
+import six
 
 from sqlalchemy.sql.expression import null
 import connexion
@@ -557,9 +558,9 @@ class ReleaseFieldView(AdminView):
         elif value is None:
             value = 'NULL'
         elif isinstance(value, integer_types):
-            value = text_type(str(value), 'utf8')
+            value = str(value)
         else:
-            value = text_type(value, 'utf8')
+            value = text_type(value, 'utf8') if six.PY2 else str(value)
         return value
 
     def get(self, change_id, field):

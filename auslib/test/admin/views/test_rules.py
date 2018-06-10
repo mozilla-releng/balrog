@@ -1,5 +1,7 @@
 import mock
 
+from six import assertCountEqual
+
 from auslib.global_state import dbo
 from auslib.test.admin.views.base import ViewTest
 from auslib.util.comparison import operators
@@ -647,7 +649,7 @@ class TestSingleRuleView_JSON(ViewTest):
     def testPostWithRequiredSignoff(self):
         ret = self._post("/rules/4", data=dict(product="c", channel="c", data_version=1))
         self.assertEquals(ret.status_code, 400)
-        self.assertIn("This change requires signoff", ret.get_data())
+        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
 
     # Regression test for https://bugzilla.mozilla.org/show_bug.cgi?id=1375670
     def testPostWithRequiredSignoffForProductOnly(self):
@@ -1043,7 +1045,7 @@ class TestSingleColumn_JSON(ViewTest):
         ret = self._get("/rules/columns/product")
         returned_data = ret.get_json()
         self.assertEquals(returned_data['count'], expected['count'])
-        self.assertItemsEqual(returned_data['product'], expected['product'])
+        assertCountEqual(self, returned_data['product'], expected['product'])
 
     def testGetRuleColumn404(self):
         ret = self.client.get("/rules/columns/blah")
@@ -1600,7 +1602,7 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._delete("/rules/1", qs=dict(data_version=1))
         self.assertEquals(ret.status_code, 400, ret.get_data())
         self.assertEquals(ret.mimetype, "application/json")
-        self.assertIn("Cannot delete rows that have", ret.get_data())
+        self.assertIn("Cannot delete rows that have", ret.get_data(as_text=True))
 
     def testDeleteScheduledChange(self):
         ret = self._delete("/scheduled_changes/rules/1", qs=dict(data_version=1))

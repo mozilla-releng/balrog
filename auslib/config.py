@@ -1,5 +1,9 @@
-from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
 import logging
+
+try:
+    from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
+except ImportError:
+    from configparser import RawConfigParser, NoSectionError, NoOptionError
 
 
 class AUSConfig(object):

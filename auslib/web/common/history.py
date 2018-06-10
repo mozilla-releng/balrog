@@ -1,5 +1,6 @@
 import json
 import time
+import six
 from connexion import request
 from flask import Response, jsonify
 from six import text_type, string_types
@@ -95,7 +96,7 @@ def annotateRevisionDifferences(revisions):
             elif isinstance(value, int):
                 value = text_type(value)
             elif not isinstance(value, string_types):
-                value = text_type(value, 'utf8')
+                value = text_type(value, 'utf8') if six.PY2 else str(value)
             rev[key] = value
 
         rev['_different'] = different

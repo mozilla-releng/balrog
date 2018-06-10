@@ -1,5 +1,7 @@
 import unittest
 
+from six import assertCountEqual
+
 from auslib.blobs.gmp import GMPBlobV1
 from auslib.errors import BadDataError
 
@@ -143,7 +145,7 @@ class TestSchema1Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</addons>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testGMPUpdateWithAlias(self):
@@ -166,7 +168,7 @@ class TestSchema1Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</addons>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testGMPUpdateSingleAddons(self):
@@ -187,7 +189,7 @@ class TestSchema1Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</addons>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testGMPUpdateMultipleAddons(self):
@@ -210,7 +212,7 @@ class TestSchema1Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</addons>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testGMPWithForbiddenDomain(self):
@@ -229,7 +231,7 @@ class TestSchema1Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</addons>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        self.assertItemsEqual(returned, expected)
+        assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testContainsForbiddenDomain(self):
