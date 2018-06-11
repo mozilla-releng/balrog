@@ -12,7 +12,7 @@ import logging
 
 try:
     from urllib import unquote
-except ImportError:
+except ImportError: # pragma: no cover
     from urllib.parse import unquote
 
 
