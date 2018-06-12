@@ -75,16 +75,14 @@ def generic(error):
     # Escape exception messages before replying with them, because they may
     # contain user input.
     # See https://bugzilla.mozilla.org/show_bug.cgi?id=1332829 for background.
-    if not hasattr(error, 'message'):
-        error.message = str(error)
-    error.message = cgi.escape(error.message)
+    message = cgi.escape(str(error))
     if isinstance(error, BadDataError):
-        return Response(status=400, mimetype="text/plain", response=error.message)
+        return Response(status=400, mimetype="text/plain", response=message)
 
     if sentry.client:
         sentry.captureException()
 
-    return Response(status=500, mimetype="text/plain", response=error.message)
+    return Response(status=500, mimetype="text/plain", response=message)
 
 
 # Keeping static files endpoints here due to an issue when returning response for static files.
