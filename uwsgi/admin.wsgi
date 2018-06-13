@@ -1,6 +1,8 @@
 import logging
 import os
 
+from flask_wtf.csrf import CSRFProtect
+
 from auslib.log import configure_logging
 
 SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "seabld"]
@@ -67,6 +69,18 @@ dbo.setDomainWhitelist(DOMAIN_WHITELIST)
 application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
 application.config["PAGE_TITLE"] = "Balrog Administration"
 application.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+
+class JSONCSRFProtect(CSRFProtect):
+    def _get_csrf_token(self):
+        from flask import current_app, request
+        token = CSRFProtect._get_csrf_token(self)
+        if not token:
+            field_name = current_app.config["WTF_CSRF_FIELD_NAME"]
+            token = request.json.get(field_name)
+        return token
+
+
+JSONCSRFProtect(application)
 
 if os.environ.get("SENTRY_DSN"):
     application.config["SENTRY_DSN"] = os.environ.get("SENTRY_DSN")
