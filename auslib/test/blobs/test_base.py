@@ -40,7 +40,7 @@ class TestCreateBlob(unittest.TestCase):
         self.assertRaises(ValueError, createBlob, dict(schema_version=666))
 
     def testSchemaCaching(self):
-        with mock.patch("yaml.load") as yaml_load:
+        with mock.patch("yaml.safe_load") as yaml_load:
             yaml_load.return_value = {
                 "title": "Test",
                 "type": "object",
