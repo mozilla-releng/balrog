@@ -4,7 +4,7 @@ from jsonschema.compat import str_types
 import logging
 import operator
 
-from auslib.util.comparison import get_op
+from auslib.util.comparison import get_op, strip_operator
 from auslib.util.versions import MozillaVersion
 
 logger = logging.getLogger(__name__)
@@ -24,6 +24,10 @@ def operator_validator(field_value):
     except TypeError:
         # get_op field returns None if no operator or no match, can't be unpacked
         raise jsonschema.ValidationError("Invalid input for buildID : %s. No Operator or Match found." % field_value)
+    try:
+        int(strip_operator(field_value))
+    except ValueError:
+        raise jsonschema.ValidationError("Invalid input for buildID: must be an integer.")
     return True
 
 
@@ -148,6 +152,6 @@ def ascii_validator(field_value):
     try:
         field_value.encode("ascii")
     except UnicodeEncodeError:
-        return False
+        raise jsonschema.ValidationError("value must be ascii")
 
     return True
