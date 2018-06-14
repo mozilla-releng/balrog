@@ -239,6 +239,12 @@ class TestRulesAPI_JSON(ViewTest):
             self.assertEquals(len(r), 1)
             self.assertEquals(r[0]['buildID'], '%s20010101000000' % op)
 
+    def testBuildIDDoesntAcceptStrings(self):
+        for buildid in ('abcdef', '<abcdef'):
+            ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
+                             product='Firefox', channel="nightly", update_type='minor', buildID=buildid))
+            self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
     def testVersionListValidInput(self):
         for validVersionList in ('3.3,4.2', '3.1.3,4.2'):
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
