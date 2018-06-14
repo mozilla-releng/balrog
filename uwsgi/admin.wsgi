@@ -68,6 +68,27 @@ application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
 application.config["PAGE_TITLE"] = "Balrog Administration"
 application.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
 
+# Secure cookies should be enabled when we're using https (otherwise the
+# session cookie won't get set, and that will cause CSRF failures).
+# For now, this means disabling it for local development. In the future
+# we should start using self signed SSL for local dev, so we can enable it.
+if not os.environ.get("INSECURE_SESSION_COOKIE"):
+    application.config["SESSION_COOKIE_SECURE"] = True
+
+# HttpOnly cookies can only be accessed by the browser (not javascript).
+# This helps mitigate XSS attacks.
+# https://www.owasp.org/index.php/HttpOnly#What_is_HttpOnly.3F
+application.config["SESSION_COOKIE_HTTPONLY"] = True
+
+# Strict Samesite cookies means that the session cookie will never be sent
+# when loading any page or making any request where the referrer is some
+# other site. For example, a link to Balrog from Gmail will not send the session
+# cookie. Our session cookies are only necessary for POST/PUT/DELETE, so this
+# won't break anything in the UI, but it provides the most secure protection.
+# When we re-work auth, we may need to switch to Lax samesite cookies.
+# https://tools.ietf.org/html/draft-west-first-party-cookies-07#section-4.1.1
+application.config["SESSION_COOKIE_SAMESITE"] = "Strict"
+
 if os.environ.get("SENTRY_DSN"):
     application.config["SENTRY_DSN"] = os.environ.get("SENTRY_DSN")
     from auslib.web.admin.base import sentry
