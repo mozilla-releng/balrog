@@ -239,6 +239,7 @@ definitions:
       channel:
         description: The update channel that the client must send in order for the rule to match. "*" can be used to glob at the end of the channel name.
         type: ["string", "null"]
+        format: ascii
         minLength: 0
         maxLength: 75
         example: beta

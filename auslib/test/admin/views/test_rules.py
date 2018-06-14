@@ -1,3 +1,4 @@
+# This Python file uses the following encoding: utf-8
 import json
 import mock
 
@@ -54,6 +55,11 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEquals(r[0]['backgroundRate'], 31)
         self.assertEquals(r[0]['priority'], 33)
         self.assertEquals(r[0]['data_version'], 1)
+
+    def testNewRulePostWithUnicode(self):
+        ret = self._post('/rules', data=dict(backgroundRate=31, mapping='c', priority=33,
+                                             product='Firefox', update_type='minor', channel='nightlyÁ'))
+        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
     def testBackgroundRateZero(self):
         ret = self._post('/rules', data=dict(backgroundRate=0, mapping='c', priority=33,
