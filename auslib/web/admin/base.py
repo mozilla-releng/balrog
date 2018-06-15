@@ -7,6 +7,7 @@ import auslib
 from os import path
 from flask import request
 from flask_compress import Compress
+from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import BalrogRequestBodyValidator
 from raven.contrib.flask import Sentry
 from specsynthase.specbuilder import SpecBuilder
@@ -57,6 +58,11 @@ def ise(error):
     log.debug("Request environment is: %s", request.environ)
     log.debug("Request headers are: %s", request.headers)
     return error
+
+
+@app.errorhandler(UnicodeEncodeError)
+def unicode(error):
+    return problem(400, "Unicode Error", "Connexion was unable to parse some unicode data correctly.")
 
 
 @app.after_request
