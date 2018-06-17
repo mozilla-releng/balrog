@@ -74,7 +74,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests-py3.sh backend"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh backend py36"
       features:
         dind: true
         taskclusterProxy: true
