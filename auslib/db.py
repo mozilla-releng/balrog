@@ -1872,72 +1872,31 @@ class Releases(AUSTable):
         return self.getReleaseInfo(nameOnly=True, **kwargs)
 
     def getReleaseBlob(self, name, transaction=None):
-        # Putting the data_version and blob getters into these methods lets us
-        # delegate the decision about whether or not to use the cached values
-        # to the cache class. It will either return as a cached value, or use
-        # the getter to return a fresh value (and cache it).
-        def getDataVersion():
-            try:
-                return self.select(where=[self.name == name], columns=[self.data_version], limit=1, transaction=transaction)[0]
-            except IndexError:
-                raise KeyError("Couldn't find release with name '%s'" % name)
-
-        data_version = cache.get("blob_version", name, getDataVersion)
-
-        def getBlob():
-            try:
-                row = self.select(where=[self.name == name], columns=[self.data], limit=1, transaction=transaction)[0]
-                blob = row['data']
-                return {"data_version": data_version, "blob": blob}
-            except IndexError:
-                raise KeyError("Couldn't find release with name '%s'" % name)
-
-        def get_data_version(obj):
-            if isinstance(obj, int):
-                return obj
-            return obj["data_version"]
-
-        cached_blob = cache.get("blob", name, getBlob)
-
-        # Even though we may have retrieved a cached blob, we need to make sure
-        # that it's not older than the one in the database. If the data version
-        # of the cached blob and the latest data version don't match, we need
-        # to update the cache with the latest blob.
-        if get_data_version(data_version) > get_data_version(cached_blob["data_version"]):
-            blob_info = getBlob()
-            cache.put("blob", name, blob_info)
-            blob = blob_info["blob"]
-        else:
-            # And while it's extremely unlikely, there is a remote possibility
-            # that the cached blob actually has a newer data version than the
-            # blob version cache. This can occur if the blob cache expired
-            # between retrieving the cached data version and cached blob.
-            # (Because the blob version cache ttl should be shorter than the
-            # blob cache ttl, if the blob cache expired prior to retrieving the
-            # data version, the blob version cache would've expired as well.
-            # If we hit one of these cases, we should bring the blob version
-            # cache up to date since we have it.
-            if get_data_version(cached_blob["data_version"]) > get_data_version(data_version):
-                cache.put("blob_version", name, data_version)
-            blob = cached_blob["blob"]
-            
+        blob = next(iter(self.getReleaseBlobs(names=[name], transaction=transaction).values()))
         return blob
 
     def getReleaseBlobs(self, names, transaction=None):
         blobs = {}
         uncached = []
+
+        # get data_versions for all blobs
+        dv_query = self.select(where=[self.name.in_(tuple(names))], columns=[self.name, self.data_version], transaction=transaction)
+        data_versions = {row['name']: row['data_version'] for row in dv_query}
+
         for name in names:
             cached_blob = cache.get('blob', name)
-            if cached_blob:
-                blobs.update({name: cached_blob})
+            # Also make sure that the cached blob is not older than the one in database
+            if cached_blob and cached_blob['data_version'] >= data_versions.get(name):
+                blobs.update({name: cached_blob['data']})
             else:
                 uncached.append(name)
 
-        q = self.select(where=[self.name.in_(tuple(uncached))], columns=[self.name, self.data, self.data_version], transaction=transaction)
-        for row in q:
-# TODO: investigate what's slowing down cache.put
-#            cache.put('blob', row['name'], row['data'])
+        # We now get all blobs that are not in cache
+        query = self.select(where=[self.name.in_(tuple(uncached))], columns=[self.name, self.data, self.data_version], transaction=transaction)
+        for row in query:
+            cache.put('blob', row['name'], row)  # update cache
             blobs.update({row['name']: row['data']})
+
         if not blobs:
             raise KeyError("Coudn't find releases with names {}".format(",".join(names)))
         return blobs
