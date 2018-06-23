@@ -1,5 +1,4 @@
 include requirements.txt
-include requirements-py3.txt
 include version.txt
 
 recursive-include auslib/migrate *

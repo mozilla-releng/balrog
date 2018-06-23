@@ -17,8 +17,8 @@ WORKDIR /app
 
 # The general app requirements and packages required to run Tox are installed into the system.
 # We copy them in early to avoid re-installing them unless absolutely necessary.
-COPY requirements-py3.txt requirements-tox.txt /app/
-RUN pip install -r requirements-py3.txt
+COPY requirements.txt requirements-tox.txt /app/
+RUN pip install -r requirements.txt
 RUN pip install -r requirements-tox.txt
 
 COPY aus-data-snapshots/ /app/aus-data-snapshots/
@@ -26,7 +26,7 @@ COPY auslib/ /app/auslib/
 COPY ui/ /app/ui/
 COPY scripts/ /app/scripts/
 COPY uwsgi/ /app/uwsgi/
-COPY MANIFEST.in requirements-test-py3.txt setup.py tox.ini version.json version.txt /app/
+COPY MANIFEST.in requirements-test.txt setup.py tox.ini version.json version.txt /app/
 
 # Using /bin/bash as the entrypoint works around some volume mount issues on Windows
 # where volume-mounted files do not have execute bits set.
