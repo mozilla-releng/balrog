@@ -14,6 +14,8 @@ services:
       - bash
       - scripts/initdb_and_run.sh
     command: admin-dev
+    ports:
+      - "7070:7070"
     expose:
       - "7070"
     volumes:
