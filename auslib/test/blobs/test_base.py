@@ -86,7 +86,8 @@ def test_merge_lists_unique_items_present(base, left_additional, right_additiona
     expected = list(set(deepcopy(base) + left_additional + right_additional))
     got = merge_lists(base, left, right)
     assert len(got) == len(expected)
-    assert all([expected_item in got for expected_item in expected])
+    assert all([expected_item in expected + got for expected_item in expected])
+
 
 @given(st.lists(useful_values), st.lists(useful_values))
 def test_merge_lists_no_dupes(base, additional):
@@ -95,7 +96,7 @@ def test_merge_lists_no_dupes(base, additional):
     expected = list(set(left))
     got = merge_lists(base, left, right)
     assert len(got) == len(expected)
-    assert all([expected_item in got for expected_item in expected])
+    assert all([expected_item in expected + got for expected_item in expected])
 
 
 def unique_items_only(i):
