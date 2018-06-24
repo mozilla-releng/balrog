@@ -73,11 +73,20 @@ application.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
 class JSONCSRFProtect(CSRFProtect):
     def _get_csrf_token(self):
         from flask import current_app, request
-        token = CSRFProtect._get_csrf_token(self)
-        if not token:
+
+        def get_token():
             field_name = current_app.config["WTF_CSRF_FIELD_NAME"]
-            token = request.json.get(field_name)
-        return token
+            token = CSRFProtect._get_csrf_token(self)
+            yield token
+            if request.json:
+                token = request.json.get(field_name)
+                yield token
+            token = request.args[field_name]
+            yield token
+
+        for token in get_token():
+            if token:
+                return token
 
 
 JSONCSRFProtect(application)
