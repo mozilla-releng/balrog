@@ -97,6 +97,7 @@ services:
       - .cache:/cache
     environment:
       - WEB_PORT=8080
+      - HOST_PROXY=balrogadmin
     entrypoint:
       - /bin/bash
       - /app/docker-entrypoint.sh

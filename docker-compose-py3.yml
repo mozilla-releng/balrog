@@ -96,6 +96,7 @@ services:
       - .cache:/cache
     environment:
       - WEB_PORT=8080
+      - HOST_PROXY=balrogadmin-py3
     entrypoint:
       - /bin/bash
       - /app/docker-entrypoint.sh
