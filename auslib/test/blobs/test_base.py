@@ -118,6 +118,44 @@ json = st.dictionaries(st.text(),
                        max_size=10)
 
 
+def test_merge_dicts_simple_additions():
+    base = {
+        "nothing": "nothing",
+    }
+    left = deepcopy(base)
+    right = deepcopy(base)
+    expected = deepcopy(base)
+    left["foo"] = "foo"
+    right["bar"] = "bar"
+    got = merge_dicts(base, left, right)
+    expected = {
+        "foo": "foo",
+        "bar": "bar",
+        "nothing": "nothing",
+    }
+    assert got == expected
+
+
+def test_merge_dicts_simple_changes():
+    base = {
+        "foo": "oof",
+        "bar": "rab",
+        "nothing": "nothing",
+    }
+    left = deepcopy(base)
+    right = deepcopy(base)
+    expected = deepcopy(base)
+    left["foo"] = "foo"
+    right["bar"] = "bar"
+    got = merge_dicts(base, left, right)
+    expected = {
+        "foo": "foo",
+        "bar": "bar",
+        "nothing": "nothing",
+    }
+    assert got == expected
+
+
 # too_slow health checks are repressed because tests can be slow in CI, and we
 # don't want CI failures due to this.
 @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
