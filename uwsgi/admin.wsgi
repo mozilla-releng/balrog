@@ -75,13 +75,13 @@ class JSONCSRFProtect(CSRFProtect):
         from flask import current_app, request
 
         def get_token():
-            field_name = current_app.config["WTF_CSRF_FIELD_NAME"]
             token = CSRFProtect._get_csrf_token(self)
             yield token
+            field_name = current_app.config["WTF_CSRF_FIELD_NAME"]
             if request.json:
                 token = request.json.get(field_name)
                 yield token
-            token = request.args[field_name]
+            token = request.args.get(field_name)
             yield token
 
         for token in get_token():
