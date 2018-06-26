@@ -1703,6 +1703,7 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         self.assertEquals(ret, expected)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300000))
     def testGetReleaseHistoryWithinTimeRange(self):
         ret = self._get("/releases/history", qs={"timestamp_from": 15, "timestamp_to": 33})
         self.assertEquals(ret.status_code, 200, ret.get_data())
@@ -1847,6 +1848,7 @@ class TestReleaseHistoryView(ViewTest):
         with self.assertRaises(KeyError):
             data['data']
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300000))
     def testGetHistory(self):
         url = '/releases/history'
         ret = self._get(url)
