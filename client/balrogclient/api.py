@@ -119,7 +119,7 @@ class API(object):
             logging.debug('Data sent: %s', sanitised_data)
         else:
             logging.debug('Data sent: %s', data)
-        data = json.dump(data)
+        data = json.dumps(data)
         if method == 'PUT' or method == 'POST':
             data = data.encode('utf-8')
             data = gzip.compress(data)
