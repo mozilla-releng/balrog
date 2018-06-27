@@ -1,5 +1,6 @@
 import logging
 import os
+import six
 
 from flask_wtf.csrf import CSRFProtect
 
@@ -89,7 +90,9 @@ class JSONCSRFProtect(CSRFProtect):
                 return token
 
 
-JSONCSRFProtect(application)
+if six.PY2:
+    JSONCSRFProtect(application)
+
 
 # Secure cookies should be enabled when we're using https (otherwise the
 # session cookie won't get set, and that will cause CSRF failures).
