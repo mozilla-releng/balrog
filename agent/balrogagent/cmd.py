@@ -7,6 +7,8 @@ from collections import defaultdict
 from . import client
 from .changes import get_telemetry_uptake, telemetry_is_ready, time_is_ready
 from .log import configure_logging
+from raven.handlers.logging import SentryHandler
+from raven.conf import setup_logging
 
 SCHEDULED_CHANGE_ENDPOINTS = ['rules',
                               'releases',
@@ -96,6 +98,10 @@ def main():
     if os.environ.get("LOG_FORMAT") == "plain":
         logging_kwargs["formatter"] = logging.Formatter
     configure_logging(**logging_kwargs)
+
+    handler = SentryHandler()
+    handler.setLevel(**logging_kwargs)
+    setup_logging(handler)
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
