@@ -19,6 +19,7 @@ paths:
           in: query
           description: "If 'name_prefix' is passed, only Releases whose name starts with the given prefix will be returned."
           type: string
+          format: ascii
           x-nullable: true
           required: false
         - name: names_only
@@ -49,6 +50,7 @@ paths:
                 uniqueItems: true
                 items:
                   type: string
+                  format: ascii
                   maxLength: 100
           examples:
             application/json:
@@ -136,10 +138,12 @@ paths:
                               minItems: 0
                               items:
                                 type: string
+                                format: ascii
                               example: ["product", "data"]
                             _time_ago:
                               description: Time passed since the particular change
                               type: string
+                              format: ascii
                               example: "1 day ago"
                       required:
                         - name

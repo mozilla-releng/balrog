@@ -4,6 +4,7 @@ parameters:
     in: query
     description: Name of the product to filter the rules/releases against.
     type: string
+    format: ascii
     x-nullable: true
     required: false
 
@@ -12,6 +13,7 @@ parameters:
     in: path
     description: Name of the product.
     type: string
+    format: ascii
     required: true
 
   channelQueryParam:
@@ -19,6 +21,7 @@ parameters:
     in: query
     description: Name of the channel to filter.
     type: string
+    format: ascii
     x-nullable: true
     required: false
 
@@ -27,6 +30,7 @@ parameters:
     in: path
     description: Release channel.
     type: string
+    format: ascii
     required: true
 
   releaseParam:
@@ -34,6 +38,7 @@ parameters:
     in: path
     description: release name
     type: string
+    format: ascii
     maxLength: 100
     required: true
   
@@ -68,6 +73,7 @@ parameters:
     in: path
     description: platform name
     type: string
+    format: ascii
     required: true
 
   localeParam:
@@ -75,6 +81,7 @@ parameters:
     in: path
     description: locale identifier
     type: string
+    format: ascii
     required: true
 
   rule_id_or_alias_param:

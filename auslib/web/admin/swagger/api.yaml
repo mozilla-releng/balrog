@@ -85,6 +85,7 @@ parameters:
     in: path
     description: unique identifier name of the user
     type: string
+    format: ascii
     maxLength: 100
     required: true
 
@@ -93,6 +94,7 @@ parameters:
     in: query
     description: unique identifier name of the user
     type: string
+    format: ascii
     minLength: 1
     maxLength: 100
     x-nullable: true
@@ -103,6 +105,7 @@ parameters:
     in: query
     description: valid csrf token
     type: string
+    format: ascii
     required: true
 
   dataVersionParam:
@@ -119,6 +122,7 @@ parameters:
     in: path
     description: Name of defined column in DB.
     type: string
+    format: ascii
     maxLength: 50
     required: true
 
@@ -135,6 +139,7 @@ parameters:
     in: query
     description: Name of the product to filter the rules/releases against.
     type: string
+    format: ascii
     minLength: 1
     maxLength: 15
     required: true
@@ -144,6 +149,7 @@ parameters:
     in: query
     description: roles are used when signing off on Scheduled Changes
     type: string
+    format: ascii
     minLength: 1
     maxLength: 50
     required: true
@@ -153,6 +159,7 @@ parameters:
     in: query
     description: The update channel of the application request an update.
     type: string
+    format: ascii
     minLength: 1
     maxLength: 75
     required: true
@@ -180,6 +187,7 @@ parameters:
     in: path
     description: user role to grant access to
     type: string
+    format: ascii
     maxLength: 50
     required: true
 
@@ -204,6 +212,7 @@ parameters:
     in: path
     description: name of DB column whose history is requested
     type: string
+    format: ascii
     required: true
 
   change_id_body_param:
@@ -257,6 +266,7 @@ parameters:
     in: query
     description: The username who made the requested changes.
     type: string
+    format: ascii
     x-nullable: true
     required: false
 
@@ -305,6 +315,7 @@ parameters:
     in: query
     description: channel stirng for filtering history.
     type: string
+    format: ascii
     x-nullable: true
     required: false
 
@@ -404,6 +415,7 @@ paths:
             X-CSRF-Token:
               description: token
               type: string
+              format: ascii
           examples:
             text/html: "csrf_token: 1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
 
@@ -519,6 +531,7 @@ paths:
           in: query
           description: The role(s) required for product signoff
           type: string
+          format: ascii
           x-nullable: true
           required: false
       responses:
@@ -553,6 +566,7 @@ paths:
           in: query
           description: The role(s) required for permission signoff
           type: string
+          format: ascii
           x-nullable: true
           required: false
       responses:
@@ -658,6 +672,7 @@ paths:
           in: query
           description: "If 'name_prefix' is passed, only Releases whose name starts with the given prefix will be returned."
           type: string
+          format: ascii
           x-nullable: true
           required: false
         - name: names_only
@@ -694,6 +709,7 @@ paths:
                 uniqueItems: true
                 items:
                   type: string
+                  format: ascii
                   maxLength: 100
           examples:
             application/json:
@@ -1079,10 +1095,12 @@ paths:
                               minItems: 0
                               items:
                                 type: string
+                                format: ascii
                               example: ["product", "data"]
                             _time_ago:
                               description: Time passed since the particular change
                               type: string
+                              format: ascii
                               example: "1 day ago"
                       required:
                         - name
@@ -1464,6 +1482,7 @@ paths:
                 minItems: 0
                 items:
                   type: string
+                  format: ascii
                 example: ["balrogadmin"]
 
   /users/{username}:
@@ -1495,6 +1514,7 @@ paths:
               username:
                 description: unique identifier name of the user
                 type: string
+                format: ascii
                 maxLength: 100
                 minLength: 1
                 example: balrogadmin
@@ -2121,6 +2141,7 @@ paths:
           in: query
           description: "'change_type' value for a scheduled change."
           type: string
+          format: ascii
           enum:
             - insert
             - delete
@@ -3955,6 +3976,7 @@ paths:
               change_type:
                 description: type of change
                 type: string
+                format: ascii
                 enum:
                   - delete
                 minLength: 1
@@ -4118,6 +4140,7 @@ definitions:
     properties:
       csrf_token:
         type: string
+        format: ascii
         example: "1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
 
   DataVersionNullable:
@@ -4175,6 +4198,7 @@ definitions:
       role:
         description: roles are used when signing off on Scheduled Changes
         type: string
+        format: ascii
         minLength: 1
         maxLength: 50
         example: releng
@@ -4187,6 +4211,7 @@ definitions:
       product:
         description: The product name that the client must send in order for the rule to match. Only full string matches are supported.
         type: ["string", "null"]
+        format: ascii
         minLength: 1
         maxLength: 15
         example: Firefox
@@ -4199,6 +4224,7 @@ definitions:
       permission:
         description: Permission name
         type: string
+        format: ascii
         minLength: 1
         maxLength: 50
         enum:
@@ -4214,6 +4240,7 @@ definitions:
       username:
         description: user name
         type: string
+        format: ascii
         minLength: 1
         maxLength: 100
         example: balrogadmin
@@ -4246,6 +4273,7 @@ definitions:
         example: false
       scheduled_by:
         type: string
+        format: ascii
         description: user who scheduled the change
         minLength: 1
         maxLength: 100
@@ -4278,11 +4306,13 @@ definitions:
       telemetry_product:
         description: Name of telemetry product
         type: ["string", "null"]
+        format: ascii
         minLength: 1
         maxLength: 15
       telemetry_channel:
         description: Name of telemetry channel
         type: ["string", "null"]
+        format: ascii
         minLength: 1
         maxLength: 75
       telemetry_uptake:
@@ -4310,6 +4340,7 @@ definitions:
       change_type:
         description: type of change
         type: string
+        format: ascii
         enum:
           - insert
           - update
@@ -4386,6 +4417,7 @@ definitions:
           hashFunction:
             description: cryptographic hash function to assure integrity of transmitted data
             type: string
+            format: ascii
             example: sha512
           schema_version:
             description: The version number of release
@@ -4396,10 +4428,12 @@ definitions:
           copyTo:
             description: List names of releases which the updated data must be copied to
             type: string
+            format: ascii
             format: JSONStringField
           alias:
             description: id of the release
             type: string
+            format: ascii
             format: JSONStringField
     required:
       - product
@@ -4430,12 +4464,14 @@ definitions:
             uniqueItems: true
             items:
               type: string
+              format: ascii
             example: ["Firefox"]
           actions:
             type: array
             uniqueItems: true
             items:
               type: string
+              format: ascii
             example: ["modify"]
 
   UserPermissionsModel:
@@ -4470,6 +4506,7 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
+                      format: ascii
 
         required:
           - data_version
@@ -4508,6 +4545,7 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
+                      format: ascii
         required:
           - data_version
 
@@ -4526,6 +4564,7 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
+                      format: ascii
         required:
           - data_version
 

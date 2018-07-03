@@ -4,7 +4,7 @@ from jsonschema.compat import str_types
 import logging
 import operator
 
-from auslib.util.comparison import get_op
+from auslib.util.comparison import get_op, strip_operator
 from auslib.util.versions import MozillaVersion
 
 logger = logging.getLogger(__name__)
@@ -24,6 +24,10 @@ def operator_validator(field_value):
     except TypeError:
         # get_op field returns None if no operator or no match, can't be unpacked
         raise jsonschema.ValidationError("Invalid input for buildID : %s. No Operator or Match found." % field_value)
+    try:
+        int(strip_operator(field_value))
+    except ValueError:
+        raise jsonschema.ValidationError("Invalid input for buildID: must be an integer.")
     return True
 
 
@@ -137,3 +141,17 @@ def signoffs_required_validator(field_value):
     if field_value is not None and field_value != '':
         logger.debug('starting in signoffs_required_validator: signoffs_required is %s' % field_value)
     return integer_and_range_validator("signoffs_required", field_value, 1)
+
+
+# TODO: Remove this after Balrog properly supports unicode. This is kindof a hacky workaround
+# for the problem described in https://bugzilla.mozilla.org/show_bug.cgi?id=1457893.
+@jsonschema.draft4_format_checker.checks(format="ascii", raises=jsonschema.ValidationError)
+def ascii_validator(field_value):
+    if field_value is None or field_value == '':
+        return True
+    try:
+        field_value.encode("ascii")
+    except UnicodeEncodeError:
+        raise jsonschema.ValidationError("value must be ascii")
+
+    return True
