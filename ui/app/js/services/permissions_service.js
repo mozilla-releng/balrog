@@ -60,7 +60,7 @@ angular.module("app").factory('Permissions', function($http, $q, ScheduledChange
     grantRole: function(username, role, data_version, csrf_token) {
       var url = '/api/users/' + encodeURIComponent(username) + '/roles/';
       url += encodeURIComponent(role);
-      return $http.put(url);
+      return $http.put(url, {'csrf_token': csrf_token});
     },
     revokeRole: function(username, role, csrf_token) {
       var url = '/api/users/' + encodeURIComponent(username) + '/roles/';
