@@ -7,6 +7,7 @@ import logging
 import time
 import requests
 import gzip
+import StringIO
 
 
 def is_csrf_token_expired(token):
@@ -120,13 +121,16 @@ class API(object):
         else:
             logging.debug('Data sent: %s', data)
         data = json.dumps(data)
-        if method == 'PUT' or method == 'POST':
-            data = data.encode('utf-8')
-            data = gzip.compress(data)
         headers = {'Accept-Encoding': 'application/json',
-                   'Accept': 'application/json',
-                   'Content-Type': 'application/json',
-                   'Content-Encoding': 'gzip'}
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'}
+        if method == ('PUT', 'POST'):
+            out = StringIO.StringIO()
+            data = data.encode('utf-8')
+            with gzip.GzipFile(fileobj=out, mode="w") as f:
+                f.write(data)
+            data = out.getvalue()
+            headers['Content-Encoding'] = 'gzip'
         before = time.time()
         req = self.session.request(
             method=method, url=url, data=data, timeout=self.timeout,
