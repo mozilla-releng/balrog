@@ -7,8 +7,11 @@ import logging
 import time
 import requests
 import gzip
-import StringIO
+import sys
 
+#importing StringIO to do gzip compression only if we are using python3 and under
+if (sys.version_info < (3, 0)):
+    import StringIO
 
 def is_csrf_token_expired(token):
     """Checks whether a CSRF token is still valid
@@ -125,12 +128,17 @@ class API(object):
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'}
         if method == ('PUT', 'POST'):
-            out = StringIO.StringIO()
             data = data.encode('utf-8')
-            with gzip.GzipFile(fileobj=out, mode="w") as f:
-                f.write(data)
-            data = out.getvalue()
             headers['Content-Encoding'] = 'gzip'
+            if (sys.version_info > (3, 0)):
+                #if python version is 3.0+ then use the inbuilt gzip compress function
+                data = gzip.compress(data)
+            else:
+                #if python version is less than 3.0 then use StringIO and GzipFile function to compress
+                out = StringIO.StringIO()
+                with gzip.GzipFile(fileobj=out, mode="w") as f:
+                    f.write(data)
+                data = out.getvalue()
         before = time.time()
         req = self.session.request(
             method=method, url=url, data=data, timeout=self.timeout,
