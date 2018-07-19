@@ -28,6 +28,9 @@ async def request(api_root, path, method="GET", data={}, headers=default_headers
                 resp.raise_for_status()
                 data["csrf_token"] = resp.headers["X-CSRF-Token"]
 
+        for c in client.cookie_jar:
+            c["secure"] = False
+
         logging.debug("Sending %s request to %s", method, url)
         async with client.request(method, url, data=json.dumps(data), headers=headers, auth=auth) as resp:
             # Raises on 400 code or higher, we can assume things are good if we make it past this.
