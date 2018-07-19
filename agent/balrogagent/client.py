@@ -28,6 +28,11 @@ async def request(api_root, path, method="GET", data={}, headers=default_headers
                 resp.raise_for_status()
                 data["csrf_token"] = resp.headers["X-CSRF-Token"]
 
+        # Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=1471109
+        # In our deployed environments, the Agent doesn't connect to admin over
+        # https, which means it won't send back the session token by default,
+        # which breaks csrf token validation. Changing the cookies to insecure
+        # will let them be sent back, but it's a horrible back.
         for c in client.cookie_jar:
             c["secure"] = False
 
