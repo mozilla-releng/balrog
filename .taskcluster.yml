@@ -199,8 +199,8 @@ tasks:
         branches:
           - master
     metadata:
-      name: Balrog Docker Image Creation
-      description: Balrog Docker Image Creation
+      name: Balrog Agent Docker Image Creation
+      description: Balrog Agent Docker Image Creation
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
 

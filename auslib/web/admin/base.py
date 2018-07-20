@@ -7,6 +7,7 @@ import auslib
 from os import path
 from flask import request
 from flask_compress import Compress
+from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import BalrogRequestBodyValidator
 from raven.contrib.flask import Sentry
 from specsynthase.specbuilder import SpecBuilder
@@ -57,6 +58,15 @@ def ise(error):
     log.debug("Request environment is: %s", request.environ)
     log.debug("Request headers are: %s", request.headers)
     return error
+
+
+# Connexion's error handling sometimes breaks when parameters contain
+# unicode characters (https://github.com/zalando/connexion/issues/604).
+# To work around, we catch them and return a 400 (which is what Connexion
+# would do if it didn't hit this error).
+@app.errorhandler(UnicodeEncodeError)
+def unicode(error):
+    return problem(400, "Unicode Error", "Connexion was unable to parse some unicode data correctly.")
 
 
 @app.after_request
