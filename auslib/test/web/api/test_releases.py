@@ -1,4 +1,6 @@
 import json
+import mock
+
 from auslib.test.web.api.base import CommonTestBase
 
 
@@ -47,6 +49,7 @@ class TestPublicReleasesAPI(CommonTestBase):
         platform = got["platforms"]["p"]
         self.assertIn("l", platform["locales"])
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300000))
     def test_get_release_history(self):
         ret = self.public_client.get("/api/v1/releases/q/revisions")
         self.assertEqual(ret.status_code, 200)
@@ -70,6 +73,7 @@ class TestPublicReleasesAPI(CommonTestBase):
         ret = self.public_client.get("/api/v1/releases/Firefox.55.0a1/builds/p/404")
         self.assertEqual(ret.status_code, 404)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300000))
     def test_get_revisions_400(self):
         ret = self.public_client.get("/api/v1/releases/q/revisions?page=0")
         self.assertEqual(ret.status_code, 400)
