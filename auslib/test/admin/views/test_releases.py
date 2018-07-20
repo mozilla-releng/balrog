@@ -1757,7 +1757,7 @@ class TestReleasesScheduledChanges(ViewTest):
                         'data_version': 1,
                         'product': 'b',
                         'timestamp': 16,
-                        '_time_ago': '48 years and 585 months ago'
+                        '_time_ago': '48 years ago'
                     }
                 ],
                 'count': 1
@@ -1863,7 +1863,7 @@ class TestReleaseHistoryView(ViewTest):
                         'name': 'b',
                         'change_id': 6,
                         'read_only': 'False',
-                        '_time_ago': '48 years and 584 months ago',
+                        '_time_ago': '48 years ago',
                         'data_version': 1,
                         '_different': [],
                         'timestamp': 16,
@@ -1874,7 +1874,7 @@ class TestReleaseHistoryView(ViewTest):
                         'name': 'd',
                         'change_id': 4,
                         'read_only': 'False',
-                        '_time_ago': '48 years and 584 months ago',
+                        '_time_ago': '48 years ago',
                         'data_version': 1,
                         '_different': ['name', 'data', 'product'],
                         'timestamp': 10, 'product': 'd', 'changed_by': 'bill'
@@ -1883,7 +1883,7 @@ class TestReleaseHistoryView(ViewTest):
                         'name': 'ab',
                         'change_id': 2,
                         'read_only': 'False',
-                        '_time_ago': '48 years and 584 months ago',
+                        '_time_ago': '48 years ago',
                         'data_version': 1,
                         '_different': ['name', 'data', 'product'],
                         'timestamp': 6,
