@@ -2,7 +2,7 @@
 
 set -e
 
-tags=$@
+tags=( $@ )
 
 password_url="taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:dockerhub"
 artifact_url="taskcluster/queue/v1/task/${TASK_ID}/runs/${RUN_ID}/artifacts/public/docker-image-shasum256.txt"
@@ -15,7 +15,7 @@ if [ -z $dockerhub_password ]; then
     echo "Dockerhub password not set, can't continue!"
     exit 1
 fi
-if [ ${#tags[@]} -eq 0 ]; then
+if [ ${#tags[*]} -eq 0 ]; then
     echo "Must pass at least one tag"
     exit 2
 fi
@@ -37,7 +37,7 @@ docker build -t buildtemp .
 echo "Logging into Dockerhub"
 docker login -e $dockerhub_email -u $dockerhub_username -p $dockerhub_password
 
-for tag in ${tags[@]}; do
+for tag in ${tags[*]}; do
     echo "Tagging Docker image with ${tag}"
     docker tag buildtemp "mozilla/balrog:${tag}"
     echo "Pushing Docker image tagged with ${tag}"
