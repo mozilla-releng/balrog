@@ -1757,7 +1757,7 @@ class TestReleasesScheduledChanges(ViewTest):
                         'data_version': 1,
                         'product': 'b',
                         'timestamp': 16,
-                        '_time_ago': '48 years and 585 months ago'
+                        '_time_ago': '48 years ago'
                     }
                 ],
                 'count': 1
@@ -1815,6 +1815,7 @@ class TestReleasesScheduledChanges(ViewTest):
 
 class TestReleaseHistoryView(ViewTest):
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300000))
     def testGetRevisions(self):
         # Make some changes to a release
         data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
@@ -1862,7 +1863,7 @@ class TestReleaseHistoryView(ViewTest):
                         'name': 'b',
                         'change_id': 6,
                         'read_only': 'False',
-                        '_time_ago': '48 years and 584 months ago',
+                        '_time_ago': '48 years ago',
                         'data_version': 1,
                         '_different': [],
                         'timestamp': 16,
@@ -1873,7 +1874,7 @@ class TestReleaseHistoryView(ViewTest):
                         'name': 'd',
                         'change_id': 4,
                         'read_only': 'False',
-                        '_time_ago': '48 years and 584 months ago',
+                        '_time_ago': '48 years ago',
                         'data_version': 1,
                         '_different': ['name', 'data', 'product'],
                         'timestamp': 10, 'product': 'd', 'changed_by': 'bill'
@@ -1882,7 +1883,7 @@ class TestReleaseHistoryView(ViewTest):
                         'name': 'ab',
                         'change_id': 2,
                         'read_only': 'False',
-                        '_time_ago': '48 years and 584 months ago',
+                        '_time_ago': '48 years ago',
                         'data_version': 1,
                         '_different': ['name', 'data', 'product'],
                         'timestamp': 6,
@@ -1919,6 +1920,7 @@ class TestReleaseHistoryView(ViewTest):
             self.assertEquals(revisions[index]['changed_by'], expected_revisions[index]['changed_by'])
         self.assertEquals(len(history_data["revisions"]), 3)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300000))
     def testPostRevisionRollback(self):
         # Make some changes to a release
         data = json.dumps(dict(detailsUrl='beep', fakePartials=True, schema_version=1))
@@ -1969,6 +1971,7 @@ class TestReleaseHistoryView(ViewTest):
         self.assertEqual(data['fakePartials'], True)
         self.assertEqual(data['detailsUrl'], 'beep')
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300000))
     def testPostRevisionRollbackBadRequests(self):
         data = json.dumps(dict(detailsUrl='beep', fakePartials=True, schema_version=1))
         ret = self._post(
