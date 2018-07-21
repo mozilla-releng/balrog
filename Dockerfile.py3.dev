@@ -1,15 +1,14 @@
 
-FROM python:3.6-slim-jessie
+FROM python:3.7-slim
 
 MAINTAINER bhearsum@mozilla.com
 
-# Some versions of the python:3.6 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
-# Node and npm are to build the frontend. nodejs-legacy is needed by this version of npm.
+# Some versions of the python:3.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
 # mysql-client is needed to import sample data
 # libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 # libfontconfig1 is required by phantomjs.
 RUN apt-get -q update \
-    && apt-get -q --yes install netcat libpcre3 libpcre3-dev nodejs nodejs-legacy npm libmysqlclient-dev mysql-client \
+    && apt-get -q --yes install gcc netcat libpcre3 libpcre3-dev default-libmysqlclient-dev mysql-client \
                                 libfontconfig1 netcat curl \
     && apt-get clean
 
