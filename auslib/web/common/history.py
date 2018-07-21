@@ -1,11 +1,12 @@
 import json
-import time
+
+import arrow
 import six
+
 from connexion import request
 from flask import Response, jsonify
 from six import text_type, string_types
 from sqlalchemy import and_
-from auslib.util.timesince import timesince
 
 
 class HistoryHelper():
@@ -100,17 +101,6 @@ def annotateRevisionDifferences(revisions):
             rev[key] = value
 
         rev['_different'] = different
-        rev['_time_ago'] = getTimeAgo(rev['timestamp'])
-
-
-def getTimeAgo(timestamp):
-    now, then = int(time.time()), int(timestamp / 1000.0)
-    time_ago = timesince(
-        then,
-        now,
-        afterword='ago',
-        minute_granularity=True,
-        max_no_sections=2)
-    if not time_ago:
-        time_ago = 'seconds ago'
-    return time_ago
+        # Divide by 1000 because the timestamp from the database is to the millisecond,
+        # but stored as an integer
+        rev['_time_ago'] = arrow.get(rev['timestamp'] / 1000).humanize()
