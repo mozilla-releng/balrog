@@ -2,18 +2,25 @@
 
 from calendar import timegm
 from datetime import datetime
-from httplib import HTTPSConnection
+from six.moves.http_client import HTTPSConnection
 import logging
 import os
 from socket import gaierror
 import time
-from urllib2 import urlopen, HTTPError, URLError
+
+try:
+    from urllib import urlopen, HTTPError, URLError
+except ImportError: # pragma: no cover
+    from urllib.error import HTTPError, URLError
+    from urllib.parse import unquote
+    from urllib.request import urlopen
 
 
 HOST = 'https://balrog-public-dump-prod.s3.amazonaws.com'
 PATH = '/dump.sql.txt.xz'
 LOCAL_DB_PATH = os.getenv('LOCAL_DUMP', '/app/scripts/prod_db_dump.sql.xz')
 TIMEOUT = 10
+
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s: %(message)s')
 
