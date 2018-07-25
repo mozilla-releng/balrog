@@ -42,7 +42,7 @@ tasks:
         - "-c"
         - >
           apt-get -q --yes update && apt-get -q --yes install git libmysqlclient-dev gcc &&
-          git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && pip install -r requirements-tox.ini && tox
+          git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && pip install -r requirements-tox.txt && tox
       features:
         taskclusterProxy: true
     extra:
@@ -98,7 +98,7 @@ tasks:
         - "-c"
         - >
           apt-get -q --yes update && apt-get -q --yes install git &&
-          git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd agent && pip install -r requirements-tox.ini && tox
+          git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd agent && pip install -r requirements-tox.txt && tox
     extra:
       github:
         env: true
