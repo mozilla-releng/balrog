@@ -40,8 +40,9 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "apt-get -q --yes update && apt-get -q --yes install git libmysqlclient-dev gcc && "
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && pip install -r requirements-tox.ini && tox"
+        - >
+          apt-get -q --yes update && apt-get -q --yes install git libmysqlclient-dev gcc &&
+          git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && pip install -r requirements-tox.ini && tox
       features:
         taskclusterProxy: true
     extra:
@@ -68,8 +69,9 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "apt-get -q --yes update && apt-get -q --yes install git nodejs nodejs-legacy npm libfontconfig1 && "
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd ui && npm install && npm run build && npm test"
+        - >
+          apt-get -q --yes update && apt-get -q --yes install git nodejs nodejs-legacy npm libfontconfig1 &&
+          git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd ui && npm install && npm run build && npm test
     extra:
       github:
         env: true
@@ -94,8 +96,9 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "apt-get -q --yes update && apt-get -q --yes install git && "
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd agent && pip install -r requirements-tox.ini && tox"
+        - >
+          apt-get -q --yes update && apt-get -q --yes install git &&
+          git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd agent && pip install -r requirements-tox.ini && tox
     extra:
       github:
         env: true
@@ -120,8 +123,9 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "apt-get -q --yes update && apt-get -q --yes install git && "
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd client && tox"
+        - >
+          apt-get -q --yes update && apt-get -q --yes install git &&
+          git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd client && tox
     extra:
       github:
         env: true
