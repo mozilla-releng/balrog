@@ -2264,6 +2264,7 @@ class Permissions(AUSTable):
         self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"],
                        columns.get("options"))
         super(Permissions, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        cache.invalidate('users', 'usernames')
         self.log.debug("successfully granted %s to %s with options %s", columns["permission"],
                        columns["username"], columns.get("options"))
 
@@ -2317,6 +2318,8 @@ class Permissions(AUSTable):
                 if len(self.getUserPermissions(u, transaction)) == 0:
                     for role in self.user_roles.select([self.user_roles.username == u], transaction=transaction):
                         self.revokeRole(u, role["role"], changed_by=changed_by, old_data_version=role["data_version"], transaction=transaction)
+
+        cache.invalidate('users', 'usernames')
 
     def revokeRole(self, username, role, changed_by=None, old_data_version=None, transaction=None):
         if not self.hasPermission(changed_by, "permission", "delete", transaction=transaction):
@@ -2394,6 +2397,19 @@ class Permissions(AUSTable):
     def hasRole(self, username, role, transaction=None):
         roles_list = [r['role'] for r in self.getUserRoles(username, transaction)]
         return role in roles_list
+
+    def isKnownUser(self, username):
+        if not username:
+            return False
+
+        cache_column = 'username'
+
+        def user_getter():
+            permissions = self.select(columns=[cache_column], distinct=True)
+            return [permission[cache_column] for permission in permissions]
+
+        usernames = cache.get('users', 'usernames', value_getter=user_getter)
+        return username in usernames
 
 
 class Dockerflow(AUSTable):
@@ -2654,6 +2670,9 @@ class AUSDatabase(object):
                                                                from_addr,
                                                                use_tls)
         self.releases.onUpdate = read_only_bleeter
+
+    def isKnownUser(self, username):
+        return self.permissions.isKnownUser(username)
 
     def isAdmin(self, *args, **kwargs):
         return self.permissions.isAdmin(*args, **kwargs)

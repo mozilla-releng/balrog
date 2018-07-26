@@ -40,7 +40,7 @@ class TestCreateBlob(unittest.TestCase):
         self.assertRaises(ValueError, createBlob, dict(schema_version=666))
 
     def testSchemaCaching(self):
-        with mock.patch("yaml.load") as yaml_load:
+        with mock.patch("yaml.safe_load") as yaml_load:
             yaml_load.return_value = {
                 "title": "Test",
                 "type": "object",
@@ -116,6 +116,44 @@ json = st.dictionaries(st.text(),
                                     lambda x: useful_list | useful_dict,
                                     max_leaves=20),
                        max_size=10)
+
+
+def test_merge_dicts_simple_additions():
+    base = {
+        "nothing": "nothing",
+    }
+    left = deepcopy(base)
+    right = deepcopy(base)
+    expected = deepcopy(base)
+    left["foo"] = "foo"
+    right["bar"] = "bar"
+    got = merge_dicts(base, left, right)
+    expected = {
+        "foo": "foo",
+        "bar": "bar",
+        "nothing": "nothing",
+    }
+    assert got == expected
+
+
+def test_merge_dicts_simple_changes():
+    base = {
+        "foo": "oof",
+        "bar": "rab",
+        "nothing": "nothing",
+    }
+    left = deepcopy(base)
+    right = deepcopy(base)
+    expected = deepcopy(base)
+    left["foo"] = "foo"
+    right["bar"] = "bar"
+    got = merge_dicts(base, left, right)
+    expected = {
+        "foo": "foo",
+        "bar": "bar",
+        "nothing": "nothing",
+    }
+    assert got == expected
 
 
 # too_slow health checks are repressed because tests can be slow in CI, and we

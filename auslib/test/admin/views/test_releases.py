@@ -397,9 +397,14 @@ class TestReleasesAPI_JSON(ViewTest):
 }
 """))
 
-    def testReleasePostCreatesNewReleaseNopermission(self):
+    def testReleasePostCreatesNewReleaseNoAuthentication(self):
         data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='e', hashFunction="sha512"))
-        ret = self._post('/releases/e', data=dict(data=data, product='e', schema_version=1), username="kate")
+        ret = self._post('/releases/e', data=dict(data=data, product='e', schema_version=1), username=None)
+        self.assertStatusCode(ret, 401)
+
+    def testReleasePostCreatesNewReleaseNoPermission(self):
+        data = json.dumps(dict(bouncerProducts=dict(partial='foo'), name='e', hashFunction="sha512"))
+        ret = self._post('/releases/e', data=dict(data=data, product='e', schema_version=1), username="mary")
         self.assertStatusCode(ret, 403)
 
     def testReleasePostCreatesNewReleasev2(self):
@@ -606,6 +611,11 @@ class TestReleasesAPI_JSON(ViewTest):
         data = json.dumps(dict(complete=dict(filesize='435')))
         ret = self._put('/releases/ab/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 400)
+
+    def testLocalePutWithoutAuthentication(self):
+        data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}'
+        ret = self._put('/releases/ab/builds/p/l', username=None, data=dict(data=data, product='a', data_version=1, schema_version=1))
+        self.assertStatusCode(ret, 401)
 
     def testLocalePutWithoutPermission(self):
         data = '{"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}'
@@ -1693,6 +1703,7 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         self.assertEquals(ret, expected)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300000))
     def testGetReleaseHistoryWithinTimeRange(self):
         ret = self._get("/releases/history", qs={"timestamp_from": 15, "timestamp_to": 33})
         self.assertEquals(ret.status_code, 200, ret.data)
@@ -1746,7 +1757,7 @@ class TestReleasesScheduledChanges(ViewTest):
                         'data_version': 1,
                         'product': 'b',
                         'timestamp': 16,
-                        '_time_ago': '48 years and 585 months ago'
+                        '_time_ago': '48 years ago'
                     }
                 ],
                 'count': 1
@@ -1804,6 +1815,7 @@ class TestReleasesScheduledChanges(ViewTest):
 
 class TestReleaseHistoryView(ViewTest):
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300000))
     def testGetRevisions(self):
         # Make some changes to a release
         data = json.dumps(dict(detailsUrl='blah', fakePartials=True, schema_version=1))
@@ -1837,6 +1849,7 @@ class TestReleaseHistoryView(ViewTest):
         with self.assertRaises(KeyError):
             data['data']
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300000))
     def testGetHistory(self):
         url = '/releases/history'
         ret = self._get(url)
@@ -1850,7 +1863,7 @@ class TestReleaseHistoryView(ViewTest):
                         'name': 'b',
                         'change_id': 6,
                         'read_only': 'False',
-                        '_time_ago': '48 years and 584 months ago',
+                        '_time_ago': '48 years ago',
                         'data_version': 1,
                         '_different': [],
                         'timestamp': 16,
@@ -1861,7 +1874,7 @@ class TestReleaseHistoryView(ViewTest):
                         'name': 'd',
                         'change_id': 4,
                         'read_only': 'False',
-                        '_time_ago': '48 years and 584 months ago',
+                        '_time_ago': '48 years ago',
                         'data_version': 1,
                         '_different': ['name', 'data', 'product'],
                         'timestamp': 10, 'product': 'd', 'changed_by': 'bill'
@@ -1870,7 +1883,7 @@ class TestReleaseHistoryView(ViewTest):
                         'name': 'ab',
                         'change_id': 2,
                         'read_only': 'False',
-                        '_time_ago': '48 years and 584 months ago',
+                        '_time_ago': '48 years ago',
                         'data_version': 1,
                         '_different': ['name', 'data', 'product'],
                         'timestamp': 6,
@@ -1907,6 +1920,7 @@ class TestReleaseHistoryView(ViewTest):
             self.assertEquals(revisions[index]['changed_by'], expected_revisions[index]['changed_by'])
         self.assertEquals(len(history_data["revisions"]), 3)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300000))
     def testPostRevisionRollback(self):
         # Make some changes to a release
         data = json.dumps(dict(detailsUrl='beep', fakePartials=True, schema_version=1))
@@ -1957,6 +1971,7 @@ class TestReleaseHistoryView(ViewTest):
         self.assertEqual(data['fakePartials'], True)
         self.assertEqual(data['detailsUrl'], 'beep')
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300000))
     def testPostRevisionRollbackBadRequests(self):
         data = json.dumps(dict(detailsUrl='beep', fakePartials=True, schema_version=1))
         ret = self._post(

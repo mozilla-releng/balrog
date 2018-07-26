@@ -4507,6 +4507,13 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
     def testIsAdminNegative(self):
         self.assertFalse(self.permissions.isAdmin("bob"))
 
+    def testKnownUser(self):
+        self.assertTrue(self.permissions.isKnownUser('bob'))
+
+    def testUnknownUser(self):
+        self.assertFalse(self.permissions.isKnownUser(None))
+        self.assertFalse(self.permissions.isKnownUser('adams'))
+
 
 class TestDockerflow(unittest.TestCase, MemoryDatabaseMixin):
 

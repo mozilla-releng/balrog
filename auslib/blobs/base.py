@@ -156,7 +156,7 @@ class Blob(dict):
 
     def getSchema(self):
         def loadSchema():
-            return yaml.load(open(path.join(path.dirname(path.abspath(__file__)), "schemas", self.jsonschema)))
+            return yaml.safe_load(open(path.join(path.dirname(path.abspath(__file__)), "schemas", self.jsonschema)))
 
         return cache.get("blob_schema", self.jsonschema, loadSchema)
 

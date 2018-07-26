@@ -8,6 +8,15 @@ responses:
         detail: "Invalid field value"
         status: 400
 
+  unauthenticatedUser:
+    description: Unauthenticated User
+    schema:
+      $ref: "#/definitions/4xxClientErrorResponseModel"
+    examples:
+      application/json:
+        detail: "Login is required"
+        status: 401
+
   unauthorizedUser:
     description: Not authorized to access resource
     schema:
