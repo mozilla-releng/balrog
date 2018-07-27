@@ -35,16 +35,15 @@ tasks:
     scopes:
       - secrets:get:repo:github.com/mozilla/balrog:coveralls
     payload:
-      maxRunTime: 1200
-      image: "mozillareleases/python-test-runner"
-      env:
-        NO_VOLUME_MOUNT: 1
+      maxRunTime: 3600
+      image: "python:2.7-slim-jessie"
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh backend"
+        - >
+          apt-get -q --yes update && apt-get -q --yes install git libmysqlclient-dev gcc &&
+          git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && pip install -r requirements-tox.txt && tox
       features:
-        dind: true
         taskclusterProxy: true
     extra:
       github:
@@ -66,15 +65,13 @@ tasks:
     workerType: "{{ taskcluster.docker.workerType }}"
     payload:
       maxRunTime: 1200
-      image: "mozillareleases/python-test-runner"
-      env:
-        NO_VOLUME_MOUNT: 1
+      image: "python:2.7-slim-jessie"
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh frontend"
-      features:
-        dind: true
+        - >
+          apt-get -q --yes update && apt-get -q --yes install git nodejs nodejs-legacy npm libfontconfig1 &&
+          git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd ui && npm install && npm run build && npm test
     extra:
       github:
         env: true
@@ -95,15 +92,13 @@ tasks:
     workerType: "{{ taskcluster.docker.workerType }}"
     payload:
       maxRunTime: 1200
-      image: "mozillareleases/python-test-runner"
-      env:
-        NO_VOLUME_MOUNT: 1
+      image: "python:3.6-slim"
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd agent && bash run-tests.sh"
-      features:
-        dind: true
+        - >
+          apt-get -q --yes update && apt-get -q --yes install git &&
+          git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd agent && pip install -r requirements-tox.txt && tox
     extra:
       github:
         env: true
@@ -125,14 +120,10 @@ tasks:
     payload:
       maxRunTime: 1200
       image: "mozillareleases/python-test-runner"
-      env:
-        NO_VOLUME_MOUNT: 1
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd client && bash run-tests.sh"
-      features:
-        dind: true
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd client && tox"
     extra:
       github:
         env: true
