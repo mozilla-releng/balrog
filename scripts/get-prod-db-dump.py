@@ -9,7 +9,7 @@ from socket import gaierror
 import time
 
 try:
-    from urllib import urlopen, HTTPError, URLError
+    from urllib2 import urlopen, HTTPError, URLError
 except ImportError: # pragma: no cover
     from urllib.error import HTTPError, URLError
     from urllib.parse import unquote
