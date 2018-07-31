@@ -22,6 +22,8 @@ services:
       - balrogdb
     environment:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
+      - DB_HOST=balrogdb
+      - CACHEDIR=.cache
       - SECRET_KEY=blahblah
       - PORT=7070
       - LOG_FORMAT=plain
