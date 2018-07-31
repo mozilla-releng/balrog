@@ -1,4 +1,4 @@
-# Some people have reported problems with the balrogui API proxy not working correctly.
+# Some people have reported problems with the balrogui-py3 API proxy not working correctly.
 # This appears to be the same problem reported in https://github.com/docker/compose/issues/2172,
 # and seems to only occur with certain(older) versions of docker-compose.
 version: '2.1'
@@ -65,7 +65,7 @@ services:
       - balrogdb
 
 
-  balrogagent:
+  balrogagent-py3:
     build: ./agent
     depends_on:
       balrogadmin-py3:
@@ -83,7 +83,7 @@ services:
       - LOG_LEVEL=WARNING
 
 
-  balrogui:
+  balrogui-py3:
     image: node:0.10
     depends_on:
       balrogadmin-py3:
