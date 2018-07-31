@@ -112,8 +112,8 @@ sqlalchemy-migrate==0.11.0 \
     --hash=sha256:e68af5e3e0561f629d4eb23d9d0ea77d2649747f2eff37fd29aece74615ca251
 tempita==0.5.2 \
     --hash=sha256:cacecf0baa674d356641f1d406b8bff1d756d739c46b869a54de515d08e6fc9c
-uwsgi==2.0.17 \
-    --hash=sha256:3dc2e9b48db92b67bfec1badec0d3fdcc0771316486c5efa3217569da3528bf2
+uwsgi==2.0.17.1 \
+    --hash=sha256:d2318235c74665a60021a4fc7770e9c2756f9fc07de7b8c22805efe85b5ab277
 Werkzeug==0.14.1 \
     --hash=sha256:d5da73735293558eb1651ee2fddc4d0dedcfa06538b8813a2e20011583c9e49b \
     --hash=sha256:c3fd7a7d41976d9f44db327260e263132466836cef6f91512889ed60ad26557c
