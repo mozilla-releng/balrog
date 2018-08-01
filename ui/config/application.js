@@ -42,7 +42,7 @@ module.exports = function(lineman) {
         prefix: 'api',
         enabled: true,
         host: process.env.HOST_PROXY,
-        port: 7070
+        port: process.env.HOST_PROXY_PORT
       }
     },
 
