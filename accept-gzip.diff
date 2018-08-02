@@ -1,0 +1,32 @@
+diff --git a/auslib/web/admin/base.py b/auslib/web/admin/base.py
+index 59fa9fa..9f82527 100644
+--- a/auslib/web/admin/base.py
++++ b/auslib/web/admin/base.py
+@@ -3,6 +3,8 @@ import re
+ import connexion
+ import logging
+ import auslib
++import gzip
++import io
+
+ from os import path
+ from flask import request
+@@ -68,6 +70,21 @@ def ise(error):
+ def unicode(error):
+     return problem(400, "Unicode Error", "Connexion was unable to parse some unicode data correctly.")
+
++# handle gzip compressed data in POST/PUT requests
++@app.before_request
++def gzip_http_request_middleware(limit=2*1024**2):
++    encoding = request.headers.get('content-encoding', '')
++    if encoding == 'gzip':
++        gz = request.get_data()
++        zb = io.BytesIO(gz)
++        zf = gzip.GzipFile(fileobj=zb)
++        # read up to limit bytes to avoid server OOM for large data on a request
++        clear = zf.read(limit)
++        # more data available is an error to pass to the requester
++        if zf.read(1):
++            return problem(400, "Too much data",
++                           "More than %d bytes of data after gzip decompression" % limit)
++        request._cached_data = clear

@@ -3,6 +3,8 @@ import re
 import connexion
 import logging
 import auslib
+import gzip
+import io
 
 from os import path
 from flask import request
@@ -57,7 +59,22 @@ def ise(error):
     log.debug("Request environment is: %s", request.environ)
     log.debug("Request headers are: %s", request.headers)
     return error
-
+    
+# handle gzip compressed data in POST/PUT requests
+@app.before_request
+def gzip_http_request_middleware(limit=2*1024**2):
+    encoding = request.headers.get('content-encoding', '')
+    if encoding == 'gzip':
+        gz = request.get_data()
+        zb = io.BytesIO(gz)
+        zf = gzip.GzipFile(fileobj=zb)
+        # read up to limit bytes to avoid server OOM for large data on a request
+        clear = zf.read(limit)
+        # more data available is an error to pass to the requester
+        if zf.read(1):
+            return problem(400, "Too much data",
+                           "More than %d bytes of data after gzip decompression" % limit)
+        request._cached_data = clear
 
 @app.after_request
 def add_security_headers(response):
