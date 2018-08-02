@@ -8,6 +8,7 @@ import io
 
 from os import path
 from flask import request
+from connexion import problem
 from flask_compress import Compress
 from auslib.web.admin.views.validators import BalrogRequestBodyValidator
 from raven.contrib.flask import Sentry
