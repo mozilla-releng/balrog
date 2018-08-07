@@ -9,10 +9,6 @@ import requests
 import gzip
 import sys
 
-#importing StringIO to do gzip compression only if we are using python3 and under
-if (sys.version_info < (3, 0)):
-    import StringIO
-
 def is_csrf_token_expired(token):
     """Checks whether a CSRF token is still valid
 
@@ -125,16 +121,17 @@ class API(object):
             logging.debug('Data sent: %s', data)
         data = json.dumps(data)
         headers = {'Accept-Encoding': 'application/json',
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'}
-        if method == ('PUT', 'POST'):
-            data = data.encode('utf-8')
+                   'Accept': 'application/json',
+                   'Content-Type': 'application/json'}
+        if method in ('PUT', 'POST'):
+            data = data.encode()
             headers['Content-Encoding'] = 'gzip'
-            if (sys.version_info > (3, 0)):
-                #if python version is 3.0+ then use the inbuilt gzip compress function
+            if (sys.version_info > (3, 2)):
+                #if python version is 3.2+ then use the inbuilt gzip compress function
                 data = gzip.compress(data)
             else:
-                #if python version is less than 3.0 then use StringIO and GzipFile function to compress
+                #if python version is less than 3.2 then use StringIO and GzipFile function to compress
+                import StringIO
                 out = StringIO.StringIO()
                 with gzip.GzipFile(fileobj=out, mode="w") as f:
                     f.write(data)
