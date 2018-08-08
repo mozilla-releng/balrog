@@ -4,6 +4,13 @@ import re
 from auslib.errors import BadDataError
 
 
+class PostModernMozillaVersion(StrictVersion):
+    """A version class that supports Firefox versions 5.0 and up, which
+       may have "a1" but not "b2" tags in them"""
+    version_re = re.compile(r"""^(\d+) \. (\d+) (\. (\d+))?
+                                (a(\d+))?$""", re.VERBOSE)
+
+
 class ModernMozillaVersion(StrictVersion):
     """A version class that is slightly less restrictive than StrictVersion.
        Instead of just allowing "a" or "b" as prerelease tags, it allows any
@@ -26,15 +33,15 @@ class AncientMozillaVersion(StrictVersion):
 
 def MozillaVersion(version):
     try:
-        return ModernMozillaVersion(version)
-    except ValueError:
-        pass
-    try:
-        if version.count('.') == 3:
+        if version.count(".") in (1, 2):
+            if int(version[0]) > 4:
+                return PostModernMozillaVersion(version)
+            else:
+                return ModernMozillaVersion(version)
+        else:
             return AncientMozillaVersion(version)
     except ValueError:
-        pass
-    raise BadDataError("Version number %s is invalid." % version)
+        raise BadDataError("Version number %s is invalid." % version)
 
 
 def increment_version(version):
