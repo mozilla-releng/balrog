@@ -277,7 +277,6 @@ parameters:
     description: The update channel of the application request an update.
     required: true
     type: string
-    format: ascii
 
   osVersion:
     name: osVersion
