@@ -56,6 +56,10 @@ def getSystemCapabilities(systemCapabilities):
 
 def getCleanQueryFromURL(url):
     query = url.copy()
+    for field in query:
+        if field == "queryVersion":
+            continue
+        query[field] = query[field].encode("ascii", "replace")
     # Some versions of Avast make requests and blindly append "?avast=1" to
     # them, which breaks query string parsing if ?force=1 is already
     # there. Because we're nice people we'll fix it up.
