@@ -1,3 +1,4 @@
+# coding: latin-1
 import logging
 import mock
 import os
@@ -865,6 +866,36 @@ class ClientTest(ClientTestBase):
     def testEmptySnippetMissingExtv(self):
         ret = self.client.get('/update/3/e/20.0/1/p/l/a/a/a/a/update.xml')
         self.assertUpdatesAreEmpty(ret)
+
+    def testUnicodeAcceptedInURLFields(self):
+        # /update/1, 2, and 3 are just subsets of /update/4 - so we don't
+        # need to test them explicitly
+        v4_url = "/update/4/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/update.xml"
+        subs = [3, "e", "20.0", "1", "p", "l", "a", "a", "a", "a"]
+        for i in range(0, 10):
+            my_subs = subs[:]
+            subs[i] = "ÃÃÃÃÃÃ"
+            my_url = v4_url.format(*my_subs)
+            ret = self.client.get(my_url)
+            self.assertEqual(ret.status_code, 200)
+
+        v5_url = "/update/5/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/update.xml"
+        subs = [3, "e", "20.0", "1", "p", "l", "a", "a", "a", "a"]
+        for i in range(0, 10):
+            my_subs = subs[:]
+            subs[i] = "ÃÃÃÃÃÃ"
+            my_url = v5_url.format(*my_subs)
+            ret = self.client.get(my_url)
+            self.assertEqual(ret.status_code, 200)
+
+        v6_url = "/update/6/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/update.xml"
+        subs = [3, "e", "20.0", "1", "p", "l", "a", "a", "a", "a"]
+        for i in range(0, 10):
+            my_subs = subs[:]
+            subs[i] = "ÃÃÃÃÃÃ"
+            my_url = v6_url.format(*my_subs)
+            ret = self.client.get(my_url)
+            self.assertEqual(ret.status_code, 200)
 
     def testRobotsExists(self):
         ret = self.client.get('/robots.txt')
