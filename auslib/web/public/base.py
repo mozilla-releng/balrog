@@ -13,6 +13,7 @@ from flask import make_response, send_from_directory, Response
 from raven.contrib.flask import Sentry
 
 from auslib.AUS import AUS
+from auslib.web.admin.views.problem import problem
 from specsynthase.specbuilder import SpecBuilder
 
 from auslib.errors import BadDataError
