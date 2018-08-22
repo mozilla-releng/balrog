@@ -65,6 +65,15 @@ def fourohfour(error):
     return Response(status=404, mimetype="text/plain", response=error.description)
 
 
+# Connexion's error handling sometimes breaks when parameters contain
+# unicode characters (https://github.com/zalando/connexion/issues/604).
+# To work around, we catch them and return a 400 (which is what Connexion
+# would do if it didn't hit this error).
+@app.errorhandler(UnicodeEncodeError)
+def unicode(error):
+    return problem(400, "Unicode Error", "Connexion was unable to parse some unicode data correctly.")
+
+
 @app.errorhandler(Exception)
 def generic(error):
     """Deals with any unhandled exceptions. If the exception is not a
