@@ -5,6 +5,8 @@ from connexion import request
 
 from flask import make_response, current_app as app
 
+import six
+
 from auslib.AUS import AUS, SUCCEED, FAIL
 from auslib.global_state import dbo
 
@@ -61,29 +63,32 @@ def getSystemCapabilities(systemCapabilities):
 
 def getCleanQueryFromURL(url):
     query = url.copy()
-    for field in query:
-        if field == "queryVersion":
-            continue
-        query[field] = query[field].encode("ascii", "replace")
+    if six.PY2:
+        for field in query:
+            if field == "queryVersion":
+                continue
+            query[field] = query[field].encode("ascii", "replace")
     # Some versions of Avast make requests and blindly append "?avast=1" to
     # them, which breaks query string parsing if ?force=1 is already
     # there. Because we're nice people we'll fix it up.
-    if 'force' in query and b'avast' in query['force']:
+    if 'force' in query and 'avast' in query['force']:
         force_value = query['force']
-        force_split = force_value.split(b'?', 1)
+        force_split = force_value.split('?', 1)
 
         if len(force_split) < 2:
-            force_split = force_value.split(b'%3F', 1)
+            force_split = force_value.split('%3F', 1)
 
         query['force'] = force_split[0]
 
         avast_parameter = force_split[1]
-        avast_split = avast_parameter.split(b'=')
+        avast_split = avast_parameter.split('=')
+        print(avast_split)
+        print(query)
         query[avast_split[0]] = int(avast_split[1])
 
     # Some versions of Avast have a bug in them that prepends "x86 "
     if 'locale' in query:
-        query['locale'] = query['locale'].replace(b'x86 ', b'')
+        query['locale'] = query['locale'].replace('x86 ', '')
 
     return query
 
