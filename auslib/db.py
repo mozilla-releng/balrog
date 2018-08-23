@@ -8,6 +8,8 @@ import simplejson as json
 import sys
 import time
 
+from six import iteritems, string_types, reraise, text_type
+
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
     create_engine, select, BigInteger, Boolean, join
 from sqlalchemy.exc import SQLAlchemyError
@@ -34,7 +36,8 @@ def rows_to_dicts(rows):
     are immutable), or if you want to serialize them to JSON
     (SQLAlchemy rows get confused if you try to serialize them).
     """
-    return map(dict, rows)
+    # In Python 3, map returns an iterable instead a list.
+    return [dict(row) for row in rows]
 
 
 def _matchesRegex(foo, bar):
@@ -190,7 +193,7 @@ def verify_signoffs(potential_required_signoffs, signoffs):
         signoffs_given[signoff["role"]] += 1
     for rs in potential_required_signoffs:
         required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
-    for role, signoffs_required in required_signoffs.iteritems():
+    for role, signoffs_required in iteritems(required_signoffs):
         if signoffs_given[role] < signoffs_required:
             raise SignoffRequiredError("Not enough signoffs for role '{}'".format(role))
 
@@ -211,14 +214,14 @@ class AUSTransaction(object):
     def __enter__(self):
         return self
 
-    def __exit__(self, *exc):
+    def __exit__(self, exc_type, exc_value, exc_traceback):
         try:
             # If something that executed in the context raised an Exception,
             # rollback and re-raise it.
-            if exc[0]:
+            if exc_type:
                 self.log.debug("exc is:", exc_info=True)
                 self.rollback()
-                raise exc[0], exc[1], exc[2]
+                reraise(exc_type, exc_value, exc_traceback)
             # Also need to check for exceptions during commit!
             try:
                 self.commit()
@@ -247,7 +250,7 @@ class AUSTransaction(object):
             klass, e, tb = sys.exc_info()
             self.rollback()
             e = TransactionError(e.args)
-            raise TransactionError, e, tb
+            reraise(TransactionError, e, tb)
 
     def commit(self):
         try:
@@ -256,7 +259,7 @@ class AUSTransaction(object):
             klass, e, tb = sys.exc_info()
             self.rollback()
             e = TransactionError(e.args)
-            raise TransactionError, e, tb
+            reraise(TransactionError, e, tb)
 
     def rollback(self):
         self.trans.rollback()
@@ -360,7 +363,7 @@ class AUSTable(object):
            @rtype: sqlalchemy.sql.expression.Select
         """
         if columns:
-            table_columns = [(self.t.c[col] if isinstance(col, basestring) else col) for col in columns]
+            table_columns = [(self.t.c[col] if isinstance(col, string_types) else col) for col in columns]
             query = select(table_columns, order_by=order_by, limit=limit, offset=offset, distinct=distinct)
         else:
             query = self.t.select(order_by=order_by, limit=limit, offset=offset, distinct=distinct)
@@ -386,7 +389,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in where.iteritems()]
+            where = [getattr(self, k) == v for k, v in iteritems(where)]
 
         query = self._selectStatement(where=where, **kwargs)
 
@@ -539,7 +542,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in where.iteritems()]
+            where = [getattr(self, k) == v for k, v in iteritems(where)]
 
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
@@ -645,7 +648,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in where.iteritems()]
+            where = [getattr(self, k) == v for k, v in iteritems(where)]
 
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
@@ -828,7 +831,7 @@ class History(AUSTable):
         # We know a bunch of columns are going to be empty...easier to strip them out
         # than to be super verbose (also should let this test continue to work even
         # if the schema changes).
-        for key in change.keys():
+        for key in change.copy().keys():
             if change[key] is None:
                 del change[key]
         return change
@@ -928,7 +931,7 @@ class ConditionsTable(AUSTable):
         if set(conditions) - set(self.condition_groups):
             raise ValueError("Unknown conditions in: {}".format(conditions))
 
-        self.enabled_condition_groups = {k: v for k, v in self.condition_groups.iteritems() if k in conditions}
+        self.enabled_condition_groups = {k: v for k, v in iteritems(self.condition_groups) if k in conditions}
 
         self.table = Table("{}_conditions".format(baseName), metadata,
                            Column("sc_id", Integer, primary_key=True),
@@ -948,12 +951,12 @@ class ConditionsTable(AUSTable):
         super(ConditionsTable, self).__init__(db, dialect, history=history, versioned=True)
 
     def validate(self, conditions):
-        conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
+        conditions = {k: v for k, v in iteritems(conditions) if conditions[k]}
         if not conditions:
             raise ValueError("No conditions found")
 
         for c in conditions:
-            for condition, args in self.condition_groups.iteritems():
+            for condition, args in iteritems(self.condition_groups):
                 if c in args:
                     if c in itertools.chain(*self.enabled_condition_groups.values()):
                         break
@@ -1044,7 +1047,7 @@ class ScheduledChangeTable(AUSTable):
         with the base table ones prefixed."""
         ret = {}
         base_columns = [c.name for c in self.baseTable.t.get_children()]
-        for k, v in columns.iteritems():
+        for k, v in iteritems(columns):
             if k in base_columns:
                 ret["base_%s" % k] = v
             else:
@@ -1909,13 +1912,18 @@ class Releases(AUSTable):
             except IndexError:
                 raise KeyError("Couldn't find release with name '%s'" % name)
 
+        def get_data_version(obj):
+            if isinstance(obj, int):
+                return obj
+            return obj["data_version"]
+
         cached_blob = cache.get("blob", name, getBlob)
 
         # Even though we may have retrieved a cached blob, we need to make sure
         # that it's not older than the one in the database. If the data version
         # of the cached blob and the latest data version don't match, we need
         # to update the cache with the latest blob.
-        if data_version > cached_blob["data_version"]:
+        if get_data_version(data_version) > get_data_version(cached_blob["data_version"]):
             blob_info = getBlob()
             cache.put("blob", name, blob_info)
             blob = blob_info["blob"]
@@ -1929,7 +1937,7 @@ class Releases(AUSTable):
             # data version, the blob version cache would've expired as well.
             # If we hit one of these cases, we should bring the blob version
             # cache up to date since we have it.
-            if cached_blob["data_version"] > data_version:
+            if get_data_version(cached_blob["data_version"]) > get_data_version(data_version):
                 cache.put("blob_version", name, data_version)
             blob = cached_blob["blob"]
 
@@ -2482,7 +2490,7 @@ class UTF8PrettyPrinter(pprint.PrettyPrinter):
     """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
     Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
     def format(self, object, context, maxlevels, level):
-        if isinstance(object, unicode):
+        if isinstance(object, text_type):
             return pprint._safe_repr(object.encode('utf8'), context, maxlevels, level)
         return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
 

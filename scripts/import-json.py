@@ -25,7 +25,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s: %(message)s")
 
     if not options.db or not options.release or not options.version or not options.product or len(args) != 1:
-        print doc
+        print(doc)
         sys.exit(1)
 
     db = AUSDatabase(options.db)

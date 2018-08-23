@@ -6,6 +6,7 @@ test.done
 htmlcov
 cef.log
 .cache
+.cache_py3
 .tox
 .swp
 *.egg-info

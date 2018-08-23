@@ -1,4 +1,3 @@
-import urllib
 import re
 import sys
 
@@ -10,6 +9,12 @@ from auslib.AUS import AUS, SUCCEED, FAIL
 from auslib.global_state import dbo
 
 import logging
+
+try:
+    from urllib import unquote
+except ImportError: # pragma: no cover
+    from urllib.parse import unquote
+
 
 AUS = AUS()
 LOG = logging.getLogger(__name__)
@@ -63,22 +68,22 @@ def getCleanQueryFromURL(url):
     # Some versions of Avast make requests and blindly append "?avast=1" to
     # them, which breaks query string parsing if ?force=1 is already
     # there. Because we're nice people we'll fix it up.
-    if 'force' in query and 'avast' in query['force']:
+    if 'force' in query and b'avast' in query['force']:
         force_value = query['force']
-        force_split = force_value.split('?', 1)
+        force_split = force_value.split(b'?', 1)
 
         if len(force_split) < 2:
-            force_split = force_value.split('%3F', 1)
+            force_split = force_value.split(b'%3F', 1)
 
         query['force'] = force_split[0]
 
         avast_parameter = force_split[1]
-        avast_split = avast_parameter.split('=')
+        avast_split = avast_parameter.split(b'=')
         query[avast_split[0]] = int(avast_split[1])
 
     # Some versions of Avast have a bug in them that prepends "x86 "
     if 'locale' in query:
-        query['locale'] = query['locale'].replace('x86 ', '')
+        query['locale'] = query['locale'].replace(b'x86 ', b'')
 
     return query
 
@@ -88,7 +93,7 @@ def getQueryFromURL(url):
     if "systemCapabilities" in query:
         query.update(getSystemCapabilities(url["systemCapabilities"]))
         del query["systemCapabilities"]
-    query['osVersion'] = urllib.unquote(query['osVersion'])
+    query['osVersion'] = unquote(query['osVersion'])
     ua = request.headers.get('User-Agent')
     query['headerArchitecture'] = getHeaderArchitecture(query['buildTarget'], ua)
     force = query.get('force')

@@ -42,8 +42,6 @@ class TestMaybeCacher(unittest.TestCase):
         # cache entry format is (pos, value, expiration)
         cache.caches["cache1"].data["foo"] = (0, obj, 9999999999999999)
         cached_obj = cache.get("cache1", "foo")
-        print obj
-        print cached_obj
         self.assertEquals(id(obj), id(cached_obj))
 
     def testPutDoesntCopyByDefault(self):

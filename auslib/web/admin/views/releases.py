@@ -1,9 +1,11 @@
 import difflib
 import simplejson as json
+import six
 
 from sqlalchemy.sql.expression import null
 import connexion
 from flask import Response, jsonify, abort
+from six import integer_types, text_type
 
 from auslib.global_state import dbo
 from auslib.blobs.base import createBlob, BlobValidationError
@@ -555,10 +557,10 @@ class ReleaseFieldView(AdminView):
                 pass
         elif value is None:
             value = 'NULL'
-        elif isinstance(value, int) or isinstance(value, long):
-            value = unicode(str(value), 'utf8')
+        elif isinstance(value, integer_types):
+            value = str(value)
         else:
-            value = unicode(value, 'utf8')
+            value = text_type(value, 'utf8') if six.PY2 else str(value)
         return value
 
     def get(self, change_id, field):

@@ -50,21 +50,21 @@ def handleGeneralExceptions(messages):
                 return problem(400, "Bad Request", "UpdateMergeError", ext={"exception": msg})
             except ChangeScheduledError as e:
                 msg = "Couldn't perform the request %s due a conflict with a scheduled change. " % messages
-                msg += e.message
+                msg += str(e)
                 log.warning("Bad input: %s", msg)
                 log.warning(e)
                 return problem(400, "Bad Request", "ChangeScheduledError", ext={"exception": msg})
             except SignoffRequiredError as e:
-                msg = "This change requires signoff, it cannot be done directly. {}".format(e.message)
+                msg = "This change requires signoff, it cannot be done directly. {}".format(e)
                 log.warning(msg)
                 log.warning(e)
                 return problem(400, "Bad Request", "SignoffRequiredError", ext={"exception": msg})
             except PermissionDeniedError as e:
-                msg = "Permission denied to perform the request. {}".format(e.message)
+                msg = "Permission denied to perform the request. {}".format(e)
                 log.warning(msg)
                 return problem(403, "Forbidden", "PermissionDeniedError", ext={"exception": msg})
             except ValueError as e:
-                msg = "Bad input: {}".format(e.message)
+                msg = "Bad input: {}".format(e)
                 log.warning(msg)
                 return problem(400, "Bad Request", "ValueError", ext={"exception": msg})
         return decorated
