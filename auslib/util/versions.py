@@ -37,11 +37,15 @@ def MozillaVersion(version):
     raise BadDataError("Version number %s is invalid." % version)
 
 
+def get_version_parts(version):
+    return [int(v) for v in version.split(".")]
+
+
 def increment_version(version):
     """Increments a version to its 'next' version by adding one to the last
     part of the version."""
 
-    parts = map(int, version.split("."))
+    parts = get_version_parts(version)
     parts[-1] += 1
     return ".".join(map(str, parts))
 
@@ -52,7 +56,7 @@ def decrement_version(version):
     last part is subtracted by one. This is repeated until subtraction happens
     or we run out of parts."""
 
-    parts = map(int, version.split("."))
+    parts = get_version_parts(version)
     for i in reversed(range(len(parts))):
         if parts[i] == 0:
             # Horrible assumption! Doesn't work if incoming versions have parts

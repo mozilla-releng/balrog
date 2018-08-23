@@ -21,13 +21,13 @@ if __name__ == "__main__":
     options, args = parser.parse_args()
 
     if not options.db or not options.release:
-        print "db and release are required"
-        print __doc__
+        print("db and release are required")
+        print(__doc__)
         sys.exit(1)
 
     db = AUSDatabase(options.db)
     blob = db.releases.getReleaseBlob(options.release)
     if options.ugly:
-        print json.dumps(blob)
+        print(json.dumps(blob))
     else:
-        print json.dumps(blob, indent=4)
+        print(json.dumps(blob, indent=4))

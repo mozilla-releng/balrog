@@ -1,4 +1,3 @@
-import json
 import mock
 
 from auslib.global_state import dbo
@@ -9,7 +8,7 @@ class TestProductRequiredSignoffs(ViewTest):
 
     def testGetRequiredSignoffs(self):
         ret = self._get("/required_signoffs/product")
-        got = json.loads(ret.data)
+        got = ret.get_json()
         self.assertEquals(got["count"], 4)
         expected = [
             {"product": "fake", "channel": "a", "role": "releng", "signoffs_required": 1, "data_version": 1},
@@ -33,12 +32,12 @@ class TestProductRequiredSignoffs(ViewTest):
     def testAddRequiredSignoffWithoutEnoughUsersInRole(self):
         ret = self._post("/required_signoffs/product", data=dict(product="fake", channel="b", role="releng", signoffs_required=3))
         self.assertStatusCode(ret, 400)
-        self.assertIn("Cannot require 3 signoffs", ret.data)
+        self.assertIn("Cannot require 3 signoffs", ret.get_data(as_text=True))
 
     def testAddRequiredSignoffThatRequiresSignoff(self):
         ret = self._post("/required_signoffs/product", data=dict(product="fake", channel="a", role="relman", signoffs_required=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.data)
+        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
 
     def testAddRequiredSignoffWithoutPermission(self):
         ret = self._post("/required_signoffs/product", data=dict(product="fake", channel="b", role="releng", signoffs_required=1), username="janet")
@@ -47,12 +46,12 @@ class TestProductRequiredSignoffs(ViewTest):
     def testModifyRequiredSignoff(self):
         ret = self._post("/required_signoffs/product", data=dict(product="fake", channel="a", role="relman", signoffs_required=1, data_version=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.data)
+        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
 
     def testDeleteRequiredSignoff(self):
         ret = self._delete("/required_signoffs/product", qs=dict(product="fake", channel="a", role="relman", data_version=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.data)
+        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
 
 
 class TestProductRequiredSignoffsHistoryView(ViewTest):
@@ -62,7 +61,7 @@ class TestProductRequiredSignoffsHistoryView(ViewTest):
         ret = self._get("/required_signoffs/product/revisions", qs={"product": "fake", "channel": "k", "role": "relman"})
         self.assertStatusCode(ret, 200)
 
-        got = json.loads(ret.data)
+        got = ret.get_json()
         expected = [
             {
                 "change_id": 3,
@@ -92,7 +91,7 @@ class TestProductRequiredSignoffsHistoryView(ViewTest):
         ret = self._get("/required_signoffs/product/history", qs={})
         self.assertStatusCode(ret, 200)
 
-        got = json.loads(ret.data)
+        got = ret.get_json()
         expected = [
             {
                 "change_id": 3,
@@ -122,7 +121,7 @@ class TestProductRequiredSignoffsHistoryView(ViewTest):
         ret = self._get("/required_signoffs/product/history", qs={"timestamp_from": 20, "timestamp_to": 30})
         self.assertStatusCode(ret, 200)
 
-        got = json.loads(ret.data)
+        got = ret.get_json()
         expected = [
             {
                 "change_id": 3,
@@ -250,7 +249,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                 },
             ],
         }
-        self.assertEquals(json.loads(ret.data), expected)
+        self.assertEquals(ret.get_json(), expected)
 
     def testGetScheduledChangesWithCompleted(self):
         ret = self._get("/scheduled_changes/required_signoffs/product", qs={"all": 1})
@@ -282,7 +281,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                 },
             ],
         }
-        self.assertEquals(json.loads(ret.data), expected)
+        self.assertEquals(ret.get_json(), expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeExistingRequiredSignoff(self):
@@ -290,8 +289,8 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "when": 400000000, "product": "fake", "channel": "k", "role": "relman", "signoffs_required": 2, "data_version": 2, "change_type": "update",
         }
         ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
-        self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
+        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEquals(ret.get_json(), {"sc_id": 5, "signoffs": {}})
         r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -312,8 +311,8 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "when": 400000000, "product": "fake", "channel": "k", "role": "releng", "signoffs_required": 1, "change_type": "insert",
         }
         ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
-        self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
+        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEquals(ret.get_json(), {"sc_id": 5, "signoffs": {}})
         r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -334,8 +333,8 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "when": 400000000, "product": "fake", "channel": "k", "role": "relman", "change_type": "delete", "data_version": 2,
         }
         ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
-        self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
+        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEquals(ret.get_json(), {"sc_id": 5, "signoffs": {}})
         r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -356,10 +355,10 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "signoffs_required": 1, "data_version": 1, "sc_data_version": 1, "when": 200000000,
         }
         ret = self._post("/scheduled_changes/required_signoffs/product/98765432", data=data)
-        self.assertEquals(ret.status_code, 404, ret.data)
+        self.assertEquals(ret.status_code, 404, ret.get_data())
 
         ret = self._post("/scheduled_changes/required_signoffs/permissions/98765432", data=data)
-        self.assertEquals(ret.status_code, 404, ret.data)
+        self.assertEquals(ret.status_code, 404, ret.get_data())
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeExistingRequiredSignoff(self):
@@ -367,8 +366,8 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "signoffs_required": 1, "data_version": 1, "sc_data_version": 1, "when": 200000000,
         }
         ret = self._post("/scheduled_changes/required_signoffs/product/2", data=data)
-        self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {'bill': 'releng'}})
+        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEquals(ret.get_json(), {"new_data_version": 2, "signoffs": {'bill': 'releng'}})
 
         r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -390,8 +389,8 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "signoffs_required": 2, "sc_data_version": 1, "when": 450000000,
         }
         ret = self._post("/scheduled_changes/required_signoffs/product/1", data=data)
-        self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {'bill': 'releng'}})
+        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEquals(ret.get_json(), {"new_data_version": 2, "signoffs": {'bill': 'releng'}})
 
         r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -409,7 +408,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
 
     def testDeleteScheduledChange(self):
         ret = self._delete("/scheduled_changes/required_signoffs/product/1", qs={"data_version": 1})
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
         got = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(got, [])
         cond_got = dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()\
@@ -418,7 +417,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
 
     def testEnactScheduledChangeExistingRequiredSignoff(self):
         ret = self._post("/scheduled_changes/required_signoffs/product/2/enact")
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
 
         r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -440,7 +439,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
 
     def testEnactScheduledChangeNewRequiredSignoff(self):
         ret = self._post("/scheduled_changes/required_signoffs/product/1/enact")
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
 
         r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -462,7 +461,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
 
     def testEnactScheduledChangeDeleteRequiredSignoff(self):
         ret = self._post("/scheduled_changes/required_signoffs/product/4/enact")
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
 
         r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 4).execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -481,7 +480,7 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
 
     def testGetScheduledChangeHistoryRevisions(self):
         ret = self._get("/scheduled_changes/required_signoffs/product/3/revisions")
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
         expected = {
             "count": 2,
             "revisions": [
@@ -497,12 +496,12 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                 },
             ],
         }
-        self.assertEquals(json.loads(ret.data), expected)
+        self.assertEquals(ret.get_json(), expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=100))
     def testSignoffWithPermission(self):
         ret = self._post("/scheduled_changes/required_signoffs/product/2/signoffs", data=dict(role="relman"), username="bob")
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
         r = dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.select()\
             .where(dbo.productRequiredSignoffs.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 2)
@@ -518,11 +517,11 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
 
     def testSignoffWithoutPermission(self):
         ret = self._post("/scheduled_changes/required_signoffs/product/2/signoffs", data=dict(role="relman"), username="bill")
-        self.assertEquals(ret.status_code, 403, ret.data)
+        self.assertEquals(ret.status_code, 403, ret.get_data())
 
     def testRevokeSignoff(self):
         ret = self._delete("/scheduled_changes/required_signoffs/product/1/signoffs", username="bill")
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
         r = dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.select()\
             .where(dbo.productRequiredSignoffs.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 0)
@@ -532,7 +531,7 @@ class TestPermissionsRequiredSignoffs(ViewTest):
 
     def testGetRequiredSignoffs(self):
         ret = self._get("/required_signoffs/permissions")
-        got = json.loads(ret.data)
+        got = ret.get_json()
         self.assertEquals(got["count"], 5)
         expected = [
             {"product": "fake", "role": "releng", "signoffs_required": 1, "data_version": 1},
@@ -556,12 +555,12 @@ class TestPermissionsRequiredSignoffs(ViewTest):
     def testAddRequiredSignoffWithoutEnoughUsersInRole(self):
         ret = self._post("/required_signoffs/permissions", data=dict(product="super", role="releng", signoffs_required=3))
         self.assertStatusCode(ret, 400)
-        self.assertIn("Cannot require 3 signoffs", ret.data)
+        self.assertIn("Cannot require 3 signoffs", ret.get_data(as_text=True))
 
     def testAddRequiredSignoffThatRequiresSignoff(self):
         ret = self._post("/required_signoffs/permissions", data=dict(product="fake", role="relman", signoffs_required=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.data)
+        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
 
     def testAddRequiredSignoffWithoutPermission(self):
         ret = self._post("/required_signoffs/permissions", data=dict(product="super", role="releng", signoffs_required=1), username="janet")
@@ -570,12 +569,12 @@ class TestPermissionsRequiredSignoffs(ViewTest):
     def testModifyRequiredSignoff(self):
         ret = self._post("/required_signoffs/permissions", data=dict(product="fake", role="releng", signoffs_required=2, data_version=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.data)
+        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
 
     def testDeleteRequiredSignoff(self):
         ret = self._delete("/required_signoffs/permissions", qs=dict(product="fake", role="releng", data_version=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.data)
+        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
 
 
 class TestPermissionsRequiredSignoffsHistoryView(ViewTest):
@@ -585,7 +584,7 @@ class TestPermissionsRequiredSignoffsHistoryView(ViewTest):
         ret = self._get("/required_signoffs/permissions/revisions", qs={"product": "doop", "role": "releng"})
         self.assertStatusCode(ret, 200)
 
-        got = json.loads(ret.data)
+        got = ret.get_json()
         expected = [
             {
                 "change_id": 3,
@@ -613,7 +612,7 @@ class TestPermissionsRequiredSignoffsHistoryView(ViewTest):
         ret = self._get("/required_signoffs/permissions/history", qs={"timestamp_from": 20, "timestamp_to": 30})
         self.assertStatusCode(ret, 200)
 
-        got = json.loads(ret.data)
+        got = ret.get_json()
         expected = [
             {
                 "change_id": 3,
@@ -740,7 +739,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                 },
             ],
         }
-        self.assertEquals(json.loads(ret.data), expected)
+        self.assertEquals(ret.get_json(), expected)
 
     def testGetScheduledChangesWithCompleted(self):
         ret = self._get("/scheduled_changes/required_signoffs/permissions", qs={"all": 1})
@@ -771,7 +770,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                 },
             ],
         }
-        self.assertEquals(json.loads(ret.data), expected)
+        self.assertEquals(ret.get_json(), expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeExistingRequiredSignoff(self):
@@ -779,8 +778,8 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "when": 400000000, "product": "doop", "role": "releng", "signoffs_required": 2, "data_version": 2, "change_type": "update",
         }
         ret = self._post("/scheduled_changes/required_signoffs/permissions", data=data)
-        self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {"bill": "releng"}})
+        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEquals(ret.get_json(), {"sc_id": 5, "signoffs": {"bill": "releng"}})
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 5)\
                                                                         .execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -802,8 +801,8 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "when": 400000000, "product": "foo", "role": "relman", "signoffs_required": 1, "change_type": "insert",
         }
         ret = self._post("/scheduled_changes/required_signoffs/permissions", data=data)
-        self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {}})
+        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEquals(ret.get_json(), {"sc_id": 5, "signoffs": {}})
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 5)\
                                                                         .execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -825,8 +824,8 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "when": 400000000, "product": "doop", "role": "releng", "change_type": "delete", "data_version": 2,
         }
         ret = self._post("/scheduled_changes/required_signoffs/permissions", data=data)
-        self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"sc_id": 5, "signoffs": {"bill": "releng"}})
+        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEquals(ret.get_json(), {"sc_id": 5, "signoffs": {"bill": "releng"}})
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 5)\
                                                                         .execute().fetchall()
         self.assertEquals(len(r), 1)
@@ -848,8 +847,8 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "signoffs_required": 1, "data_version": 1, "sc_data_version": 1, "when": 200000000,
         }
         ret = self._post("/scheduled_changes/required_signoffs/permissions/2", data=data)
-        self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {'bill': 'releng'}})
+        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEquals(ret.get_json(), {"new_data_version": 2, "signoffs": {'bill': 'releng'}})
 
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 2)\
                                                                         .execute().fetchall()
@@ -872,8 +871,8 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "signoffs_required": 2, "sc_data_version": 1, "when": 450000000,
         }
         ret = self._post("/scheduled_changes/required_signoffs/permissions/1", data=data)
-        self.assertEquals(ret.status_code, 200, ret.data)
-        self.assertEquals(json.loads(ret.data), {"new_data_version": 2, "signoffs": {}})
+        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEquals(ret.get_json(), {"new_data_version": 2, "signoffs": {}})
 
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 1)\
                                                                         .execute().fetchall()
@@ -892,7 +891,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
 
     def testDeleteScheduledChange(self):
         ret = self._delete("/scheduled_changes/required_signoffs/permissions/1", qs={"data_version": 1})
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
         got = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 1)\
                                                                           .execute().fetchall()
         self.assertEquals(got, [])
@@ -902,7 +901,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
 
     def testEnactScheduledChangeExistingRequiredSignoff(self):
         ret = self._post("/scheduled_changes/required_signoffs/permissions/2/enact")
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
 
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 2)\
                                                                         .execute().fetchall()
@@ -924,7 +923,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
 
     def testEnactScheduledChangeNewRequiredSignoff(self):
         ret = self._post("/scheduled_changes/required_signoffs/permissions/1/enact")
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
 
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 1)\
                                                                         .execute().fetchall()
@@ -946,7 +945,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
 
     def testEnactScheduledChangeDeleteRequiredSignoff(self):
         ret = self._post("/scheduled_changes/required_signoffs/permissions/4/enact")
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
 
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 4)\
                                                                         .execute().fetchall()
@@ -965,7 +964,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
 
     def testGetScheduledChangeHistoryRevisions(self):
         ret = self._get("/scheduled_changes/required_signoffs/permissions/3/revisions")
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
         expected = {
             "count": 2,
             "revisions": [
@@ -981,11 +980,11 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                 },
             ],
         }
-        self.assertEquals(json.loads(ret.data), expected)
+        self.assertEquals(ret.get_json(), expected)
 
     def testGetPermissionsRequiredSignoffsHistory(self):
         ret = self._get("/required_signoffs/permissions/history")
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
         expected = {
             "count": 2,
             "required_signoffs": [
@@ -998,7 +997,7 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                 },
             ],
         }
-        data = json.loads(ret.data)
+        data = ret.get_json()
         revisions = data["Permissions Required Signoffs"]["required_signoffs"]
         expected_revisions = expected["required_signoffs"]
         for index in range(len(revisions)):
@@ -1008,12 +1007,12 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             self.assertEquals(revisions[index]['data_version'], expected_revisions[index]['data_version'])
             self.assertEquals(revisions[index]['changed_by'], expected_revisions[index]['changed_by'])
         self.assertEquals(len(data["Permissions Required Signoffs"]["required_signoffs"]), 2)
-        self.assertEquals(json.loads(ret.data)["Permissions Required Signoffs"], expected)
+        self.assertEquals(ret.get_json()["Permissions Required Signoffs"], expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=100))
     def testSignoffWithPermission(self):
         ret = self._post("/scheduled_changes/required_signoffs/permissions/2/signoffs", data=dict(role="relman"), username="bob")
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.select()\
             .where(dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
         self.assertEquals(len(r), 2)
@@ -1030,16 +1029,16 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
     def testSignoffWithoutPermission(self):
         ret = self._post("/scheduled_changes/required_signoffs/permissions/2/signoffs", data=dict(role="relman"),
                          username="bill")
-        self.assertEquals(ret.status_code, 403, ret.data)
+        self.assertEquals(ret.status_code, 403, ret.get_data())
 
     def testSignoffWithoutRole(self):
         ret = self._post("/scheduled_changes/required_signoffs/permissions/2/signoffs", data=dict(lorem="random"),
                          username="bill")
-        self.assertEquals(ret.status_code, 400, ret.data)
+        self.assertEquals(ret.status_code, 400, ret.get_data())
 
     def testRevokeSignoff(self):
         ret = self._delete("/scheduled_changes/required_signoffs/permissions/1/signoffs", username="bob")
-        self.assertEquals(ret.status_code, 200, ret.data)
+        self.assertEquals(ret.status_code, 200, ret.get_data())
         r = dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.select()\
             .where(dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
         self.assertEquals(len(r), 0)
