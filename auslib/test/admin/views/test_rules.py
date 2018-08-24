@@ -240,6 +240,20 @@ class TestRulesAPI_JSON(ViewTest):
                                                  channel="nightly", update_type="minor", version="%s5" % op))
             self.assertEquals(ret.status_code, 400)
 
+    def testVersionValidationAlphaTagsAllowedForModernVersions(self):
+        ret = self._post("/rules", data=dict(backgroundRate=42, mapping="d", priority=50, product="Firefox",
+                                             channel="nightly", update_type="minor", version="5.0a1"))
+        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" %
+                          (ret.status_code, ret.data))
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+        self.assertEquals(len(r), 1)
+        self.assertEquals(r[0]['version'], '5.0a1')
+
+    def testVersionValidationNoBetaTagsAllowedForModernVersions(self):
+        ret = self._post("/rules", data=dict(backgroundRate=42, mapping="d", priority=50, product="Firefox",
+                                             channel="nightly", update_type="minor", version="5.0b4"))
+        self.assertEquals(ret.status_code, 400)
+
     def testBuildIDValidation(self):
         for op in operators:
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
