@@ -1622,6 +1622,9 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
                 self.assertUpdatesAreEmpty(ret)
                 self.assertFalse(mock_cr_view.called)
 
+    # "Accepted" is a bit weird here - it basically just means "doesn't cause an ISE 500"
+    # We don't have any valid query fields with unicode in their name, so a 400 is the
+    # best thing we can test for.
     def testUnicodeAcceptedInQueryFieldName(self):
         ret = self.client.get("/update/6/3/e/2.0.0/1/p/l/a/a/a/a/update.xml?fooÃÃÃÃÃÃbar=1")
         self.assertEqual(ret.status_code, 400)

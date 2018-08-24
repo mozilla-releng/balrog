@@ -63,6 +63,14 @@ def getSystemCapabilities(systemCapabilities):
 
 def getCleanQueryFromURL(url):
     query = url.copy()
+    # Any of the fields (except queryVersion, which is hardcoded) could contain Unicode data.
+    # The lower level of Balrog is not ready to support Unicode yet, and any valid data will
+    # not contain Unicode characters - so for now, we simply encode to ascii and replace the
+    # Unicode characters.
+    # This is something that we should revisit when we upgrade to Python 3, as it will be as
+    # easy to pretend Unicode doesn't exist. (Which is why this block is only for Python 2 --
+    # encoding to ascii in Python 3 gives us "bytes", which causes a whole mess of problems
+    # later.)
     if six.PY2:
         for field in query:
             if field == "queryVersion":
