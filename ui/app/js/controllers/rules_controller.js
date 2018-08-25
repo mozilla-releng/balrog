@@ -376,7 +376,6 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           sc["change_type"] = "insert";
           delete sc.data_version;
           delete sc.rule_id;
-          delete sc.alias;
           return sc;
         },
         original_row: function() {
