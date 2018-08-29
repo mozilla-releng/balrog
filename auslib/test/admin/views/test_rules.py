@@ -243,9 +243,10 @@ class TestRulesAPI_JSON(ViewTest):
     def testVersionValidationAlphaTagsAllowedForModernVersions(self):
         ret = self._post("/rules", data=dict(backgroundRate=42, mapping="d", priority=50, product="Firefox",
                                              channel="nightly", update_type="minor", version="5.0a1"))
+        rule_id = int(ret.get_data())
         self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" %
-                          (ret.status_code, ret.data))
-        r = dbo.rules.t.select().where(dbo.rules.rule_id == ret.data).execute().fetchall()
+                          (ret.status_code, rule_id))
+        r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
         self.assertEquals(len(r), 1)
         self.assertEquals(r[0]['version'], '5.0a1')
 
