@@ -90,8 +90,6 @@ def getCleanQueryFromURL(url):
 
         avast_parameter = force_split[1]
         avast_split = avast_parameter.split('=')
-        print(avast_split)
-        print(query)
         query[avast_split[0]] = int(avast_split[1])
 
     # Some versions of Avast have a bug in them that prepends "x86 "
