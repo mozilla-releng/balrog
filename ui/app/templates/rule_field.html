@@ -19,7 +19,7 @@
 
 {{sc_field_value=rule.scheduled_change[fieldname] === true ? "Yes" : (rule.scheduled_change[fieldname] === false ? "No" : rule.scheduled_change[fieldname]);""}}
 <span tooltip="{{sc_field_value.length > limittextto_sc ? sc_field_value : ''}}" style="color: green" ng-show="showdiff && showsc && fieldIsChanging(rule, fieldname)">
-    {{sc_field_value | limitTo:limittextto_sc}} {{sc_field_value.length > limittextto_sc ? '...' : ''}}
+    {{sc_field_value | limitTo:limittextto_sc || sc_field_value.length }} {{sc_field_value.length > limittextto_sc ? '...' : ''}}
 </span>
 </b>
 </h5>
