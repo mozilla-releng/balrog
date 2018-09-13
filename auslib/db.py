@@ -646,11 +646,10 @@ class AUSTable(object):
                 return self._prepareUpdate(trans, where, what, changed_by, old_data_version)
 
     def count(self, column='*', where=None, transaction=None):
-        count_statement = select([func.count(column)])
+        count_statement = select(columns=[func.count(column)], from_obj=self.t)
         if where:
             for cond in where:
                 count_statement = count_statement.where(cond)
-        print(count_statement)
         if transaction:
             row_count = transaction.execute(count_statement).scalar()
         else:
@@ -1608,11 +1607,7 @@ class Rules(AUSTable):
 
     def countRules(self, transaction=None):
         """Returns a number of the count of rules"""
-        if transaction:
-            count, = transaction.execute(self.t.count()).fetchone()
-        else:
-            count, = self.getEngine().execute(self.t.count()).fetchone()
-        return count
+        return self.count(transaction=transaction)
 
     def getRulesMatchingQuery(self, updateQuery, fallbackChannel, transaction=None):
         """Returns all of the rules that match the given update query.
@@ -1835,6 +1830,7 @@ class Releases(AUSTable):
 
     def countReleases(self, transaction=None):
         """Returns a number of the count of releases"""
+        return self.count(transaction=transaction)
         if transaction:
             count, = transaction.execute(self.t.count()).fetchone()
         else:
@@ -2107,16 +2103,9 @@ class Releases(AUSTable):
             return False
 
     def isMappedTo(self, name, transaction=None):
-        if transaction:
-            mapping_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.mapping == name)).fetchone()[0]
-            fallbackMapping_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.fallbackMapping == name)).fetchone()[0]
-        else:
-            mapping_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.mapping == name)).fetchone()[0]
-            fallbackMapping_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.fallbackMapping == name)).fetchone()[0]
-        if mapping_count > 0 or fallbackMapping_count > 0:
-            return True
-
-        return False
+        mapping_count = self.count(where=[self.db.rules.mapping == name], transaction=transaction)
+        fallbackMapping_count = self.count(where=[self.db.rules.fallbackMapping == name], transaction=transaction)
+        return mapping_count > 0 or fallbackMapping_count > 0
 
     def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
         release = self.select(where=where, columns=[self.name, self.product], transaction=transaction)

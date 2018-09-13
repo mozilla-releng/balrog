@@ -438,7 +438,7 @@ class TestReleasesAPI_JSON(ViewTest):
     def testDeleteRelease(self):
         ret = self._delete("/releases/d", qs=dict(data_version=1))
         self.assertStatusCode(ret, 200)
-        ret = dbo.releases.t.count().where(dbo.releases.name == 'd').execute().first()[0]
+        ret = dbo.releases.count(where=[dbo.releases.name == 'd'])
         self.assertEqual(ret, 0)
 
     def testDeleteReleaseOutdatedData(self):

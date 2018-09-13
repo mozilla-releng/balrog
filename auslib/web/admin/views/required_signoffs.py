@@ -1,7 +1,7 @@
 import json
 import connexion
 
-from sqlalchemy.sql.expression import null
+from sqlalchemy.sql.expression import null, select
 
 from flask import jsonify, Response
 
@@ -80,10 +80,10 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
             return problem(400, "Bad Request", str(msg))
         offset = limit * (page - 1)
 
-        query = self.table.history.t.count().where(self.table.history.data_version != null())
+        where_count = [self.table.history.data_version != null()]
         for field in self.decisionFields:
-            query = query.where(getattr(self.table.history, field) == input_dict.get(field))
-        total_count = query.execute().fetchone()[0]
+            where_count.append(getattr(self.table.history, field) == input_dict.get(field))
+        total_count = self.table.history.count(where=where_count)
 
         where = [getattr(self.table.history, f) == input_dict.get(f) for f in self.decisionFields]
         where.append(self.table.history.data_version != null())
@@ -104,10 +104,7 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
         offset = limit * (page - 1)
 
         where = self._get_filters()
-        total_count = self.table.history.t.count()\
-                                        .where(and_(*where))\
-                                        .execute().fetchone()[0]
-
+        total_count = self.table.history.count(where=where)
         revisions = self.table.history.select(
             where=where, limit=limit, offset=offset,
             order_by=[self.table.history.timestamp.desc()]

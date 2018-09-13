@@ -58,9 +58,7 @@ class HistoryView(AdminView):
         offset = limit * (page - 1)
 
         filters = history_filters_callback(obj)
-        total_count = self.history_table.t.count()\
-                                          .where(and_(*filters))\
-                                          .execute().fetchone()[0]
+        total_count = self.history_table.count(where=filters)
 
         revisions = self.history_table.select(
             where=filters,

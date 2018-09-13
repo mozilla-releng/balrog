@@ -37,9 +37,7 @@ class HistoryHelper():
         offset = limit * (page - 1)
 
         filters = self.fn_history_filters(obj, self.hist_table)
-        total_count = self.hist_table.t.count()\
-                                       .where(and_(*filters))\
-                                       .execute().fetchone()[0]
+        total_count = self.hist_table.count(where=filters)
 
         revisions = self.hist_table.select(
             where=filters,

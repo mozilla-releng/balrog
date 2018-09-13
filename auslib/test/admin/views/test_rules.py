@@ -954,8 +954,7 @@ class TestRuleHistoryView(ViewTest):
         self.assertEqual(row['backgroundRate'], 72)
         self.assertEqual(row['data_version'], 3)
 
-        query = table.history.t.count()
-        count, = query.execute().first()
+        count = table.history.count()
         self.assertEqual(count, 2)
 
         # Oh no! We prefer the product=Firefox, backgroundRate=71 one better
@@ -971,8 +970,7 @@ class TestRuleHistoryView(ViewTest):
         ret = self._post(url, {'change_id': change_id})
         self.assertEquals(ret.status_code, 200, ret.get_data())
 
-        query = table.history.t.count()
-        count, = query.execute().first()
+        count = table.history.count()
         self.assertEqual(count, 3)
 
         row, = table.select(where=[table.rule_id == 1])
@@ -1737,7 +1735,7 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/rules/3/revisions", data={"change_id": 2})
         self.assertEquals(ret.status_code, 200, ret.get_data())
 
-        self.assertEquals(dbo.rules.scheduled_changes.history.t.count().execute().first()[0], 16)
+        self.assertEquals(dbo.rules.scheduled_changes.history.count(), 16)
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 3).execute().fetchall()
         self.assertEquals(len(r), 1)
         db_data = dict(r[0])
@@ -1749,7 +1747,7 @@ class TestRuleScheduledChanges(ViewTest):
             "base_data_version": None, "base_instructionSet": None, "base_memory": None, "base_mig64": None, "base_jaws": None, "change_type": "insert",
         }
         self.assertEquals(db_data, expected)
-        self.assertEquals(dbo.rules.scheduled_changes.conditions.history.t.count().execute().first()[0], 16)
+        self.assertEquals(dbo.rules.scheduled_changes.conditions.history.count(), 16)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 3).execute().fetchall()
         self.assertEquals(len(cond), 1)
         cond_expected = {"sc_id": 3, "data_version": 3, "when": 2000000, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None}
