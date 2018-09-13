@@ -11,7 +11,7 @@ import time
 from six import iteritems, string_types, reraise, text_type
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-    create_engine, select, BigInteger, Boolean, join
+    create_engine, select, BigInteger, Boolean, join, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 import sqlalchemy.types
@@ -644,6 +644,19 @@ class AUSTable(object):
         else:
             with AUSTransaction(self.getEngine()) as trans:
                 return self._prepareUpdate(trans, where, what, changed_by, old_data_version)
+
+    def count(self, column='*', where=None, transaction=None):
+        count_statement = select([func.count(column)])
+        if where:
+            for cond in where:
+                count_statement = count_statement.where(cond)
+        print(count_statement)
+        if transaction:
+            row_count = transaction.execute(count_statement).scalar()
+        else:
+            with AUSTransaction(self.getEngine()) as trans:
+                row_count = trans.execute(count_statement).scalar()
+        return row_count
 
     def getRecentChanges(self, limit=10, transaction=None):
         return self.history.select(transaction=transaction,
@@ -1381,15 +1394,9 @@ class RequiredSignoffsTable(AUSTable):
         for col in self.decisionColumns:
             if columns[col] is None:
                 raise ValueError("{} are required.".format(self.decisionColumns))
+            user_table = self.db.permissions.user_roles
+            users_with_role = user_table.count(where=[user_table.role == columns["role"]], transaction=transaction)
 
-        if transaction:
-            users_with_role, = transaction.execute(
-                self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"])
-            ).fetchone()
-        else:
-            users_with_role, = self.getEngine().execute(
-                self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"])
-            ).fetchone()
         if users_with_role < columns["signoffs_required"]:
             msg = ", ".join([columns[col] for col in self.decisionColumns])
             raise ValueError("Cannot require {} signoffs for {} - only {} users hold the {} role".format(
