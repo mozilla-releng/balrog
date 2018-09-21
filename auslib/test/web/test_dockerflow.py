@@ -16,14 +16,14 @@ class TestDockerflowEndpoints(ClientTestBase):
 """)
 
     def testHeartbeat(self):
-        with mock.patch("auslib.global_state.dbo.rules.countRules") as cr:
+        with mock.patch("auslib.global_state.dbo.rules.count") as cr:
             ret = self.client.get("/__heartbeat__")
             self.assertEqual(ret.status_code, 200)
             self.assertEqual(cr.call_count, 1)
             self.assertEqual(ret.headers["Cache-Control"], "public, max-age=60")
 
     def testHeartbeatWithException(self):
-        with mock.patch("auslib.global_state.dbo.rules.countRules") as cr:
+        with mock.patch("auslib.global_state.dbo.rules.count") as cr:
             cr.side_effect = Exception("kabom!")
             # Because there's no web server between us and the endpoint, we receive
             # the Exception directly instead of a 500 error

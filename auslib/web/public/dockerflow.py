@@ -8,7 +8,7 @@ def heartbeat():
     # the default database function.
     # Counting the rules should be a trivial enough operation that it won't
     # cause notable load, but will verify that the database works.
-    return heartbeat_response(lambda dbo: dbo.rules.countRules())
+    return heartbeat_response(lambda dbo: dbo.rules.count())
 
 
 def lbheartbeat():

@@ -2318,7 +2318,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertRaises(SignoffRequiredError, self.paths.delete, {"rule_id": 9}, changed_by="bill", old_data_version=1)
 
     def testGetNumberOfRules(self):
-        self.assertEquals(self.paths.countRules(), 10)
+        self.assertEquals(self.paths.count(), 10)
 
 
 class TestJawsRules(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
@@ -2941,7 +2941,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetNumberOfReleases(self):
         # because 4 releases were set up in the setUp()
-        self.assertEquals(self.releases.countReleases(), 5)
+        self.assertEquals(self.releases.count(), 5)
 
     def testDeleteRelease(self):
         self.releases.delete({"name": "a"}, changed_by="bill", old_data_version=1)

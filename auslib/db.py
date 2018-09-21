@@ -1605,10 +1605,6 @@ class Rules(AUSTable):
         """Returns all of the rules, sorted in ascending order"""
         return self.select(where=where, order_by=(self.priority, self.version, self.mapping), transaction=transaction)
 
-    def countRules(self, transaction=None):
-        """Returns a number of the count of rules"""
-        return self.count(transaction=transaction)
-
     def getRulesMatchingQuery(self, updateQuery, fallbackChannel, transaction=None):
         """Returns all of the rules that match the given update query.
            For cases where a particular updateQuery channel has no
@@ -1827,15 +1823,6 @@ class Releases(AUSTable):
         for row in rows:
             row["data"] = self.getReleaseBlob(row["name"], transaction)
         return rows
-
-    def countReleases(self, transaction=None):
-        """Returns a number of the count of releases"""
-        return self.count(transaction=transaction)
-        if transaction:
-            count, = transaction.execute(self.t.count()).fetchone()
-        else:
-            count, = self.getEngine().execute(self.t.count()).fetchone()
-        return count
 
     def getReleaseInfo(self, names=None, product=None, limit=None,
                        transaction=None, nameOnly=False, name_prefix=None):
