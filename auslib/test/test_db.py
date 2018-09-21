@@ -410,6 +410,16 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         # to the id condition above.
         self.assertEquals(len(shared[3]._whereclause.get_children()), 2)
 
+    def test_count(self):
+        count = self.test.count()
+        self.assertEquals(count, 3)
+        where = [self.test.id == 2]
+        count = self.test.count(where=where)
+        self.assertEquals(count, 1)
+        where = [self.test.id == -1]
+        count = self.test.count(where=where)
+        self.assertEquals(count, 0)
+
 
 class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileDatabaseMixin):
 
