@@ -32,7 +32,7 @@ validator_map = {
 }
 
 connexion_app = connexion.App(__name__, validator_map=validator_map, debug=False)
-connexion_app.add_api(spec, validate_responses=True, strict_validation=True)
+connexion_app.add_api(spec, strict_validation=True)
 app = connexion_app.app
 sentry = Sentry()
 
