@@ -60,7 +60,7 @@ class TestSchema1Blob(unittest.TestCase):
         expected_header_addon = '    <addons>'
 
         self.assertEqual(headerXML_gmp, expected_header_gmp)
-        self.assertEquals(headerXML_addon, expected_header_addon)
+        self.assertEqual(headerXML_addon, expected_header_addon)
 
     def testInnerFooterXML(self):
         updateQuery = {

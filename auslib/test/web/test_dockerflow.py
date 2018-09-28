@@ -7,7 +7,7 @@ class TestDockerflowEndpoints(ClientTestBase):
 
     def testVersion(self):
         ret = self.client.get("/__version__")
-        self.assertEquals(ret.get_data(as_text=True), """
+        self.assertEqual(ret.get_data(as_text=True), """
 {
   "source":"https://github.com/mozilla/balrog",
   "version":"1.0",

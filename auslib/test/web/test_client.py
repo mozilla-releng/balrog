@@ -26,31 +26,31 @@ def setUpModule():
 
 class TestGetSystemCapabilities(unittest.TestCase):
     def testUnprefixedInstructionSetOnly(self):
-        self.assertEquals(
+        self.assertEqual(
             client_api.getSystemCapabilities("SSE3"),
             {"instructionSet": "SSE3", "memory": None, "jaws": None}
         )
 
     def testUnprefixedInstructionSetAndMemory(self):
-        self.assertEquals(
+        self.assertEqual(
             client_api.getSystemCapabilities("SSE3,8095"),
             {"instructionSet": "SSE3", "memory": 8095, "jaws": None}
         )
 
     def testPrefixedInstructionSetAndMemory(self):
-        self.assertEquals(
+        self.assertEqual(
             client_api.getSystemCapabilities("ISET:SSE2,MEM:6321"),
             {"instructionSet": "SSE2", "memory": 6321, "jaws": None}
         )
 
     def testPrefixedInstructionSetMemoryAndJaws(self):
-        self.assertEquals(
+        self.assertEqual(
             client_api.getSystemCapabilities("ISET:SSE2,MEM:6321,JAWS:1"),
             {"instructionSet": "SSE2", "memory": 6321, "jaws": True}
         )
 
     def testNothingProvided(self):
-        self.assertEquals(
+        self.assertEqual(
             client_api.getSystemCapabilities("NA"),
             {"instructionSet": "NA", "memory": None, "jaws": None}
         )
@@ -59,7 +59,7 @@ class TestGetSystemCapabilities(unittest.TestCase):
         self.assertRaises(ValueError, client_api.getSystemCapabilities, ("ISET:SSE2,MEM:63T1A"))
 
     def testUnknownField(self):
-        self.assertEquals(
+        self.assertEqual(
             client_api.getSystemCapabilities("ISET:SSE3,MEM:6721,PROC:Intel"),
             {"instructionSet": "SSE3", "memory": 6721, "jaws": None}
         )
@@ -1082,42 +1082,42 @@ class ClientTest(ClientTestBase):
     @given(just("mig64"), just(1))
     def testUnknownQueryStringParametersAreAllowedV1(self, param, val):
         ret = self.client.get("/update/1/b/1.0/1/p/l/a/update.xml?{}={}".format(param, val))
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
 
     # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
     # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
     @given(just("mig64"), just(1))
     def testUnknownQueryStringParametersAreAllowedV2(self, param, val):
         ret = self.client.get("/update/2/c/10.0/1/p/l/a/a/update.xml?{}={}".format(param, val))
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
 
     # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
     # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
     @given(just("mig64"), just(1))
     def testUnknownQueryStringParametersAreAllowedV3(self, param, val):
         ret = self.client.get("/update/3/b/1.0/1/p/l/a/a/a/a/update.xml?{}={}".format(param, val))
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
 
     # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
     # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
     @given(just("mig64"), just(1))
     def testUnknownQueryStringParametersAreAllowedV4(self, param, val):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?{}={}".format(param, val))
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
 
     # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
     # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
     @given(just("mig64"), just(1))
     def testUnknownQueryStringParametersAreAllowedV5(self, param, val):
         ret = self.client.get("/update/5/b/1.0/1/p/l/a/a/a/a/1/update.xml?{}={}".format(param, val))
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
 
     # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
     # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
     @given(just("mig64"), just(1))
     def testUnknownQueryStringParametersAreAllowedV6(self, param, val):
         ret = self.client.get("/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml?{}={}".format(param, val))
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
 
 
 class ClientTestMig64(ClientTestCommon):

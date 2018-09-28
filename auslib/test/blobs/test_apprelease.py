@@ -35,8 +35,8 @@ class TestReleaseBlobBase(unittest.TestCase):
 
     def testGetResolvedPlatform(self):
         blob = SimpleBlob(platforms=dict(a=dict(), b=dict(alias='a')))
-        self.assertEquals('a', blob.getResolvedPlatform('a'))
-        self.assertEquals('a', blob.getResolvedPlatform('b'))
+        self.assertEqual('a', blob.getResolvedPlatform('a'))
+        self.assertEqual('a', blob.getResolvedPlatform('b'))
 
     def testGetResolvedPlatformRaisesBadDataError(self):
         blob = SimpleBlob(platforms=dict(a=dict(), b=dict(alias='a')))
@@ -44,7 +44,7 @@ class TestReleaseBlobBase(unittest.TestCase):
 
     def testGetPlatformData(self):
         blob = SimpleBlob(platforms=dict(a=dict(foo=1)))
-        self.assertEquals(blob.getPlatformData('a'), dict(foo=1))
+        self.assertEqual(blob.getPlatformData('a'), dict(foo=1))
 
     def testGetPlatformDataRaisesBadDataError(self):
         blob = SimpleBlob(platforms=dict(a=dict(foo=1)))
@@ -56,7 +56,7 @@ class TestReleaseBlobBase(unittest.TestCase):
 
     def testGetLocaleData(self):
         blob = SimpleBlob(platforms=dict(b=dict(locales=dict(a=dict(foo=4)))))
-        self.assertEquals(blob.getLocaleData("b", "a"), dict(foo=4))
+        self.assertEqual(blob.getLocaleData("b", "a"), dict(foo=4))
 
     def testGetLocaleDataRaisesBadDataError(self):
         blob = SimpleBlob(platforms=dict(b=dict(locales=dict(a=dict(foo=4)))))
@@ -64,23 +64,23 @@ class TestReleaseBlobBase(unittest.TestCase):
 
     def testGetLocaleOrTopLevelParamTopLevelOnly(self):
         blob = SimpleBlob(foo=5)
-        self.assertEquals(5, blob.getLocaleOrTopLevelParam('a', 'b', 'foo'))
+        self.assertEqual(5, blob.getLocaleOrTopLevelParam('a', 'b', 'foo'))
 
     def testGetLocaleOrTopLevelParamLocaleOnly(self):
         blob = SimpleBlob(platforms=dict(f=dict(locales=dict(g=dict(foo=6)))))
-        self.assertEquals(6, blob.getLocaleOrTopLevelParam('f', 'g', 'foo'))
+        self.assertEqual(6, blob.getLocaleOrTopLevelParam('f', 'g', 'foo'))
 
     def testGetLocaleOrTopLevelParamMissing(self):
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(foo=6)))))
-        self.assertEquals(None, blob.getLocaleOrTopLevelParam('a', 'b', 'c'))
+        self.assertEqual(None, blob.getLocaleOrTopLevelParam('a', 'b', 'c'))
 
     def testGetBuildIDPlatformOnly(self):
         blob = SimpleBlob(platforms=dict(a=dict(buildID=1, locales=dict(b=dict()))))
-        self.assertEquals(1, blob.getBuildID('a', 'b'))
+        self.assertEqual(1, blob.getBuildID('a', 'b'))
 
     def testGetBuildIDLocaleOnly(self):
         blob = SimpleBlob(platforms=dict(c=dict(locales=dict(d=dict(buildID=9)))))
-        self.assertEquals(9, blob.getBuildID('c', 'd'))
+        self.assertEqual(9, blob.getBuildID('c', 'd'))
 
     def testGetBuildIDMissingLocale(self):
         blob = SimpleBlob(platforms=dict(c=dict(locales=dict(d=dict(buildID=9)))))
@@ -201,7 +201,7 @@ class TestReleaseBlobV1(unittest.TestCase):
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlob.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
-        self.assertEquals(sorted(partial_releases),
+        self.assertEqual(sorted(partial_releases),
                           ['samplePartial1', 'samplePartial2', 'samplePartial3', 'samplePartial4']
                           )
 
@@ -225,7 +225,7 @@ class TestReleaseBlobV1(unittest.TestCase):
         sample_release_blob = ReleaseBlobV1()
         sample_release_blob.loadJSON(sample_release_JSON)
         partial_releases = sample_release_blob.getReferencedReleases()
-        self.assertEquals(0, len(partial_releases))
+        self.assertEqual(0, len(partial_releases))
 
     def testGetPartialReleaseReferences_No_Partial_Release_Case(self):
         sample_release_JSON = """
@@ -252,23 +252,23 @@ class TestReleaseBlobV1(unittest.TestCase):
         sample_release_blob = ReleaseBlobV1()
         sample_release_blob.loadJSON(sample_release_JSON)
         partial_releases = sample_release_blob.getReferencedReleases()
-        self.assertEquals(0, len(partial_releases))
+        self.assertEqual(0, len(partial_releases))
 
     def testGetAppv(self):
         blob = ReleaseBlobV1(appv=1)
-        self.assertEquals(1, blob.getAppv('p', 'l'))
+        self.assertEqual(1, blob.getAppv('p', 'l'))
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(appv=2)))))
-        self.assertEquals(2, blob.getAppv('f', 'g'))
+        self.assertEqual(2, blob.getAppv('f', 'g'))
 
     def testGetExtv(self):
         blob = ReleaseBlobV1(extv=3)
-        self.assertEquals(3, blob.getExtv('p', 'l'))
+        self.assertEqual(3, blob.getExtv('p', 'l'))
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(extv=4)))))
-        self.assertEquals(4, blob.getExtv('f', 'g'))
+        self.assertEqual(4, blob.getExtv('f', 'g'))
 
     def testApplicationVersion(self):
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(extv=4)))))
-        self.assertEquals(blob.getExtv('f', 'g'), blob.getApplicationVersion('f', 'g'))
+        self.assertEqual(blob.getExtv('f', 'g'), blob.getApplicationVersion('f', 'g'))
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV1(fileUrls=dict(c="http://a.com/a"))
@@ -427,25 +427,25 @@ class TestNewStyleVersionBlob(unittest.TestCase):
 
     def testGetAppVersion(self):
         blob = ReleaseBlobV2(appVersion=1)
-        self.assertEquals(1, blob.getAppVersion('p', 'l'))
+        self.assertEqual(1, blob.getAppVersion('p', 'l'))
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(g=dict(appVersion=2)))))
-        self.assertEquals(2, blob.getAppVersion('f', 'g'))
+        self.assertEqual(2, blob.getAppVersion('f', 'g'))
 
     def testGetDisplayVersion(self):
         blob = ReleaseBlobV2(displayVersion=3)
-        self.assertEquals(3, blob.getDisplayVersion('p', 'l'))
+        self.assertEqual(3, blob.getDisplayVersion('p', 'l'))
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(g=dict(displayVersion=4)))))
-        self.assertEquals(4, blob.getDisplayVersion('f', 'g'))
+        self.assertEqual(4, blob.getDisplayVersion('f', 'g'))
 
     def testGetPlatformVersion(self):
         blob = ReleaseBlobV2(platformVersion=5)
-        self.assertEquals(5, blob.getPlatformVersion('p', 'l'))
+        self.assertEqual(5, blob.getPlatformVersion('p', 'l'))
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(g=dict(platformVersion=6)))))
-        self.assertEquals(6, blob.getPlatformVersion('f', 'g'))
+        self.assertEqual(6, blob.getPlatformVersion('f', 'g'))
 
     def testApplicationVersion(self):
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(g=dict(appVersion=6)))))
-        self.assertEquals(blob.getAppVersion('f', 'g'), blob.getApplicationVersion('f', 'g'))
+        self.assertEqual(blob.getAppVersion('f', 'g'), blob.getApplicationVersion('f', 'g'))
 
 
 class TestSpecialQueryParams(unittest.TestCase):
@@ -825,7 +825,7 @@ class TestSchema2Blob(unittest.TestCase):
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlob.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
-        self.assertEquals(sorted(partial_releases),
+        self.assertEqual(sorted(partial_releases),
                           ['samplePartial1', 'samplePartial2', 'samplePartial3', 'samplePartial4']
                           )
 
@@ -1300,7 +1300,7 @@ class TestSchema3Blob(unittest.TestCase):
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlobV3.getReferencedReleases()
         self.assertTrue(3, len(partial_releases))
-        self.assertEquals(sorted(partial_releases), ['d4', 'e3', 'g1'])
+        self.assertEqual(sorted(partial_releases), ['d4', 'e3', 'g1'])
 
     def testGetPartialReleaseReferences_Empty_Partials(self):
         sampleReleaseDataJSON = """
@@ -1357,7 +1357,7 @@ class TestSchema3Blob(unittest.TestCase):
         sampleReleaseBlobV3 = ReleaseBlobV3()
         sampleReleaseBlobV3.loadJSON(sampleReleaseDataJSON)
         partial_releases = sampleReleaseBlobV3.getReferencedReleases()
-        self.assertEquals(0, len(partial_releases))
+        self.assertEqual(0, len(partial_releases))
 
     def testIsValid(self):
         # Raises on error
@@ -1793,7 +1793,7 @@ class TestSchema4Blob(unittest.TestCase):
         """)
         partial_releases = sample_release_blob_v4.getReferencedReleases()
         self.assertTrue(5, len(partial_releases))
-        self.assertEquals(sorted(partial_releases), ['h0', 'h1', 'h2', 'h3', 'h4'])
+        self.assertEqual(sorted(partial_releases), ['h0', 'h1', 'h2', 'h3', 'h4'])
 
     def testGetPartialReleaseReferences_Empty_Partials_Case(self):
         sample_release_blob_v4 = ReleaseBlobV4()
@@ -1812,7 +1812,7 @@ class TestSchema4Blob(unittest.TestCase):
             }
             """)
         partial_releases = sample_release_blob_v4.getReferencedReleases()
-        self.assertEquals(0, len(partial_releases))
+        self.assertEqual(0, len(partial_releases))
 
     def testGetPartialReleaseReferences_Empty_Locales_Case(self):
         sample_release_blob_v4 = ReleaseBlobV4()
@@ -1878,7 +1878,7 @@ class TestSchema4Blob(unittest.TestCase):
         """)
         partial_releases = sample_release_blob_v4.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
-        self.assertEquals(sorted(partial_releases), ['h0', 'h1', 'h2', 'h3'])
+        self.assertEqual(sorted(partial_releases), ['h0', 'h1', 'h2', 'h3'])
 
     def testIsValid(self):
         # Raises on error
@@ -2043,9 +2043,9 @@ class TestSchema4Blob(unittest.TestCase):
 """]
         expected_footer = "</update>"
         expected = [x.strip() for x in expected]
-        self.assertEquals(returned_header.strip(), expected_header.strip())
-        self.assertEquals(returned, expected)
-        self.assertEquals(returned_footer.strip(), expected_footer.strip())
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testConvertFromV3(self):
         v3Blob = ReleaseBlobV3()
@@ -2105,7 +2105,7 @@ class TestSchema4Blob(unittest.TestCase):
             }
         }
 
-        self.assertEquals(v4Blob, expected)
+        self.assertEqual(v4Blob, expected)
 
     def testConvertFromV3Noop(self):
         v3Blob = ReleaseBlobV3()
@@ -2151,7 +2151,7 @@ class TestSchema4Blob(unittest.TestCase):
         expected = v3Blob.copy()
         expected["schema_version"] = 4
 
-        self.assertEquals(v4Blob, expected)
+        self.assertEqual(v4Blob, expected)
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://a.com/c"))))
@@ -2336,7 +2336,7 @@ class TestSchema5Blob(unittest.TestCase):
         """)
         partial_releases = sample_release_blob_v5.getReferencedReleases()
         self.assertTrue(2, len(partial_releases))
-        self.assertEquals(sorted(partial_releases), ['h1', 'h2'])
+        self.assertEqual(sorted(partial_releases), ['h1', 'h2'])
 
     def testGetPartialReleaseReferences_Empty_fileUrls_Case(self):
         sample_release_blob_v5 = ReleaseBlobV5()
@@ -2425,7 +2425,7 @@ class TestSchema5Blob(unittest.TestCase):
         """)
         partial_releases = sample_release_blob_v5.getReferencedReleases()
         self.assertTrue(3, len(partial_releases))
-        self.assertEquals(sorted(partial_releases), ['h1', 'h2', 'h3'])
+        self.assertEqual(sorted(partial_releases), ['h1', 'h2', 'h3'])
 
     def testIsValid(self):
         # Raises on error
@@ -2609,7 +2609,7 @@ class TestSchema6Blob(unittest.TestCase):
         """)
         partial_releases = sample_release_blob_v6.getReferencedReleases()
         self.assertTrue(2, len(partial_releases))
-        self.assertEquals(sorted(partial_releases), ['h1', 'h2'])
+        self.assertEqual(sorted(partial_releases), ['h1', 'h2'])
 
     def testGetPartialReleaseReferences_Empty_Partials_Case(self):
         sample_release_blob_v6 = ReleaseBlobV6()
@@ -2627,7 +2627,7 @@ class TestSchema6Blob(unittest.TestCase):
         }
         """)
         partial_releases = sample_release_blob_v6.getReferencedReleases()
-        self.assertEquals(0, len(partial_releases))
+        self.assertEqual(0, len(partial_releases))
 
     def testIsValid(self):
         # Raises on error
@@ -3347,7 +3347,7 @@ class TestUnifiedFileUrlsMixin(unittest.TestCase):
         expected_url = "http://a.com/h1-partial.mar"
         url = self.mixin_instance._getUrl(updateQuery, patchKey, patch, specialForceHosts)
 
-        self.assertEquals(expected_url, url)
+        self.assertEqual(expected_url, url)
 
     def testGetUrlDoesntFallBackToCatchAll(self):
         updateQuery = {
@@ -3381,7 +3381,7 @@ class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):
         expected_additional_patch_attributes = {'binTransInclusionProof': 'foobar'}
         additionalPatchAttributes = self.mixin_instance._getAdditionalPatchAttributes(patch)
 
-        self.assertEquals(expected_additional_patch_attributes, additionalPatchAttributes)
+        self.assertEqual(expected_additional_patch_attributes, additionalPatchAttributes)
 
     def testGetAdditionalPatchAttributesPartial(self):
         patch = {
@@ -3395,4 +3395,4 @@ class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):
         expected_additional_patch_attributes = {'binTransInclusionProof': 'barfoo'}
         additionalPatchAttributes = self.mixin_instance._getAdditionalPatchAttributes(patch)
 
-        self.assertEquals(expected_additional_patch_attributes, additionalPatchAttributes)
+        self.assertEqual(expected_additional_patch_attributes, additionalPatchAttributes)

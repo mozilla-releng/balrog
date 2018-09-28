@@ -1,7 +1,11 @@
-import cgi
 import connexion
 import logging
 import re
+
+try:
+    import html
+except ImportError: # pragma: no cover
+    import cgi as html
 
 import auslib.web
 
@@ -93,12 +97,12 @@ def generic(error):
     # information about them to Sentry.
     message = " ".join(getattr(error, "args", repr(error)))
     if isinstance(error, BadDataError):
-        return Response(status=400, mimetype="text/plain", response=cgi.escape(message))
+        return Response(status=400, mimetype="text/plain", response=html.escape(message))
 
     if sentry.client:
         sentry.captureException()
 
-    return Response(status=500, mimetype="text/plain", response=cgi.escape(message))
+    return Response(status=500, mimetype="text/plain", response=html.escape(message))
 
 
 # Keeping static files endpoints here due to an issue when returning response for static files.
