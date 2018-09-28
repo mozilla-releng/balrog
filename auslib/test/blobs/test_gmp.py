@@ -1,6 +1,5 @@
 import unittest
 
-import six
 from six import assertCountEqual, assertRaisesRegex
 
 from auslib.blobs.gmp import GMPBlobV1
