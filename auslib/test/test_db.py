@@ -10,6 +10,7 @@ import re
 
 from itertools import chain
 
+from six import assertRaisesRegex
 from six.moves import xrange
 
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select, String
@@ -846,23 +847,23 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertTrue("role" in signoff_columns)
 
     def testValidateConditionsNone(self):
-        self.assertRaisesRegex(ValueError, "No conditions found", self.sc_table.conditions.validate, {})
+        assertRaisesRegex(self, ValueError, "No conditions found", self.sc_table.conditions.validate, {})
 
     def testValidateConditionsNoneValue(self):
-        self.assertRaisesRegex(ValueError, "No conditions found", self.sc_table.conditions.validate, {"when": None})
+        assertRaisesRegex(self, ValueError, "No conditions found", self.sc_table.conditions.validate, {"when": None})
 
     def testValdiateConditionsInvalid(self):
-        self.assertRaisesRegex(ValueError, "Invalid condition", self.sc_table.conditions.validate, {"blah": "blah"})
+        assertRaisesRegex(self, ValueError, "Invalid condition", self.sc_table.conditions.validate, {"blah": "blah"})
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testValidateConditionsJustWhen(self):
         self.sc_table.conditions.validate({"when": 12345678})
 
     def testValidateConditionsBadWhen(self):
-        self.assertRaisesRegex(ValueError, "Cannot parse", self.sc_table.conditions.validate, {"when": "abc"})
+        assertRaisesRegex(self, ValueError, "Cannot parse", self.sc_table.conditions.validate, {"when": "abc"})
 
     def testValidateConditionsWhenInThePast(self):
-        self.assertRaisesRegex(ValueError, "Cannot schedule changes in the past", self.sc_table.conditions.validate, {"when": 1})
+        assertRaisesRegex(self, ValueError, "Cannot schedule changes in the past", self.sc_table.conditions.validate, {"when": 1})
 
     def testValidateConditionsJustTelemetry(self):
         self.sc_table.conditions.validate({
@@ -872,11 +873,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         })
 
     def testValidateConditionsNotAllowedWhenAndOther(self):
-        self.assertRaisesRegex(ValueError, "Invalid combination of conditions", self.sc_table.conditions.validate,
+        assertRaisesRegex(self, ValueError, "Invalid combination of conditions", self.sc_table.conditions.validate,
                                 {"when": "12345", "telemetry_product": "foo"})
 
     def testValidateConditionsMissingTelemetryValue(self):
-        self.assertRaisesRegex(ValueError, "Invalid combination of conditions", self.sc_table.conditions.validate, {"telemetry_product": "foo"})
+        assertRaisesRegex(self, ValueError, "Invalid combination of conditions", self.sc_table.conditions.validate, {"telemetry_product": "foo"})
 
     def testSelectIncludesConditionColumns(self):
         row = self.sc_table.select(where=[self.sc_table.sc_id == 2])[0]
@@ -990,12 +991,12 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.metadata.create_all()
         table_sc = table.scheduled_changes
         what = {'baz': 'baz', 'change_type': 'insert', 'when': 876000}
-        self.assertRaisesRegex(ValueError, 'Missing primary key column ', table_sc.insert, changed_by="alice", **what)
+        assertRaisesRegex(self, ValueError, 'Missing primary key column ', table_sc.insert, changed_by="alice", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertForExistingNoSuchRow(self):
         what = {"fooid": 10, "foo": "thing", "data_version": 1, "when": 999000, "change_type": "update"}
-        self.assertRaisesRegex(ValueError, "Cannot create scheduled change with data_version for non-existent row", self.sc_table.insert, changed_by="bob",
+        assertRaisesRegex(self, ValueError, "Cannot create scheduled change with data_version for non-existent row", self.sc_table.insert, changed_by="bob",
                                 **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
@@ -1014,11 +1015,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         table = TestTable2("fake", self.metadata)
         self.metadata.create_all()
         what = {"fooid": 2, "when": 4532000, "change_type": "insert"}
-        self.assertRaisesRegex(ValueError, "Missing primary key column", table.scheduled_changes.insert, changed_by="bob", **what)
+        assertRaisesRegex(self, ValueError, "Missing primary key column", table.scheduled_changes.insert, changed_by="bob", **what)
 
     def testInsertWithMalformedTimestamp(self):
         what = {"foo": "blah", "when": "abc", "change_type": "insert"}
-        self.assertRaisesRegex(ValueError, "Cannot parse", self.sc_table.insert, changed_by="bob", **what)
+        assertRaisesRegex(self, ValueError, "Cannot parse", self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertDataVersionChanged(self):
@@ -1058,7 +1059,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertCreateExistingPK(self):
         what = {"fooid": 3, "foo": "mine is better", "when": 99999999, "change_type": "insert"}
-        self.assertRaisesRegex(ValueError, "Cannot schedule change for duplicate PK", self.sc_table.insert, changed_by="bob", **what)
+        assertRaisesRegex(self, ValueError, "Cannot schedule change for duplicate PK", self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testDeleteScheduledChangeWithoutPKColumns(self):
@@ -1191,13 +1192,13 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testUpdateWithBadConditions(self):
         where = [self.sc_table.sc_id == 1]
         what = {"telemetry_product": "boop", "telemetry_channel": "boop", "telemetry_uptake": 99}
-        self.assertRaisesRegex(ValueError, "Invalid combination of conditions", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
+        assertRaisesRegex(self, ValueError, "Invalid combination of conditions", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateRemoveConditions(self):
         where = [self.sc_table.sc_id == 2]
         what = {"when": None}
-        self.assertRaisesRegex(ValueError, "No conditions found", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
+        assertRaisesRegex(self, ValueError, "No conditions found", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateRaisesErrorOnDataVersionBetweenCoreAndConditions(self):
@@ -1519,7 +1520,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
             def getPotentialRequiredSignoffs(self, *args, **kwargs):
                 return None
 
-        self.assertRaisesRegex(ValueError, "No conditions enabled", TestTable2, self.db, self.metadata)
+        assertRaisesRegex(self, ValueError, "No conditions enabled", TestTable2, self.db, self.metadata)
 
     def testSCTableWithBadConditions(self):
         class TestTable3(AUSTable):
@@ -1534,10 +1535,10 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
             def getPotentialRequiredSignoffs(self, *args, **kwargs):
                 return None
 
-        self.assertRaisesRegex(ValueError, "Unknown conditions", TestTable3, self.db, self.metadata)
+        assertRaisesRegex(self, ValueError, "Unknown conditions", TestTable3, self.db, self.metadata)
 
     def testValidateConditionsNone(self):
-        self.assertRaisesRegex(ValueError, "No conditions found", self.sc_table.conditions.validate, {})
+        assertRaisesRegex(self, ValueError, "No conditions found", self.sc_table.conditions.validate, {})
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testValidateConditionsJustWhen(self):
@@ -1549,7 +1550,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
             "telemetry_channel": "nightly",
             "telemetry_uptake": "200000",
         }
-        self.assertRaisesRegex(ValueError, "uptake condition is disabled", self.sc_table.conditions.validate, conditions)
+        assertRaisesRegex(self, ValueError, "uptake condition is disabled", self.sc_table.conditions.validate, conditions)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertWithEnabledCondition(self):
@@ -1570,7 +1571,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
     def testInsertWithDisabledCondition(self):
         what = {"fooid": 11, "foo": "i", "bar": "jjj", "data_version": 1, "telemetry_product": "aa",
                 "telemetry_channel": "bb", "telemetry_uptake": 34567, "change_type": "update"}
-        self.assertRaisesRegex(ValueError, "uptake condition is disabled", self.sc_table.insert, changed_by="bob", **what)
+        assertRaisesRegex(self, ValueError, "uptake condition is disabled", self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateWithNewValueForEnabledCondition(self):
@@ -1605,7 +1606,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
     def testUpdateChangeToDisabledCondition(self):
         where = [self.sc_table.sc_id == 1]
         what = {"telemetry_product": "pro", "telemetry_channel": "cha", "telemetry_uptake": 3456, "bar": "ccc", "when": None}
-        self.assertRaisesRegex(ValueError, "uptake condition is disabled", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
+        assertRaisesRegex(self, ValueError, "uptake condition is disabled", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
 
 
 class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
@@ -1640,7 +1641,7 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(got, [(1, "bob", "releng")])
 
     def testSignoffWithoutPermission(self):
-        self.assertRaisesRegex(PermissionDeniedError, "jim cannot signoff with role 'releng'",
+        assertRaisesRegex(self, PermissionDeniedError, "jim cannot signoff with role 'releng'",
                                 self.signoffs.insert, "jim", sc_id=1, username="jim", role="releng")
 
     def testSignoffASecondTimeWithSameRole(self):
@@ -1651,7 +1652,7 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(len(history), 0)
 
     def testSignoffWithSecondRole(self):
-        self.assertRaisesRegex(PermissionDeniedError, "Cannot signoff with a second role",
+        assertRaisesRegex(self, PermissionDeniedError, "Cannot signoff with a second role",
                                 self.signoffs.insert, "nancy", sc_id=1, username="nancy", role="qa")
 
     def testCannotUpdateSignoff(self):
@@ -1673,7 +1674,7 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(len(got), 0)
 
     def testRevokeOtherUsersSignoffWithoutPermission(self):
-        self.assertRaisesRegex(PermissionDeniedError, "Cannot revoke a signoff made by someone in a group you do not belong to",
+        assertRaisesRegex(self, PermissionDeniedError, "Cannot revoke a signoff made by someone in a group you do not belong to",
                                 self.signoffs.delete, {"sc_id": 1, "username": "nancy"}, changed_by="bob")
 
 
@@ -4380,7 +4381,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertIn(("bob", "relman", 1), got)
 
     def testGrantRoleToUserWhoDoesntHaveAPermission(self):
-        self.assertRaisesRegex(ValueError, "Cannot grant a role to a user without any permissions",
+        assertRaisesRegex(self, ValueError, "Cannot grant a role to a user without any permissions",
                                 self.permissions.grantRole, changed_by="bill", username="kirk", role="dev")
 
     def testRevokePermission(self):
@@ -4418,7 +4419,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
                           old_data_version=1)
 
     def testCannotRevokeRoleThatMakesRequiredSignoffImpossible(self):
-        self.assertRaisesRegex(ValueError, "Revoking dev role would make it impossible for Required Signoffs to be fulfilled",
+        assertRaisesRegex(self, ValueError, "Revoking dev role would make it impossible for Required Signoffs to be fulfilled",
                                 self.permissions.revokeRole, "bob", "dev", "bill", old_data_version=1)
 
     def testGetAllUsers(self):

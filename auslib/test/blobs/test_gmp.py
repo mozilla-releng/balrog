@@ -1,6 +1,7 @@
 import unittest
 
-from six import assertCountEqual
+import six
+from six import assertCountEqual, assertRaisesRegex
 
 from auslib.blobs.gmp import GMPBlobV1
 from auslib.errors import BadDataError
@@ -83,7 +84,7 @@ class TestSchema1Blob(unittest.TestCase):
     }
 }
 """)
-        self.assertRaisesRegex(ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
+        assertRaisesRegex(self, ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
                                 blob.validate, 'gg', self.whitelistedDomains)
 
     def testGetVendorsForPlatform(self):
