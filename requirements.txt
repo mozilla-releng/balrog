@@ -132,9 +132,9 @@ clickclick==1.2.2 \
     --hash=sha256:4a890aaa9c3990cfabd446294eb34e3dc89701101ac7b41c1bff85fc210f6d23
 strict-rfc3339==0.7 \
     --hash=sha256:5cad17bedfc3af57b399db0fed32771f18fc54bbd917e85546088607ac5e1277
-swagger-spec-validator==2.3.1 \
-    --hash=sha256:dc902093b7c5720326aab1cf150410079d319fb5672643422555c17da127c482 \
-    --hash=sha256:f1a74627c439774edd30132d25cdb7583aa044deaf46333c745bb8b7c0461b75
+swagger-spec-validator==2.4.0 \
+    --hash=sha256:aec4cbc4d16a55c4ba7fcf1f42d2600b5813114060e0dea0553c9527b0038a2c \
+    --hash=sha256:7212467c6be39a86ed5b0009ad04d1a1a8c4b0bb7eea8ba396763347bdc3e20a
 pathlib==1.0.1 \
     --hash=sha256:6940718dfc3eff4258203ad5021090933e5c04707d5ca8cc9e73c94a7894ea9f
 inflection==0.3.1 \
