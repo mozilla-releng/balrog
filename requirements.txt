@@ -132,9 +132,10 @@ clickclick==1.2.2 \
     --hash=sha256:4a890aaa9c3990cfabd446294eb34e3dc89701101ac7b41c1bff85fc210f6d23
 strict-rfc3339==0.7 \
     --hash=sha256:5cad17bedfc3af57b399db0fed32771f18fc54bbd917e85546088607ac5e1277
-swagger-spec-validator==2.3.1   # pyup: ignore \
+swagger-spec-validator==2.3.1 \
     --hash=sha256:dc902093b7c5720326aab1cf150410079d319fb5672643422555c17da127c482 \
-    --hash=sha256:f1a74627c439774edd30132d25cdb7583aa044deaf46333c745bb8b7c0461b75
+    --hash=sha256:f1a74627c439774edd30132d25cdb7583aa044deaf46333c745bb8b7c0461b75 \
+    # pyup: ignore
 pathlib==1.0.1 \
     --hash=sha256:6940718dfc3eff4258203ad5021090933e5c04707d5ca8cc9e73c94a7894ea9f
 inflection==0.3.1 \
