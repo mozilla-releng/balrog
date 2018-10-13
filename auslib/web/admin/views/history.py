@@ -1,9 +1,29 @@
 import connexion
+import difflib
+import six
+import simplejson as json
+from six import integer_types, text_type
+from auslib.global_state import dbo
 from flask import Response, jsonify
 from sqlalchemy import and_
+from sqlalchemy.sql.expression import null
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.base import AdminView
 
+
+def format_value(value):
+   if isinstance(value, dict):
+       try:
+           value = json.dumps(value, indent=2, sort_keys=True)
+       except ValueError:
+           pass
+   elif value is None:
+       value = 'NULL'
+   elif isinstance(value, integer_types):
+       value = str(value)
+   else:
+       value = text_type(value, 'utf8') if six.PY2 else str(value)
+   return value
 
 class HistoryView(AdminView):
     """Base class for history views. Provides basics operations to get all
@@ -141,3 +161,54 @@ class HistoryView(AdminView):
                           old_data_version=old_data_version,
                           transaction=transaction)
         return Response(response_message)
+
+
+class ScheduledReleaseDiffView(AdminView):
+    """/history/diff/sc/release/:change_id"""
+
+    def __init__(self):
+        super(AdminView, self).__init__()
+        self.table = dbo.releases.scheduled_changes.history
+
+    def get_value(self, change_id):
+        revision = self.table.getChange(change_id=change_id)
+        if not revision:
+            abort(400, 'Bad change_id')
+        return revision
+
+    def previous(self, value, change_id):
+        sc_name, table = value['base_name'], self.table
+        old_revision = table.select(
+            where=[
+                table.base_name == sc_name,
+                table.change_id < change_id,
+                table.data_version != null()
+            ],
+            limit=1,
+            order_by=[table.timestamp.desc()],
+        )
+        if len(old_revision) > 0:
+            return self.get_value(old_revision[0]['change_id'])
+
+    def get(self, change_id):
+       try:
+           _curr = self.get_value(change_id)
+           _prev = self.previous(_curr, change_id)
+
+       except (KeyError, TypeError, IndexError) as msg:
+           return problem(400, 'Bad Request', str(msg))
+       except ValueError as msg:
+           return problem(404, 'Not Found', str(msg))
+
+       curr = format_value(_curr["base_data"]) if _curr else ''
+       prev = format_value(_curr["base_data"]) if _prev else ''
+
+       result = difflib.unified_diff(
+           prev.splitlines(),
+           curr.splitlines(),
+           fromfile='Data Version {}'.format(_prev['data_version'] if _prev else 0),
+           tofile='Data Version {}'.format(_curr['data_version'] if _curr else 0),
+           lineterm=''
+       )
+
+       return Response('\n'.join(result), content_type='text/plain')

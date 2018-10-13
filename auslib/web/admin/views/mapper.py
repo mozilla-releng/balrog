@@ -1,4 +1,5 @@
 from auslib.web.admin.views.csrf import CSRFView
+import history as History
 
 from auslib.web.admin.views.rules import RulesAPIView, SingleRuleView, SingleRuleColumnView, \
     RuleHistoryAPIView, RuleScheduledChangesView, EnactRuleScheduledChangeView, RuleScheduledChangeSignoffsView, \
@@ -106,6 +107,10 @@ def user_specific_permission_delete(username, permission):
 def release_diff_history_get(change_id, field):
     """GET /history/diff/release/:id/:field"""
     return ReleaseDiffView().get(change_id, field)
+
+def scheduled_release_diff_history_get(change_id):
+    """GET /history/diff/sc/release/:id"""
+    return History.ScheduledReleaseDiffView().get(change_id)
 
 
 def scheduled_release_diff_get(sc_id):
