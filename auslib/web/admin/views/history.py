@@ -4,7 +4,7 @@ import six
 import simplejson as json
 from six import integer_types, text_type
 from auslib.global_state import dbo
-from flask import Response, jsonify
+from flask import Response, jsonify, abort
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import null
 from auslib.web.admin.views.problem import problem

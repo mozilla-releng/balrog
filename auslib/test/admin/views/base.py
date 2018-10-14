@@ -134,6 +134,28 @@ class ViewTest(unittest.TestCase):
     }
 }
 """))
+
+        dbo.releases.scheduled_changes.history.t.insert().execute(change_id=10, sc_id=1, timestamp=10, changed_by="bill",
+                                                base_name='a', base_product='a', base_data_version=1, base_data=createBlob("""
+{
+    "name": "a",
+    "schema_version": 1,
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "locales": {
+                "a": {
+                    "complete": {
+                        "filesize": 1234,
+                        "from": "*",
+                        "hashValue": "abc"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
         dbo.rules.t.insert().execute(
             rule_id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='minor',
             product="a", channel="a", data_version=1

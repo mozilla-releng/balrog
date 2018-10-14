@@ -188,3 +188,24 @@ class TestHistoryView(ViewTest):
         self.assertFalse('"detailsUrl": "blahblahblah"' in ret.get_data(as_text=True))
         self.assertTrue('"fakePartials": true' in ret.get_data(as_text=True))
         self.assertTrue('"fakePartials": false' in ret.get_data(as_text=True))
+
+    def testScheduledReleaseDiff(self):
+        url = '/history/diff/sc/release/10'
+        ret = self.client.get(url)
+        self.assertStatusCode(ret, 200)
+
+    def testScheduledReleaseDiffData(self):
+        url = '/history/diff/sc/release/10'
+        ret = self.client.get(url)
+        self.assertStatusCode(ret, 200)
+
+        # Checks should now give diff for versions of a
+        self.assertTrue('"hashFunction": "sha512"' in ret.get_data(as_text=True))
+        self.assertTrue('"name": "a"' in ret.get_data(as_text=True))
+        self.assertTrue('"schema_version": 1' in ret.get_data(as_text=True))
+
+
+    def testScheduledReleaseDiffWithBadId(self):
+        url = '/history/diff/sc/release/88289'
+        ret = self.client.get(url)
+        self.assertStatusCode(ret, 400)
