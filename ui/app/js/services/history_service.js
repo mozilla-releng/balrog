@@ -16,7 +16,18 @@ angular.module("app").factory('History', function($http, $q, ScheduledChanges, H
         }
         return $http.get(url) ;
       },
-    };
+
+      getScheduedReleaseDiff: function(change_id) {
+        var url = '/api/history/diff/sc/release/' + change_id;
+        return $http({
+          url: url,
+          method: 'GET',
+          transformResponse: function(value) {
+            return value;
+          }
+        });
+      },
+      };
     return service; 
   });
   

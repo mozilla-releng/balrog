@@ -1,12 +1,12 @@
 angular.module('app').controller('ReleaseDataCtrl',
-function($scope, $http, $modalInstance, Releases, Rules, release, diff) {
+function($scope, $http, $modalInstance, Releases, History, release, diff) {
   $scope.release = release;
   $scope.diff = diff;
 
   if (release.change_id) {
     if (diff) {
-      Releases.getDiff(release.change_id)
-      .then(function(response) {
+      const Diff = !!release.sc_id ? History.getScheduedReleaseDiff : Releases.getDiff;
+       Diff.call(this, release.change_id).then(function(response) {
         $scope.release.diff = response.data;
       });
 

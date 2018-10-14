@@ -206,8 +206,8 @@ class ScheduledReleaseDiffView(AdminView):
        result = difflib.unified_diff(
            prev.splitlines(),
            curr.splitlines(),
-           fromfile='Data Version {}'.format(_prev['data_version'] if _prev else 0),
-           tofile='Data Version {}'.format(_curr['data_version'] if _curr else 0),
+           fromfile='Data Version {}'.format(_prev['data_version'] if _prev else ''),
+           tofile='Data Version {}'.format(_curr['data_version'] if _curr else ''),
            lineterm=''
        )
 

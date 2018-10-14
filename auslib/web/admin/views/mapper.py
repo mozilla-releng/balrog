@@ -1,5 +1,5 @@
 from auslib.web.admin.views.csrf import CSRFView
-import history as History
+import auslib.web.admin.views.history as History
 
 from auslib.web.admin.views.rules import RulesAPIView, SingleRuleView, SingleRuleColumnView, \
     RuleHistoryAPIView, RuleScheduledChangesView, EnactRuleScheduledChangeView, RuleScheduledChangeSignoffsView, \
