@@ -34,10 +34,12 @@ COPY version.json /app/
 WORKDIR /app
 
 RUN cd ui && \
-    apt-get -q --yes install nodejs nodejs-legacy npm && \
+    apt-get -q --yes install curl git bzip2 && \
+    curl -sL https://deb.nodesource.com/setup_8.x | bash - && \
+    apt-get -q --yes install nodejs && \
     npm install && \
     npm run build && \
-    apt-get -q --yes remove nodejs nodejs-legacy npm && \
+    apt-get -q --yes remove nodejs && \
     apt-get -q --yes autoremove && \
     apt-get clean && \
     rm -rf /root/.npm /tmp/phantomjs && \

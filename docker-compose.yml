@@ -86,7 +86,7 @@ services:
 
 
   balrogui:
-    image: node:0.10
+    image: node:8
     depends_on:
       balrogadmin:
         condition: service_healthy

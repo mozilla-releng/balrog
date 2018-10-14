@@ -6,7 +6,10 @@ MAINTAINER bhearsum@mozilla.com
 # mysql-client is needed to import sample data
 # libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 RUN apt-get -q update \
-    && apt-get -q --yes install netcat libpcre3 libpcre3-dev nodejs nodejs-legacy libmysqlclient-dev mysql-client curl gcc xz-utils \
+    && apt-get -q --yes install netcat libpcre3 libpcre3-dev libmysqlclient-dev \
+                                mysql-client curl gcc xz-utils bzip2 \
+    && curl -sL https://deb.nodesource.com/setup_8.x | bash \
+    && apt-get -q --yes install nodejs \
     && apt-get clean
 
 WORKDIR /app

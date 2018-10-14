@@ -14,8 +14,10 @@ MAINTAINER bhearsum@mozilla.com
 # libfontconfig1 is required by phantomjs
 # git is needed to send coverage information
 RUN apt-get -q update \
-    && apt-get -q --yes install netcat libpcre3 libpcre3-dev nodejs nodejs-legacy npm libmysqlclient-dev mysql-client \
-                                libfontconfig1 netcat git curl xz-utils \
+    && apt-get -q --yes install netcat libpcre3 libpcre3-dev libmysqlclient-dev mysql-client \
+                                libfontconfig1 netcat git curl xz-utils bzip2 gcc \
+    && curl -sL https://deb.nodesource.com/setup_8.x | bash \
+    && apt-get -q --yes install nodejs \
     && apt-get clean
 
 WORKDIR /app

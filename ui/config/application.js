@@ -25,7 +25,8 @@ module.exports = function(lineman) {
 
     jshint: {
       options: {
-        esnext: true
+        esnext: true,
+        reporterOutput: ''
       },
     },
 
