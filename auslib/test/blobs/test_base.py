@@ -40,7 +40,7 @@ class TestCreateBlob(unittest.TestCase):
         self.assertRaises(ValueError, createBlob, dict(schema_version=666))
 
     def testSchemaCaching(self):
-        with mock.patch("yaml.load") as yaml_load:
+        with mock.patch("yaml.safe_load") as yaml_load:
             yaml_load.return_value = {
                 "title": "Test",
                 "type": "object",
@@ -83,18 +83,20 @@ useful_values = st.none() | st.floats(allow_nan=False) | st.text()
 def test_merge_lists_unique_items_present(base, left_additional, right_additional):
     left = deepcopy(base) + left_additional
     right = deepcopy(base) + right_additional
-    expected = sorted(list(set(deepcopy(base) + left_additional + right_additional)))
-    got = sorted(merge_lists(base, left, right))
-    assert got == expected
+    expected = list(set(deepcopy(base) + left_additional + right_additional))
+    got = merge_lists(base, left, right)
+    assert len(got) == len(expected)
+    assert all([expected_item in expected + got for expected_item in expected])
 
 
 @given(st.lists(useful_values), st.lists(useful_values))
 def test_merge_lists_no_dupes(base, additional):
     left = deepcopy(base) + additional
     right = deepcopy(base) + additional
-    expected = sorted(list(set(left)))
-    got = sorted(merge_lists(base, left, right))
-    assert got == expected
+    expected = list(set(left))
+    got = merge_lists(base, left, right)
+    assert len(got) == len(expected)
+    assert all([expected_item in expected + got for expected_item in expected])
 
 
 def unique_items_only(i):
@@ -116,6 +118,44 @@ json = st.dictionaries(st.text(),
                                     lambda x: useful_list | useful_dict,
                                     max_leaves=20),
                        max_size=10)
+
+
+def test_merge_dicts_simple_additions():
+    base = {
+        "nothing": "nothing",
+    }
+    left = deepcopy(base)
+    right = deepcopy(base)
+    expected = deepcopy(base)
+    left["foo"] = "foo"
+    right["bar"] = "bar"
+    got = merge_dicts(base, left, right)
+    expected = {
+        "foo": "foo",
+        "bar": "bar",
+        "nothing": "nothing",
+    }
+    assert got == expected
+
+
+def test_merge_dicts_simple_changes():
+    base = {
+        "foo": "oof",
+        "bar": "rab",
+        "nothing": "nothing",
+    }
+    left = deepcopy(base)
+    right = deepcopy(base)
+    expected = deepcopy(base)
+    left["foo"] = "foo"
+    right["bar"] = "bar"
+    got = merge_dicts(base, left, right)
+    expected = {
+        "foo": "foo",
+        "bar": "bar",
+        "nothing": "nothing",
+    }
+    assert got == expected
 
 
 # too_slow health checks are repressed because tests can be slow in CI, and we
@@ -150,7 +190,7 @@ def test_merge_dicts_raise_when_both_adding_same_key(base):
     try:
         merge_dicts(base, left, right)
     except ValueError as e:
-        assert "left and right are both changing 'foobar'" in e.message
+        assert "left and right are both changing 'foobar'" in str(e)
     else:
         assert False, "ValueError not raised"
 
@@ -166,7 +206,7 @@ def test_merge_dicts_raise_when_both_modifying_same_key(base):
     try:
         merge_dicts(base, left, right)
     except ValueError as e:
-        assert "left and right are both changing" in e.message
+        assert "left and right are both changing" in str(e)
     else:
         assert False, "ValueError not raised"
 
@@ -178,13 +218,13 @@ def test_merge_dicts_mismatched_types(base):
 
     left = deepcopy(base)
     right = deepcopy(base)
-    to_modify = base.keys()[0]
+    to_modify = list(base.keys())[0]
     left[to_modify] = "foo"
     right[to_modify] = [1, 2, 3]
     try:
         merge_dicts(base, left, right)
     except ValueError as e:
-        assert "type mismatch" in e.message
+        assert "type mismatch" in str(e)
     else:
         assert False, "ValueError not raised"
 

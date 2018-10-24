@@ -2,6 +2,7 @@ import simplejson as json
 import operator
 
 from flask_wtf import FlaskForm as Form
+from six import text_type
 from wtforms import StringField, IntegerField, SelectField, BooleanField
 from wtforms.widgets import TextInput, FileInput, HiddenInput
 from wtforms.validators import InputRequired, Optional, NumberRange, Length, Regexp, ValidationError
@@ -254,7 +255,7 @@ class RuleForm(Form):
 class EditRuleForm(DbEditableForm):
     backgroundRate = IntegerField('Background Rate', validators=[Optional(), NumberRange(0, 100)])
     priority = IntegerField('Priority', validators=[Optional()])
-    mapping = SelectField('Mapping', validators=[Optional()], coerce=NoneOrType(unicode))
+    mapping = SelectField('Mapping', validators=[Optional()], coerce=NoneOrType(text_type))
     fallbackMapping = NullableStringField('fallbackMapping', validators=[Optional()])
     alias = NullableStringField('Alias', validators=[Optional(), Length(0, 50), Regexp(RULE_ALIAS_REGEXP)])
     product = NullableStringField('Product', validators=[Optional(), Length(0, 15)])
@@ -269,7 +270,7 @@ class EditRuleForm(DbEditableForm):
     memory = NullableStringField('Memory', validators=[Optional(), Length(0, 100)])
     distVersion = NullableStringField('Dist Version', validators=[Optional(), Length(0, 100)])
     comment = NullableStringField('Comment', validators=[Optional(), Length(0, 500)])
-    update_type = SelectField('Update Type', choices=[('minor', 'minor'), ('major', 'major')], validators=[Optional()], coerce=NoneOrType(unicode))
+    update_type = SelectField('Update Type', choices=[('minor', 'minor'), ('major', 'major')], validators=[Optional()], coerce=NoneOrType(text_type))
     headerArchitecture = NullableStringField('Header Architecture', validators=[Optional(), Length(0, 10)])
 
 

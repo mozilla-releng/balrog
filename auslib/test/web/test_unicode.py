@@ -1,4 +1,5 @@
 import unittest
+from six import unichr
 from auslib.global_state import dbo
 from auslib.web.public.base import app
 

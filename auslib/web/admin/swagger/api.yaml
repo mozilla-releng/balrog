@@ -85,6 +85,7 @@ parameters:
     in: path
     description: unique identifier name of the user
     type: string
+    format: ascii
     maxLength: 100
     required: true
 
@@ -93,6 +94,7 @@ parameters:
     in: query
     description: unique identifier name of the user
     type: string
+    format: ascii
     minLength: 1
     maxLength: 100
     x-nullable: true
@@ -103,6 +105,7 @@ parameters:
     in: query
     description: valid csrf token
     type: string
+    format: ascii
     required: true
 
   dataVersionParam:
@@ -119,6 +122,7 @@ parameters:
     in: path
     description: Name of defined column in DB.
     type: string
+    format: ascii
     maxLength: 50
     required: true
 
@@ -135,6 +139,7 @@ parameters:
     in: query
     description: Name of the product to filter the rules/releases against.
     type: string
+    format: ascii
     minLength: 1
     maxLength: 15
     required: true
@@ -144,6 +149,7 @@ parameters:
     in: query
     description: roles are used when signing off on Scheduled Changes
     type: string
+    format: ascii
     minLength: 1
     maxLength: 50
     required: true
@@ -153,6 +159,7 @@ parameters:
     in: query
     description: The update channel of the application request an update.
     type: string
+    format: ascii
     minLength: 1
     maxLength: 75
     required: true
@@ -180,6 +187,7 @@ parameters:
     in: path
     description: user role to grant access to
     type: string
+    format: ascii
     maxLength: 50
     required: true
 
@@ -204,6 +212,7 @@ parameters:
     in: path
     description: name of DB column whose history is requested
     type: string
+    format: ascii
     required: true
 
   change_id_body_param:
@@ -257,6 +266,7 @@ parameters:
     in: query
     description: The username who made the requested changes.
     type: string
+    format: ascii
     x-nullable: true
     required: false
 
@@ -305,6 +315,7 @@ parameters:
     in: query
     description: channel stirng for filtering history.
     type: string
+    format: ascii
     x-nullable: true
     required: false
 
@@ -404,9 +415,10 @@ paths:
             X-CSRF-Token:
               description: token
               type: string
+              format: ascii
           examples:
             text/html: "csrf_token: 1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
-  
+
   /rules/history:
     get:
       summary: Returns a list of all rules and it's scheduled change history.
@@ -519,6 +531,7 @@ paths:
           in: query
           description: The role(s) required for product signoff
           type: string
+          format: ascii
           x-nullable: true
           required: false
       responses:
@@ -553,6 +566,7 @@ paths:
           in: query
           description: The role(s) required for permission signoff
           type: string
+          format: ascii
           x-nullable: true
           required: false
       responses:
@@ -612,8 +626,6 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
-
-
   /history/view/release/{change_id}/{field}:
     get:
       summary: Returns the value of the named field from the named object at specified change_id
@@ -660,6 +672,7 @@ paths:
           in: query
           description: "If 'name_prefix' is passed, only Releases whose name starts with the given prefix will be returned."
           type: string
+          format: ascii
           x-nullable: true
           required: false
         - name: names_only
@@ -696,6 +709,7 @@ paths:
                 uniqueItems: true
                 items:
                   type: string
+                  format: ascii
                   maxLength: 100
           examples:
             application/json:
@@ -733,6 +747,10 @@ paths:
           $ref: '#/responses/newObjectDataVersion'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /releases/{release}:
     get:
@@ -787,6 +805,8 @@ paths:
           description: successfully created a new release
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
         '403':
           $ref: '#/responses/unauthorizedUser'
 
@@ -820,6 +840,8 @@ paths:
           $ref: '#/responses/modifiedDataVersion'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
         '403':
           $ref: '#/responses/unauthorizedUser'
 
@@ -844,6 +866,8 @@ paths:
       responses:
         '200':
           description: Successfully deleted the release
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
         '403':
           $ref: '#/responses/unauthorizedUser'
         '404':
@@ -927,6 +951,10 @@ paths:
       responses:
         '201':
           $ref: '#/responses/updateExistingObject'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -1008,6 +1036,8 @@ paths:
           $ref: '#/responses/modifiedDataVersion'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
         '403':
           $ref: '#/responses/unauthorizedUser'
 
@@ -1065,10 +1095,12 @@ paths:
                               minItems: 0
                               items:
                                 type: string
+                                format: ascii
                               example: ["product", "data"]
                             _time_ago:
                               description: Time passed since the particular change
                               type: string
+                              format: ascii
                               example: "1 day ago"
                       required:
                         - name
@@ -1103,10 +1135,14 @@ paths:
       responses:
         '200':
           description: Successfully reverted back the release revision
-        '404':
-          $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
   /required_signoffs/product:
     get:
@@ -1189,6 +1225,10 @@ paths:
           $ref: '#/responses/newObjectDataVersion'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
     delete:
       summary: Throws exception when attempt to revoke product signoff
@@ -1340,6 +1380,10 @@ paths:
           $ref: '#/responses/newObjectDataVersion'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
     delete:
       summary: Throws exception when attempt to revoke permissions signoff
@@ -1438,8 +1482,8 @@ paths:
                 minItems: 0
                 items:
                   type: string
+                  format: ascii
                 example: ["balrogadmin"]
-
 
   /users/{username}:
     get:
@@ -1470,6 +1514,7 @@ paths:
               username:
                 description: unique identifier name of the user
                 type: string
+                format: ascii
                 maxLength: 100
                 minLength: 1
                 example: balrogadmin
@@ -1498,6 +1543,8 @@ paths:
               username: balrogadmin
         '404':
           $ref: '#/responses/resourceNotFound'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
         '403':
           $ref: '#/responses/unauthorizedUser'
 
@@ -1552,6 +1599,11 @@ paths:
           $ref: '#/responses/modifiedDataVersion'
         '201':
           $ref: '#/responses/newObjectDataVersion'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+
     delete:
       summary: Revokes the given role from the given username
       description: >
@@ -1574,6 +1626,10 @@ paths:
       responses:
         '200':
           description: Successfully revoked the user role
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -1635,6 +1691,10 @@ paths:
           $ref: '#/responses/newObjectDataVersion'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
     post:
       summary: Only overwrites the details of named permission for the username given.
@@ -1660,6 +1720,10 @@ paths:
           $ref: '#/responses/updateExistingObject'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -1687,6 +1751,10 @@ paths:
           description: Successfully deleted the permission
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -1753,6 +1821,10 @@ paths:
             text/html: 514
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /rules/{id_or_alias}:
     get:
@@ -1814,10 +1886,14 @@ paths:
       responses:
         '200':
           $ref: '#/responses/updateExistingObject'
-        '404':
-          $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
     # Exactly same as POST
     put:
@@ -1850,10 +1926,14 @@ paths:
       responses:
         '200':
           $ref: '#/responses/updateExistingObject'
-        '404':
-          $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
     delete:
       summary: Deletes a rule identified by the rule id
@@ -1876,6 +1956,10 @@ paths:
       responses:
         '200':
           description: Successfully deleted a rule
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -1966,10 +2050,14 @@ paths:
       responses:
         '200':
           description: Successfully reverted back the Rule
-        '404':
-          $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
   /rules/columns/{column}:
     get:
@@ -2032,6 +2120,7 @@ paths:
                         - properties:
                             original_row:
                               $ref: '#/definitions/RuleObject'
+
     post:
       summary: create scheduled change for rules.
       description: >
@@ -2052,6 +2141,7 @@ paths:
           in: query
           description: "'change_type' value for a scheduled change."
           type: string
+          format: ascii
           enum:
             - insert
             - delete
@@ -2080,6 +2170,10 @@ paths:
             $ref: '#/definitions/SCIdModel'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/rules/{sc_id}:
     post:
@@ -2118,6 +2212,10 @@ paths:
           $ref: '#/responses/updateExistingObject'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -2144,6 +2242,10 @@ paths:
           description: Successfully deleted the given scheduled change.
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -2184,10 +2286,14 @@ paths:
                       allOf:
                         - $ref: "#/definitions/SCRulesItemBase"
                         - $ref: '#/definitions/HistoryModel'
-        '404':
-          $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
     post:
       summary: Reverts to any previous version of scheduled change
@@ -2210,10 +2316,14 @@ paths:
       responses:
         '200':
           description: Successfully reverted back the scheduled change object
-        '404':
-          $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
   /scheduled_changes/permissions:
     get:
@@ -2270,6 +2380,7 @@ paths:
                         - when
                         - permission
                         - username
+
     post:
       summary: create scheduled change for permissions.
       description: >
@@ -2311,6 +2422,10 @@ paths:
             $ref: '#/definitions/SCIdModel'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/permissions/{sc_id}:
     post:
@@ -2348,6 +2463,10 @@ paths:
           $ref: '#/responses/updateExistingObject'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -2374,6 +2493,10 @@ paths:
           description: Successfully deleted the given scheduled change.
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -2454,10 +2577,14 @@ paths:
       responses:
         '200':
           description: Successfully reverted back the scheduled change object
-        '404':
-          $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
   /scheduled_changes/releases:
     get:
@@ -2520,6 +2647,7 @@ paths:
                         - name
                         - data
                         - read_only
+
     post:
       summary: create scheduled change for a release.
       description: >
@@ -2561,6 +2689,10 @@ paths:
             $ref: '#/definitions/SCIdModel'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/releases/{sc_id}:
     post:
@@ -2599,6 +2731,10 @@ paths:
           $ref: '#/responses/updateExistingObject'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -2625,6 +2761,10 @@ paths:
           description: Successfully deleted the given scheduled change.
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -2709,10 +2849,14 @@ paths:
       responses:
         '200':
           description: Successfully reverted back the scheduled change object
-        '404':
-          $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
   /scheduled_changes/required_signoffs/product:
     get:
@@ -2775,6 +2919,7 @@ paths:
                         - channel
                         - role
                         - signoffs_required
+
     post:
       summary: create scheduled change for required signoffs of Product.
       description: >
@@ -2820,6 +2965,10 @@ paths:
             $ref: '#/definitions/SCIdModel'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/required_signoffs/product/{sc_id}:
     post:
@@ -2859,6 +3008,10 @@ paths:
           $ref: '#/responses/updateExistingObject'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -2885,6 +3038,10 @@ paths:
           description: Successfully deleted the given scheduled change.
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -2973,6 +3130,10 @@ paths:
           $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/required_signoffs/permissions:
     get:
@@ -3032,6 +3193,7 @@ paths:
                         - product
                         - role
                         - signoffs_required
+
     post:
       summary: create scheduled change for required signoffs of Permission.
       description: >
@@ -3075,6 +3237,10 @@ paths:
             $ref: '#/definitions/SCIdModel'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/required_signoffs/permissions/{sc_id}:
     post:
@@ -3113,6 +3279,10 @@ paths:
           $ref: '#/responses/updateExistingObject'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -3139,6 +3309,10 @@ paths:
           description: Successfully deleted the given scheduled change.
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -3221,10 +3395,14 @@ paths:
       responses:
         '200':
           description: Successfully reverted back the scheduled change object
-        '404':
-          $ref: '#/responses/resourceNotFound'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+        '404':
+          $ref: '#/responses/resourceNotFound'
 
   /scheduled_changes/rules/{sc_id}/enact:
     post:
@@ -3246,6 +3424,10 @@ paths:
       responses:
         '200':
           description: Successfully enacted the scheduled change
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/permissions/{sc_id}/enact:
     post:
@@ -3267,6 +3449,10 @@ paths:
       responses:
         '200':
           description: Successfully enacted the scheduled change
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/releases/{sc_id}/enact:
     post:
@@ -3288,6 +3474,10 @@ paths:
       responses:
         '200':
           description: Successfully enacted the scheduled change
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/required_signoffs/product/{sc_id}/enact:
     post:
@@ -3309,6 +3499,10 @@ paths:
       responses:
         '200':
           description: Successfully enacted the scheduled change
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/required_signoffs/permissions/{sc_id}/enact:
     post:
@@ -3330,6 +3524,10 @@ paths:
       responses:
         '200':
           description: Successfully enacted the scheduled change
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/rules/{sc_id}/signoffs:
     post:
@@ -3355,6 +3553,10 @@ paths:
           description: Successfully signed off on the given scheduled change for the named object.
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
     delete:
       summary: Removes an existing Signoff from the Scheduled Change for the Rule.
@@ -3377,6 +3579,10 @@ paths:
       responses:
         '200':
           description: Successfully deleted the signoff on the given scheduled change.
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -3404,6 +3610,10 @@ paths:
           description: Successfully signed off on the given scheduled change for the named object.
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
     delete:
       summary: Removes an existing Signoff from the Scheduled Change for the Permission.
@@ -3426,6 +3636,10 @@ paths:
       responses:
         '200':
           description: Successfully deleted the signoff on the given scheduled change.
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -3453,6 +3667,10 @@ paths:
           description: Successfully signed off on the given scheduled change for the named object.
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
     delete:
       summary: Removes an existing Signoff from the Scheduled Change for the Release.
@@ -3475,6 +3693,10 @@ paths:
       responses:
         '200':
           description: Successfully deleted the signoff on the given scheduled change.
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -3502,6 +3724,10 @@ paths:
           description: Successfully signed off on the given scheduled change for the named object.
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
     delete:
       summary: Removes an existing Signoff from the Scheduled Change for the Product Required Signoff.
@@ -3524,6 +3750,10 @@ paths:
       responses:
         '200':
           description: Successfully deleted the signoff on the given scheduled change.
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -3551,6 +3781,10 @@ paths:
           description: Successfully signed off on the given scheduled change for the named object.
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
     delete:
       summary: Removes an existing Signoff from the Scheduled Change for the Permission Required Signoff.
@@ -3573,6 +3807,10 @@ paths:
       responses:
         '200':
           description: Successfully deleted the signoff on the given scheduled change.
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -3614,6 +3852,10 @@ paths:
           description: Successfully created an emergency shut off.
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /emergency_shutoff/{product}/{channel}:
     get:
@@ -3660,6 +3902,10 @@ paths:
           description: Successfully deleted the shut off.
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -3730,6 +3976,7 @@ paths:
               change_type:
                 description: type of change
                 type: string
+                format: ascii
                 enum:
                   - delete
                 minLength: 1
@@ -3742,6 +3989,10 @@ paths:
             $ref: '#/definitions/SCIdModel'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/emergency_shutoff/{sc_id}:
     post:
@@ -3776,6 +4027,10 @@ paths:
           $ref: '#/responses/updateExistingObject'
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -3799,6 +4054,10 @@ paths:
           description: Successfully deleted the given scheduled change.
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -3818,6 +4077,10 @@ paths:
       responses:
         '200':
           description: Successfully enacted the scheduled change.
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/emergency_shutoff/{sc_id}/signoffs:
     post:
@@ -3839,6 +4102,10 @@ paths:
           description: Successfully signed off on the given scheduled change.
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
     delete:
       summary: Removes an existing Signoff from the emergency shut off Scheduled Change.
@@ -3856,6 +4123,10 @@ paths:
       responses:
         '200':
           description: Successfully deleted the signoff on the given scheduled change.
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
         '404':
           $ref: '#/responses/resourceNotFound'
 
@@ -3869,6 +4140,7 @@ definitions:
     properties:
       csrf_token:
         type: string
+        format: ascii
         example: "1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
 
   DataVersionNullable:
@@ -3926,6 +4198,7 @@ definitions:
       role:
         description: roles are used when signing off on Scheduled Changes
         type: string
+        format: ascii
         minLength: 1
         maxLength: 50
         example: releng
@@ -3938,6 +4211,7 @@ definitions:
       product:
         description: The product name that the client must send in order for the rule to match. Only full string matches are supported.
         type: ["string", "null"]
+        format: ascii
         minLength: 1
         maxLength: 15
         example: Firefox
@@ -3950,6 +4224,7 @@ definitions:
       permission:
         description: Permission name
         type: string
+        format: ascii
         minLength: 1
         maxLength: 50
         enum:
@@ -3965,6 +4240,7 @@ definitions:
       username:
         description: user name
         type: string
+        format: ascii
         minLength: 1
         maxLength: 100
         example: balrogadmin
@@ -3997,6 +4273,7 @@ definitions:
         example: false
       scheduled_by:
         type: string
+        format: ascii
         description: user who scheduled the change
         minLength: 1
         maxLength: 100
@@ -4029,11 +4306,13 @@ definitions:
       telemetry_product:
         description: Name of telemetry product
         type: ["string", "null"]
+        format: ascii
         minLength: 1
         maxLength: 15
       telemetry_channel:
         description: Name of telemetry channel
         type: ["string", "null"]
+        format: ascii
         minLength: 1
         maxLength: 75
       telemetry_uptake:
@@ -4061,6 +4340,7 @@ definitions:
       change_type:
         description: type of change
         type: string
+        format: ascii
         enum:
           - insert
           - update
@@ -4137,6 +4417,7 @@ definitions:
           hashFunction:
             description: cryptographic hash function to assure integrity of transmitted data
             type: string
+            format: ascii
             example: sha512
           schema_version:
             description: The version number of release
@@ -4147,10 +4428,12 @@ definitions:
           copyTo:
             description: List names of releases which the updated data must be copied to
             type: string
+            format: ascii
             format: JSONStringField
           alias:
             description: id of the release
             type: string
+            format: ascii
             format: JSONStringField
     required:
       - product
@@ -4181,12 +4464,14 @@ definitions:
             uniqueItems: true
             items:
               type: string
+              format: ascii
             example: ["Firefox"]
           actions:
             type: array
             uniqueItems: true
             items:
               type: string
+              format: ascii
             example: ["modify"]
 
   UserPermissionsModel:
@@ -4221,6 +4506,7 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
+                      format: ascii
 
         required:
           - data_version
@@ -4259,6 +4545,7 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
+                      format: ascii
         required:
           - data_version
 
@@ -4277,6 +4564,7 @@ definitions:
                     uniqueItems: true
                     items:
                       type: string
+                      format: ascii
         required:
           - data_version
 

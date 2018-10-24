@@ -48,9 +48,12 @@ class TestMozillaVersions(unittest.TestCase):
                     ('0.4.0', '0.4', 0),
                     ('1.13++', '5.5.kw', BadDataError))
 
+        def cmp(x, y):
+            return (x > y) - (x < y)
+
         for v1, v2, wanted in versions:
             try:
-                res = MozillaVersion(v1).__cmp__(MozillaVersion(v2))
+                res = cmp(MozillaVersion(v1), MozillaVersion(v2))
             except BadDataError:
                 if wanted is BadDataError:
                     continue

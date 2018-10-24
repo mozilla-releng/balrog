@@ -51,11 +51,11 @@
     <h3 class="panel-title">
       <div style="float: right">
         <i ng-if="scheduled_changes_count && $first && (currentPage == 1)">Current</i>
-        <button ng-show="!sc.sc_id && (! isEmpty(sc['required_signoffs']) &&
+        <button ng-show="!sc_id && (! isEmpty(sc['required_signoffs']) &&
           !sc['signoffs'].hasOwnProperty(current_user))" class="btn btn-xs btn-primary" ng-click="signoff(sc)">
           Signoff as...
         </button>
-        <button ng-show="!sc.sc_id && (! isEmpty(sc['required_signoffs']) &&
+        <button ng-show="!sc_id && (! isEmpty(sc['required_signoffs']) &&
           sc['signoffs'].hasOwnProperty(current_user))" class="btn btn-xs btn-danger" ng-click="revokeSignoff(sc)">
           Revoke your Signoff
         </button>
@@ -69,7 +69,7 @@
     </h3>
   </div>
   <div class="panel-body">
-    <div ng-show="!sc.sc_id && ! isEmpty(sc.required_signoffs)">
+    <div ng-show="!sc_id && ! isEmpty(sc.required_signoffs)">
       <span style="float: left">
         <h4>Before it can be enacted, this change must be signed off on by:</h4>
         <ul>

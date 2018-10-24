@@ -46,7 +46,7 @@ class TestHistoryView(ViewTest):
         url = '/history/view/release/%d/data' % rows[2]["change_id"]
         ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
-        self.assertEqual(json.loads(ret.data), json.loads("""
+        self.assertEqual(json.loads(ret.get_data()), json.loads("""
 {
     "name": "d",
     "schema_version": 1,
@@ -82,8 +82,8 @@ class TestHistoryView(ViewTest):
         url = '/history/diff/release/%d/data' % rows[3]["change_id"]
         ret = self.client.get(url)
         self.assertStatusCode(ret, 200)
-        self.assertTrue('"fakePartials": true' in ret.data)
-        self.assertTrue('"fakePartials": false' in ret.data)
+        self.assertTrue('"fakePartials": true' in ret.get_data(as_text=True))
+        self.assertTrue('"fakePartials": false' in ret.get_data(as_text=True))
 
     def testFieldViewReleaseUnknownChangeId(self):
         url = '/history/view/release/10676782/data'
@@ -160,11 +160,11 @@ class TestHistoryView(ViewTest):
         self.assertStatusCode(ret, 200)
 
         # Checks should give diff for versions of d
-        self.assertTrue('"detailsUrl": "blahblahblah"' in ret.data)
-        self.assertTrue('"detailsUrl": "blahblah"' in ret.data)
-        self.assertFalse('"detailsUrl": "blahagain"' in ret.data)
-        self.assertTrue('"fakePartials": true' in ret.data)
-        self.assertTrue('"fakePartials": false' in ret.data)
+        self.assertTrue('"detailsUrl": "blahblahblah"' in ret.get_data(as_text=True))
+        self.assertTrue('"detailsUrl": "blahblah"' in ret.get_data(as_text=True))
+        self.assertFalse('"detailsUrl": "blahagain"' in ret.get_data(as_text=True))
+        self.assertTrue('"fakePartials": true' in ret.get_data(as_text=True))
+        self.assertTrue('"fakePartials": false' in ret.get_data(as_text=True))
 
         # Add another version for b
         data = json.dumps(dict(detailsUrl='blahagainblahagain', fakePartials=False, schema_version=1, name="b", hashFunction="sha512"))
@@ -183,8 +183,8 @@ class TestHistoryView(ViewTest):
         self.assertStatusCode(ret, 200)
 
         # Checks should now give diff for versions of b
-        self.assertTrue('"detailsUrl": "blahagainblahagain"' in ret.data)
-        self.assertTrue('"detailsUrl": "blahagain"' in ret.data)
-        self.assertFalse('"detailsUrl": "blahblahblah"' in ret.data)
-        self.assertTrue('"fakePartials": true' in ret.data)
-        self.assertTrue('"fakePartials": false' in ret.data)
+        self.assertTrue('"detailsUrl": "blahagainblahagain"' in ret.get_data(as_text=True))
+        self.assertTrue('"detailsUrl": "blahagain"' in ret.get_data(as_text=True))
+        self.assertFalse('"detailsUrl": "blahblahblah"' in ret.get_data(as_text=True))
+        self.assertTrue('"fakePartials": true' in ret.get_data(as_text=True))
+        self.assertTrue('"fakePartials": false' in ret.get_data(as_text=True))

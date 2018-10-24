@@ -24,11 +24,13 @@ class BalrogRequestBodyValidator(RequestBodyValidator):
             for i in exception.path:
                 exception_field = i + ': '
             if exception.__cause__ is not None:
-                exception_message = str(exception.__cause__.message) + ' ' + exception_field + str(exception.message)
+                exception_message = exception.__cause__.message + ' ' + exception_field + exception.message
             else:
-                exception_message = exception_field + str(exception.message)
+                exception_message = exception_field + exception.message
+            # Some exceptions could contain unicode characters - if we don't replace them
+            # we could end up with a UnicodeEncodeError.
             logger.error("{url} validation error: {error}".
-                         format(url=url, error=exception_message))
+                         format(url=url, error=exception_message.encode("utf-8", "replace")))
             return problem(400, 'Bad Request', exception_message)
 
         return None

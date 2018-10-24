@@ -1,4 +1,3 @@
-import urllib
 import re
 import connexion
 import logging
@@ -7,9 +6,16 @@ import auslib
 from os import path
 from flask import request
 from flask_compress import Compress
+from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import BalrogRequestBodyValidator
 from raven.contrib.flask import Sentry
 from specsynthase.specbuilder import SpecBuilder
+
+try:
+    from urllib import unquote
+except ImportError: # pragma: no cover
+    from urllib.parse import unquote
+
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +32,7 @@ validator_map = {
 }
 
 connexion_app = connexion.App(__name__, validator_map=validator_map, debug=False)
-connexion_app.add_api(spec, validate_responses=True, strict_validation=True)
+connexion_app.add_api(spec, strict_validation=True)
 app = connexion_app.app
 sentry = Sentry()
 
@@ -43,7 +49,7 @@ class UnquotingMiddleware(object):
         self.app = app
 
     def __call__(self, environ, start_response):
-        environ["PATH_INFO"] = urllib.unquote(environ["PATH_INFO"])
+        environ["PATH_INFO"] = unquote(environ["PATH_INFO"])
         return self.app(environ, start_response)
 
 
@@ -57,6 +63,15 @@ def ise(error):
     log.debug("Request environment is: %s", request.environ)
     log.debug("Request headers are: %s", request.headers)
     return error
+
+
+# Connexion's error handling sometimes breaks when parameters contain
+# unicode characters (https://github.com/zalando/connexion/issues/604).
+# To work around, we catch them and return a 400 (which is what Connexion
+# would do if it didn't hit this error).
+@app.errorhandler(UnicodeEncodeError)
+def unicode(error):
+    return problem(400, "Unicode Error", "Connexion was unable to parse some unicode data correctly.")
 
 
 @app.after_request

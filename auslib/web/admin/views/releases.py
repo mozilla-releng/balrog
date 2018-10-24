@@ -1,9 +1,11 @@
 import difflib
 import simplejson as json
+import six
 
 from sqlalchemy.sql.expression import null
 import connexion
 from flask import Response, jsonify, abort
+from six import integer_types, text_type
 
 from auslib.global_state import dbo
 from auslib.blobs.base import createBlob, BlobValidationError
@@ -271,7 +273,7 @@ class SingleReleaseView(AdminView):
 
     @requirelogin
     def _delete(self, release, changed_by, transaction):
-        releases = dbo.releases.getReleaseInfo(names=release, nameOnly=True, limit=1)
+        releases = dbo.releases.getReleaseInfo(names=[release], nameOnly=True, limit=1)
         if not releases:
             return problem(404, "Not Found", "Release: %s not found" % release)
         release = releases[0]
@@ -305,7 +307,7 @@ class ReleaseReadOnlyView(AdminView):
 
     @requirelogin
     def _put(self, release, changed_by, transaction):
-        releases = dbo.releases.getReleaseInfo(names=release, nameOnly=True, limit=1)
+        releases = dbo.releases.getReleaseInfo(names=[release], nameOnly=True, limit=1)
         if not releases:
             return problem(404, "Not Found", "Release: %s not found" % release)
 
@@ -371,7 +373,7 @@ class ReleasesAPIView(AdminView):
 
     @requirelogin
     def _post(self, changed_by, transaction):
-        if dbo.releases.getReleaseInfo(names=connexion.request.get_json().get("name"), transaction=transaction, nameOnly=True,
+        if dbo.releases.getReleaseInfo(names=[connexion.request.get_json().get("name")], transaction=transaction, nameOnly=True,
                                        limit=1):
             return problem(400, "Bad Request", "Release: %s already exists" % connexion.request.get_json().get("name"),
                            ext={"data": "Database already contains the release"})
@@ -555,10 +557,10 @@ class ReleaseFieldView(AdminView):
                 pass
         elif value is None:
             value = 'NULL'
-        elif isinstance(value, int) or isinstance(value, long):
-            value = unicode(str(value), 'utf8')
+        elif isinstance(value, integer_types):
+            value = str(value)
         else:
-            value = unicode(value, 'utf8')
+            value = text_type(value, 'utf8') if six.PY2 else str(value)
         return value
 
     def get(self, change_id, field):

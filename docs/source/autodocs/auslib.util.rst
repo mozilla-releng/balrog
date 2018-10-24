@@ -26,14 +26,6 @@ auslib.util.thirdparty
     :undoc-members:
     :show-inheritance:
 
-auslib.util.timesince
----------------------
-
-.. automodule:: auslib.util.timesince
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 auslib.util.timestamp
 ---------------------
 

@@ -8,6 +8,8 @@ import simplejson as json
 import sys
 import time
 
+from six import iteritems, string_types, reraise, text_type
+
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
     create_engine, select, BigInteger, Boolean, join
 from sqlalchemy.exc import SQLAlchemyError
@@ -34,7 +36,8 @@ def rows_to_dicts(rows):
     are immutable), or if you want to serialize them to JSON
     (SQLAlchemy rows get confused if you try to serialize them).
     """
-    return map(dict, rows)
+    # In Python 3, map returns an iterable instead a list.
+    return [dict(row) for row in rows]
 
 
 def _matchesRegex(foo, bar):
@@ -190,7 +193,7 @@ def verify_signoffs(potential_required_signoffs, signoffs):
         signoffs_given[signoff["role"]] += 1
     for rs in potential_required_signoffs:
         required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
-    for role, signoffs_required in required_signoffs.iteritems():
+    for role, signoffs_required in iteritems(required_signoffs):
         if signoffs_given[role] < signoffs_required:
             raise SignoffRequiredError("Not enough signoffs for role '{}'".format(role))
 
@@ -211,14 +214,14 @@ class AUSTransaction(object):
     def __enter__(self):
         return self
 
-    def __exit__(self, *exc):
+    def __exit__(self, exc_type, exc_value, exc_traceback):
         try:
             # If something that executed in the context raised an Exception,
             # rollback and re-raise it.
-            if exc[0]:
+            if exc_type:
                 self.log.debug("exc is:", exc_info=True)
                 self.rollback()
-                raise exc[0], exc[1], exc[2]
+                reraise(exc_type, exc_value, exc_traceback)
             # Also need to check for exceptions during commit!
             try:
                 self.commit()
@@ -247,7 +250,7 @@ class AUSTransaction(object):
             klass, e, tb = sys.exc_info()
             self.rollback()
             e = TransactionError(e.args)
-            raise TransactionError, e, tb
+            reraise(TransactionError, e, tb)
 
     def commit(self):
         try:
@@ -256,7 +259,7 @@ class AUSTransaction(object):
             klass, e, tb = sys.exc_info()
             self.rollback()
             e = TransactionError(e.args)
-            raise TransactionError, e, tb
+            reraise(TransactionError, e, tb)
 
     def rollback(self):
         self.trans.rollback()
@@ -360,7 +363,8 @@ class AUSTable(object):
            @rtype: sqlalchemy.sql.expression.Select
         """
         if columns:
-            query = select(columns, order_by=order_by, limit=limit, offset=offset, distinct=distinct)
+            table_columns = [(self.t.c[col] if isinstance(col, string_types) else col) for col in columns]
+            query = select(table_columns, order_by=order_by, limit=limit, offset=offset, distinct=distinct)
         else:
             query = self.t.select(order_by=order_by, limit=limit, offset=offset, distinct=distinct)
         if where:
@@ -385,7 +389,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in where.iteritems()]
+            where = [getattr(self, k) == v for k, v in iteritems(where)]
 
         query = self._selectStatement(where=where, **kwargs)
 
@@ -405,7 +409,9 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.sql.express.Insert
         """
-        return self.t.insert(values=columns)
+        table_columns = {k: columns[k] for k in columns.keys() if k in self.table.c}
+        unconsumed_columns = {k: columns[k] for k in columns.keys() if k not in table_columns}
+        return self.t.insert(values=table_columns), unconsumed_columns
 
     def _prepareInsert(self, trans, changed_by, **columns):
         """Prepare an INSERT statement for commit. If this table has versioning enabled,
@@ -418,7 +424,7 @@ class AUSTable(object):
         data = columns.copy()
         if self.versioned:
             data['data_version'] = 1
-        query = self._insertStatement(**data)
+        query, unconsumed_columns = self._insertStatement(**data)
         ret = trans.execute(query)
         if self.history:
             for q in self.history.forInsert(ret.inserted_primary_key, data, changed_by):
@@ -427,7 +433,8 @@ class AUSTable(object):
             pk_columns = self.t.primary_key.columns.keys()
             pk_values = ret.inserted_primary_key
             pk_args = dict(zip(pk_columns, pk_values))
-            self.onInsert(self, "INSERT", changed_by, query, trans, **pk_args)
+            self.onInsert(self, "INSERT", changed_by, query, trans,
+                          additional_columns=unconsumed_columns, pk_args=pk_args)
         return ret
 
     def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
@@ -535,7 +542,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in where.iteritems()]
+            where = [getattr(self, k) == v for k, v in iteritems(where)]
 
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
@@ -562,11 +569,13 @@ class AUSTable(object):
 
            @rtype: sqlalchemy.sql.expression.Update
         """
-        query = self.t.update(values=what)
+        table_what = {k: what[k] for k in what.keys() if k in self.table.c}
+        unconsumed_columns = {k: what[k] for k in what.keys() if k not in table_what}
+        query = self.t.update(values=table_what)
         if where:
             for cond in where:
                 query = query.where(cond)
-        return query
+        return query, unconsumed_columns
 
     def _prepareUpdate(self, trans, where, what, changed_by, old_data_version):
         """Prepare an UPDATE statement for commit. If this table has versioning enabled,
@@ -590,10 +599,10 @@ class AUSTable(object):
         for col in what:
             new_row[col] = what[col]
 
-        query = self._updateStatement(where, new_row)
+        query, unconsumed_columns = self._updateStatement(where, new_row)
 
         if self.onUpdate:
-            self.onUpdate(self, "UPDATE", changed_by, query, trans)
+            self.onUpdate(self, "UPDATE", changed_by, query, trans, additional_columns=unconsumed_columns)
 
         ret = trans.execute(query)
         # It's important that OutdatedDataError is raised as early as possible
@@ -639,7 +648,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in where.iteritems()]
+            where = [getattr(self, k) == v for k, v in iteritems(where)]
 
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
@@ -720,30 +729,36 @@ class History(AUSTable):
             columns[name] = insertedKeys[i]
 
         ts = getMillisecondTimestamp()
-        queries.append(self._insertStatement(changed_by=changed_by, timestamp=ts - 1, **primary_key_data))
-        queries.append(self._insertStatement(changed_by=changed_by, timestamp=ts, **columns))
+        query, _ = self._insertStatement(changed_by=changed_by, timestamp=ts - 1, **primary_key_data)
+        queries.append(query)
+        query, _ = self._insertStatement(changed_by=changed_by, timestamp=ts, **columns)
+        queries.append(query)
         return queries
 
     def forDelete(self, rowData, changed_by):
         """Deletes cause a single row to be created, which only contains the
            primary key data. This represents that the row no longer exists."""
         row = {}
-        for k in rowData:
-            row[str(k)] = rowData[k]
+        table_row_data = {k: rowData[k] for k in rowData.keys() if k in self.table.c}
+        for k in table_row_data:
+            row[str(k)] = table_row_data[k]
         # Tack on history table information to the row
         row['changed_by'] = changed_by
         row['timestamp'] = getMillisecondTimestamp()
-        return self._insertStatement(**row)
+        query, _ = self._insertStatement(**row)
+        return query
 
     def forUpdate(self, rowData, changed_by):
         """Updates cause a single row to be created, which contains the full,
            new data of the row at the time of the update."""
         row = {}
-        for k in rowData:
-            row[str(k)] = rowData[k]
+        table_row_data = {k: rowData[k] for k in rowData.keys() if k in self.table.c}
+        for k in table_row_data:
+            row[str(k)] = table_row_data[k]
         row['changed_by'] = changed_by
         row['timestamp'] = getMillisecondTimestamp()
-        return self._insertStatement(**row)
+        query, _ = self._insertStatement(**row)
+        return query
 
     def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
         """ Returns the unique change that matches the give change_id or
@@ -816,7 +831,7 @@ class History(AUSTable):
         # We know a bunch of columns are going to be empty...easier to strip them out
         # than to be super verbose (also should let this test continue to work even
         # if the schema changes).
-        for key in change.keys():
+        for key in change.copy().keys():
             if change[key] is None:
                 del change[key]
         return change
@@ -916,7 +931,7 @@ class ConditionsTable(AUSTable):
         if set(conditions) - set(self.condition_groups):
             raise ValueError("Unknown conditions in: {}".format(conditions))
 
-        self.enabled_condition_groups = {k: v for k, v in self.condition_groups.iteritems() if k in conditions}
+        self.enabled_condition_groups = {k: v for k, v in iteritems(self.condition_groups) if k in conditions}
 
         self.table = Table("{}_conditions".format(baseName), metadata,
                            Column("sc_id", Integer, primary_key=True),
@@ -936,12 +951,12 @@ class ConditionsTable(AUSTable):
         super(ConditionsTable, self).__init__(db, dialect, history=history, versioned=True)
 
     def validate(self, conditions):
-        conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
+        conditions = {k: v for k, v in iteritems(conditions) if conditions[k]}
         if not conditions:
             raise ValueError("No conditions found")
 
         for c in conditions:
-            for condition, args in self.condition_groups.iteritems():
+            for condition, args in iteritems(self.condition_groups):
                 if c in args:
                     if c in itertools.chain(*self.enabled_condition_groups.values()):
                         break
@@ -1032,7 +1047,7 @@ class ScheduledChangeTable(AUSTable):
         with the base table ones prefixed."""
         ret = {}
         base_columns = [c.name for c in self.baseTable.t.get_children()]
-        for k, v in columns.iteritems():
+        for k, v in iteritems(columns):
             if k in base_columns:
                 ret["base_%s" % k] = v
             else:
@@ -1897,13 +1912,18 @@ class Releases(AUSTable):
             except IndexError:
                 raise KeyError("Couldn't find release with name '%s'" % name)
 
+        def get_data_version(obj):
+            if isinstance(obj, int):
+                return obj
+            return obj["data_version"]
+
         cached_blob = cache.get("blob", name, getBlob)
 
         # Even though we may have retrieved a cached blob, we need to make sure
         # that it's not older than the one in the database. If the data version
         # of the cached blob and the latest data version don't match, we need
         # to update the cache with the latest blob.
-        if data_version > cached_blob["data_version"]:
+        if get_data_version(data_version) > get_data_version(cached_blob["data_version"]):
             blob_info = getBlob()
             cache.put("blob", name, blob_info)
             blob = blob_info["blob"]
@@ -1917,7 +1937,7 @@ class Releases(AUSTable):
             # data version, the blob version cache would've expired as well.
             # If we hit one of these cases, we should bring the blob version
             # cache up to date since we have it.
-            if cached_blob["data_version"] > data_version:
+            if get_data_version(cached_blob["data_version"]) > get_data_version(data_version):
                 cache.put("blob_version", name, data_version)
             blob = cached_blob["blob"]
 
@@ -2252,6 +2272,7 @@ class Permissions(AUSTable):
         self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"],
                        columns.get("options"))
         super(Permissions, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        cache.invalidate('users', 'usernames')
         self.log.debug("successfully granted %s to %s with options %s", columns["permission"],
                        columns["username"], columns.get("options"))
 
@@ -2305,6 +2326,8 @@ class Permissions(AUSTable):
                 if len(self.getUserPermissions(u, transaction)) == 0:
                     for role in self.user_roles.select([self.user_roles.username == u], transaction=transaction):
                         self.revokeRole(u, role["role"], changed_by=changed_by, old_data_version=role["data_version"], transaction=transaction)
+
+        cache.invalidate('users', 'usernames')
 
     def revokeRole(self, username, role, changed_by=None, old_data_version=None, transaction=None):
         if not self.hasPermission(changed_by, "permission", "delete", transaction=transaction):
@@ -2383,6 +2406,19 @@ class Permissions(AUSTable):
         roles_list = [r['role'] for r in self.getUserRoles(username, transaction)]
         return role in roles_list
 
+    def isKnownUser(self, username):
+        if not username:
+            return False
+
+        cache_column = 'username'
+
+        def user_getter():
+            permissions = self.select(columns=[cache_column], distinct=True)
+            return [permission[cache_column] for permission in permissions]
+
+        usernames = cache.get('users', 'usernames', value_getter=user_getter)
+        return username in usernames
+
 
 class Dockerflow(AUSTable):
     def __init__(self, db, metadata, dialect):
@@ -2426,7 +2462,7 @@ class EmergencyShutoffs(AUSTable):
 
         ret = super(EmergencyShutoffs, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
-            return ret.last_updated_params()
+            return ret.last_inserted_params()
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = {'rs': []}
@@ -2454,7 +2490,7 @@ class UTF8PrettyPrinter(pprint.PrettyPrinter):
     """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
     Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
     def format(self, object, context, maxlevels, level):
-        if isinstance(object, unicode):
+        if isinstance(object, text_type):
             return pprint._safe_repr(object.encode('utf8'), context, maxlevels, level)
         return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
 
@@ -2494,7 +2530,7 @@ def send_email(relayhost, port, username, password, to_addr, from_addr, table, s
 
 
 def make_change_notifier(relayhost, port, username, password, to_addr, from_addr, use_tls):
-    def bleet(table, type_, changed_by, query, transaction, **pk_args):
+    def bleet(table, type_, changed_by, query, transaction, additional_columns=None, pk_args=None):
         body = ["Changed by: %s" % changed_by]
         if type_ == "UPDATE":
             body.append("Row(s) to be updated as follows:")
@@ -2503,8 +2539,11 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
             unchanged = {}
             for row in table.select(where=where, transaction=transaction):
                 for k in row:
-                    if query.parameters[k] != row[k]:
-                        changed[k] = UnquotedStr("%s ---> %s" % (repr(row[k]), repr(query.parameters[k])))
+                    parameters = copy(query.parameters)
+                    if additional_columns:
+                        parameters.update(additional_columns)
+                    if parameters[k] != row[k]:
+                        changed[k] = UnquotedStr("%s ---> %s" % (repr(row[k]), repr(parameters[k])))
                     else:
                         unchanged[k] = UnquotedStr("%s" % repr(row[k]))
                 body.append('Changed values:')
@@ -2519,8 +2558,11 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
                 body.append(UTF8PrettyPrinter().pformat(row))
         elif type_ == "INSERT":
             body.append("Row to be inserted:")
-            query.parameters.update(pk_args)
-            body.append(UTF8PrettyPrinter().pformat(query.parameters))
+            parameters = copy(query.parameters)
+            parameters.update(pk_args)
+            if additional_columns:
+                parameters.update(additional_columns)
+            body.append(UTF8PrettyPrinter().pformat(parameters))
 
         subj = "%s to %s detected %s" % (type_, table.t.name, generate_random_string(6))
         send_email(relayhost, port, username, password, to_addr, from_addr,
@@ -2538,7 +2580,7 @@ def generate_random_string(length):
 
 
 def make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr, use_tls):
-    def bleet(table, type_, changed_by, query, transaction):
+    def bleet(table, type_, changed_by, query, transaction, additional_columns=None):
         body = ["Changed by: %s" % changed_by]
         where = [c for c in query._whereclause.get_children()]
         # TODO: How are we sometimes (always?) getting no rows for this. It shouldn't be possible...
@@ -2636,6 +2678,9 @@ class AUSDatabase(object):
                                                                from_addr,
                                                                use_tls)
         self.releases.onUpdate = read_only_bleeter
+
+    def isKnownUser(self, username):
+        return self.permissions.isKnownUser(username)
 
     def isAdmin(self, *args, **kwargs):
         return self.permissions.isAdmin(*args, **kwargs)

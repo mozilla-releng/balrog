@@ -1,4 +1,3 @@
-import urllib
 import re
 import sys
 
@@ -6,10 +5,18 @@ from connexion import request
 
 from flask import make_response, current_app as app
 
+import six
+
 from auslib.AUS import AUS, SUCCEED, FAIL
 from auslib.global_state import dbo
 
 import logging
+
+try:
+    from urllib import unquote
+except ImportError: # pragma: no cover
+    from urllib.parse import unquote
+
 
 AUS = AUS()
 LOG = logging.getLogger(__name__)
@@ -56,6 +63,19 @@ def getSystemCapabilities(systemCapabilities):
 
 def getCleanQueryFromURL(url):
     query = url.copy()
+    # Any of the fields (except queryVersion, which is hardcoded) could contain Unicode data.
+    # The lower level of Balrog is not ready to support Unicode yet, and any valid data will
+    # not contain Unicode characters - so for now, we simply encode to ascii and replace the
+    # Unicode characters.
+    # This is something that we should revisit when we upgrade to Python 3, as it will be as
+    # easy to pretend Unicode doesn't exist. (Which is why this block is only for Python 2 --
+    # encoding to ascii in Python 3 gives us "bytes", which causes a whole mess of problems
+    # later.)
+    if six.PY2:
+        for field in query:
+            if field == "queryVersion":
+                continue
+            query[field] = query[field].encode("ascii", "replace")
     # Some versions of Avast make requests and blindly append "?avast=1" to
     # them, which breaks query string parsing if ?force=1 is already
     # there. Because we're nice people we'll fix it up.
@@ -84,7 +104,7 @@ def getQueryFromURL(url):
     if "systemCapabilities" in query:
         query.update(getSystemCapabilities(url["systemCapabilities"]))
         del query["systemCapabilities"]
-    query['osVersion'] = urllib.unquote(query['osVersion'])
+    query['osVersion'] = unquote(query['osVersion'])
     ua = request.headers.get('User-Agent')
     query['headerArchitecture'] = getHeaderArchitecture(query['buildTarget'], ua)
     force = query.get('force')

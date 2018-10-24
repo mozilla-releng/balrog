@@ -3,6 +3,7 @@
 import itertools
 import logging
 from os import path, popen
+from six.moves import xrange
 from sqlalchemy.engine.url import make_url
 import sys
 
@@ -31,11 +32,11 @@ AND (STR_TO_DATE(RIGHT(name, 14), "%%%%Y%%%%m%%%%d%%%%H%%%%i%%%%S") < NOW() - IN
 """ % nightly_age
     if dryrun:
         todelete = trans.execute("SELECT name FROM releases" + query).fetchall()
-        print "Releases rows to be deleted:"
+        print("Releases rows to be deleted:")
         if todelete:
-            print "\n".join(itertools.chain(*todelete))
+            print("\n".join(itertools.chain(*todelete)))
         else:
-            print "  - None"
+            print("  - None")
     else:
         trans.execute("DELETE releases FROM releases" + query)
 
@@ -66,9 +67,9 @@ def cleanup_releases_history(trans, dryrun=True):
         if dryrun:
             todelete = trans.execute(query).fetchall()
             if todelete:
-                print "releases_history (%s) rows to be deleted:" % name
+                print("releases_history (%s) rows to be deleted:" % name)
                 for key, group in itertools.groupby(todelete, lambda x: x[0]):
-                    print "  - %s: %s history rows" % (key, len(list(group)))
+                    print("  - %s: %s history rows" % (key, len(list(group))))
         else:
             del_query = """
                 DELETE R.*
@@ -79,10 +80,10 @@ def cleanup_releases_history(trans, dryrun=True):
 
             results = trans.execute(del_query)
             if results:
-                print "Deleted %s '%s' records" % (results.rowcount, name)
+                print("Deleted %s '%s' records" % (results.rowcount, name))
                 total_deleted += results.rowcount
 
-    print "Total Deleted: %d" % total_deleted
+    print("Total Deleted: %d" % total_deleted)
 
 
 def chunk_list(list_object, n):

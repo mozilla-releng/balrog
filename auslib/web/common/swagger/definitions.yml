@@ -79,6 +79,7 @@ definitions:
         example: 10
       changed_by:
         type: string
+        format: ascii
         minimum: 1
         maximum: 100
         example: "balrogadmin"
@@ -91,6 +92,7 @@ definitions:
       product:
         description: The product name that the client must send in order for the rule to match. Only full string matches are supported.
         type: string
+        format: ascii
         minLength: 1
         maxLength: 15
         example: Firefox
@@ -103,6 +105,7 @@ definitions:
       channel:
         description: The update channel of the application request an update.
         type: string
+        format: ascii
         minLength: 1
         maxLength: 75
         example: beta
@@ -115,6 +118,7 @@ definitions:
       name:
         description: Release name
         type: string
+        format: ascii
         minLength: 1
         maxLength: 100
         example: "Firefox-47.0.2-build2-43.0.1"
@@ -208,6 +212,7 @@ definitions:
       mapping:
         description: The Release to construct an update out of if the user is on the right side of a background rate dice roll, or if the background rate is 100. This is a foreign key to the "name" column of the Releases table.
         type: ["string", "null"]
+        format: ascii
         minLength: 0
         maxLength: 100
         example: No-Update
@@ -223,6 +228,7 @@ definitions:
       product:
         description: The product name that the client must send in order for the rule to match. Only full string matches are supported.
         type: ["string", "null"]
+        format: ascii
         minLength: 0
         maxLength: 15
         example: Firefox
@@ -239,6 +245,7 @@ definitions:
       channel:
         description: The update channel that the client must send in order for the rule to match. "*" can be used to glob at the end of the channel name.
         type: ["string", "null"]
+        format: ascii
         minLength: 0
         maxLength: 75
         example: beta
@@ -246,6 +253,7 @@ definitions:
       buildTarget:
         description: The “build target” that the client must send in order for the rule to match. This is usually related to the target platform the app was built for. Only full string matches are supported.
         type: ["string", "null"]
+        format: ascii
         minLength: 0
         maxLength: 75
         example: Darwin_x86_64-gcc3-u-i386-x86_64
@@ -261,6 +269,7 @@ definitions:
       locale:
         description: The locale that the client must send in order for the rule to match. A comma separated list may be used to list multiple locales.
         type: ["string", "null"]
+        format: ascii
         minLength: 0
         maxLength: 200
         example: de
@@ -269,6 +278,7 @@ definitions:
         description: >
           The OS Version requirements that the client must meet in order for the rule to match. && may be used to match multiple substrings at once (eg: "Windows && (websense-"). Commas may be used to match any of a list of substrings.
         type: ["string", "null"]
+        format: ascii
         minLength: 0
         maxLength: 1000
         example: 'Windows_NT 5.0'
@@ -276,6 +286,7 @@ definitions:
       distribution:
         description: The partner distributions names that the application must send in order for the rule to match. A comma separated list may be used to list multiple distributions.
         type: ["string", "null"]
+        format: ascii
         minLength: 0
         maxLength: 2000
         example: default
@@ -283,6 +294,7 @@ definitions:
       distVersion:
         description: The version of the partner distribution that the application must send in order for the rule to match.
         type: ["string", "null"]
+        format: ascii
         minLength: 0
         maxLength: 100
         example: '1.19'
@@ -290,6 +302,7 @@ definitions:
       headerArchitecture:
         description: The client architecture (as guessed based on the User Agent) that the client must provide in order for the rule to match. This field is deprecated in favour of build target.
         type: ["string", "null"]
+        format: ascii
         minLength: 0
         maxLength: 10
         example: 'PPC'
@@ -297,6 +310,7 @@ definitions:
       comment:
         description: A string describing the purpose of the rule. Not always necessary for obvious rules.
         type: ["string", "null"]
+        format: ascii
         minLength: 0
         maxLength: 500
         example: lorem ipso facto
@@ -313,6 +327,7 @@ definitions:
         description: >
           The most modern CPU instruction set that the client must support in order for the rule to match. A comma separated list may be used to list multiple instruction sets.
         type: ["string", "null"]
+        format: ascii
         minLength: 0
         maxLength: 1000
         example: 'SSE'
@@ -320,6 +335,7 @@ definitions:
       memory:
         description: The amount of RAM, in megabytes, that the client must have for the rule to match. Comparisons such as "<8000" may be used.
         type: ["string", "null"]
+        format: ascii
         minLength: 0
         maxLength: 100
         example: '<8000'
@@ -327,6 +343,7 @@ definitions:
       fallbackMapping:
         description: The Release to construct an update out of when the user is on the wrong side of a background rate dice roll. This is a foreign key to the “name” column of the Releases table.
         type: ["string", "null"]
+        format: ascii
         minLength: 0
         maxLength: 100
         example: null

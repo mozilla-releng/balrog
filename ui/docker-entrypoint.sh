@@ -7,6 +7,6 @@ cd /app
 # fully track it down, but jlorenzo discovered that adjusting this setInterval has made a
 # huge difference without affecting the responsiveness of the UI rebuilding.
 # This really needs a deeper investigation, and a more robust fix.
-sed -i -e 's/200/10000/' /app/node_modules/grunt-watch-nospawn/tasks/watch.js
+sed -i -e 's/200/10000/' /app/node_modules/lineman/node_modules/grunt-watch-nospawn/tasks/watch.js
 /usr/local/bin/npm build
 /usr/local/bin/npm start

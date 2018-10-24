@@ -3,7 +3,7 @@
 # system locations (some system packages and some python packages).
 # Things that are fully local to /app (such as npm requirements and the built UI)
 # are done as needed in the entrypoint.
-FROM python:2.7-slim
+FROM python:2.7-slim-jessie
 
 MAINTAINER bhearsum@mozilla.com
 
@@ -15,7 +15,7 @@ MAINTAINER bhearsum@mozilla.com
 # git is needed to send coverage information
 RUN apt-get -q update \
     && apt-get -q --yes install netcat libpcre3 libpcre3-dev nodejs nodejs-legacy npm libmysqlclient-dev mysql-client \
-                                libfontconfig1 netcat git curl \
+                                libfontconfig1 netcat git curl xz-utils \
     && apt-get clean
 
 WORKDIR /app

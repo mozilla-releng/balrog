@@ -1,10 +1,10 @@
+# coding: latin-1
 import logging
 import mock
 import os
 from tempfile import mkstemp
 import unittest
 from xml.dom import minidom
-import json
 
 from hypothesis import assume, example, given
 from hypothesis.strategies import characters, integers, just, text
@@ -67,19 +67,19 @@ class TestGetSystemCapabilities(unittest.TestCase):
 
 class ClientTestCommon(unittest.TestCase):
     def assertHttpResponse(self, http_response):
-        self.assertEqual(http_response.status_code, 200, http_response.data)
+        self.assertEqual(http_response.status_code, 200, http_response.get_data())
         self.assertEqual(http_response.mimetype, 'text/xml')
 
     def assertUpdatesAreEmpty(self, http_reponse):
         self.assertHttpResponse(http_reponse)
         # An empty update contains an <updates> tag with a newline, which is what we're expecting here
         self.assertEqual(
-            minidom.parseString(http_reponse.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n'
+            minidom.parseString(http_reponse.get_data()).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n'
         )
 
     def assertUpdateEqual(self, http_reponse, expected_xml_string):
         self.assertHttpResponse(http_reponse)
-        returned = minidom.parseString(http_reponse.data)
+        returned = minidom.parseString(http_reponse.get_data())
         expected = minidom.parseString(expected_xml_string)
         self.assertEqual(returned.toxml(), expected.toxml())
 
@@ -859,23 +859,58 @@ class ClientTest(ClientTestBase):
     def testGetURLNotInWhitelist(self):
         ret = self.client.get('/update/3/d/20.0/1/p/l/a/a/a/a/update.xml')
         self.assertHttpResponse(ret)
-        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue,
+        self.assertEqual(minidom.parseString(ret.get_data()).getElementsByTagName('updates')[0].firstChild.nodeValue,
                          '\n    ')
 
     def testEmptySnippetMissingExtv(self):
         ret = self.client.get('/update/3/e/20.0/1/p/l/a/a/a/a/update.xml')
         self.assertUpdatesAreEmpty(ret)
 
+    def testUnicodeAcceptedInURLFields(self):
+        # /update/1, 2, and 3 are just subsets of /update/4 - so we don't
+        # need to test them explicitly
+        v4_url = "/update/4/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/update.xml"
+        subs = [3, "e", "20.0", "1", "p", "l", "a", "a", "a", "a"]
+        for i in range(0, 10):
+            my_subs = subs[:]
+            subs[i] = "ÃÃÃÃÃÃ"
+            my_url = v4_url.format(*my_subs)
+            ret = self.client.get(my_url)
+            self.assertEqual(ret.status_code, 200)
+
+        v5_url = "/update/5/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/update.xml"
+        subs = [3, "e", "20.0", "1", "p", "l", "a", "a", "a", "a"]
+        for i in range(0, 10):
+            my_subs = subs[:]
+            subs[i] = "ÃÃÃÃÃÃ"
+            my_url = v5_url.format(*my_subs)
+            ret = self.client.get(my_url)
+            self.assertEqual(ret.status_code, 200)
+
+        v6_url = "/update/6/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/update.xml"
+        subs = [3, "e", "20.0", "1", "p", "l", "a", "a", "a", "a"]
+        for i in range(0, 10):
+            my_subs = subs[:]
+            subs[i] = "ÃÃÃÃÃÃ"
+            my_url = v6_url.format(*my_subs)
+            ret = self.client.get(my_url)
+            self.assertEqual(ret.status_code, 200)
+
+    def testUnicodeAcceptedInQueryFields(self):
+        for field in ("force", "mig64", "avast"):
+            ret = self.client.get("/update/6/3/e/2.0.0/1/p/l/a/a/a/a/update.xml?{}=ÃÃÃÃÃÃ".format(field))
+            self.assertEqual(ret.status_code, 200)
+
     def testRobotsExists(self):
         ret = self.client.get('/robots.txt')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/plain')
-        self.assertTrue('User-agent' in ret.data)
+        self.assertTrue('User-agent' in ret.get_data(as_text=True))
 
     def testContributeJsonExists(self):
         ret = self.client.get('/contribute.json')
         self.assertEqual(ret.status_code, 200)
-        self.assertTrue(json.loads(ret.data))
+        self.assertTrue(ret.get_json())
         self.assertEqual(ret.mimetype, 'application/json')
 
     def testBadAvastURLsFromBug1125231(self):
@@ -888,7 +923,7 @@ class ClientTest(ClientTestBase):
         # should get the same update XML.
         ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
         self.assertHttpResponse(ret2)
-        self.assertEqual(ret.data, ret2.data)
+        self.assertEqual(ret.get_data(), ret2.get_data())
 
     def testFixForBug1125231DoesntBreakXhLocale(self):
         ret = self.client.get('/update/4/b/1.0/1/p/xh/a/a/a/a/1/update.xml')
@@ -905,14 +940,14 @@ class ClientTest(ClientTestBase):
         self.assertHttpResponse(ret)
         ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1')
         self.assertHttpResponse(ret2)
-        self.assertEqual(ret.data, ret2.data)
+        self.assertEqual(ret.get_data(), ret2.get_data())
 
     def testAvastURLsWithUnescapedBadQueryArgs(self):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1?avast=1")
         self.assertHttpResponse(ret)
         ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1')
         self.assertHttpResponse(ret2)
-        self.assertEqual(ret.data, ret2.data)
+        self.assertEqual(ret.get_data(), ret2.get_data())
 
     def testAvastURLsWithGoodQueryArgs(self):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1&avast=1")
@@ -1533,7 +1568,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual('I break!', ret.data)
+            self.assertEqual('I break!', ret.get_data(as_text=True))
 
     def testEscapedOutputOn500(self):
         with mock.patch('auslib.web.public.client.getQueryFromURL') as m:
@@ -1541,22 +1576,23 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual('50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt;', ret.data)
+            self.assertEqual('50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt;', ret.get_data(as_text=True))
 
     def testEscapedOutputOn400(self):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
             m.side_effect = BadDataError('Version number 50.1.0zibj5<img src%3da onerror%3dalert(document.domain)> is invalid.')
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
-            self.assertEqual(ret.status_code, 400, ret.data)
+            error_message = ret.get_data(as_text=True)
+            self.assertEqual(ret.status_code, 400, error_message)
             self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual("Version number 50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt; is invalid.", ret.data)
+            self.assertEqual("Version number 50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt; is invalid.", error_message)
 
     def testSentryBadDataError(self):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch("auslib.web.public.base.sentry") as sentry:
             m.side_effect = BadDataError("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertFalse(sentry.captureException.called)
-            self.assertEqual(ret.status_code, 400, ret.data)
+            self.assertEqual(ret.status_code, 400, ret.get_data())
             self.assertEqual(ret.mimetype, "text/plain")
 
     def testSentryRealError(self):
@@ -1566,7 +1602,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
             self.assertTrue(sentry.captureException.called)
-            self.assertEqual('exterminate!', ret.data)
+            self.assertEqual('exterminate!', ret.get_data(as_text=True))
 
     def testNonSubstitutedUrlVariablesReturnEmptyUpdate(self):
         request1 = '/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml'
@@ -1585,3 +1621,10 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
                 ret = self.client.get(request)
                 self.assertUpdatesAreEmpty(ret)
                 self.assertFalse(mock_cr_view.called)
+
+    # "Accepted" is a bit weird here - it basically just means "doesn't cause an ISE 500"
+    # We don't have any valid query fields with unicode in their name, so a 400 is the
+    # best thing we can test for.
+    def testUnicodeAcceptedInQueryFieldName(self):
+        ret = self.client.get("/update/6/3/e/2.0.0/1/p/l/a/a/a/a/update.xml?fooÃÃÃÃÃÃbar=1")
+        self.assertEqual(ret.status_code, 400)

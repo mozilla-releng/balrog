@@ -54,11 +54,11 @@
     <h3 class="panel-title">
       <div style="float: right">
         <i ng-if="scheduled_changes_rules_count && $first && (currentPage == 1)">Current</i>
-        <button ng-show="sc.sc_id && (!isEmpty(sc['required_signoffs']) &&
+        <button ng-show="!sc_id && (!isEmpty(sc['required_signoffs']) &&
           !sc['signoffs'].hasOwnProperty(current_user))" class="btn btn-xs btn-primary" ng-click="signoff(sc)">
           Signoff as...
         </button>
-        <button ng-show="sc.sc_id && (!isEmpty(sc['signoffs']) &&
+        <button ng-show="!sc_id && (!isEmpty(sc['signoffs']) &&
           sc['signoffs'].hasOwnProperty(current_user))" class="btn btn-xs btn-danger" ng-click="revokeSignoff(sc)">
           Revoke your Signoff
         </button>

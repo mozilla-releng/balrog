@@ -4,6 +4,8 @@ from os import path
 import simplejson as json
 import yaml
 
+from six import string_types, text_type
+
 from auslib.AUS import isSpecialURL
 from auslib.global_state import cache
 # To enable shared jsonschema validators
@@ -43,7 +45,7 @@ def createBlob(data):
         5000: SystemAddonsBlob
     }
 
-    if isinstance(data, basestring):
+    if isinstance(data, string_types):
         data = json.loads(data)
     schema_version = data.get("schema_version")
 
@@ -81,8 +83,9 @@ def merge_dicts(ancestor, left, right):
     for key in set(key for d in dicts for key in d.keys()):
         key_types = set([type(d.get(key)) for d in dicts])
         key_types.discard(type(None))
-        if len(key_types) > 1 and not key_types.issubset([str, unicode]):
-            raise ValueError("Cannot merge blobs: type mismatch for '{}'".format(key.encode('ascii', 'replace')))
+        encoded_str_key = str(text_type(key.encode('ascii', 'replace'), 'utf-8'))
+        if len(key_types) > 1 and not key_types.issubset([str, text_type]):
+            raise ValueError("Cannot merge blobs: type mismatch for '{}'".format(encoded_str_key))
 
         if any(isinstance(d.get(key), dict) for d in dicts):
             result[key] = merge_dicts(*[d.get(key, {}) for d in dicts])
@@ -91,7 +94,7 @@ def merge_dicts(ancestor, left, right):
         else:
             if key in ancestor:
                 if key in left and key in right and ancestor[key] != left[key] and ancestor[key] != right[key]:
-                    raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key.encode('ascii', 'replace')))
+                    raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(encoded_str_key))
                 if key in left and ancestor[key] != left.get(key):
                     result[key] = left[key]
                 elif key in right and ancestor[key] != right.get(key):
@@ -100,7 +103,7 @@ def merge_dicts(ancestor, left, right):
                     result[key] = ancestor[key]
             else:
                 if key in left and key in right and left[key] != right[key]:
-                    raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(key.encode('ascii', 'replace')))
+                    raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(encoded_str_key))
                 if key in left:
                     result[key] = left[key]
                 elif key in right:
@@ -156,7 +159,7 @@ class Blob(dict):
 
     def getSchema(self):
         def loadSchema():
-            return yaml.load(open(path.join(path.dirname(path.abspath(__file__)), "schemas", self.jsonschema)))
+            return yaml.safe_load(open(path.join(path.dirname(path.abspath(__file__)), "schemas", self.jsonschema)))
 
         return cache.get("blob_schema", self.jsonschema, loadSchema)
 

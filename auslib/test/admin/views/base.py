@@ -217,4 +217,4 @@ class ViewTest(unittest.TestCase):
         return self.client.delete(url, query_string=qs, environ_base=self._getAuth(username))
 
     def assertStatusCode(self, response, expected):
-        self.assertEquals(response.status_code, expected, '%d - %s' % (response.status_code, response.data))
+        self.assertEquals(response.status_code, expected, '%d - %s' % (response.status_code, response.get_data()))

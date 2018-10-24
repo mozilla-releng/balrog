@@ -8,3 +8,6 @@ branch: master
 
 # automatically discover requirements files
 search: True
+
+# in time for a mid-week release
+schedule: every week on monday

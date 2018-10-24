@@ -7,7 +7,7 @@ class TestDockerflowEndpoints(ClientTestBase):
 
     def testVersion(self):
         ret = self.client.get("/__version__")
-        self.assertEquals(ret.data, """
+        self.assertEquals(ret.get_data(as_text=True), """
 {
   "source":"https://github.com/mozilla/balrog",
   "version":"1.0",
@@ -29,7 +29,7 @@ class TestDockerflowEndpoints(ClientTestBase):
             # the Exception directly instead of a 500 error
             ret = self.client.get("/__heartbeat__")
             self.assertEqual(ret.status_code, 502)
-            self.assertEqual(ret.data, "Can't connect to the database.")
+            self.assertEqual(ret.get_data(as_text=True), "Can't connect to the database.")
             self.assertEqual(ret.headers["Cache-Control"], "public, max-age=60")
             self.assertEqual(cr.call_count, 1)
 

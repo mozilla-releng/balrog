@@ -1,4 +1,4 @@
-from flask import request, Response
+from flask import request
 from flask.views import MethodView
 from auslib.global_state import dbo
 from auslib.web.admin.views.problem import problem
@@ -7,12 +7,23 @@ from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError
 import logging
 
 
+log = logging.getLogger(__name__)
+
+
 def requirelogin(f):
     def decorated(*args, **kwargs):
         username = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
         if not username:
-            logging.warning("Login Required")
-            return Response(status=401)
+            log.warning("Login Required")
+            return problem(401, 'Unauthenticated', 'Login Required')
+        elif not dbo.isKnownUser(username):
+            # Was identified some situations where a REMOTE_USER can be changed through
+            # the 'Remote-User' header.
+            # This check prevents the request reaches database layer when the user is not
+            # in permissions table.
+            # https://bugzilla.mozilla.org/show_bug.cgi?id=1457905
+            log.warning("Authorization Required")
+            return problem(403, 'Forbidden', 'Authorization Required')
         return f(*args, changed_by=username, **kwargs)
     return decorated
 
@@ -25,8 +36,8 @@ def handleGeneralExceptions(messages):
             except OutdatedDataError as e:
                 msg = "Couldn't perform the request %s. Outdated Data Version. " \
                       "old_data_version doesn't match current data_version" % messages
-                logging.warning("Bad input: %s", msg)
-                logging.warning(e)
+                log.warning("Bad input: %s", msg)
+                log.warning(e)
                 # using connexion.problem results in TypeError: 'ConnexionResponse' object is not callable
                 # hence using flask.Response but modifying response's json data into connexion.problem format
                 # for validation purpose
@@ -34,27 +45,27 @@ def handleGeneralExceptions(messages):
             except UpdateMergeError as e:
                 msg = "Couldn't perform the request %s due to merge error. " \
                       "Is there a scheduled change that conflicts with yours?" % messages
-                logging.warning("Bad input: %s", msg)
-                logging.warning(e)
+                log.warning("Bad input: %s", msg)
+                log.warning(e)
                 return problem(400, "Bad Request", "UpdateMergeError", ext={"exception": msg})
             except ChangeScheduledError as e:
                 msg = "Couldn't perform the request %s due a conflict with a scheduled change. " % messages
-                msg += e.message
-                logging.warning("Bad input: %s", msg)
-                logging.warning(e)
+                msg += str(e)
+                log.warning("Bad input: %s", msg)
+                log.warning(e)
                 return problem(400, "Bad Request", "ChangeScheduledError", ext={"exception": msg})
             except SignoffRequiredError as e:
-                msg = "This change requires signoff, it cannot be done directly. {}".format(e.message)
-                logging.warning(msg)
-                logging.warning(e)
+                msg = "This change requires signoff, it cannot be done directly. {}".format(e)
+                log.warning(msg)
+                log.warning(e)
                 return problem(400, "Bad Request", "SignoffRequiredError", ext={"exception": msg})
             except PermissionDeniedError as e:
-                msg = "Permission denied to perform the request. {}".format(e.message)
-                logging.warning(msg)
+                msg = "Permission denied to perform the request. {}".format(e)
+                log.warning(msg)
                 return problem(403, "Forbidden", "PermissionDeniedError", ext={"exception": msg})
             except ValueError as e:
-                msg = "Bad input: {}".format(e.message)
-                logging.warning(msg)
+                msg = "Bad input: {}".format(e)
+                log.warning(msg)
                 return problem(400, "Bad Request", "ValueError", ext={"exception": msg})
         return decorated
     return wrap
