@@ -1,5 +1,4 @@
 import mock
-import simplejson as json
 
 from sqlalchemy import select
 

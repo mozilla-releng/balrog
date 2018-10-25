@@ -2,7 +2,7 @@ import logging
 
 try:
     from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
     from configparser import RawConfigParser, NoSectionError, NoOptionError
 
 

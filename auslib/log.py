@@ -35,9 +35,9 @@ class BalrogLogger(logging.Logger):
             except RuntimeError:
                 pass
             extra['requestid'] = requestid
-        if six.PY2: # pragma: no cover
+        if six.PY2:  # pragma: no cover
             return logging.Logger.makeRecord(self, name, level, fn, lno, msg, args, exc_info, func, extra)
-        return logging.Logger.makeRecord(self, name, level, fn, lno, msg, args, exc_info, func, extra, sinfo) # pragma: no cover
+        return logging.Logger.makeRecord(self, name, level, fn, lno, msg, args, exc_info, func, extra, sinfo)  # pragma: no cover
 
 
 class JsonLogFormatter(logging.Formatter):

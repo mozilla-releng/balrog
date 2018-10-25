@@ -1,5 +1,4 @@
 # This Python file uses the following encoding: utf-8
-import json
 import mock
 
 from six import assertCountEqual
