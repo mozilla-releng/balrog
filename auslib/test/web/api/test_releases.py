@@ -1,4 +1,3 @@
-import json
 import mock
 
 from auslib.test.web.api.base import CommonTestBase

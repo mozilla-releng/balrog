@@ -10,9 +10,8 @@ import time
 
 try:
     from urllib2 import urlopen, HTTPError, URLError
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
     from urllib.error import HTTPError, URLError
-    from urllib.parse import unquote
     from urllib.request import urlopen
 
 
