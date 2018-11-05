@@ -126,7 +126,7 @@ def getQueryFromURL(url):
 
 def extract_query_version(request_url):
     version = 0
-    pattern = '^.*/update/(\d+)/.*\.xml.*$'
+    pattern = r'^.*/update/(\d+)/.*\.xml.*$'
     match = re.match(pattern, request_url)
     if match:
         version = int(match.group(1))

@@ -40,26 +40,6 @@ def rows_to_dicts(rows):
     return [dict(row) for row in rows]
 
 
-def _matchesRegex(foo, bar):
-    # Expand wildcards and use ^/$ to make sure we don't succeed on partial
-    # matches. Eg, 3.6* matches 3.6, 3.6.1, 3.6b3, etc.
-    # Channel length must be strictly greater than two
-    # And globbing is allowed at the end of channel-name only
-    if foo.endswith('*'):
-        if(len(foo) >= 3):
-            test = foo.replace('.', '\.').replace('*', '\*', foo.count('*') - 1)
-            test = '^{}.*$'.format(test[:-1])
-            if re.match(test, bar):
-                return True
-            return False
-        else:
-            return False
-    elif (foo == bar):
-        return True
-    else:
-        return False
-
-
 class AlreadySetupError(Exception):
 
     def __str__(self):
@@ -2469,7 +2449,7 @@ class EmergencyShutoffs(AUSTable):
         row = affected_rows[-1]
         where = {"product": row["product"]}
         for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
-            if not row.get("channel") or _matchesRegex(row["channel"], rs["channel"]):
+            if not row.get("channel") or matchRegex(row["channel"], rs["channel"]):
                 potential_required_signoffs['rs'].append(rs)
         return potential_required_signoffs
 
