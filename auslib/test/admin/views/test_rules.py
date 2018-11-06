@@ -222,8 +222,9 @@ class TestRulesAPI_JSON(ViewTest):
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
                              product='Firefox', channel="nightly", update_type='minor', version='%s4.0' % op))
             rule_id = int(ret.get_data())
-            self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s, Operator: %s" %
-                              (ret.status_code, rule_id, op))
+            self.assertEqual(
+                ret.status_code, 200,
+                "Status Code: %d, Data: %s, Operator: %s" % (ret.status_code, rule_id, op))
             r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
             self.assertEqual(len(r), 1)
             self.assertEqual(r[0]['version'], '%s4.0' % op)
@@ -243,8 +244,9 @@ class TestRulesAPI_JSON(ViewTest):
         ret = self._post("/rules", data=dict(backgroundRate=42, mapping="d", priority=50, product="Firefox",
                                              channel="nightly", update_type="minor", version="5.0a1"))
         rule_id = int(ret.get_data())
-        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" %
-                          (ret.status_code, rule_id))
+        self.assertEqual(
+            ret.status_code, 200,
+            "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
         r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
         self.assertEqual(len(r), 1)
         self.assertEqual(r[0]['version'], '5.0a1')
@@ -275,8 +277,9 @@ class TestRulesAPI_JSON(ViewTest):
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
                                                  product='Firefox', channel="nightly",
                                                  update_type='minor', version=validVersionList))
-            self.assertEqual(ret.status_code, 200,
-                              "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.get_data(), validVersionList))
+            self.assertEqual(
+                ret.status_code, 200,
+                "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.get_data(), validVersionList))
 
     def testVersionValidationBogusInput(self):
         for bogus in ('<= 4.0', ' <=4.0', '<>4.0', '<=-4.0', '=4.0', '> 4.0', '>= 4.0', ' >=4.0', ' 4.0 ',

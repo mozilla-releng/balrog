@@ -1,7 +1,7 @@
 import json
 import connexion
 
-from sqlalchemy.sql.expression import null, select
+from sqlalchemy.sql.expression import null
 
 from flask import jsonify, Response
 
@@ -14,7 +14,6 @@ from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
 from auslib.db import SignoffRequiredError
 from auslib.global_state import dbo
 from auslib.web.common.history import get_input_dict
-from sqlalchemy import and_
 
 
 class RequiredSignoffsView(AdminView):

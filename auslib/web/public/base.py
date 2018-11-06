@@ -4,7 +4,7 @@ import re
 
 try:
     import html
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
     import cgi as html
 
 import auslib.web

@@ -84,7 +84,7 @@ class TestSchema1Blob(unittest.TestCase):
 }
 """)
         assertRaisesRegex(self, ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
-                                blob.validate, 'gg', self.whitelistedDomains)
+                          blob.validate, 'gg', self.whitelistedDomains)
 
     def testGetVendorsForPlatform(self):
         vendors = set([v for v in self.blob.getVendorsForPlatform("q")])

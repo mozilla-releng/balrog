@@ -493,14 +493,14 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.test.insert(changed_by='george', id=4, foo=0)
         ret = self.test.history.t.select().execute().fetchall()
         self.assertEqual(ret, [(1, 'george', 999, 4, None, None),
-                                (2, 'george', 1000, 4, 0, 1)])
+                               (2, 'george', 1000, 4, 0, 1)])
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponAutoincrementInsert(self):
         self.test.insert(changed_by='george', foo=0)
         ret = self.test.history.t.select().execute().fetchall()
         self.assertEqual(ret, [(1, 'george', 999, 4, None, None),
-                                (2, 'george', 1000, 4, 0, 1)])
+                               (2, 'george', 1000, 4, 0, 1)])
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponDelete(self):
@@ -585,18 +585,18 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.test.insert(changed_by='george', id=4, foo=0)
         ret = self.test.history.getChange(change_id=1)
         self.assertEqual(ret, {u'data_version': None,
-                                u'changed_by': u'george',
-                                u'foo': None, u'timestamp': 999,
-                                u'change_id': 1, u'id': 4})
+                               u'changed_by': u'george',
+                               u'foo': None, u'timestamp': 999,
+                               u'change_id': 1, u'id': 4})
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryGetChangeWithDataVersion(self):
         self.test.insert(changed_by='george', id=4, foo=0)
         ret = self.test.history.getChange(data_version=1, column_values={'id': 4})
         self.assertEqual(ret, {u'data_version': 1,
-                                u'changed_by': u'george',
-                                u'foo': 0, u'timestamp': 1000,
-                                u'change_id': 2, u'id': 4})
+                               u'changed_by': u'george',
+                               u'foo': 0, u'timestamp': 1000,
+                               u'change_id': 2, u'id': 4})
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryGetChangeWithDataVersionReturnNone(self):
@@ -634,7 +634,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
         self.test.insert(changed_by='george', id1=4, id2=5, foo=0)
         ret = self.test.history.t.select().execute().fetchall()
         self.assertEqual(ret, [(1, 'george', 999, 4, 5, None, None),
-                                (2, 'george', 1000, 4, 5, 0, 1)])
+                               (2, 'george', 1000, 4, 5, 0, 1)])
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryHistoryUponDelete(self):
@@ -704,9 +704,9 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
         self.test.insert(changed_by='george', id1=4, id2=5, foo=0)
         ret = self.test.history.getChange(data_version=1, column_values={'id1': 4, 'id2': 5})
         self.assertEqual(ret, {u'data_version': 1,
-                                u'changed_by': u'george',
-                                u'foo': 0, u'timestamp': 1000,
-                                u'change_id': 2, u'id1': 4, u'id2': 5})
+                               u'changed_by': u'george',
+                               u'foo': 0, u'timestamp': 1000,
+                               u'change_id': 2, u'id1': 4, u'id2': 5})
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryKeyHistoryGetChangeWithDataVersionReturnNone(self):
@@ -874,7 +874,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testValidateConditionsNotAllowedWhenAndOther(self):
         assertRaisesRegex(self, ValueError, "Invalid combination of conditions", self.sc_table.conditions.validate,
-                                {"when": "12345", "telemetry_product": "foo"})
+                          {"when": "12345", "telemetry_product": "foo"})
 
     def testValidateConditionsMissingTelemetryValue(self):
         assertRaisesRegex(self, ValueError, "Invalid combination of conditions", self.sc_table.conditions.validate, {"telemetry_product": "foo"})
@@ -996,8 +996,9 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertForExistingNoSuchRow(self):
         what = {"fooid": 10, "foo": "thing", "data_version": 1, "when": 999000, "change_type": "update"}
-        assertRaisesRegex(self, ValueError, "Cannot create scheduled change with data_version for non-existent row", self.sc_table.insert, changed_by="bob",
-                                **what)
+        assertRaisesRegex(
+            self, ValueError, "Cannot create scheduled change with data_version for non-existent row",
+            self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertMissingRequiredPartOfPK(self):
@@ -1642,7 +1643,7 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
 
     def testSignoffWithoutPermission(self):
         assertRaisesRegex(self, PermissionDeniedError, "jim cannot signoff with role 'releng'",
-                                self.signoffs.insert, "jim", sc_id=1, username="jim", role="releng")
+                          self.signoffs.insert, "jim", sc_id=1, username="jim", role="releng")
 
     def testSignoffASecondTimeWithSameRole(self):
         self.signoffs.insert("nancy", sc_id=1, username="nancy", role="relman")
@@ -1653,7 +1654,7 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
 
     def testSignoffWithSecondRole(self):
         assertRaisesRegex(self, PermissionDeniedError, "Cannot signoff with a second role",
-                                self.signoffs.insert, "nancy", sc_id=1, username="nancy", role="qa")
+                          self.signoffs.insert, "nancy", sc_id=1, username="nancy", role="qa")
 
     def testCannotUpdateSignoff(self):
         self.assertRaises(AttributeError, self.signoffs.update, {"username": "nancy"}, {"role": "qa"}, "nancy")
@@ -1675,7 +1676,7 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
 
     def testRevokeOtherUsersSignoffWithoutPermission(self):
         assertRaisesRegex(self, PermissionDeniedError, "Cannot revoke a signoff made by someone in a group you do not belong to",
-                                self.signoffs.delete, {"sc_id": 1, "username": "nancy"}, changed_by="bob")
+                          self.signoffs.delete, {"sc_id": 1, "username": "nancy"}, changed_by="bob")
 
 
 class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
@@ -4382,7 +4383,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGrantRoleToUserWhoDoesntHaveAPermission(self):
         assertRaisesRegex(self, ValueError, "Cannot grant a role to a user without any permissions",
-                                self.permissions.grantRole, changed_by="bill", username="kirk", role="dev")
+                          self.permissions.grantRole, changed_by="bill", username="kirk", role="dev")
 
     def testRevokePermission(self):
         self.permissions.delete({"username": "bob", "permission": "release"}, changed_by="bill", old_data_version=1)
@@ -4420,7 +4421,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testCannotRevokeRoleThatMakesRequiredSignoffImpossible(self):
         assertRaisesRegex(self, ValueError, "Revoking dev role would make it impossible for Required Signoffs to be fulfilled",
-                                self.permissions.revokeRole, "bob", "dev", "bill", old_data_version=1)
+                          self.permissions.revokeRole, "bob", "dev", "bill", old_data_version=1)
 
     def testGetAllUsers(self):
         self.assertEqual(self.permissions.getAllUsers(), ({

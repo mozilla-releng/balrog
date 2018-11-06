@@ -201,9 +201,9 @@ class TestReleaseBlobV1(unittest.TestCase):
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlob.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
-        self.assertEqual(sorted(partial_releases),
-                          ['samplePartial1', 'samplePartial2', 'samplePartial3', 'samplePartial4']
-                          )
+        self.assertEqual(
+            sorted(partial_releases),
+            ['samplePartial1', 'samplePartial2', 'samplePartial3', 'samplePartial4'])
 
     def testGetPartialReleaseReferences_Empty_Locales_Case(self):
         sample_release_JSON = """
@@ -825,9 +825,9 @@ class TestSchema2Blob(unittest.TestCase):
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlob.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
-        self.assertEqual(sorted(partial_releases),
-                          ['samplePartial1', 'samplePartial2', 'samplePartial3', 'samplePartial4']
-                          )
+        self.assertEqual(
+            sorted(partial_releases),
+            ['samplePartial1', 'samplePartial2', 'samplePartial3', 'samplePartial4'])
 
     def testIsValid(self):
         # Raises on error

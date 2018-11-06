@@ -6,7 +6,6 @@ import six
 from connexion import request
 from flask import Response, jsonify
 from six import text_type, string_types
-from sqlalchemy import and_
 
 
 class HistoryHelper():
