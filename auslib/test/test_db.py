@@ -4617,7 +4617,7 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("INSERT"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row to be inserted:"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString("'channel':\s[b|u]?'bar'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'channel':\s[b|u]?'bar'"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'rule_id':"))
 
     def testOnInsertPermission(self):
@@ -4637,11 +4637,11 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("UPDATE to rules"))
         mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
         mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'product': None ---> 'blah'"))
-        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", RegexPartialString("'channel':\s[b|u]?\"?'release'\"?"))
+        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", RegexPartialString(r"'channel':\s[b|u]?\"?'release'\"?"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE to rules_scheduled_changes"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString("'base_product':\s[b|u]?\"?None ---> 'blah'\"?"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString("'base_channel':\s[u|b]?\"?'release'\"?,"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'base_product':\s[b|u]?\"?None ---> 'blah'\"?"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'base_channel':\s[u|b]?\"?'release'\"?,"))
 
     def testOnDelete(self):
         def doit():
@@ -4650,7 +4650,7 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("DELETE"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be removed:"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'rule_id': 3"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString("'channel':\s[b|u]?'release'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'channel':\s[b|u]?'release'"))
 
     def testOnInsertRuleSC(self):
         def doit():
@@ -4659,8 +4659,8 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("INSERT"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row to be inserted:"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString("'scheduled_by':\s[u|b]?'bob'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString("'base_channel':\s[u|b]?'bar'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'scheduled_by':\s[u|b]?'bob'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'base_channel':\s[u|b]?'bar'"))
 
     def testOnUpdateRuleSC(self):
         def doit():
@@ -4669,7 +4669,7 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_product': None ---> 'blah'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString("'base_channel':\s[b|u]?\"?'release'\"?"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'base_channel':\s[b|u]?\"?'release'\"?"))
 
     def testOnDeleteRuleSC(self):
         def doit():
@@ -4678,7 +4678,7 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("DELETE"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be removed:"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'sc_id': 1"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString("'base_channel':\s[b|u]?'release'"))
+        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'base_channel':\s[b|u]?'release'"))
 
     def testOnChangeReadOnly(self):
         def doit():
@@ -4686,11 +4686,11 @@ class TestChangeNotifiers(unittest.TestCase):
         mock_conn = self._runTest(doit)
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com",
                                               RegexPartialString("Read only release"
-                                                                 "\s[b|u]?'a' changed to modifiable"))
+                                                                 r"\s[b|u]?'a' changed to modifiable"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com",
-                                              RegexPartialString("'name':\s[b|u]?'a'"))
+                                              RegexPartialString(r"'name':\s[b|u]?'a'"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com",
-                                              RegexPartialString("'product':\s[b|u]?'a'"))
+                                              RegexPartialString(r"'product':\s[b|u]?'a'"))
         mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com",
                                               PartialString("'read_only': True"
                                                             " ---> False"))
