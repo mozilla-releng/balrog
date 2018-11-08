@@ -31,8 +31,8 @@ validator_map = {
     'body': BalrogRequestBodyValidator
 }
 
-connexion_app = connexion.App(__name__, debug=False)
-connexion_app.add_api(spec, validator_map=validator_map, strict_validation=True)
+connexion_app = connexion.App(__name__, validator_map=validator_map, debug=False)
+connexion_app.add_api(spec, strict_validation=True)
 app = connexion_app.app
 sentry = Sentry()
 
