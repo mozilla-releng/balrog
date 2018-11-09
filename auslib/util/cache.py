@@ -1,6 +1,73 @@
+import sys
 from copy import deepcopy
+from collections import namedtuple
 
-from repoze.lru import ExpiringLRUCache
+if sys.version_info[0] >= 3:
+    import functools
+else:
+    import functools32 as functools
+
+
+class _Equals:
+    def __init__(self, obj):
+        self.obj = obj
+
+    def __eq__(self, other):
+        # if current value is truthy
+        if self.obj is not None:
+            return True
+        return False
+
+    def __hash__(self):
+        return 0
+
+
+def lru_cache(*args, **kwargs):
+    lru_decorator = functools.lru_cache(*args, **kwargs)
+
+    def decorator(f):
+        @lru_decorator
+        def _memoize(key, ret=None):
+            if ret is not None:
+                ret = ret.obj
+            return f(key, ret)
+
+        @functools.wraps(f)
+        def function(key, ret=None):
+            value, info = _Equals(ret), _memoize.cache_info()._asdict()
+            if ret:
+                info['hits'] -= 1
+            return _memoize(key, value), info
+
+        return function
+
+    return decorator
+
+
+class LRUCache:
+    def __init__(self, maxsize=None):
+        self.__maxsize = maxsize
+        self.cache = self._cache()
+
+    @property
+    def info(self):
+        return namedtuple(
+            'CacheInfo', self._info.keys())(**self._info)
+
+    def _cache(self):
+        @lru_cache(maxsize=self.__maxsize)
+        def function(key, ret=None):
+            if callable(ret):
+                return ret()
+            return ret
+        return function
+
+    def put(self, key, value):
+        _, self._info = self.cache(key, value)
+
+    def get(self, key):
+        value, self._info = self.cache(key)
+        return value
 
 
 class MaybeCacher(object):
@@ -36,7 +103,7 @@ class MaybeCacher(object):
     def make_cache(self, name, maxsize, timeout):
         if name in self.caches:
             raise Exception()
-        self.caches[name] = ExpiringLRUCache(maxsize, timeout)
+        self.caches[name] = LRUCache(maxsize)
 
     def reset(self):
         self.caches.clear()
