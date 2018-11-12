@@ -23,7 +23,7 @@ class TestCreateBlob(unittest.TestCase):
 "schema_version": 2,
 "name": "blah"}"""
         blob = createBlob(data)
-        self.assertEquals(blob, dict(schema_version=2, name="blah"))
+        self.assertEqual(blob, dict(schema_version=2, name="blah"))
 
     def testLoadDict(self):
         data = dict(
@@ -31,7 +31,7 @@ class TestCreateBlob(unittest.TestCase):
             name="foo"
         )
         blob = createBlob(data)
-        self.assertEquals(blob, data)
+        self.assertEqual(blob, data)
 
     def testMissingSchemaVersion(self):
         self.assertRaises(ValueError, createBlob, dict(name="foo"))
@@ -66,7 +66,7 @@ class TestCreateBlob(unittest.TestCase):
             ))
             blob.validate('fake', [])
 
-            self.assertEquals(yaml_load.call_count, 1)
+            self.assertEqual(yaml_load.call_count, 1)
 
 
 # Things we consider to be useful values in testing blobs. Basically, these

@@ -30,4 +30,4 @@ domain_whitelist=a.com:c|d, boring.com:e
 
     def testWhitelistDomains(self):
         expected = {'a.com': ('c', 'd'), 'boring.com': ('e',)}
-        self.assertEquals(expected, self.cfg.getDomainWhitelist())
+        self.assertEqual(expected, self.cfg.getDomainWhitelist())

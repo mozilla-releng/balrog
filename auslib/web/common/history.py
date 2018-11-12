@@ -6,7 +6,6 @@ import six
 from connexion import request
 from flask import Response, jsonify
 from six import text_type, string_types
-from sqlalchemy import and_
 
 
 class HistoryHelper():
@@ -37,9 +36,7 @@ class HistoryHelper():
         offset = limit * (page - 1)
 
         filters = self.fn_history_filters(obj, self.hist_table)
-        total_count = self.hist_table.t.count()\
-                                       .where(and_(*filters))\
-                                       .execute().fetchone()[0]
+        total_count = self.hist_table.count(where=filters)
 
         revisions = self.hist_table.select(
             where=filters,

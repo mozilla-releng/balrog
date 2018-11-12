@@ -1,6 +1,6 @@
 import unittest
 
-from six import assertCountEqual
+from six import assertCountEqual, assertRaisesRegex
 
 from auslib.blobs.gmp import GMPBlobV1
 from auslib.errors import BadDataError
@@ -83,33 +83,33 @@ class TestSchema1Blob(unittest.TestCase):
     }
 }
 """)
-        self.assertRaisesRegexp(ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
-                                blob.validate, 'gg', self.whitelistedDomains)
+        assertRaisesRegex(self, ValueError, ("The hashValue length is different from the required length of 128 for sha512"),
+                          blob.validate, 'gg', self.whitelistedDomains)
 
     def testGetVendorsForPlatform(self):
         vendors = set([v for v in self.blob.getVendorsForPlatform("q")])
-        self.assertEquals(set(["c", "d"]), vendors)
+        self.assertEqual(set(["c", "d"]), vendors)
 
     def testGetVendorsForPlatformDefault(self):
         vendors = set([v for v in self.blob.getVendorsForPlatform("q2")])
-        self.assertEquals(set(["c", "d"]), vendors)
+        self.assertEqual(set(["c", "d"]), vendors)
 
     def testGetVendorsForPlatformOnlyDefault(self):
         vendors = set([v for v in self.blob.getVendorsForPlatform("s")])
-        self.assertEquals(set(["d"]), vendors)
+        self.assertEqual(set(["d"]), vendors)
 
     def testGetVendorsForPlatformOnlyInOne(self):
         vendors = set([v for v in self.blob.getVendorsForPlatform("r")])
-        self.assertEquals(set(["d"]), vendors)
+        self.assertEqual(set(["d"]), vendors)
 
     def testGetResolvedPlatform(self):
-        self.assertEquals("q", self.blob.getResolvedPlatform("c", "q2"))
+        self.assertEqual("q", self.blob.getResolvedPlatform("c", "q2"))
 
     def testGetResolvedPlatformDefault(self):
-        self.assertEquals("default", self.blob.getResolvedPlatform("d", "q2"))
+        self.assertEqual("default", self.blob.getResolvedPlatform("d", "q2"))
 
     def testGetResolvedPlatformSpecificOverridesDefault(self):
-        self.assertEquals("r", self.blob.getResolvedPlatform("d", "r"))
+        self.assertEqual("r", self.blob.getResolvedPlatform("d", "r"))
 
     def testGetResolvedPlatformRaisesBadDataError(self):
         self.assertRaises(BadDataError, self.blob.getResolvedPlatform, "c", "bbb")
@@ -120,7 +120,7 @@ class TestSchema1Blob(unittest.TestCase):
             "hashValue": "5",
             "fileUrl": "http://boring.com/blah",
         }
-        self.assertEquals(self.blob.getPlatformData("c", "q2"), expected)
+        self.assertEqual(self.blob.getPlatformData("c", "q2"), expected)
 
     def testGetPlatformDataRaisesBadDataError(self):
         self.assertRaises(BadDataError, self.blob.getPlatformData, "c", "f")

@@ -14,7 +14,7 @@ class TestRulesAPI_JSON(ViewTest):
     def testGetRules(self):
         ret = self._get("/rules")
         got = ret.get_json()
-        self.assertEquals(got["count"], 9)
+        self.assertEqual(got["count"], 9)
 
     def testGetRulesWithProductFilter(self):
         ret = self._get("/rules", qs={"product": "fake"})
@@ -42,89 +42,89 @@ class TestRulesAPI_JSON(ViewTest):
                 "memory": None, "mig64": None, "jaws": None,
             }
         ]
-        self.assertEquals(got["count"], 3)
+        self.assertEqual(got["count"], 3)
         rules = sorted(got["rules"], key=lambda r: r["rule_id"])
-        self.assertEquals(rules, expected)
+        self.assertEqual(rules, expected)
 
     def testNewRulePost(self):
         ret = self._post('/rules', data=dict(backgroundRate=31, mapping='c', priority=33,
                                              product='Firefox', update_type='minor', channel='nightly'))
         rule_id = int(ret.get_data())
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
         r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mapping'], 'c')
-        self.assertEquals(r[0]['backgroundRate'], 31)
-        self.assertEquals(r[0]['priority'], 33)
-        self.assertEquals(r[0]['data_version'], 1)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['mapping'], 'c')
+        self.assertEqual(r[0]['backgroundRate'], 31)
+        self.assertEqual(r[0]['priority'], 33)
+        self.assertEqual(r[0]['data_version'], 1)
 
     def testNewRulePostWithUnicode(self):
         ret = self._post('/rules', data=dict(backgroundRate=31, mapping='c', priority=33,
                                              product='Firefox', update_type='minor', channel='nightlyÁ'))
-        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
     def testBackgroundRateZero(self):
         ret = self._post('/rules', data=dict(backgroundRate=0, mapping='c', priority=33,
                                              product='Firefox', update_type='minor', channel='nightly'))
         rule_id = int(ret.get_data())
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
         r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mapping'], 'c')
-        self.assertEquals(r[0]['backgroundRate'], 0)
-        self.assertEquals(r[0]['priority'], 33)
-        self.assertEquals(r[0]['data_version'], 1)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['mapping'], 'c')
+        self.assertEqual(r[0]['backgroundRate'], 0)
+        self.assertEqual(r[0]['priority'], 33)
+        self.assertEqual(r[0]['data_version'], 1)
 
     def testPriorityZero(self):
         ret = self._post('/rules', data=dict(backgroundRate=33, mapping='c', priority=0,
                                              product='Firefox', update_type='minor', channel='nightly'))
         rule_id = int(ret.get_data())
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
         r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mapping'], 'c')
-        self.assertEquals(r[0]['backgroundRate'], 33)
-        self.assertEquals(r[0]['priority'], 0)
-        self.assertEquals(r[0]['data_version'], 1)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['mapping'], 'c')
+        self.assertEqual(r[0]['backgroundRate'], 33)
+        self.assertEqual(r[0]['priority'], 0)
+        self.assertEqual(r[0]['data_version'], 1)
 
     def testCreateRuleWithMemory(self):
         ret = self._post('/rules', data=dict(backgroundRate=33, mapping='c', priority=0, memory="<7373",
                                              product='Firefox', update_type='minor', channel='nightly'))
         rule_id = int(ret.get_data())
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
         r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mapping'], 'c')
-        self.assertEquals(r[0]['backgroundRate'], 33)
-        self.assertEquals(r[0]['priority'], 0)
-        self.assertEquals(r[0]['memory'], "<7373")
-        self.assertEquals(r[0]['data_version'], 1)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['mapping'], 'c')
+        self.assertEqual(r[0]['backgroundRate'], 33)
+        self.assertEqual(r[0]['priority'], 0)
+        self.assertEqual(r[0]['memory'], "<7373")
+        self.assertEqual(r[0]['data_version'], 1)
 
     def testCreateRuleWithMig64(self):
         ret = self._post('/rules', data=dict(backgroundRate=33, mapping='c', priority=0, mig64=True,
                                              product='Firefox', update_type='minor', channel='nightly'))
         rule_id = int(ret.get_data())
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
         r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mapping'], 'c')
-        self.assertEquals(r[0]['backgroundRate'], 33)
-        self.assertEquals(r[0]['priority'], 0)
-        self.assertEquals(r[0]['mig64'], True)
-        self.assertEquals(r[0]['data_version'], 1)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['mapping'], 'c')
+        self.assertEqual(r[0]['backgroundRate'], 33)
+        self.assertEqual(r[0]['priority'], 0)
+        self.assertEqual(r[0]['mig64'], True)
+        self.assertEqual(r[0]['data_version'], 1)
 
     def testCreateRuleWithJaws(self):
         ret = self._post('/rules', data=dict(backgroundRate=33, mapping='c', priority=0, jaws=True,
                                              product='Firefox', update_type='minor', channel='nightly'))
         rule_id = int(ret.get_data())
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
         r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mapping'], 'c')
-        self.assertEquals(r[0]['backgroundRate'], 33)
-        self.assertEquals(r[0]['priority'], 0)
-        self.assertEquals(r[0]['jaws'], True)
-        self.assertEquals(r[0]['data_version'], 1)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['mapping'], 'c')
+        self.assertEqual(r[0]['backgroundRate'], 33)
+        self.assertEqual(r[0]['priority'], 0)
+        self.assertEqual(r[0]['jaws'], True)
+        self.assertEqual(r[0]['data_version'], 1)
 
     def testVersionMaxFieldLength(self):
         # Max field length of rules.version is 75
@@ -147,14 +147,14 @@ class TestRulesAPI_JSON(ViewTest):
                 buildTarget='MAC',
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ret.status_code,
             200,
             "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data())
         )
         ret = dbo.rules.select(where={"rule_id": 1}, columns=["version"])
-        self.assertEquals(ret[0].get("version"), version)
-        self.assertEquals(len(ret[0].get("version")), len(version))
+        self.assertEqual(ret[0].get("version"), version)
+        self.assertEqual(len(ret[0].get("version")), len(version))
 
     def testNewRuleWithoutProductAdminPermission(self):
         data = dict(
@@ -178,7 +178,7 @@ class TestRulesAPI_JSON(ViewTest):
             update_type="minor", channel="nightly"
         )
         ret = self._post("/rules", data=data, username="jack")
-        self.assertEquals(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
 
     def testNewRuleWithWhitespaceInLocale(self):
         data = dict(
@@ -187,14 +187,14 @@ class TestRulesAPI_JSON(ViewTest):
         )
         ret = self._post("/rules", data=data, username="billy")
         rule_id = int(ret.get_data())
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
         r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mapping'], "a")
-        self.assertEquals(r[0]['backgroundRate'], 31)
-        self.assertEquals(r[0]['priority'], 33)
-        self.assertEquals(r[0]['data_version'], 1)
-        self.assertEquals(r[0]['locale'], "de,en-US,hu,it,zh-TW")
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['mapping'], "a")
+        self.assertEqual(r[0]['backgroundRate'], 31)
+        self.assertEqual(r[0]['priority'], 33)
+        self.assertEqual(r[0]['data_version'], 1)
+        self.assertEqual(r[0]['locale'], "de,en-US,hu,it,zh-TW")
 
     # A POST without the required fields shouldn't be valid
     def testMissingFields(self):
@@ -202,19 +202,19 @@ class TestRulesAPI_JSON(ViewTest):
         # is done before what we're testing
         post_data = {'product': 'a'}
         ret = self._post('/rules', data=post_data)
-        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         # Connexion and manual request.json validation methods will preempt and throw 400 error as
         # soon as the first field invalidates. Only one field may be present in the response.get_data() depending
         # upon the order of fields sorted in swagger yaml file and in views.
         post_data['update_type'] = 'minor'
         ret = self._post('/rules', data=post_data)
 
-        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         self.assertTrue('backgroundRate' in ret.get_data(as_text=True), msg=ret.get_data())
         post_data['backgroundRate'] = 10
         ret = self._post('/rules', data=post_data)
 
-        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         self.assertTrue('priority' in ret.get_data(as_text=True), msg=ret.get_data())
 
     def testVersionValidation(self):
@@ -222,91 +222,94 @@ class TestRulesAPI_JSON(ViewTest):
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
                              product='Firefox', channel="nightly", update_type='minor', version='%s4.0' % op))
             rule_id = int(ret.get_data())
-            self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s, Operator: %s" %
-                              (ret.status_code, rule_id, op))
+            self.assertEqual(
+                ret.status_code, 200,
+                "Status Code: %d, Data: %s, Operator: %s" % (ret.status_code, rule_id, op))
             r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
-            self.assertEquals(len(r), 1)
-            self.assertEquals(r[0]['version'], '%s4.0' % op)
+            self.assertEqual(len(r), 1)
+            self.assertEqual(r[0]['version'], '%s4.0' % op)
 
     def testVersionValidationRequiresAtLeastTwoPartVersion(self):
         ret = self._post("/rules", data=dict(backgroundRate=42, mapping="d", priority=50, product="Firefox",
                                              channel="nightly", update_type="minor", version="5"))
-        self.assertEquals(ret.status_code, 400)
+        self.assertEqual(ret.status_code, 400)
 
     def testVersionValidationRequiresAtLeastTwoPartVersionWithOperator(self):
         for op in operators:
             ret = self._post("/rules", data=dict(backgroundRate=42, mapping="d", priority=50, product="Firefox",
                                                  channel="nightly", update_type="minor", version="%s5" % op))
-            self.assertEquals(ret.status_code, 400)
+            self.assertEqual(ret.status_code, 400)
 
     def testVersionValidationAlphaTagsAllowedForModernVersions(self):
         ret = self._post("/rules", data=dict(backgroundRate=42, mapping="d", priority=50, product="Firefox",
                                              channel="nightly", update_type="minor", version="5.0a1"))
         rule_id = int(ret.get_data())
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" %
-                          (ret.status_code, rule_id))
+        self.assertEqual(
+            ret.status_code, 200,
+            "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
         r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['version'], '5.0a1')
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['version'], '5.0a1')
 
     def testVersionValidationNoBetaTagsAllowedForModernVersions(self):
         ret = self._post("/rules", data=dict(backgroundRate=42, mapping="d", priority=50, product="Firefox",
                                              channel="nightly", update_type="minor", version="5.0b4"))
-        self.assertEquals(ret.status_code, 400)
+        self.assertEqual(ret.status_code, 400)
 
     def testBuildIDValidation(self):
         for op in operators:
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
                              product='Firefox', channel="nightly", update_type='minor', buildID='%s20010101000000' % op))
             rule_id = int(ret.get_data())
-            self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s, Operator: %s" % (ret.status_code, rule_id, op))
+            self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s, Operator: %s" % (ret.status_code, rule_id, op))
             r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
-            self.assertEquals(len(r), 1)
-            self.assertEquals(r[0]['buildID'], '%s20010101000000' % op)
+            self.assertEqual(len(r), 1)
+            self.assertEqual(r[0]['buildID'], '%s20010101000000' % op)
 
     def testBuildIDDoesntAcceptStrings(self):
         for buildid in ('abcdef', '<abcdef'):
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
                              product='Firefox', channel="nightly", update_type='minor', buildID=buildid))
-            self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+            self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
     def testVersionListValidInput(self):
         for validVersionList in ('3.3,4.2', '3.1.3,4.2'):
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
                                                  product='Firefox', channel="nightly",
                                                  update_type='minor', version=validVersionList))
-            self.assertEquals(ret.status_code, 200,
-                              "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.get_data(), validVersionList))
+            self.assertEqual(
+                ret.status_code, 200,
+                "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.get_data(), validVersionList))
 
     def testVersionValidationBogusInput(self):
         for bogus in ('<= 4.0', ' <=4.0', '<>4.0', '<=-4.0', '=4.0', '> 4.0', '>= 4.0', ' >=4.0', ' 4.0 ',
                       '<=4.0,3.0', '>=4.0,3.0', '4.0,<3.0', '4.0,>3.0', '=4.0,3.0', '=4.0,=3.0', '4.0,=3.0'):
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
                              product='Firefox', channel="nightly", update_type='minor', version=bogus))
-            self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.get_data(), bogus))
+            self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.get_data(), bogus))
             self.assertTrue('version' in ret.get_data(as_text=True), msg=ret.get_data())
 
     def testBuilIDValidationBogusInput(self):
         for bogus in ('<= 4120', ' <=4120', '<>4120', '<=-4120', '=41230', '> 41210', '>= 41220', ' >=41220', ' 41220 '):
             ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
                              product='Firefox', channel="nightly", update_type='minor', buildID=bogus))
-            self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.get_data(), bogus))
+            self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s, Input: %s" % (ret.status_code, ret.get_data(), bogus))
             self.assertTrue('buildID' in ret.get_data(as_text=True), msg=ret.get_data())
 
     def testValidationEmptyInput(self):
         ret = self._post('/rules', data=dict(backgroundRate=42, mapping='d', priority=50,
                          product='Firefox', channel="nightly", update_type='minor', version='', buildID=''))
         rule_id = int(ret.get_data())
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
         r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['buildID'], None)
-        self.assertEquals(r[0]['version'], None)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['buildID'], None)
+        self.assertEqual(r[0]['version'], None)
 
     def testInvalidMapping(self):
         data_dict = dict(backgroundRate=31, mapping='random', priority=33, product='a', update_type='minor')
         ret = self._post('/rules', data=data_dict)
-        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         self.assertIn("mapping", ret.get_data(as_text=True), "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
 
     def testPutDataVersionLessThanOne(self):
@@ -314,18 +317,18 @@ class TestRulesAPI_JSON(ViewTest):
         ret = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d',
                                               priority=73, data_version=0,
                                               product='Firefox', channel='nightly', update_type='minor'))
-        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
 
     def testDuplicateAlias(self):
         ret = self._post('/rules', data=dict(backgroundRate=31, mapping='c',
                                              priority=33, product='Firefox',
                                              update_type='minor', channel='nightly', alias='test'))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
 
         ret = self._post('/rules', data=dict(backgroundRate=31, mapping='c',
                                              priority=33, product='Firefox',
                                              update_type='minor', channel='nightly', alias='test'))
-        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
 
     def testNewRulePostWithDistributionList(self):
         data = dict(
@@ -334,10 +337,10 @@ class TestRulesAPI_JSON(ViewTest):
         )
         ret = self._post("/rules", data=data)
         rule_id = int(ret.get_data())
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, rule_id))
         r = dbo.rules.t.select().where(dbo.rules.rule_id == rule_id).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['distribution'], 'mozilla1,mozilla2,mozilla3,mozilla4')
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['distribution'], 'mozilla1,mozilla2,mozilla3,mozilla4')
 
 
 class TestSingleRuleView_JSON(ViewTest):
@@ -369,7 +372,7 @@ class TestSingleRuleView_JSON(ViewTest):
             mig64=None,
             jaws=None,
         )
-        self.assertEquals(ret.get_json(), expected)
+        self.assertEqual(ret.get_json(), expected)
         self.assertIn('X-CSRF-Token', ret.headers)
 
     def testGetRuleByAlias(self):
@@ -399,169 +402,169 @@ class TestSingleRuleView_JSON(ViewTest):
             mig64=None,
             jaws=None,
         )
-        self.assertEquals(ret.get_json(), expected)
+        self.assertEqual(ret.get_json(), expected)
 
     def testGetRule404(self):
         ret = self.client.get("/rules/123")
-        self.assertEquals(ret.status_code, 404)
+        self.assertEqual(ret.status_code, 404)
 
     def testPost(self):
         # Make some changes to a rule
         ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d', update_type='minor',
                                                fallbackMapping="b", priority=73, data_version=1,
                                                product='Firefox', channel='nightly', instructionSet="SSE"))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
 
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mapping'], 'd')
-        self.assertEquals(r[0]['fallbackMapping'], 'b')
-        self.assertEquals(r[0]['backgroundRate'], 71)
-        self.assertEquals(r[0]['instructionSet'], "SSE")
-        self.assertEquals(r[0]['priority'], 73)
-        self.assertEquals(r[0]['data_version'], 2)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['mapping'], 'd')
+        self.assertEqual(r[0]['fallbackMapping'], 'b')
+        self.assertEqual(r[0]['backgroundRate'], 71)
+        self.assertEqual(r[0]['instructionSet'], "SSE")
+        self.assertEqual(r[0]['priority'], 73)
+        self.assertEqual(r[0]['data_version'], 2)
         # And that we didn't modify other fields
-        self.assertEquals(r[0]['update_type'], 'minor')
-        self.assertEquals(r[0]['version'], '3.5')
-        self.assertEquals(r[0]['buildTarget'], 'd')
+        self.assertEqual(r[0]['update_type'], 'minor')
+        self.assertEqual(r[0]['version'], '3.5')
+        self.assertEqual(r[0]['buildTarget'], 'd')
 
     def testPostChangeToMemory(self):
         # Make some changes to a rule
         ret = self._post('/rules/1', data=dict(memory="42", data_version=1))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
 
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['memory'], '42')
-        self.assertEquals(r[0]['data_version'], 2)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['memory'], '42')
+        self.assertEqual(r[0]['data_version'], 2)
         # And that we didn't modify other fields
-        self.assertEquals(r[0]['update_type'], 'minor')
-        self.assertEquals(r[0]['version'], '3.5')
-        self.assertEquals(r[0]['buildTarget'], 'd')
+        self.assertEqual(r[0]['update_type'], 'minor')
+        self.assertEqual(r[0]['version'], '3.5')
+        self.assertEqual(r[0]['buildTarget'], 'd')
 
     def testPostChangeToMig64(self):
         # Make some changes to a rule
         ret = self._post('/rules/1', data=dict(mig64=True, data_version=1))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
 
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mig64'], True)
-        self.assertEquals(r[0]['data_version'], 2)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['mig64'], True)
+        self.assertEqual(r[0]['data_version'], 2)
         # And that we didn't modify other fields
-        self.assertEquals(r[0]['update_type'], 'minor')
-        self.assertEquals(r[0]['version'], '3.5')
-        self.assertEquals(r[0]['buildTarget'], 'd')
+        self.assertEqual(r[0]['update_type'], 'minor')
+        self.assertEqual(r[0]['version'], '3.5')
+        self.assertEqual(r[0]['buildTarget'], 'd')
 
     def testPostChangeToJaws(self):
         # Make some changes to a rule
         ret = self._post('/rules/1', data=dict(jaws=True, data_version=1))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
 
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['jaws'], True)
-        self.assertEquals(r[0]['data_version'], 2)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['jaws'], True)
+        self.assertEqual(r[0]['data_version'], 2)
         # And that we didn't modify other fields
-        self.assertEquals(r[0]['update_type'], 'minor')
-        self.assertEquals(r[0]['version'], '3.5')
-        self.assertEquals(r[0]['buildTarget'], 'd')
+        self.assertEqual(r[0]['update_type'], 'minor')
+        self.assertEqual(r[0]['version'], '3.5')
+        self.assertEqual(r[0]['buildTarget'], 'd')
 
     def testPostUnsetMig64(self):
         # Make some changes to a rule
         ret = self._post('/rules/8', data=dict(mig64=None, data_version=1))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
 
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 8).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mig64'], None)
-        self.assertEquals(r[0]['data_version'], 2)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['mig64'], None)
+        self.assertEqual(r[0]['data_version'], 2)
         # And that we didn't modify other fields
-        self.assertEquals(r[0]['update_type'], 'minor')
-        self.assertEquals(r[0]['priority'], 25)
+        self.assertEqual(r[0]['update_type'], 'minor')
+        self.assertEqual(r[0]['priority'], 25)
 
     def testPostUnsetJaws(self):
         # Make some changes to a rule
         ret = self._post('/rules/9', data=dict(jaws=None, data_version=1))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
 
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 9).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['jaws'], None)
-        self.assertEquals(r[0]['data_version'], 2)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['jaws'], None)
+        self.assertEqual(r[0]['data_version'], 2)
         # And that we didn't modify other fields
-        self.assertEquals(r[0]['update_type'], 'minor')
-        self.assertEquals(r[0]['priority'], 25)
+        self.assertEqual(r[0]['update_type'], 'minor')
+        self.assertEqual(r[0]['priority'], 25)
 
     def testPutRuleOutdatedData(self):
         # Make changes to a rule
         ret = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d',
                                               priority=73, data_version=1,
                                               product='Firefox', channel='nightly'))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
-        self.assertEquals(r[0]['data_version'], 2)
+        self.assertEqual(r[0]['data_version'], 2)
 
         # OutdatedDataVersion Request
         ret2 = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1, product='Firefox', channel='nightly'))
-        self.assertEquals(ret2.status_code, 400, "Status Code: %d, Data: %s" % (ret2.status_code, ret2.get_data()))
+        self.assertEqual(ret2.status_code, 400, "Status Code: %d, Data: %s" % (ret2.status_code, ret2.get_data()))
 
     def testPostRuleOutdatedData(self):
         # Make changes to a rule
         ret = self._post('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
                                                product='Firefox', channel='nightly'))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
-        self.assertEquals(r[0]['data_version'], 2)
+        self.assertEqual(r[0]['data_version'], 2)
 
         # OutdatedDataVersion Request
         ret2 = self._put('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73,
                                                data_version=1, product='Firefox', channel='nightly'))
-        self.assertEquals(ret2.status_code, 400, "Status Code: %d, Data: %s" % (ret2.status_code, ret2.get_data()))
+        self.assertEqual(ret2.status_code, 400, "Status Code: %d, Data: %s" % (ret2.status_code, ret2.get_data()))
 
     def testPostByAlias(self):
         # Make some changes to a rule
         ret = self._post('/rules/frodo', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
                                                    product='Firefox', channel='nightly'))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
 
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 2).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mapping'], 'd')
-        self.assertEquals(r[0]['backgroundRate'], 71)
-        self.assertEquals(r[0]['priority'], 73)
-        self.assertEquals(r[0]['data_version'], 2)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['mapping'], 'd')
+        self.assertEqual(r[0]['backgroundRate'], 71)
+        self.assertEqual(r[0]['priority'], 73)
+        self.assertEqual(r[0]['data_version'], 2)
         # And that we didn't modify other fields
-        self.assertEquals(r[0]['update_type'], 'minor')
-        self.assertEquals(r[0]['version'], '3.3')
-        self.assertEquals(r[0]['buildTarget'], 'd')
+        self.assertEqual(r[0]['update_type'], 'minor')
+        self.assertEqual(r[0]['version'], '3.3')
+        self.assertEqual(r[0]['buildTarget'], 'd')
 
     def testPostJSON(self):
         data = dict(
@@ -569,205 +572,205 @@ class TestSingleRuleView_JSON(ViewTest):
             product="Firefox", channel="nightly"
         )
         ret = self._post("/rules/1", data=data)
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
 
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mapping'], 'd')
-        self.assertEquals(r[0]['backgroundRate'], 71)
-        self.assertEquals(r[0]['priority'], 73)
-        self.assertEquals(r[0]['data_version'], 2)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['mapping'], 'd')
+        self.assertEqual(r[0]['backgroundRate'], 71)
+        self.assertEqual(r[0]['priority'], 73)
+        self.assertEqual(r[0]['data_version'], 2)
         # And that we didn't modify other fields
-        self.assertEquals(r[0]['update_type'], 'minor')
-        self.assertEquals(r[0]['version'], '3.5')
-        self.assertEquals(r[0]['buildTarget'], 'd')
+        self.assertEqual(r[0]['update_type'], 'minor')
+        self.assertEqual(r[0]['version'], '3.5')
+        self.assertEqual(r[0]['buildTarget'], 'd')
 
     def testPostAddAlias(self):
         # Make some changes to a rule
         ret = self._post("/rules/1", data=dict(alias="sam", data_version=1))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load["new_data_version"], 2)
+        self.assertEqual(load["new_data_version"], 2)
 
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]["alias"], "sam")
-        self.assertEquals(r[0]["data_version"], 2)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["alias"], "sam")
+        self.assertEqual(r[0]["data_version"], 2)
         # And that we didn"t modify other fields
-        self.assertEquals(r[0]["update_type"], "minor")
-        self.assertEquals(r[0]["version"], "3.5")
-        self.assertEquals(r[0]["buildTarget"], "d")
+        self.assertEqual(r[0]["update_type"], "minor")
+        self.assertEqual(r[0]["version"], "3.5")
+        self.assertEqual(r[0]["buildTarget"], "d")
 
     def testPostAddBadAlias(self):
         ret = self._post("/rules/1", data=dict(alias="abc#$%", data_version=1))
-        self.assertEquals(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
 
     def testPostWithoutProduct(self):
         ret = self._post('/rules/2', username='bob',
                          data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
                                    channel='nightly'))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 2).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mapping'], 'd')
-        self.assertEquals(r[0]['backgroundRate'], 71)
-        self.assertEquals(r[0]['priority'], 73)
-        self.assertEquals(r[0]['data_version'], 2)
-        self.assertEquals(r[0]['channel'], 'nightly')
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['mapping'], 'd')
+        self.assertEqual(r[0]['backgroundRate'], 71)
+        self.assertEqual(r[0]['priority'], 73)
+        self.assertEqual(r[0]['data_version'], 2)
+        self.assertEqual(r[0]['channel'], 'nightly')
         # And that we didn't modify other fields
-        self.assertEquals(r[0]['update_type'], 'minor')
-        self.assertEquals(r[0]['buildTarget'], 'd')
-        self.assertEquals(r[0]['product'], 'a')
+        self.assertEqual(r[0]['update_type'], 'minor')
+        self.assertEqual(r[0]['buildTarget'], 'd')
+        self.assertEqual(r[0]['product'], 'a')
 
     def testPostSetBackgroundRateTo0(self):
         ret = self._post("/rules/3", data=dict(backgroundRate=0, data_version=1))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 3).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['backgroundRate'], 0)
-        self.assertEquals(r[0]['data_version'], 2)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['backgroundRate'], 0)
+        self.assertEqual(r[0]['data_version'], 2)
         # And that we didn't modify other fields
-        self.assertEquals(r[0]['update_type'], 'minor')
-        self.assertEquals(r[0]['mapping'], 'a')
-        self.assertEquals(r[0]['priority'], 100)
-        self.assertEquals(r[0]['buildTarget'], 'a')
-        self.assertEquals(r[0]['product'], 'a')
+        self.assertEqual(r[0]['update_type'], 'minor')
+        self.assertEqual(r[0]['mapping'], 'a')
+        self.assertEqual(r[0]['priority'], 100)
+        self.assertEqual(r[0]['buildTarget'], 'a')
+        self.assertEqual(r[0]['product'], 'a')
 
     def testPostRemoveRestriction(self):
         ret = self._post("/rules/5", data=dict(buildTarget="", data_version=1))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 5).execute().fetchall()
-        self.assertEquals(len(r), 1)
+        self.assertEqual(len(r), 1)
         r = r[0]
-        self.assertEquals(r["buildTarget"], None)
+        self.assertEqual(r["buildTarget"], None)
         # ...and that other fields weren't modified
-        self.assertEquals(r["priority"], 80)
-        self.assertEquals(r["version"], "3.3")
-        self.assertEquals(r["backgroundRate"], 0)
-        self.assertEquals(r["mapping"], "c")
-        self.assertEquals(r["update_type"], "minor")
-        self.assertEquals(r["product"], "a")
+        self.assertEqual(r["priority"], 80)
+        self.assertEqual(r["version"], "3.3")
+        self.assertEqual(r["backgroundRate"], 0)
+        self.assertEqual(r["mapping"], "c")
+        self.assertEqual(r["update_type"], "minor")
+        self.assertEqual(r["product"], "a")
 
     def testPost404(self):
         ret = self._post("/rules/555", data=dict(mapping="d", data_version=1))
-        self.assertEquals(ret.status_code, 404)
+        self.assertEqual(ret.status_code, 404)
 
     def testPostWithBadData(self):
         ret = self._post("/rules/1", data=dict(mapping="uhet"))
-        self.assertEquals(ret.status_code, 400)
+        self.assertEqual(ret.status_code, 400)
 
     def testPostWithBadAlias(self):
         ret = self._post("/rules/1", data=dict(alias="3", data_version=1))
-        self.assertEquals(ret.status_code, 400)
+        self.assertEqual(ret.status_code, 400)
 
     def testPostWithRequiredSignoff(self):
         ret = self._post("/rules/4", data=dict(product="c", channel="c", data_version=1))
-        self.assertEquals(ret.status_code, 400)
+        self.assertEqual(ret.status_code, 400)
         self.assertIn("This change requires signoff", ret.get_data(as_text=True))
 
     # Regression test for https://bugzilla.mozilla.org/show_bug.cgi?id=1375670
     def testPostWithRequiredSignoffForProductOnly(self):
         ret = self._post("/rules/7", data=dict(osVersion="Darwin", data_version=1))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 7).execute().fetchall()
-        self.assertEquals(len(r), 1)
+        self.assertEqual(len(r), 1)
         r = r[0]
-        self.assertEquals(r["osVersion"], "Darwin")
+        self.assertEqual(r["osVersion"], "Darwin")
         # ...and that other fields weren't modified
-        self.assertEquals(r["priority"], 30)
-        self.assertEquals(r["backgroundRate"], 85)
-        self.assertEquals(r["mapping"], "a")
-        self.assertEquals(r["update_type"], "minor")
-        self.assertEquals(r["product"], "fake")
-        self.assertEquals(r["channel"], "c")
+        self.assertEqual(r["priority"], 30)
+        self.assertEqual(r["backgroundRate"], 85)
+        self.assertEqual(r["mapping"], "a")
+        self.assertEqual(r["update_type"], "minor")
+        self.assertEqual(r["product"], "fake")
+        self.assertEqual(r["channel"], "c")
 
     def testBadAuthPost(self):
         ret = self._badAuthPost('/rules/1', data=dict(backgroundRate=100, mapping='c', priority=100, data_version=1))
-        self.assertEquals(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
 
     def testHttpRemoteUserAuth(self):
         # Make some changes to a rule
         ret = self._httpRemoteUserPost('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
                                                              product='Firefox', channel='nightly'))
-        self.assertEquals(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
         load = ret.get_json()
-        self.assertEquals(load['new_data_version'], 2)
+        self.assertEqual(load['new_data_version'], 2)
 
         # Assure the changes made it into the database
         r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
-        self.assertEquals(len(r), 1)
-        self.assertEquals(r[0]['mapping'], 'd')
-        self.assertEquals(r[0]['backgroundRate'], 71)
-        self.assertEquals(r[0]['priority'], 73)
-        self.assertEquals(r[0]['data_version'], 2)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]['mapping'], 'd')
+        self.assertEqual(r[0]['backgroundRate'], 71)
+        self.assertEqual(r[0]['priority'], 73)
+        self.assertEqual(r[0]['data_version'], 2)
         # And that we didn't modify other fields
-        self.assertEquals(r[0]['update_type'], 'minor')
-        self.assertEquals(r[0]['version'], '3.5')
-        self.assertEquals(r[0]['buildTarget'], 'd')
+        self.assertEqual(r[0]['update_type'], 'minor')
+        self.assertEqual(r[0]['version'], '3.5')
+        self.assertEqual(r[0]['buildTarget'], 'd')
 
     def testNoPermissionToAlterExistingProduct(self):
         ret = self._post('/rules/4', data=dict(backgroundRate=71, data_version=1), username='bob')
-        self.assertEquals(ret.status_code, 403)
+        self.assertEqual(ret.status_code, 403)
 
     def testNoPermissionToAlterNewProduct(self):
         ret = self._post(
             '/rules/4', data=dict(product='protected', mapping='a', backgroundRate=71, priority=50, update_type='minor', data_version=1), username='bob')
-        self.assertEquals(ret.status_code, 403)
+        self.assertEqual(ret.status_code, 403)
 
     def testGetSingleRule(self):
         ret = self._get('/rules/1')
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
         self.assertTrue("c" in ret.get_data(as_text=True), msg=ret.get_data())
         for h in ("X-CSRF-Token", "X-Data-Version"):
             self.assertTrue(h in ret.headers, msg=ret.headers)
 
     def testDeleteRule(self):
         ret = self._delete('/rules/1', qs=dict(data_version=1))
-        self.assertEquals(ret.status_code, 200, msg=ret.get_data())
+        self.assertEqual(ret.status_code, 200, msg=ret.get_data())
 
     def testDeleteRuleOutdatedData(self):
         ret = self._get('/rules/1')
-        self.assertEquals(ret.status_code, 200, msg=ret.get_data())
+        self.assertEqual(ret.status_code, 200, msg=ret.get_data())
         ret = self._delete('/rules/1', qs=dict(data_version=7))
-        self.assertEquals(ret.status_code, 400, msg=ret.get_data())
+        self.assertEqual(ret.status_code, 400, msg=ret.get_data())
 
     def testDeleteRuleByAlias(self):
         ret = self._delete('/rules/frodo', qs={"data_version": 1})
-        self.assertEquals(ret.status_code, 200, msg=ret.get_data())
+        self.assertEqual(ret.status_code, 200, msg=ret.get_data())
 
     def testDeleteRule404(self):
         ret = self._delete("/rules/112", qs={"data_version": 25})
-        self.assertEquals(ret.status_code, 404)
+        self.assertEqual(ret.status_code, 404)
 
     def testDeleteWithProductAdminPermission(self):
         ret = self._delete("/rules/3", username="billy",
                            qs=dict(data_version=1))
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
 
     def testDeleteWithoutProductAdminPermission(self):
         ret = self._delete("/rules/4", username="billy",
                            qs=dict(data_version=1))
-        self.assertEquals(ret.status_code, 403)
+        self.assertEqual(ret.status_code, 403)
 
     def testDeleteWithoutPermission(self):
         ret = self._delete("/rules/2", username="tony", qs=dict(data_version=1))
-        self.assertEquals(ret.status_code, 403)
+        self.assertEqual(ret.status_code, 403)
 
 
 class TestRuleHistoryView(ViewTest):
@@ -775,13 +778,13 @@ class TestRuleHistoryView(ViewTest):
     def testGetNoRevisions(self):
         url = '/rules/1/revisions'
         ret = self._get(url)
-        self.assertEquals(ret.status_code, 200, msg=ret.get_data())
+        self.assertEqual(ret.status_code, 200, msg=ret.get_data())
         got = ret.get_json()
-        self.assertEquals(got["count"], 0)
+        self.assertEqual(got["count"], 0)
 
     def testGetRefusesAlias(self):
         ret = self._get("/rules/frodo/revisions")
-        self.assertEquals(ret.status_code, 404)
+        self.assertEqual(ret.status_code, 404)
 
     def testGetRevisions(self):
         # Make some changes to a rule
@@ -797,7 +800,7 @@ class TestRuleHistoryView(ViewTest):
                 channel='nightly',
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ret.status_code,
             200,
             "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data())
@@ -815,7 +818,7 @@ class TestRuleHistoryView(ViewTest):
                 channel='nightly',
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ret.status_code,
             200,
             "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data())
@@ -824,8 +827,8 @@ class TestRuleHistoryView(ViewTest):
         url = '/rules/1/revisions'
         ret = self._get(url)
         got = ret.get_json()
-        self.assertEquals(ret.status_code, 200, msg=ret.get_data())
-        self.assertEquals(got["count"], 2)
+        self.assertEqual(ret.status_code, 200, msg=ret.get_data())
+        self.assertEqual(got["count"], 2)
         self.assertTrue(u"rule_id" in got["rules"][0])
         self.assertTrue(u"backgroundRate" in got["rules"][0])
 
@@ -843,7 +846,7 @@ class TestRuleHistoryView(ViewTest):
                 channel='nightly',
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ret.status_code,
             200,
             "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data())
@@ -861,7 +864,7 @@ class TestRuleHistoryView(ViewTest):
                 channel='nightly',
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ret.status_code,
             200,
             "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data())
@@ -870,8 +873,8 @@ class TestRuleHistoryView(ViewTest):
         url = '/rules/history'
         ret = self._get(url)
         got = ret.get_json()
-        self.assertEquals(ret.status_code, 200, msg=ret.get_data())
-        self.assertEquals(got["Rules"]["count"], 2)
+        self.assertEqual(ret.status_code, 200, msg=ret.get_data())
+        self.assertEqual(got["Rules"]["count"], 2)
         self.assertTrue(u"rule_id" in got["Rules"]["revisions"][0])
         self.assertTrue(u"backgroundRate" in got["Rules"]["revisions"][0])
         self.assertTrue(u"timestamp" in got["Rules"]["revisions"][0])
@@ -897,14 +900,14 @@ class TestRuleHistoryView(ViewTest):
                 buildTarget='MAC',
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ret.status_code,
             200,
             "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data())
         )
         ret = dbo.rules.history.select(where={"rule_id": 1}, columns=["version"])
-        self.assertEquals(ret[0].get("version"), version)
-        self.assertEquals(len(ret[0].get("version")), len(version))
+        self.assertEqual(ret[0].get("version"), version)
+        self.assertEqual(len(ret[0].get("version")), len(version))
 
     def testPostRevisionRollback(self):
         # Make some changes to a rule
@@ -925,7 +928,7 @@ class TestRuleHistoryView(ViewTest):
                 buildTarget='MAC',
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ret.status_code,
             200,
             "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data())
@@ -943,7 +946,7 @@ class TestRuleHistoryView(ViewTest):
                 channel='nightly',
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ret.status_code,
             200,
             "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data())
@@ -954,8 +957,7 @@ class TestRuleHistoryView(ViewTest):
         self.assertEqual(row['backgroundRate'], 72)
         self.assertEqual(row['data_version'], 3)
 
-        query = table.history.t.count()
-        count, = query.execute().first()
+        count = table.history.count()
         self.assertEqual(count, 2)
 
         # Oh no! We prefer the product=Firefox, backgroundRate=71 one better
@@ -969,10 +971,9 @@ class TestRuleHistoryView(ViewTest):
 
         url = '/rules/1/revisions'
         ret = self._post(url, {'change_id': change_id})
-        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.status_code, 200, ret.get_data())
 
-        query = table.history.t.count()
-        count, = query.execute().first()
+        count = table.history.count()
         self.assertEqual(count, 3)
 
         row, = table.select(where=[table.rule_id == 1])
@@ -1023,7 +1024,7 @@ class TestRuleHistoryView(ViewTest):
 
         url = '/rules/1/revisions'
         ret = self._post(url, {'change_id': change_id}, username='bob')
-        self.assertEquals(ret.status_code, 403)
+        self.assertEqual(ret.status_code, 403)
 
     def testPostRevisionRollbackBadRequests(self):
         ret = self._post(
@@ -1043,7 +1044,7 @@ class TestRuleHistoryView(ViewTest):
                 buildTarget='MAC',
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             ret.status_code,
             200,
             "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data())
@@ -1052,16 +1053,16 @@ class TestRuleHistoryView(ViewTest):
         wrong_url = '/rules/999/revisions'
         # not found rule_id
         ret = self._post(wrong_url, {'change_id': 10})
-        self.assertEquals(ret.status_code, 404, ret.get_data())
+        self.assertEqual(ret.status_code, 404, ret.get_data())
 
         url = '/rules/1/revisions'
         ret = self._post(url, {'change_id': 999})
         # not found change_id
-        self.assertEquals(ret.status_code, 400)
+        self.assertEqual(ret.status_code, 400)
 
         url = '/rules/1/revisions'
         ret = self._post(url)  # no change_id posted
-        self.assertEquals(ret.status_code, 400)
+        self.assertEqual(ret.status_code, 400)
 
 
 class TestSingleColumn_JSON(ViewTest):
@@ -1071,12 +1072,12 @@ class TestSingleColumn_JSON(ViewTest):
         expected = dict(count=4, product=expected_product)
         ret = self._get("/rules/columns/product")
         returned_data = ret.get_json()
-        self.assertEquals(returned_data['count'], expected['count'])
+        self.assertEqual(returned_data['count'], expected['count'])
         assertCountEqual(self, returned_data['product'], expected['product'])
 
     def testGetRuleColumn404(self):
         ret = self.client.get("/rules/columns/blah")
-        self.assertEquals(ret.status_code, 404)
+        self.assertEqual(ret.status_code, 404)
 
 
 class TestRuleScheduledChanges(ViewTest):
@@ -1245,7 +1246,7 @@ class TestRuleScheduledChanges(ViewTest):
                 },
             ],
         }
-        self.assertEquals(ret.get_json(), expected)
+        self.assertEqual(ret.get_json(), expected)
 
     def testGetScheduledChangesWithCompleted(self):
         ret = self._get("/scheduled_changes/rules", qs={"all": 1})
@@ -1314,7 +1315,7 @@ class TestRuleScheduledChanges(ViewTest):
                 },
             ],
         }
-        self.assertEquals(ret.get_json(), expected)
+        self.assertEqual(ret.get_json(), expected)
 
     @mock.patch('time.time', mock.MagicMock(return_value=300))
     def testAddScheduledChangeExistingRule(self):
@@ -1324,11 +1325,11 @@ class TestRuleScheduledChanges(ViewTest):
             "data_version": 1, "change_type": "update", "when": 1234567
         }
         ret = self._post("/scheduled_changes/rules", data=data)
-        self.assertEquals(ret.status_code, 200, ret.get_data())
-        self.assertEquals(ret.get_json(), {"sc_id": 8, "signoffs": {"bill": "releng"}})
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.get_json(), {"sc_id": 8, "signoffs": {"bill": "releng"}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 8).execute().fetchall()
-        self.assertEquals(len(r), 1)
+        self.assertEqual(len(r), 1)
         db_data = dict(r[0])
         expected = {
             "scheduled_by": "bill", "base_rule_id": 5, "base_priority": 80, "base_buildTarget": "d", "base_version": "3.3", "base_backgroundRate": 100,
@@ -1337,11 +1338,11 @@ class TestRuleScheduledChanges(ViewTest):
             "base_fallbackMapping": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_memory": None,
             "base_mig64": None, "base_instructionSet": None, "base_jaws": None, "change_type": "update",
         }
-        self.assertEquals(db_data, expected)
+        self.assertEqual(db_data, expected)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 8).execute().fetchall()
-        self.assertEquals(len(cond), 1)
+        self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 8, "data_version": 1, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "when": 1234567}
-        self.assertEquals(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]), cond_expected)
 
     @mock.patch('time.time', mock.MagicMock(return_value=300))
     def testAddScheduledChangeExistingDeletingRule(self):
@@ -1350,11 +1351,11 @@ class TestRuleScheduledChanges(ViewTest):
             "data_version": 1, "change_type": "delete", "when": 1234567
         }
         ret = self._post("/scheduled_changes/rules", data=data)
-        self.assertEquals(ret.status_code, 200, ret.get_data())
-        self.assertEquals(ret.get_json(), {"sc_id": 8, "signoffs": {"bill": "releng"}})
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.get_json(), {"sc_id": 8, "signoffs": {"bill": "releng"}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 8).execute().fetchall()
-        self.assertEquals(len(r), 1)
+        self.assertEqual(len(r), 1)
         db_data = dict(r[0])
         expected = {
             "scheduled_by": "bill", "base_rule_id": 5, "base_priority": None, "base_buildTarget": None, "base_version": None, "base_backgroundRate": None,
@@ -1363,11 +1364,11 @@ class TestRuleScheduledChanges(ViewTest):
             "base_fallbackMapping": None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None, "base_memory": None,
             "base_mig64": None, "base_instructionSet": None, "base_jaws": None, "change_type": "delete",
         }
-        self.assertEquals(db_data, expected)
+        self.assertEqual(db_data, expected)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 8).execute().fetchall()
-        self.assertEquals(len(cond), 1)
+        self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 8, "data_version": 1, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None, "when": 1234567}
-        self.assertEquals(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeNewRule(self):
@@ -1376,11 +1377,11 @@ class TestRuleScheduledChanges(ViewTest):
             "update_type": "minor", "mapping": "a", "change_type": "insert"
         }
         ret = self._post("/scheduled_changes/rules", data=data)
-        self.assertEquals(ret.status_code, 200, ret.get_data())
-        self.assertEquals(ret.get_json(), {"sc_id": 8, "signoffs": {}})
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.get_json(), {"sc_id": 8, "signoffs": {}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 8).execute().fetchall()
-        self.assertEquals(len(r), 1)
+        self.assertEqual(len(r), 1)
         db_data = dict(r[0])
         expected = {
             "scheduled_by": "bill", "base_priority": 120, "base_backgroundRate": 100, "base_product": "blah", "base_channel": "blah",
@@ -1389,11 +1390,11 @@ class TestRuleScheduledChanges(ViewTest):
             "base_osVersion": None, "base_distribution": None, "base_fallbackMapping": None, "base_distVersion": None, "base_headerArchitecture": None,
             "base_comment": None, "base_instructionSet": None, "change_type": "insert", "base_memory": None, "base_mig64": None, "base_jaws": None,
         }
-        self.assertEquals(db_data, expected)
+        self.assertEqual(db_data, expected)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 8).execute().fetchall()
-        self.assertEquals(len(cond), 1)
+        self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 8, "data_version": 1, "when": 1234567, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None}
-        self.assertEquals(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeNewRuleWithoutUpdateType(self):
@@ -1401,7 +1402,7 @@ class TestRuleScheduledChanges(ViewTest):
             "when": 1234567, "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah", "mapping": "a", "change_type": "insert"
         }
         ret = self._post("/scheduled_changes/rules", data=data)
-        self.assertEquals(ret.status_code, 400, ret.get_data())
+        self.assertEqual(ret.status_code, 400, ret.get_data())
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeUpdateRuleRuleWithoutUpdateType(self):
@@ -1410,7 +1411,7 @@ class TestRuleScheduledChanges(ViewTest):
             "mapping": "a", "change_type": "insert", "data_version": 1
         }
         ret = self._post("/scheduled_changes/rules", data=data)
-        self.assertEquals(ret.status_code, 400, ret.get_data())
+        self.assertEqual(ret.status_code, 400, ret.get_data())
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeInThePast(self):
@@ -1419,7 +1420,7 @@ class TestRuleScheduledChanges(ViewTest):
             "update_type": "minor", "mapping": "a", "change_type": "insert"
         }
         ret = self._post("/scheduled_changes/rules", data=data)
-        self.assertEquals(ret.status_code, 400, ret.get_data())
+        self.assertEqual(ret.status_code, 400, ret.get_data())
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeNoPermissionsToSchedule(self):
@@ -1428,7 +1429,7 @@ class TestRuleScheduledChanges(ViewTest):
             "update_type": "minor", "mapping": "a", "change_type": "insert",
         }
         ret = self._post("/scheduled_changes/rules", data=data, username="bob")
-        self.assertEquals(ret.status_code, 403, ret.get_data())
+        self.assertEqual(ret.status_code, 403, ret.get_data())
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeNoPermissionsToMakeChange(self):
@@ -1437,7 +1438,7 @@ class TestRuleScheduledChanges(ViewTest):
             "update_type": "minor", "mapping": "a", "change_type": "insert"
         }
         ret = self._post("/scheduled_changes/rules", data=data, username="mary")
-        self.assertEquals(ret.status_code, 403, ret.get_data())
+        self.assertEqual(ret.status_code, 403, ret.get_data())
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeMultipleConditions(self):
@@ -1446,14 +1447,14 @@ class TestRuleScheduledChanges(ViewTest):
             "priority": 120, "backgroundRate": 100, "update_type": "minor", "change_type": "insert"
         }
         ret = self._post("scheduled_changes/rules", data=data)
-        self.assertEquals(ret.status_code, 400)
+        self.assertEqual(ret.status_code, 400)
 
     def testAddScheduledChangeMissingRequiredTelemetryFields(self):
         data = {
             "telemetry_product": "foo", "priority": 120, "backgroundRate": 100, "update_type": "minor", "change_type": "insert"
         }
         ret = self._post("scheduled_changes/rules", data=data)
-        self.assertEquals(ret.status_code, 400)
+        self.assertEqual(ret.status_code, 400)
 
     def testAddScheduledChangeForDeletionMissingRequiredPKColumns(self):
         data = {
@@ -1461,7 +1462,7 @@ class TestRuleScheduledChanges(ViewTest):
             "change_type": "delete",
         }
         ret = self._post("/scheduled_changes/rules", data=data)
-        self.assertEquals(ret.status_code, 400)
+        self.assertEqual(ret.status_code, 400)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateCompletedScheduleChange(self):
@@ -1470,7 +1471,7 @@ class TestRuleScheduledChanges(ViewTest):
             "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
         }
         ret = self._post("/scheduled_changes/rules/4", data=data)
-        self.assertEquals(ret.status_code, 400, ret.get_data())
+        self.assertEqual(ret.status_code, 400, ret.get_data())
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateUnknownScheduledChangeID(self):
@@ -1479,7 +1480,7 @@ class TestRuleScheduledChanges(ViewTest):
             "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
         }
         ret = self._post("/scheduled_changes/rules/9876", data=data)
-        self.assertEquals(ret.status_code, 404, ret.get_data())
+        self.assertEqual(ret.status_code, 404, ret.get_data())
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChange(self):
@@ -1488,11 +1489,11 @@ class TestRuleScheduledChanges(ViewTest):
             "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1, "memory": "888",
         }
         ret = self._post("/scheduled_changes/rules/1", data=data)
-        self.assertEquals(ret.status_code, 200, ret.get_data())
-        self.assertEquals(ret.get_json(), {"new_data_version": 2, "signoffs": {}})
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 1).execute().fetchall()
-        self.assertEquals(len(r), 1)
+        self.assertEqual(len(r), 1)
         db_data = dict(r[0])
         expected = {
             "sc_id": 1, "scheduled_by": "bill", "data_version": 2, "complete": False, "base_rule_id": 1,
@@ -1503,11 +1504,11 @@ class TestRuleScheduledChanges(ViewTest):
             "base_headerArchitecture": None, "base_comment": None, "base_instructionSet": None, "base_memory": "888",
             "base_mig64": None, "base_jaws": None, "change_type": "update",
         }
-        self.assertEquals(db_data, expected)
+        self.assertEqual(db_data, expected)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 1).execute().fetchall()
-        self.assertEquals(len(cond), 1)
+        self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 1, "data_version": 2, "when": 2000000, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None}
-        self.assertEquals(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeVersionFieldLength(self):
@@ -1517,11 +1518,11 @@ class TestRuleScheduledChanges(ViewTest):
             "buildTarget": "d", "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
         }
         ret = self._post("/scheduled_changes/rules/1", data=data)
-        self.assertEquals(ret.status_code, 200, ret.get_data())
-        self.assertEquals(ret.get_json(), {"new_data_version": 2, "signoffs": {}})
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {}})
 
         ret = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 1).execute().fetchall()
-        self.assertEquals(len(ret), 1)
+        self.assertEqual(len(ret), 1)
         db_data = dict(ret[0])
         expected = {
             "sc_id": 1, "scheduled_by": "bill", "data_version": 2, "complete": False, "base_rule_id": 1,
@@ -1532,7 +1533,7 @@ class TestRuleScheduledChanges(ViewTest):
             "base_mig64": None, "base_headerArchitecture": None, "base_comment": None, "base_instructionSet": None, "change_type": "update",
             "base_jaws": None,
         }
-        self.assertEquals(db_data, expected)
+        self.assertEqual(db_data, expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeHistoryVersionFieldLength(self):
@@ -1542,15 +1543,15 @@ class TestRuleScheduledChanges(ViewTest):
             "buildTarget": "d", "backgroundRate": 100, "mapping": "c", "update_type": "minor", "sc_data_version": 1
         }
         ret = self._post("/scheduled_changes/rules/1", data=data)
-        self.assertEquals(ret.status_code, 200, ret.get_data())
-        self.assertEquals(ret.get_json(), {"new_data_version": 2, "signoffs": {}})
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {}})
 
         ret = dbo.rules.scheduled_changes.history.t.select().where(dbo.rules.scheduled_changes.history.sc_id == 1).execute().fetchall()
-        self.assertEquals(len(ret), 1)
+        self.assertEqual(len(ret), 1)
         db_data = dict(ret[0])
         expected = {"base_version": "{}".format(version)}
-        self.assertEquals(db_data["base_version"], expected["base_version"])
-        self.assertEquals(len(db_data["base_version"]), len(expected["base_version"]))
+        self.assertEqual(db_data["base_version"], expected["base_version"])
+        self.assertEqual(len(db_data["base_version"]), len(expected["base_version"]))
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeResetSignOffs(self):
@@ -1560,13 +1561,13 @@ class TestRuleScheduledChanges(ViewTest):
         }
         rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
             dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
-        self.assertEquals(len(rows), 2)
+        self.assertEqual(len(rows), 2)
         ret = self._post("/scheduled_changes/rules/3", data=data)
-        self.assertEquals(ret.status_code, 200, ret.get_data())
-        self.assertEquals(ret.get_json(), {"new_data_version": 3, "signoffs": {'bill': 'releng'}})
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.get_json(), {"new_data_version": 3, "signoffs": {'bill': 'releng'}})
 
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 3).execute().fetchall()
-        self.assertEquals(len(r), 1)
+        self.assertEqual(len(r), 1)
         db_data = dict(r[0])
         expected = {
             "sc_id": 3, "scheduled_by": "bill", "data_version": 3, "complete": False,
@@ -1578,10 +1579,10 @@ class TestRuleScheduledChanges(ViewTest):
             "base_instructionSet": None, "base_version": None, "base_rule_id": None, "base_buildTarget": None,
             "change_type": "insert",
         }
-        self.assertEquals(db_data, expected)
+        self.assertEqual(db_data, expected)
         rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
             dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
-        self.assertEquals(len(rows), 1)
+        self.assertEqual(len(rows), 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeDiffUserResetSignOffs(self):
@@ -1591,12 +1592,12 @@ class TestRuleScheduledChanges(ViewTest):
         }
         rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
             dbo.rules.scheduled_changes.signoffs.sc_id == 6).execute().fetchall()
-        self.assertEquals(len(rows), 2)
+        self.assertEqual(len(rows), 2)
         ret = self._post("/scheduled_changes/rules/6", data=data, username="julie")
-        self.assertEquals(ret.status_code, 200, ret.get_data())
-        self.assertEquals(ret.get_json(), {"new_data_version": 2, "signoffs": {'julie': 'releng'}})
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {'julie': 'releng'}})
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 6).execute().fetchall()
-        self.assertEquals(len(r), 1)
+        self.assertEqual(len(r), 1)
         db_data = dict(r[0])
         expected = {
             "sc_id": 6, "scheduled_by": "julie", "data_version": 2, "complete": False,
@@ -1608,62 +1609,62 @@ class TestRuleScheduledChanges(ViewTest):
             "base_instructionSet": None, "base_version": None, "base_rule_id": None, "base_buildTarget": None,
             "change_type": "insert",
         }
-        self.assertEquals(db_data, expected)
+        self.assertEqual(db_data, expected)
         rows = dbo.rules.scheduled_changes.signoffs.t.select().where(
             dbo.rules.scheduled_changes.signoffs.sc_id == 6).execute().fetchall()
-        self.assertEquals(len(rows), 1)
+        self.assertEqual(len(rows), 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeCantRemoveProductWithoutPermission(self):
         data = {"data_version": 1, "product": None, "sc_data_version": 1}
         ret = self._post("/scheduled_changes/rules/2", username="bob", data=data)
-        self.assertEquals(ret.status_code, 403, ret.get_data())
+        self.assertEqual(ret.status_code, 403, ret.get_data())
 
     def testUpdateRuleWithMergeError(self):
         data = {"mapping": "a", "data_version": 1}
         ret = self._post("/rules/1", data=data)
-        self.assertEquals(ret.status_code, 400, ret.get_data())
+        self.assertEqual(ret.status_code, 400, ret.get_data())
         self.assertIn("Is there a scheduled change", ret.get_data(as_text=True))
 
     def testDeleteRuleWithScheduledChange(self):
         ret = self._delete("/rules/1", qs=dict(data_version=1))
-        self.assertEquals(ret.status_code, 400, ret.get_data())
-        self.assertEquals(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 400, ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
         self.assertIn("Cannot delete rows that have", ret.get_data(as_text=True))
 
     def testDeleteScheduledChange(self):
         ret = self._delete("/scheduled_changes/rules/1", qs=dict(data_version=1))
-        self.assertEquals(ret.mimetype, "application/json")
-        self.assertEquals(ret.status_code, 200, msg=ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 200, msg=ret.get_data())
 
     def testDeleteCompletedScheduledChange(self):
         ret = self._delete("/scheduled_changes/rules/4", qs=dict(data_version=1))
-        self.assertEquals(ret.mimetype, "application/json")
-        self.assertEquals(ret.status_code, 400, msg=ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 400, msg=ret.get_data())
 
     def testDeleteScheduledChangeWrongDataVersion(self):
         ret = self._delete("/scheduled_changes/rules/1", qs=dict(data_version=5))
-        self.assertEquals(ret.status_code, 400, msg=ret.get_data())
-        self.assertEquals(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 400, msg=ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
         self.assertIn("Outdated Data Version", ret.get_data(as_text=True))
 
     def testDeleteScheduledChangeWithoutPermission(self):
         ret = self._delete("/scheduled_changes/rules/1", username="rex", qs=dict(data_version=1))
-        self.assertEquals(ret.mimetype, "application/json")
-        self.assertEquals(ret.status_code, 403, msg=ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 403, msg=ret.get_data())
 
     def testDeleteNonExistentScheduledChange(self):
         ret = self._delete("/scheduled_changes/rules/62", qs=dict(data_version=1))
-        self.assertEquals(ret.mimetype, "application/json")
-        self.assertEquals(ret.status_code, 404, msg=ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 404, msg=ret.get_data())
 
     def testEnactScheduledChangeExistingRule(self):
         ret = self._post("/scheduled_changes/rules/1/enact", username="mary")
-        self.assertEquals(ret.mimetype, "application/json")
-        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 200, ret.get_data())
 
         sc_row = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 1).execute().fetchall()[0]
-        self.assertEquals(sc_row["complete"], True)
+        self.assertEqual(sc_row["complete"], True)
 
         row = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()[0]
         expected = {
@@ -1672,15 +1673,15 @@ class TestRuleScheduledChanges(ViewTest):
             "locale": None, "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None,
             "comment": None, "instructionSet": None, "memory": None, "mig64": None, "jaws": None,
         }
-        self.assertEquals(dict(row), expected)
+        self.assertEqual(dict(row), expected)
 
     def testEnactScheduledChangeNewRule(self):
         ret = self._post("/scheduled_changes/rules/2/enact", username="mary")
-        self.assertEquals(ret.mimetype, "application/json")
-        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 200, ret.get_data())
 
         sc_row = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 2).execute().fetchall()[0]
-        self.assertEquals(sc_row["complete"], True)
+        self.assertEqual(sc_row["complete"], True)
 
         row = dbo.rules.t.select().where(dbo.rules.rule_id == 10).execute().fetchall()[0]
         expected = {
@@ -1689,16 +1690,16 @@ class TestRuleScheduledChanges(ViewTest):
             "locale": None, "osVersion": None, "distribution": None, "distVersion": None, "headerArchitecture": None,
             "comment": None, "instructionSet": None, "memory": None, "mig64": None, "jaws": None,
         }
-        self.assertEquals(dict(row), expected)
+        self.assertEqual(dict(row), expected)
 
     def testEnactScheduledChangeNoPermissions(self):
         ret = self._post("/scheduled_changes/rules/2/enact", username="bob")
-        self.assertEquals(ret.mimetype, "application/json")
-        self.assertEquals(ret.status_code, 403, ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 403, ret.get_data())
 
     def testGetScheduledChangeHistoryRevisions(self):
         ret = self._get("/scheduled_changes/rules/3/revisions")
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
         expected = {
             "count": 2,
             "revisions": [
@@ -1720,14 +1721,14 @@ class TestRuleScheduledChanges(ViewTest):
                 },
             ],
         }
-        self.assertEquals(ret.get_json(), expected)
+        self.assertEqual(ret.get_json(), expected)
 
     def testGetRulesHistory(self):
         ret = self._get("/rules/history")
         got = ret.get_json()
-        self.assertEquals(ret.status_code, 200)
-        self.assertEquals(ret.status_code, 200, msg=ret.get_data())
-        self.assertEquals(got["Rules scheduled change"]["count"], 8)
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200, msg=ret.get_data())
+        self.assertEqual(got["Rules scheduled change"]["count"], 8)
         self.assertTrue(u"rule_id" in got["Rules scheduled change"]["revisions"][0])
         self.assertTrue(u"backgroundRate" in got["Rules scheduled change"]["revisions"][0])
         self.assertTrue(u"timestamp" in got["Rules scheduled change"]["revisions"][0])
@@ -1735,11 +1736,11 @@ class TestRuleScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testRevertScheduledChange(self):
         ret = self._post("/scheduled_changes/rules/3/revisions", data={"change_id": 2})
-        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.status_code, 200, ret.get_data())
 
-        self.assertEquals(dbo.rules.scheduled_changes.history.t.count().execute().first()[0], 16)
+        self.assertEqual(dbo.rules.scheduled_changes.history.count(), 16)
         r = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.sc_id == 3).execute().fetchall()
-        self.assertEquals(len(r), 1)
+        self.assertEqual(len(r), 1)
         db_data = dict(r[0])
         expected = {
             "sc_id": 3, "scheduled_by": "bill", "complete": False, "data_version": 3, "base_rule_id": None, "base_priority": 150,
@@ -1748,72 +1749,72 @@ class TestRuleScheduledChanges(ViewTest):
             "base_distribution": None, 'base_fallbackMapping': None, "base_distVersion": None, "base_headerArchitecture": None, "base_comment": None,
             "base_data_version": None, "base_instructionSet": None, "base_memory": None, "base_mig64": None, "base_jaws": None, "change_type": "insert",
         }
-        self.assertEquals(db_data, expected)
-        self.assertEquals(dbo.rules.scheduled_changes.conditions.history.t.count().execute().first()[0], 16)
+        self.assertEqual(db_data, expected)
+        self.assertEqual(dbo.rules.scheduled_changes.conditions.history.count(), 16)
         cond = dbo.rules.scheduled_changes.conditions.t.select().where(dbo.rules.scheduled_changes.conditions.sc_id == 3).execute().fetchall()
-        self.assertEquals(len(cond), 1)
+        self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 3, "data_version": 3, "when": 2000000, "telemetry_product": None, "telemetry_channel": None, "telemetry_uptake": None}
-        self.assertEquals(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]), cond_expected)
 
     def testRevertScheduledChangeBadChangeId(self):
         ret = self._post("/scheduled_changes/rules/3/revisions", data={"change_id": 43})
-        self.assertEquals(ret.status_code, 400, ret.get_data())
+        self.assertEqual(ret.status_code, 400, ret.get_data())
 
     def testRevertScheduledChangeChangeIdDoesntMatchScId(self):
         ret = self._post("/scheduled_changes/rules/3/revisions", data={"change_id": 4})
-        self.assertEquals(ret.status_code, 400, ret.get_data())
+        self.assertEqual(ret.status_code, 400, ret.get_data())
 
     def testSignoffWithPermission(self):
         ret = self._post("/scheduled_changes/rules/2/signoffs", data=dict(role="qa"), username="bill")
-        self.assertEquals(ret.mimetype, "application/json")
-        self.assertEquals(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 200, ret.get_data())
         r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
-        self.assertEquals(len(r), 1)
+        self.assertEqual(len(r), 1)
         db_data = dict(r[0])
-        self.assertEquals(db_data, {"sc_id": 2, "username": "bill", "role": "qa"})
+        self.assertEqual(db_data, {"sc_id": 2, "username": "bill", "role": "qa"})
 
     def testSignoffWithoutPermission(self):
         ret = self._post("/scheduled_changes/rules/2/signoffs", data=dict(role="relman"), username="bill")
-        self.assertEquals(ret.mimetype, "application/json")
-        self.assertEquals(ret.status_code, 403, ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 403, ret.get_data())
 
     def testSignoffASecondTimeWithSameRole(self):
         ret = self._post("/scheduled_changes/rules/3/signoffs", data=dict(role="releng"), username="bill")
-        self.assertEquals(ret.status_code, 200, ret.get_data())
-        self.assertEquals(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
         r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
-        self.assertEquals(len(r), 2)
+        self.assertEqual(len(r), 2)
         db_data = [dict(row) for row in r]
         self.assertIn({"sc_id": 3, "username": "bill", "role": "releng"}, db_data)
         self.assertIn({"sc_id": 3, "username": "mary", "role": "relman"}, db_data)
 
     def testSignoffWithSecondRole(self):
         ret = self._post("/scheduled_changes/rules/3/signoffs", data=dict(role="qa"), username="bill")
-        self.assertEquals(ret.status_code, 403, ret.get_data())
-        self.assertEquals(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 403, ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
 
     def testSignoffWithoutRole(self):
         ret = self._post("/scheduled_changes/rules/3/signoffs", data=dict(lorem_ipso="random"), username="bill")
-        self.assertEquals(ret.status_code, 400, ret.get_data())
-        self.assertEquals(ret.mimetype, "application/problem+json")
+        self.assertEqual(ret.status_code, 400, ret.get_data())
+        self.assertEqual(ret.mimetype, "application/problem+json")
 
     def testRevokeSignoff(self):
         ret = self._delete("/scheduled_changes/rules/3/signoffs", username="bill")
-        self.assertEquals(ret.status_code, 200, ret.get_data())
-        self.assertEquals(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
         r = dbo.rules.scheduled_changes.signoffs.t.select().where(dbo.rules.scheduled_changes.signoffs.sc_id == 3).execute().fetchall()
-        self.assertEquals(len(r), 1)
+        self.assertEqual(len(r), 1)
 
     def testRevokeOtherUsersSignoffAsAdmin(self):
         # The username passed to _delete is the user performing the action.
         # The username in the query string is the person who's signoff we want to revoke.
         ret = self._delete("/scheduled_changes/rules/3/signoffs", username="bill", qs={"username": "mary"})
-        self.assertEquals(ret.status_code, 200, ret.get_data())
-        self.assertEquals(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")
 
     def testCannotRevokeOtherUsersSignoffAsNormalUser(self):
         # The username passed to _delete is the user performing the action.
         # The username in the query string is the person who's signoff we want to revoke.
         ret = self._delete("/scheduled_changes/rules/3/signoffs", username="julie", qs={"username": "mary"})
-        self.assertEquals(ret.status_code, 403, ret.get_data())
-        self.assertEquals(ret.mimetype, "application/json")
+        self.assertEqual(ret.status_code, 403, ret.get_data())
+        self.assertEqual(ret.mimetype, "application/json")

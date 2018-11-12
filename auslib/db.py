@@ -11,7 +11,7 @@ import time
 from six import iteritems, string_types, reraise, text_type
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-    create_engine, select, BigInteger, Boolean, join
+    create_engine, select, BigInteger, Boolean, join, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 import sqlalchemy.types
@@ -644,6 +644,18 @@ class AUSTable(object):
         else:
             with AUSTransaction(self.getEngine()) as trans:
                 return self._prepareUpdate(trans, where, what, changed_by, old_data_version)
+
+    def count(self, column='*', where=None, transaction=None):
+        count_statement = select(columns=[func.count(column)], from_obj=self.t)
+        if where:
+            for cond in where:
+                count_statement = count_statement.where(cond)
+        if transaction:
+            row_count = transaction.execute(count_statement).scalar()
+        else:
+            with AUSTransaction(self.getEngine()) as trans:
+                row_count = trans.execute(count_statement).scalar()
+        return row_count
 
     def getRecentChanges(self, limit=10, transaction=None):
         return self.history.select(transaction=transaction,
@@ -1381,15 +1393,9 @@ class RequiredSignoffsTable(AUSTable):
         for col in self.decisionColumns:
             if columns[col] is None:
                 raise ValueError("{} are required.".format(self.decisionColumns))
+            user_table = self.db.permissions.user_roles
+            users_with_role = user_table.count(where=[user_table.role == columns["role"]], transaction=transaction)
 
-        if transaction:
-            users_with_role, = transaction.execute(
-                self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"])
-            ).fetchone()
-        else:
-            users_with_role, = self.getEngine().execute(
-                self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"])
-            ).fetchone()
         if users_with_role < columns["signoffs_required"]:
             msg = ", ".join([columns[col] for col in self.decisionColumns])
             raise ValueError("Cannot require {} signoffs for {} - only {} users hold the {} role".format(
@@ -1598,14 +1604,6 @@ class Rules(AUSTable):
     def getOrderedRules(self, where=None, transaction=None):
         """Returns all of the rules, sorted in ascending order"""
         return self.select(where=where, order_by=(self.priority, self.version, self.mapping), transaction=transaction)
-
-    def countRules(self, transaction=None):
-        """Returns a number of the count of rules"""
-        if transaction:
-            count, = transaction.execute(self.t.count()).fetchone()
-        else:
-            count, = self.getEngine().execute(self.t.count()).fetchone()
-        return count
 
     def getRulesMatchingQuery(self, updateQuery, fallbackChannel, transaction=None):
         """Returns all of the rules that match the given update query.
@@ -1825,14 +1823,6 @@ class Releases(AUSTable):
         for row in rows:
             row["data"] = self.getReleaseBlob(row["name"], transaction)
         return rows
-
-    def countReleases(self, transaction=None):
-        """Returns a number of the count of releases"""
-        if transaction:
-            count, = transaction.execute(self.t.count()).fetchone()
-        else:
-            count, = self.getEngine().execute(self.t.count()).fetchone()
-        return count
 
     def getReleaseInfo(self, names=None, product=None, limit=None,
                        transaction=None, nameOnly=False, name_prefix=None):
@@ -2100,16 +2090,9 @@ class Releases(AUSTable):
             return False
 
     def isMappedTo(self, name, transaction=None):
-        if transaction:
-            mapping_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.mapping == name)).fetchone()[0]
-            fallbackMapping_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.fallbackMapping == name)).fetchone()[0]
-        else:
-            mapping_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.mapping == name)).fetchone()[0]
-            fallbackMapping_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.fallbackMapping == name)).fetchone()[0]
-        if mapping_count > 0 or fallbackMapping_count > 0:
-            return True
-
-        return False
+        mapping_count = self.count(where=[self.db.rules.mapping == name], transaction=transaction)
+        fallbackMapping_count = self.count(where=[self.db.rules.fallbackMapping == name], transaction=transaction)
+        return mapping_count > 0 or fallbackMapping_count > 0
 
     def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
         release = self.select(where=where, columns=[self.name, self.product], transaction=transaction)
