@@ -8,7 +8,7 @@ import simplejson as json
 import sys
 import time
 
-from six import iteritems, string_types, reraise, text_type
+from six import integer_types, iteritems, string_types, reraise, text_type
 
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
     create_engine, select, BigInteger, Boolean, join, func
@@ -1883,7 +1883,7 @@ class Releases(AUSTable):
                 raise KeyError("Couldn't find release with name '%s'" % name)
 
         def get_data_version(obj):
-            if isinstance(obj, int):
+            if isinstance(obj, integer_types):
                 return obj
             return obj["data_version"]
 
