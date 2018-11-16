@@ -34,4 +34,5 @@ setup(
     include_package_data=True,
     install_requires=requirements,
     url="https://github.com/mozilla/balrog",
+    license="MPL-2.0",
 )
