@@ -1,5 +1,6 @@
 include requirements.txt
 include version.txt
+include LICENSE
 
 recursive-include auslib/migrate *
 recursive-include auslib/blobs/schemas *

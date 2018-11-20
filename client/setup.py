@@ -1,13 +1,15 @@
 #! /usr/bin/env python
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name="balrogclient",
     version="0.0.4",
     description="Balrog Admin API Client",
-    author="Release Engineers",
-    author_email="release@mozilla.com",
+    author="Mozilla Release Engineers",
+    author_email="release+python@mozilla.com",
+    url="https://github.com/mozilla/balrog",
+    license="MPL-2.0",
 
     packages=['balrogclient'],
 
