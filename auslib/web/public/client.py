@@ -1,5 +1,6 @@
 import re
 import sys
+from functools import wraps
 
 from connexion import request
 
@@ -133,7 +134,16 @@ def extract_query_version(request_url):
     return version
 
 
-def get_update_blob(**url):
+def with_transaction(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        with dbo.begin() as transaction:
+            return f(*args, transaction=transaction, **kwargs)
+    return wrapper
+
+
+@with_transaction
+def get_update_blob(transaction, **url):
     url['queryVersion'] = extract_query_version(request.url)
     # Underlying code depends on osVersion being set. Since this route only
     # exists to support ancient queries, and all newer versions have osVersion
@@ -144,7 +154,7 @@ def get_update_blob(**url):
 
     query = getQueryFromURL(url)
     LOG.debug("Got query: %s", query)
-    release, update_type = AUS.evaluateRules(query)
+    release, update_type = AUS.evaluateRules(query, transaction=transaction)
 
     # passing {},None returns empty xml
     if release:
@@ -157,7 +167,7 @@ def get_update_blob(**url):
             for product in response_products:
                 product_query = query.copy()
                 product_query["product"] = product
-                response_release, response_update_type = AUS.evaluateRules(product_query)
+                response_release, response_update_type = AUS.evaluateRules(product_query, transaction=transaction)
                 if not response_release:
                     continue
 
@@ -169,9 +179,9 @@ def get_update_blob(**url):
                 # if we have a SuperBlob of systemaddons, we process the response products and
                 # concatenate their inner XMLs
                 product_query = query.copy()
-                product = dbo.releases.getReleases(name=blob_name, limit=1)[0]['product']
+                product = dbo.releases.getReleases(name=blob_name, limit=1, transaction=transaction)[0]['product']
                 product_query["product"] = product
-                response_release = dbo.releases.getReleaseBlob(name=blob_name)
+                response_release = dbo.releases.getReleaseBlob(name=blob_name, transaction=transaction)
                 if not response_release:
                     LOG.warning("No release found with name: %s", blob_name)
                     continue
