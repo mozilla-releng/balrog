@@ -16,6 +16,8 @@ from six.moves import xrange
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select, String
 from sqlalchemy.engine.reflection import Inspector
 
+import pytest
+
 import migrate.versioning.api
 
 from auslib.global_state import cache, dbo
@@ -720,10 +722,11 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
         self.assertRaises(ValueError, self.test.history.getChange, data_version=1, column_values={'id1': 4, 'foo': 4})
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class ScheduledChangesTableMixin(object):
     def setUp(self):
         self.db = AUSDatabase(self.dburi)
-        self.db.create()
+        self.metadata.create_all(self.db.engine)
         self.engine = self.db.engine
         self.metadata = self.db.metadata
 
@@ -1440,12 +1443,13 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(UpdateMergeError, self.sc_table.mergeUpdate, old_row, what, changed_by="bob")
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.create()
+        self.metadata.create_all(self.db.engine)
         self.engine = self.db.engine
         self.metadata = self.db.metadata
 
@@ -1610,12 +1614,13 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         assertRaisesRegex(self, ValueError, "uptake condition is disabled", self.sc_table.update, where, what, changed_by="bob", old_data_version=1)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.create()
+        self.metadata.create_all(self.db.engine)
         self.engine = self.db.engine
         self.metadata = self.db.metadata
         self.signoffs = SignoffsTable(self.db, self.metadata, "sqlite", "test_table")
@@ -1679,12 +1684,13 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
                           self.signoffs.delete, {"sc_id": 1, "username": "nancy"}, changed_by="bob")
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.create()
+        self.metadata.create_all(self.db.engine)
         self.engine = self.db.engine
         self.metadata = self.db.metadata
         self.rs = self.db.productRequiredSignoffs
@@ -1783,12 +1789,13 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(len(got), 0)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestPermissionsRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.create()
+        self.metadata.create_all(self.db.engine)
         self.engine = self.db.engine
         self.metadata = self.db.metadata
         self.rs = self.db.permissionsRequiredSignoffs
@@ -1892,12 +1899,13 @@ class RulesTestMixin(object):
         return rules
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.create()
+        self.metadata.create_all(self.db.engine)
         self.paths = self.db.rules
         self.paths.t.insert().execute(rule_id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='z',
                                       product="a", channel="a", data_version=1)
@@ -2323,12 +2331,13 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEqual(self.paths.count(), 10)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestJawsRules(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.create()
+        self.metadata.create_all(self.db.engine)
         self.rules = self.db.rules
         self.rules.t.insert().execute(rule_id=1, priority=90, mapping="myes", backgroundRate=100, jaws=True,
                                       update_type="z", product="mm", channel="mm", data_version=1)
@@ -2463,12 +2472,13 @@ class TestJawsRules(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEqual(rules, expected)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestMig64Rules(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.create()
+        self.metadata.create_all(self.db.engine)
         self.rules = self.db.rules
         self.rules.t.insert().execute(rule_id=1, priority=90, mapping="myes", backgroundRate=100, mig64=True,
                                       update_type="z", product="mm", channel="mm", data_version=1)
@@ -2603,12 +2613,13 @@ class TestMig64Rules(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEqual(rules, expected)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.create()
+        self.metadata.create_all(self.db.engine)
         self.rules = self.db.rules
         self.rules.t.insert().execute(rule_id=1, priority=100, version='>=4.0b1', backgroundRate=100, update_type='z', data_version=1)
         self.rules.t.insert().execute(rule_id=2, priority=100, channel='release*', backgroundRate=100, update_type='z', data_version=1)
@@ -2804,12 +2815,13 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEqual(rules, [])
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         dbo.setDb(self.dburi)
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         self.rules = dbo.rules
         self.releases = dbo.releases
         self.permissions = dbo.permissions
@@ -3062,6 +3074,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(rules, expected)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):
 
     def setUp(self):
@@ -3070,7 +3083,7 @@ class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):
         cache.make_copies = True
         cache.make_cache("rules", 20, 4)
         self.db = AUSDatabase(self.dburi)
-        self.db.create()
+        self.metadata.create_all(self.db.engine)
         self.rules = self.db.rules
         self.rules.t.insert().execute(rule_id=1, priority=100, version='3.5', buildTarget='d', backgroundRate=100, mapping='c', update_type='z', data_version=1)
         self.rules.t.insert().execute(rule_id=2, priority=100, version='3.3', buildTarget='d', backgroundRate=100, mapping='b', update_type='z', data_version=1)
@@ -3204,12 +3217,13 @@ class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):
             self._checkCacheStats(cache.caches["rules"], 5, 3, 2)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         dbo.setDb(self.dburi)
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         cache.reset()
         cache.make_copies = True
         cache.make_cache("blob", 10, 10)
@@ -3414,6 +3428,7 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
             self._checkCacheStats(cache.caches["blob_version"], 3, 2, 1)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
     """Tests for the Releases class that are interwoven with AppRelease blob schemas"""
 
@@ -3422,7 +3437,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.create()
+        self.metadata.create_all(self.db.engine)
         self.releases = self.db.releases
         self.releases.t.insert().execute(name='a', product='a', data_version=1, data=createBlob("""
 {
@@ -4290,12 +4305,13 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(history_rows[3]["data"], result_blob)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.create()
+        self.metadata.create_all(self.db.engine)
         self.permissions = self.db.permissions
         self.user_roles = self.db.permissions.user_roles
         self.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
@@ -4533,12 +4549,13 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertFalse(self.permissions.isKnownUser('adams'))
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestDockerflow(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.create()
+        self.metadata.create_all(self.db.engine)
         self.dockerflow = self.db.dockerflow
 
     def testInitAndIncrementValue(self):
@@ -4595,11 +4612,12 @@ class RegexPartialString(object):
         return "RegexPartialString %s" % self.pattern
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestChangeNotifiers(unittest.TestCase):
 
     def setUp(self):
         self.db = AUSDatabase('sqlite:///:memory:')
-        self.db.create()
+        self.metadata.create_all(self.db.engine)
         self.db.rules.t.insert().execute(rule_id=2, priority=100, channel='release', backgroundRate=100, update_type='z', data_version=1)
         self.db.rules.t.insert().execute(rule_id=3, priority=100, channel='release', backgroundRate=100, update_type='y', data_version=1)
         self.db.rules.scheduled_changes.t.insert().execute(sc_id=1, complete=0, scheduled_by="bob", base_rule_id=2, base_priority=100,
@@ -5091,7 +5109,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
         """
         Tests that downgrades and upgrades work as expected. Since the DB will never
         be rolled back beyond version 21 we treat it as the base version for all future versions from now.
-        Note: These tests run and verify migrations on a sqllite DB
+        Note: These tests run and verify migrations on a sqlite DB
         whereas the actual migration happens on a mySQL DB.
         """
         # TODO Remove these tests when we upgrade sqlalchemy so that these per-version tests are no longer required.

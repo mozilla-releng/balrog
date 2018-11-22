@@ -600,7 +600,7 @@ class AUSTable(object):
         return ret
 
     def update(self, where, what, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
-        """Perform an UPDATE statement on this stable. See AUSTable._updateStatement for
+        """Perform an UPDATE statement on this table. See AUSTable._updateStatement for
            a description of `where' and `what'. This method can only update a single row
            per invocation. If the where clause given would update zero or multiple rows, a
            WrongNumberOfRowsError is raised.
@@ -1624,7 +1624,7 @@ class Rules(AUSTable):
             else:
                 where.extend([(self.distVersion == null())])
 
-            self.log.debug("where: %s" % where)
+            self.log.debug("where: %s", where)
             return self.select(where=where, transaction=transaction)
 
         # This cache key is constructed from all parts of the updateQuery that

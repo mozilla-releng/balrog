@@ -4,6 +4,8 @@ import simplejson as json
 from tempfile import mkstemp
 import unittest
 
+import pytest
+
 from auslib.global_state import dbo, cache
 from auslib.web.admin.base import app
 from auslib.blobs.base import createBlob
@@ -14,6 +16,7 @@ def setUpModule():
     logging.getLogger('migrate').setLevel(logging.CRITICAL)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class ViewTest(unittest.TestCase):
     """Base class for all view tests. Sets up some sample data, and provides
        some helper methods."""
@@ -37,7 +40,7 @@ class ViewTest(unittest.TestCase):
 """)
         dbo.setDb('sqlite:///:memory:')
         dbo.setDomainWhitelist({'good.com': ('a', 'b', 'c', 'd')})
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         dbo.permissions.t.insert().execute(permission='permission', username='bob', data_version=1)
         dbo.permissions.t.insert().execute(permission='release', username='bob',
