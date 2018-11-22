@@ -15,7 +15,7 @@ import auslib.web.public.client as client_api
 from auslib.web.public.client import extract_query_version
 
 from auslib.blobs.base import createBlob
-from auslib.global_state import dbo
+from auslib.global_state import dbo, cache
 from auslib.web.public.base import app
 
 from auslib.errors import BadDataError
@@ -1448,6 +1448,7 @@ class ClientTestEmergencyShutoff(ClientTestBase):
     </update>
 </updates>
 """
+        cache.reset()
 
     def testShutoffUpdates(self):
         update_query = '/update/3/b/1.0/1/p/l/a/a/a/a/update.xml'
@@ -1459,6 +1460,21 @@ class ClientTestEmergencyShutoff(ClientTestBase):
 
         ret = self.client.get(update_query)
         self.assertUpdatesAreEmpty(ret)
+
+    def testShutoffUpdatesCache(self):
+        # Create the updates_disabled cache for this test
+        cache.make_cache('updates_disabled', 10, 100)
+        update_query = '/update/3/b/1.0/1/p/l/a/a/a/a/update.xml'
+        ret = self.client.get(update_query)
+        self.assertUpdateEqual(ret, self.update_xml)
+
+        dbo.emergencyShutoffs.t.insert().execute(
+            product='b', channel='a', data_version=1)
+
+        # We should actually get the same update here since the disabled
+        # updates check has been cached
+        ret = self.client.get(update_query)
+        self.assertUpdateEqual(ret, self.update_xml)
 
     def testShutoffUpdatesFallbackChannel(self):
         update_query = '/update/3/b/1.0/1/p/l/a-cck-foo/a/a/a/update.xml'

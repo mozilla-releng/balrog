@@ -48,6 +48,10 @@ cache.make_cache("blob_version", 500, 60)
 # small there sholudn't be any negative effect.
 cache.make_cache("rules", 500, 30)
 
+# Cache the emergency update state for a minute. We have less than 100
+# product/channel combinations we care about.
+cache.make_cache("updates_disabled", 100, 60)
+
 dbo.setDb(os.environ["DBURI"])
 dbo.setDomainWhitelist(DOMAIN_WHITELIST)
 application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
