@@ -95,14 +95,18 @@ def generic(error):
     # both because it's ugly and potentially can leak things, but it's also
     # extremely helpful for debugging BadDataErrors, because we don't send
     # information about them to Sentry.
-    message = " ".join(getattr(error, "args", repr(error)))
+
+    if hasattr(error, "args"):
+        message = " ".join(str(a) for a in error.args)
+    else:
+        message = repr(error)
     if isinstance(error, BadDataError):
-        return Response(status=400, mimetype="text/plain", response=html.escape(message))
+        return Response(status=400, mimetype="text/plain", response=html.escape(message, quote=False))
 
     if sentry.client:
         sentry.captureException()
 
-    return Response(status=500, mimetype="text/plain", response=html.escape(message))
+    return Response(status=500, mimetype="text/plain", response=html.escape(message, quote=False))
 
 
 # Keeping static files endpoints here due to an issue when returning response for static files.

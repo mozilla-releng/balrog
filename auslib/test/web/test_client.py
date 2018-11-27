@@ -1573,6 +1573,24 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual(ret.mimetype, "text/plain")
             self.assertEqual('I break!', ret.get_data(as_text=True))
 
+    def testErrorMessageOn500withSimpleArgs(self):
+        with mock.patch('auslib.web.public.client.getQueryFromURL') as m:
+            m.side_effect = Exception('I break!')
+            m.side_effect.args = ("one", "two", "three")
+            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual(ret.status_code, 500)
+            self.assertEqual(ret.mimetype, "text/plain")
+            self.assertEqual('one two three', ret.get_data(as_text=True))
+
+    def testErrorMessageOn500withComplexArgs(self):
+        with mock.patch('auslib.web.public.client.getQueryFromURL') as m:
+            m.side_effect = Exception('I break!')
+            m.side_effect.args = ("one", ("two", "three"))
+            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual(ret.status_code, 500)
+            self.assertEqual(ret.mimetype, "text/plain")
+            self.assertEqual("one ('two', 'three')", ret.get_data(as_text=True))
+
     def testEscapedOutputOn500(self):
         with mock.patch('auslib.web.public.client.getQueryFromURL') as m:
             m.side_effect = Exception('50.1.0zibj5<img src%3da onerror%3dalert(document.domain)>')
