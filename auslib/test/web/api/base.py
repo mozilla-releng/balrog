@@ -1,6 +1,8 @@
 import unittest
 import logging
 
+import pytest
+
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
 from auslib.web.public.base import app
@@ -11,6 +13,7 @@ def setUpModule():
     logging.getLogger('migrate').setLevel(logging.CRITICAL)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class CommonTestBase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -28,7 +31,7 @@ class CommonTestBase(unittest.TestCase):
         self.public_client = app.test_client()
 
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.rules.t.insert().execute(rule_id=1, priority=90, backgroundRate=100, mapping='Fennec.55.0a1', update_type='minor', product='Fennec',
                                      data_version=1, alias="moz-releng")
         dbo.releases.t.insert().execute(name='Fennec.55.0a1', product='Fennec', data_version=1, data=createBlob("""

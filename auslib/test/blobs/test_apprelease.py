@@ -108,12 +108,13 @@ class TestReleaseBlobBase(unittest.TestCase):
     # XXX: should we support the locale overriding the platform? this should probably be invalid
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestReleaseBlobV1(unittest.TestCase):
 
     def setUp(self):
         self.whitelistedDomains = {'a.com': ('a',), 'boring.com': ('b',)}
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         self.sampleReleaseBlob = ReleaseBlobV1()
         self.sampleReleaseBlob.loadJSON("""
@@ -627,13 +628,14 @@ class TestSpecialQueryParams(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestSchema2Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {'a.com': ('j', 'k')}
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(name='j1', product='j', version='39.0', data_version=1, data=createBlob("""
 {
@@ -943,6 +945,7 @@ class TestSchema2Blob(unittest.TestCase):
                                                      self.whitelistedDomains))
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestSchema2BlobNightlyStyle(unittest.TestCase):
 
     maxDiff = 2000
@@ -951,7 +954,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {'a.com': ('j',)}
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(name='j1', product='j', version='0.5', data_version=1, data=createBlob("""
 {
@@ -1067,13 +1070,14 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
                                                      self.whitelistedDomains))
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestSchema3Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {'a.com': ('f', 'g')}
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(name='f1', product='f', version='22.0', data_version=1, data=createBlob("""
 {
@@ -1531,13 +1535,14 @@ class TestSchema3Blob(unittest.TestCase):
                                                      self.whitelistedDomains))
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestSchema4Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {'a.com': ('h', 'g',)}
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(name='h0', product='h', version='29.0', data_version=1, data=createBlob("""
 {
@@ -2180,6 +2185,7 @@ class TestSchema4Blob(unittest.TestCase):
                                                      self.whitelistedDomains))
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestSchema5Blob(unittest.TestCase):
 
     def setUp(self):
@@ -2189,7 +2195,7 @@ class TestSchema5Blob(unittest.TestCase):
         app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
         app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data=createBlob("""
 {
     "name": "h1",
@@ -2459,6 +2465,7 @@ class TestSchema5Blob(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestSchema6Blob(unittest.TestCase):
 
     def setUp(self):
@@ -2468,7 +2475,7 @@ class TestSchema6Blob(unittest.TestCase):
         app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
         app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(name='h1', product='h', data_version=1, data=createBlob("""
 {
     "name": "h1",
@@ -2727,6 +2734,7 @@ class TestSchema6Blob(unittest.TestCase):
         self.assertRaises(BlobValidationError, self.blobH3.validate, 'h', self.whitelistedDomains)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestSchema8Blob(unittest.TestCase):
 
     def setUp(self):
@@ -2736,7 +2744,7 @@ class TestSchema8Blob(unittest.TestCase):
         app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
         app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(name='h1', product='h', data_version=1, data=createBlob("""
 {
     "name": "h1",
@@ -2852,6 +2860,7 @@ class TestSchema8Blob(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestSchema9Blob(unittest.TestCase):
 
     def setUp(self):
@@ -2861,7 +2870,7 @@ class TestSchema9Blob(unittest.TestCase):
         app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
         app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(name='h1', product='h', data_version=1, data=createBlob("""
 {
     "name": "h1",
@@ -3258,6 +3267,7 @@ def testSchema9CannotCreateBlobWithConflictingFields(for1, for2):
     assert "Multiple values found for updateLine items: detailsURL" in str(excinfo.value)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestDesupportBlob(unittest.TestCase):
 
     def setUp(self):
@@ -3267,7 +3277,7 @@ class TestDesupportBlob(unittest.TestCase):
         app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
         app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         self.blob = DesupportBlob()
         self.blob.loadJSON("""
 {

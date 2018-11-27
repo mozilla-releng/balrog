@@ -2,6 +2,8 @@ import logging
 import mock
 import unittest
 
+import pytest
+
 from auslib.global_state import dbo
 from auslib.AUS import AUS, SUCCEED, FAIL
 from auslib.blobs.base import createBlob
@@ -15,11 +17,12 @@ def setUpModule():
     logging.getLogger('migrate').setLevel(logging.CRITICAL)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class TestAUSThrottlingWithoutFallback(unittest.TestCase):
 
     def setUp(self):
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(
             name='b', product='b', data_version=1,
             data=createBlob({"name": "b", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}))

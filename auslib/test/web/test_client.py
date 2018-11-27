@@ -9,6 +9,8 @@ from xml.dom import minidom
 from hypothesis import assume, example, given
 from hypothesis.strategies import characters, integers, just, text
 
+import pytest
+
 import auslib.web.public.client as client_api
 from auslib.web.public.client import extract_query_version
 
@@ -65,6 +67,7 @@ class TestGetSystemCapabilities(unittest.TestCase):
         )
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class ClientTestCommon(unittest.TestCase):
     def assertHttpResponse(self, http_response):
         self.assertEqual(http_response.status_code, 200, http_response.get_data())
@@ -114,7 +117,7 @@ class ClientTestBase(ClientTestCommon):
 }
 """)
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e', 'distTest')})
         self.client = app.test_client()
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
@@ -1141,7 +1144,7 @@ class ClientTestMig64(ClientTestCommon):
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
         app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
         dbo.setDb("sqlite:///:memory:")
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
         dbo.setDomainWhitelist({"a.com": ("a", "b", "c")})
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a",
@@ -1286,7 +1289,7 @@ class ClientTestJaws(ClientTestCommon):
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
         app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
         dbo.setDb("sqlite:///:memory:")
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
         dbo.setDomainWhitelist({"a.com": ("a", "b", "c")})
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a",
@@ -1478,7 +1481,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         app.config['DEBUG'] = True
         app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a",)}
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
 
     def testCacheControlIsSet(self):
