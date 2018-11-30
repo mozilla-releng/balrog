@@ -115,7 +115,7 @@ class TestHistoryView(ViewTest):
         }"""
 
         ret = self._put('/releases/ddd1', data=dict(blob=blob, name='ddd1',
-                        product='d', data_version=1))
+                                                    product='d', data_version=1))
         self.assertStatusCode(ret, 201)
         table = dbo.releases.history
         row, = table.select(order_by=[table.change_id.asc()], limit=1)
@@ -203,7 +203,6 @@ class TestHistoryView(ViewTest):
         self.assertTrue('"hashFunction": "sha512"' in ret.get_data(as_text=True))
         self.assertTrue('"name": "a"' in ret.get_data(as_text=True))
         self.assertTrue('"schema_version": 1' in ret.get_data(as_text=True))
-
 
     def testScheduledReleaseDiffWithBadId(self):
         url = '/history/diff/sc/release/88289'

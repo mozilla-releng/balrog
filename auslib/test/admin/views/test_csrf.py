@@ -15,5 +15,5 @@ class TestCSRFEndpoint(ViewTest):
             csrf.return_value = 111
 
             ret = self.client.get('/csrf_token')
-            self.assertEquals(ret.status_code, 200)
-            self.assertEquals(ret.headers['X-CSRF-Token'], '111')
+            self.assertEqual(ret.status_code, 200)
+            self.assertEqual(ret.headers['X-CSRF-Token'], '111')

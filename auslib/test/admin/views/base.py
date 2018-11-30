@@ -4,6 +4,8 @@ import simplejson as json
 from tempfile import mkstemp
 import unittest
 
+import pytest
+
 from auslib.global_state import dbo, cache
 from auslib.web.admin.base import app
 from auslib.blobs.base import createBlob
@@ -14,6 +16,7 @@ def setUpModule():
     logging.getLogger('migrate').setLevel(logging.CRITICAL)
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class ViewTest(unittest.TestCase):
     """Base class for all view tests. Sets up some sample data, and provides
        some helper methods."""
@@ -37,7 +40,7 @@ class ViewTest(unittest.TestCase):
 """)
         dbo.setDb('sqlite:///:memory:')
         dbo.setDomainWhitelist({'good.com': ('a', 'b', 'c', 'd')})
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
         dbo.permissions.t.insert().execute(permission='permission', username='bob', data_version=1)
         dbo.permissions.t.insert().execute(permission='release', username='bob',
@@ -136,7 +139,7 @@ class ViewTest(unittest.TestCase):
 """))
 
         dbo.releases.scheduled_changes.history.t.insert().execute(change_id=10, sc_id=1, timestamp=10, changed_by="bill",
-                                                base_name='a', base_product='a', base_data_version=1, base_data=createBlob("""
+                                                                  base_name='a', base_product='a', base_data_version=1, base_data=createBlob("""
 {
     "name": "a",
     "schema_version": 1,
@@ -239,4 +242,4 @@ class ViewTest(unittest.TestCase):
         return self.client.delete(url, query_string=qs, environ_base=self._getAuth(username))
 
     def assertStatusCode(self, response, expected):
-        self.assertEquals(response.status_code, expected, '%d - %s' % (response.status_code, response.get_data()))
+        self.assertEqual(response.status_code, expected, '%d - %s' % (response.status_code, response.get_data()))

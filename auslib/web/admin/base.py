@@ -13,7 +13,7 @@ from specsynthase.specbuilder import SpecBuilder
 
 try:
     from urllib import unquote
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
     from urllib.parse import unquote
 
 

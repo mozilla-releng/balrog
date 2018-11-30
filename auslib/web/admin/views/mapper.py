@@ -108,6 +108,7 @@ def release_diff_history_get(change_id, field):
     """GET /history/diff/release/:id/:field"""
     return ReleaseDiffView().get(change_id, field)
 
+
 def scheduled_release_diff_history_get(change_id):
     """GET /history/diff/sc/release/:id"""
     return History.ScheduledReleaseDiffView().get(change_id)

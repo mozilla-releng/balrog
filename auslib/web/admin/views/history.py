@@ -5,25 +5,25 @@ import simplejson as json
 from six import integer_types, text_type
 from auslib.global_state import dbo
 from flask import Response, jsonify, abort
-from sqlalchemy import and_
 from sqlalchemy.sql.expression import null
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.base import AdminView
 
 
 def format_value(value):
-   if isinstance(value, dict):
-       try:
-           value = json.dumps(value, indent=2, sort_keys=True)
-       except ValueError:
-           pass
-   elif value is None:
-       value = 'NULL'
-   elif isinstance(value, integer_types):
-       value = str(value)
-   else:
-       value = text_type(value, 'utf8') if six.PY2 else str(value)
-   return value
+    if isinstance(value, dict):
+        try:
+            value = json.dumps(value, indent=2, sort_keys=True)
+        except ValueError:
+            pass
+    elif value is None:
+        value = 'NULL'
+    elif isinstance(value, integer_types):
+        value = str(value)
+    else:
+        value = text_type(value, 'utf8') if six.PY2 else str(value)
+    return value
+
 
 class HistoryView(AdminView):
     """Base class for history views. Provides basics operations to get all
@@ -78,9 +78,7 @@ class HistoryView(AdminView):
         offset = limit * (page - 1)
 
         filters = history_filters_callback(obj)
-        total_count = self.history_table.t.count()\
-                                          .where(and_(*filters))\
-                                          .execute().fetchone()[0]
+        total_count = self.history_table.count(where=filters)
 
         revisions = self.history_table.select(
             where=filters,
@@ -191,24 +189,24 @@ class ScheduledReleaseDiffView(AdminView):
             return self.get_value(old_revision[0]['change_id'])
 
     def get(self, change_id):
-       try:
-           _curr = self.get_value(change_id)
-           _prev = self.previous(_curr, change_id)
+        try:
+            _curr = self.get_value(change_id)
+            _prev = self.previous(_curr, change_id)
 
-       except (KeyError, TypeError, IndexError) as msg:
-           return problem(400, 'Bad Request', str(msg))
-       except ValueError as msg:
-           return problem(404, 'Not Found', str(msg))
+        except (KeyError, TypeError, IndexError) as msg:
+            return problem(400, 'Bad Request', str(msg))
+        except ValueError as msg:
+            return problem(404, 'Not Found', str(msg))
 
-       curr = format_value(_curr["base_data"]) if _curr else ''
-       prev = format_value(_curr["base_data"]) if _prev else ''
+        curr = format_value(_curr["base_data"]) if _curr else ''
+        prev = format_value(_curr["base_data"]) if _prev else ''
 
-       result = difflib.unified_diff(
-           prev.splitlines(),
-           curr.splitlines(),
-           fromfile='Data Version {}'.format(_prev['data_version'] if _prev else ''),
-           tofile='Data Version {}'.format(_curr['data_version'] if _curr else ''),
-           lineterm=''
-       )
+        result = difflib.unified_diff(
+            prev.splitlines(),
+            curr.splitlines(),
+            fromfile='Data Version {}'.format(_prev['data_version'] if _prev else ''),
+            tofile='Data Version {}'.format(_curr['data_version'] if _curr else ''),
+            lineterm=''
+        )
 
-       return Response('\n'.join(result), content_type='text/plain')
+        return Response('\n'.join(result), content_type='text/plain')
