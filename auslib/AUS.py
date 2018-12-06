@@ -8,7 +8,7 @@ except ImportError:  # pragma: no cover
 
 import logging
 
-from auslib.global_state import dbo
+from auslib.global_state import dbo, cache
 
 
 class ForceResult(object):
@@ -57,9 +57,16 @@ class AUS:
         self.log = logging.getLogger(self.__class__.__name__)
 
     def updates_are_disabled(self, product, channel, transaction=None):
+        cache_key = (product, channel)
+        v = cache.get('updates_disabled', cache_key)
+        if v is not None:
+            return v
+
         where = dict(product=product, channel=channel)
         emergency_shutoffs = dbo.emergencyShutoffs.select(where=where, transaction=transaction)
-        return bool(emergency_shutoffs)
+        v = bool(emergency_shutoffs)
+        cache.put('updates_disabled', cache_key, v)
+        return v
 
     def evaluateRules(self, updateQuery, transaction=None):
         self.log.debug("Looking for rules that apply to:")
