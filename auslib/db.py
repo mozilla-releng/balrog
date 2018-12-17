@@ -1483,6 +1483,8 @@ class SignoffsTable(AUSTable):
             raise ValueError("sc_id and role must be provided when signing off")
         if "username" in columns and columns["username"] != changed_by:
             raise PermissionDeniedError("Cannot signoff on behalf of another user")
+        if changed_by in self.db.systemAccounts:
+            raise PermissionDeniedError("System account cannot signoff")
         if not self.db.hasRole(changed_by, columns["role"], transaction=transaction):
             raise PermissionDeniedError("{} cannot signoff with role '{}'".format(changed_by, columns["role"]))
 
@@ -1506,6 +1508,8 @@ class SignoffsTable(AUSTable):
     def delete(self, where, changed_by=None, transaction=None, dryrun=False, reset_signoff=False):
         if not reset_signoff:
             for row in self.select(where, transaction):
+                if changed_by in self.db.systemAccounts:
+                    raise PermissionDeniedError("System accounts cannot revoke a signoff")
                 if not self.db.hasRole(changed_by, row["role"], transaction=transaction) and not self.db.isAdmin(changed_by, transaction=transaction):
                     raise PermissionDeniedError("Cannot revoke a signoff made by someone in a group you do not belong to")
 
@@ -2592,6 +2596,7 @@ class AUSDatabase(object):
         if dburi:
             self.setDburi(dburi, mysql_traditional_mode)
         self.log = logging.getLogger(self.__class__.__name__)
+        self.systemAccounts = []
 
     def setDburi(self, dburi, mysql_traditional_mode=False):
         """Setup the database connection. Note that SQLAlchemy only opens a connection
@@ -2613,6 +2618,9 @@ class AUSDatabase(object):
         self.permissionsRequiredSignoffsTable = PermissionsRequiredSignoffsTable(self, self.metadata, dialect)
         self.emergencyShutoffsTable = EmergencyShutoffs(self, self.metadata, dialect)
         self.metadata.bind = self.engine
+
+    def setSystemAccounts(self, systemAccounts):
+        self.systemAccounts = systemAccounts
 
     def setDomainWhitelist(self, domainWhitelist):
         self.releasesTable.setDomainWhitelist(domainWhitelist)
