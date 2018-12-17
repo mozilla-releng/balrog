@@ -4,7 +4,6 @@ import os
 from auslib.log import configure_logging
 
 
-SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "seabld"]
 SPECIAL_FORCE_HOSTS = ["http://download.mozilla.org"]
 DOMAIN_WHITELIST = {
     "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
@@ -18,7 +17,6 @@ DOMAIN_WHITELIST = {
     "ftp.mozilla.org": ("SystemAddons",),
 }
 if os.environ.get("STAGING"):
-    SYSTEM_ACCOUNTS.extend(["stage-ffxbld", "stage-tbirdbld", "stage-seabld"])
     DOMAIN_WHITELIST.update({
         "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
         "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),

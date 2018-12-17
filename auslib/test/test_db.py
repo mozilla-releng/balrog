@@ -1625,6 +1625,7 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.metadata = self.db.metadata
         self.signoffs = SignoffsTable(self.db, self.metadata, "sqlite", "test_table")
         self.metadata.create_all()
+        self.db.setSystemAccounts(["goodbot"])
         self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="nancy", role="relman", data_version=1)
@@ -1649,6 +1650,10 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
     def testSignoffWithoutPermission(self):
         assertRaisesRegex(self, PermissionDeniedError, "jim cannot signoff with role 'releng'",
                           self.signoffs.insert, "jim", sc_id=1, username="jim", role="releng")
+
+    def testSignoffWithoutPermissionSystemAccount(self):
+        assertRaisesRegex(self, PermissionDeniedError, "System account cannot signoff",
+                          self.signoffs.insert, "goodbot", sc_id=1, username="goodbot", role="releng")
 
     def testSignoffASecondTimeWithSameRole(self):
         self.signoffs.insert("nancy", sc_id=1, username="nancy", role="relman")
@@ -1682,6 +1687,10 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
     def testRevokeOtherUsersSignoffWithoutPermission(self):
         assertRaisesRegex(self, PermissionDeniedError, "Cannot revoke a signoff made by someone in a group you do not belong to",
                           self.signoffs.delete, {"sc_id": 1, "username": "nancy"}, changed_by="bob")
+
+    def testRevokeOtherUsersSignoffWithoutPermissionSystemAccount(self):
+        assertRaisesRegex(self, PermissionDeniedError, "System accounts cannot revoke a signoff",
+                          self.signoffs.delete, {"sc_id": 1, "username": "nancy"}, changed_by="goodbot")
 
 
 @pytest.mark.usefixtures("current_db_schema")
