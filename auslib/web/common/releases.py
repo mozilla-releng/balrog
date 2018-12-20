@@ -69,9 +69,12 @@ def get_release(release, with_csrf_header=False):
         headers.update(get_csrf_headers())
     if request.args.get("pretty"):
         indent = 4
+        separators = (',', ': ')
     else:
         indent = None
-    return Response(response=json.dumps(release['data'], indent=indent, sort_keys=True),
+        separators = None
+    # separators set manually due to https://bugs.python.org/issue16333 affecting Python 2
+    return Response(response=json.dumps(release['data'], indent=indent, separators=separators, sort_keys=True),
                     mimetype='application/json', headers=headers)
 
 
