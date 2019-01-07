@@ -151,6 +151,8 @@ def get_update_blob(transaction, **url):
     # code support queries without it.
     if url['queryVersion'] == 1:
         url['osVersion'] = ''
+    # Bug 1517743 - two Firefox nightlies can't parse update.xml when it contains the usual newlines or indentations
+    squash_response = False
 
     query = getQueryFromURL(url)
     LOG.debug("Got query: %s", query)
@@ -193,6 +195,10 @@ def get_update_blob(transaction, **url):
             response_blobs.append({'product_query': query,
                                    'response_release': release,
                                    'response_update_type': update_type})
+            # Bug 1517743 - we want a cheap test because this will be run on each request
+            if release['name'] == 'Firefox-mozilla-central-nightly-latest' and query['buildID'] in ('20190103220533', '20190104093221'):
+                squash_response = True
+                LOG.debug('Busted nightly detected, will squash xml response')
 
         # getHeaderXML() returns outermost header for an update which
         # is same for all release type
@@ -226,6 +232,11 @@ def get_update_blob(transaction, **url):
         xml.append('<updates>')
         xml.append('</updates>')
         xml = "\n".join(xml)
+
+    # Bug 1517743 - remove newlines and 4 space indents
+    if squash_response:
+        xml = xml.replace('\n', '').replace('    ', '')
+
     LOG.debug("Sending XML: %s", xml)
     response = make_response(xml)
     response.headers["Cache-Control"] = app.cacheControl

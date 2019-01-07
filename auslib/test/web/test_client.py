@@ -86,6 +86,11 @@ class ClientTestCommon(unittest.TestCase):
         expected = minidom.parseString(expected_xml_string)
         self.assertEqual(returned.toxml(), expected.toxml())
 
+    def assertUpdateTextEqual(self, http_response, expected):
+        self.assertHttpResponse(http_response)
+        returned = http_response.get_data(as_text=True)
+        self.assertEqual(returned, expected)
+
 
 class ClientTestBase(ClientTestCommon):
     maxDiff = 2000
@@ -1665,3 +1670,68 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
     def testUnicodeAcceptedInQueryFieldName(self):
         ret = self.client.get("/update/6/3/e/2.0.0/1/p/l/a/a/a/a/update.xml?fooÃÃÃÃÃÃbar=1")
         self.assertEqual(ret.status_code, 400)
+
+
+class ClientTestCompactXML(ClientTestCommon):
+    """Tests the compact XML needed to rescue two Firefox nightlies (bug 1517743)."""
+
+    @classmethod
+    def setUpClass(cls):
+        # Error handlers are removed in order to give us better debug messages
+        cls.error_spec = app.error_handler_spec
+        # Ripped from https://github.com/mitsuhiko/flask/blob/1f5927eee2288b4aaf508af5dc1f148aa2140d91/flask/app.py#L394
+        app.error_handler_spec = {None: {}}
+
+    @classmethod
+    def tearDownClass(cls):
+        app.error_handler_spec = cls.error_spec
+
+    def setUp(self):
+        self.version_fd, self.version_file = mkstemp()
+        app.config['DEBUG'] = True
+        app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
+        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b',)}
+        dbo.setDb('sqlite:///:memory:')
+        self.metadata.create_all(dbo.engine)
+        dbo.setDomainWhitelist({'a.com': ('b',)})
+        self.client = app.test_client()
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='Firefox-mozilla-central-nightly-latest',
+                                     update_type='minor', product='b', data_version=1)
+        dbo.releases.t.insert().execute(name='Firefox-mozilla-central-nightly-latest', product='b', data_version=1, data=createBlob("""
+{
+    "name": "Firefox-mozilla-central-nightly-latest",
+    "schema_version": 1,
+    "appv": "1.0",
+    "extv": "1.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "30000101000000",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/z"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+
+    def testGoodNightly(self):
+        ret = self.client.get('/update/6/b/1.0/20181212121212/p/l/a/a/a/a/a/update.xml')
+        self.assertUpdateTextEqual(ret, u"""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="30000101000000">
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>""")
+
+    def testBrokenNightly(self):
+        ret = self.client.get('/update/6/b/1.0/20190103220533/p/l/a/a/a/a/a/update.xml')
+        self.assertUpdateTextEqual(ret, u'<?xml version="1.0"?><updates><update type="minor" version="1.0" extensionVersion="1.0" buildID="30000101000000">'
+                                        u'<patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/></update></updates>')
