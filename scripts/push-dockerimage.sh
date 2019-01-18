@@ -2,7 +2,7 @@
 
 set -e
 
-DOCKERFILE="$0"
+DOCKERFILE="$1"
 shift
 
 tags=( $@ )
