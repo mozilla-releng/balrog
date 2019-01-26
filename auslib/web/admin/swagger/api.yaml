@@ -717,7 +717,6 @@ paths:
                 - data_version: 2
                   name: XP-Vista-Desupport
                   product: Firefox
-                  read_only: false
                   rule_ids: [468, 498]
 
     post:
@@ -873,91 +872,6 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
-  /releases/{release}/read_only:
-    get:
-      summary: Returns whether or not the named Release is marked as read_only
-      description: >
-        Returns whether or not the named Release is marked as read_only. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-read-only)
-      tags:
-        - Releases
-      operationId: auslib.web.admin.views.mapper.release_read_only_get
-      consumes: []
-      produces:
-        - application/json
-      externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-read-only"
-        description: Returns whether or not the named Release is marked as read_only
-      parameters:
-        - $ref: '#/parameters/releaseParam'
-      responses:
-        '200':
-          description: Returns release object data
-          schema:
-            type: object
-            required:
-              - read_only
-            properties:
-              read_only:
-                description: boolean flag set to True is release is read only else set as False
-                type: boolean
-                example: true
-        '404':
-          $ref: '#/responses/resourceNotFound'
-
-    put:
-      summary: Sets or unsets the read_only flag of the named Release.
-      description: >
-        Sets or unsets the read_only flag of the named Release. Requires release name, data_version and read_only values. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id15)
-      tags:
-        - Releases
-      operationId: auslib.web.admin.views.mapper.release_read_only_put
-      consumes:
-        - application/json
-      produces:
-        - text/html
-        - application/json
-      externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id15"
-        description: Sets or unsets the read_only flag of the named Release.
-      parameters:
-        - $ref: '#/parameters/releaseParam'
-        - name: release_read_only_body
-          in: body
-          description: Read Only Release modify Request paramaters
-          required: true
-          schema:
-            required:
-              - data_version
-            allOf:
-              - $ref: '#/definitions/CSRFModel'
-              - $ref: '#/definitions/DataVersionModel'
-              - type: object
-                description: read_only boolean flag
-                required:
-                  - read_only
-                properties:
-                  read_only:
-                    # read_only key is always present when submitted from the UI form.
-                    # In case of false , a blank string i.e. '' is passed as key's value
-                    # hence we have to add type: string along with boolean as list of accepted types
-                    # for read_only.
-                    # TODO: Fix bug in UI and remove type: string below
-                    type: ["boolean", "string"]
-                    description: blank string if read only is true else set to false
-                    example: true
-                # TODO: Fix bug in UI. Currently the UI form sends the entire '#/definitions/ReleaseGET' model in
-                # the request.json when only two values 'read_only' and 'data_version' are needed.
-                additionalProperties: true
-      responses:
-        '201':
-          $ref: '#/responses/updateExistingObject'
-        '401':
-          $ref: '#/responses/unauthenticatedUser'
-        '403':
-          $ref: '#/responses/unauthorizedUser'
-        '404':
-          $ref: '#/responses/resourceNotFound'
-
   /releases/columns/{column}:
     get:
       summary: Returns a JSON Object containing the unique values for the given release column
@@ -1083,11 +997,6 @@ paths:
                         - $ref: '#/definitions/ReleaseName'
                         - type: object
                           properties:
-                            read_only:
-                              description: Flag that indicates whether release is marked read_only or not.
-                              type: string
-                              enum: [ "True", "False"]
-                              example: "True"
                             _different:
                               description: list of columns that were modified in revision
                               type: array
@@ -1106,7 +1015,6 @@ paths:
                         - name
                         - product
                         - data_version
-                        - read_only
                         - _different
                         - _time_ago
         '400':
@@ -2628,7 +2536,6 @@ paths:
                         - $ref: '#/definitions/SCCommonFieldsModel'
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/ProductNullable'
-                        - $ref: '#/definitions/ReleaseReadOnly'
                         - $ref: '#/definitions/ReleaseDataObject'
                         - $ref: '#/definitions/ReleaseName'
                         - properties:
@@ -2638,7 +2545,6 @@ paths:
                                 - $ref: '#/definitions/ReleaseName'
                                 - $ref: '#/definitions/DataVersionNullable'
                                 - $ref: '#/definitions/ProductNullable'
-                                - $ref: '#/definitions/ReleaseReadOnly'
                       required:
                         - change_type
                         - data_version
@@ -2646,7 +2552,6 @@ paths:
                         - product
                         - name
                         - data
-                        - read_only
 
     post:
       summary: create scheduled change for a release.
@@ -2811,7 +2716,6 @@ paths:
                         - $ref: '#/definitions/SCCommonFieldsModel'
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/ProductNullable'
-                        - $ref: '#/definitions/ReleaseReadOnly'
                         - $ref: '#/definitions/ReleaseDataObject'
                         - $ref: '#/definitions/ReleaseName'
                         - $ref: '#/definitions/HistoryModel'
@@ -2822,7 +2726,6 @@ paths:
                         - product
                         - name
                         - data
-                        - read_only
         '404':
           $ref: '#/responses/resourceNotFound'
         '400':
@@ -4130,6 +4033,238 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
+  /releases_readonly/{release}:
+    post:
+      summary: Set the release as readonly.
+      description: Set the release as readonly.
+      tags:
+        - Releases
+        - Release Readonly
+      operationId: auslib.web.admin.releases_readonly.post
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+      responses:
+        '201':
+          description: Successfully set the release as readonly.
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+    
+    delete:
+      summary: Set the release as read/write.
+      description: Set the release as read/write.
+      tags:
+        - Releases
+        - Release Readonly
+      operationId: auslib.web.admin.releases_readonly.delete
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+        - $ref: '#/parameters/csrfTokenParam'
+        - $ref: '#/parameters/dataVersionParam'
+      responses:
+        '200':
+          description: Successfully set the release as read/write.
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+
+  /scheduled_changes/releases_readonly:
+    get:
+      summary: Returns scheduled changes for readonly releases.
+      description: >
+        Returns scheduled changes to make a release read/write.
+      tags:
+        - Scheduled Changes
+        - Release readonly
+      operationId: auslib.web.admin.releases_readonly.scheduled_changes
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/allSCParam'
+      responses:
+        '200':
+          description: JSON object with scheduled changes for releases readonly.
+          schema:
+            type: object
+            required:
+              - scheduled_changes
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  scheduled_changes:
+                    description: Array where each element is a scheduled change for a readonly release.
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - $ref: '#/definitions/SCSignoffsModel'
+                        - $ref: '#/definitions/ReleasesReadonlyModel'
+                        - properties:
+                            original_row:
+                              $ref: '#/definitions/ReleasesReadonlyModel'
+
+    post:
+      summary: Create scheduled change to make the release read/write.
+      description: >
+        Create scheduled change to make the release read/write.
+      tags:
+        - Scheduled Changes
+        - Release Readonly
+      operationId: auslib.web.admin.releases_readonly.schedule_release_read_write
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: "create scheduled change for release readonly."
+      parameters:
+        - name: sc_release_readonly
+          in: body
+          description: Request body for release readonly
+          required: true
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/CSRFModel'
+              # - $ref: '#/definitions/SCTime'
+              - $ref: '#/definitions/ReleasesReadonlyModel'
+            properties:
+              change_type:
+                description: type of change
+                type: string
+                format: ascii
+                enum:
+                  - delete
+                minLength: 1
+                maxLength: 50
+                example: update
+      responses:
+        '200':
+          description: Returns sc_id of change
+          schema:
+            $ref: '#/definitions/SCIdModel'
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+
+  /scheduled_changes/releases_readonly/{sc_id}:
+    delete:
+      summary: Deletes the given Scheduled Change for a Releases Readonly.
+      description: >
+        Deletes the given Scheduled Change for Releases Readonly. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
+      tags:
+        - Scheduled Changes
+        - Release Readonly
+      operationId: auslib.web.admin.releases_readonly.delete_scheduled_release_read_write
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/dataVersionParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the given scheduled change.
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
+  /scheduled_changes/releases_readonly/{sc_id}/enact:
+    post:
+      summary: Execute the scheduled change for the release readonly.
+      description: >
+        Execute the scheduled change for the release readonly and mark release as read/write.
+      tags:
+        - Scheduled Changes
+        - Release Readonly
+      operationId: auslib.web.admin.releases_readonly.enact_release_read_write
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+      responses:
+        '200':
+          description: Successfully enacted the scheduled change.
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+
+  /scheduled_changes/releases_readonly/{sc_id}/signoffs:
+    post:
+      summary: Signs off on the given release readonly.
+      description: Signs off on the given release readonly.
+      tags:
+        - Scheduled Changes
+        - Release Readonly
+      operationId: auslib.web.admin.releases_readonly.scheduled_changes_signoffs
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/sc_signoff_post_body_param'
+      responses:
+        '200':
+          description: Successfully signed off on the given scheduled change.
+        '400':
+          $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+
+    delete:
+      summary: Removes an existing Signoff from the release readonly Scheduled Change.
+      description: Removes an existing Signoff from the release readonly Scheduled Change.
+      tags:
+        - Scheduled Changes
+        - Release Readonly
+      operationId: auslib.web.admin.releases_readonly.scheduled_changes_signoffs_delete
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+        - $ref: '#/parameters/usernameQueryParam'
+        - $ref: '#/parameters/csrfTokenParam'
+      responses:
+        '200':
+          description: Successfully deleted the signoff on the given scheduled change.
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
 definitions:
   CSRFModel:
     title: CSRF Token
@@ -4638,3 +4773,17 @@ definitions:
 
     #Warning: Do NOT add an example object here. Interferes with Example Value during
     # request generation in Swagger-UI
+
+  ReleasesReadonlyModel:
+    title: Release Readonly
+    description: Release to be marked as readonly
+    type: object
+    allOf:
+      - $ref: '#/definitions/DataVersionModel'
+      - type: object
+        properties:
+          release_name:
+            type: string
+            format: ascii
+    required:
+      - release_name

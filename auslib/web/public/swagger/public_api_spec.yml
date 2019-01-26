@@ -58,7 +58,6 @@ paths:
                 - data_version: 2
                   name: XP-Vista-Desupport
                   product: Firefox
-                  read_only: false
                   rule_ids: [468, 498]
 
   /api/v1/releases/{release}:
@@ -126,11 +125,6 @@ paths:
                         - $ref: '#/definitions/ReleaseName'
                         - type: object
                           properties:
-                            read_only:
-                              description: Flag that indicates whether release is marked read_only or not.
-                              type: string
-                              enum: [ "True", "False"]
-                              example: "True"
                             _different:
                               description: list of columns that were modified in revision
                               type: array
@@ -149,7 +143,6 @@ paths:
                         - name
                         - product
                         - data_version
-                        - read_only
                         - _different
                         - _time_ago
         '400':

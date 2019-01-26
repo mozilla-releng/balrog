@@ -297,40 +297,6 @@ class SingleReleaseView(AdminView):
         return Response(status=200)
 
 
-class ReleaseReadOnlyView(AdminView):
-    """/releases/:release/read_only"""
-
-    def get(self, release):
-        try:
-            is_release_read_only = dbo.releases.isReadOnly(name=release, limit=1)
-        except KeyError as e:
-            return problem(404, "Not Found", json.dumps(e.args))
-
-        return jsonify(read_only=is_release_read_only)
-
-    @requirelogin
-    def _put(self, release, changed_by, transaction):
-        releases = dbo.releases.getReleaseInfo(names=[release], nameOnly=True, limit=1)
-        if not releases:
-            return problem(404, "Not Found", "Release: %s not found" % release)
-
-        data_version = connexion.request.get_json().get("data_version")
-        is_release_read_only = dbo.releases.isReadOnly(release)
-
-        if connexion.request.get_json().get("read_only"):
-            if not is_release_read_only:
-                dbo.releases.update(
-                    where={"name": release}, what={"read_only": True}, changed_by=changed_by, old_data_version=data_version, transaction=transaction
-                )
-                data_version += 1
-        else:
-            dbo.releases.update(
-                where={"name": release}, what={"read_only": False}, changed_by=changed_by, old_data_version=data_version, transaction=transaction
-            )
-            data_version += 1
-        return Response(status=201, response=json.dumps(dict(new_data_version=data_version)))
-
-
 class ReleaseHistoryView(HistoryView):
     """/releases/:release/revisions"""
 

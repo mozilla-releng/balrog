@@ -334,7 +334,8 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=3)), "Data: %s" % ret.get_data())
 
         # Outdated Data Error on same release
-        ret = self._post("/releases/ee", data=dict(hashFunction="sha512", read_only=True, name="ee", product="ee", data_version=1))
+        ret = self._post('/releases/ee', data=dict(hashFunction="sha512",
+                                                   name='ee', product='ee', data_version=1))
         self.assertStatusCode(ret, 400)
 
         blob = json.loads(blob)
@@ -342,16 +343,12 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEqual(len(history_rows), 4)
         self.assertEqual(history_rows[0]["data"], None)
         self.assertEqual(history_rows[0]["data_version"], None)
-        self.assertEqual(history_rows[0]["read_only"], False)
         self.assertEqual(history_rows[1]["data"], {"name": "ee", "schema_version": 1, "hashFunction": "sha512"})
         self.assertEqual(history_rows[1]["data_version"], 1)
-        self.assertEqual(history_rows[1]["read_only"], False)
         self.assertEqual(history_rows[2]["data"], blob)
         self.assertEqual(history_rows[2]["data_version"], 2)
-        self.assertEqual(history_rows[2]["read_only"], False)
         self.assertEqual(history_rows[3]["data"], blob)
         self.assertEqual(history_rows[3]["data_version"], 3)
-        self.assertEqual(history_rows[3]["read_only"], False)
 
     def testReleasePostMismatchedName(self):
         data = json.dumps(dict(name="eee", schema_version=1))
@@ -480,7 +477,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 403)
 
     def testDeleteReadOnlyRelease(self):
-        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "d").execute()
+        dbo.releasesReadonly.t.insert().execute({'release_name': 'd', 'data_version': 1})
         ret = self._delete("/releases/d", username="bill", qs=dict(data_version=2))
         self.assertStatusCode(ret, 403)
 
@@ -919,9 +916,9 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 401)
 
     def testLocalePutReadOnlyRelease(self):
-        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "ab").execute()
+        dbo.releasesReadonly.t.insert().execute({'release_name': 'ab', 'data_version': 1})
         data = json.dumps({"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}})
-        ret = self._put("/releases/ab/builds/p/l", data=dict(data=data, product="a", data_version=1, schema_version=1))
+        ret = self._put('/releases/ab/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
         self.assertStatusCode(ret, 403)
 
     def testLocalePutWithProductAdmin(self):
@@ -1412,7 +1409,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "name": "m",
                     "product": "m",
                     "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1},
-                    "read_only": False,
                     "data_version": None,
                     "signoffs": {},
                     "required_signoffs": {},
@@ -1427,7 +1423,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "name": "a",
                     "product": "a",
                     "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
-                    "read_only": False,
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
@@ -1443,7 +1438,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "name": "ab",
                     "product": None,
                     "data": None,
-                    "read_only": False,
                     "data_version": 1,
                     "signoffs": {"ben": "releng", "bill": "releng"},
                     "required_signoffs": {},
@@ -1468,7 +1462,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "name": "m",
                     "product": "m",
                     "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1},
-                    "read_only": False,
                     "data_version": None,
                     "signoffs": {},
                     "required_signoffs": {},
@@ -1483,7 +1476,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "name": "a",
                     "product": "a",
                     "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
-                    "read_only": False,
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
@@ -1499,7 +1491,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "name": "b",
                     "product": "b",
                     "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1},
-                    "read_only": False,
                     "data_version": 1,
                     "signoffs": {},
                     "required_signoffs": {},
@@ -1515,7 +1506,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "name": "ab",
                     "product": None,
                     "data": None,
-                    "read_only": False,
                     "data_version": 1,
                     "signoffs": {"ben": "releng", "bill": "releng"},
                     "required_signoffs": {},
@@ -1548,7 +1538,6 @@ class TestReleasesScheduledChanges(ViewTest):
             "complete": False,
             "data_version": 1,
             "base_product": "d",
-            "base_read_only": False,
             "base_name": "d",
             "base_data": {"name": "d", "hashFunction": "sha256", "schema_version": 1},
             "base_data_version": 1,
@@ -1575,7 +1564,6 @@ class TestReleasesScheduledChanges(ViewTest):
             "complete": False,
             "data_version": 1,
             "base_product": None,
-            "base_read_only": False,
             "base_name": "d",
             "base_data": None,
             "base_data_version": 1,
@@ -1608,7 +1596,6 @@ class TestReleasesScheduledChanges(ViewTest):
             "complete": False,
             "data_version": 1,
             "base_product": "q",
-            "base_read_only": False,
             "base_name": "q",
             "base_data": {"name": "q", "hashFunction": "sha512", "schema_version": 1},
             "base_data_version": None,
@@ -1657,7 +1644,6 @@ class TestReleasesScheduledChanges(ViewTest):
             "scheduled_by": "bill",
             "base_name": "a",
             "base_product": "a",
-            "base_read_only": False,
             "base_data": {"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1},
             "base_data_version": 1,
         }
@@ -1687,7 +1673,6 @@ class TestReleasesScheduledChanges(ViewTest):
             "scheduled_by": "bill",
             "base_name": "ab",
             "base_product": None,
-            "base_read_only": False,
             "base_data": None,
             "base_data_version": 1,
         }
@@ -1722,7 +1707,6 @@ class TestReleasesScheduledChanges(ViewTest):
             "scheduled_by": "julie",
             "base_name": "a",
             "base_product": "a",
-            "base_read_only": False,
             "base_data": {"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1},
             "base_data_version": 1,
         }
@@ -1779,7 +1763,6 @@ class TestReleasesScheduledChanges(ViewTest):
             "scheduled_by": "bill",
             "base_name": "m",
             "base_product": "m",
-            "base_read_only": False,
             "base_data": {"name": "m", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1},
             "base_data_version": None,
         }
@@ -1813,7 +1796,6 @@ class TestReleasesScheduledChanges(ViewTest):
             "scheduled_by": "bill",
             "base_name": "mm",
             "base_product": "mm",
-            "base_read_only": False,
             "base_data": {"name": "mm", "hashFunction": "sha512", "appv": "4.0", "schema_version": 1},
             "base_data_version": None,
         }
@@ -1848,7 +1830,6 @@ class TestReleasesScheduledChanges(ViewTest):
             "change_type": "update",
             "base_name": "a",
             "base_product": "a",
-            "base_read_only": False,
             "base_data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
             "base_data_version": 1,
         }
@@ -1858,7 +1839,6 @@ class TestReleasesScheduledChanges(ViewTest):
         base_expected = {
             "name": "a",
             "product": "a",
-            "read_only": False,
             "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
             "data_version": 2,
         }
@@ -1880,7 +1860,6 @@ class TestReleasesScheduledChanges(ViewTest):
             "change_type": "insert",
             "base_name": "m",
             "base_product": "m",
-            "base_read_only": False,
             "base_data": {"name": "m", "hashFunction": "sha512", "schema_version": 1},
             "base_data_version": None,
         }
@@ -1890,7 +1869,6 @@ class TestReleasesScheduledChanges(ViewTest):
         base_expected = {
             "name": "m",
             "product": "m",
-            "read_only": False,
             "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1},
             "data_version": 1,
         }
@@ -1912,7 +1890,6 @@ class TestReleasesScheduledChanges(ViewTest):
             "change_type": "delete",
             "base_name": "ab",
             "base_product": None,
-            "base_read_only": False,
             "base_data": None,
             "base_data_version": 1,
         }
@@ -1939,7 +1916,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "name": "b",
                     "product": "b",
                     "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1},
-                    "read_only": False,
                     "complete": True,
                     "when": 10000000,
                     "sc_data_version": 2,
@@ -1955,7 +1931,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "name": "b",
                     "product": "b",
                     "data": {"name": "b", "hashFunction": "sha512", "schema_version": 1},
-                    "read_only": False,
                     "complete": False,
                     "when": 10000000,
                     "sc_data_version": 1,
@@ -1974,7 +1949,6 @@ class TestReleasesScheduledChanges(ViewTest):
                 "revisions": [
                     {
                         "change_id": 9,
-                        "read_only": False,
                         "name": "ab",
                         "scheduled_by": "bill",
                         "when": 230000000,
@@ -1990,7 +1964,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     },
                     {
                         "change_id": 7,
-                        "read_only": False,
                         "name": "b",
                         "scheduled_by": "bill",
                         "when": 10000000,
@@ -2011,7 +1984,6 @@ class TestReleasesScheduledChanges(ViewTest):
                 "revisions": [
                     {
                         "change_id": 6,
-                        "read_only": "False",
                         "name": "b",
                         "_different": [],
                         "changed_by": "bill",
@@ -2031,9 +2003,9 @@ class TestReleasesScheduledChanges(ViewTest):
         for index in range(len(revisions)):
             self.assertEqual(revisions[index]["product"], expected_revisions[index]["product"])
             self.assertEqual(revisions[index]["timestamp"], expected_revisions[index]["timestamp"])
-            self.assertEqual(revisions[index]["read_only"], expected_revisions[index]["read_only"])
             self.assertEqual(revisions[index]["data_version"], expected_revisions[index]["data_version"])
             self.assertEqual(revisions[index]["changed_by"], expected_revisions[index]["changed_by"])
+
         self.assertEqual(len(history_data["revisions"]), 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=100))
@@ -2108,7 +2080,6 @@ class TestReleaseHistoryView(ViewTest):
                     {
                         "name": "b",
                         "change_id": 6,
-                        "read_only": "False",
                         "_time_ago": "48 years ago",
                         "data_version": 1,
                         "_different": [],
@@ -2119,7 +2090,6 @@ class TestReleaseHistoryView(ViewTest):
                     {
                         "name": "d",
                         "change_id": 4,
-                        "read_only": "False",
                         "_time_ago": "48 years ago",
                         "data_version": 1,
                         "_different": ["name", "data", "product"],
@@ -2130,7 +2100,6 @@ class TestReleaseHistoryView(ViewTest):
                     {
                         "name": "ab",
                         "change_id": 2,
-                        "read_only": "False",
                         "_time_ago": "48 years ago",
                         "data_version": 1,
                         "_different": ["name", "data", "product"],
@@ -2185,9 +2154,9 @@ class TestReleaseHistoryView(ViewTest):
         for index in range(len(revisions)):
             self.assertEqual(revisions[index]["product"], expected_revisions[index]["product"])
             self.assertEqual(revisions[index]["timestamp"], expected_revisions[index]["timestamp"])
-            self.assertEqual(revisions[index]["read_only"], expected_revisions[index]["read_only"])
             self.assertEqual(revisions[index]["data_version"], expected_revisions[index]["data_version"])
             self.assertEqual(revisions[index]["changed_by"], expected_revisions[index]["changed_by"])
+
         self.assertEqual(len(history_data["revisions"]), 3)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300000))
@@ -2257,71 +2226,6 @@ class TestSingleColumn_JSON(ViewTest):
     def testGetReleaseColumn404(self):
         ret = self.client.get("/releases/columns/blah")
         self.assertEqual(ret.status_code, 404)
-
-
-class TestReadOnlyView(ViewTest):
-    def testReadOnlyGet(self):
-        ret = self._get("/releases/b/read_only")
-        is_read_only = dbo.releases.t.select(dbo.releases.name == "b").execute().first()["read_only"]
-        self.assertEqual(ret.get_json()["read_only"], is_read_only)
-
-    def testReadOnlySetTrueAdmin(self):
-        data = dict(name="b", read_only=True, product="b", data_version=1)
-        ret = self._put("/releases/b/read_only", username="bill", data=data)
-        self.assertStatusCode(ret, 201)
-        read_only = dbo.releases.isReadOnly(name="b")
-        self.assertEqual(read_only, True)
-
-    def testReadOnlySetTrueNonAdmin(self):
-        data = dict(name="b", read_only=True, product="b", data_version=1)
-        ret = self._put("/releases/b/read_only", username="bob", data=data)
-        self.assertStatusCode(ret, 201)
-        read_only = dbo.releases.isReadOnly(name="b")
-        self.assertEqual(read_only, True)
-
-    def testReadOnlySetFalseAdmin(self):
-        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
-        data = dict(name="b", read_only="", product="b", data_version=2)
-        ret = self._put("/releases/b/read_only", username="bill", data=data)
-        self.assertStatusCode(ret, 201)
-        read_only = dbo.releases.isReadOnly(name="b")
-        self.assertEqual(read_only, False)
-
-    def testReadOnlyUnsetWithoutPermissionForProduct(self):
-        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
-        data = dict(name="b", read_only="", product="b", data_version=2)
-        ret = self._put("/releases/b/read_only", username="me", data=data)
-        self.assertStatusCode(ret, 403)
-
-    def testReadOnlyAdminSetAndUnsetFlag(self):
-        # Setting flag
-        data = dict(name="b", read_only=True, product="b", data_version=1)
-        ret = self._put("/releases/b/read_only", username="bill", data=data)
-        self.assertStatusCode(ret, 201)
-
-        # Resetting flag
-        data = dict(name="b", read_only="", product="b", data_version=2)
-        ret = self._put("/releases/b/read_only", username="bill", data=data)
-        self.assertStatusCode(ret, 201)
-
-        # Verify reset
-        read_only = dbo.releases.isReadOnly(name="b")
-        self.assertEqual(read_only, False)
-
-    def testReadOnlyNonAdminCanSetFlagButNotUnset(self):
-        # Setting read only flag
-        data_set = dict(name="b", read_only=True, product="b", data_version=1)
-        ret = self._put("/releases/b/read_only", username="bob", data=data_set)
-        self.assertStatusCode(ret, 201)
-
-        # Verifying if flag was set to true
-        read_only = dbo.releases.isReadOnly(name="b")
-        self.assertEqual(read_only, True)
-
-        # Resetting flag, which should fail with 403
-        data_unset = dict(name="b", read_only="", product="b", data_version=2)
-        ret = self._put("/releases/b/read_only", username="bob", data=data_unset)
-        self.assertStatusCode(ret, 403)
 
 
 class TestRuleIdsReturned(ViewTest):

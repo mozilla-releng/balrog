@@ -123,16 +123,6 @@ definitions:
         maxLength: 100
         example: "Firefox-47.0.2-build2-43.0.1"
 
-  ReleaseReadOnly:
-    title: Release Read Only
-    description: "Release's read_only flag field marks whether release can only be read and not modified"
-    type: object
-    properties:
-      read_only:
-        type: ["boolean", "null"]
-        example: true
-        description: "flag value is true if release is marked as read_only else release is modifiable"
-
   ReleaseGET:
     title: Release form values plus read only and rule ids
     description: "Release Base Model + read only + list of mapped rule_ids"
@@ -141,7 +131,6 @@ definitions:
       - $ref: '#/definitions/DataVersionModel'
       - $ref: '#/definitions/ProductModel'
       - $ref: '#/definitions/ReleaseName'
-      - $ref: '#/definitions/ReleaseReadOnly'
       - type: object
         properties:
           rule_ids:
@@ -157,7 +146,6 @@ definitions:
       - name
       - product
       - data_version
-      - read_only
       - rule_ids
 
   UpdateType:

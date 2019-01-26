@@ -1753,13 +1753,11 @@ class Rules(AUSTable):
 class Releases(AUSTable):
     def __init__(self, db, metadata, dialect):
         self.domainWhitelist = []
-
         self.table = Table(
             "releases",
             metadata,
             Column("name", String(100), primary_key=True),
             Column("product", String(15), nullable=False),
-            Column("read_only", Boolean, default=False),
         )
         if dialect == "mysql":
             from sqlalchemy.dialects.mysql import LONGTEXT
@@ -1836,7 +1834,7 @@ class Releases(AUSTable):
         if nameOnly:
             column = [self.name]
         else:
-            column = [self.name, self.product, self.data_version, self.read_only]
+            column = [self.name, self.product, self.data_version]
 
         rows = self.select(where=where, columns=column, limit=limit, transaction=transaction)
 
@@ -1857,7 +1855,8 @@ class Releases(AUSTable):
                 if len(refs) > 0:
                     row["rule_ids"] = [ref[1] for ref in refs]
                 else:
-                    row["rule_ids"] = []
+                    row['rule_ids'] = []
+                row['read_only'] = self.is_readonly(row['name'], transaction=transaction)
 
         return rows
 
@@ -1942,7 +1941,7 @@ class Releases(AUSTable):
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
         blob = what.get("data")
 
-        current_releases = self.select(where=where, columns=[self.name, self.product, self.read_only], transaction=transaction)
+        current_releases = self.select(where=where, columns=[self.name, self.product], transaction=transaction)
         for current_release in current_releases:
             name = current_release["name"]
             if "product" in what or "data" in what:
@@ -1962,25 +1961,6 @@ class Releases(AUSTable):
                 # has permission to modify releases of that product, too.
                 if not self.db.hasPermission(changed_by, "release", "modify", what["product"], transaction):
                     raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, what["product"]))
-
-            # The way things stand right now we cannot grant access to _only_ modify
-            # the read only flag. When the permissions were still enforced at the
-            # web level we had this because that flag had its own endpoint.
-            # If we want this again we'll need to adjust this code, and perhaps
-            # make a special method on this class that only modifies read_only
-            # (similar to addLocaleToRelease).
-            if "read_only" in what:
-                product = what.get("product", current_release["product"])
-                # In addition to being able to modify the release overall, users
-                # need to be granted explicit access to manipulate the read_only
-                # flag. This lets us give out very granular access, which can be
-                # very helpful particularly in automation.
-                if what["read_only"] is False:
-                    if not self.db.hasPermission(changed_by, "release_read_only", "unset", product, transaction):
-                        raise PermissionDeniedError("%s is not allowed to mark %s products read write" % (changed_by, what.get("product")))
-                elif what["read_only"] is True:
-                    if not self.db.hasPermission(changed_by, "release_read_only", "set", product, transaction):
-                        raise PermissionDeniedError("%s is not allowed to mark %s products read only" % (changed_by, what.get("product")))
 
             new_release = current_release.copy()
             new_release.update(what)
@@ -2125,14 +2105,11 @@ class Releases(AUSTable):
             cache.invalidate("blob", release["name"])
             cache.invalidate("blob_version", release["name"])
 
-    def isReadOnly(self, name, limit=None, transaction=None):
-        where = [self.name == name]
-        column = [self.read_only]
-        row = self.select(where=where, columns=column, limit=limit, transaction=transaction)[0]
-        return row["read_only"]
+    def isReadOnly(self, name, transaction=None):
+        return self.db.releasesReadonly.is_readonly(name, transaction=None)
 
-    def _proceedIfNotReadOnly(self, name, limit=None, transaction=None):
-        if self.isReadOnly(name, limit, transaction):
+    def _proceedIfNotReadOnly(self, name, transaction=None):
+        if self.isReadOnly(name, transaction):
             raise ReadOnlyError("Release '%s' is read only" % name)
 
 
@@ -2461,6 +2438,61 @@ class EmergencyShutoffs(AUSTable):
         super(EmergencyShutoffs, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
 
+class ReleasesReadonly(AUSTable):
+    def __init__(self, db, metadata, dialect):
+        self.table = Table('releases_readonly', metadata,
+                           Column('release_name', String(100), nullable=False, primary_key=True))
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
+
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+        for row in affected_rows:
+            if 'release_name' in row:
+                row['name'] = row['release_name']
+        return self.db.releases.getPotentialRequiredSignoffs(affected_rows, transaction=transaction)
+
+    def is_readonly(self, release_name, transaction=None):
+        release_readonly = self.select(
+            where={'release_name': release_name}, columns=[self.release_name], limit=1)
+        return bool(release_readonly)
+
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        release_info = self.get_release_info(columns['release_name'], transaction=transaction)
+
+        if not release_info:
+            raise ValueError('Release {} does not exists.'.format(columns['release_name']))
+
+        product = release_info['product']
+
+        if not self.db.hasPermission(changed_by, 'release_read_only', 'set', product, transaction):
+            raise PermissionDeniedError(
+                '{} is not allowed to mark {} products read only'.format(changed_by, product))
+
+        super(ReleasesReadonly, self).insert(
+            changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+
+    def delete(self, where, changed_by, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
+        release_readonly = self.select(where=where, transaction=transaction)[0]
+        release_info = self.get_release_info(release_readonly['release_name'], transaction=transaction)
+        product = release_info['product']
+        if not self.db.hasPermission(changed_by, 'release_read_only', 'unset', product, transaction):
+            raise PermissionDeniedError(
+                '{} is not allowed to mark {} products read write'.format(changed_by, product))
+
+        if not dryrun:
+            potential_required_signoffs = self.getPotentialRequiredSignoffs(
+                [release_info], transaction=transaction)
+            potential_required_signoffs = [obj for v in potential_required_signoffs.values() for obj in v]
+            verify_signoffs(potential_required_signoffs, signoffs)
+
+        super(ReleasesReadonly, self).delete(
+            changed_by=changed_by, where=where, old_data_version=old_data_version,
+            transaction=transaction, dryrun=dryrun)
+
+    def get_release_info(self, release_name, transaction=None):
+        release_info = self.db.releases.getReleaseInfo(names=[release_name], transaction=transaction)
+        return release_info[0] if release_info else None
+
+
 class UTF8PrettyPrinter(pprint.PrettyPrinter):
     """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
     Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
@@ -2618,6 +2650,7 @@ class AUSDatabase(object):
         self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)
         self.permissionsRequiredSignoffsTable = PermissionsRequiredSignoffsTable(self, self.metadata, dialect)
         self.emergencyShutoffsTable = EmergencyShutoffs(self, self.metadata, dialect)
+        self.releasesReadonlyTable = ReleasesReadonly(self, self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def setSystemAccounts(self, systemAccounts):
@@ -2645,15 +2678,15 @@ class AUSDatabase(object):
                 self.permissionsRequiredSignoffs.scheduled_changes.signoffs,
                 self.releases.scheduled_changes,
                 self.releases.scheduled_changes.signoffs,
+                self.releasesReadonly,
+                self.releasesReadonly.scheduled_changes,
+                self.releasesReadonly.scheduled_changes.signoffs,
             )
 
         for t in notify_tables:
             t.onInsert = bleeter
             t.onUpdate = bleeter
             t.onDelete = bleeter
-
-        read_only_bleeter = make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr, use_tls)
-        self.releases.onUpdate = read_only_bleeter
 
     def isKnownUser(self, username):
         return self.permissions.isKnownUser(username)
@@ -2735,3 +2768,7 @@ class AUSDatabase(object):
     @property
     def emergencyShutoffs(self):
         return self.emergencyShutoffsTable
+
+    @property
+    def releasesReadonly(self):
+        return self.releasesReadonlyTable

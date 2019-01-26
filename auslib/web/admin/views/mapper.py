@@ -1,4 +1,5 @@
 from auslib.web.admin.views.csrf import CSRFView
+
 from auslib.web.admin.views.permissions import (
     EnactPermissionScheduledChangeView,
     PermissionScheduledChangeHistoryView,
@@ -16,7 +17,6 @@ from auslib.web.admin.views.releases import (
     ReleaseDiffView,
     ReleaseFieldView,
     ReleaseHistoryView,
-    ReleaseReadOnlyView,
     ReleasesAPIView,
     ReleaseScheduledChangeHistoryView,
     ReleaseScheduledChangeSignoffsView,
@@ -174,16 +174,6 @@ def single_release_put(release):
 def single_release_delete(release):
     """DELETE /releases/:release"""
     return SingleReleaseView().delete(release)
-
-
-def release_read_only_get(release):
-    """GET /releases/:release/read_only"""
-    return ReleaseReadOnlyView().get(release)
-
-
-def release_read_only_put(release):
-    """PUT /releases/:release/read_only"""
-    return ReleaseReadOnlyView().put(release)
 
 
 def release_single_column_get(column):
