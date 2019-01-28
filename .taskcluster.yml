@@ -257,7 +257,9 @@ tasks:
           - release
     routes:
       - index.project.balrog.releases.latest.app
+      - index.project.balrog.releases.latest.app-py2
       - index.project.balrog.releases.{{ event.version }}.app
+      - index.project.balrog.releases.{{ event.version }}.app-py2
     metadata:
       name: Balrog Docker Image Creation (release event) (py2)
       description: Balrog Docker Image Creation (release event) (py2)
@@ -339,8 +341,8 @@ tasks:
         events:
           - release
     routes:
-      - index.project.balrog.releases.latest.app
-      - index.project.balrog.releases.{{ event.version }}.app
+      - index.project.balrog.releases.latest.app-py3
+      - index.project.balrog.releases.{{ event.version }}.app-py3
     metadata:
       name: Balrog Docker Image Creation (release event) (py3)
       description: Balrog Docker Image Creation (release event) (py3)
