@@ -77,9 +77,9 @@ pyparsing==2.3.1 \
 packaging==19.0 \
     --hash=sha256:9e1cbf8c12b1f1ce0bb5344b8d7ecf66a6f8a6e91bcb0c84593ed6d3ab5c4ab3 \
     --hash=sha256:0c98a5d0be38ed775798ece1b9727178c4469d9c3b4ada66e8e6b7849f8732af
-setuptools==40.6.3 \
-    --hash=sha256:e2c1ce9a832f34cf7a31ed010aabcab5008eb65ce8f2aadc04622232c14bdd0b \
-    --hash=sha256:3b474dad69c49f0d2d86696b68105f3a6f195f7ab655af12ef9a9c326d2b08f8
+setuptools==40.7.3 \
+    --hash=sha256:4f4acaf06d617dccfd3fbbc9fbd83cf4749759a1fa2bdf589206a3278e0d537a \
+    --hash=sha256:702fdd31cb10a65a94beba1a7d89219a58d2587a349e0a1b7827b133e99ca430
 babel==2.6.0 \
     --hash=sha256:6778d85147d5d85345c14a26aada5e478ab04e39b078b0745ee6870c2b5cf669 \
     --hash=sha256:8cba50f48c529ca3fa18cf81fa9403be176d374ac4d60738b839122dfaaa3d23
