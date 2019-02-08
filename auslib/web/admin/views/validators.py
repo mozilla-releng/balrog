@@ -3,10 +3,13 @@ from connexion.utils import is_null
 from connexion import problem
 import logging
 import jsonschema
+# to satisfy flake8 with the type hinting
+from typing import AnyStr, Union  # noqa
+from connexion.lifecycle import ConnexionResponse  # noqa
 
 from auslib.util.timestamp import getMillisecondTimestamp
 # To enable shared jsonschema validators
-import auslib.util.jsonschema_validators # noqa
+import auslib.util.jsonschema_validators  # noqa
 
 logger = logging.getLogger(__name__)
 
