@@ -8,6 +8,11 @@
     "company": "Mozilla"
   },
   "devDependencies": {
+    "follow-redirects": "1.6.1",
+    "node-notifier": "5.3.0",
+    "mime-type": "2.1.21",
+    "tough-cookie": "3.0.0",
+    "node-no
     "commander": "2.16.0",
     "debug": "<4.0",
     "grunt": "0.4.5",
