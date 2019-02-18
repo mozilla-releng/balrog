@@ -112,9 +112,9 @@ pbr==5.1.2 \
     --hash=sha256:d717573351cfe09f49df61906cd272abaa759b3e91744396b804965ff7bff38b
 SQLAlchemy==1.2.18 \
     --hash=sha256:8027fa183f5be466030617a497b2d64e0e16c8d615e5a34bdf9fab6f66bf4723
-sqlalchemy-migrate==0.11.0 \
-    --hash=sha256:14e020626ba256a272f46bf15508d6cce4f715dec6430601a37f0e97bb256785 \
-    --hash=sha256:e68af5e3e0561f629d4eb23d9d0ea77d2649747f2eff37fd29aece74615ca251
+sqlalchemy-migrate==0.12.0 \
+    --hash=sha256:8cfada30bbcf79a83b3a2d1bcd637de7e1f43e390d54de33e4f3249fd9aacfae \
+    --hash=sha256:c0ef4165e47a049b3e7ce77637a40df31db7648c08f5a2f3cd26a53ad0b95ab4
 tempita==0.5.2 \
     --hash=sha256:cacecf0baa674d356641f1d406b8bff1d756d739c46b869a54de515d08e6fc9c
 uwsgi==2.0.17.1 \
