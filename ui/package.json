@@ -9,7 +9,6 @@
   },
   "devDependencies": {
     "node-notifier": "5.3.0",
-    "mime-types": "2.1.21",
     "commander": "2.16.0",
     "debug": "<4.0",
     "grunt": "0.4.5",
