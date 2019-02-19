@@ -6,7 +6,7 @@ from tempfile import mkstemp
 import unittest
 from xml.dom import minidom
 
-from hypothesis import assume, example, given
+from hypothesis import assume, example, given, settings
 from hypothesis.strategies import characters, integers, just, text
 
 import pytest
@@ -972,6 +972,7 @@ class ClientTest(ClientTestBase):
     @example('1" name="Firefox 54.0" isOSUpdate="false" installDate="1498012260998')
     @example('1)')
     @example('"|sleep 7 #')
+    @settings(deadline=400)
     def testForceParamWithBadInputs(self, x):
         assume(x != '1')
         force_output = """<?xml version="1.0"?>
@@ -1123,6 +1124,7 @@ class ClientTest(ClientTestBase):
     # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
     # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
     @given(just("mig64"), just(1))
+    @settings(deadline=400)
     def testUnknownQueryStringParametersAreAllowedV6(self, param, val):
         ret = self.client.get("/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml?{}={}".format(param, val))
         self.assertEqual(ret.status_code, 200)

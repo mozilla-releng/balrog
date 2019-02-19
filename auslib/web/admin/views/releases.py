@@ -286,10 +286,10 @@ class SingleReleaseView(AdminView):
                                 old_data_version=old_data_version,
                                 transaction=transaction)
         except ReadOnlyError as e:
-                msg = "Couldn't delete release: %s" % e
-                self.log.warning("Bad input: %s", msg)
-                return problem(403, "Forbidden", "Couldn't delete %s. Release is marked read only" % release["name"],
-                               ext={"data": e.args})
+            msg = "Couldn't delete release: %s" % e
+            self.log.warning("Bad input: %s", msg)
+            return problem(403, "Forbidden", "Couldn't delete %s. Release is marked read only" % release["name"],
+                           ext={"data": e.args})
 
         return Response(status=200)
 

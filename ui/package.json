@@ -8,6 +8,7 @@
     "company": "Mozilla"
   },
   "devDependencies": {
+    "node-notifier": "5.3.0",
     "commander": "2.16.0",
     "debug": "<4.0",
     "grunt": "0.4.5",
