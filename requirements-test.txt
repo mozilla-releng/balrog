@@ -146,9 +146,11 @@ pluggy==0.9.0 \
 pytest-forked==1.0.2 \
     --hash=sha256:5fe33fbd07d7b1302c95310803a5e5726a4ff7f19d5a542b7ce57c76fed8135f \
     --hash=sha256:d352aaced2ebd54d42a65825722cb433004b4446ab5d2044851d9cc7a00c9e38
-more-itertools==6.0.0; python_version == '2.7' \
-    --hash=sha256:0125e8f60e9e031347105eb1682cef932f5e97d7b9a1a28d9bf00c22a5daef40 \
-    --hash=sha256:590044e3942351a1bdb1de960b739ff4ce277960f2425ad4509446dbace8d9d1
+more-itertools==5.0.0; python_version == '2.7' \
+    --hash=sha256:c0a5785b1109a6bd7fac76d6837fd1feca158e54e521ccd2ae8bfe393cc9d4fc \
+    --hash=sha256:fe7a7cae1ccb57d33952113ff4fa1bc5f879963600ed74918f1236e212ee50b9 \
+    --hash=sha256:38a936c0a6d98a38bcc2d03fdaaedaba9f412879461dd2ceff8d37564d6522e4 \
+     # pyup: ignore
 more-itertools==6.0.0; python_version >= '3' \
     --hash=sha256:0125e8f60e9e031347105eb1682cef932f5e97d7b9a1a28d9bf00c22a5daef40 \
     --hash=sha256:590044e3942351a1bdb1de960b739ff4ce277960f2425ad4509446dbace8d9d1
