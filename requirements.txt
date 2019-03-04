@@ -213,8 +213,3 @@ python-dateutil==2.8.0 \
 backports.functools_lru_cache==1.5 \
     --hash=sha256:f0b0e4eba956de51238e17573b7087e852dfe9854afd2e9c873f73fc0ca0a6dd \
     --hash=sha256:9d98697f088eb1b0fa451391f91afb5e3ebde16bbdb272819fd091151fda4f1a
-pyrsistent==0.14.11 \
-    --hash=sha256:3ca82748918eb65e2d89f222b702277099aca77e34843c5eb9d52451173970e2
-attrs==19.1.0 \
-    --hash=sha256:69c0dbf2ed392de1cb5ec704444b08a5ef81680a61cb899dc08127123af36a79 \
-    --hash=sha256:f0b870f674851ecbfbbbd364d6b5cbdff9dcedbc7f3f5e18a6891057f21fe399
