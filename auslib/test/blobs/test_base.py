@@ -23,7 +23,7 @@ class TestCreateBlob(unittest.TestCase):
 "schema_version": 2,
 "name": "blah"}"""
         blob = createBlob(data)
-        self.assertEquals(blob, dict(schema_version=2, name="blah"))
+        self.assertEqual(blob, dict(schema_version=2, name="blah"))
 
     def testLoadDict(self):
         data = dict(
@@ -31,7 +31,7 @@ class TestCreateBlob(unittest.TestCase):
             name="foo"
         )
         blob = createBlob(data)
-        self.assertEquals(blob, data)
+        self.assertEqual(blob, data)
 
     def testMissingSchemaVersion(self):
         self.assertRaises(ValueError, createBlob, dict(name="foo"))
@@ -66,7 +66,7 @@ class TestCreateBlob(unittest.TestCase):
             ))
             blob.validate('fake', [])
 
-            self.assertEquals(yaml_load.call_count, 1)
+            self.assertEqual(yaml_load.call_count, 1)
 
 
 # Things we consider to be useful values in testing blobs. Basically, these
@@ -83,18 +83,20 @@ useful_values = st.none() | st.floats(allow_nan=False) | st.text()
 def test_merge_lists_unique_items_present(base, left_additional, right_additional):
     left = deepcopy(base) + left_additional
     right = deepcopy(base) + right_additional
-    expected = sorted(list(set(deepcopy(base) + left_additional + right_additional)))
-    got = sorted(merge_lists(base, left, right))
-    assert got == expected
+    expected = list(set(deepcopy(base) + left_additional + right_additional))
+    got = merge_lists(base, left, right)
+    assert len(got) == len(expected)
+    assert all([expected_item in expected + got for expected_item in expected])
 
 
 @given(st.lists(useful_values), st.lists(useful_values))
 def test_merge_lists_no_dupes(base, additional):
     left = deepcopy(base) + additional
     right = deepcopy(base) + additional
-    expected = sorted(list(set(left)))
-    got = sorted(merge_lists(base, left, right))
-    assert got == expected
+    expected = list(set(left))
+    got = merge_lists(base, left, right)
+    assert len(got) == len(expected)
+    assert all([expected_item in expected + got for expected_item in expected])
 
 
 def unique_items_only(i):
@@ -188,7 +190,7 @@ def test_merge_dicts_raise_when_both_adding_same_key(base):
     try:
         merge_dicts(base, left, right)
     except ValueError as e:
-        assert "left and right are both changing 'foobar'" in e.message
+        assert "left and right are both changing 'foobar'" in str(e)
     else:
         assert False, "ValueError not raised"
 
@@ -204,7 +206,7 @@ def test_merge_dicts_raise_when_both_modifying_same_key(base):
     try:
         merge_dicts(base, left, right)
     except ValueError as e:
-        assert "left and right are both changing" in e.message
+        assert "left and right are both changing" in str(e)
     else:
         assert False, "ValueError not raised"
 
@@ -216,13 +218,13 @@ def test_merge_dicts_mismatched_types(base):
 
     left = deepcopy(base)
     right = deepcopy(base)
-    to_modify = base.keys()[0]
+    to_modify = list(base.keys())[0]
     left[to_modify] = "foo"
     right[to_modify] = [1, 2, 3]
     try:
         merge_dicts(base, left, right)
     except ValueError as e:
-        assert "type mismatch" in e.message
+        assert "type mismatch" in str(e)
     else:
         assert False, "ValueError not raised"
 

@@ -11,7 +11,7 @@ def matchRegex(foo, bar):
     # And globbing is allowed at the end of channel-name only
     if foo.endswith('*'):
         if(len(foo) >= 3):
-            test = foo.replace('.', '\.').replace('*', '\*', foo.count('*') - 1)
+            test = foo.replace('.', r'\.').replace('*', r'\*', foo.count('*') - 1)
             test = '^{}.*$'.format(test[:-1])
             if re.match(test, bar):
                 return True

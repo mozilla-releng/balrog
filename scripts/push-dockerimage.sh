@@ -2,6 +2,9 @@
 
 set -e
 
+DOCKERFILE="$1"
+shift
+
 tags=( $@ )
 
 password_url="taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:dockerhub"
@@ -33,7 +36,7 @@ cat > version.json <<EOF
 EOF
 
 echo "Building Docker image"
-docker build -t buildtemp .
+docker build -f $DOCKERFILE -t buildtemp .
 echo "Logging into Dockerhub"
 docker login -e $dockerhub_email -u $dockerhub_username -p $dockerhub_password
 

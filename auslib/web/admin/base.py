@@ -1,4 +1,3 @@
-import urllib
 import re
 import connexion
 import logging
@@ -11,6 +10,12 @@ from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import BalrogRequestBodyValidator
 from raven.contrib.flask import Sentry
 from specsynthase.specbuilder import SpecBuilder
+
+try:
+    from urllib import unquote
+except ImportError:  # pragma: no cover
+    from urllib.parse import unquote
+
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +32,7 @@ validator_map = {
 }
 
 connexion_app = connexion.App(__name__, validator_map=validator_map, debug=False)
-connexion_app.add_api(spec, validate_responses=True, strict_validation=True)
+connexion_app.add_api(spec, strict_validation=True)
 app = connexion_app.app
 sentry = Sentry()
 
@@ -44,7 +49,7 @@ class UnquotingMiddleware(object):
         self.app = app
 
     def __call__(self, environ, start_response):
-        environ["PATH_INFO"] = urllib.unquote(environ["PATH_INFO"])
+        environ["PATH_INFO"] = unquote(environ["PATH_INFO"])
         return self.app(environ, start_response)
 
 

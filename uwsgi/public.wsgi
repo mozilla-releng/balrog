@@ -4,7 +4,6 @@ import os
 from auslib.log import configure_logging
 
 
-SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "seabld"]
 SPECIAL_FORCE_HOSTS = ["http://download.mozilla.org"]
 DOMAIN_WHITELIST = {
     "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
@@ -18,7 +17,6 @@ DOMAIN_WHITELIST = {
     "ftp.mozilla.org": ("SystemAddons",),
 }
 if os.environ.get("STAGING"):
-    SYSTEM_ACCOUNTS.extend(["stage-ffxbld", "stage-tbirdbld", "stage-seabld"])
     DOMAIN_WHITELIST.update({
         "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
         "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
@@ -47,6 +45,10 @@ cache.make_cache("blob_version", 500, 60)
 # 500 is probably a bit oversized for the rules cache, but the items are so
 # small there sholudn't be any negative effect.
 cache.make_cache("rules", 500, 30)
+
+# Cache the emergency update state for a minute. We have less than 100
+# product/channel combinations we care about.
+cache.make_cache("updates_disabled", 100, 60)
 
 dbo.setDb(os.environ["DBURI"])
 dbo.setDomainWhitelist(DOMAIN_WHITELIST)

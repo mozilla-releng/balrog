@@ -11,6 +11,8 @@ except Exception:
     import simplejson as json
 
 from auslib.db import AUSDatabase
+from six import iteritems
+
 
 SCHEMA_VERSION = 1
 IGNORE_PLATFORMS = ('WINCE_arm-msvc',)
@@ -84,9 +86,9 @@ def isMac64(platform, version):
 
 
 def cmpVersions(left, right):
-    left = StrictVersion(re.sub('rc(\d+)', 'b9999999\\1', left))
-    right = StrictVersion(re.sub('rc(\d+)', 'b9999999\\1', right))
-    return cmp(left, right)
+    left = StrictVersion(re.sub(r'rc(\d+)', 'b9999999\\1', left))
+    right = StrictVersion(re.sub(r'rc(\d+)', 'b9999999\\1', right))
+    return (left > right) - (left < right)
 
 
 def versionLt(left, right):
@@ -104,7 +106,7 @@ def getPlatforms(platform, version):
     # they want.
     def findPlatforms(pmap, p):
         r = []
-        for k, v in pmap.iteritems():
+        for k, v in iteritems(pmap):
             if p in k or p in v.values():
                 r.append((k, v))
         if r:
@@ -369,7 +371,7 @@ if __name__ == "__main__":
                 fn(options.walkdir, d, options.version, options.partial, options.exclude_partials, options.locales, relData)
 
     if options.verbose:
-        print json.dumps(relData, sort_keys=True, indent=4)
+        print(json.dumps(relData, sort_keys=True, indent=4))
     if options.db:
         current = db.releases.select(columns=[db.releases.data_version], where=[db.releases.name == options.name])
         if current:

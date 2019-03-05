@@ -1,19 +1,21 @@
+# coding: latin-1
 import logging
 import mock
 import os
 from tempfile import mkstemp
 import unittest
 from xml.dom import minidom
-import json
 
-from hypothesis import assume, example, given
+from hypothesis import assume, example, given, settings
 from hypothesis.strategies import characters, integers, just, text
+
+import pytest
 
 import auslib.web.public.client as client_api
 from auslib.web.public.client import extract_query_version
 
 from auslib.blobs.base import createBlob
-from auslib.global_state import dbo
+from auslib.global_state import dbo, cache
 from auslib.web.public.base import app
 
 from auslib.errors import BadDataError
@@ -26,31 +28,31 @@ def setUpModule():
 
 class TestGetSystemCapabilities(unittest.TestCase):
     def testUnprefixedInstructionSetOnly(self):
-        self.assertEquals(
+        self.assertEqual(
             client_api.getSystemCapabilities("SSE3"),
             {"instructionSet": "SSE3", "memory": None, "jaws": None}
         )
 
     def testUnprefixedInstructionSetAndMemory(self):
-        self.assertEquals(
+        self.assertEqual(
             client_api.getSystemCapabilities("SSE3,8095"),
             {"instructionSet": "SSE3", "memory": 8095, "jaws": None}
         )
 
     def testPrefixedInstructionSetAndMemory(self):
-        self.assertEquals(
+        self.assertEqual(
             client_api.getSystemCapabilities("ISET:SSE2,MEM:6321"),
             {"instructionSet": "SSE2", "memory": 6321, "jaws": None}
         )
 
     def testPrefixedInstructionSetMemoryAndJaws(self):
-        self.assertEquals(
+        self.assertEqual(
             client_api.getSystemCapabilities("ISET:SSE2,MEM:6321,JAWS:1"),
             {"instructionSet": "SSE2", "memory": 6321, "jaws": True}
         )
 
     def testNothingProvided(self):
-        self.assertEquals(
+        self.assertEqual(
             client_api.getSystemCapabilities("NA"),
             {"instructionSet": "NA", "memory": None, "jaws": None}
         )
@@ -59,29 +61,35 @@ class TestGetSystemCapabilities(unittest.TestCase):
         self.assertRaises(ValueError, client_api.getSystemCapabilities, ("ISET:SSE2,MEM:63T1A"))
 
     def testUnknownField(self):
-        self.assertEquals(
+        self.assertEqual(
             client_api.getSystemCapabilities("ISET:SSE3,MEM:6721,PROC:Intel"),
             {"instructionSet": "SSE3", "memory": 6721, "jaws": None}
         )
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class ClientTestCommon(unittest.TestCase):
     def assertHttpResponse(self, http_response):
-        self.assertEqual(http_response.status_code, 200, http_response.data)
+        self.assertEqual(http_response.status_code, 200, http_response.get_data())
         self.assertEqual(http_response.mimetype, 'text/xml')
 
     def assertUpdatesAreEmpty(self, http_reponse):
         self.assertHttpResponse(http_reponse)
         # An empty update contains an <updates> tag with a newline, which is what we're expecting here
         self.assertEqual(
-            minidom.parseString(http_reponse.data).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n'
+            minidom.parseString(http_reponse.get_data()).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n'
         )
 
     def assertUpdateEqual(self, http_reponse, expected_xml_string):
         self.assertHttpResponse(http_reponse)
-        returned = minidom.parseString(http_reponse.data)
+        returned = minidom.parseString(http_reponse.get_data())
         expected = minidom.parseString(expected_xml_string)
         self.assertEqual(returned.toxml(), expected.toxml())
+
+    def assertUpdateTextEqual(self, http_response, expected):
+        self.assertHttpResponse(http_response)
+        returned = http_response.get_data(as_text=True)
+        self.assertEqual(returned, expected)
 
 
 class ClientTestBase(ClientTestCommon):
@@ -114,7 +122,7 @@ class ClientTestBase(ClientTestCommon):
 }
 """)
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e', 'distTest')})
         self.client = app.test_client()
         dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
@@ -859,23 +867,58 @@ class ClientTest(ClientTestBase):
     def testGetURLNotInWhitelist(self):
         ret = self.client.get('/update/3/d/20.0/1/p/l/a/a/a/a/update.xml')
         self.assertHttpResponse(ret)
-        self.assertEqual(minidom.parseString(ret.data).getElementsByTagName('updates')[0].firstChild.nodeValue,
+        self.assertEqual(minidom.parseString(ret.get_data()).getElementsByTagName('updates')[0].firstChild.nodeValue,
                          '\n    ')
 
     def testEmptySnippetMissingExtv(self):
         ret = self.client.get('/update/3/e/20.0/1/p/l/a/a/a/a/update.xml')
         self.assertUpdatesAreEmpty(ret)
 
+    def testUnicodeAcceptedInURLFields(self):
+        # /update/1, 2, and 3 are just subsets of /update/4 - so we don't
+        # need to test them explicitly
+        v4_url = "/update/4/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/update.xml"
+        subs = [3, "e", "20.0", "1", "p", "l", "a", "a", "a", "a"]
+        for i in range(0, 10):
+            my_subs = subs[:]
+            subs[i] = "ÃÃÃÃÃÃ"
+            my_url = v4_url.format(*my_subs)
+            ret = self.client.get(my_url)
+            self.assertEqual(ret.status_code, 200)
+
+        v5_url = "/update/5/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/update.xml"
+        subs = [3, "e", "20.0", "1", "p", "l", "a", "a", "a", "a"]
+        for i in range(0, 10):
+            my_subs = subs[:]
+            subs[i] = "ÃÃÃÃÃÃ"
+            my_url = v5_url.format(*my_subs)
+            ret = self.client.get(my_url)
+            self.assertEqual(ret.status_code, 200)
+
+        v6_url = "/update/6/{}/{}/{}/{}/{}/{}/{}/{}/{}/{}/update.xml"
+        subs = [3, "e", "20.0", "1", "p", "l", "a", "a", "a", "a"]
+        for i in range(0, 10):
+            my_subs = subs[:]
+            subs[i] = "ÃÃÃÃÃÃ"
+            my_url = v6_url.format(*my_subs)
+            ret = self.client.get(my_url)
+            self.assertEqual(ret.status_code, 200)
+
+    def testUnicodeAcceptedInQueryFields(self):
+        for field in ("force", "mig64", "avast"):
+            ret = self.client.get("/update/6/3/e/2.0.0/1/p/l/a/a/a/a/update.xml?{}=ÃÃÃÃÃÃ".format(field))
+            self.assertEqual(ret.status_code, 200)
+
     def testRobotsExists(self):
         ret = self.client.get('/robots.txt')
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.mimetype, 'text/plain')
-        self.assertTrue('User-agent' in ret.data)
+        self.assertTrue('User-agent' in ret.get_data(as_text=True))
 
     def testContributeJsonExists(self):
         ret = self.client.get('/contribute.json')
         self.assertEqual(ret.status_code, 200)
-        self.assertTrue(json.loads(ret.data))
+        self.assertTrue(ret.get_json())
         self.assertEqual(ret.mimetype, 'application/json')
 
     def testBadAvastURLsFromBug1125231(self):
@@ -888,7 +931,7 @@ class ClientTest(ClientTestBase):
         # should get the same update XML.
         ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
         self.assertHttpResponse(ret2)
-        self.assertEqual(ret.data, ret2.data)
+        self.assertEqual(ret.get_data(), ret2.get_data())
 
     def testFixForBug1125231DoesntBreakXhLocale(self):
         ret = self.client.get('/update/4/b/1.0/1/p/xh/a/a/a/a/1/update.xml')
@@ -905,14 +948,14 @@ class ClientTest(ClientTestBase):
         self.assertHttpResponse(ret)
         ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1')
         self.assertHttpResponse(ret2)
-        self.assertEqual(ret.data, ret2.data)
+        self.assertEqual(ret.get_data(), ret2.get_data())
 
     def testAvastURLsWithUnescapedBadQueryArgs(self):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1?avast=1")
         self.assertHttpResponse(ret)
         ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1')
         self.assertHttpResponse(ret2)
-        self.assertEqual(ret.data, ret2.data)
+        self.assertEqual(ret.get_data(), ret2.get_data())
 
     def testAvastURLsWithGoodQueryArgs(self):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1&avast=1")
@@ -929,6 +972,7 @@ class ClientTest(ClientTestBase):
     @example('1" name="Firefox 54.0" isOSUpdate="false" installDate="1498012260998')
     @example('1)')
     @example('"|sleep 7 #')
+    @settings(deadline=400)
     def testForceParamWithBadInputs(self, x):
         assume(x != '1')
         force_output = """<?xml version="1.0"?>
@@ -1047,42 +1091,43 @@ class ClientTest(ClientTestBase):
     @given(just("mig64"), just(1))
     def testUnknownQueryStringParametersAreAllowedV1(self, param, val):
         ret = self.client.get("/update/1/b/1.0/1/p/l/a/update.xml?{}={}".format(param, val))
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
 
     # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
     # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
     @given(just("mig64"), just(1))
     def testUnknownQueryStringParametersAreAllowedV2(self, param, val):
         ret = self.client.get("/update/2/c/10.0/1/p/l/a/a/update.xml?{}={}".format(param, val))
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
 
     # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
     # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
     @given(just("mig64"), just(1))
     def testUnknownQueryStringParametersAreAllowedV3(self, param, val):
         ret = self.client.get("/update/3/b/1.0/1/p/l/a/a/a/a/update.xml?{}={}".format(param, val))
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
 
     # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
     # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
     @given(just("mig64"), just(1))
     def testUnknownQueryStringParametersAreAllowedV4(self, param, val):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?{}={}".format(param, val))
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
 
     # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
     # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
     @given(just("mig64"), just(1))
     def testUnknownQueryStringParametersAreAllowedV5(self, param, val):
         ret = self.client.get("/update/5/b/1.0/1/p/l/a/a/a/a/1/update.xml?{}={}".format(param, val))
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
 
     # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
     # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
     @given(just("mig64"), just(1))
+    @settings(deadline=400)
     def testUnknownQueryStringParametersAreAllowedV6(self, param, val):
         ret = self.client.get("/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml?{}={}".format(param, val))
-        self.assertEquals(ret.status_code, 200)
+        self.assertEqual(ret.status_code, 200)
 
 
 class ClientTestMig64(ClientTestCommon):
@@ -1106,7 +1151,7 @@ class ClientTestMig64(ClientTestCommon):
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
         app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
         dbo.setDb("sqlite:///:memory:")
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
         dbo.setDomainWhitelist({"a.com": ("a", "b", "c")})
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a",
@@ -1251,7 +1296,7 @@ class ClientTestJaws(ClientTestCommon):
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
         app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
         dbo.setDb("sqlite:///:memory:")
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
         dbo.setDomainWhitelist({"a.com": ("a", "b", "c")})
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a",
@@ -1410,6 +1455,7 @@ class ClientTestEmergencyShutoff(ClientTestBase):
     </update>
 </updates>
 """
+        cache.reset()
 
     def testShutoffUpdates(self):
         update_query = '/update/3/b/1.0/1/p/l/a/a/a/a/update.xml'
@@ -1421,6 +1467,21 @@ class ClientTestEmergencyShutoff(ClientTestBase):
 
         ret = self.client.get(update_query)
         self.assertUpdatesAreEmpty(ret)
+
+    def testShutoffUpdatesCache(self):
+        # Create the updates_disabled cache for this test
+        cache.make_cache('updates_disabled', 10, 100)
+        update_query = '/update/3/b/1.0/1/p/l/a/a/a/a/update.xml'
+        ret = self.client.get(update_query)
+        self.assertUpdateEqual(ret, self.update_xml)
+
+        dbo.emergencyShutoffs.t.insert().execute(
+            product='b', channel='a', data_version=1)
+
+        # We should actually get the same update here since the disabled
+        # updates check has been cached
+        ret = self.client.get(update_query)
+        self.assertUpdateEqual(ret, self.update_xml)
 
     def testShutoffUpdatesFallbackChannel(self):
         update_query = '/update/3/b/1.0/1/p/l/a-cck-foo/a/a/a/update.xml'
@@ -1443,7 +1504,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         app.config['DEBUG'] = True
         app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a",)}
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
 
     def testCacheControlIsSet(self):
@@ -1533,7 +1594,25 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual('I break!', ret.data)
+            self.assertEqual('I break!', ret.get_data(as_text=True))
+
+    def testErrorMessageOn500withSimpleArgs(self):
+        with mock.patch('auslib.web.public.client.getQueryFromURL') as m:
+            m.side_effect = Exception('I break!')
+            m.side_effect.args = ("one", "two", "three")
+            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual(ret.status_code, 500)
+            self.assertEqual(ret.mimetype, "text/plain")
+            self.assertEqual('one two three', ret.get_data(as_text=True))
+
+    def testErrorMessageOn500withComplexArgs(self):
+        with mock.patch('auslib.web.public.client.getQueryFromURL') as m:
+            m.side_effect = Exception('I break!')
+            m.side_effect.args = ("one", ("two", "three"))
+            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            self.assertEqual(ret.status_code, 500)
+            self.assertEqual(ret.mimetype, "text/plain")
+            self.assertEqual("one ('two', 'three')", ret.get_data(as_text=True))
 
     def testEscapedOutputOn500(self):
         with mock.patch('auslib.web.public.client.getQueryFromURL') as m:
@@ -1541,22 +1620,23 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual('50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt;', ret.data)
+            self.assertEqual('50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt;', ret.get_data(as_text=True))
 
     def testEscapedOutputOn400(self):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
             m.side_effect = BadDataError('Version number 50.1.0zibj5<img src%3da onerror%3dalert(document.domain)> is invalid.')
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
-            self.assertEqual(ret.status_code, 400, ret.data)
+            error_message = ret.get_data(as_text=True)
+            self.assertEqual(ret.status_code, 400, error_message)
             self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual("Version number 50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt; is invalid.", ret.data)
+            self.assertEqual("Version number 50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt; is invalid.", error_message)
 
     def testSentryBadDataError(self):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch("auslib.web.public.base.sentry") as sentry:
             m.side_effect = BadDataError("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertFalse(sentry.captureException.called)
-            self.assertEqual(ret.status_code, 400, ret.data)
+            self.assertEqual(ret.status_code, 400, ret.get_data())
             self.assertEqual(ret.mimetype, "text/plain")
 
     def testSentryRealError(self):
@@ -1566,7 +1646,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
             self.assertTrue(sentry.captureException.called)
-            self.assertEqual('exterminate!', ret.data)
+            self.assertEqual('exterminate!', ret.get_data(as_text=True))
 
     def testNonSubstitutedUrlVariablesReturnEmptyUpdate(self):
         request1 = '/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml'
@@ -1585,3 +1665,75 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
                 ret = self.client.get(request)
                 self.assertUpdatesAreEmpty(ret)
                 self.assertFalse(mock_cr_view.called)
+
+    # "Accepted" is a bit weird here - it basically just means "doesn't cause an ISE 500"
+    # We don't have any valid query fields with unicode in their name, so a 400 is the
+    # best thing we can test for.
+    def testUnicodeAcceptedInQueryFieldName(self):
+        ret = self.client.get("/update/6/3/e/2.0.0/1/p/l/a/a/a/a/update.xml?fooÃÃÃÃÃÃbar=1")
+        self.assertEqual(ret.status_code, 400)
+
+
+class ClientTestCompactXML(ClientTestCommon):
+    """Tests the compact XML needed to rescue two Firefox nightlies (bug 1517743)."""
+
+    @classmethod
+    def setUpClass(cls):
+        # Error handlers are removed in order to give us better debug messages
+        cls.error_spec = app.error_handler_spec
+        # Ripped from https://github.com/mitsuhiko/flask/blob/1f5927eee2288b4aaf508af5dc1f148aa2140d91/flask/app.py#L394
+        app.error_handler_spec = {None: {}}
+
+    @classmethod
+    def tearDownClass(cls):
+        app.error_handler_spec = cls.error_spec
+
+    def setUp(self):
+        self.version_fd, self.version_file = mkstemp()
+        app.config['DEBUG'] = True
+        app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
+        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b',)}
+        dbo.setDb('sqlite:///:memory:')
+        self.metadata.create_all(dbo.engine)
+        dbo.setDomainWhitelist({'a.com': ('b',)})
+        self.client = app.test_client()
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='Firefox-mozilla-central-nightly-latest',
+                                     update_type='minor', product='b', data_version=1)
+        dbo.releases.t.insert().execute(name='Firefox-mozilla-central-nightly-latest', product='b', data_version=1, data=createBlob("""
+{
+    "name": "Firefox-mozilla-central-nightly-latest",
+    "schema_version": 1,
+    "appv": "1.0",
+    "extv": "1.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "30000101000000",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/z"
+                    }
+                }
+            }
+        }
+    }
+}
+"""))
+
+    def testGoodNightly(self):
+        ret = self.client.get('/update/6/b/1.0/20181212121212/p/l/a/a/a/a/a/update.xml')
+        self.assertUpdateTextEqual(ret, u"""<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="30000101000000">
+        <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>""")
+
+    def testBrokenNightly(self):
+        ret = self.client.get('/update/6/b/1.0/20190103220533/p/l/a/a/a/a/a/update.xml')
+        self.assertUpdateTextEqual(ret, u'<?xml version="1.0"?><updates><update type="minor" version="1.0" extensionVersion="1.0" buildID="30000101000000">'
+                                        u'<patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/></update></updates>')

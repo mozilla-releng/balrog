@@ -1,12 +1,17 @@
 import unittest
+from six import unichr
+
+import pytest
+
 from auslib.global_state import dbo
 from auslib.web.public.base import app
 
 
+@pytest.mark.usefixtures("current_db_schema")
 class UnicodeTest(unittest.TestCase):
     def setUp(self):
         dbo.setDb('sqlite:///:memory:')
-        dbo.create()
+        self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
 
     def testUnicodeInRoute(self):

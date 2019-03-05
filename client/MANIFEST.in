@@ -1,0 +1,4 @@
+include LICENSE
+include Dockerfile.dev
+include tox.ini
+include run-tests.sh

@@ -8,8 +8,10 @@ import simplejson as json
 import sys
 import time
 
+from six import integer_types, iteritems, string_types, reraise, text_type
+
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-    create_engine, select, BigInteger, Boolean, join
+    create_engine, select, BigInteger, Boolean, join, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 import sqlalchemy.types
@@ -34,27 +36,8 @@ def rows_to_dicts(rows):
     are immutable), or if you want to serialize them to JSON
     (SQLAlchemy rows get confused if you try to serialize them).
     """
-    return map(dict, rows)
-
-
-def _matchesRegex(foo, bar):
-    # Expand wildcards and use ^/$ to make sure we don't succeed on partial
-    # matches. Eg, 3.6* matches 3.6, 3.6.1, 3.6b3, etc.
-    # Channel length must be strictly greater than two
-    # And globbing is allowed at the end of channel-name only
-    if foo.endswith('*'):
-        if(len(foo) >= 3):
-            test = foo.replace('.', '\.').replace('*', '\*', foo.count('*') - 1)
-            test = '^{}.*$'.format(test[:-1])
-            if re.match(test, bar):
-                return True
-            return False
-        else:
-            return False
-    elif (foo == bar):
-        return True
-    else:
-        return False
+    # In Python 3, map returns an iterable instead a list.
+    return [dict(row) for row in rows]
 
 
 class AlreadySetupError(Exception):
@@ -190,7 +173,7 @@ def verify_signoffs(potential_required_signoffs, signoffs):
         signoffs_given[signoff["role"]] += 1
     for rs in potential_required_signoffs:
         required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
-    for role, signoffs_required in required_signoffs.iteritems():
+    for role, signoffs_required in iteritems(required_signoffs):
         if signoffs_given[role] < signoffs_required:
             raise SignoffRequiredError("Not enough signoffs for role '{}'".format(role))
 
@@ -211,14 +194,14 @@ class AUSTransaction(object):
     def __enter__(self):
         return self
 
-    def __exit__(self, *exc):
+    def __exit__(self, exc_type, exc_value, exc_traceback):
         try:
             # If something that executed in the context raised an Exception,
             # rollback and re-raise it.
-            if exc[0]:
+            if exc_type:
                 self.log.debug("exc is:", exc_info=True)
                 self.rollback()
-                raise exc[0], exc[1], exc[2]
+                reraise(exc_type, exc_value, exc_traceback)
             # Also need to check for exceptions during commit!
             try:
                 self.commit()
@@ -247,7 +230,7 @@ class AUSTransaction(object):
             klass, e, tb = sys.exc_info()
             self.rollback()
             e = TransactionError(e.args)
-            raise TransactionError, e, tb
+            reraise(TransactionError, e, tb)
 
     def commit(self):
         try:
@@ -256,7 +239,7 @@ class AUSTransaction(object):
             klass, e, tb = sys.exc_info()
             self.rollback()
             e = TransactionError(e.args)
-            raise TransactionError, e, tb
+            reraise(TransactionError, e, tb)
 
     def rollback(self):
         self.trans.rollback()
@@ -360,7 +343,7 @@ class AUSTable(object):
            @rtype: sqlalchemy.sql.expression.Select
         """
         if columns:
-            table_columns = [(self.t.c[col] if isinstance(col, basestring) else col) for col in columns]
+            table_columns = [(self.t.c[col] if isinstance(col, string_types) else col) for col in columns]
             query = select(table_columns, order_by=order_by, limit=limit, offset=offset, distinct=distinct)
         else:
             query = self.t.select(order_by=order_by, limit=limit, offset=offset, distinct=distinct)
@@ -386,7 +369,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in where.iteritems()]
+            where = [getattr(self, k) == v for k, v in iteritems(where)]
 
         query = self._selectStatement(where=where, **kwargs)
 
@@ -539,7 +522,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in where.iteritems()]
+            where = [getattr(self, k) == v for k, v in iteritems(where)]
 
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
@@ -617,7 +600,7 @@ class AUSTable(object):
         return ret
 
     def update(self, where, what, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
-        """Perform an UPDATE statement on this stable. See AUSTable._updateStatement for
+        """Perform an UPDATE statement on this table. See AUSTable._updateStatement for
            a description of `where' and `what'. This method can only update a single row
            per invocation. If the where clause given would update zero or multiple rows, a
            WrongNumberOfRowsError is raised.
@@ -645,7 +628,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in where.iteritems()]
+            where = [getattr(self, k) == v for k, v in iteritems(where)]
 
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
@@ -661,6 +644,18 @@ class AUSTable(object):
         else:
             with AUSTransaction(self.getEngine()) as trans:
                 return self._prepareUpdate(trans, where, what, changed_by, old_data_version)
+
+    def count(self, column='*', where=None, transaction=None):
+        count_statement = select(columns=[func.count(column)], from_obj=self.t)
+        if where:
+            for cond in where:
+                count_statement = count_statement.where(cond)
+        if transaction:
+            row_count = transaction.execute(count_statement).scalar()
+        else:
+            with AUSTransaction(self.getEngine()) as trans:
+                row_count = trans.execute(count_statement).scalar()
+        return row_count
 
     def getRecentChanges(self, limit=10, transaction=None):
         return self.history.select(transaction=transaction,
@@ -828,7 +823,7 @@ class History(AUSTable):
         # We know a bunch of columns are going to be empty...easier to strip them out
         # than to be super verbose (also should let this test continue to work even
         # if the schema changes).
-        for key in change.keys():
+        for key in change.copy().keys():
             if change[key] is None:
                 del change[key]
         return change
@@ -928,7 +923,7 @@ class ConditionsTable(AUSTable):
         if set(conditions) - set(self.condition_groups):
             raise ValueError("Unknown conditions in: {}".format(conditions))
 
-        self.enabled_condition_groups = {k: v for k, v in self.condition_groups.iteritems() if k in conditions}
+        self.enabled_condition_groups = {k: v for k, v in iteritems(self.condition_groups) if k in conditions}
 
         self.table = Table("{}_conditions".format(baseName), metadata,
                            Column("sc_id", Integer, primary_key=True),
@@ -948,12 +943,12 @@ class ConditionsTable(AUSTable):
         super(ConditionsTable, self).__init__(db, dialect, history=history, versioned=True)
 
     def validate(self, conditions):
-        conditions = {k: v for k, v in conditions.iteritems() if conditions[k]}
+        conditions = {k: v for k, v in iteritems(conditions) if conditions[k]}
         if not conditions:
             raise ValueError("No conditions found")
 
         for c in conditions:
-            for condition, args in self.condition_groups.iteritems():
+            for condition, args in iteritems(self.condition_groups):
                 if c in args:
                     if c in itertools.chain(*self.enabled_condition_groups.values()):
                         break
@@ -1044,7 +1039,7 @@ class ScheduledChangeTable(AUSTable):
         with the base table ones prefixed."""
         ret = {}
         base_columns = [c.name for c in self.baseTable.t.get_children()]
-        for k, v in columns.iteritems():
+        for k, v in iteritems(columns):
             if k in base_columns:
                 ret["base_%s" % k] = v
             else:
@@ -1398,15 +1393,9 @@ class RequiredSignoffsTable(AUSTable):
         for col in self.decisionColumns:
             if columns[col] is None:
                 raise ValueError("{} are required.".format(self.decisionColumns))
+            user_table = self.db.permissions.user_roles
+            users_with_role = user_table.count(where=[user_table.role == columns["role"]], transaction=transaction)
 
-        if transaction:
-            users_with_role, = transaction.execute(
-                self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"])
-            ).fetchone()
-        else:
-            users_with_role, = self.getEngine().execute(
-                self.db.permissions.user_roles.t.count().where(self.db.permissions.user_roles.role == columns["role"])
-            ).fetchone()
         if users_with_role < columns["signoffs_required"]:
             msg = ", ".join([columns[col] for col in self.decisionColumns])
             raise ValueError("Cannot require {} signoffs for {} - only {} users hold the {} role".format(
@@ -1494,6 +1483,8 @@ class SignoffsTable(AUSTable):
             raise ValueError("sc_id and role must be provided when signing off")
         if "username" in columns and columns["username"] != changed_by:
             raise PermissionDeniedError("Cannot signoff on behalf of another user")
+        if changed_by in self.db.systemAccounts:
+            raise PermissionDeniedError("System account cannot signoff")
         if not self.db.hasRole(changed_by, columns["role"], transaction=transaction):
             raise PermissionDeniedError("{} cannot signoff with role '{}'".format(changed_by, columns["role"]))
 
@@ -1517,6 +1508,8 @@ class SignoffsTable(AUSTable):
     def delete(self, where, changed_by=None, transaction=None, dryrun=False, reset_signoff=False):
         if not reset_signoff:
             for row in self.select(where, transaction):
+                if changed_by in self.db.systemAccounts:
+                    raise PermissionDeniedError("System accounts cannot revoke a signoff")
                 if not self.db.hasRole(changed_by, row["role"], transaction=transaction) and not self.db.isAdmin(changed_by, transaction=transaction):
                     raise PermissionDeniedError("Cannot revoke a signoff made by someone in a group you do not belong to")
 
@@ -1616,14 +1609,6 @@ class Rules(AUSTable):
         """Returns all of the rules, sorted in ascending order"""
         return self.select(where=where, order_by=(self.priority, self.version, self.mapping), transaction=transaction)
 
-    def countRules(self, transaction=None):
-        """Returns a number of the count of rules"""
-        if transaction:
-            count, = transaction.execute(self.t.count()).fetchone()
-        else:
-            count, = self.getEngine().execute(self.t.count()).fetchone()
-        return count
-
     def getRulesMatchingQuery(self, updateQuery, fallbackChannel, transaction=None):
         """Returns all of the rules that match the given update query.
            For cases where a particular updateQuery channel has no
@@ -1643,7 +1628,7 @@ class Rules(AUSTable):
             else:
                 where.extend([(self.distVersion == null())])
 
-            self.log.debug("where: %s" % where)
+            self.log.debug("where: %s", where)
             return self.select(where=where, transaction=transaction)
 
         # This cache key is constructed from all parts of the updateQuery that
@@ -1843,14 +1828,6 @@ class Releases(AUSTable):
             row["data"] = self.getReleaseBlob(row["name"], transaction)
         return rows
 
-    def countReleases(self, transaction=None):
-        """Returns a number of the count of releases"""
-        if transaction:
-            count, = transaction.execute(self.t.count()).fetchone()
-        else:
-            count, = self.getEngine().execute(self.t.count()).fetchone()
-        return count
-
     def getReleaseInfo(self, names=None, product=None, limit=None,
                        transaction=None, nameOnly=False, name_prefix=None):
         where = []
@@ -1909,13 +1886,18 @@ class Releases(AUSTable):
             except IndexError:
                 raise KeyError("Couldn't find release with name '%s'" % name)
 
+        def get_data_version(obj):
+            if isinstance(obj, integer_types):
+                return obj
+            return obj["data_version"]
+
         cached_blob = cache.get("blob", name, getBlob)
 
         # Even though we may have retrieved a cached blob, we need to make sure
         # that it's not older than the one in the database. If the data version
         # of the cached blob and the latest data version don't match, we need
         # to update the cache with the latest blob.
-        if data_version > cached_blob["data_version"]:
+        if get_data_version(data_version) > get_data_version(cached_blob["data_version"]):
             blob_info = getBlob()
             cache.put("blob", name, blob_info)
             blob = blob_info["blob"]
@@ -1929,7 +1911,7 @@ class Releases(AUSTable):
             # data version, the blob version cache would've expired as well.
             # If we hit one of these cases, we should bring the blob version
             # cache up to date since we have it.
-            if cached_blob["data_version"] > data_version:
+            if get_data_version(cached_blob["data_version"]) > get_data_version(data_version):
                 cache.put("blob_version", name, data_version)
             blob = cached_blob["blob"]
 
@@ -2112,16 +2094,9 @@ class Releases(AUSTable):
             return False
 
     def isMappedTo(self, name, transaction=None):
-        if transaction:
-            mapping_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.mapping == name)).fetchone()[0]
-            fallbackMapping_count = transaction.execute(self.db.rules.t.count().where(self.db.rules.fallbackMapping == name)).fetchone()[0]
-        else:
-            mapping_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.mapping == name)).fetchone()[0]
-            fallbackMapping_count = self.getEngine().execute(self.db.rules.t.count().where(self.db.rules.fallbackMapping == name)).fetchone()[0]
-        if mapping_count > 0 or fallbackMapping_count > 0:
-            return True
-
-        return False
+        mapping_count = self.count(where=[self.db.rules.mapping == name], transaction=transaction)
+        fallbackMapping_count = self.count(where=[self.db.rules.fallbackMapping == name], transaction=transaction)
+        return mapping_count > 0 or fallbackMapping_count > 0
 
     def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
         release = self.select(where=where, columns=[self.name, self.product], transaction=transaction)
@@ -2461,7 +2436,7 @@ class EmergencyShutoffs(AUSTable):
         row = affected_rows[-1]
         where = {"product": row["product"]}
         for rs in self.db.productRequiredSignoffs.select(where=where, transaction=transaction):
-            if not row.get("channel") or _matchesRegex(row["channel"], rs["channel"]):
+            if not row.get("channel") or matchRegex(row["channel"], rs["channel"]):
                 potential_required_signoffs['rs'].append(rs)
         return potential_required_signoffs
 
@@ -2482,7 +2457,7 @@ class UTF8PrettyPrinter(pprint.PrettyPrinter):
     """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
     Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
     def format(self, object, context, maxlevels, level):
-        if isinstance(object, unicode):
+        if isinstance(object, text_type):
             return pprint._safe_repr(object.encode('utf8'), context, maxlevels, level)
         return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
 
@@ -2621,6 +2596,7 @@ class AUSDatabase(object):
         if dburi:
             self.setDburi(dburi, mysql_traditional_mode)
         self.log = logging.getLogger(self.__class__.__name__)
+        self.systemAccounts = []
 
     def setDburi(self, dburi, mysql_traditional_mode=False):
         """Setup the database connection. Note that SQLAlchemy only opens a connection
@@ -2642,6 +2618,9 @@ class AUSDatabase(object):
         self.permissionsRequiredSignoffsTable = PermissionsRequiredSignoffsTable(self, self.metadata, dialect)
         self.emergencyShutoffsTable = EmergencyShutoffs(self, self.metadata, dialect)
         self.metadata.bind = self.engine
+
+    def setSystemAccounts(self, systemAccounts):
+        self.systemAccounts = systemAccounts
 
     def setDomainWhitelist(self, domainWhitelist):
         self.releasesTable.setDomainWhitelist(domainWhitelist)

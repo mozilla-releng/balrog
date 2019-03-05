@@ -1,4 +1,3 @@
-import json
 import mock
 from auslib.global_state import dbo
 from auslib.test.admin.views.base import ViewTest
@@ -33,19 +32,19 @@ class TestEmergencyShutoff(ViewTest):
     def test_get_emergency_shutoff_list(self):
         resp = self._get('/emergency_shutoff')
         self.assertStatusCode(resp, 200)
-        data = json.loads(resp.data)
-        self.assertEquals(data['count'], 3)
+        data = resp.get_json()
+        self.assertEqual(data['count'], 3)
         self.assertIn('shutoffs', data)
 
     def test_get_by_id(self):
         resp = self._get('/emergency_shutoff/Fennec/beta')
         self.assertStatusCode(resp, 200)
         self.assertIn('X-Data-Version', resp.headers)
-        data = json.loads(resp.data)
+        data = resp.get_json()
         self.assertIn('product', data)
-        self.assertEquals(data['product'], 'Fennec')
+        self.assertEqual(data['product'], 'Fennec')
         self.assertIn('channel', data)
-        self.assertEquals(data['channel'], 'beta')
+        self.assertEqual(data['channel'], 'beta')
 
     def test_get_notfound(self):
         resp = self._get('/emergency_shutoff/foo/bar')
@@ -59,7 +58,7 @@ class TestEmergencyShutoff(ViewTest):
         shutoffs = dbo.emergencyShutoffs.select(where=data)
         self.assertTrue(shutoffs)
         for key in data.keys():
-            self.assertEquals(data[key], shutoffs[0][key])
+            self.assertEqual(data[key], shutoffs[0][key])
 
     def test_create_no_permission(self):
         data = {'product': 'Thunderbird',
@@ -93,16 +92,16 @@ class TestEmergencyShutoff(ViewTest):
     def test_get_scheduled_changes(self):
         resp = self._get('/scheduled_changes/emergency_shutoff')
         self.assertStatusCode(resp, 200)
-        resp_data = json.loads(resp.data)
-        self.assertEquals(resp_data['count'], 2)
+        resp_data = resp.get_json()
+        self.assertEqual(resp_data['count'], 2)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def test_schedule_deletion(self):
         data = {'when': 4200024, 'change_type': 'delete', 'data_version': 1,
                 'product': 'Fennec', 'channel': 'beta'}
         ret = self._post("/scheduled_changes/emergency_shutoff", data=data)
-        self.assertEquals(ret.status_code, 200)
-        self.assertIn('sc_id', json.loads(ret.data))
+        self.assertEqual(ret.status_code, 200)
+        self.assertIn('sc_id', ret.get_json())
         sc_table = dbo.emergencyShutoffs.scheduled_changes
         conditions_table = sc_table.conditions
         sc = sc_table.t.select().where(sc_table.base_product == data['product'])\
@@ -118,10 +117,10 @@ class TestEmergencyShutoff(ViewTest):
     def test_update_scheduled_deletion(self):
         data = {'when': 123454321, 'sc_data_version': 1}
         ret = self._post("/scheduled_changes/emergency_shutoff/1", data=data)
-        self.assertEquals(ret.status_code, 200)
-        ret_data = json.loads(ret.data)
+        self.assertEqual(ret.status_code, 200)
+        ret_data = ret.get_json()
         self.assertIn('new_data_version', ret_data)
-        self.assertEquals(ret_data['new_data_version'], 2)
+        self.assertEqual(ret_data['new_data_version'], 2)
         sc_table = dbo.emergencyShutoffs.scheduled_changes
         conditions_table = sc_table.conditions
         sc = sc_table.t.select().where(sc_table.base_product == 'Firefox')\

@@ -1,11 +1,12 @@
 import logging
 import os
+import six
 
 from flask_wtf.csrf import CSRFProtect
 
 from auslib.log import configure_logging
 
-SYSTEM_ACCOUNTS = ["ffxbld", "tbirdbld", "seabld"]
+SYSTEM_ACCOUNTS = ["balrogagent", "balrog-ffxbld", "balrog-tbirdbld", "seabld"]
 DOMAIN_WHITELIST = {
     "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
     "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
@@ -18,7 +19,7 @@ DOMAIN_WHITELIST = {
     "ftp.mozilla.org": ("SystemAddons",),
 }
 if os.environ.get("STAGING"):
-    SYSTEM_ACCOUNTS.extend(["stage-ffxbld", "stage-tbirdbld", "stage-seabld"])
+    SYSTEM_ACCOUNTS.extend(["balrog-stage-ffxbld", "balrog-stage-tbirdbld"])
     DOMAIN_WHITELIST.update({
         "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
         "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
@@ -65,6 +66,7 @@ if os.environ.get("NOTIFY_TO_ADDR"):
         os.environ["NOTIFY_FROM_ADDR"],
         use_tls,
     )
+dbo.setSystemAccounts(SYSTEM_ACCOUNTS)
 dbo.setDomainWhitelist(DOMAIN_WHITELIST)
 application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
 application.config["PAGE_TITLE"] = "Balrog Administration"
@@ -90,6 +92,7 @@ class JSONCSRFProtect(CSRFProtect):
 
 
 JSONCSRFProtect(application)
+
 
 # Secure cookies should be enabled when we're using https (otherwise the
 # session cookie won't get set, and that will cause CSRF failures).

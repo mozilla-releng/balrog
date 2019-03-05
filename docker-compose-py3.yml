@@ -1,31 +1,31 @@
-# Some people have reported problems with the balrogui API proxy not working correctly.
+# Some people have reported problems with the balrogui-py3 API proxy not working correctly.
 # This appears to be the same problem reported in https://github.com/docker/compose/issues/2172,
-# and seems to only occur with certain (older) versions of docker-compose.
+# and seems to only occur with certain(older) versions of docker-compose.
 version: '2.1'
 services:
-  balrogadmin:
+  balrogadmin-py3:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.py3.dev
     depends_on:
-      balrogdb:
+      balrogdb-py3:
         condition: service_healthy
     entrypoint:
       - bash
       - scripts/initdb_and_run.sh
-    command: admin
+    command: admin-dev
     expose:
-      - "7070"
+      - "17070"
     volumes:
       - .:/app
     links:
-      - balrogdb
+      - balrogdb-py3
     environment:
-      - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
-      - DB_HOST=balrogdb
-      - CACHEDIR=.cache
+      - DBURI=mysql://balrogadmin:balrogadmin@balrogdb-py3/balrog
+      - DB_HOST=balrogdb-py3
+      - CACHEDIR=.cache_py3
       - SECRET_KEY=blahblah
-      - PORT=7070
+      - PORT=17070
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
       - INSECURE_SESSION_COOKIE=1
@@ -39,45 +39,45 @@ services:
       - NOTIFY_FROM_ADDR
       - STAGING
     healthcheck:
-        test: nc -z -v balrogadmin 7070
+        test: nc -z -v balrogadmin-py3 17070
         interval: 5s
         timeout: 30s
         retries: 50
 
 
-  balrogpub:
+  balrogpub-py3:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.py3.dev
     depends_on:
-      balrogdb:
+      balrogdb-py3:
         condition: service_healthy
     command: public
     ports:
-      - "9090:9090"
+      - "19090:19090"
     volumes:
       - .:/app
     environment:
-      - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
+      - DBURI=mysql://balrogadmin:balrogadmin@balrogdb-py3/balrog
       - SECRET_KEY=blahblah
-      - PORT=9090
+      - PORT=19090
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
     links:
-      - balrogdb
+      - balrogdb-py3
 
 
-  balrogagent:
+  balrogagent-py3:
     build: ./agent
     depends_on:
-      balrogadmin:
+      balrogadmin-py3:
         condition: service_healthy
     volumes:
       - ./agent:/app
     links:
-      - balrogadmin
+      - balrogadmin-py3
     environment:
-      - BALROG_API_ROOT=http://balrogadmin:7070/api
+      - BALROG_API_ROOT=http://balrogadmin-py3:17070/api
       - BALROG_USERNAME=balrogadmin
       - BALROG_PASSWORD=balrogadmin
       - TELEMETRY_API_ROOT=abc
@@ -85,38 +85,28 @@ services:
       - LOG_LEVEL=WARNING
 
 
-  balrogui:
+  balrogui-py3:
     image: node:0.10
     depends_on:
-      balrogadmin:
+      balrogadmin-py3:
         condition: service_healthy
-    expose:
-      - 6060
+    ports:
+      - "18080:18080"
+    links:
+      - balrogadmin-py3
     volumes:
       - ./ui:/app
-      - .cache:/cache
+      - .cache_py3:/cache
     environment:
-      - WEB_PORT=6060
-      - HOST_PROXY=balrogadmin
-      - HOST_PROXY_PORT=7070
+      - WEB_PORT=18080
+      - HOST_PROXY=balrogadmin-py3
+      - HOST_PROXY_PORT=17070
     entrypoint:
       - /bin/bash
       - /app/docker-entrypoint.sh
 
-  nginx:
-    image: openresty/openresty:centos
-    ports:
-      - "8080:8080"
-    links:
-      - balrogadmin
-    volumes:
-      - ./scripts/nginx.conf:/etc/nginx/conf.d/http_balrog.conf.template
-    environment:
-      - NGINX_PORT=8080
-      - BALROG_ADMIN_ROOT=http://balrogadmin:7070
-    command: /bin/bash -c "envsubst '$$NGINX_PORT $$BALROG_ADMIN_ROOT' < /etc/nginx/conf.d/http_balrog.conf.template > /etc/nginx/conf.d/http_balrog.conf && nginx -g 'daemon off;'"
 
-  balrogdb:
+  balrogdb-py3:
     build:
       context: .
       dockerfile: Dockerfile.database
@@ -128,9 +118,9 @@ services:
       - MYSQL_PASSWORD=balrogadmin
       - MYSQL_ROOT_PASSWORD=admin
     volumes:
-      - .cache/mysql:/var/lib/mysql
+      - .cache_py3/mysql:/var/lib/mysql
     healthcheck:
-        test: nc -z -v balrogdb 3306
+        test: nc -z -v balrogdb-py3 3306
         interval: 30s
         timeout: 30s
         retries: 10

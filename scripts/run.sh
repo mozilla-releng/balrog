@@ -1,4 +1,5 @@
 #!/bin/bash
+PYTHON_VERSION="py27"
 
 build_front_end() {
     cd /app/ui
@@ -8,8 +9,10 @@ build_front_end() {
 }
 
 run_back_end_tests() {
+  PYTHON_VERSION=${1:-py27}
+  shift
   cd /app
-  tox $@
+  tox $@ -e $PYTHON_VERSION
 }
 
 run_front_end_tests() {
@@ -99,7 +102,7 @@ elif [ $1 == "test" ]; then
         fi
     fi
     # Only send coverage data for the authoritative Balrog repo.
-    if [[ $coveralls == 1 && $GITHUB_BASE_REPO_URL == "https://github.com/mozilla/balrog.git" ]];
+    if [[ $PYTHON_VERSION == "py27" && $coveralls == 1 && $GITHUB_BASE_REPO_URL == "https://github.com/mozilla/balrog.git" ]];
     then
         # COVERALLS_REPO_TOKEN is already in the environment
         export CIRCLECI=1

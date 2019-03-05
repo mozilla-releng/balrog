@@ -1,12 +1,11 @@
-import json
 from auslib.test.web.api.base import CommonTestBase
 
 
 class TestPublicRulesAPI(CommonTestBase):
     def test_get_rules(self):
         ret = self.public_client.get("/api/v1/rules")
-        got = json.loads(ret.data)
-        self.assertEquals(got["count"], 4)
+        got = ret.get_json()
+        self.assertEqual(got["count"], 4)
         rules = [(rule["mapping"], rule["product"]) for rule in got["rules"]]
         self.assertIn(("Fennec.55.0a1", "Fennec"), rules)
         self.assertIn(("Firefox.55.0a1", "Firefox"), rules)
@@ -15,8 +14,8 @@ class TestPublicRulesAPI(CommonTestBase):
     def test_get_rules_by_product(self):
         product = "Fennec"
         ret = self.public_client.get("/api/v1/rules?product={}".format(product))
-        self.assertEqual(ret.status_code, 200, ret.data)
-        got = json.loads(ret.data)
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        got = ret.get_json()
         self.assertTrue(got, "No rules returned for product {}".format(product))
         self.assertEqual(got["count"], 1)
         self.assertEqual(got["rules"][0]["product"], product)
@@ -24,8 +23,8 @@ class TestPublicRulesAPI(CommonTestBase):
     def test_get_rule_by_id(self):
         rule_id = 2
         ret = self.public_client.get("/api/v1/rules/{}".format(rule_id))
-        self.assertEqual(ret.status_code, 200, ret.data)
-        got = json.loads(ret.data)
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        got = ret.get_json()
         self.assertTrue(got, "Rule not found by rule_id={}".format(rule_id))
         self.assertEqual(ret.headers['X-Data-Version'], '1')
         self.assertNotIn('X-CSRF-Token', ret.headers)
@@ -43,8 +42,8 @@ class TestPublicRulesAPI(CommonTestBase):
                         osVersion=None, memory=None, instructionSet=None, mig64=None,
                         jaws=None)
         ret = self.public_client.get("/api/v1/rules/moz-releng")
-        self.assertEqual(ret.status_code, 200, ret.data)
-        got = json.loads(ret.data)
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        got = ret.get_json()
         self.assertEqual(got, expected)
         self.assertEqual(ret.headers['X-Data-Version'], '1')
 
@@ -54,8 +53,8 @@ class TestPublicRulesAPI(CommonTestBase):
 
     def test_get_revisions(self):
         ret = self.public_client.get("/api/v1/rules/3/revisions")
-        self.assertEqual(ret.status_code, 200, ret.data)
-        got = json.loads(ret.data)
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+        got = ret.get_json()
         self.assertEqual(got["count"], 2)
         rules = [(rule["mapping"], rule["product"], rule["data_version"]) for rule in got["rules"]]
         self.assertIn(("z", "z", 1), rules)

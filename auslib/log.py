@@ -1,5 +1,6 @@
 import json
 import logging
+import six
 import socket
 import sys
 import traceback
@@ -11,7 +12,7 @@ log_format = "%(asctime)s - %(levelname)s - PID: %(process)s - Request: %(reques
 
 class BalrogLogger(logging.Logger):
 
-    def makeRecord(self, name, level, fn, lno, msg, args, exc_info, func=None, extra=None):
+    def makeRecord(self, name, level, fn, lno, msg, args, exc_info, func=None, extra=None, sinfo=None):
         if extra is None:
             extra = {}
         if 'requestid' not in extra:
@@ -34,7 +35,9 @@ class BalrogLogger(logging.Logger):
             except RuntimeError:
                 pass
             extra['requestid'] = requestid
-        return logging.Logger.makeRecord(self, name, level, fn, lno, msg, args, exc_info, func, extra)
+        if six.PY2:  # pragma: no cover
+            return logging.Logger.makeRecord(self, name, level, fn, lno, msg, args, exc_info, func, extra)
+        return logging.Logger.makeRecord(self, name, level, fn, lno, msg, args, exc_info, func, extra, sinfo)  # pragma: no cover
 
 
 class JsonLogFormatter(logging.Formatter):

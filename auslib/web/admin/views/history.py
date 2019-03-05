@@ -1,6 +1,5 @@
 import connexion
 from flask import Response, jsonify
-from sqlalchemy import and_
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.base import AdminView
 
@@ -58,9 +57,7 @@ class HistoryView(AdminView):
         offset = limit * (page - 1)
 
         filters = history_filters_callback(obj)
-        total_count = self.history_table.t.count()\
-                                          .where(and_(*filters))\
-                                          .execute().fetchone()[0]
+        total_count = self.history_table.count(where=filters)
 
         revisions = self.history_table.select(
             where=filters,

@@ -1,7 +1,11 @@
-import cgi
 import connexion
 import logging
 import re
+
+try:
+    import html
+except ImportError:  # pragma: no cover
+    import cgi as html
 
 import auslib.web
 
@@ -13,6 +17,7 @@ from flask import make_response, send_from_directory, Response
 from raven.contrib.flask import Sentry
 
 from auslib.AUS import AUS
+from auslib.web.admin.views.problem import problem
 from specsynthase.specbuilder import SpecBuilder
 
 from auslib.errors import BadDataError
@@ -65,6 +70,15 @@ def fourohfour(error):
     return Response(status=404, mimetype="text/plain", response=error.description)
 
 
+# Connexion's error handling sometimes breaks when parameters contain
+# unicode characters (https://github.com/zalando/connexion/issues/604).
+# To work around, we catch them and return a 400 (which is what Connexion
+# would do if it didn't hit this error).
+@app.errorhandler(UnicodeEncodeError)
+def unicode(error):
+    return problem(400, "Unicode Error", "Connexion was unable to parse some unicode data correctly.")
+
+
 @app.errorhandler(Exception)
 def generic(error):
     """Deals with any unhandled exceptions. If the exception is not a
@@ -75,14 +89,24 @@ def generic(error):
     # Escape exception messages before replying with them, because they may
     # contain user input.
     # See https://bugzilla.mozilla.org/show_bug.cgi?id=1332829 for background.
-    error.message = cgi.escape(error.message)
+    # We used to look at error.message here, but that disappeared from many
+    # Exception classes in Python 3, so args is the safer better.
+    # We may want to stop returning messages like this to the client altogether
+    # both because it's ugly and potentially can leak things, but it's also
+    # extremely helpful for debugging BadDataErrors, because we don't send
+    # information about them to Sentry.
+
+    if hasattr(error, "args"):
+        message = " ".join(str(a) for a in error.args)
+    else:
+        message = repr(error)
     if isinstance(error, BadDataError):
-        return Response(status=400, mimetype="text/plain", response=error.message)
+        return Response(status=400, mimetype="text/plain", response=html.escape(message, quote=False))
 
     if sentry.client:
         sentry.captureException()
 
-    return Response(status=500, mimetype="text/plain", response=error.message)
+    return Response(status=500, mimetype="text/plain", response=html.escape(message, quote=False))
 
 
 # Keeping static files endpoints here due to an issue when returning response for static files.

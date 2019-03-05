@@ -1,10 +1,14 @@
 import functools
 from random import randint
-from urlparse import urlparse
+
+try:
+    from urlparse import urlparse
+except ImportError:  # pragma: no cover
+    from urllib.parse import urlparse
 
 import logging
 
-from auslib.global_state import dbo
+from auslib.global_state import dbo, cache
 
 
 class ForceResult(object):
@@ -52,17 +56,24 @@ class AUS:
         self.rand = functools.partial(randint, 0, 99)
         self.log = logging.getLogger(self.__class__.__name__)
 
-    def updates_are_disabled(self, product, channel):
-        where = dict(product=product, channel=channel)
-        emergency_shutoffs = dbo.emergencyShutoffs.select(where=where)
-        return bool(emergency_shutoffs)
+    def updates_are_disabled(self, product, channel, transaction=None):
+        cache_key = (product, channel)
+        v = cache.get('updates_disabled', cache_key)
+        if v is not None:
+            return v
 
-    def evaluateRules(self, updateQuery):
+        where = dict(product=product, channel=channel)
+        emergency_shutoffs = dbo.emergencyShutoffs.select(where=where, transaction=transaction)
+        v = bool(emergency_shutoffs)
+        cache.put('updates_disabled', cache_key, v)
+        return v
+
+    def evaluateRules(self, updateQuery, transaction=None):
         self.log.debug("Looking for rules that apply to:")
         self.log.debug(updateQuery)
 
-        if self.updates_are_disabled(updateQuery['product'], updateQuery['channel']) or \
-           self.updates_are_disabled(updateQuery['product'], getFallbackChannel(updateQuery['channel'])):
+        if self.updates_are_disabled(updateQuery['product'], updateQuery['channel'], transaction) or \
+           self.updates_are_disabled(updateQuery['product'], getFallbackChannel(updateQuery['channel']), transaction):
             log_message = 'Updates are disabled for {}/{}.'.format(
                 updateQuery['product'], updateQuery['channel'])
             self.log.debug(log_message)
@@ -70,7 +81,8 @@ class AUS:
 
         rules = dbo.rules.getRulesMatchingQuery(
             updateQuery,
-            fallbackChannel=getFallbackChannel(updateQuery['channel'])
+            fallbackChannel=getFallbackChannel(updateQuery['channel']),
+            transaction=transaction,
         )
 
         # TODO: throw any N->N update rules and keep the highest priority remaining one?
@@ -97,7 +109,7 @@ class AUS:
             if updateQuery['force'] == FAIL or self.rand() >= rule['backgroundRate']:
                 fallbackReleaseName = rule['fallbackMapping']
                 if fallbackReleaseName:
-                    release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1)[0]
+                    release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1, transaction=transaction)[0]
                     blob = release['data']
                     if not blob.shouldServeUpdate(updateQuery):
                         return None, None
@@ -110,7 +122,7 @@ class AUS:
         # 3) Incoming release is older than the one in the mapping, defined as one of:
         #    * version decreases
         #    * version is the same and buildID doesn't increase
-        release = dbo.releases.getReleases(name=rule['mapping'], limit=1)[0]
+        release = dbo.releases.getReleases(name=rule['mapping'], limit=1, transaction=transaction)[0]
         blob = release['data']
         if not blob.shouldServeUpdate(updateQuery):
             return None, None

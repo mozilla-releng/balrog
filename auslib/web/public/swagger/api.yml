@@ -101,7 +101,6 @@ paths:
           description: Platform Version.
           required: true
           type: string
-          format: ascii
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
         - $ref: '#/parameters/mig64'
@@ -130,7 +129,6 @@ paths:
           description: IMEI
           required: true
           type: string
-          format: ascii
         - $ref: '#/parameters/avast'
         - $ref: '#/parameters/force'
         - $ref: '#/parameters/mig64'
@@ -158,7 +156,6 @@ paths:
             The supported hardware features of the application requesting an update. This field is primarily used to point desupported users based on their hardware. Eg: users who do not support SSE2.
           required: true
           type: string
-          format: ascii
         - $ref: '#/parameters/distribution'
         - $ref: '#/parameters/distVersion'
         - $ref: '#/parameters/avast'
@@ -230,7 +227,6 @@ parameters:
     description: The name of the application requesting an update.
     required: true
     type: string
-    format: ascii
 
   productQuery:
     name: product
@@ -238,7 +234,6 @@ parameters:
     in: query
     required: false
     type: string
-    format: ascii
 
   version:
     name: version
@@ -246,7 +241,6 @@ parameters:
     description: The version of the application requesting an update.
     required: true
     type: string
-    format: ascii
 
   buildID:
     name: buildID
@@ -261,7 +255,6 @@ parameters:
     description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
     required: true
     type: string
-    format: ascii
 
   locale:
     name: locale
@@ -269,7 +262,6 @@ parameters:
     description: The locale of the application requesting an update.
     required: true
     type: string
-    format: ascii
 
   channel:
     name: channel
@@ -277,7 +269,6 @@ parameters:
     description: The update channel of the application request an update.
     required: true
     type: string
-    format: ascii
 
   osVersion:
     name: osVersion
@@ -285,7 +276,6 @@ parameters:
     description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
     required: true
     type: string
-    format: ascii
     default: ""
 
   distribution:
@@ -294,7 +284,6 @@ parameters:
     description: The partner distribution name of the application requesting an update or “default” if the application is not a partner build.
     required: true
     type: string
-    format: ascii
 
   distVersion:
     name: distVersion
@@ -302,7 +291,6 @@ parameters:
     description: The version of the partner distribution of the application requesting an update or “default” if the application is not a partner build.
     required: true
     type: string
-    format: ascii
 
   avast:
     name: avast

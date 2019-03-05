@@ -1,6 +1,7 @@
 import aiohttp
 import json
 import logging
+import os
 
 
 default_headers = {
@@ -20,7 +21,12 @@ async def request(api_root, path, method="GET", data={}, headers=default_headers
     csrf_url = get_url(api_root, "/csrf_token")
     data = data.copy()
 
-    async with aiohttp.ClientSession(loop=loop) as client:
+    # Aiohttp does not allow cookie from urls that using IP address instead dns name,
+    # so if for any reason agent needs point to IP address, the envvar "ALLOW_COOKIE_FROM_IP_URL"
+    # should be set. (https://aiohttp.readthedocs.io/en/stable/client_advanced.html#cookie-safety)
+    cookie_jar = aiohttp.CookieJar(unsafe=os.environ.get('ALLOW_COOKIE_FROM_IP_URL', False))
+
+    async with aiohttp.ClientSession(loop=loop, cookie_jar=cookie_jar) as client:
         # CSRF tokens are only required for POST/PUT/DELETE.
         if method not in ("HEAD", "GET"):
             logging.debug("Sending %s request to %s", "HEAD", csrf_url)

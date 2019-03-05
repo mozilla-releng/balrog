@@ -1,5 +1,7 @@
 import itertools
 
+from six import iteritems
+
 from auslib.AUS import isForbiddenUrl, getFallbackChannel
 from auslib.blobs.base import Blob, BlobValidationError
 from auslib.global_state import dbo
@@ -752,7 +754,7 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
             return v4Blob
 
         v4Blob["fileUrls"] = {}
-        for channel, baseUrl in v3Blob.get('fileUrls').iteritems():
+        for channel, baseUrl in iteritems(v3Blob.get('fileUrls')):
             if channel not in v4Blob["fileUrls"]:
                 v4Blob["fileUrls"][channel] = {}
 
@@ -765,10 +767,10 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
                     # If we've found a match, we need to replicate the inner structure
                     # of the lookup dict, substitute the match in the url,
                     # and add it to the new fileUrls.
-                    for patchKey, products in v3Blob.get(lookup, {}).iteritems():
+                    for patchKey, products in iteritems(v3Blob.get(lookup, {})):
                         if patchKey not in v4Blob["fileUrls"][channel]:
                             v4Blob["fileUrls"][channel][patchKey] = {}
-                        for from_, product in products.iteritems():
+                        for from_, product in iteritems(products):
                             url = baseUrl.replace(matchstr, product)
                             v4Blob["fileUrls"][channel][patchKey][from_] = url
 

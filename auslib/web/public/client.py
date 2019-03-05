@@ -1,15 +1,23 @@
-import urllib
 import re
 import sys
+from functools import wraps
 
 from connexion import request
 
 from flask import make_response, current_app as app
 
+import six
+
 from auslib.AUS import AUS, SUCCEED, FAIL
 from auslib.global_state import dbo
 
 import logging
+
+try:
+    from urllib import unquote
+except ImportError:  # pragma: no cover
+    from urllib.parse import unquote
+
 
 AUS = AUS()
 LOG = logging.getLogger(__name__)
@@ -56,6 +64,19 @@ def getSystemCapabilities(systemCapabilities):
 
 def getCleanQueryFromURL(url):
     query = url.copy()
+    # Any of the fields (except queryVersion, which is hardcoded) could contain Unicode data.
+    # The lower level of Balrog is not ready to support Unicode yet, and any valid data will
+    # not contain Unicode characters - so for now, we simply encode to ascii and replace the
+    # Unicode characters.
+    # This is something that we should revisit when we upgrade to Python 3, as it will be as
+    # easy to pretend Unicode doesn't exist. (Which is why this block is only for Python 2 --
+    # encoding to ascii in Python 3 gives us "bytes", which causes a whole mess of problems
+    # later.)
+    if six.PY2:
+        for field in query:
+            if field == "queryVersion":
+                continue
+            query[field] = query[field].encode("ascii", "replace")
     # Some versions of Avast make requests and blindly append "?avast=1" to
     # them, which breaks query string parsing if ?force=1 is already
     # there. Because we're nice people we'll fix it up.
@@ -84,7 +105,7 @@ def getQueryFromURL(url):
     if "systemCapabilities" in query:
         query.update(getSystemCapabilities(url["systemCapabilities"]))
         del query["systemCapabilities"]
-    query['osVersion'] = urllib.unquote(query['osVersion'])
+    query['osVersion'] = unquote(query['osVersion'])
     ua = request.headers.get('User-Agent')
     query['headerArchitecture'] = getHeaderArchitecture(query['buildTarget'], ua)
     force = query.get('force')
@@ -106,14 +127,23 @@ def getQueryFromURL(url):
 
 def extract_query_version(request_url):
     version = 0
-    pattern = '^.*/update/(\d+)/.*\.xml.*$'
+    pattern = r'^.*/update/(\d+)/.*\.xml.*$'
     match = re.match(pattern, request_url)
     if match:
         version = int(match.group(1))
     return version
 
 
-def get_update_blob(**url):
+def with_transaction(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        with dbo.begin() as transaction:
+            return f(*args, transaction=transaction, **kwargs)
+    return wrapper
+
+
+@with_transaction
+def get_update_blob(transaction, **url):
     url['queryVersion'] = extract_query_version(request.url)
     # Underlying code depends on osVersion being set. Since this route only
     # exists to support ancient queries, and all newer versions have osVersion
@@ -121,10 +151,12 @@ def get_update_blob(**url):
     # code support queries without it.
     if url['queryVersion'] == 1:
         url['osVersion'] = ''
+    # Bug 1517743 - two Firefox nightlies can't parse update.xml when it contains the usual newlines or indentations
+    squash_response = False
 
     query = getQueryFromURL(url)
     LOG.debug("Got query: %s", query)
-    release, update_type = AUS.evaluateRules(query)
+    release, update_type = AUS.evaluateRules(query, transaction=transaction)
 
     # passing {},None returns empty xml
     if release:
@@ -137,7 +169,7 @@ def get_update_blob(**url):
             for product in response_products:
                 product_query = query.copy()
                 product_query["product"] = product
-                response_release, response_update_type = AUS.evaluateRules(product_query)
+                response_release, response_update_type = AUS.evaluateRules(product_query, transaction=transaction)
                 if not response_release:
                     continue
 
@@ -149,9 +181,9 @@ def get_update_blob(**url):
                 # if we have a SuperBlob of systemaddons, we process the response products and
                 # concatenate their inner XMLs
                 product_query = query.copy()
-                product = dbo.releases.getReleases(name=blob_name, limit=1)[0]['product']
+                product = dbo.releases.getReleases(name=blob_name, limit=1, transaction=transaction)[0]['product']
                 product_query["product"] = product
-                response_release = dbo.releases.getReleaseBlob(name=blob_name)
+                response_release = dbo.releases.getReleaseBlob(name=blob_name, transaction=transaction)
                 if not response_release:
                     LOG.warning("No release found with name: %s", blob_name)
                     continue
@@ -163,6 +195,10 @@ def get_update_blob(**url):
             response_blobs.append({'product_query': query,
                                    'response_release': release,
                                    'response_update_type': update_type})
+            # Bug 1517743 - we want a cheap test because this will be run on each request
+            if release['name'] == 'Firefox-mozilla-central-nightly-latest' and query['buildID'] in ('20190103220533', '20190104093221'):
+                squash_response = True
+                LOG.debug('Busted nightly detected, will squash xml response')
 
         # getHeaderXML() returns outermost header for an update which
         # is same for all release type
@@ -196,6 +232,11 @@ def get_update_blob(**url):
         xml.append('<updates>')
         xml.append('</updates>')
         xml = "\n".join(xml)
+
+    # Bug 1517743 - remove newlines and 4 space indents
+    if squash_response:
+        xml = xml.replace('\n', '').replace('    ', '')
+
     LOG.debug("Sending XML: %s", xml)
     response = make_response(xml)
     response.headers["Cache-Control"] = app.cacheControl

@@ -1,9 +1,11 @@
 import json
 
 import arrow
+import six
+
 from connexion import request
 from flask import Response, jsonify
-from sqlalchemy import and_
+from six import text_type, string_types
 
 
 class HistoryHelper():
@@ -34,9 +36,7 @@ class HistoryHelper():
         offset = limit * (page - 1)
 
         filters = self.fn_history_filters(obj, self.hist_table)
-        total_count = self.hist_table.t.count()\
-                                       .where(and_(*filters))\
-                                       .execute().fetchone()[0]
+        total_count = self.hist_table.count(where=filters)
 
         revisions = self.hist_table.select(
             where=filters,
@@ -92,9 +92,9 @@ def annotateRevisionDifferences(revisions):
                 except ValueError:
                     pass
             elif isinstance(value, int):
-                value = unicode(str(value), 'utf8')
-            elif not isinstance(value, basestring):
-                value = unicode(value, 'utf8')
+                value = text_type(value)
+            elif not isinstance(value, string_types):
+                value = text_type(value, 'utf8') if six.PY2 else str(value)
             rev[key] = value
 
         rev['_different'] = different
