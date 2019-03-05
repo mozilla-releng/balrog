@@ -86,6 +86,10 @@ services:
       - LOG_LEVEL=WARNING
 
 
+  # This container exists solely to have something automatically rebuilding the UI
+  # in the background during local development. Although it runs a web server, we
+  # don't use it. Instead, the nginx one below is used as our entry point to more
+  # closely mimic production, and support SSL.
   balrogui:
     image: node:0.10
     depends_on:
