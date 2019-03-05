@@ -111,6 +111,8 @@ services:
       - balrogadmin
     volumes:
       - ./scripts/nginx.conf:/etc/nginx/conf.d/http_balrog.conf.template
+      - ./scripts/server.crt:/etc/nginx/server.crt
+      - ./scripts/server.key:/etc/nginx/server.key
     environment:
       - NGINX_PORT=8080
       - BALROG_ADMIN_ROOT=http://balrogadmin:7070
