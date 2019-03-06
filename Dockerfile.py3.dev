@@ -1,12 +1,12 @@
-FROM python:3.6-slim-jessie
+FROM python:3.7-slim-stretch
 
 MAINTAINER bhearsum@mozilla.com
 
-# Some versions of the python:3.6 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
+# Some versions of the python:3.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
 # mysql-client is needed to import sample data
-# libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
+# default-libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 RUN apt-get -q update \
-    && apt-get -q --yes install netcat libpcre3 libpcre3-dev nodejs nodejs-legacy libmysqlclient-dev mysql-client curl gcc xz-utils \
+    && apt-get -q --yes install netcat libpcre3 libpcre3-dev nodejs nodejs-legacy default-libmysqlclient-dev mysql-client curl gcc xz-utils \
     && apt-get clean
 
 WORKDIR /app

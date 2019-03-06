@@ -6,7 +6,7 @@ PYTHON_VERSION=${2:-py27}
 if [[ $PYTHON_VERSION == "py27" ]];
 then
     docker build  -t balrogtest -f Dockerfile.dev .
-elif [[ $PYTHON_VERSION == "py36" ]];
+elif [[ $PYTHON_VERSION == "py37" ]];
 then
     docker build  -t balrogtest -f Dockerfile.py3.dev .
 else
