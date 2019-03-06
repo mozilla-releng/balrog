@@ -108,7 +108,7 @@ services:
       - /app/docker-entrypoint.sh
 
 
-  nginx:
+  nginx-py3:
     image: openresty/openresty:centos
     ports:
       - "18080:18080"
