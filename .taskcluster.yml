@@ -74,7 +74,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh backend py36"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh backend py37"
       features:
         dind: true
         taskclusterProxy: true
@@ -89,7 +89,7 @@ tasks:
         branches:
           - master
     metadata:
-      name: Balrog Python 3.6 back-end tests
+      name: Balrog Python 3.7 back-end tests
       description: Balrog Python tests
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
