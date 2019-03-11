@@ -78,7 +78,7 @@ services:
     links:
       - nginx
     environment:
-      - BALROG_API_ROOT=http://nginx:8081/api
+      - BALROG_API_ROOT=http://nginx:8011/api
       - BALROG_USERNAME=balrogagent
       - BALROG_PASSWORD=na
       - TELEMETRY_API_ROOT=abc
@@ -112,8 +112,8 @@ services:
       context: .
       dockerfile: Dockerfile.nginx
     ports:
-      - "8080:8080"
-      - "8081:8081"
+      - "8010:8010"
+      - "8011:8011"
     links:
       - balrogadmin
     volumes:
@@ -122,12 +122,12 @@ services:
       - ./scripts/server.key:/etc/nginx/server.key
       - ./scripts/dhparam.pem:/etc/nginx/dhparam.pem
     environment:
-      - NGINX_PORT=8080
-      - NGINX_BALROG_AGENT_PORT=8081
+      - NGINX_PORT=8010
+      - NGINX_BALROG_AGENT_PORT=8011
       - BALROG_ADMIN_ROOT=http://balrogadmin:7070
     command: /bin/bash -c "envsubst '$$NGINX_PORT $$NGINX_BALROG_AGENT_PORT $$BALROG_ADMIN_ROOT' < /etc/nginx/conf.d/http_balrog.conf.template > /etc/nginx/conf.d/http_balrog.conf && nginx -g 'daemon off;'"
     healthcheck:
-        test: nc -z -v nginx 8080 && nc -z -v nginx 8081
+        test: nc -z -v nginx 8010 && nc -z -v nginx 8011
         interval: 5s
         timeout: 30s
         retries: 50
