@@ -1,4 +1,4 @@
-angular.module("app").config(function($routeProvider, $locationProvider) {
+angular.module("app").config(function($routeProvider, $locationProvider, angularAuth0Provider) {
 
   $locationProvider.html5Mode(true);
 
@@ -86,8 +86,24 @@ angular.module("app").config(function($routeProvider, $locationProvider) {
     reloadOnSearch: false
   })
 
+  .when('/login', {
+    templateUrl: 'login.html',
+    controller: 'LoginController',
+    reloadOnSearch: false
+  })
+
   ;
 
   $routeProvider.otherwise({ redirectTo: '/' });
+
+  // TODO: move config to somewhere app specific
+  angularAuth0Provider.init({
+    clientID: 'FK1mJkHhwjulTYBGklxn8W4Fhd1pgT4t',
+    domain: 'auth.mozilla.auth0.com',
+    audience: 'login.taskcluster.net',
+    responseType: 'token id_token',
+    redirectUri: 'https://localhost:8010/login',
+    scope: 'full-user-credentials openid profile email'
+  });
 
 });

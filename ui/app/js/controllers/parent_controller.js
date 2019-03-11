@@ -42,10 +42,11 @@ angular.module("app").config(['$httpProvider', function($httpProvider) {
 
 /* Put things in here that the sub-controllers can use */
 angular.module("app").controller('ParentController',
-function($scope, Page) {
+function($scope, Page, Auth0) {
   $scope.Page = Page;
   $scope.isEmpty = isEmpty;
   $scope.fieldIsChanging = fieldIsChanging;
   $scope.humanizeDate = humanizeDate;
   $scope.formatMoment = formatMoment;
+  $scope.auth0 = Auth0;
 });

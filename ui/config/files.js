@@ -21,11 +21,13 @@ module.exports = function(lineman) {
         "vendor/js/angular-css-injector.min.js",
         "vendor/bootstrap/js/bootstrap.min.js",
 
-
         "vendor/js/localforage.min.js",
         "vendor/js/angular-localForage.min.js",
 
         "vendor/js/datetimepicker.js",
+
+        "vendor/js/auth0.js",
+        "vendor/js/angular-auth0.js",
       ],
       app: [
         "app/js/app.js",

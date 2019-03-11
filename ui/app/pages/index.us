@@ -50,7 +50,10 @@
 
             <li ng-class="{active: isOn('/change_logs')}">
               <a href="/change_logs">Change Logs</a>
-          </li>
+            </li>
+            <li>
+              <a ng-click="auth0.login()">Sign in...</a>
+            </li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
