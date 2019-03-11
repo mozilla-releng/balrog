@@ -124,3 +124,8 @@ if os.environ.get("SENTRY_DSN"):
 # about the current code (version number, commit hash), but doesn't exist in
 # the repo itself
 application.config["VERSION_FILE"] = "/app/version.json"
+
+# Auth0 config
+application.config["AUTH_DOMAIN"] = "auth.mozilla.auth0.com"
+# TODO: What should this actually be?
+application.config["AUTH_AUDIENCE"] = "login.taskcluster.net"
