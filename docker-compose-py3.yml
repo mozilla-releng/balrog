@@ -95,8 +95,6 @@ services:
     depends_on:
       balrogadmin-py3:
         condition: service_healthy
-    expose:
-      - 16060
     volumes:
       - ./ui:/app
       - .cache_py3:/cache

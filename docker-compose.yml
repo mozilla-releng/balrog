@@ -95,8 +95,6 @@ services:
     depends_on:
       balrogadmin:
         condition: service_healthy
-    expose:
-      - 6060
     volumes:
       - ./ui:/app
       - .cache:/cache
