@@ -1,15 +1,17 @@
 angular.module("app").factory('Auth0', function(angularAuth0) {
   var accessToken;
   var idToken;
+  var picture;
 
   localLogin = function(authResult) {
     // Set isLoggedIn flag in localStorage
-    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('isLoggedIn', true);
     localStorage.setItem('accessToken', authResult.accessToken);
     // Set the time that the access token will expire at
     expiresAt = (authResult.expiresIn * 1000) + new Date().getTime();
     accessToken = authResult.accessToken;
     idToken = authResult.idToken;
+    picture = authResult.idTokenPayload.picture;
   };
   var service = {
     login: function() {
@@ -20,6 +22,9 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
     },
     getAccessToken: function() {
       return accessToken;
+    },
+    getPicture: function() {
+      return picture;
     },
     handleAuthentication: function() {
       angularAuth0.parseHash(function(err, authResult) {

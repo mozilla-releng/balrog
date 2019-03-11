@@ -49,4 +49,5 @@ function($scope, Page, Auth0) {
   $scope.humanizeDate = humanizeDate;
   $scope.formatMoment = formatMoment;
   $scope.auth0 = Auth0;
+  $scope.isLoggedIn = localStorage.getItem("isLoggedIn");
 });
