@@ -1,5 +1,6 @@
 import simplejson as json
 import connexion
+from flask import current_app as app
 from flask import Response, jsonify
 from auslib.web.admin.views.problem import problem
 from auslib.global_state import dbo
@@ -7,6 +8,7 @@ from auslib.web.admin.views.base import requirelogin, AdminView
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
+from auslib.util.auth import verified_userinfo
 
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
 
@@ -26,10 +28,13 @@ class UsersView(AdminView):
 class SpecificUserView(AdminView):
     """Returns all of the details about the logged in user. The UI needs this
     method to know things about the current user because it does not have
-    access to REMOTE_USER, so it cannot query directly by name."""
+    access to REMOTE_USER, so it cannot query directly by name.
+
+    TODO: rewrite the comments above
+    """
 
     def get(self, username):
-        current_user = connexion.request.environ.get('REMOTE_USER', connexion.request.environ.get("HTTP_REMOTE_USER"))
+        current_user = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])['email']
         query_for_current = False
         if username == "current":
             username = current_user

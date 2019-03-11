@@ -175,12 +175,15 @@ class ViewTest(unittest.TestCase):
         os.remove(self.version_file)
 
     def _getBadAuth(self):
+        # TODO: FIXME
         return {'REMOTE_USER': 'NotAuth!'}
 
     def _getHttpRemoteUserAuth(self, username):
+        # TODO: FIXME
         return {"HTTP_REMOTE_USER": username}
 
     def _getAuth(self, username):
+        # TODO: FIXME
         return {'REMOTE_USER': username}
 
     def _get(self, url, qs={}, username=None):
