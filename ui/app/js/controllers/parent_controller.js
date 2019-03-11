@@ -49,5 +49,9 @@ function($scope, Page, Auth0) {
   $scope.humanizeDate = humanizeDate;
   $scope.formatMoment = formatMoment;
   $scope.auth0 = Auth0;
-  $scope.isLoggedIn = localStorage.getItem("isLoggedIn");
+  // We can't assign directly to the localStorage retrieval, because it wouldn't
+  // update when that value changes.
+  $scope.isLoggedIn = function() {
+    return localStorage.getItem("isLoggedIn");
+  };
 });

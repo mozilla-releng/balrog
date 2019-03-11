@@ -17,6 +17,13 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
     login: function() {
       angularAuth0.authorize();
     },
+    logout: function() {
+      localStorage.removeItem("isLoggedIn");
+      accessToken = null;
+      idToken = null;
+      picture = null;
+      expiresAt = null;
+    },
     getIdToken: function() {
       return idToken;
     },
