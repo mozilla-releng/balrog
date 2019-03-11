@@ -22,6 +22,31 @@ module.exports = function(lineman) {
     //     module: "myModuleName"
     //   }
     // }
+    prependTasks: {
+      common: [
+        "ngtemplates",
+        "less",
+        "ngconstant:dev"
+      ]
+    },
+    ngconstant: {
+      options: {
+        name: "config",
+        constants: "config/env/default.json"
+      },
+      dev: {
+        options: {
+            dest: "generated/js/config.js"
+        },
+        constants: "config/env/dev.json"
+      },
+      dist: {
+        options: {
+            dest: "dist/js/config.js"
+        },
+        constants: "config/env/prod.json"
+      }
+    },
 
     jshint: {
       options: {

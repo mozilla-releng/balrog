@@ -1,0 +1,6 @@
+{
+    "Auth0Config": {
+        "clientID": "TODO",
+        "redirectUri": "TODO"
+    }
+}

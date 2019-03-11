@@ -1,4 +1,4 @@
-angular.module("app").config(function($routeProvider, $locationProvider, angularAuth0Provider) {
+angular.module("app").config(function($routeProvider, $locationProvider, angularAuth0Provider, Auth0Config) {
 
   $locationProvider.html5Mode(true);
 
@@ -98,11 +98,11 @@ angular.module("app").config(function($routeProvider, $locationProvider, angular
 
   // TODO: move config to somewhere app specific
   angularAuth0Provider.init({
-    clientID: 'FK1mJkHhwjulTYBGklxn8W4Fhd1pgT4t',
-    domain: 'auth.mozilla.auth0.com',
-    audience: 'login.taskcluster.net',
+    clientID: Auth0Config['clientID'],
+    domain: Auth0Config['domain'],
+    audience: Auth0Config['audience'],
     responseType: 'token id_token',
-    redirectUri: 'https://localhost:8010/login',
+    redirectUri: Auth0Config['redirectUri'],
     scope: 'full-user-credentials openid profile email'
   });
 

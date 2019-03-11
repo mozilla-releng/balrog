@@ -6,4 +6,5 @@ angular.module("app", [
   "LocalForageModule",
   "ui.bootstrap.datetimepicker",
   "auth0.auth0",
+  "config",
 ]);

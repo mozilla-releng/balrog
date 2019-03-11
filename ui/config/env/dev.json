@@ -1,0 +1,6 @@
+{
+    "Auth0Config": {
+        "clientID": "FK1mJkHhwjulTYBGklxn8W4Fhd1pgT4t",
+        "redirectUri": "https://localhost:8010/login"
+    }
+}
