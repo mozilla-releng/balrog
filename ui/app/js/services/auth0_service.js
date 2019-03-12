@@ -14,8 +14,8 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
     picture = authResult.idTokenPayload.picture;
   };
   var service = {
-    login: function() {
-      angularAuth0.authorize();
+    login: function(path) {
+      angularAuth0.authorize({"state": path});
     },
     logout: function() {
       localStorage.removeItem("isLoggedIn");
@@ -34,10 +34,11 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
     getPicture: function() {
       return picture;
     },
-    handleAuthentication: function(errCallback) {
+    handleAuthentication: function(successCallback, errCallback) {
       angularAuth0.parseHash(function(err, authResult) {
         if (authResult && authResult.accessToken && authResult.idToken) {
           localLogin(authResult);
+          successCallback(authResult.state);
         }
         else if (err) {
           errCallback(err.error);

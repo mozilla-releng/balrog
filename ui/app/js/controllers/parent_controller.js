@@ -42,7 +42,7 @@ angular.module("app").config(['$httpProvider', function($httpProvider) {
 
 /* Put things in here that the sub-controllers can use */
 angular.module("app").controller('ParentController',
-function($scope, Page, Auth0) {
+function($scope, $location, Page, Auth0) {
   $scope.Page = Page;
   $scope.isEmpty = isEmpty;
   $scope.fieldIsChanging = fieldIsChanging;
@@ -54,4 +54,5 @@ function($scope, Page, Auth0) {
   $scope.isLoggedIn = function() {
     return localStorage.getItem("isLoggedIn");
   };
+  $scope.loc = $location;
 });
