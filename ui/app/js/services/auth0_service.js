@@ -1,10 +1,11 @@
 angular.module("app").factory('Auth0', function(angularAuth0) {
   var accessToken;
   var idToken;
+  var expiresAt;
 
   localLogin = function(authResult) {
     // Set isLoggedIn flag in localStorage
-    localStorage.setItem('isLoggedIn', true);
+    localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('accessToken', authResult.accessToken);
     localStorage.setItem('picture', authResult.idTokenPayload.picture);
     // Set the time that the access token will expire at
@@ -19,10 +20,10 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
     logout: function() {
       localStorage.removeItem("isLoggedIn");
       localStorage.removeItem("accessToken");
+      localStorage.removeItem("picture");
       accessToken = null;
       idToken = null;
-      picture = null;
-      expiresAt = null;
+      expiresAt = 0;
     },
     getIdToken: function() {
       return idToken;
@@ -33,17 +34,26 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
     getPicture: function() {
       return localStorage.getItem('picture');
     },
+    isAuthenticated: function() {
+      return localStorage.getItem('isLoggedIn') === 'true' && new Date().getTime() < expiresAt;
+    },
     handleAuthentication: function(successCallback, errCallback) {
       angularAuth0.parseHash(function(err, authResult) {
         if (authResult && authResult.accessToken && authResult.idToken) {
           localLogin(authResult);
-          successCallback(authResult.state);
+          if (successCallback) {
+            successCallback(authResult.state);
+          }
         }
         else if (err) {
-          errCallback(err.error);
+          if (errCallback) {
+            errCallback(err.error);
+          }
         }
         else {
-          errCallback("Couldn't complete login for unknown reason");
+          if (errCallback) {
+            errCallback("Couldn't complete login for unknown reason");
+          }
         }
       });
     },
