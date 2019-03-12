@@ -58,7 +58,7 @@
                          container
               -->
               <img style="height: 50px" ng-show="isLoggedIn()" src="{{ auth0.getPicture() }}"></img><span ng-show="isLoggedIn()" class="caret"></span>
-              <ul class="dropdown-menu dropdown-menu-left">
+              <ul class="dropdown-menu dropdown-menu-right">
                   <li><a ng-click="auth0.logout()">Sign out</a></li>
               </ul>
             </li>
