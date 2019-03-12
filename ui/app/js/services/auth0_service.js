@@ -19,6 +19,7 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
     },
     logout: function() {
       localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("accessToken");
       accessToken = null;
       idToken = null;
       picture = null;
@@ -33,12 +34,16 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
     getPicture: function() {
       return picture;
     },
-    handleAuthentication: function() {
+    handleAuthentication: function(errCallback) {
       angularAuth0.parseHash(function(err, authResult) {
         if (authResult && authResult.accessToken && authResult.idToken) {
           localLogin(authResult);
-        } else if (err) {
-          console.log(err);
+        }
+        else if (err) {
+          errCallback(err.error);
+        }
+        else {
+          errCallback("Couldn't complete login for unknown reason");
         }
       });
     },
