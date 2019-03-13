@@ -64,9 +64,13 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
           }
         }
         else {
-          if (errCallback) {
-            errCallback("Couldn't complete login for unknown reason");
-          }
+          // This branch specifically cannot throw an error, because app.run.js relies
+          // on being able to call this function whether or not a login has happened.
+          // In the case where it is called and a login has not happened, we hit this
+          // branch, which needs to be a no-op. In theory (although maybe not in practice)
+          // it's possible to hit this branch when a login has happened (authResult might
+          // not be what we expect, but no error is shown), which we're unable to distinguish
+          // from the aforementioned case.
         }
       });
     },
