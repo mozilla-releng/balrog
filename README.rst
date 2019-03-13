@@ -27,7 +27,7 @@ following command to create and run the necessary images:
 
 Once it completes, you should be able to access
 
-- The admin interface at http://127.0.0.1:8080
+- The admin interface at https://localhost:8080
 - The public interface on port 9090
 
 

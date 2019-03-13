@@ -13,7 +13,7 @@ services:
     entrypoint:
       - bash
       - scripts/initdb_and_run.sh
-    command: admin-dev
+    command: admin
     expose:
       - "17070"
     volumes:
@@ -29,6 +29,7 @@ services:
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
       - INSECURE_SESSION_COOKIE=1
+      - LOCALDEV=1
       # Grab mail information from the local environment
       - SMTP_HOST
       - SMTP_PORT
@@ -70,40 +71,66 @@ services:
   balrogagent-py3:
     build: ./agent
     depends_on:
-      balrogadmin-py3:
+      nginx-py3:
         condition: service_healthy
     volumes:
       - ./agent:/app
     links:
-      - balrogadmin-py3
+      - nginx-py3
     environment:
-      - BALROG_API_ROOT=http://balrogadmin-py3:17070/api
-      - BALROG_USERNAME=balrogadmin
-      - BALROG_PASSWORD=balrogadmin
+      - BALROG_API_ROOT=http://nginx-py3:18081/api
+      - BALROG_USERNAME=balrogagent
+      - BALROG_PASSWORD=na
       - TELEMETRY_API_ROOT=abc
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
 
 
+  # This container exists solely to have something automatically rebuilding the UI
+  # in the background during local development. Although it runs a web server, we
+  # don't use it. Instead, the nginx one below is used as our entry point to more
+  # closely mimic production, and support SSL.
   balrogui-py3:
     image: node:0.10
     depends_on:
       balrogadmin-py3:
         condition: service_healthy
-    ports:
-      - "18080:18080"
-    links:
-      - balrogadmin-py3
     volumes:
       - ./ui:/app
       - .cache_py3:/cache
     environment:
-      - WEB_PORT=18080
+      - WEB_PORT=16060
       - HOST_PROXY=balrogadmin-py3
       - HOST_PROXY_PORT=17070
     entrypoint:
       - /bin/bash
       - /app/docker-entrypoint.sh
+
+
+  nginx-py3:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "18080:18080"
+      - "18081:18081"
+    links:
+      - balrogadmin-py3
+    volumes:
+      - ./scripts/nginx.conf:/etc/nginx/conf.d/http_balrog.conf.template
+      - ./scripts/server.crt:/etc/nginx/server.crt
+      - ./scripts/server.key:/etc/nginx/server.key
+      - ./scripts/dhparam.pem:/etc/nginx/dhparam.pem
+    environment:
+      - NGINX_PORT=18080
+      - NGINX_BALROG_AGENT_PORT=18081
+      - BALROG_ADMIN_ROOT=http://balrogadmin-py3:17070
+    command: /bin/bash -c "envsubst '$$NGINX_PORT $$NGINX_BALROG_AGENT_PORT $$BALROG_ADMIN_ROOT' < /etc/nginx/conf.d/http_balrog.conf.template > /etc/nginx/conf.d/http_balrog.conf && nginx -g 'daemon off;'"
+    healthcheck:
+        test: nc -z -v nginx 18080 && nc -z -v nginx 18081
+        interval: 5s
+        timeout: 30s
+        retries: 50
 
 
   balrogdb-py3:

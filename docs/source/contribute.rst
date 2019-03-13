@@ -41,8 +41,8 @@ following command to create and run the necessary images:
 
 After it completes, you should be able to access
 
--   The admin interface at http://127.0.0.1:8080
--   The public interface on port 9090, for example http://127.0.0.1:9090/update/3/Firefox/33.0/20141202185629/Darwin_x86_64-gcc3-u-i386-x86_64/en-US/release/default/default/default/update.xml?force=1
+-   The admin interface at https://localhost:8080
+-   The public interface on port 9090, for example https://localhost:9090/update/3/Firefox/33.0/20141202185629/Darwin_x86_64-gcc3-u-i386-x86_64/en-US/release/default/default/default/update.xml?force=1
 
 
 -------------
