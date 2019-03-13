@@ -130,7 +130,7 @@ services:
       - BALROG_ADMIN_ROOT=http://balrogadmin-py3:17070
     command: /bin/bash -c "envsubst '$$NGINX_PORT $$NGINX_BALROG_AGENT_PORT $$BALROG_ADMIN_ROOT' < /etc/nginx/conf.d/http_balrog.conf.template > /etc/nginx/conf.d/http_balrog.conf && nginx -g 'daemon off;'"
     healthcheck:
-        test: nc -z -v nginx 8010 && nc -z -v nginx 8011
+        test: nc -z -v nginx 18010 && nc -z -v nginx 18011
         interval: 5s
         timeout: 30s
         retries: 50
