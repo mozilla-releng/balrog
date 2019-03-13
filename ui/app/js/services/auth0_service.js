@@ -58,9 +58,8 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
           }
         }
         else if (err) {
-          console.log(err);
           if (errCallback) {
-            errCallback(err.error);
+            errCallback(err.errorDescription);
           }
         }
         else {
@@ -74,18 +73,20 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
         }
       });
     },
-    renewTokens: function() {
-      // TODO: this is getting a timeout error, only initial logins are working right now
+    renewTokens: function(errCallback) {
       angularAuth0.checkSession({},
         function(err, result) {
           if (err) {
-            console.log(err);
+            if (errCallback) {
+              errCallback(err.error_description);
+            }
           } else {
             localLogin(result);
           }
         }
       );
-    }
+    },
+    scheduleRenewal: scheduleRenewal
   };
 
   return service;
