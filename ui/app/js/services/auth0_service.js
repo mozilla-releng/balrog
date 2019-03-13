@@ -2,6 +2,16 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
   var accessToken;
   var idToken;
   var expiresAt;
+  var tokenRenewalTimeout;
+
+  function scheduleRenewal() {
+    var delay = expiresAt - Date.now();
+    if (delay > 0) {
+      tokenRenewalTimeout = setTimeout(function() {
+        renewTokens();
+      }, delay);
+    }
+  }
 
   localLogin = function(authResult) {
     // Set isLoggedIn flag in localStorage
@@ -12,6 +22,7 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
     expiresAt = (authResult.expiresIn * 1000) + new Date().getTime();
     accessToken = authResult.accessToken;
     idToken = authResult.idToken;
+    scheduleRenewal();
   };
   var service = {
     login: function(path) {
@@ -24,6 +35,7 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
       accessToken = null;
       idToken = null;
       expiresAt = 0;
+      clearTimeout(tokenRenewalTimeout);
     },
     getIdToken: function() {
       return idToken;
@@ -46,6 +58,7 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
           }
         }
         else if (err) {
+          console.log(err);
           if (errCallback) {
             errCallback(err.error);
           }
