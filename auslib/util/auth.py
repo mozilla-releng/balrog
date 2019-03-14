@@ -17,8 +17,6 @@ def get_access_token(request):
         return request.form["access_token"]
     if "access_token" in request.args:
         return request.args["access_token"]
-    if "access_token" in request.json:
-        return request.json["access_token"]
 
     auth = request.headers.get("Authorization", None)
     if not auth:

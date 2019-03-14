@@ -19,7 +19,6 @@ angular.module("app").factory('Rules', function($http, ScheduledChanges, Helpers
     },
     updateRule: function(id, data, csrf_token) {
       data.csrf_token = csrf_token;
-      data.access_token = localStorage.getItem('accessToken');
       data = Helpers.replaceEmptyStrings(data);
       return $http.put('/api/rules/' + id, data);
     },
