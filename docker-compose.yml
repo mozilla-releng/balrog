@@ -39,6 +39,7 @@ services:
       - NOTIFY_TO_ADDR
       - NOTIFY_FROM_ADDR
       - STAGING
+      - LOCAL_ADMIN
     healthcheck:
         test: nc -z -v balrogadmin 7070
         interval: 5s
