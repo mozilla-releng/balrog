@@ -32,5 +32,5 @@ if [ -n "${NO_VOLUME_MOUNT}" ]; then
     docker run -e GITHUB_BASE_REPO_URL=$GITHUB_BASE_REPO_URL -e GITHUB_PULL_REQUEST=$GITHUB_PULL_REQUEST -e COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN --rm balrogtest test $@
 else
     echo "Running tests with volume mount"
-    docker run -e GITHUB_BASE_REPO_URL=$GITHUB_BASE_REPO_URL -e GITHUB_PULL_REQUEST=$GITHUB_PULL_REQUEST -e COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN --rm -v `pwd`:/app balrogtest test $@
+    docker run -e GITHUB_BASE_REPO_URL=$GITHUB_BASE_REPO_URL -e GITHUB_PULL_REQUEST=$GITHUB_PULL_REQUEST -e COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN --rm -v tox:/app/.tox balrogtest test $@
 fi

@@ -701,28 +701,8 @@ class TestSingleRuleView_JSON(ViewTest):
         self.assertEqual(r["channel"], "c")
 
     def testBadAuthPost(self):
-        ret = self._badAuthPost('/rules/1', data=dict(backgroundRate=100, mapping='c', priority=100, data_version=1))
+        ret = self._post('/rules/1', data=dict(backgroundRate=100, mapping='c', priority=100, data_version=1), username="bad!")
         self.assertEqual(ret.status_code, 403, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
-
-    def testHttpRemoteUserAuth(self):
-        # Make some changes to a rule
-        ret = self._httpRemoteUserPost('/rules/1', data=dict(backgroundRate=71, mapping='d', priority=73, data_version=1,
-                                                             product='Firefox', channel='nightly'))
-        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
-        load = ret.get_json()
-        self.assertEqual(load['new_data_version'], 2)
-
-        # Assure the changes made it into the database
-        r = dbo.rules.t.select().where(dbo.rules.rule_id == 1).execute().fetchall()
-        self.assertEqual(len(r), 1)
-        self.assertEqual(r[0]['mapping'], 'd')
-        self.assertEqual(r[0]['backgroundRate'], 71)
-        self.assertEqual(r[0]['priority'], 73)
-        self.assertEqual(r[0]['data_version'], 2)
-        # And that we didn't modify other fields
-        self.assertEqual(r[0]['update_type'], 'minor')
-        self.assertEqual(r[0]['version'], '3.5')
-        self.assertEqual(r[0]['buildTarget'], 'd')
 
     def testNoPermissionToAlterExistingProduct(self):
         ret = self._post('/rules/4', data=dict(backgroundRate=71, data_version=1), username='bob')

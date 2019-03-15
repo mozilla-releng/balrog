@@ -116,7 +116,7 @@ def verified_userinfo(request, auth_domain, auth_audience):
                 "code": "incomplete_validation",
                 "description": "couldn't find additional userinfo from access token"},
                 401)
-        except Exception as e:
+        except Exception:
             raise AuthError({
                 "code": "invalid_header",
                 "description": "Unable to parse authentication token."},

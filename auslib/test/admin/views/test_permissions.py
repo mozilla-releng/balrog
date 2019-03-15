@@ -192,15 +192,6 @@ class TestPermissionsAPI_JSON(ViewTest):
         query = query.where(dbo.permissions.permission == 'admin')
         self.assertEqual(query.execute().fetchone(), ('admin', 'bob@bobsworld.com', {"products": ["a"]}, 1))
 
-    def testPermissionsPostWithHttpRemoteUser(self):
-        ret = self._httpRemoteUserPost('/users/bob/permissions/release_read_only', username="bob", data=dict(options=json.dumps(dict(products=["a", "b"])),
-                                       data_version=1))
-        self.assertEqual(ret.status_code, 200, ret.get_data())
-        self.assertEqual(ret.get_json(), dict(new_data_version=2))
-        r = dbo.permissions.t.select().where(dbo.permissions.username == 'bob').where(dbo.permissions.permission == "release_read_only").execute().fetchall()
-        self.assertEqual(len(r), 1)
-        self.assertEqual(r[0], ('release_read_only', 'bob', {"products": ["a", "b"]}, 2))
-
     def testPermissionsPost(self):
         ret = self._post('/users/bob/permissions/release_read_only', data=dict(options=json.dumps(dict(products=["a", "b"])), data_version=1))
         self.assertEqual(ret.status_code, 200, ret.get_data())

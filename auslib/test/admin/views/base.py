@@ -22,6 +22,21 @@ class ViewTest(unittest.TestCase):
        some helper methods."""
 
     def setUp(self):
+        from auslib.web.admin.views import base as view_base
+        self.view_base = view_base
+
+        # Mock out verified_userinfo, because we don't want to talk to Auth0
+        # or need to provide real credentials in tests.
+        # We don't do this with "mock" because this is a base to all of other
+        # tests, and "mock" must be applied in the tests itself.
+        self.orig_verified_userinfo = view_base.verified_userinfo
+        self.mocked_user = None
+
+        def my_userinfo(*args, **kwargs):
+            return {"email": self.mocked_user}
+
+        view_base.verified_userinfo = my_userinfo
+
         self.version_fd, self.version_file = mkstemp()
         cache.reset()
         cache.make_copies = True
@@ -30,6 +45,8 @@ class ViewTest(unittest.TestCase):
         app.config["WTF_CSRF_ENABLED"] = False
         app.config['WHITELISTED_DOMAINS'] = {'good.com': ('a', 'b', 'c', 'd')}
         app.config["VERSION_FILE"] = self.version_file
+        app.config["AUTH_DOMAIN"] = "balrog.test.dev"
+        app.config["AUTH_AUDIENCE"] = "balrog test"
         with open(self.version_file, "w+") as f:
             f.write("""
 {
@@ -173,54 +190,34 @@ class ViewTest(unittest.TestCase):
         dbo.reset()
         os.close(self.version_fd)
         os.remove(self.version_file)
-
-    def _getBadAuth(self):
-        # TODO: FIXME
-        return {'REMOTE_USER': 'NotAuth!'}
-
-    def _getHttpRemoteUserAuth(self, username):
-        # TODO: FIXME
-        return {"HTTP_REMOTE_USER": username}
-
-    def _getAuth(self, username):
-        # TODO: FIXME
-        return {'REMOTE_USER': username}
+        self.view_base.verified_userinfo = self.orig_verified_userinfo
 
     def _get(self, url, qs={}, username=None):
-        environ_base = None
         headers = {
             "Accept-Encoding": "application/json",
             "Accept": "application/json"
         }
-        if username:
-            environ_base = self._getAuth(username)
-        ret = self.client.get(url, query_string=qs, headers=headers, environ_base=environ_base)
+        self.mocked_user = username
+        ret = self.client.get(url, query_string=qs, headers=headers)
         return ret
 
     def _post(self, url, data={}, username='bill', **kwargs):
         if type(data) == dict:
             data["csrf_token"] = "lorem"
-        return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getAuth(username), **kwargs)
-
-    def _httpRemoteUserPost(self, url, username="bill", data={}):
-        if type(data) == dict:
-            data["csrf_token"] = "lorem"
-        return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getHttpRemoteUserAuth(username))
-
-    def _badAuthPost(self, url, data={}):
-        if type(data) == dict:
-            data["csrf_token"] = "lorem"
-        return self.client.post(url, data=json.dumps(data), content_type="application/json", environ_base=self._getBadAuth())
+        self.mocked_user = username
+        return self.client.post(url, data=json.dumps(data), content_type="application/json", **kwargs)
 
     def _put(self, url, data={}, username='bill'):
         if type(data) == dict:
             data["csrf_token"] = "lorem"
-        return self.client.put(url, data=json.dumps(data), content_type="application/json", environ_base=self._getAuth(username))
+        self.mocked_user = username
+        return self.client.put(url, data=json.dumps(data), content_type="application/json")
 
     def _delete(self, url, qs={}, username='bill'):
         if type(qs) == dict:
             qs["csrf_token"] = "lorem"
-        return self.client.delete(url, query_string=qs, environ_base=self._getAuth(username))
+        self.mocked_user = username
+        return self.client.delete(url, query_string=qs)
 
     def assertStatusCode(self, response, expected):
         self.assertEqual(response.status_code, expected, '%d - %s' % (response.status_code, response.get_data()))
