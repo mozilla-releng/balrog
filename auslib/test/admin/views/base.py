@@ -23,19 +23,23 @@ class ViewTest(unittest.TestCase):
 
     def setUp(self):
         from auslib.web.admin.views import base as view_base
+        from auslib.web.admin.views import permissions as view_permissions
         self.view_base = view_base
+        self.view_permissions = view_permissions
 
         # Mock out verified_userinfo, because we don't want to talk to Auth0
         # or need to provide real credentials in tests.
         # We don't do this with "mock" because this is a base to all of other
         # tests, and "mock" must be applied in the tests itself.
-        self.orig_verified_userinfo = view_base.verified_userinfo
+        self.orig_base_verified_userinfo = view_base.verified_userinfo
+        self.orig_permissions_verified_userinfo = view_permissions.verified_userinfo
         self.mocked_user = None
 
         def my_userinfo(*args, **kwargs):
             return {"email": self.mocked_user}
 
         view_base.verified_userinfo = my_userinfo
+        view_permissions.verified_userinfo = my_userinfo
 
         self.version_fd, self.version_file = mkstemp()
         cache.reset()
@@ -190,7 +194,8 @@ class ViewTest(unittest.TestCase):
         dbo.reset()
         os.close(self.version_fd)
         os.remove(self.version_file)
-        self.view_base.verified_userinfo = self.orig_verified_userinfo
+        self.view_base.verified_userinfo = self.orig_base_verified_userinfo
+        self.view_permissions.verified_userinfo = self.orig_permissions_verified_userinfo
 
     def _get(self, url, qs={}, username=None):
         headers = {

@@ -22,58 +22,7 @@ class TestUsersAPI_JSON(ViewTest):
             'mary': {'roles': [{'role': 'relman', 'data_version': 1}]}}))
 
 
-class TestCurrentUserAPI_JSON(ViewTest):
-
-    def testGetCurrentUser(self):
-        ret = self._get("/users/current", username="bill")
-        self.assertEqual(ret.status_code, 200)
-        data = ret.get_json()
-        expected = {
-            "username": "bill",
-            "permissions": {
-                "admin": {
-                    "options": None, "data_version": 1,
-                },
-            },
-            "roles": {
-                "releng": {
-                    "data_version": 1,
-                },
-                "qa": {
-                    "data_version": 1,
-                },
-            },
-        }
-        self.assertEqual(data, expected)
-
-    def testGetCurrentUserWithoutRoles(self):
-        ret = self._get("/users/current", username="billy")
-        self.assertEqual(ret.status_code, 200)
-        data = ret.get_json()
-        expected = {
-            "username": "billy",
-            "permissions": {
-                "admin": {
-                    "options": {
-                        "products": ["a"]
-                    },
-                    "data_version": 1,
-                }
-            },
-            "roles": {},
-        }
-        self.assertEqual(data, expected)
-
-    def testGetCurrentUserWithoutRolesWithoutPermissions(self):
-        ret = self._get("/users/current", username="vikas")
-        self.assertEqual(ret.status_code, 200)
-        data = ret.get_json()
-        expected = {
-            "username": "vikas",
-            "permissions": {},
-            "roles": {},
-        }
-        self.assertEqual(data, expected)
+class TestNamedUserAPI_JSON(ViewTest):
 
     def testGetSelfPermissionWithoutRolesAndWithoutPermission(self):
         ret = self._get("/users/vikas", username="vikas")

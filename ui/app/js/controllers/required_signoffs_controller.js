@@ -13,7 +13,7 @@ function($scope, $modal, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredS
   $scope.required_signoffs = {};
   $scope.selected_product = null;
   $scope.state = "current";
-  $scope.current_user = null;
+  $scope.current_user = localStorage.getItem("username");
   $scope.user_roles = [];
 
   // All of the initial loads happen asynchronously. We keep track of these so we can
@@ -23,7 +23,7 @@ function($scope, $modal, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredS
     "permissions": $q.defer(),
     "product_sc": $q.defer(),
     "permissions_sc": $q.defer(),
-    "current_user": $q.defer(),
+    "user_info": $q.defer(),
   };
 
   $q.all([loading_deferreds["product"].promise, loading_deferreds["permissions"].promise,
@@ -218,9 +218,8 @@ function($scope, $modal, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredS
     loading_deferreds["permissions_sc"].resolve();
   });
 
-  Permissions.getCurrentUser()
+  Permissions.getUserInfo()
   .success(function(response) {
-    $scope.current_user = response["username"];
     $scope.user_roles = Object.keys(response["roles"]);
   })
   .error(function(response) {

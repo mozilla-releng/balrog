@@ -23,9 +23,9 @@ function ($scope, $modalInstance, CSRF, Permissions, users, roles, is_edit, user
     $scope.user = angular.copy(user);
 
     $scope.user.permissions = [];
-    Permissions.getUserPermissions($scope.user.username)
-      .then(function (permissions) {
-        _.forEach(permissions, function (p) {
+    Permissions.getUserInfo($scope.user.username)
+      .then(function (response) {
+        _.forEach(response.permissions, function (p) {
           if (p.options) {
             p.options_as_json = JSON.stringify(p['options']);
           }

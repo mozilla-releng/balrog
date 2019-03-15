@@ -3,22 +3,20 @@ angular.module("app").factory('Permissions', function($http, $q, ScheduledChange
     getUsers: function() {
       return $http.get('/api/users');
     },
-    getCurrentUser: function() {
-      return $http.get("/api/users/current");
-    },
-    getUserPermissions: function(username) {
+    getUserInfo: function(username) {
       var deferred = $q.defer();
-      var url = '/api/users/' + encodeURIComponent(username) + '/permissions';
+      var url = '/api/users/' + encodeURIComponent(username);
       $http.get(url)
       .success(function(response) {
         // What comes back from the server is a dict like this:
         //  {permission1: {options: ...}, otherPermission: {options: ...}, ...}
         // so turn it into a list with the key being called "permission"
-        var permissions = _.map(response, function(value, key) {
+        console.log(response);
+        var permissions = _.map(response.permissions, function(value, key) {
           value.permission = key;
           return value;
         });
-        deferred.resolve(permissions);
+        deferred.resolve({"permissions": permissions, "roles": response.roles});
       })
       .error(function() {
         console.error(arguments);

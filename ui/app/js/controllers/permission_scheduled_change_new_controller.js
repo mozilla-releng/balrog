@@ -60,9 +60,9 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc, perm
   }, true);
 
   $scope.sc.permissions = [];
-  Permissions.getUserPermissions(sc.username)
-  .then(function(permissions) {
-    _.forEach(permissions, function(p) {
+  Permissions.getUserInfo(sc.username)
+  .then(function(response) {
+    _.forEach(responsepermissions, function(p) {
       if (p.options) {
         p.options = JSON.stringify(p['options']);
       }

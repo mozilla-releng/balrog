@@ -10,9 +10,9 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
 
   $scope.sc_id = $routeParams.sc_id;
 
-  Permissions.getCurrentUser()
+  $scope.current_user = localStorage.getItem("username");
+  Permissions.getUserInfo()
   .success(function(response) {
-    $scope.current_user = response["username"];
     $scope.user_roles = Object.keys(response["roles"]);
   })
   .error(function(response) {

@@ -18,6 +18,8 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('accessToken', authResult.accessToken);
     localStorage.setItem('picture', authResult.idTokenPayload.picture);
+    console.log(authResult.idTokenPayload);
+    localStorage.setItem('username', authResult.idTokenPayload.email);
     // Set the time that the access token will expire at
     expiresAt = (authResult.expiresIn * 1000) + new Date().getTime();
     accessToken = authResult.accessToken;

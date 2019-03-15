@@ -18,6 +18,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.show_sc = true;
   $scope.emergency_shutoffs = [];
   $scope.current_emergency_shutoff = null;
+  $scope.current_user = localStorag.getItem("username");
 
   function changeLocationWithFilterParams(filterParamsString) {
     localStorage.setItem("pr_ch_filter", filterParamsString);
@@ -72,9 +73,8 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
         {id: 50, name: '50'}, 
         {id: $scope.rules_count, name: 'All'}];
 
-      Permissions.getCurrentUser()
+      Permissions.getUserInfo()
       .success(function(response) {
-        $scope.current_user = response["username"];
         $scope.user_roles = Object.keys(response["roles"]);
       })
       .error(function(response) {
