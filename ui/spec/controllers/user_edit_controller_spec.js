@@ -24,10 +24,13 @@ describe("controller: UserPermissionsCtrl", function() {
     }];
 
   var sample_permissions = {
-    "/releases/:name": {
-      data_version: 1,
-      options: null
-    }
+    "permissions": {
+      "/releases/:name": {
+        data_version: 1,
+        options: null
+      }
+    },
+    "roles": {}
   };
 
   var sample_roles = {
@@ -73,7 +76,7 @@ describe("controller: UserPermissionsCtrl", function() {
   describe("opening the edit user modal", function() {
 
     it("should should all defaults", function() {
-      this.$httpBackend.expectGET('/api/users/peterbe/permissions')
+      this.$httpBackend.expectGET('/api/users/peterbe')
       .respond(200, JSON.stringify(sample_permissions));
       this.$httpBackend.flush();
       expect(this.scope.errors).toEqual({permissions:{}});
@@ -103,7 +106,7 @@ describe("controller: UserPermissionsCtrl", function() {
     });
     //
     it("should should be able add a permission", function() {
-      this.$httpBackend.expectGET('/api/users/peterbe/permissions')
+      this.$httpBackend.expectGET('/api/users/peterbe')
       .respond(200, JSON.stringify(sample_permissions));
       this.$httpBackend.flush();
       this.$httpBackend.expectGET('/api/csrf_token')
@@ -122,7 +125,7 @@ describe("controller: UserPermissionsCtrl", function() {
     });
 
     it("should should be able update a permission", function() {
-      this.$httpBackend.expectGET('/api/users/peterbe/permissions')
+      this.$httpBackend.expectGET('/api/users/peterbe')
       .respond(200, JSON.stringify(sample_permissions));
       this.$httpBackend.flush();
       this.$httpBackend.expectGET('/api/csrf_token')
@@ -144,7 +147,7 @@ describe("controller: UserPermissionsCtrl", function() {
     });
 
     it("should should be able add a role", function() {
-      this.$httpBackend.expectGET('/api/users/peterbe/permissions')
+      this.$httpBackend.expectGET('/api/users/peterbe')
       .respond(200, JSON.stringify(sample_permissions));
       this.$httpBackend.flush();
       this.$httpBackend.expectGET('/api/csrf_token')

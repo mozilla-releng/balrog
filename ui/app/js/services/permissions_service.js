@@ -11,7 +11,6 @@ angular.module("app").factory('Permissions', function($http, $q, ScheduledChange
         // What comes back from the server is a dict like this:
         //  {permission1: {options: ...}, otherPermission: {options: ...}, ...}
         // so turn it into a list with the key being called "permission"
-        console.log(response);
         var permissions = _.map(response.permissions, function(value, key) {
           value.permission = key;
           return value;

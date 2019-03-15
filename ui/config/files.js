@@ -31,7 +31,7 @@ module.exports = function(lineman) {
       ],
       app: [
         "app/js/app.js",
-        "app/js/config.js",
+        "app/js/app.run.js",
         "app/js/**/*.js"
       ]
     },

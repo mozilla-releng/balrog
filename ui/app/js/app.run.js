@@ -20,7 +20,6 @@ angular.module("app").run(function($location, $http, Auth0) {
   Auth0.scheduleRenewal();
 
   // Ensure that the bearer token is always included in requests to the backend.
-  console.log($http.defaults.headers);
   $http.defaults.headers.post.Authorization = "Bearer " + localStorage.getItem("accessToken");
   $http.defaults.headers.put.Authorization = "Bearer " + localStorage.getItem("accessToken");
   $http.defaults.headers.delete = {

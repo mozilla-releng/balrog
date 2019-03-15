@@ -218,17 +218,16 @@ function($scope, $modal, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredS
     loading_deferreds["permissions_sc"].resolve();
   });
 
-  Permissions.getUserInfo()
-  .success(function(response) {
+  Permissions.getUserInfo($scope.current_user)
+  .then(function(response) {
     $scope.user_roles = Object.keys(response["roles"]);
-  })
-  .error(function(response) {
+    loading_deferreds["current_user"].resolve();
+  },
+  function(response) {
     sweetAlert(
       "Failed to load current user Roles:",
       response
     );
-  })
-  .finally(function() {
     loading_deferreds["current_user"].resolve();
   });
 

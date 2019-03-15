@@ -98,8 +98,8 @@ describe("controller: RulesController", function() {
     it("should return all rules empty", function() {
       this.$httpBackend.expectGET('/api/rules')
       .respond(200, '{"rules": [], "count": 0}');
-      this.$httpBackend.expectGET('/api/users/current')
-      .respond(200, '{"permissions": {"admin": {"data_version": 1, "options": null}}, "roles": {}, "username": "balrogadmin"}');
+      this.$httpBackend.expectGET('/api/users/superduperadmin')
+      .respond(200, '{"permissions": {"admin": {"data_version": 1, "options": null}}, "roles": {}}');
       this.$httpBackend.expectGET('/api/scheduled_changes/rules')
       .respond(200, '{"scheduled_changes": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/product')
@@ -119,8 +119,8 @@ describe("controller: RulesController", function() {
     it("should return all rules some", function() {
       this.$httpBackend.expectGET('/api/rules')
       .respond(200, JSON.stringify(sample_rules));
-      this.$httpBackend.expectGET('/api/users/current')
-      .respond(200, '{"permissions": {"admin": {"data_version": 1, "options": null}}, "roles": {}, "username": "balrogadmin"}');
+      this.$httpBackend.expectGET('/api/users/superduperadmin')
+      .respond(200, '{"permissions": {"admin": {"data_version": 1, "options": null}}, "roles": {}}');
       this.$httpBackend.expectGET('/api/scheduled_changes/rules')
       .respond(200, '{"scheduled_changes": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/product')
@@ -144,8 +144,8 @@ describe("controller: RulesController", function() {
     it("should be possible to change selected filter", function() {
       this.$httpBackend.expectGET('/api/rules')
       .respond(200, JSON.stringify(sample_rules));
-      this.$httpBackend.expectGET('/api/users/current')
-      .respond(200, '{"permissions": {"admin": {"data_version": 1, "options": null}}, "roles": {}, "username": "balrogadmin"}');
+      this.$httpBackend.expectGET('/api/users/superduperadmin')
+      .respond(200, '{"permissions": {"admin": {"data_version": 1, "options": null}}, "roles": {}}');
       this.$httpBackend.expectGET('/api/scheduled_changes/rules')
       .respond(200, '{"scheduled_changes": [], "count": 0}');
       this.$httpBackend.expectGET('/api/rules/columns/product')

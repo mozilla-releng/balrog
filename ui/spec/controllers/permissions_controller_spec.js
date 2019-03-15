@@ -153,7 +153,7 @@ describe("controller: PermissionsController", function() {
       .respond(200, JSON.stringify(sample_users));
       this.$httpBackend.expectGET('/api/required_signoffs/permissions')
       .respond(200, '{"required_signoffs": []}');
-      this.$httpBackend.expectGET('/api/users/peterbe/permissions')
+      this.$httpBackend.expectGET('/api/users/peterbe')
       .respond(200, JSON.stringify(sample_permissions));
       this.$httpBackend.expectGET('/api/releases/columns/product').respond(200,{});
       this.scope.openUpdateModal({username: "peterbe"});
@@ -170,14 +170,17 @@ describe("controller: PermissionsController by username", function() {
   });
 
   var sample_permissions = {
-    "/releases/:name": {
-      data_version: 1,
-      options: null
+    "permissions": {
+      "/releases/:name": {
+        data_version: 1,
+        options: null
+      },
+      "admin": {
+        data_version: 1,
+        options: null
+      }
     },
-    "admin": {
-      data_version: 1,
-      options: null
-    }
+    "roles": {}
   };
 
   beforeEach(inject(function($controller, $rootScope, $location, Permissions, $httpBackend) {
@@ -204,7 +207,7 @@ describe("controller: PermissionsController by username", function() {
       inject(function($route, $location, $rootScope) {
 
         expect($route.current).toBeUndefined();
-        this.$httpBackend.expectGET('/api/users/peterbe/permissions')
+        this.$httpBackend.expectGET('/api/users/peterbe')
         .respond(200, JSON.stringify(sample_permissions));
         this.$httpBackend.expectGET('/api/required_signoffs/permissions')
         .respond(200, '{"required_signoffs": []}');

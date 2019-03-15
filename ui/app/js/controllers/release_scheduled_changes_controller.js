@@ -11,11 +11,11 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
   $scope.sc_id = $routeParams.sc_id;
 
   $scope.current_user = localStorage.getItem("username");
-  Permissions.getUserInfo()
-  .success(function(response) {
+  Permissions.getUserInfo($scope.current_user)
+  .then(function(response) {
     $scope.user_roles = Object.keys(response["roles"]);
-  })
-  .error(function(response) {
+  },
+  function(response) {
     sweetAlert(
       "Failed to load current user Roles:",
       response

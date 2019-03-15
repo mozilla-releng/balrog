@@ -10,11 +10,11 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
 
   $scope.sc_id = parseInt($routeParams.sc_id, 10);
 
-  Permissions.getUserInfo()
-  .success(function(response) {
+  Permissions.getUserInfo($scope.current_user)
+  .then(function(response) {
     $scope.user_roles = Object.keys(response["roles"]);
-  })
-  .error(function(response) {
+  },
+  function(response) {
     sweetAlert(
       "Failed to load current user Roles:",
       response

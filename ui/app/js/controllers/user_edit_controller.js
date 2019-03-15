@@ -30,8 +30,8 @@ function ($scope, $modalInstance, CSRF, Permissions, users, roles, is_edit, user
             p.options_as_json = JSON.stringify(p['options']);
           }
         });
-        $scope.originalPermissions = angular.copy(permissions);
-        $scope.user.permissions = permissions;
+        $scope.originalPermissions = angular.copy(response.permissions);
+        $scope.user.permissions = response.permissions;
       });
 
     $scope.users.forEach(function (eachUser) {
