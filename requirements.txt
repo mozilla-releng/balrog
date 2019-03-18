@@ -201,9 +201,9 @@ typing==3.6.6 \
 spec-synthase==0.1.9 \
     --hash=sha256:f8be65bb4100aaebdc12813075024db8d347af0d5736abed5864e8fd23501b09 \
     --hash=sha256:4d493e95cf6bff62e85673debd15a0a9a7320db57409d1d8f119888f9730f854
-sqlparse==0.2.4 \
-    --hash=sha256:d9cf190f51cbb26da0412247dfe4fb5f4098edb73db84e02f9fc21fdca31fed4 \
-    --hash=sha256:ce028444cfab83be538752a2ffdb56bc417b7784ff35bb9a3062413717807dec
+sqlparse==0.3.0 \
+    --hash=sha256:40afe6b8d4b1117e7dff5504d7a8ce07d9a1b15aeeade8a2d10f130a834f8177 \
+    --hash=sha256:7c3dca29c022744e95b547e867cee89f4fce4373f3549ccd8797d8eb52cdb873
 arrow==0.13.1 \
     --hash=sha256:3397e5448952e18e1295bf047014659effa5ae8da6a5371d37ff0ddc46fa6872 \
     --hash=sha256:6f54d9f016c0b7811fac9fb8c2c7fa7421d80c54dbdd75ffb12913c55db60b8a
