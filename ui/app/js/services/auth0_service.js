@@ -20,7 +20,7 @@ angular.module("app").factory('Auth0', function(angularAuth0, $http) {
     if (delay > 0) {
       tokenRenewalTimeout = setTimeout(function() {
         renewTokens();
-      }, 10000);
+      }, delay);
     }
   }
 
