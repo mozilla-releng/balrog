@@ -129,14 +129,12 @@ function($scope, $modalInstance, $q, CSRF, ProductRequiredSignoffs, PermissionsR
           if (new_role["sc"]) {
             change["pending"] = true;
             if (new_role["sc"]["signoffs_required"] === current_role["sc"]["signoffs_required"]) {
-              console.log("No change to " + role_name + ", skipping...");
               noop = true;
             }
           }
           else {
             change["pending"] = false;
             if (new_role["signoffs_required"] === current_role["signoffs_required"]) {
-              console.log("No change to " + role_name + ", skipping...");
               noop = true;
             }
           }

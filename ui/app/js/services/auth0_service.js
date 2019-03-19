@@ -1,8 +1,22 @@
 angular.module("app").factory('Auth0', function(angularAuth0) {
   var tokenRenewalTimeout;
 
+  function renewTokens(errCallback) {
+    angularAuth0.checkSession({},
+      function(err, result) {
+        if (err) {
+          if (errCallback) {
+            errCallback(err.error_description);
+          }
+        } else {
+          localLogin(result);
+        }
+      }
+    );
+  }
   function scheduleRenewal() {
-    var delay = localStorage.getItem("expiresAt") - Date.now();
+    // Renew tokens 5 minutes ahead of expiration
+    var delay = localStorage.getItem("expiresAt") - Date.now() - 500000;
     if (delay > 0) {
       tokenRenewalTimeout = setTimeout(function() {
         renewTokens();
@@ -60,19 +74,7 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
         }
       });
     },
-    renewTokens: function(errCallback) {
-      angularAuth0.checkSession({},
-        function(err, result) {
-          if (err) {
-            if (errCallback) {
-              errCallback(err.error_description);
-            }
-          } else {
-            localLogin(result);
-          }
-        }
-      );
-    },
+    renewTokens: renewTokens,
     scheduleRenewal: scheduleRenewal
   };
 

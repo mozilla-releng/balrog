@@ -52,11 +52,11 @@ function($scope, $window, $location, Page, Auth0) {
   $scope.loc = $location;
   $scope.initiateLogin = function() {
     var loginWindow = $window.open('/auth0_login', '_blank');
-    console.log("done here");
     var timer = setInterval(function() {
       if (loginWindow.closed) {
         clearInterval(timer);
         $scope.$apply();
+        Auth0.scheduleRenewal();
       }
     }, 500);
   };
