@@ -14,6 +14,7 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
   }
 
   localLogin = function(authResult) {
+    console.log(localStorage);
     // Set isLoggedIn flag in localStorage
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('accessToken', authResult.accessToken);
@@ -26,13 +27,29 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
     scheduleRenewal();
   };
   var service = {
-    login: function(path) {
-      angularAuth0.authorize({"state": path});
+    login: function(path, successCallback, errCallback) {
+      console.log(successCallback);
+      console.log(errCallback);
+      localStorage.setItem("pathBeforeLogin", path);
+      angularAuth0.popup.authorize({"state": path}, function(err, authResult) {
+          console.log(authResult);
+          if (authResult && authResult.accessToken && authResult.idToken) {
+            console.log("local login");
+            localLogin(authResult);
+            successCallback();
+          }
+          else if (err) {
+            if (errCallback) {
+              errCallback(err.errorDescription);
+            }
+          }
+      });
     },
     logout: function() {
       localStorage.removeItem("isLoggedIn");
       localStorage.removeItem("accessToken");
       localStorage.removeItem("picture");
+      localStorage.removeItem("username");
       accessToken = null;
       idToken = null;
       expiresAt = 0;
@@ -51,10 +68,12 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
       return localStorage.getItem('isLoggedIn') === 'true' && new Date().getTime() < expiresAt;
     },
     handleAuthentication: function(successCallback, errCallback) {
+      console.log("handling");
       angularAuth0.parseHash(function(err, authResult) {
         if (authResult && authResult.accessToken && authResult.idToken) {
           localLogin(authResult);
           if (successCallback) {
+            console.log("success callback");
             successCallback(authResult.state);
           }
         }

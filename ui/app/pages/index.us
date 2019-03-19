@@ -52,7 +52,7 @@
               <a href="/change_logs">Change Logs</a>
             </li>
             <li ng-class="{dropdown: auth0.isAuthenticated(), nav: auth0.isAuthenticated()}">
-              <a ng-show="! auth0.isAuthenticated()" ng-click="auth0.login(loc.path())">Sign in...</a>
+              <a ng-show="! auth0.isAuthenticated()" ng-click="auth0.login(loc.path(), successCallback, errCallback)">Sign in...</a>
               <!-- TODO: how can we avoid hardcoding this? Bootstrap's navbar class specifies 50px, but
                          I haven't been able to figure out how to force the img to shrink to size of its
                          container
