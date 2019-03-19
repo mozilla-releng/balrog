@@ -51,11 +51,14 @@ function($scope, $window, $location, Page, Auth0) {
   $scope.auth0 = Auth0;
   $scope.loc = $location;
   $scope.initiateLogin = function() {
+    // Do the login in a new window, and set-up token renewal
+    // when it completes.
     var loginWindow = $window.open('/auth0_login', '_blank');
     var timer = setInterval(function() {
       if (loginWindow.closed) {
         clearInterval(timer);
         $scope.$apply();
+        // TODO: how to avoid doing this when login fails?
         Auth0.scheduleRenewal();
       }
     }, 500);

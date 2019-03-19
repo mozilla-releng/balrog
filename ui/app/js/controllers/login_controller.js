@@ -5,6 +5,7 @@ angular.module("app").controller('LoginController', function($window, Auth0) {
     Auth0.handleAuthentication("fakestate", function() {
       $window.close();
     },
+    // We explicitly don't close the window when the login fails to avoid losing error messages.
     function(errMsg) {
       sweetAlert("Error logging in", errMsg, "error");
     });

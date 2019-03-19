@@ -93,7 +93,7 @@ angular.module("app").config(function($routeProvider, $locationProvider, angular
   })
 
   .when('/auth0_login', {
-    templateUrl: 'login.html',
+    template: "Forwarding you to the login page...",
     controller: 'Auth0LoginController',
     reloadOnSearch: false
   })
