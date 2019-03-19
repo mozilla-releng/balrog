@@ -1,4 +1,4 @@
-angular.module("app").factory('Auth0', function(angularAuth0) {
+angular.module("app").factory('Auth0', function(angularAuth0, $http) {
   var tokenRenewalTimeout;
 
   function renewTokens(errCallback) {
@@ -20,7 +20,7 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
     if (delay > 0) {
       tokenRenewalTimeout = setTimeout(function() {
         renewTokens();
-      }, delay);
+      }, 10000);
     }
   }
 
@@ -33,6 +33,11 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
     // Set the time that the access token will expire at
     localStorage.setItem('expiresAt', authResult.expiresIn * 1000 + new Date().getTime());
     scheduleRenewal();
+    $http.defaults.headers.post.Authorization = "Bearer " + localStorage.getItem("accessToken");
+    $http.defaults.headers.put.Authorization = "Bearer " + localStorage.getItem("accessToken");
+    $http.defaults.headers.delete = {
+      "Authorization": "Bearer " + localStorage.getItem("accessToken")
+    };
   };
   var service = {
     login: function(state) {
@@ -64,13 +69,9 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
           }
         }
         else {
-          // This branch specifically cannot throw an error, because app.run.js relies
-          // on being able to call this function whether or not a login has happened.
-          // In the case where it is called and a login has not happened, we hit this
-          // branch, which needs to be a no-op. In theory (although maybe not in practice)
-          // it's possible to hit this branch when a login has happened (authResult might
-          // not be what we expect, but no error is shown), which we're unable to distinguish
-          // from the aforementioned case.
+          if (errCallback) {
+            errCallback("unknown error");
+          }
         }
       });
     },

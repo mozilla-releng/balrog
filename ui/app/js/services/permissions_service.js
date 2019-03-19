@@ -17,9 +17,8 @@ angular.module("app").factory('Permissions', function($http, $q, ScheduledChange
         });
         deferred.resolve({"permissions": permissions, "roles": response.roles});
       })
-      .error(function() {
-        console.error(arguments);
-        deferred.reject(arguments);
+      .error(function(response) {
+        deferred.reject(response.detail);
       });
       return deferred.promise;
     },

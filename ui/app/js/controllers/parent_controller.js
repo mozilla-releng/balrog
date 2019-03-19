@@ -42,7 +42,7 @@ angular.module("app").config(['$httpProvider', function($httpProvider) {
 
 /* Put things in here that the sub-controllers can use */
 angular.module("app").controller('ParentController',
-function($scope, $window, $location, Page, Auth0) {
+function($scope, $window, $location, $http, Page, Auth0) {
   $scope.Page = Page;
   $scope.isEmpty = isEmpty;
   $scope.fieldIsChanging = fieldIsChanging;
@@ -50,6 +50,13 @@ function($scope, $window, $location, Page, Auth0) {
   $scope.formatMoment = formatMoment;
   $scope.auth0 = Auth0;
   $scope.loc = $location;
+  function updateHttpDefaults() {
+    $http.defaults.headers.post.Authorization = "Bearer " + localStorage.getItem("accessToken");
+    $http.defaults.headers.put.Authorization = "Bearer " + localStorage.getItem("accessToken");
+    $http.defaults.headers.delete = {
+      "Authorization": "Bearer " + localStorage.getItem("accessToken")
+    };
+  }
   $scope.initiateLogin = function() {
     // Do the login in a new window, and set-up token renewal
     // when it completes.
@@ -58,8 +65,10 @@ function($scope, $window, $location, Page, Auth0) {
       if (loginWindow.closed) {
         clearInterval(timer);
         $scope.$apply();
-        // TODO: how to avoid doing this when login fails?
-        Auth0.scheduleRenewal();
+        if (Auth0.isAuthenticated()) {
+          Auth0.scheduleRenewal(updateHttpDefaults);
+          updateHttpDefaults();
+        }
       }
     }, 500);
   };

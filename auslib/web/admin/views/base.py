@@ -18,13 +18,9 @@ def requirelogin(f):
         if not username:
             log.warning("Login Required")
             return problem(401, 'Unauthenticated', 'Login Required')
+        # Even if the user has provided a valid access token, we want to ensure that they're
+        # a known user -- we don't want just anybody to be able to access Balrog.
         elif not dbo.isKnownUser(username):
-            # TODO: is this still a valid issue?
-            # Was identified some situations where a REMOTE_USER can be changed through
-            # the 'Remote-User' header.
-            # This check prevents the request reaches database layer when the user is not
-            # in permissions table.
-            # https://bugzilla.mozilla.org/show_bug.cgi?id=1457905
             log.warning("Authorization Required")
             return problem(403, 'Forbidden', 'Authorization Required')
         return f(*args, changed_by=username, **kwargs)
