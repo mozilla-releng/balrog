@@ -9,10 +9,7 @@ angular.module("app").run(function($location, $http, Auth0) {
   // If not, we might have just gotten back from a login through Auth0
   // TODO: can this block have to LoginController?
   else {
-    Auth0.handleAuthentication(function(uri) {
-      $location.path(uri).hash(null);
-    },
-    handleError);
+    Auth0.handleAuthentication(handleError);
   }
   // TODO: the angular sample code does this, but the timeout is always calculated as NaN for this call?
   // probably because renewTokens or handleAuthentication needs to complete first?

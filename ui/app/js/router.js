@@ -92,6 +92,12 @@ angular.module("app").config(function($routeProvider, $locationProvider, angular
     reloadOnSearch: false
   })
 
+  .when('/auth0_login', {
+    templateUrl: 'login.html',
+    controller: 'Auth0LoginController',
+    reloadOnSearch: false
+  })
+
   ;
 
   $routeProvider.otherwise({ redirectTo: '/' });

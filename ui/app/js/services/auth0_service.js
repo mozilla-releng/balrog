@@ -1,11 +1,8 @@
 angular.module("app").factory('Auth0', function(angularAuth0) {
-  var accessToken;
-  var idToken;
-  var expiresAt;
   var tokenRenewalTimeout;
 
   function scheduleRenewal() {
-    var delay = expiresAt - Date.now();
+    var delay = localStorage.getItem("expiresAt") - Date.now();
     if (delay > 0) {
       tokenRenewalTimeout = setTimeout(function() {
         renewTokens();
@@ -14,68 +11,38 @@ angular.module("app").factory('Auth0', function(angularAuth0) {
   }
 
   localLogin = function(authResult) {
-    console.log(localStorage);
     // Set isLoggedIn flag in localStorage
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('accessToken', authResult.accessToken);
     localStorage.setItem('picture', authResult.idTokenPayload.picture);
     localStorage.setItem('username', authResult.idTokenPayload.email);
     // Set the time that the access token will expire at
-    expiresAt = (authResult.expiresIn * 1000) + new Date().getTime();
-    accessToken = authResult.accessToken;
-    idToken = authResult.idToken;
+    localStorage.setItem('expiresAt', authResult.expiresIn * 1000 + new Date().getTime());
     scheduleRenewal();
   };
   var service = {
-    login: function(path, successCallback, errCallback) {
-      console.log(successCallback);
-      console.log(errCallback);
-      localStorage.setItem("pathBeforeLogin", path);
-      angularAuth0.popup.authorize({"state": path}, function(err, authResult) {
-          console.log(authResult);
-          if (authResult && authResult.accessToken && authResult.idToken) {
-            console.log("local login");
-            localLogin(authResult);
-            successCallback();
-          }
-          else if (err) {
-            if (errCallback) {
-              errCallback(err.errorDescription);
-            }
-          }
-      });
+    login: function(state) {
+      angularAuth0.authorize({"state": state});
     },
     logout: function() {
       localStorage.removeItem("isLoggedIn");
       localStorage.removeItem("accessToken");
       localStorage.removeItem("picture");
       localStorage.removeItem("username");
-      accessToken = null;
-      idToken = null;
-      expiresAt = 0;
+      localStorage.removeItem("expiresAt");
       clearTimeout(tokenRenewalTimeout);
-    },
-    getIdToken: function() {
-      return idToken;
-    },
-    getAccessToken: function() {
-      return accessToken;
     },
     getPicture: function() {
       return localStorage.getItem('picture');
     },
     isAuthenticated: function() {
-      return localStorage.getItem('isLoggedIn') === 'true' && new Date().getTime() < expiresAt;
+      return localStorage.getItem('isLoggedIn') === 'true' && new Date().getTime() < localStorage.getItem('expiresAt');
     },
-    handleAuthentication: function(successCallback, errCallback) {
-      console.log("handling");
-      angularAuth0.parseHash(function(err, authResult) {
+    handleAuthentication: function(state, successCallback, errCallback) {
+      angularAuth0.parseHash({"state": state}, function(err, authResult) {
         if (authResult && authResult.accessToken && authResult.idToken) {
           localLogin(authResult);
-          if (successCallback) {
-            console.log("success callback");
-            successCallback(authResult.state);
-          }
+          successCallback();
         }
         else if (err) {
           if (errCallback) {

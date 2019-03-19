@@ -42,7 +42,7 @@ angular.module("app").config(['$httpProvider', function($httpProvider) {
 
 /* Put things in here that the sub-controllers can use */
 angular.module("app").controller('ParentController',
-function($scope, $location, Page, Auth0) {
+function($scope, $window, $location, Page, Auth0) {
   $scope.Page = Page;
   $scope.isEmpty = isEmpty;
   $scope.fieldIsChanging = fieldIsChanging;
@@ -50,14 +50,14 @@ function($scope, $location, Page, Auth0) {
   $scope.formatMoment = formatMoment;
   $scope.auth0 = Auth0;
   $scope.loc = $location;
-  // Passed to auth0.login() in the template
-  $scope.successCallback = function() {
-    // Because the login happens in a pop-up window, angular won't automatically
-    // update the page, which means the "Sign in..." button won't change to a user
-    // picture without this explicit call
-    $scope.$apply();
-  };
-  $scope.errCallback = function(errMsg) {
-    sweetAlert("Error logging in", errMsg, "error");
+  $scope.initiateLogin = function() {
+    var loginWindow = $window.open('/auth0_login', '_blank');
+    console.log("done here");
+    var timer = setInterval(function() {
+      if (loginWindow.closed) {
+        clearInterval(timer);
+        $scope.$apply();
+      }
+    }, 500);
   };
 });
