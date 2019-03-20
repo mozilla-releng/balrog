@@ -145,6 +145,10 @@ application.config["AUTH_AUDIENCE"] = os.environ["AUTH0_AUDIENCE"]
 # It feels a bit hacky to be writing out a frontend config on the fly, but none
 # of the alternatives seemed better (baking dev/stage/prod configs into one image,
 # building separate images for those environments, cloudops maintaining this config).
+frontend_config = os.environ.get("FRONTEND_CONFIG")
+config_dir = os.path.dirname(frontend_config)
+if not os.path.exists(config_dir):
+    os.makedirs(config_dir)
 with open(os.environ.get("FRONTEND_CONFIG", "/app/ui/dist/js/config.js"), "w+") as f:
     f.write("""
 angular.module('config', [])
