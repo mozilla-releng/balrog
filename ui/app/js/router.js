@@ -103,12 +103,12 @@ angular.module("app").config(function($routeProvider, $locationProvider, angular
   $routeProvider.otherwise({ redirectTo: '/' });
 
   angularAuth0Provider.init({
-    clientID: Auth0Config['clientID'],
-    domain: Auth0Config['domain'],
-    audience: Auth0Config['audience'],
-    responseType: 'token id_token',
-    redirectUri: Auth0Config['redirectUri'],
-    scope: 'full-user-credentials openid profile email'
+    clientID: Auth0Config['AUTH0_CLIENT_ID'],
+    domain: Auth0Config['AUTH0_DOMAIN'],
+    audience: Auth0Config['AUTH0_AUDIENCE'],
+    responseType: Auth0Config['AUTH0_RESPONSE_TYPE'],
+    redirectUri: Auth0Config['AUTH0_REDIRECT_URI'],
+    scope: Auth0Config['AUTH0_SCOPE']
   });
 
 });

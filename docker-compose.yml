@@ -30,6 +30,13 @@ services:
       - LOG_LEVEL=WARNING
       - INSECURE_SESSION_COOKIE=1
       - LOCALDEV=1
+      - FRONTEND_CONFIG=/app/ui/generated/js/config.js
+      - AUTH0_CLIENT_ID=FK1mJkHhwjulTYBGklxn8W4Fhd1pgT4t
+      - AUTH0_REDIRECT_URI=https://localhost:8010/login
+      - AUTH0_DOMAIN=auth.mozilla.auth0.com
+      - AUTH0_AUDIENCE=login.taskcluster.net
+      - AUTH0_RESPONSE_TYPE=token id_token
+      - AUTH0_SCOPE=full-user-credentials openid profile email
       # Grab mail information from the local environment
       - SMTP_HOST
       - SMTP_PORT
