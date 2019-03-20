@@ -27,7 +27,6 @@ class UsersView(AdminView):
 
 class SpecificUserView(AdminView):
     """/users/:username
-    
     Returns all of the details about the named user."""
 
     def get(self, username):
