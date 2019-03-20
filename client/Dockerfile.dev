@@ -1,10 +1,9 @@
-FROM python:3.7-stretch
+
+FROM mozillareleases/python-test-runner
 
 WORKDIR /app
-
-RUN apt-get update
-RUN apt-get -y install tox
 
 COPY balrogclient/ /app/balrogclient/
 COPY setup.py /app/
 COPY tox.ini /app/
+
