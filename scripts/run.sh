@@ -73,15 +73,13 @@ elif [ $1 == "reset-stage-db" ]; then
         exit 1
     fi
     exec scripts/reset-stage-db.sh $DBURI $2
-# TODO: update docs to talk about running this target
 elif [ $1 == "create-local-admin" ]; then
     if [ -z "${LOCAL_ADMIN}" ]; then
         echo "\$LOCAL_ADMIN must be set to whatever account you intend to login with. If you don't know what this is, you should ask."
         exit 1
     fi
     # Protect against this accidentally (or maliciously) being used in prod
-    # TODO: Update to check for balrogdb-py3, too
-    if [ "${DB_HOST}" != "balrogdb" ]; then
+    if [ "${DB_HOST}" != "balrogdb" -a "${DB_HOST}" != "balrogdb-py3" ]; then
         echo "create-local-admin cannot be used outside of local development"
         exit 1
     fi

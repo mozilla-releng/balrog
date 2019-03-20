@@ -102,7 +102,6 @@ angular.module("app").config(function($routeProvider, $locationProvider, angular
 
   $routeProvider.otherwise({ redirectTo: '/' });
 
-  // TODO: move config to somewhere app specific
   angularAuth0Provider.init({
     clientID: Auth0Config['clientID'],
     domain: Auth0Config['domain'],

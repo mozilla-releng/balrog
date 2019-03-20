@@ -26,12 +26,9 @@ class UsersView(AdminView):
 
 
 class SpecificUserView(AdminView):
-    """Returns all of the details about the logged in user. The UI needs this
-    method to know things about the current user because it does not have
-    access to REMOTE_USER, so it cannot query directly by name.
-
-    TODO: rewrite the comments above
-    """
+    """/users/:username
+    
+    Returns all of the details about the named user."""
 
     def get(self, username):
         current_user = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])['email']

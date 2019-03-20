@@ -39,6 +39,7 @@ services:
       - NOTIFY_TO_ADDR
       - NOTIFY_FROM_ADDR
       - STAGING
+      - LOCAL_ADMIN
     healthcheck:
         test: nc -z -v balrogadmin-py3 17070
         interval: 5s
@@ -55,13 +56,13 @@ services:
         condition: service_healthy
     command: public
     ports:
-      - "19090:19090"
+      - "19010:19010"
     volumes:
       - .:/app
     environment:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb-py3/balrog
       - SECRET_KEY=blahblah
-      - PORT=19090
+      - PORT=19010
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
     links:
@@ -130,7 +131,7 @@ services:
       - BALROG_ADMIN_ROOT=http://balrogadmin-py3:17070
     command: /bin/bash -c "envsubst '$$NGINX_PORT $$NGINX_BALROG_AGENT_PORT $$BALROG_ADMIN_ROOT' < /etc/nginx/conf.d/http_balrog.conf.template > /etc/nginx/conf.d/http_balrog.conf && nginx -g 'daemon off;'"
     healthcheck:
-        test: nc -z -v nginx 18010 && nc -z -v nginx 18011
+        test: nc -z -v nginx-py3 18010 && nc -z -v nginx-py3 18011
         interval: 5s
         timeout: 30s
         retries: 50

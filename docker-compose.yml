@@ -56,13 +56,13 @@ services:
         condition: service_healthy
     command: public
     ports:
-      - "9090:9090"
+      - "9010:9010"
     volumes:
       - .:/app
     environment:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
       - SECRET_KEY=blahblah
-      - PORT=9090
+      - PORT=9010
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
     links:
