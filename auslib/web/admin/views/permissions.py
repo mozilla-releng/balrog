@@ -8,7 +8,7 @@ from auslib.web.admin.views.base import requirelogin, AdminView
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
-from auslib.util.auth import verified_userinfo
+from auslib.util.auth import verified_userinfo, AuthError
 
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
 
@@ -30,7 +30,10 @@ class SpecificUserView(AdminView):
     Returns all of the details about the named user."""
 
     def get(self, username):
-        current_user = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])['email']
+        try:
+            current_user = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])['email']
+        except AuthError:
+            current_user = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
         # If the user is retrieving permissions other than their own, we need
         # to make sure they have enough access to do so. If any user is able
         # to retrieve permissions of anyone, it may make privilege escalation

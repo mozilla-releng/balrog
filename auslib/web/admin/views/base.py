@@ -6,7 +6,7 @@ from auslib.web.admin.views.problem import problem
 from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError, \
     SignoffRequiredError
 import logging
-from auslib.util.auth import verified_userinfo
+from auslib.util.auth import verified_userinfo, AuthError
 
 
 log = logging.getLogger(__name__)
@@ -14,7 +14,10 @@ log = logging.getLogger(__name__)
 
 def requirelogin(f):
     def decorated(*args, **kwargs):
-        username = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])['email']
+        try:
+            username = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])['email']
+        except AuthError:
+            username = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
         if not username:
             log.warning("Login Required")
             return problem(401, 'Unauthenticated', 'Login Required')
