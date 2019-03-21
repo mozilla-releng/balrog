@@ -33,7 +33,7 @@ angular.module("app").factory('Auth0', function(angularAuth0, $http) {
     // Set the time that the access token will expire at
     localStorage.setItem('expiresAt', authResult.expiresIn * 1000 + new Date().getTime());
     scheduleRenewal();
-    $http.defaults.headers.common["X-Authorization"] = "Bearer " + localStorage.getItem("accessToken");
+    $http.defaults.headers.common["Authorization"] = "Bearer " + localStorage.getItem("accessToken");
   };
   var service = {
     login: function(state) {

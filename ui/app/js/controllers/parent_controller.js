@@ -51,7 +51,7 @@ function($scope, $window, $location, $http, Page, Auth0) {
   $scope.auth0 = Auth0;
   $scope.loc = $location;
   function updateHttpDefaults() {
-    $http.defaults.headers.common["X-Authorization"] = "Bearer " + localStorage.getItem("accessToken");
+    $http.defaults.headers.common["Authorization"] = "Bearer " + localStorage.getItem("accessToken");
   }
   $scope.initiateLogin = function() {
     // Do the login in a new window, and set-up token renewal
