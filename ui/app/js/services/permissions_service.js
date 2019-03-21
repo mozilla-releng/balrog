@@ -6,7 +6,8 @@ angular.module("app").factory('Permissions', function($http, $q, ScheduledChange
     getUserInfo: function(username) {
       var deferred = $q.defer();
       var url = '/api/users/' + encodeURIComponent(username);
-      $http.get(url, config={"headers": {"Authorization": "Bearer " + localStorage.getItem("accessToken")}})
+      // TODO: can probably remove this header setting because we use headers.common.blah now
+      $http.get(url, config={"headers": {"X-Authorization": "Bearer " + localStorage.getItem("accessToken")}})
       .success(function(response) {
         // What comes back from the server is a dict like this:
         //  {permission1: {options: ...}, otherPermission: {options: ...}, ...}
