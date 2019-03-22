@@ -31,10 +31,10 @@ services:
       - INSECURE_SESSION_COOKIE=1
       - LOCALDEV=1
       - FRONTEND_CONFIG=/app/ui/generated/js/config.js
-      - AUTH0_CLIENT_ID=FK1mJkHhwjulTYBGklxn8W4Fhd1pgT4t
+      - AUTH0_CLIENT_ID=3ZZYS6kQZkqQFcZDHg1plLKrRfz0OXWt
       - AUTH0_REDIRECT_URI=https://localhost:18010/login
       - AUTH0_DOMAIN=auth.mozilla.auth0.com
-      - AUTH0_AUDIENCE=login.taskcluster.net
+      - AUTH0_AUDIENCE=balrog-localdev
       - AUTH0_RESPONSE_TYPE=token id_token
       - AUTH0_SCOPE=full-user-credentials openid profile email
       # Grab mail information from the local environment
@@ -92,6 +92,12 @@ services:
       - TELEMETRY_API_ROOT=abc
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
+      - AUTH0_DOMAIN=balrogtest.auth0.com
+      - ALLOW_COOKIE_FROM_IP_URL=1
+      - AUTH0_AUDIENCE=https://balrogtest.auth0.com/api/v2/
+      - AUTH0_M2M_CLIENT_ID=U80wJ8BpIToC0eWlpK3s9f7JuVbI9YzU
+      - AUTH0_M2M_CLIENT_SECRET=f1zlXa8bjh7cZWB-F-GUwjcfvjm7MJxPudgm0SAsE1MJuGcALrLZoIjFztP-kZjn
+
 
 
   # This container exists solely to have something automatically rebuilding the UI
