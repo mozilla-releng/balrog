@@ -18,6 +18,11 @@ def get_access_token(request):
     if "access_token" in request.args:
         return request.args["access_token"]
 
+    # For a gracefully transition, we will temporarily be accepting both
+    # HTTP Auth (which will overwrite the Authorization header) and
+    # a Bearer token. During this period, we need to look for a Bearer
+    # token in both headers. Once clients switch to Authorization
+    # we will remove support for X-Authorization.
     auth = request.headers.get("Authorization", None)
     if not auth or "bearer" not in auth.lower():
         auth = request.headers.get("X-Authorization", None)
@@ -96,16 +101,12 @@ def verified_userinfo(request, auth_domain, auth_audience):
                 audience=auth_audience,
                 issuer="https://{}/".format(auth_domain),
             )
-            # If this is false, this is a user token, and we need to retrieve
-            # additional information from auth. Doing this doesn't work for
-            # machine tokens, so we skip it.
-            # TODO: this is kindof ugly, is there a better way? maybe we should
-            # just try to retrieve, and fail gracefully to setting email to azp?
-            if payload["azp"] not in payload["sub"]:
+            try:
                 payload.update(get_additional_userinfo(auth_domain, access_token))
-            else:
-                payload["email"] = payload["azp"]
-            if "email" not in payload:
+            except ValueError:
+                # Failed to parse json, probably a machine token
+                payload["email"] = payload.get("azp")
+            if not payload.get("email"):
                 raise AuthError({
                     "code": "no_email",
                     "description": "no email address found in access or id tokens"},
