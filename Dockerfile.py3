@@ -1,13 +1,13 @@
-FROM python:3.6-slim-jessie
+FROM python:3.7-slim-stretch
 
 MAINTAINER bhearsum@mozilla.com
 
-# Some versions of the python:3.6 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
+# Some versions of the python:3.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
 # Node and npm are to build the frontend. nodejs-legacy is needed by this version of npm. These will get removed after building.
-# libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
+# default-libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 # xz-utils is needed to compress production database dumps
 RUN apt-get -q update \
-    && apt-get -q --yes install libpcre3 libpcre3-dev libmysqlclient-dev mysql-client xz-utils \
+    && apt-get -q --yes install libpcre3 libpcre3-dev default-libmysqlclient-dev mysql-client xz-utils \
     && apt-get clean
 
 WORKDIR /app
@@ -34,10 +34,13 @@ COPY version.json /app/
 WORKDIR /app
 
 RUN cd ui && \
-    apt-get -q --yes install nodejs nodejs-legacy npm && \
+    echo "deb http://deb.debian.org/debian stretch-backports main" > /etc/apt/sources.list.d/stretch-backports.list && \
+    apt-get -q update && \
+    apt-get -q --yes install -t stretch-backports git nodejs npm && \
     npm install && \
     npm run build && \
-    apt-get -q --yes remove nodejs nodejs-legacy npm && \
+    rm /etc/apt/sources.list.d/stretch-backports.list && \
+    apt-get -q --yes remove nodejs npm && \
     apt-get -q --yes autoremove && \
     apt-get clean && \
     rm -rf /root/.npm /tmp/phantomjs && \

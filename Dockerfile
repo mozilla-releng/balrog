@@ -34,7 +34,7 @@ COPY version.json /app/
 WORKDIR /app
 
 RUN cd ui && \
-    apt-get -q --yes install nodejs nodejs-legacy npm && \
+    apt-get -q --yes install git nodejs nodejs-legacy npm && \
     npm install && \
     npm run build && \
     apt-get -q --yes remove nodejs nodejs-legacy npm && \
