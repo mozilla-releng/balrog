@@ -14,10 +14,7 @@ log = logging.getLogger(__name__)
 
 def requirelogin(f):
     def decorated(*args, **kwargs):
-        try:
-            username = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])['email']
-        except AuthError:
-            username = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
+        username = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])['email']
         if not username:
             log.warning("Login Required")
             return problem(401, 'Unauthenticated', 'Login Required')

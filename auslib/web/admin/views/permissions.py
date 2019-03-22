@@ -30,10 +30,7 @@ class SpecificUserView(AdminView):
     Returns all of the details about the named user."""
 
     def get(self, username):
-        try:
-            current_user = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])['email']
-        except AuthError:
-            current_user = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
+        current_user = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])['email']
         # If the user is retrieving permissions other than their own, we need
         # to make sure they have enough access to do so. If any user is able
         # to retrieve permissions of anyone, it may make privilege escalation
