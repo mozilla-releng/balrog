@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="balrogclient",
-    version="0.0.4",
+    version="0.1.0",
     description="Balrog Admin API Client",
     author="Mozilla Release Engineers",
     author_email="release+python@mozilla.com",
