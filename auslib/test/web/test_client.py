@@ -6,7 +6,7 @@ from tempfile import mkstemp
 import unittest
 from xml.dom import minidom
 
-from hypothesis import assume, example, given, settings
+from hypothesis import assume, example, given
 from hypothesis.strategies import characters, integers, just, text
 
 import pytest
