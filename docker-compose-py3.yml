@@ -92,6 +92,7 @@ services:
       - TELEMETRY_API_ROOT=abc
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
+      # TODO: Update me after we have a machine-to-machine token from IT
       - AUTH0_DOMAIN=balrogtest.auth0.com
       - ALLOW_COOKIE_FROM_IP_URL=1
       - AUTH0_AUDIENCE=https://balrogtest.auth0.com/api/v2/
