@@ -105,6 +105,8 @@ def verified_userinfo(request, auth_domain, auth_audience):
                 payload.update(get_additional_userinfo(auth_domain, access_token))
             except ValueError:
                 # Failed to parse json, probably a machine token
+                # azp in machine tokens is their clientId, which is the closest
+                # thing we have to an e-mail address for them
                 payload["email"] = payload.get("azp")
             if not payload.get("email"):
                 raise AuthError({
