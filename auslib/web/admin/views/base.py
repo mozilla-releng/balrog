@@ -21,8 +21,9 @@ def requirelogin(f):
         if not username:
             log.warning("Login Required")
             return problem(401, 'Unauthenticated', 'Login Required')
-        # Even if the user has provided a valid access token, we want to ensure that they're
-        # a known user -- we don't want just anybody to be able to access Balrog.
+        # Even if the user has provided a valid access token, we don't want to assume
+        # that person should be able to access Balrog (in case auth0 is not configured
+        # to be restrictive enough.
         elif not dbo.isKnownUser(username):
             log.warning("Authorization Required")
             return problem(403, 'Forbidden', 'Authorization Required')
