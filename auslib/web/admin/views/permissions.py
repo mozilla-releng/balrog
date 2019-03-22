@@ -8,7 +8,7 @@ from auslib.web.admin.views.base import requirelogin, AdminView
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
-from auslib.util.auth import verified_userinfo, AuthError
+from auslib.util.auth import verified_userinfo
 
 __all__ = ["UsersView", "PermissionsView", "SpecificPermissionView"]
 

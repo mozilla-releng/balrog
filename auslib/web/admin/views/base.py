@@ -6,7 +6,7 @@ from auslib.web.admin.views.problem import problem
 from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError, \
     SignoffRequiredError
 import logging
-from auslib.util.auth import verified_userinfo, AuthError
+from auslib.util.auth import verified_userinfo
 
 
 log = logging.getLogger(__name__)
