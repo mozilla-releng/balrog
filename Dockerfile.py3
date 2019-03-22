@@ -34,10 +34,13 @@ COPY version.json /app/
 WORKDIR /app
 
 RUN cd ui && \
-    apt-get -q --yes install nodejs nodejs-legacy npm && \
+    echo "deb http://deb.debian.org/debian stretch-backports main" > /etc/apt/sources.list.d/stretch-backports.list && \
+    apt-get -q update && \
+    apt-get -q --yes install -t stretch-backports git nodejs npm && \
     npm install && \
     npm run build && \
-    apt-get -q --yes remove nodejs nodejs-legacy npm && \
+    rm /etc/apt/sources.list.d/stretch-backports.list && \
+    apt-get -q --yes remove nodejs npm && \
     apt-get -q --yes autoremove && \
     apt-get clean && \
     rm -rf /root/.npm /tmp/phantomjs && \

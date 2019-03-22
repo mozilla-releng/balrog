@@ -16,7 +16,7 @@
     "grunt-contrib-jasmine": "0.8.2",
     "grunt-webfont": "0.4.8",
     "jasmine-given": "2.6.4",
-    "lineman": "0.34.4",
+    "lineman": "0.37.0",
     "lineman-angular": "0.3.0",
     "lineman-less": "0.1.0",
     "phantomjs-prebuilt": "2.1.15",
