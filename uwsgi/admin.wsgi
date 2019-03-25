@@ -101,11 +101,6 @@ if os.environ.get("SENTRY_DSN"):
 # the repo itself
 application.config["VERSION_FILE"] = "/app/version.json"
 
-# Auth0 config
-application.config["AUTH_DOMAIN"] = "auth.mozilla.auth0.com"
-# TODO: What should this actually be?
-application.config["AUTH_AUDIENCE"] = "login.taskcluster.net"
-
 auth0_config = {
     "AUTH0_CLIENT_ID": os.environ["AUTH0_CLIENT_ID"],
     "AUTH0_REDIRECT_URI": os.environ["AUTH0_REDIRECT_URI"],
