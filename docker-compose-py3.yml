@@ -92,12 +92,12 @@ services:
       - TELEMETRY_API_ROOT=abc
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
-      # TODO: Update me after we have a machine-to-machine token from IT
-      - AUTH0_DOMAIN=balrogtest.auth0.com
+      - AUTH0_DOMAIN=auth.mozilla.auth0.com
       - ALLOW_COOKIE_FROM_IP_URL=1
-      - AUTH0_AUDIENCE=https://balrogtest.auth0.com/api/v2/
-      - AUTH0_M2M_CLIENT_ID=U80wJ8BpIToC0eWlpK3s9f7JuVbI9YzU
-      - AUTH0_M2M_CLIENT_SECRET=f1zlXa8bjh7cZWB-F-GUwjcfvjm7MJxPudgm0SAsE1MJuGcALrLZoIjFztP-kZjn
+      - AUTH0_AUDIENCE=balrog-localdev
+      - AUTH0_M2M_CLIENT_ID=xWFk4cJVfLm3Vg7tFIK9H8j6LeFmsF3B
+      # If you don't have this, ask.
+      - AUTH0_M2M_CLIENT_SECRET
 
 
 
