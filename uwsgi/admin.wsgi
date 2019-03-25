@@ -117,6 +117,17 @@ auth0_config = {
 application.config["AUTH_DOMAIN"] = os.environ["AUTH0_DOMAIN"]
 application.config["AUTH_AUDIENCE"] = os.environ["AUTH0_AUDIENCE"]
 
+application.config["M2M_ACCOUNT_MAPPING"] = {
+    # Local dev
+    "xWFk4cJVfLm3Vg7tFIK9H8j6LeFmsF3B": "balrogagent",
+    # Dev
+    "TODO": "balrogagent",
+    # Stage
+    "tKirJIJUQ5D5wU1oxPoA1qxEzmMHnB4h": "balrogagent",
+    # Prod
+    "6TpOQiDH9UhSUouLrxlLP7PbWyJ8epsa": "balrogagent",
+}
+
 # Generate frontend config
 # It feels a bit hacky to be writing out a frontend config on the fly, but none
 # of the alternatives seemed better (baking dev/stage/prod configs into one image,

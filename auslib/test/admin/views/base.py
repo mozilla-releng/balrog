@@ -51,6 +51,7 @@ class ViewTest(unittest.TestCase):
         app.config["VERSION_FILE"] = self.version_file
         app.config["AUTH_DOMAIN"] = "balrog.test.dev"
         app.config["AUTH_AUDIENCE"] = "balrog test"
+        app.config["M2M_ACCOUNT_MAPPING"] = {}
         with open(self.version_file, "w+") as f:
             f.write("""
 {

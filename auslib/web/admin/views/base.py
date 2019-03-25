@@ -18,6 +18,11 @@ def requirelogin(f):
         if not username:
             log.warning("Login Required")
             return problem(401, 'Unauthenticated', 'Login Required')
+        # Machine to machine accounts are identified by uninformative clientIds
+        # In order to keep Balrog permissions more readable, we map them to
+        # more useful usernames, which are stored in the app config.
+        if "@" not in username:
+            username = app.config["M2M_ACCOUNT_MAPPING"].get(username, username)
         # Even if the user has provided a valid access token, we don't want to assume
         # that person should be able to access Balrog (in case auth0 is not configured
         # to be restrictive enough.
