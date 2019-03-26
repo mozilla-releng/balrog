@@ -221,14 +221,14 @@ function($scope, $modal, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredS
   Permissions.getUserInfo($scope.current_user)
   .then(function(response) {
     $scope.user_roles = Object.keys(response["roles"]);
-    loading_deferreds["current_user"].resolve();
+    loading_deferreds["user_info"].resolve();
   },
   function(response) {
     sweetAlert(
       "Failed to load current user Roles:",
       response
     );
-    loading_deferreds["current_user"].resolve();
+    loading_deferreds["user_info"].resolve();
   });
 
 
