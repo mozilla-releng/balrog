@@ -199,37 +199,37 @@ function ($scope, $modalInstance, CSRF, Permissions, users, roles, is_edit, user
     sweetAlert({
       title: "Are you sure?",
       text: "This will delete the permission.",
-      type: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#DD6B55",
-      confirmButtonText: "Yes, delete it!",
-      closeOnConfirm: false
-    }, function(){
-      $scope.saving = true;
-      CSRF.getToken()
-      .then(function(csrf_token) {
-        Permissions.deletePermission($scope.user.username, permission, csrf_token)
-        .success(function(response) {
-          $scope.user.permissions.splice($scope.user.permissions.indexOf(permission), 1);
-          sweetAlert("Deleted", "Permission deleted.", "success");
-          if (!$scope.user.permissions.length) {
-            var index = null;
-            _.each($scope.users, function(user, i) {
-              if (user.username === $scope.user.username) {
-                index = i;
-              }
-            });
-            $scope.users.splice(index, 1);
-          }
-          $scope.cancel();
-        })
-        .error(function(response) {
-          console.error(response);
-        })
-        .finally(function() {
-          $scope.saving = false;
+      icon: "warning",
+      buttons: ["Cancel", "Yes, delete it!"],
+      dangerMode: true
+    }).then(function(willDelete) {
+      if (willDelete) {
+        $scope.saving = true;
+        CSRF.getToken()
+        .then(function(csrf_token) {
+          Permissions.deletePermission($scope.user.username, permission, csrf_token)
+          .success(function(response) {
+            $scope.user.permissions.splice($scope.user.permissions.indexOf(permission), 1);
+            sweetAlert("Deleted", "Permission deleted.", "success");
+            if (!$scope.user.permissions.length) {
+              var index = null;
+              _.each($scope.users, function(user, i) {
+                if (user.username === $scope.user.username) {
+                  index = i;
+                }
+              });
+              $scope.users.splice(index, 1);
+            }
+            $scope.cancel();
+          })
+          .error(function(response) {
+            console.error(response);
+          })
+          .finally(function() {
+            $scope.saving = false;
+          });
         });
-      });
+      }
 
     });
 

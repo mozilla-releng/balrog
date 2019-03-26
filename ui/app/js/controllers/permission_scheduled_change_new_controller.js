@@ -2,12 +2,14 @@
 angular.module('app').controller('NewPermissionScheduledChangeCtrl',
 function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc, permissionSignoffRequirements) {
 
-  $scope.loading = true;
+  $scope.loading = false;
   $scope.scheduled_changes = scheduled_changes;
   $scope.currentItemTab = 1;
   $scope.is_edit = true;
   $scope.saving = false;
   $scope.sc = angular.copy(sc);
+  $scope.sc.permissions = [];
+  $scope.originalPermissions = [];
   $scope.permission = {
     permission: '',
     options: ''
@@ -58,20 +60,6 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc, perm
       return permissionSignoffsRequired($scope.originalPermissions[i], permission);
     });
   }, true);
-
-  $scope.sc.permissions = [];
-  Permissions.getUserInfo(sc.username)
-  .then(function(response) {
-    _.forEach(responsepermissions, function(p) {
-      if (p.options) {
-        p.options = JSON.stringify(p['options']);
-      }
-    });
-    $scope.originalPermissions = angular.copy(permissions);
-    $scope.sc.permissions = permissions;
-    $scope.loading = false;
-  });
-
 
   $scope.addScheduledPermission = function() {
     $scope.permission.options = $scope.permission.options_as_json;
@@ -178,49 +166,49 @@ function ($scope, $modalInstance, CSRF, Permissions, scheduled_changes, sc, perm
     sweetAlert({
       title: "Are you sure?",
       text: "This will scheduled delete for the permission.",
-      type: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#DD6B55",
-      confirmButtonText: "Yes, delete it!",
-      closeOnConfirm: false
-    }, function(){
-      $scope.saving = true;
-      date = new Date();
-      permission.when = date.getTime()+5000;
-      permission.change_type = "delete";
-      permission.username = $scope.sc.username;
+      icon: "warning",
+      buttons: ["Cancel", "Yes, delete it!"],
+      dangerMode: true
+    }).then(function(willDelete) {
+      if (willDelete) {
+        $scope.saving = true;
+        date = new Date();
+        permission.when = date.getTime()+5000;
+        permission.change_type = "delete";
+        permission.username = $scope.sc.username;
 
-      CSRF.getToken()
-      .then(function(csrf_token) {
-        Permissions.addScheduledChange(permission, csrf_token)
-        .success(function(response) {
-          $scope.sc.permissions.splice($scope.sc.permissions.indexOf(permission), 1);
-          sweetAlert("Permission Scheduled For Deletion.", "success");
-          $scope.cancel();
+        CSRF.getToken()
+        .then(function(csrf_token) {
+          Permissions.addScheduledChange(permission, csrf_token)
+          .success(function(response) {
+            $scope.sc.permissions.splice($scope.sc.permissions.indexOf(permission), 1);
+            sweetAlert("Permission Scheduled For Deletion.", "success");
+            $scope.cancel();
+          })
+          .error(function(response) {
+          if (typeof response === 'object') {
+             $scope.errors = response;
+            sweetAlert(
+              "Form submission error",
+              "See fields highlighted in red.",
+              "error"
+            );
+          } else if (typeof response === 'string') {
+            // quite possibly an error in the blob validation
+            sweetAlert(
+              "Form submission error",
+              "Unable to submit successfully.\n" +
+              "(" + response+ ")",
+              "error"
+            );
+          }
         })
-        .error(function(response) {
-        if (typeof response === 'object') {
-           $scope.errors = response;
-          sweetAlert(
-            "Form submission error",
-            "See fields highlighted in red.",
-            "error"
-          );
-        } else if (typeof response === 'string') {
-          // quite possibly an error in the blob validation
-          sweetAlert(
-            "Form submission error",
-            "Unable to submit successfully.\n" +
-            "(" + response+ ")",
-            "error"
-          );
-        }
-      })
-        .finally(function() {
-          $scope.saving = false;
+          .finally(function() {
+            $scope.saving = false;
+          });
         });
-      });
 
+      }
     });
 
   };
