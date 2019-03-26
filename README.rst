@@ -18,8 +18,12 @@ To run a development environment you must have Docker and docker-compose
 installed (if you're on Windows or Mac you need "Docker for Windows" or "Docker
 for Mac" at least v1.12.0)
 
-Once these prerequisites are installed, run the
-following command to create and run the necessary images:
+If you have access to it, set up the machine token for the Agent. If you don't have access to it, just skip this step. The Agent will not function, but everything else will work.
+
+::
+    $ export AUTH0_M2M_CLIENT_SECRET=abcdef123456
+
+Now, run the following command to create and run the necessary images:
 
 ::
 
