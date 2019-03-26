@@ -2,6 +2,8 @@ import logging
 import os
 import six
 
+from flask_wtf.csrf import CSRFProtect
+
 from auslib.log import configure_logging
 
 SYSTEM_ACCOUNTS = ["balrogagent", "balrog-ffxbld", "balrog-tbirdbld", "seabld"]
@@ -70,6 +72,28 @@ application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
 application.config["PAGE_TITLE"] = "Balrog Administration"
 application.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
 
+class JSONCSRFProtect(CSRFProtect):
+    def _get_csrf_token(self):
+        from flask import current_app, request
+
+        def get_token():
+            token = CSRFProtect._get_csrf_token(self)
+            yield token
+            field_name = current_app.config["WTF_CSRF_FIELD_NAME"]
+            if request.json:
+                token = request.json.get(field_name)
+                yield token
+            token = request.args.get(field_name)
+            yield token
+
+        for token in get_token():
+            if token:
+                return token
+
+
+JSONCSRFProtect(application)
+
+
 # Secure cookies should be enabled when we're using https (otherwise the
 # session cookie won't get set, and that will cause CSRF failures).
 # For now, this means disabling it for local development. In the future
@@ -116,7 +140,7 @@ application.config["M2M_ACCOUNT_MAPPING"] = {
     # Local dev
     "xWFk4cJVfLm3Vg7tFIK9H8j6LeFmsF3B": "balrogagent",
     # Dev
-    "TODO": "balrogagent",
+    "R6Tpyx7clqQFmR6bvkAUJodV4J8V8LdQ": "balrogagent",
     # Stage
     "tKirJIJUQ5D5wU1oxPoA1qxEzmMHnB4h": "balrogagent",
     # Prod
