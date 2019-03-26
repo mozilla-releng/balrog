@@ -1,6 +1,0 @@
-{
-    "Auth0Config": {
-        "domain": "auth.mozilla.auth0.com",
-        "audience": "login.taskcluster.net"
-    }
-}
