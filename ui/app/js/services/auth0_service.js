@@ -16,7 +16,7 @@ angular.module("app").factory('Auth0', function(angularAuth0, $http) {
   }
   function scheduleRenewal() {
     // Renew tokens 5 minutes ahead of expiration
-    var delay = localStorage.getItem("expiresAt") - Date.now() - 500000;
+    var delay = localStorage.getItem("expiresAt") - Date.now() - 300000;
     if (delay > 0) {
       tokenRenewalTimeout = setTimeout(function() {
         renewTokens();
