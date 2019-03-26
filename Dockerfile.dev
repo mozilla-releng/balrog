@@ -7,6 +7,11 @@ FROM python:2.7-slim-jessie
 
 MAINTAINER bhearsum@mozilla.com
 
+# jessie has been archived, and this repo is no longer valid
+# the upstream image has not been updated yet
+# see https://github.com/debuerreotype/docker-debian-artifacts/issues/66
+RUN sed -i '/jessie-updates/d' /etc/apt/sources.list  # Now archived
+
 # Some versions of the python:2.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
 # Node and npm are to build the frontend. nodejs-legacy is needed by this version of npm.
 # mysql-client is needed to import sample data
