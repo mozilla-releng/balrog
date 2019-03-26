@@ -2,6 +2,7 @@ import aiohttp
 import json
 import logging
 import os
+import time
 
 
 default_headers = {
@@ -9,6 +10,9 @@ default_headers = {
     "Accept": "application/json",
     "Content-Type": "application/json",
 }
+# Refresh the tokens 5 minutes before they expire
+REFRESH_THRESHOLD = 5 * 60
+_token_cache = {}
 
 
 async def _get_auth0_token(secrets, loop=None):
@@ -16,6 +20,15 @@ async def _get_auth0_token(secrets, loop=None):
 
     See https://auth0.com/docs/api/authentication#regular-web-app-login-flow43 for the description
     """
+    cache_key = "{}-{}-{}".format(secrets["client_id"], secrets["client_secret"], secrets["audience"])
+    if cache_key in _token_cache:
+        entry = _token_cache[cache_key]
+        expiration = entry["exp"]
+        if expiration - time.time() > REFRESH_THRESHOLD:
+            logging.debug("Using cached token")
+            return entry['access_token']
+
+    logging.debug("Refreshing, getting new token")
     url = "https://{}/oauth/token".format(secrets["domain"])
     payload = dict(
         client_id=secrets["client_id"],
@@ -26,7 +39,13 @@ async def _get_auth0_token(secrets, loop=None):
     async with aiohttp.ClientSession(loop=loop) as client:
         async with client.request("POST", url, json=payload) as resp:
             resp.raise_for_status()
-            return (await resp.json())['access_token']
+            response = await resp.json()
+            # In order to know exact expiration we would need to decode the token, what
+            # requires more dependencies. Instead we use the returned "expires_in" in
+            # order to guess the expiry.
+            _token_cache[cache_key] = response
+            _token_cache[cache_key]["exp"] = time.time() + response["expires_in"]
+            return _token_cache[cache_key]['access_token']
 
 
 def get_url(api_root, path):

@@ -8,6 +8,10 @@ import time
 import requests
 import requests.auth
 
+# Refresh the tokens 5 minutes before they expire
+REFRESH_THRESHOLD = 5 * 60
+_token_cache = {}
+
 
 def is_csrf_token_expired(token):
     """Checks whether a CSRF token is still valid
@@ -30,6 +34,15 @@ def _get_auth0_token(secrets):
 
     See https://auth0.com/docs/api/authentication#regular-web-app-login-flow43 for the description
     """
+    cache_key = "{}-{}-{}".format(secrets["client_id"], secrets["client_secret"], secrets["audience"])
+    if cache_key in _token_cache:
+        entry = _token_cache[cache_key]
+        expiration = entry["exp"]
+        if expiration - time.time() > REFRESH_THRESHOLD:
+            logging.debug("Using cached token")
+            return entry['access_token']
+
+    logging.debug("Refreshing, getting new token")
     url = "https://{}/oauth/token".format(secrets["domain"])
     payload = dict(
         client_id=secrets["client_id"],
@@ -40,7 +53,12 @@ def _get_auth0_token(secrets):
     headers = {"Content-Type": "application/json"}
     request = requests.post(url, data=json.dumps(payload), headers=headers)
     response = request.json()
-    return response['access_token']
+    # In order to know exact expiration we would need to decode the token, what
+    # requires more dependencies. Instead we use the returned "expires_in" in
+    # order to guess the expiry.
+    _token_cache[cache_key] = response
+    _token_cache[cache_key]["exp"] = time.time() + response["expires_in"]
+    return _token_cache[cache_key]['access_token']
 
 
 class CombinedAuth(requests.auth.AuthBase):
