@@ -84,17 +84,25 @@ class TestNamedUserAPI_JSON(ViewTest):
 class TestPermissionsAPI_JSON(ViewTest):
 
     def testPermissionsCollection(self):
-        ret = self._get('/users/bill/permissions')
+        ret = self._get('/users/bill/permissions', username="bill")
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.get_json(), dict(admin=dict(options=None, data_version=1)))
 
+    def testPermissionsCollectionWithoutPermission(self):
+        ret = self._get('/users/bill/permissions', username="mary")
+        self.assertEqual(ret.status_code, 403)
+
     def testPermissionGet(self):
-        ret = self._get('/users/bill/permissions/admin')
+        ret = self._get('/users/bill/permissions/admin', username="bill")
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.get_json(), dict(options=None, data_version=1))
 
+    def testPermissionGetWithoutPermission(self):
+        ret = self._get('/users/bill/permissions/admin', username="mary")
+        self.assertEqual(ret.status_code, 403)
+
     def testPermissionGetMissing(self):
-        ret = self.client.get("/users/bill/permissions/rule")
+        ret = self._get("/users/bill/permissions/rule", username="bill")
         self.assertEqual(ret.status_code, 404)
 
     def testPermissionPut(self):
