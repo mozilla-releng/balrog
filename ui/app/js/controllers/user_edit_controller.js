@@ -32,6 +32,10 @@ function ($scope, $modalInstance, CSRF, Permissions, users, roles, is_edit, user
         });
         $scope.originalPermissions = angular.copy(response.permissions);
         $scope.user.permissions = response.permissions;
+      },
+      function(err) {
+        sweetAlert("Error loading permissions", err, "error");
+        $modalInstance.close();
       });
 
     $scope.users.forEach(function (eachUser) {
