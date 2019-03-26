@@ -54,7 +54,9 @@ def get_access_token(request):
     return token
 
 
-@lru_cache(2048)
+# Cache this for 1 hour. Without this, we'd need to restart the admin app
+# to pick up changes to the keys.
+@lru_cache(2048, timeout=3600)
 def get_jwks(auth_domain):
     jwks_url = "https://{}/.well-known/jwks.json".format(auth_domain)
     req = requests.get(jwks_url)
