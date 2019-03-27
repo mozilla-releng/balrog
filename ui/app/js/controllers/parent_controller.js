@@ -42,10 +42,30 @@ angular.module("app").config(['$httpProvider', function($httpProvider) {
 
 /* Put things in here that the sub-controllers can use */
 angular.module("app").controller('ParentController',
-function($scope, Page) {
+function($scope, $window, $location, $http, Page, Auth0) {
   $scope.Page = Page;
   $scope.isEmpty = isEmpty;
   $scope.fieldIsChanging = fieldIsChanging;
   $scope.humanizeDate = humanizeDate;
   $scope.formatMoment = formatMoment;
+  $scope.auth0 = Auth0;
+  $scope.loc = $location;
+  function updateHttpDefaults() {
+    $http.defaults.headers.common["Authorization"] = "Bearer " + localStorage.getItem("accessToken");
+  }
+  $scope.initiateLogin = function() {
+    // Do the login in a new window, and set-up token renewal
+    // when it completes.
+    var loginWindow = $window.open('/auth0_login', '_blank');
+    var timer = setInterval(function() {
+      if (loginWindow.closed) {
+        clearInterval(timer);
+        $scope.$apply();
+        if (Auth0.isAuthenticated()) {
+          Auth0.scheduleRenewal(updateHttpDefaults);
+          updateHttpDefaults();
+        }
+      }
+    }, 500);
+  };
 });

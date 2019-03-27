@@ -7,6 +7,7 @@ describe("controller: RuleScheduledChangesController", function() {
     this.$location = $location;
     this.$httpBackend = $httpBackend;
     this.scope = $rootScope.$new();
+    localStorage.setItem("username", "superduperadmin");
     // this.redirect = spyOn($location, 'path');
     $controller('RuleScheduledChangesController', {
       $scope: this.scope,
@@ -20,16 +21,15 @@ describe("controller: RuleScheduledChangesController", function() {
     this.$httpBackend.verifyNoOutstandingExpectation();
   });
 
-  var current_user = {
+  var sample_user = {
     "permissions": {
       "admin": {
         "data_version": 1,
-        "options": null,
+        "options": null
       },
     },
-    "roles": {},
-    "username": "superduperadmin",
-  }
+    "roles": {}
+  };
 
   var sample_sc = {
     "count": 3,
@@ -129,8 +129,8 @@ describe("controller: RuleScheduledChangesController", function() {
 
   describe("fetching all scheduled changes", function() {
     it("should find all scheduled changes", function() {
-      this.$httpBackend.expectGET("/api/users/current")
-      .respond(200, JSON.stringify(current_user));
+      this.$httpBackend.expectGET("/api/users/superduperadmin")
+      .respond(200, JSON.stringify(sample_user));
       this.$httpBackend.expectGET("/api/required_signoffs/product")
       .respond(200, '{"required_signoffs": [], "count": 0}');
       this.$httpBackend.expectGET("/api/scheduled_changes/rules?all=1")
@@ -143,8 +143,8 @@ describe("controller: RuleScheduledChangesController", function() {
 
   describe("filter by select", function() {
     it("should filter active scheduled changes correctly", function() {
-      this.$httpBackend.expectGET("/api/users/current")
-      .respond(200, JSON.stringify(current_user));
+      this.$httpBackend.expectGET("/api/users/superduperadmin")
+      .respond(200, JSON.stringify(sample_user));
       this.$httpBackend.expectGET("/api/required_signoffs/product")
       .respond(200, '{"required_signoffs": [], "count": 0}');
       this.$httpBackend.expectGET("/api/scheduled_changes/rules?all=1")
@@ -158,8 +158,8 @@ describe("controller: RuleScheduledChangesController", function() {
     });
 
     it("should filter completed scheduled changes correctly", function() {
-      this.$httpBackend.expectGET("/api/users/current")
-      .respond(200, JSON.stringify(current_user));
+      this.$httpBackend.expectGET("/api/users/superduperadmin")
+      .respond(200, JSON.stringify(sample_user));
       this.$httpBackend.expectGET("/api/required_signoffs/product")
       .respond(200, '{"required_signoffs": [], "count": 0}');
       this.$httpBackend.expectGET("/api/scheduled_changes/rules?all=1")
@@ -175,8 +175,8 @@ describe("controller: RuleScheduledChangesController", function() {
 
   describe("opening modals", function() {
     it("should be possible to open the add modal", function() {
-      this.$httpBackend.expectGET("/api/users/current")
-      .respond(200, JSON.stringify(current_user));
+      this.$httpBackend.expectGET("/api/users/superduperadmin")
+      .respond(200, JSON.stringify(sample_user));
       this.$httpBackend.expectGET("/api/required_signoffs/product")
       .respond(200, '{"required_signoffs": [], "count": 0}');
       this.$httpBackend.expectGET("/api/scheduled_changes/rules?all=1")
@@ -193,8 +193,8 @@ describe("controller: RuleScheduledChangesController", function() {
     });
 
     it("should be possible to open the update modal for time based change", function() {
-      this.$httpBackend.expectGET("/api/users/current")
-      .respond(200, JSON.stringify(current_user));
+      this.$httpBackend.expectGET("/api/users/superduperadmin")
+      .respond(200, JSON.stringify(sample_user));
       this.$httpBackend.expectGET("/api/required_signoffs/product")
       .respond(200, '{"required_signoffs": [], "count": 0}');
       this.$httpBackend.expectGET("/api/scheduled_changes/rules?all=1")
@@ -211,8 +211,8 @@ describe("controller: RuleScheduledChangesController", function() {
     });
 
     it("should be possible to open the update modal for telemetry change", function() {
-      this.$httpBackend.expectGET("/api/users/current")
-      .respond(200, JSON.stringify(current_user));
+      this.$httpBackend.expectGET("/api/users/superduperadmin")
+      .respond(200, JSON.stringify(sample_user));
       this.$httpBackend.expectGET("/api/required_signoffs/product")
       .respond(200, '{"required_signoffs": [], "count": 0}');
       this.$httpBackend.expectGET("/api/scheduled_changes/rules?all=1")
@@ -229,8 +229,8 @@ describe("controller: RuleScheduledChangesController", function() {
     });
 
     it("should be possible to open the delete modal", function() {
-      this.$httpBackend.expectGET("/api/users/current")
-      .respond(200, JSON.stringify(current_user));
+      this.$httpBackend.expectGET("/api/users/superduperadmin")
+      .respond(200, JSON.stringify(sample_user));
       this.$httpBackend.expectGET("/api/required_signoffs/product")
       .respond(200, '{"required_signoffs": [], "count": 0}');
       this.$httpBackend.expectGET("/api/scheduled_changes/rules?all=1")

@@ -22,58 +22,7 @@ class TestUsersAPI_JSON(ViewTest):
             'mary': {'roles': [{'role': 'relman', 'data_version': 1}]}}))
 
 
-class TestCurrentUserAPI_JSON(ViewTest):
-
-    def testGetCurrentUser(self):
-        ret = self._get("/users/current", username="bill")
-        self.assertEqual(ret.status_code, 200)
-        data = ret.get_json()
-        expected = {
-            "username": "bill",
-            "permissions": {
-                "admin": {
-                    "options": None, "data_version": 1,
-                },
-            },
-            "roles": {
-                "releng": {
-                    "data_version": 1,
-                },
-                "qa": {
-                    "data_version": 1,
-                },
-            },
-        }
-        self.assertEqual(data, expected)
-
-    def testGetCurrentUserWithoutRoles(self):
-        ret = self._get("/users/current", username="billy")
-        self.assertEqual(ret.status_code, 200)
-        data = ret.get_json()
-        expected = {
-            "username": "billy",
-            "permissions": {
-                "admin": {
-                    "options": {
-                        "products": ["a"]
-                    },
-                    "data_version": 1,
-                }
-            },
-            "roles": {},
-        }
-        self.assertEqual(data, expected)
-
-    def testGetCurrentUserWithoutRolesWithoutPermissions(self):
-        ret = self._get("/users/current", username="vikas")
-        self.assertEqual(ret.status_code, 200)
-        data = ret.get_json()
-        expected = {
-            "username": "vikas",
-            "permissions": {},
-            "roles": {},
-        }
-        self.assertEqual(data, expected)
+class TestNamedUserAPI_JSON(ViewTest):
 
     def testGetSelfPermissionWithoutRolesAndWithoutPermission(self):
         ret = self._get("/users/vikas", username="vikas")
@@ -135,17 +84,25 @@ class TestCurrentUserAPI_JSON(ViewTest):
 class TestPermissionsAPI_JSON(ViewTest):
 
     def testPermissionsCollection(self):
-        ret = self._get('/users/bill/permissions')
+        ret = self._get('/users/bill/permissions', username="bill")
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.get_json(), dict(admin=dict(options=None, data_version=1)))
 
+    def testPermissionsCollectionWithoutPermission(self):
+        ret = self._get('/users/bill/permissions', username="mary")
+        self.assertEqual(ret.status_code, 403)
+
     def testPermissionGet(self):
-        ret = self._get('/users/bill/permissions/admin')
+        ret = self._get('/users/bill/permissions/admin', username="bill")
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.get_json(), dict(options=None, data_version=1))
 
+    def testPermissionGetWithoutPermission(self):
+        ret = self._get('/users/bill/permissions/admin', username="mary")
+        self.assertEqual(ret.status_code, 403)
+
     def testPermissionGetMissing(self):
-        ret = self.client.get("/users/bill/permissions/rule")
+        ret = self._get("/users/bill/permissions/rule", username="bill")
         self.assertEqual(ret.status_code, 404)
 
     def testPermissionPut(self):
@@ -191,15 +148,6 @@ class TestPermissionsAPI_JSON(ViewTest):
         query = query.where(dbo.permissions.username == 'bob@bobsworld.com')
         query = query.where(dbo.permissions.permission == 'admin')
         self.assertEqual(query.execute().fetchone(), ('admin', 'bob@bobsworld.com', {"products": ["a"]}, 1))
-
-    def testPermissionsPostWithHttpRemoteUser(self):
-        ret = self._httpRemoteUserPost('/users/bob/permissions/release_read_only', username="bob", data=dict(options=json.dumps(dict(products=["a", "b"])),
-                                       data_version=1))
-        self.assertEqual(ret.status_code, 200, ret.get_data())
-        self.assertEqual(ret.get_json(), dict(new_data_version=2))
-        r = dbo.permissions.t.select().where(dbo.permissions.username == 'bob').where(dbo.permissions.permission == "release_read_only").execute().fetchall()
-        self.assertEqual(len(r), 1)
-        self.assertEqual(r[0], ('release_read_only', 'bob', {"products": ["a", "b"]}, 2))
 
     def testPermissionsPost(self):
         ret = self._post('/users/bob/permissions/release_read_only', data=dict(options=json.dumps(dict(products=["a", "b"])), data_version=1))

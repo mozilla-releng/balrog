@@ -1,3 +1,4 @@
+from flask import current_app as app
 from flask import request
 from flask.views import MethodView
 from auslib.global_state import dbo
@@ -5,6 +6,7 @@ from auslib.web.admin.views.problem import problem
 from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError, \
     SignoffRequiredError
 import logging
+from auslib.util.auth import verified_userinfo
 
 
 log = logging.getLogger(__name__)
@@ -12,16 +14,19 @@ log = logging.getLogger(__name__)
 
 def requirelogin(f):
     def decorated(*args, **kwargs):
-        username = request.environ.get('REMOTE_USER', request.environ.get("HTTP_REMOTE_USER"))
+        username = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])['email']
         if not username:
             log.warning("Login Required")
             return problem(401, 'Unauthenticated', 'Login Required')
+        # Machine to machine accounts are identified by uninformative clientIds
+        # In order to keep Balrog permissions more readable, we map them to
+        # more useful usernames, which are stored in the app config.
+        if "@" not in username:
+            username = app.config["M2M_ACCOUNT_MAPPING"].get(username, username)
+        # Even if the user has provided a valid access token, we don't want to assume
+        # that person should be able to access Balrog (in case auth0 is not configured
+        # to be restrictive enough.
         elif not dbo.isKnownUser(username):
-            # Was identified some situations where a REMOTE_USER can be changed through
-            # the 'Remote-User' header.
-            # This check prevents the request reaches database layer when the user is not
-            # in permissions table.
-            # https://bugzilla.mozilla.org/show_bug.cgi?id=1457905
             log.warning("Authorization Required")
             return problem(403, 'Forbidden', 'Authorization Required')
         return f(*args, changed_by=username, **kwargs)

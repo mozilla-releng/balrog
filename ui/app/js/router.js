@@ -1,4 +1,4 @@
-angular.module("app").config(function($routeProvider, $locationProvider) {
+angular.module("app").config(function($routeProvider, $locationProvider, angularAuth0Provider, Auth0Config) {
 
   $locationProvider.html5Mode(true);
 
@@ -86,8 +86,29 @@ angular.module("app").config(function($routeProvider, $locationProvider) {
     reloadOnSearch: false
   })
 
+  .when('/login', {
+    templateUrl: 'login.html',
+    controller: 'LoginController',
+    reloadOnSearch: false
+  })
+
+  .when('/auth0_login', {
+    template: "Forwarding you to the login page...",
+    controller: 'Auth0LoginController',
+    reloadOnSearch: false
+  })
+
   ;
 
   $routeProvider.otherwise({ redirectTo: '/' });
+
+  angularAuth0Provider.init({
+    clientID: Auth0Config['AUTH0_CLIENT_ID'],
+    domain: Auth0Config['AUTH0_DOMAIN'],
+    audience: Auth0Config['AUTH0_AUDIENCE'],
+    responseType: Auth0Config['AUTH0_RESPONSE_TYPE'],
+    redirectUri: Auth0Config['AUTH0_REDIRECT_URI'],
+    scope: Auth0Config['AUTH0_SCOPE']
+  });
 
 });

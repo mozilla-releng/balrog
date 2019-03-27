@@ -30,6 +30,13 @@ services:
       - LOG_LEVEL=WARNING
       - INSECURE_SESSION_COOKIE=1
       - LOCALDEV=1
+      - FRONTEND_CONFIG=/app/ui/generated/js/config.js
+      - AUTH0_CLIENT_ID=3ZZYS6kQZkqQFcZDHg1plLKrRfz0OXWt
+      - AUTH0_REDIRECT_URI=https://localhost:18010/login
+      - AUTH0_DOMAIN=auth.mozilla.auth0.com
+      - AUTH0_AUDIENCE=balrog-localdev
+      - AUTH0_RESPONSE_TYPE=token id_token
+      - AUTH0_SCOPE=full-user-credentials openid profile email
       # Grab mail information from the local environment
       - SMTP_HOST
       - SMTP_PORT
@@ -39,6 +46,7 @@ services:
       - NOTIFY_TO_ADDR
       - NOTIFY_FROM_ADDR
       - STAGING
+      - LOCAL_ADMIN
     healthcheck:
         test: nc -z -v balrogadmin-py3 17070
         interval: 5s
@@ -55,13 +63,13 @@ services:
         condition: service_healthy
     command: public
     ports:
-      - "19090:19090"
+      - "19010:19010"
     volumes:
       - .:/app
     environment:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb-py3/balrog
       - SECRET_KEY=blahblah
-      - PORT=19090
+      - PORT=19010
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
     links:
@@ -78,12 +86,19 @@ services:
     links:
       - nginx-py3
     environment:
-      - BALROG_API_ROOT=http://nginx-py3:18081/api
+      - BALROG_API_ROOT=http://nginx-py3:18011/api
       - BALROG_USERNAME=balrogagent
       - BALROG_PASSWORD=na
       - TELEMETRY_API_ROOT=abc
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
+      - AUTH0_DOMAIN=auth.mozilla.auth0.com
+      - ALLOW_COOKIE_FROM_IP_URL=1
+      - AUTH0_AUDIENCE=balrog-localdev
+      - AUTH0_M2M_CLIENT_ID=xWFk4cJVfLm3Vg7tFIK9H8j6LeFmsF3B
+      # If you don't have this, ask.
+      - AUTH0_M2M_CLIENT_SECRET
+
 
 
   # This container exists solely to have something automatically rebuilding the UI
@@ -112,8 +127,8 @@ services:
       context: .
       dockerfile: Dockerfile.nginx
     ports:
-      - "18080:18080"
-      - "18081:18081"
+      - "18010:18010"
+      - "18011:18011"
     links:
       - balrogadmin-py3
     volumes:
@@ -122,12 +137,15 @@ services:
       - ./scripts/server.key:/etc/nginx/server.key
       - ./scripts/dhparam.pem:/etc/nginx/dhparam.pem
     environment:
-      - NGINX_PORT=18080
-      - NGINX_BALROG_AGENT_PORT=18081
+      # TODO: This must be switched to 8010 after we switch to Python 3 so that the Auth0
+      # callback URL works correctly. It's currently using a different port to avoid a
+      # collision with the Python 2 docker-compose.yml
+      - NGINX_PORT=18010
+      - NGINX_BALROG_AGENT_PORT=18011
       - BALROG_ADMIN_ROOT=http://balrogadmin-py3:17070
     command: /bin/bash -c "envsubst '$$NGINX_PORT $$NGINX_BALROG_AGENT_PORT $$BALROG_ADMIN_ROOT' < /etc/nginx/conf.d/http_balrog.conf.template > /etc/nginx/conf.d/http_balrog.conf && nginx -g 'daemon off;'"
     healthcheck:
-        test: nc -z -v nginx-py3 18080 && nc -z -v nginx-py3 18081
+        test: nc -z -v nginx-py3 18010 && nc -z -v nginx-py3 18011
         interval: 5s
         timeout: 30s
         retries: 50

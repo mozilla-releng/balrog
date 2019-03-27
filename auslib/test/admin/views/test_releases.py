@@ -960,7 +960,7 @@ class TestReleasesAPI_JSON(ViewTest):
             }
         })
         inp_data = dict(csrf_token="lorem", data=data, product='d', data_version=1, schema_version=1)
-        ret = self.client.put('/releases/d/builds/p/d', data=json.dumps(inp_data), content_type="application/json")
+        ret = self._put('/releases/d/builds/p/d', data=inp_data, username=None)
         self.assertStatusCode(ret, 401)
 
     def testLocalePutReadOnlyRelease(self):

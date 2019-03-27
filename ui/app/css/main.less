@@ -10,11 +10,19 @@ h2 .count {
     font-size: 80%;
 }
 
+.caret {
+  color: #777;
+}
 
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
 
 .navbar-inverse {
   background-color: #290f50;
+}
+
+// To avoid a gap between the bottom of a user's profile picture and the bottom of the navbar
+.navbar-static-top {
+  border: 0px;
 }
 
 // Because I like a little bit more contrast on the sweetalert pop-up
@@ -195,6 +203,10 @@ hr.history {
 .m-tag__input > input{
     border:0px transparent;
     width:100%
+}
+
+.swal-button--danger {
+    background-color: #DD6B55;
 }
 
 @import 'loader';

@@ -12,9 +12,9 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
 
   if ($scope.username) {
     // history of a specific rule
-    Permissions.getUserPermissions($scope.username)
+    Permissions.getUserInfo($scope.username)
       .then(function (response) {
-        $scope.permissions = response;
+        $scope.permissions = response.permissions;
       });
   } else {
     Permissions.getUsers()

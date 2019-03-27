@@ -7,15 +7,14 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
   $scope.loading = true;
   $scope.failed = false;
 
-  $scope.current_user = null;
+  $scope.current_user = localStorage.getItem("username");
   $scope.user_roles = [];
 
-  Permissions.getCurrentUser()
-  .success(function(response) {
-    $scope.current_user = response["username"];
+  Permissions.getUserInfo($scope.current_user)
+  .then(function(response) {
     $scope.user_roles = Object.keys(response["roles"]);
-  })
-  .error(function(response) {
+  },
+  function(response) {
     sweetAlert(
       "Failed to load current user Roles:",
       response

@@ -62,7 +62,7 @@ def ise(error):
     log.debug("Request path is: %s", request.path)
     log.debug("Request environment is: %s", request.environ)
     log.debug("Request headers are: %s", request.headers)
-    return error
+    return problem(500, "Internal Server Error", "Internal Server Error")
 
 
 # Connexion's error handling sometimes breaks when parameters contain

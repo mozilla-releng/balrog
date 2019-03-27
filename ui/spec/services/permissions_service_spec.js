@@ -37,30 +37,36 @@ describe("Service: Permissions", function() {
 
   it('should return all permissions for a user', inject(function(Permissions) {
     var sample_response = {
-      "/releases/:name": {
-        data_version: 1,
-        options: null
-      },
-      "admin": {
-        data_version: 1,
-        options: null
-      }
-    };
-    this.$httpBackend.expectGET('/api/users/peterbe/permissions')
-    .respond(200, JSON.stringify(sample_response));
-    Permissions.getUserPermissions('peterbe').then(function(response) {
-      var expected_response = [
-        {
-          "data_version": 1,
-          "options": null,
-          "permission": "/releases/:name"
+      "permissions": {
+        "/releases/:name": {
+          data_version: 1,
+          options: null
         },
-        {
-          "data_version": 1,
-          "options": null,
-          "permission": "admin"
+        "admin": {
+          data_version: 1,
+          options: null
         }
-      ];
+      },
+      "roles": {}
+    };
+    this.$httpBackend.expectGET('/api/users/peterbe')
+    .respond(200, JSON.stringify(sample_response));
+    Permissions.getUserInfo('peterbe').then(function(response) {
+      var expected_response = {
+        "permissions": [
+            {
+                "permission": "/releases/:name",
+                "data_version": 1,
+                "options": null
+            },
+            {
+                "permission": "admin",
+                "data_version": 1,
+                "options": null
+            }
+        ],
+        "roles": {}
+      };
       expect(response).toEqual(expected_response);
     });
     this.$httpBackend.flush();

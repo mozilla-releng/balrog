@@ -124,3 +124,40 @@ if os.environ.get("SENTRY_DSN"):
 # about the current code (version number, commit hash), but doesn't exist in
 # the repo itself
 application.config["VERSION_FILE"] = "/app/version.json"
+
+auth0_config = {
+    "AUTH0_CLIENT_ID": os.environ["AUTH0_CLIENT_ID"],
+    "AUTH0_REDIRECT_URI": os.environ["AUTH0_REDIRECT_URI"],
+    "AUTH0_DOMAIN": os.environ["AUTH0_DOMAIN"],
+    "AUTH0_AUDIENCE": os.environ["AUTH0_AUDIENCE"],
+    "AUTH0_RESPONSE_TYPE": os.environ["AUTH0_RESPONSE_TYPE"],
+    "AUTH0_SCOPE": os.environ["AUTH0_SCOPE"],
+}
+application.config["AUTH_DOMAIN"] = os.environ["AUTH0_DOMAIN"]
+application.config["AUTH_AUDIENCE"] = os.environ["AUTH0_AUDIENCE"]
+
+application.config["M2M_ACCOUNT_MAPPING"] = {
+    # Local dev
+    "xWFk4cJVfLm3Vg7tFIK9H8j6LeFmsF3B": "balrogagent",
+    # Dev
+    "R6Tpyx7clqQFmR6bvkAUJodV4J8V8LdQ": "balrogagent",
+    # Stage
+    "tKirJIJUQ5D5wU1oxPoA1qxEzmMHnB4h": "balrogagent",
+    # Prod
+    "6TpOQiDH9UhSUouLrxlLP7PbWyJ8epsa": "balrogagent",
+}
+
+# Generate frontend config
+# It feels a bit hacky to be writing out a frontend config on the fly, but none
+# of the alternatives seemed better (baking dev/stage/prod configs into one image,
+# building separate images for those environments, cloudops maintaining this config).
+frontend_config = os.environ.get("FRONTEND_CONFIG")
+config_dir = os.path.dirname(frontend_config)
+if not os.path.exists(config_dir):
+    os.makedirs(config_dir)
+with open(os.environ.get("FRONTEND_CONFIG", "/app/ui/dist/js/config.js"), "w+") as f:
+    f.write("""
+angular.module('config', [])
+
+.constant('Auth0Config', {});
+""".format(auth0_config))

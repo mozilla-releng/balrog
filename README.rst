@@ -18,8 +18,12 @@ To run a development environment you must have Docker and docker-compose
 installed (if you're on Windows or Mac you need "Docker for Windows" or "Docker
 for Mac" at least v1.12.0)
 
-Once these prerequisites are installed, run the
-following command to create and run the necessary images:
+If you have access to it, set up the machine token for the Agent. If you don't have access to it, just skip this step. The Agent will not function, but everything else will work.
+
+::
+    $ export AUTH0_M2M_CLIENT_SECRET=abcdef123456
+
+Now, run the following command to create and run the necessary images:
 
 ::
 
@@ -27,8 +31,15 @@ following command to create and run the necessary images:
 
 Once it completes, you should be able to access
 
-- The admin interface at https://localhost:8080
-- The public interface on port 9090
+- The admin interface at https://localhost:8010
+- The public interface at http://localhost:9010
+
+You'll need to use the "Sign in..." button to do anything useful with the admin interface, which will ask you to sign in with a third party provider (eg: gmail, github). Once you've done that, run the following to create a local admin user to gain write access:
+
+::
+
+    $ export LOCAL_ADMIN=<email address you signed in with>
+    $ docker-compose run balrogadmin create-local-admin
 
 
 Tests

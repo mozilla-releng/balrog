@@ -2247,7 +2247,7 @@ class Permissions(AUSTable):
         if not self.hasPermission(changed_by, "permission", "create", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to grant user roles" % changed_by)
 
-        if len(self.getUserPermissions(username, transaction)) < 1:
+        if len(self.getUserPermissions(username, changed_by, transaction)) < 1:
             raise ValueError("Cannot grant a role to a user without any permissions")
 
         self.log.debug("granting {} role to {}".format(role, username))
@@ -2290,7 +2290,7 @@ class Permissions(AUSTable):
             super(Permissions, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
 
             for u in usernames:
-                if len(self.getUserPermissions(u, transaction)) == 0:
+                if len(self.getUserPermissions(u, changed_by, transaction)) == 0:
                     for role in self.user_roles.select([self.user_roles.username == u], transaction=transaction):
                         self.revokeRole(u, role["role"], changed_by=changed_by, old_data_version=role["data_version"], transaction=transaction)
 
@@ -2316,7 +2316,14 @@ class Permissions(AUSTable):
         except IndexError:
             return {}
 
-    def getUserPermissions(self, username, transaction=None):
+    def getUserPermissions(self, username, retrieving_as, transaction=None):
+        # If the user is retrieving permissions other than their own, we need
+        # to make sure they have enough access to do so. If any user is able
+        # to retrieve permissions of anyone, it may make privilege escalation
+        # attacks easier.
+        if username != retrieving_as and not self.hasPermission(retrieving_as, "permission", "view", transaction=transaction):
+            raise PermissionDeniedError("You are not authorized to view permissions of other users.")
+
         rows = self.select(columns=[self.permission, self.options, self.data_version], where=[self.username == username], transaction=transaction)
         ret = dict()
         for row in rows:

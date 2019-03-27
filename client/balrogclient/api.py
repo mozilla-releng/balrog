@@ -6,6 +6,11 @@ import json
 import logging
 import time
 import requests
+import requests.auth
+
+# Refresh the tokens 5 minutes before they expire
+REFRESH_THRESHOLD = 5 * 60
+_token_cache = {}
 
 
 def is_csrf_token_expired(token):
@@ -22,6 +27,66 @@ def is_csrf_token_expired(token):
     if expiry <= datetime.now().strftime('%Y%m%d%H%M%S'):
         return True
     return False
+
+
+def _get_auth0_token(secrets):
+    """Get Auth0 token
+
+    See https://auth0.com/docs/api/authentication#regular-web-app-login-flow43 for the description
+    """
+    cache_key = "{}-{}-{}".format(secrets["client_id"], secrets["client_secret"], secrets["audience"])
+    if cache_key in _token_cache:
+        entry = _token_cache[cache_key]
+        expiration = entry["exp"]
+        if expiration - time.time() > REFRESH_THRESHOLD:
+            logging.debug("Using cached token")
+            return entry['access_token']
+
+    logging.debug("Refreshing, getting new token")
+    url = "https://{}/oauth/token".format(secrets["domain"])
+    payload = dict(
+        client_id=secrets["client_id"],
+        client_secret=secrets["client_secret"],
+        audience=secrets["audience"],
+        grant_type='client_credentials',
+    )
+    headers = {"Content-Type": "application/json"}
+    request = requests.post(url, data=json.dumps(payload), headers=headers)
+    response = request.json()
+    # In order to know exact expiration we would need to decode the token, what
+    # requires more dependencies. Instead we use the returned "expires_in" in
+    # order to guess the expiry.
+    _token_cache[cache_key] = response
+    _token_cache[cache_key]["exp"] = time.time() + response["expires_in"]
+    return _token_cache[cache_key]['access_token']
+
+
+class CombinedAuth(requests.auth.AuthBase):
+    """Combines Basic HTTP auth and Bearer (access token) auth in one header"""
+
+    def __init__(self, username_and_password, access_token):
+        if username_and_password:
+            self.username, self.password = username_and_password
+        else:
+            self.username = None
+            self.password = None
+        self.access_token = access_token
+
+    def __eq__(self, other):
+        return all([
+            self.username == getattr(other, 'username', None),
+            self.password == getattr(other, 'password', None),
+            self.access_token == getattr(other, 'access_token', None),
+        ])
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __call__(self, r):
+        r.headers['X-Authorization'] = "Bearer {}".format(self.access_token)
+        if self.username and self.password:
+            r.headers['Authorization'] = requests.auth._basic_auth_str(self.username, self.password)
+        return r
 
 
 class API(object):
@@ -50,7 +115,7 @@ class API(object):
     url_template_vars = None
 
     def __init__(self, api_root='https://aus4-admin-dev.allizom.org/api',
-                 auth=None, ca_certs=True, timeout=60,
+                 auth=None, ca_certs=True, timeout=60, auth0_secrets=None,
                  raise_exceptions=True):
         """ Creates an API object which wraps REST API of Balrog server.
 
@@ -74,6 +139,7 @@ class API(object):
         self.raise_exceptions = raise_exceptions
         self.session = requests.session()
         self.csrf_token = None
+        self.auth0_secrets = auth0_secrets
 
     def request(self, data=None, method='GET'):
         url = self.api_root + self.url_template % self.url_template_vars
@@ -122,9 +188,14 @@ class API(object):
                    'Accept': 'application/json',
                    'Content-Type': 'application/json'}
         before = time.time()
+        if self.auth0_secrets:
+            access_token = _get_auth0_token(self.auth0_secrets)
+            auth = CombinedAuth(self.auth, access_token)
+        else:
+            auth = self.auth
         req = self.session.request(
             method=method, url=url, data=json.dumps(data), timeout=self.timeout,
-            verify=self.verify, auth=self.auth, headers=headers)
+            verify=self.verify, auth=auth, headers=headers)
         try:
             if self.raise_exceptions:
                 req.raise_for_status()

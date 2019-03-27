@@ -23,15 +23,19 @@ function ($scope, $modalInstance, CSRF, Permissions, users, roles, is_edit, user
     $scope.user = angular.copy(user);
 
     $scope.user.permissions = [];
-    Permissions.getUserPermissions($scope.user.username)
-      .then(function (permissions) {
-        _.forEach(permissions, function (p) {
+    Permissions.getUserInfo($scope.user.username)
+      .then(function (response) {
+        _.forEach(response.permissions, function (p) {
           if (p.options) {
             p.options_as_json = JSON.stringify(p['options']);
           }
         });
-        $scope.originalPermissions = angular.copy(permissions);
-        $scope.user.permissions = permissions;
+        $scope.originalPermissions = angular.copy(response.permissions);
+        $scope.user.permissions = response.permissions;
+      },
+      function(err) {
+        sweetAlert("Error loading permissions", err, "error");
+        $modalInstance.close();
       });
 
     $scope.users.forEach(function (eachUser) {
@@ -195,37 +199,37 @@ function ($scope, $modalInstance, CSRF, Permissions, users, roles, is_edit, user
     sweetAlert({
       title: "Are you sure?",
       text: "This will delete the permission.",
-      type: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#DD6B55",
-      confirmButtonText: "Yes, delete it!",
-      closeOnConfirm: false
-    }, function(){
-      $scope.saving = true;
-      CSRF.getToken()
-      .then(function(csrf_token) {
-        Permissions.deletePermission($scope.user.username, permission, csrf_token)
-        .success(function(response) {
-          $scope.user.permissions.splice($scope.user.permissions.indexOf(permission), 1);
-          sweetAlert("Deleted", "Permission deleted.", "success");
-          if (!$scope.user.permissions.length) {
-            var index = null;
-            _.each($scope.users, function(user, i) {
-              if (user.username === $scope.user.username) {
-                index = i;
-              }
-            });
-            $scope.users.splice(index, 1);
-          }
-          $scope.cancel();
-        })
-        .error(function(response) {
-          console.error(response);
-        })
-        .finally(function() {
-          $scope.saving = false;
+      icon: "warning",
+      buttons: ["Cancel", "Yes, delete it!"],
+      dangerMode: true
+    }).then(function(willDelete) {
+      if (willDelete) {
+        $scope.saving = true;
+        CSRF.getToken()
+        .then(function(csrf_token) {
+          Permissions.deletePermission($scope.user.username, permission, csrf_token)
+          .success(function(response) {
+            $scope.user.permissions.splice($scope.user.permissions.indexOf(permission), 1);
+            sweetAlert("Deleted", "Permission deleted.", "success");
+            if (!$scope.user.permissions.length) {
+              var index = null;
+              _.each($scope.users, function(user, i) {
+                if (user.username === $scope.user.username) {
+                  index = i;
+                }
+              });
+              $scope.users.splice(index, 1);
+            }
+            $scope.cancel();
+          })
+          .error(function(response) {
+            console.error(response);
+          })
+          .finally(function() {
+            $scope.saving = false;
+          });
         });
-      });
+      }
 
     });
 

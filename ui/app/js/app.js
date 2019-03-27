@@ -5,4 +5,6 @@ angular.module("app", [
   "angular.css.injector",
   "LocalForageModule",
   "ui.bootstrap.datetimepicker",
+  "auth0.auth0",
+  "config",
 ]);

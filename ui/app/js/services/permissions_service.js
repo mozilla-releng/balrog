@@ -3,26 +3,23 @@ angular.module("app").factory('Permissions', function($http, $q, ScheduledChange
     getUsers: function() {
       return $http.get('/api/users');
     },
-    getCurrentUser: function() {
-      return $http.get("/api/users/current");
-    },
-    getUserPermissions: function(username) {
+    getUserInfo: function(username) {
       var deferred = $q.defer();
-      var url = '/api/users/' + encodeURIComponent(username) + '/permissions';
-      $http.get(url)
+      var url = '/api/users/' + encodeURIComponent(username);
+      // TODO: can probably remove this header setting because we use headers.common.blah now
+      $http.get(url, config={"headers": {"Authorization": "Bearer " + localStorage.getItem("accessToken")}})
       .success(function(response) {
         // What comes back from the server is a dict like this:
         //  {permission1: {options: ...}, otherPermission: {options: ...}, ...}
         // so turn it into a list with the key being called "permission"
-        var permissions = _.map(response, function(value, key) {
+        var permissions = _.map(response.permissions, function(value, key) {
           value.permission = key;
           return value;
         });
-        deferred.resolve(permissions);
+        deferred.resolve({"permissions": permissions, "roles": response.roles});
       })
-      .error(function() {
-        console.error(arguments);
-        deferred.reject(arguments);
+      .error(function(response) {
+        deferred.reject(response.detail);
       });
       return deferred.promise;
     },

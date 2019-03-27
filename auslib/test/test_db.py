@@ -4479,7 +4479,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         expected = {"permission": dict(options=None, data_version=1),
                     "release": dict(options=dict(products=["fake"]), data_version=1),
                     "rule": dict(options=dict(actions=["modify"]), data_version=1)}
-        self.assertEqual(self.permissions.getUserPermissions("bob"), expected)
+        self.assertEqual(self.permissions.getUserPermissions("bob", "bob"), expected)
 
     def testGetOptions(self):
         expected = dict(products=["fake"])

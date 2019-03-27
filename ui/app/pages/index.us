@@ -24,33 +24,44 @@
         <div class="collapse navbar-collapse" ng-class="{'in':!navCollapsed}">
           <ul class="nav navbar-nav navbar-right" ng-controller="NavController">
             <li ng-class="{active: isOn('/')}"><a href="/">Home</a></li>
-            <li class="dropdown nav" ng-class="{active: isOn('/rules')}">
+            <li ng-show="auth0.isAuthenticated()" class="dropdown nav" ng-class="{active: isOn('/rules')}">
                 <a href="/rules">Rules <span class="caret"></span></a>
                 <ul class="dropdown-menu dropdown-menu-left">
                     <li><a href="/rules/scheduled_changes">Scheduled Changes</a></li>
                 </ul>
             </li>
-            <li class="dropdown nav" ng-class="{active: isOn('/releases')}">
+            <li ng-show="auth0.isAuthenticated()" class="dropdown nav" ng-class="{active: isOn('/releases')}">
                 <a href="/releases">Releases <span class="caret"></span></a>
                 <ul class="dropdown-menu dropdown-menu-left">
                     <li><a href="/releases/scheduled_changes">Scheduled Changes</a></li>
                 </ul>
             </li>
 
-            <li class="dropdown nav" ng-class="{active: isOn('/permissions')}">
+            <li ng-show="auth0.isAuthenticated()" class="dropdown nav" ng-class="{active: isOn('/permissions')}">
                 <a href="/permissions">Permissions <span class="caret"></span></a>
                 <ul class="dropdown-menu dropdown-menu-left">
                     <li><a href="/permissions/scheduled_changes">Scheduled Changes</a></li>
                 </ul>
             </li>
 
-            <li ng-class="{active: isOn('/required_signoffs')}">
+            <li ng-show="auth0.isAuthenticated()" ng-class="{active: isOn('/required_signoffs')}">
                 <a href="/required_signoffs">Required Signoffs</a>
             </li>
 
-            <li ng-class="{active: isOn('/change_logs')}">
+            <li ng-show="auth0.isAuthenticated()" ng-class="{active: isOn('/change_logs')}">
               <a href="/change_logs">Change Logs</a>
-          </li>
+            </li>
+            <li ng-class="{dropdown: auth0.isAuthenticated(), nav: auth0.isAuthenticated()}">
+              <a ng-show="! auth0.isAuthenticated()" ng-click="initiateLogin()">Sign in...</a>
+              <!-- TODO: how can we avoid hardcoding this? Bootstrap's navbar class specifies 50px, but
+                         I haven't been able to figure out how to force the img to shrink to size of its
+                         container
+              -->
+              <img style="height: 50px" ng-show="auth0.isAuthenticated()" ng-src="{{ auth0.getPicture() }}"></img><span ng-show="auth0.isAuthenticated()" class="caret"></span>
+              <ul class="dropdown-menu dropdown-menu-right">
+                  <li><a ng-click="auth0.logout()">Sign out</a></li>
+              </ul>
+            </li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -64,5 +75,6 @@
 
 
     <script type="text/javascript" src="/js/app.js"></script>
+    <script type="text/javascript" src="/js/config.js"></script>
   </body>
 </html>

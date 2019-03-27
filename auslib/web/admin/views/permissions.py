@@ -3,7 +3,7 @@ import connexion
 from flask import Response, jsonify
 from auslib.web.admin.views.problem import problem
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import requirelogin, AdminView
+from auslib.web.admin.views.base import requirelogin, AdminView, handleGeneralExceptions
 from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
     ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
     SignoffsView
@@ -24,29 +24,15 @@ class UsersView(AdminView):
 
 
 class SpecificUserView(AdminView):
-    """Returns all of the details about the logged in user. The UI needs this
-    method to know things about the current user because it does not have
-    access to REMOTE_USER, so it cannot query directly by name."""
+    """/users/:username
+    Returns all of the details about the named user."""
 
-    def get(self, username):
-        current_user = connexion.request.environ.get('REMOTE_USER', connexion.request.environ.get("HTTP_REMOTE_USER"))
-        query_for_current = False
-        if username == "current":
-            username = current_user
-            query_for_current = True
-        # If the user is retrieving permissions other than their own, we need
-        # to make sure they have enough access to do so. If any user is able
-        # to retrieve permissions of anyone, it may make privilege escalation
-        # attacks easier.
-        # TODO: do this at the database layer
-        else:
-            if username != current_user and not dbo.hasPermission(current_user, "permission", "view"):
-                return problem(status=403, title="Forbidden",
-                               detail="You are not authorized to view permissions of other users.")
+    @requirelogin
+    @handleGeneralExceptions("GET")
+    def get(self, username, changed_by):
+        permissions = dbo.permissions.getUserPermissions(username, changed_by)
 
-        permissions = dbo.permissions.getUserPermissions(username)
-
-        if ((username != current_user or not query_for_current) and not permissions):
+        if not permissions:
             return problem(status=404, title="Not Found", detail="No permission found for username %s" % username)
         roles = {r["role"]: {"data_version": r["data_version"]} for r in dbo.permissions.getUserRoles(username)}
         return jsonify({"username": username, "permissions": permissions, "roles": roles})
@@ -55,16 +41,21 @@ class SpecificUserView(AdminView):
 class PermissionsView(AdminView):
     """/users/:username/permissions"""
 
-    def get(self, username):
-        permissions = dbo.permissions.getUserPermissions(username)
+    @requirelogin
+    @handleGeneralExceptions("GET")
+    def get(self, username, changed_by):
+        permissions = dbo.permissions.getUserPermissions(username, changed_by)
         return jsonify(permissions)
 
 
 class SpecificPermissionView(AdminView):
     """/users/:username/permissions/:permission"""
-    def get(self, username, permission):
+
+    @requirelogin
+    @handleGeneralExceptions("GET")
+    def get(self, username, permission, changed_by):
         try:
-            perm = dbo.permissions.getUserPermissions(username)[permission]
+            perm = dbo.permissions.getUserPermissions(username, changed_by)[permission]
         except KeyError:
             return problem(404, "Not Found", "Requested user permission"
                                              " %s not found for %s" % (permission, username))
@@ -73,7 +64,7 @@ class SpecificPermissionView(AdminView):
     @requirelogin
     def _put(self, username, permission, changed_by, transaction):
         try:
-            if dbo.permissions.getUserPermissions(username, transaction).get(permission):
+            if dbo.permissions.getUserPermissions(username, changed_by, transaction).get(permission):
                 # Existing Permission
                 if not connexion.request.get_json().get("data_version"):
                     return problem(400, "Bad Request", "'data_version' is missing from request body")
@@ -107,7 +98,7 @@ class SpecificPermissionView(AdminView):
 
     @requirelogin
     def _post(self, username, permission, changed_by, transaction):
-        if not dbo.permissions.getUserPermissions(username, transaction=transaction).get(permission):
+        if not dbo.permissions.getUserPermissions(username, changed_by, transaction=transaction).get(permission):
             return problem(status=404, title="Not Found", detail="Requested user permission"
                                                                  " %s not found for %s" % (permission, username))
         try:
@@ -133,7 +124,7 @@ class SpecificPermissionView(AdminView):
 
     @requirelogin
     def _delete(self, username, permission, changed_by, transaction):
-        if not dbo.permissions.getUserPermissions(username, transaction=transaction).get(permission):
+        if not dbo.permissions.getUserPermissions(username, changed_by, transaction=transaction).get(permission):
             return problem(404, "Not Found", "Requested user permission"
                                              " %s not found for %s" % (permission, username))
         try:
