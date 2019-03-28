@@ -16,9 +16,8 @@ SCHEDULED_CHANGE_ENDPOINTS = ['rules',
                               'required_signoffs/permissions']
 
 
-async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, telemetry_api_root, sleeptime=30,
-                    once=False, raise_exceptions=False, auth0_secrets=None):
-    auth = aiohttp.BasicAuth(balrog_username, balrog_password)
+async def run_agent(loop, balrog_api_root, telemetry_api_root, auth0_secrets,
+                    sleeptime=30, once=False, raise_exceptions=False):
 
     while True:
         try:
@@ -26,7 +25,7 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                 logging.debug("Looking for active scheduled changes for endpoint %s..." % endpoint)
                 resp = await client.request(balrog_api_root,
                                             "/scheduled_changes/%s" % endpoint,
-                                            auth=auth, loop=loop, auth0_secrets=auth0_secrets)
+                                            loop=loop, auth0_secrets=auth0_secrets)
                 sc = resp["scheduled_changes"]
                 if endpoint == 'rules':
                     # Rules are sorted by priority, when available. Deletions will not have
@@ -61,7 +60,7 @@ async def run_agent(loop, balrog_api_root, balrog_username, balrog_password, tel
                     if ready:
                         logging.debug("Change %s is ready, enacting", change["sc_id"])
                         url = "/scheduled_changes/{}/{}/enact".format(endpoint, change["sc_id"])
-                        await client.request(balrog_api_root, url, method="POST", auth=auth, auth0_secrets=auth0_secrets, loop=loop)
+                        await client.request(balrog_api_root, url, method="POST", auth0_secrets=auth0_secrets, loop=loop)
                     else:
                         logging.debug("Change %s is not ready", change["sc_id"])
 
@@ -107,7 +106,7 @@ def main():
     loop.run_until_complete(
         run_agent(
             loop,
-            os.environ["BALROG_API_ROOT"], os.environ["BALROG_USERNAME"], os.environ["BALROG_PASSWORD"],
+            os.environ["BALROG_API_ROOT"],
             os.environ["TELEMETRY_API_ROOT"],
             auth0_secrets=auth0_secrets,
         )
