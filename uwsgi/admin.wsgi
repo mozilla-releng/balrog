@@ -143,8 +143,12 @@ application.config["M2M_ACCOUNT_MAPPING"] = {
     "R6Tpyx7clqQFmR6bvkAUJodV4J8V8LdQ": "balrogagent",
     # Stage
     "tKirJIJUQ5D5wU1oxPoA1qxEzmMHnB4h": "balrogagent",
+    "tGbG2QUboAQpF35j1p40dpD2XYiC4AB7": "balrog-stage-ffxbld",
+    "nyfi9KOMJZXAq3xjkF57wSwkJS2gUkHO": "balrog-stage-tbirdbld",
     # Prod
     "6TpOQiDH9UhSUouLrxlLP7PbWyJ8epsa": "balrogagent",
+    "DqmXymgjiz6XuRXIewDnuR7oB8bOxkf0": "balrog-ffxbld",
+    "ztM3MdGFNjbPYOq7R4br2EukKhuL6qlY": "balrog-tbirdbld",
 }
 
 # Generate frontend config
