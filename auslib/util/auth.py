@@ -24,13 +24,11 @@ def get_access_token(request):
     # token in both headers. Once clients switch to Authorization
     # we will remove support for X-Authorization.
     auth = request.headers.get("Authorization", None)
-    if not auth or "bearer" not in auth.lower():
-        auth = request.headers.get("X-Authorization", None)
-        if not auth:
-            raise AuthError({
-                "code": "authorization_header_missing",
-                "description": "Authorization or X-Authorization header is expected"
-            }, 401)
+    if not auth:
+        raise AuthError({
+            "code": "authorization_header_missing",
+            "description": "Authorization header is expected"
+        }, 401)
 
     parts = auth.split()
 
