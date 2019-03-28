@@ -60,7 +60,7 @@ async def request(api_root, path, method="GET", data={}, headers=default_headers
     data = data.copy()
     if auth0_secrets:
         access_token = await _get_auth0_token(auth0_secrets, loop)
-        headers["Authorization"] = "Bearer {}".format(access_token)
+        headers["X-Authorization"] = "Bearer {}".format(access_token)
 
     # Aiohttp does not allow cookie from urls that using IP address instead dns name,
     # so if for any reason agent needs point to IP address, the envvar "ALLOW_COOKIE_FROM_IP_URL"
