@@ -1,4 +1,3 @@
-import aiohttp
 import asyncio
 import logging
 import time
