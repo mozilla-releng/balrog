@@ -30,7 +30,7 @@ class BalrogLogger(logging.Logger):
                 # Sometimes requests that happen around the same time will
                 # end up with the same value here. Possibly only when the
                 # query strings are the same, or srcip?
-                requestid = id(request._get_current_object())
+                requestid = str(id(request._get_current_object()))
             # RuntimeError will be raised if there's no active request.
             except RuntimeError:
                 pass
