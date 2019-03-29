@@ -172,7 +172,7 @@ class API(object):
                    'Content-Type': 'application/json'}
         before = time.time()
         access_token = _get_auth0_token(self.auth0_secrets)
-        auth = BearerAuth(self.auth, access_token)
+        auth = BearerAuth(access_token)
         req = self.session.request(
             method=method, url=url, data=json.dumps(data), timeout=self.timeout,
             verify=self.verify, auth=auth, headers=headers)
