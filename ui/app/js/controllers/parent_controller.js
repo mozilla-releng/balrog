@@ -50,6 +50,48 @@ function($scope, $window, $location, $http, Page, Auth0) {
   $scope.formatMoment = formatMoment;
   $scope.auth0 = Auth0;
   $scope.loc = $location;
+  $scope.showAccessToken = function() {
+    // This is a seemingly ridiculous chain of calls just to get a human readable date.
+    // We need the moment(parseInt(...)) because Javascript's Date object won't parse
+    // unix time as best I can tell, and moment won't take unix time in string form.
+    // humanizeDate turns it into something more understandable for humans
+    var expiresAt = localStorage.getItem("expiresAt");
+    var accessToken = localStorage.getItem("accessToken");
+    var validUntil = humanizeDate(moment(parseInt(expiresAt)));
+    // This is also a kindof ridiculous chain of elements. SweetAlert only allows
+    // one element in the content, so we need to create a single root element that contains
+    // all the things we need in it. In our case, an <input> and <button> that shows/copies
+    // the accessToken to the clipboard.
+    var div = document.createElement("div");
+    var input = document.createElement("input");
+    var span = document.createElement("span");
+    var button = document.createElement("button");
+    var glyphicon = document.createElement("i");
+    div.className = "input-group";
+    input.className = "form-control";
+    input.type = "text";
+    input.value = accessToken;
+    span.className = "input-group-btn";
+    button.className = "btn";
+    button.type = "button";
+    button.title = "Copy to Clipboard";
+    button.onclick = function() {
+      input.select();
+      navigator.clipboard.writeText(accessToken);
+    };
+    glyphicon.className = "glyphicon glyphicon-share";
+    button.append(glyphicon);
+    span.append(button);
+    div.append(input);
+    div.append(span);
+    sweetAlert({
+      title: "Your access token is valid until " + validUntil,
+      content: {
+        element: div,
+      },
+      icon: "info",
+    });
+  };
   function updateHttpDefaults() {
     $http.defaults.headers.common["Authorization"] = "Bearer " + localStorage.getItem("accessToken");
   }
