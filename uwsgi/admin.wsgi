@@ -138,7 +138,7 @@ application.config["AUTH_AUDIENCE"] = os.environ["AUTH0_AUDIENCE"]
 
 application.config["M2M_ACCOUNT_MAPPING"] = {
     # Local dev
-    "xWFk4cJVfLm3Vg7tFIK9H8j6LeFmsF3B": "balrogagent",
+    "41U6XJQdSa6CL8oGa6CXvO4aZWlnq5xg": "balrogagent",
     # Dev
     "R6Tpyx7clqQFmR6bvkAUJodV4J8V8LdQ": "balrogagent",
     # Stage

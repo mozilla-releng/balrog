@@ -31,9 +31,9 @@ services:
       - INSECURE_SESSION_COOKIE=1
       - LOCALDEV=1
       - FRONTEND_CONFIG=/app/ui/generated/js/config.js
-      - AUTH0_CLIENT_ID=3ZZYS6kQZkqQFcZDHg1plLKrRfz0OXWt
+      - AUTH0_CLIENT_ID=GlZhJQfx52b7MLQ19AjuTJHieiB4oh1j
       - AUTH0_REDIRECT_URI=https://localhost:8010/login
-      - AUTH0_DOMAIN=auth.mozilla.auth0.com
+      - AUTH0_DOMAIN=balrog-localdev.auth0.com
       - AUTH0_AUDIENCE=balrog-localdev
       - AUTH0_RESPONSE_TYPE=token id_token
       - AUTH0_SCOPE=full-user-credentials openid profile email
@@ -92,12 +92,13 @@ services:
       - TELEMETRY_API_ROOT=abc
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
-      - AUTH0_DOMAIN=auth.mozilla.auth0.com
-      - ALLOW_COOKIE_FROM_IP_URL=1
+      - AUTH0_DOMAIN=balrog-localdev.auth0.com
       - AUTH0_AUDIENCE=balrog-localdev
-      - AUTH0_M2M_CLIENT_ID=xWFk4cJVfLm3Vg7tFIK9H8j6LeFmsF3B
-      # If you don't have this, ask.
-      - AUTH0_M2M_CLIENT_SECRET
+      # Not a real secret. This machine-to-machine clientId is in its own
+      # Auth0 account, and has access to nothing except the Balrog
+      # local development API.
+      - AUTH0_M2M_CLIENT_ID=41U6XJQdSa6CL8oGa6CXvO4aZWlnq5xg
+      - AUTH0_M2M_CLIENT_SECRET=updk4Gi1f6ncXDCDBH5ZclbsbIUaZmqvEXYCQLCFI56RnWlnTQXCQe6-h9n86QTv
 
 
   # This container exists solely to have something automatically rebuilding the UI
