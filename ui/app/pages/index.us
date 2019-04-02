@@ -59,6 +59,7 @@
               -->
               <img style="height: 50px" ng-show="auth0.isAuthenticated()" ng-src="{{ auth0.getPicture() }}"></img><span ng-show="auth0.isAuthenticated()" class="caret"></span>
               <ul class="dropdown-menu dropdown-menu-right">
+                  <li><a ng-click="showAccessToken()">Show Access Token</a></li>
                   <li><a ng-click="auth0.logout()">Sign out</a></li>
               </ul>
             </li>
