@@ -13,8 +13,9 @@ with open(path.join(here, 'requirements.txt')) as f:
         # Skip lines with hash values
         if not line.strip().startswith("--"):
             version_skip = [
-                "python_version=='2.7'" in line and not six.PY2,
-                "python_version=='3.6'" in line and not six.PY3
+                "python_version=='2" in line and not six.PY2,
+                "python_version=='3" in line and not six.PY3,
+                "python_version>='3" in line and not six.PY3,
             ]
             if any(version_skip):
                 continue
