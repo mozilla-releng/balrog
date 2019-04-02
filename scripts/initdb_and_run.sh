@@ -8,6 +8,11 @@ if [ ! -e /app/$CACHEDIR/mysql/db.done ]; then
 
     xz -d -c $LOCAL_DUMP | mysql -h $DB_HOST -u balrogadmin --password=balrogadmin balrog
     mysql -h $DB_HOST -u balrogadmin --password=balrogadmin -e 'insert into permissions (username, permission, options, data_version) values ("balrogagent", "scheduled_change", "{\"actions\": [\"enact\"]}", 1)' balrog
+    mysql -h $DB_HOST -u balrogadmin --password=balrogadmin -e 'insert into permissions (username, permission, options, data_version) values ("bob@mozilla.com", "release", "{\"actions\": [\"get\"]}", 1)' balrog
+    mysql -h $DB_HOST -u balrogadmin --password=balrogadmin -e 'insert into permissions (username, permission, options, data_version) values ("janet@mozilla.com", "release", "{\"actions\": [\"get\"]}", 1)' balrog
+    mysql -h $DB_HOST -u balrogadmin --password=balrogadmin -e 'insert into user_roles (username, role, data_version) values ("bob@mozilla.com", "releng", 1);' balrog
+    mysql -h $DB_HOST -u balrogadmin --password=balrogadmin -e 'insert into user_roles (username, role, data_version) values ("janet@mozilla.com", "releng", 1);' balrog
+    mysql -h $DB_HOST -u balrogadmin --password=balrogadmin -e 'insert into product_req_signoffs (product, channel, role, signoffs_required, data_version) values ("Firefox", "release", "releng", 1, 1);' balrog
     touch /app/$CACHEDIR/mysql/db.done
     echo "Done"
 
