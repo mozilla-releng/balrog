@@ -57,7 +57,9 @@ function($scope, $window, $location, $http, Page, Auth0) {
     // humanizeDate turns it into something more understandable for humans
     var expiresAt = localStorage.getItem("expiresAt");
     var accessToken = localStorage.getItem("accessToken");
-    var validUntil = humanizeDate(moment(parseInt(expiresAt)));
+    // Calculate how much longer the token is valid for, in minutes
+    var validUntilMinutes = parseInt((moment(parseInt(expiresAt)) - moment()) / 1000 / 60);
+    var validUntilTime = moment(parseInt(expiresAt)).format("HH:mm");
     // This is also a kindof ridiculous chain of elements. SweetAlert only allows
     // one element in the content, so we need to create a single root element that contains
     // all the things we need in it. In our case, an <input> and <button> that shows/copies
@@ -85,7 +87,7 @@ function($scope, $window, $location, $http, Page, Auth0) {
     div.append(input);
     div.append(span);
     sweetAlert({
-      title: "Your access token is valid until " + validUntil,
+      title: "Your access token is valid for " + validUntilMinutes + " minutes, expiring at " + validUntilTime + ".",
       content: {
         element: div,
       },
