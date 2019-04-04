@@ -12,7 +12,7 @@ class TestRunAgent(asynctest.TestCase):
         self.loop = asyncio.get_event_loop()
 
     async def _runAgent(self, scheduled_changes, request):
-        def side_effect(balrog_api_root, endpoint, auth, loop, auth0_secrets, method='GET'):
+        def side_effect(balrog_api_root, endpoint, loop, auth0_secrets, method='GET'):
             if 'required_signoffs' in endpoint:
                 endpoint = '/'.join(endpoint.split('/')[-2:])
             else:
@@ -26,7 +26,7 @@ class TestRunAgent(asynctest.TestCase):
 
         request.side_effect = side_effect
 
-        return await run_agent(self.loop, "http://balrog.fake", "balrog", "balrog", "telemetry", once=True, raise_exceptions=True)
+        return await run_agent(self.loop, "http://balrog.fake", "telemetry", auth0_secrets={}, once=True, raise_exceptions=True)
 
     async def testNoChanges(self, time_is_ready, telemetry_is_ready, request):
         sc = {}

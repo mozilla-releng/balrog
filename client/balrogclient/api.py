@@ -61,31 +61,19 @@ def _get_auth0_token(secrets):
     return _token_cache[cache_key]['access_token']
 
 
-class CombinedAuth(requests.auth.AuthBase):
-    """Combines Basic HTTP auth and Bearer (access token) auth in one header"""
+class BearerAuth(requests.auth.AuthBase):
 
-    def __init__(self, username_and_password, access_token):
-        if username_and_password:
-            self.username, self.password = username_and_password
-        else:
-            self.username = None
-            self.password = None
+    def __init__(self, access_token):
         self.access_token = access_token
 
     def __eq__(self, other):
-        return all([
-            self.username == getattr(other, 'username', None),
-            self.password == getattr(other, 'password', None),
-            self.access_token == getattr(other, 'access_token', None),
-        ])
+        return self.access_token == getattr(other, 'access_token', None)
 
     def __ne__(self, other):
         return not self == other
 
     def __call__(self, r):
-        r.headers['X-Authorization'] = "Bearer {}".format(self.access_token)
-        if self.username and self.password:
-            r.headers['Authorization'] = requests.auth._basic_auth_str(self.username, self.password)
+        r.headers['Authorization'] = "Bearer {}".format(self.access_token)
         return r
 
 
@@ -109,18 +97,16 @@ class API(object):
                                 url_template.
     """
     verify = False
-    auth = None
     url_template = None
     prerequest_url_template = None
     url_template_vars = None
 
-    def __init__(self, api_root='https://aus4-admin-dev.allizom.org/api',
-                 auth=None, ca_certs=True, timeout=60, auth0_secrets=None,
+    def __init__(self, auth0_secrets, api_root='https://aus4-admin-dev.allizom.org/api',
+                 ca_certs=True, timeout=60,
                  raise_exceptions=True):
         """ Creates an API object which wraps REST API of Balrog server.
 
         api_root: API root URL of balrog server
-        auth    : a tuple of (username, password) or None
         ca_certs: CA bundle. It follows python-requests `verify' usage.
                   If set to False, no SSL verification is done.
                   If set to True, it tries to load a CA bundle from certifi
@@ -132,9 +118,6 @@ class API(object):
         """
         self.api_root = api_root.rstrip('/')
         self.verify = ca_certs
-        assert isinstance(auth, tuple) or auth is None, \
-            "auth should be set to tuple or None"
-        self.auth = auth
         self.timeout = timeout
         self.raise_exceptions = raise_exceptions
         self.session = requests.session()
@@ -188,11 +171,8 @@ class API(object):
                    'Accept': 'application/json',
                    'Content-Type': 'application/json'}
         before = time.time()
-        if self.auth0_secrets:
-            access_token = _get_auth0_token(self.auth0_secrets)
-            auth = CombinedAuth(self.auth, access_token)
-        else:
-            auth = self.auth
+        access_token = _get_auth0_token(self.auth0_secrets)
+        auth = BearerAuth(access_token)
         req = self.session.request(
             method=method, url=url, data=json.dumps(data), timeout=self.timeout,
             verify=self.verify, auth=auth, headers=headers)

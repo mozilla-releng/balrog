@@ -52,15 +52,14 @@ def get_url(api_root, path):
     return api_root.rstrip("/") + path
 
 
-async def request(api_root, path, method="GET", data={}, headers=default_headers,
-                  auth=None, auth0_secrets=None, loop=None):
+async def request(api_root, path, auth0_secrets, method="GET", data={},
+                  headers=default_headers, loop=None):
     headers = headers.copy()
     url = get_url(api_root, path)
     csrf_url = get_url(api_root, "/csrf_token")
     data = data.copy()
-    if auth0_secrets:
-        access_token = await _get_auth0_token(auth0_secrets, loop)
-        headers["X-Authorization"] = "Bearer {}".format(access_token)
+    access_token = await _get_auth0_token(auth0_secrets, loop)
+    headers["Authorization"] = "Bearer {}".format(access_token)
 
     # Aiohttp does not allow cookie from urls that using IP address instead dns name,
     # so if for any reason agent needs point to IP address, the envvar "ALLOW_COOKIE_FROM_IP_URL"
@@ -71,7 +70,7 @@ async def request(api_root, path, method="GET", data={}, headers=default_headers
         # CSRF tokens are only required for POST/PUT/DELETE.
         if method not in ("HEAD", "GET"):
             logging.debug("Sending %s request to %s", "HEAD", csrf_url)
-            async with client.request("HEAD", csrf_url, auth=auth, headers=headers) as resp:
+            async with client.request("HEAD", csrf_url, headers=headers) as resp:
                 resp.raise_for_status()
                 data["csrf_token"] = resp.headers["X-CSRF-Token"]
 
@@ -87,7 +86,7 @@ async def request(api_root, path, method="GET", data={}, headers=default_headers
                 c["secure"] = False
 
         logging.debug("Sending %s request to %s", method, url)
-        async with client.request(method, url, data=json.dumps(data), headers=headers, auth=auth) as resp:
+        async with client.request(method, url, data=json.dumps(data), headers=headers) as resp:
             # Raises on 400 code or higher, we can assume things are good if we make it past this.
             resp.raise_for_status()
             return (await resp.json())
