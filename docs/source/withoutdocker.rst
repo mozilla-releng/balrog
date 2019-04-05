@@ -14,6 +14,7 @@ To initialize a new Balrog database, run the following:
 ::
 
     docker run --entrypoint python mozilla/balrog /app/scripts/manage-db.py -d DBURI create
+    docker run -e "DBURI=<database uri>" -e "LOCAL_ADMIN=<email address of initial admin>" mozilla/balrog create-local-admin
 
 Similarly, to upgrade the schema of an existing Balrog database, run the following:
 

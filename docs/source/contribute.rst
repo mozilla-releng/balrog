@@ -32,12 +32,7 @@ By creating a fork, you are able to generate a *pull request* so that the change
 Usage
 -----
 
-If you have access to it, set up the machine token for the Agent. If you don't have access to it, just skip this step. The Agent will not function, but everything else will work.
-
-::
-    $ export AUTH0_M2M_CLIENT_SECRET=abcdef123456
-
-Now, run the following command to create and run the necessary images:
+Run the following command to create and run the necessary images:
 
 ::
 
