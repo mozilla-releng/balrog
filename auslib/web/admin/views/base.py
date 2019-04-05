@@ -6,7 +6,7 @@ from auslib.web.admin.views.problem import problem
 from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError, \
     SignoffRequiredError
 import logging
-from auslib.util.auth import verified_userinfo
+from auslib.util.auth import AuthError, verified_userinfo
 
 
 log = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ def handleGeneralExceptions(messages):
                 log.warning(msg)
                 log.warning(e)
                 return problem(400, "Bad Request", "SignoffRequiredError", ext={"exception": msg})
-            except PermissionDeniedError as e:
+            except (PermissionDeniedError, AuthError) as e:
                 msg = "Permission denied to perform the request. {}".format(e)
                 log.warning(msg)
                 return problem(403, "Forbidden", "PermissionDeniedError", ext={"exception": msg})
