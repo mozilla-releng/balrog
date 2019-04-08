@@ -110,9 +110,9 @@ sphinx==1.8.5; python_version=='2.7' \
     --hash=sha256:9f3e17c64b34afc653d7c5ec95766e03043cc6d80b0de224f59b6b6e19d37c3c \
     --hash=sha256:c7658aab75c920288a8cf6f09f244c6cfdae30d82d803ac1634d9f223a80ca08 \
     # pyup: ignore
-sphinx==2.0.0; python_version>='3' \
-    --hash=sha256:5a54f9132766c8ffdd4021de4d0ef8afeb93235569d64b617612e60070332583 \
-    --hash=sha256:91b29c8e98d18ed474bb92777e7af31931fae96e625b8f1bc595c67fb641c46d
+sphinx==2.0.1; python_version>='3' \
+    --hash=sha256:423280646fb37944dd3c85c58fb92a20d745793a9f6c511f59da82fa97cd404b \
+    --hash=sha256:de930f42600a4fef993587633984cc5027dedba2464bcf00ddace26b40f8d9ce
 pbr==5.1.3 \
     --hash=sha256:8257baf496c8522437e8a6cfe0f15e00aedc6c0e0e7c9d55eeeeab31e0853843 \
     --hash=sha256:8c361cc353d988e4f5b998555c88098b9d5964c2e11acf7b0d21925a66bb5824
