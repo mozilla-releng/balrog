@@ -10,7 +10,7 @@
 <h2>
   <span>{{ selected_product }} Signoff Requirements</span>
 
-  <button class="btn btn-primary btn-xs" ng-click="addNewRequiredSignoff()">
+  <button class="btn btn-primary btn-xs" ng-click="addNewRequiredSignoff()" ng-show="auth0.isAuthenticated()">
     Enable Signoffs for a new Product
     <i class="glyphicon glyphicon-plus"></i>
   </button>
@@ -21,6 +21,7 @@
     <h3 class="panel-title">
       <span>
         <span ng-show="state === 'current'">To change {{ selected_product}} permissions you must have signoff from...</span>
+        <span ng-show="auth0.isAuthenticated()">
           <button class="btn btn-xs btn-warning"
                   ng-click="editRequiredSignoffs('permissions')">
             Edit
@@ -29,6 +30,7 @@
                   ng-click="deleteRequiredSignoffs(required_signoffs, 'permissions')">
             Delete
           </button>
+        </span>
       </span>
     </h3>
   </div>
@@ -41,7 +43,7 @@
           <span ng-show="role['sc'] !== null">{{ role["sc"]["signoffs_required"] }} member(s) of {{ role.$key }} (currently: {{ role["signoffs_required"] }})</span>
           <span class="label label-info" ng-show="role['sc'] !== null && role['sc']['change_type'] !== 'delete'">Pending</span>
           <span class="label label-danger" ng-show="role['sc'] !== null && role['sc']['change_type'] === 'delete'">Pending Delete</span>
-          <div style="float: right" ng-show="role['sc'] !== null">
+          <div style="float: right" ng-show="auth0.isAuthenticated() && role['sc'] !== null">
             <button class="btn btn-xs btn-primary" ng-click="signoff('permission', role['sc'], role.$key)"
                     ng-show="! role['sc']['signoffs'].hasOwnProperty(current_user)">
               Signoff as...
@@ -77,14 +79,16 @@
         <span ng-show="state === 'current'">
           To change Rules or Releases on the {{ selected_product }} {{ channel }} channel, you must have signoff from...
         </span>
-        <button class="btn btn-xs btn-warning"
-                ng-click="editRequiredSignoffs('channel', channel)">
-          Edit
-        </button>
-        <button class="btn btn-xs btn-danger"
-                ng-click="deleteRequiredSignoffs(required_signoffs, 'channel', channel)">
-          Delete
-        </button>
+        <span ng-show="auth0.isAuthenticated()">
+          <button class="btn btn-xs btn-warning"
+                  ng-click="editRequiredSignoffs('channel', channel)">
+            Edit
+          </button>
+          <button class="btn btn-xs btn-danger"
+                  ng-click="deleteRequiredSignoffs(required_signoffs, 'channel', channel)">
+            Delete
+          </button>
+        </span>
       </span>
     </h3>
   </div>
@@ -97,12 +101,12 @@
           <span ng-show="role['sc'] !== null">{{ role["sc"]["signoffs_required"] }} member(s) of {{ role.$key }} (currently: {{ role["signoffs_required"] }})</span>
           <span class="label label-info" ng-show="role['sc'] !== null && role['sc']['change_type'] !== 'delete'">Pending</span>
           <span class="label label-danger" ng-show="role['sc'] !== null && role['sc']['change_type'] === 'delete'">Pending Delete</span>
-          <button class="btn btn-xs btn-primary" ng-show="role['sc'] !== null && role['sc']['change_type'] === 'delete'"
+          <button class="btn btn-xs btn-primary" ng-show="auth0.isAuthenticated() && role['sc'] !== null && role['sc']['change_type'] === 'delete'"
                   ng-click="undoRemoveRole(role.$key, required_signoffs)">
             Cancel delete
           </button>
 
-          <div style="float: right" ng-show="role['sc'] !== null">
+          <div style="float: right" ng-show="auth0.isAuthenticated() && role['sc'] !== null">
             <button class="btn btn-xs btn-primary" ng-click="signoff('channel', role['sc'], role.$key, channel)"
                     ng-show="! role['sc']['signoffs'].hasOwnProperty(current_user)">
               Signoff as...

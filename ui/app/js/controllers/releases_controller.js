@@ -1,5 +1,5 @@
 angular.module("app").controller('ReleasesController',
-function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Page, Helpers) {
+function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Page, Helpers, Auth0) {
 
   Page.setTitle('Releases');
 
@@ -11,6 +11,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
   $scope.page_size = {id: $scope.pageSize, name: $scope.storedPageSize? $scope.storedPageSize.name : $scope.pageSize};
   $scope.currentPage = 1;
   $scope.maxSize = 10;
+  $scope.auth0 = Auth0;
 
   function loadPage(newPage) {
     Releases.getHistory($scope.release_name, $scope.pageSize, newPage)

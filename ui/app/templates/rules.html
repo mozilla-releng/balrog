@@ -10,18 +10,18 @@
   </span>
 
   <button class="btn btn-primary btn-xs"
-          ng-show="!rule_id" ng-click="openNewRuleModal()">
+          ng-show="!rule_id && auth.isAuthenticated()" ng-click="openNewRuleModal()">
     Add a new Rule
     <i class="glyphicon glyphicon-plus"></i>
   </button>
 
   <button class="btn btn-info btn-xs"
-          ng-show="!rule_id" ng-click="openNewScheduledRuleModal()">
+          ng-show="!rule_id && auth.isAuthenticated()" ng-click="openNewScheduledRuleModal()">
     Schedule a new Rule
     <i class="glyphicon glyphicon-plus"></i>
   </button>
   <button class="btn btn-danger btn-sm" style="float: right"
-          ng-show="!current_emergency_shutoff && pr_ch_selected && pr_ch_selected.length > 1"
+          ng-show="auth0.isAuthenticated() && !current_emergency_shutoff && pr_ch_selected && pr_ch_selected.length > 1"
           ng-click="openDisableUpdatesModal()">
     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
         &nbsp;<b>Disable updates on the {{pr_ch_selected[0]}} {{pr_ch_selected[1]}} channel</b>&nbsp;
@@ -96,7 +96,7 @@
     <hr ng-show="current_emergency_shutoff.sc && !isEmpty(current_emergency_shutoff.sc.required_signoffs)" />
 
     <div class="row">
-      <div class="col-sm-12">
+      <div ng-show="auth0.isAuthenticated()" class="col-sm-12">
         <button class="btn btn-md btn-danger"
                 ng-show="current_emergency_shutoff.sc && !isEmpty(current_emergency_shutoff.sc.required_signoffs) && current_emergency_shutoff.sc.signoffs.hasOwnProperty(current_user)"
                 ng-click="openEnableUpdateRevokeSignoffModal()">
@@ -133,49 +133,51 @@
       </div>
 
       <div style="float: right" ng-if="!rule_id">
-        <button class="btn btn-xs btn-primary" ng-click="signoff(rule.scheduled_change)"
-                ng-show="show_sc && rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs) && ! rule.scheduled_change.signoffs.hasOwnProperty(current_user)">
-            Signoff as...
-        </button>
-        <button class="btn btn-xs btn-danger" ng-click="revokeSignoff(rule.scheduled_change)"
-                ng-show="show_sc && rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs) && rule.scheduled_change.signoffs.hasOwnProperty(current_user)">
-            Revoke your Signoff
-        </button>
-        <button ng-show="show_sc && rule.scheduled_change.change_type === 'insert'" class="btn btn-info btn-xs"
-                ng-click="openEditScheduledRuleChangeModal(rule)">
-            Modify Pending Rule
-        </button>
-        <button class="btn btn-info btn-xs"
-                ng-click="openNewScheduledDuplicateModal(rule)">
-            Schedule Duplication
-        </button>
-        <button ng-show="show_sc && rule.scheduled_change.change_type === 'update'" class="btn btn-warning btn-xs"
-                ng-click="openEditScheduledRuleChangeModal(rule)">
-            Modify Pending Update
-        </button>
-        <button ng-show="show_sc && rule.scheduled_change.change_type === 'delete'" class="btn btn-danger btn-xs"
-                ng-click="openEditScheduledRuleChangeModal(rule)">
-            Modify Pending Delete
-        </button>
-        <button ng-show="rule.scheduled_change === null" class="btn btn-warning btn-xs"
-                ng-click="openNewScheduledRuleChangeModal(rule)">
-            Schedule an Update
-        </button>
-        <button ng-show="rule.scheduled_change === null" class="btn btn-danger btn-xs"
-                ng-click="openNewScheduledDeleteModal(rule)">
-            Schedule for Deletion
-        </button>
-        <button ng-show="ruleSignoffsRequired(rule).length === 0 && (rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert')"
-                class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">
-            Update
-        </button>
-        <button ng-show="ruleSignoffsRequired(rule).length === 0 && rule.scheduled_change === null" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">
-            Delete
-        </button>
-        <button ng-show="rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert'"
-                class="btn btn-default btn-xs" ng-click="openDuplicateModal(rule)">
-            Duplicate
-        </button>
+        <span ng-show="auth0.isAuthenticated()">
+          <button class="btn btn-xs btn-primary" ng-click="signoff(rule.scheduled_change)"
+                  ng-show="show_sc && rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs) && ! rule.scheduled_change.signoffs.hasOwnProperty(current_user)">
+              Signoff as...
+          </button>
+          <button class="btn btn-xs btn-danger" ng-click="revokeSignoff(rule.scheduled_change)"
+                  ng-show="show_sc && rule.scheduled_change !== null && ! isEmpty(rule.scheduled_change.required_signoffs) && rule.scheduled_change.signoffs.hasOwnProperty(current_user)">
+              Revoke your Signoff
+          </button>
+          <button ng-show="show_sc && rule.scheduled_change.change_type === 'insert'" class="btn btn-info btn-xs"
+                  ng-click="openEditScheduledRuleChangeModal(rule)">
+              Modify Pending Rule
+          </button>
+          <button class="btn btn-info btn-xs"
+                  ng-click="openNewScheduledDuplicateModal(rule)">
+              Schedule Duplication
+          </button>
+          <button ng-show="show_sc && rule.scheduled_change.change_type === 'update'" class="btn btn-warning btn-xs"
+                  ng-click="openEditScheduledRuleChangeModal(rule)">
+              Modify Pending Update
+          </button>
+          <button ng-show="show_sc && rule.scheduled_change.change_type === 'delete'" class="btn btn-danger btn-xs"
+                  ng-click="openEditScheduledRuleChangeModal(rule)">
+              Modify Pending Delete
+          </button>
+          <button ng-show="rule.scheduled_change === null" class="btn btn-warning btn-xs"
+                  ng-click="openNewScheduledRuleChangeModal(rule)">
+              Schedule an Update
+          </button>
+          <button ng-show="rule.scheduled_change === null" class="btn btn-danger btn-xs"
+                  ng-click="openNewScheduledDeleteModal(rule)">
+              Schedule for Deletion
+          </button>
+          <button ng-show="ruleSignoffsRequired(rule).length === 0 && (rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert')"
+                  class="btn btn-default btn-xs" ng-click="openUpdateModal(rule)">
+              Update
+          </button>
+          <button ng-show="ruleSignoffsRequired(rule).length === 0 && rule.scheduled_change === null" class="btn btn-default btn-xs" ng-click="openDeleteModal(rule)">
+              Delete
+          </button>
+          <button ng-show="rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert'"
+                  class="btn btn-default btn-xs" ng-click="openDuplicateModal(rule)">
+              Duplicate
+          </button>
+        </span>
         <a ng-show="rule.scheduled_change === null || rule.scheduled_change.change_type !== 'insert'"
            class="btn btn-default btn-xs" ng-href="/rules/{{ rule.rule_id }}">
             History

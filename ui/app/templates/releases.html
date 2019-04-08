@@ -31,7 +31,7 @@
   </span>
 
   <button class="btn btn-primary btn-xs"
-          ng-show="!release_name" ng-click="openNewReleaseModal()">
+          ng-show="auth0.isAuthenticated() && !release_name" ng-click="openNewReleaseModal()">
     Add a new Release
     <i class="glyphicon glyphicon-plus"></i>
   </button>
@@ -75,16 +75,24 @@
     <h3 class="panel-title">
       <div style="float:right">
         <i ng-if="release_name && $first && (currentPage == 1)">Current</i>
-        <button ng-if="release_name && ((currentPage != 1) || !$first )" class="btn btn-default btn-xs" ng-click="openRevertModal(release)">Revert to this</button>
-        <button ng-show="!release_name" class="btn btn-warning btn-xs" ng-click="openNewScheduledReleaseChangeModal(release)">Schedule an Update</button>
-        <button ng-show="!release_name" class="btn btn-danger btn-xs" ng-click="openNewScheduledDeleteModal(release)">Schedule for Deletion</button>
-        <button class="btn btn-default btn-xs" ng-click="openDataModal(release)">View Data</button>
-        <a ng-show="!release_name" class="btn btn-default btn-xs" download="{{ release.name | uriencode }}.json" target="_self" ng-href="/api/releases/{{ release.name | uriencode }}?pretty=1">Download</a>
-        <button ng-show="!release_name && !release.required_signoffs.length" class="btn btn-default btn-xs" ng-click="openUpdateModal(release)">Update</button>
-        <button ng-show="!release_name && !release.required_signoffs.length" class="btn btn-default btn-xs" ng-click="openDeleteModal(release)">Delete</button>
+        <span ng-show="auth0.isAuthenticated()">
+          <button ng-if="release_name && ((currentPage != 1) || !$first )" class="btn btn-default btn-xs" ng-click="openRevertModal(release)">Revert to this</button>
+          <button ng-show="!release_name" class="btn btn-warning btn-xs" ng-click="openNewScheduledReleaseChangeModal(release)">Schedule an Update</button>
+          <button ng-show="!release_name" class="btn btn-danger btn-xs" ng-click="openNewScheduledDeleteModal(release)">Schedule for Deletion</button>
+          <button class="btn btn-default btn-xs" ng-click="openDataModal(release)">View Data</button>
+          <a ng-show="!release_name" class="btn btn-default btn-xs" download="{{ release.name | uriencode }}.json" target="_self" ng-href="/api/releases/{{ release.name | uriencode }}?pretty=1">Download</a>
+          <button ng-show="!release_name && !release.required_signoffs.length" class="btn btn-default btn-xs" ng-click="openUpdateModal(release)">Update</button>
+          <button ng-show="!release_name && !release.required_signoffs.length" class="btn btn-default btn-xs" ng-click="openDeleteModal(release)">Delete</button>
+        </span>
         <a ng-show="!release_name" class="btn btn-default btn-xs" ng-href="/releases/{{ release.name }}">History</a>
-        <button ng-show="!release_name && !release.read_only" class="btn btn-xs btn-success" ng-click="openReadOnlyModal(release)">Modifiable</button>
-        <button ng-show="!release_name && release.read_only" class="btn btn-xs btn-danger" ng-click="openReadOnlyModal(release)">Read Only</button>
+        <span ng-show="auth0.isAuthenticated()">
+          <button ng-show="!release_name && !release.read_only" class="btn btn-xs btn-success" ng-click="openReadOnlyModal(release)">Modifiable</button>
+          <button ng-show="!release_name && release.read_only" class="btn btn-xs btn-danger" ng-click="openReadOnlyModal(release)">Read Only</button>
+        </span>
+        <span ng-show="!auth0.isAuthenticated()">
+          <button ng-show="!release_name && !release.read_only" class="btn btn-xs btn-success" disabled>Modifiable</button>
+          <button ng-show="!release_name && release.read_only" class="btn btn-xs btn-danger" disabled>Read Only</button>
+        </span>
 
       </div>
       <span ng-bind-html="highlightSearch(release.name, 'name')"></span>

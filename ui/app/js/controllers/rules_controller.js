@@ -1,5 +1,5 @@
 angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers, EmergencyShutoffs, CSRF) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers, EmergencyShutoffs, CSRF, Auth0) {
 
   Page.setTitle('Rules');
 
@@ -19,6 +19,7 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.emergency_shutoffs = [];
   $scope.current_emergency_shutoff = null;
   $scope.current_user = localStorage.getItem("username");
+  $scope.auth0 = Auth0;
 
   function changeLocationWithFilterParams(filterParamsString) {
     localStorage.setItem("pr_ch_filter", filterParamsString);
