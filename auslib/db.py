@@ -14,10 +14,6 @@ from six import integer_types, iteritems, reraise, string_types, text_type
 from sqlalchemy import BigInteger, Boolean, Column, Integer, MetaData, String, Table, Text, create_engine, func, join, select
 from sqlalchemy.exc import SQLAlchemyError
 
-# A helper that sets sql_mode. This should only be used with MySQL, and
-# lets us put the database in a stricter mode that will disallow things like
-# automatic data truncation.
-# From http://www.enricozini.org/2012/tips/sa-sqlmode-traditional/
 from sqlalchemy.interfaces import PoolListener
 from sqlalchemy.sql.expression import null
 
@@ -2580,6 +2576,10 @@ def make_change_notifier_for_read_only(relayhost, port, username, password, to_a
     return bleet
 
 
+# A helper that sets sql_mode. This should only be used with MySQL, and
+# lets us put the database in a stricter mode that will disallow things like
+# automatic data truncation.
+# From http://www.enricozini.org/2012/tips/sa-sqlmode-traditional/
 class SetSqlMode(PoolListener):
     def connect(self, dbapi_con, connection_record):
         cur = dbapi_con.cursor()
