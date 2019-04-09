@@ -9,12 +9,12 @@
 
 
 class DbWrapper(object):
-
     def __init__(self):
         self.db = None
 
     def setDb(self, dburi):
         from auslib.db import AUSDatabase
+
         self.db = AUSDatabase(dburi)
 
     def __getattr__(self, name):

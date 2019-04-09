@@ -4,16 +4,18 @@ from auslib.test.web.test_client import ClientTestBase
 
 
 class TestDockerflowEndpoints(ClientTestBase):
-
     def testVersion(self):
         ret = self.client.get("/__version__")
-        self.assertEqual(ret.get_data(as_text=True), """
+        self.assertEqual(
+            ret.get_data(as_text=True),
+            """
 {
   "source":"https://github.com/mozilla/balrog",
   "version":"1.0",
   "commit":"abcdef123456"
 }
-""")
+""",
+        )
 
     def testHeartbeat(self):
         with mock.patch("auslib.global_state.dbo.rules.count") as cr:

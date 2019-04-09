@@ -20,8 +20,11 @@ class GMPBlobV1(Blob):
                     actualLen = len(platform["hashValue"])
                     requiredLen = getHashLen(self["hashFunction"])
                     if actualLen != requiredLen:
-                        raise ValueError("The hashValue length is different from the required length of {} for {}."
-                                         .format(getHashLen(self["hashFunction"]), self["hashFunction"].lower()))
+                        raise ValueError(
+                            "The hashValue length is different from the required length of {} for {}.".format(
+                                getHashLen(self["hashFunction"]), self["hashFunction"].lower()
+                            )
+                        )
 
     def getVendorsForPlatform(self, platform):
         for v in self["vendors"]:
@@ -29,16 +32,16 @@ class GMPBlobV1(Blob):
                 yield v
 
     def getResolvedPlatform(self, vendor, platform):
-        if platform in self['vendors'][vendor]['platforms']:
-            return self['vendors'][vendor]['platforms'][platform].get('alias', platform)
-        if "default" in self['vendors'][vendor]['platforms']:
+        if platform in self["vendors"][vendor]["platforms"]:
+            return self["vendors"][vendor]["platforms"][platform].get("alias", platform)
+        if "default" in self["vendors"][vendor]["platforms"]:
             return "default"
         raise BadDataError("No platform '%s' or default in vendor '%s'", platform, vendor)
 
     def getPlatformData(self, vendor, platform):
         platform = self.getResolvedPlatform(vendor, platform)
         try:
-            return self['vendors'][vendor]['platforms'][platform]
+            return self["vendors"][vendor]["platforms"][platform]
         except KeyError:
             raise BadDataError("No platform '%s' in vendor '%s'", platform, vendor)
 
@@ -48,10 +51,10 @@ class GMPBlobV1(Blob):
         return True
 
     def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        return '    <addons>'
+        return "    <addons>"
 
     def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        return '    </addons>'
+        return "    </addons>"
 
     # Because specialForceHosts is only relevant to our own internal servers,
     # and these type of updates are always served externally, we don't process
@@ -67,18 +70,19 @@ class GMPBlobV1(Blob):
             url = platformData["fileUrl"]
             if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
                 continue
-            vendorXML.append('        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>' %
-                             (vendor, url, self["hashFunction"], platformData["hashValue"],
-                              platformData["filesize"], vendorInfo["version"]))
+            vendorXML.append(
+                '        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>'
+                % (vendor, url, self["hashFunction"], platformData["hashValue"], platformData["filesize"], vendorInfo["version"])
+            )
 
         return vendorXML
 
     def containsForbiddenDomain(self, product, whitelistedDomains):
         """Returns True if the blob contains any file URLs that contain a
            domain that we're not allowed to serve updates to."""
-        for vendor in self.get('vendors', {}).values():
-            for platform in vendor.get('platforms', {}).values():
-                if 'fileUrl' in platform:
+        for vendor in self.get("vendors", {}).values():
+            for platform in vendor.get("platforms", {}).values():
+                if "fileUrl" in platform:
                     if isForbiddenUrl(platform["fileUrl"], product, whitelistedDomains):
                         return True
         return False

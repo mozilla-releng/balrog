@@ -10,13 +10,16 @@ from sqlalchemy.sql.expression import null
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.db import OutdatedDataError, ReadOnlyError
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import (AdminView, requirelogin,
-                                         serialize_signoff_requirements)
+from auslib.web.admin.views.base import AdminView, requirelogin, serialize_signoff_requirements
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
-    EnactScheduledChangeView, ScheduledChangeHistoryView, ScheduledChangesView,
-    ScheduledChangeView, SignoffsView)
+    EnactScheduledChangeView,
+    ScheduledChangeHistoryView,
+    ScheduledChangesView,
+    ScheduledChangeView,
+    SignoffsView,
+)
 from auslib.web.common.releases import release_list, serialize_releases
 
 __all__ = ["SingleReleaseView", "SingleLocaleView"]
@@ -24,8 +27,7 @@ __all__ = ["SingleReleaseView", "SingleLocaleView"]
 
 def createRelease(release, product, changed_by, transaction, releaseData):
     blob = createBlob(releaseData)
-    dbo.releases.insert(changed_by=changed_by, transaction=transaction, name=release,
-                        product=product, data=blob)
+    dbo.releases.insert(changed_by=changed_by, transaction=transaction, name=release, product=product, data=blob)
     return dbo.releases.getReleases(name=release, transaction=transaction)[0]
 
 
@@ -123,27 +125,25 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                     log.warning("Bad input: %s", rel)
                     return problem(400, "Bad Request", msg)
                 # If the product we're given doesn't match the one in the DB, panic.
-                if product != releaseInfo['product']:
-                    msg = "Product name '%s' doesn't match the one on the release object ('%s') for release '%s'" % \
-                          (product, releaseInfo['product'], rel)
+                if product != releaseInfo["product"]:
+                    msg = "Product name '%s' doesn't match the one on the release object ('%s') for release '%s'" % (product, releaseInfo["product"], rel)
                     log.warning("Bad input: %s", rel)
                     return problem(400, "Bad Request", msg)
-                if 'hashFunction' in releaseInfo['data'] and hashFunction and \
-                        hashFunction != releaseInfo['data']['hashFunction']:
-                    msg = "hashFunction '{0}' doesn't match the one on the release " \
-                          "object ('{1}') for release '{2}'".format(hashFunction, releaseInfo["data"]["hashFunction"],
-                                                                    rel)
+                if "hashFunction" in releaseInfo["data"] and hashFunction and hashFunction != releaseInfo["data"]["hashFunction"]:
+                    msg = "hashFunction '{0}' doesn't match the one on the release " "object ('{1}') for release '{2}'".format(
+                        hashFunction, releaseInfo["data"]["hashFunction"], rel
+                    )
                     log.warning("Bad input: %s", rel)
                     return problem(400, "Bad Request", msg)
             # If this isn't the release in the URL...
             else:
                 # Use the data_version we just grabbed from the dbo.
-                old_data_version = releaseInfo['data_version']
+                old_data_version = releaseInfo["data_version"]
         except IndexError:
             # If the release doesn't already exist, create it, and set old_data_version appropriately.
             newReleaseData = dict(name=rel, schema_version=schema_version)
             if hashFunction:
-                newReleaseData['hashFunction'] = hashFunction
+                newReleaseData["hashFunction"] = hashFunction
             try:
                 releaseInfo = createRelease(rel, product, changed_by, transaction, newReleaseData)
             except BlobValidationError as e:
@@ -158,9 +158,9 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
 
         extraArgs = {}
         if alias:
-            extraArgs['alias'] = alias
+            extraArgs["alias"] = alias
         try:
-            commitCallback(rel, product, incomingData, releaseInfo['data'], old_data_version, extraArgs)
+            commitCallback(rel, product, incomingData, releaseInfo["data"], old_data_version, extraArgs)
         except BlobValidationError as e:
             msg = "Couldn't update release: %s" % e
             log.warning("Bad input: %s", rel)
@@ -174,7 +174,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
             log.warning("Bad input: %s", rel)
             return problem(400, "Bad Request", msg, ext={"data": e.args})
 
-    new_data_version = dbo.releases.getReleases(name=release, transaction=transaction)[0]['data_version']
+    new_data_version = dbo.releases.getReleases(name=release, transaction=transaction)[0]["data_version"]
     if new:
         status = 201
     else:
@@ -194,17 +194,24 @@ class SingleLocaleView(AdminView):
            what to set the status code to, and what data_version applies to.
            In an ideal world we would probably require a data_version for the
            releases named in copyTo as well."""
+
         def exists(rel, product):
             if rel == release:
-                return dbo.releases.localeExists(name=rel, platform=platform,
-                                                 locale=locale, transaction=transaction)
+                return dbo.releases.localeExists(name=rel, platform=platform, locale=locale, transaction=transaction)
             return False
 
         def commit(rel, product, localeData, releaseData, old_data_version, extraArgs):
-            return dbo.releases.addLocaleToRelease(name=rel, product=product, platform=platform,
-                                                   locale=locale, data=localeData, alias=extraArgs.get('alias'),
-                                                   old_data_version=old_data_version,
-                                                   changed_by=changed_by, transaction=transaction)
+            return dbo.releases.addLocaleToRelease(
+                name=rel,
+                product=product,
+                platform=platform,
+                locale=locale,
+                data=localeData,
+                alias=extraArgs.get("alias"),
+                old_data_version=old_data_version,
+                changed_by=changed_by,
+                transaction=transaction,
+            )
 
         return changeRelease(release, changed_by, transaction, exists, commit, self.log)
 
@@ -217,10 +224,13 @@ class SingleReleaseView(AdminView):
                 return problem(400, "Bad Request", "data_version field is missing")
             try:
                 blob = createBlob(connexion.request.get_json().get("blob"))
-                dbo.releases.update(where={"name": release},
-                                    what={"data": blob, "product": connexion.request.get_json().get("product")},
-                                    changed_by=changed_by, old_data_version=connexion.request.get_json().get("data_version"),
-                                    transaction=transaction)
+                dbo.releases.update(
+                    where={"name": release},
+                    what={"data": blob, "product": connexion.request.get_json().get("product")},
+                    changed_by=changed_by,
+                    old_data_version=connexion.request.get_json().get("data_version"),
+                    transaction=transaction,
+                )
             except BlobValidationError as e:
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
@@ -228,21 +238,21 @@ class SingleReleaseView(AdminView):
             except ReadOnlyError as e:
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
-                return problem(403, "Forbidden", "Couldn't update release. Release is marked read only",
-                               ext={"data": e.args})
+                return problem(403, "Forbidden", "Couldn't update release. Release is marked read only", ext={"data": e.args})
             except ValueError as e:
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
                 return problem(400, "Bad Request", "Couldn't update release", ext={"data": e.args})
             # the data_version might jump by more than 1 if outdated blobs are
             # merged
-            data_version = dbo.releases.getReleases(name=release, transaction=transaction)[0]['data_version']
+            data_version = dbo.releases.getReleases(name=release, transaction=transaction)[0]["data_version"]
             return jsonify(new_data_version=data_version)
         else:
             try:
                 blob = createBlob(connexion.request.get_json().get("blob"))
-                dbo.releases.insert(changed_by=changed_by, transaction=transaction, name=release,
-                                    product=connexion.request.get_json().get("product"), data=blob)
+                dbo.releases.insert(
+                    changed_by=changed_by, transaction=transaction, name=release, product=connexion.request.get_json().get("product"), data=blob
+                )
             except BlobValidationError as e:
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
@@ -263,9 +273,9 @@ class SingleReleaseView(AdminView):
         def commit(rel, product, newReleaseData, releaseData, old_data_version, extraArgs):
             releaseData.update(newReleaseData)
             blob = createBlob(releaseData)
-            return dbo.releases.update(where={"name": rel}, what={"data": blob, "product": product},
-                                       changed_by=changed_by, old_data_version=old_data_version,
-                                       transaction=transaction)
+            return dbo.releases.update(
+                where={"name": rel}, what={"data": blob, "product": product}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction
+            )
 
         return changeRelease(release, changed_by, transaction, exists, commit, self.log)
 
@@ -280,14 +290,11 @@ class SingleReleaseView(AdminView):
         # All input value validations already defined in swagger specification and carried out by connexion.
         try:
             old_data_version = int(connexion.request.args.get("data_version"))
-            dbo.releases.delete(where={"name": release["name"]}, changed_by=changed_by,
-                                old_data_version=old_data_version,
-                                transaction=transaction)
+            dbo.releases.delete(where={"name": release["name"]}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
         except ReadOnlyError as e:
             msg = "Couldn't delete release: %s" % e
             self.log.warning("Bad input: %s", msg)
-            return problem(403, "Forbidden", "Couldn't delete %s. Release is marked read only" % release["name"],
-                           ext={"data": e.args})
+            return problem(403, "Forbidden", "Couldn't delete %s. Release is marked read only" % release["name"], ext={"data": e.args})
 
         return Response(status=200)
 
@@ -314,12 +321,14 @@ class ReleaseReadOnlyView(AdminView):
 
         if connexion.request.get_json().get("read_only"):
             if not is_release_read_only:
-                dbo.releases.update(where={"name": release}, what={"read_only": True}, changed_by=changed_by,
-                                    old_data_version=data_version, transaction=transaction)
+                dbo.releases.update(
+                    where={"name": release}, what={"read_only": True}, changed_by=changed_by, old_data_version=data_version, transaction=transaction
+                )
                 data_version += 1
         else:
-            dbo.releases.update(where={"name": release}, what={"read_only": False}, changed_by=changed_by,
-                                old_data_version=data_version, transaction=transaction)
+            dbo.releases.update(
+                where={"name": release}, what={"read_only": False}, changed_by=changed_by, old_data_version=data_version, transaction=transaction
+            )
             data_version += 1
         return Response(status=201, response=json.dumps(dict(new_data_version=data_version)))
 
@@ -331,9 +340,7 @@ class ReleaseHistoryView(HistoryView):
         super(ReleaseHistoryView, self).__init__(dbo.releases)
 
     def _get_what(self, change):
-        return dict(
-            data=createBlob(change['data']),
-            product=change["product"])
+        return dict(data=createBlob(change["data"]), product=change["product"])
 
     def _get_release(self, release):
         releases = self.table.getReleases(name=release, limit=1)
@@ -344,12 +351,13 @@ class ReleaseHistoryView(HistoryView):
         try:
             return self.revert_to_revision(
                 get_object_callback=lambda: self._get_release(release),
-                change_field='name',
+                change_field="name",
                 get_what_callback=self._get_what,
                 changed_by=changed_by,
-                response_message='Excellent!',
+                response_message="Excellent!",
                 transaction=transaction,
-                obj_not_found_msg='bad release')
+                obj_not_found_msg="bad release",
+            )
         except BlobValidationError as e:
             self.log.warning("Bad input: %s", e.args)
             return problem(400, "Bad Request", "Invalid input blob: %s" % e.args, ext={"data": e.errors})
@@ -363,24 +371,30 @@ class ReleasesAPIView(AdminView):
 
     def get(self, **kwargs):
         releases = release_list(connexion.request)
-        if not connexion.request.args.get('names_only'):
+        if not connexion.request.args.get("names_only"):
             requirements = dbo.releases.getPotentialRequiredSignoffs(releases)
             for release in releases:
-                release['required_signoffs'] = serialize_signoff_requirements(requirements[release['name']])
+                release["required_signoffs"] = serialize_signoff_requirements(requirements[release["name"]])
         return serialize_releases(connexion.request, releases)
 
     @requirelogin
     def _post(self, changed_by, transaction):
-        if dbo.releases.getReleaseInfo(names=[connexion.request.get_json().get("name")], transaction=transaction, nameOnly=True,
-                                       limit=1):
-            return problem(400, "Bad Request", "Release: %s already exists" % connexion.request.get_json().get("name"),
-                           ext={"data": "Database already contains the release"})
+        if dbo.releases.getReleaseInfo(names=[connexion.request.get_json().get("name")], transaction=transaction, nameOnly=True, limit=1):
+            return problem(
+                400,
+                "Bad Request",
+                "Release: %s already exists" % connexion.request.get_json().get("name"),
+                ext={"data": "Database already contains the release"},
+            )
         try:
             blob = createBlob(connexion.request.get_json().get("blob"))
-            name = dbo.releases.insert(changed_by=changed_by, transaction=transaction,
-                                       name=connexion.request.get_json().get("name"),
-                                       product=connexion.request.get_json().get("product"),
-                                       data=blob)
+            name = dbo.releases.insert(
+                changed_by=changed_by,
+                transaction=transaction,
+                name=connexion.request.get_json().get("name"),
+                product=connexion.request.get_json().get("product"),
+                data=blob,
+            )
         except BlobValidationError as e:
             msg = "Couldn't create release: %s" % e
             self.log.warning("Bad input: %s", msg)
@@ -408,10 +422,7 @@ class SingleReleaseColumnView(AdminView):
                 if key == column and value is not None:
                     column_values.append(value)
         column_values = list(set(column_values))
-        ret = {
-            "count": len(column_values),
-            column: column_values,
-        }
+        ret = {"count": len(column_values), column: column_values}
         return jsonify(ret)
 
 
@@ -424,8 +435,7 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
     @requirelogin
     def _post(self, transaction, changed_by):
         if connexion.request.get_json().get("when", None) is None:
-            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change "
-                                               "for a Release")
+            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Release")
         change_type = connexion.request.get_json().get("change_type")
 
         what = {}
@@ -470,8 +480,7 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
         if sc_release:
             change_type = sc_release[0]["change_type"]
         else:
-            return problem(404, "Not Found", "Unknown sc_id",
-                           ext={"exception": "No scheduled change for release found for given sc_id"})
+            return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for release found for given sc_id"})
 
         what = {}
         for field in connexion.request.get_json():
@@ -480,9 +489,11 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
             # cannot be changed because it almost never makes sense to (and can be done
             # by deleting/recreating instead).
             # Any Release field may be changed when editing an Scheduled Change for a new Release
-            if ((change_type == "delete" and field not in ["when", "data_version"]) or
-                    (change_type == "update" and field not in ["when", "data", "data_version"]) or
-                    (change_type == "insert" and field not in ["when", "name", "product", "data"])):
+            if (
+                (change_type == "delete" and field not in ["when", "data_version"])
+                or (change_type == "update" and field not in ["when", "data", "data_version"])
+                or (change_type == "insert" and field not in ["when", "name", "product", "data"])
+            ):
                 continue
 
             what[field] = connexion.request.get_json()[field]
@@ -490,15 +501,13 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
         if change_type in ["update", "delete"] and not what.get("data_version", None):
             return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
-        elif change_type == "insert" and 'data' in what and not what.get("data", None):
+        elif change_type == "insert" and "data" in what and not what.get("data", None):
             # edit scheduled change for new release
-            return problem(400, "Bad Request", "Null/Empty Value",
-                           ext={"exception": "data cannot be set to null when scheduling insertion of a new release"})
+            return problem(400, "Bad Request", "Null/Empty Value", ext={"exception": "data cannot be set to null when scheduling insertion of a new release"})
         if what.get("data", None):
             what["data"] = createBlob(what.get("data"))
 
-        return super(ReleaseScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
-                                                             connexion.request.get_json().get("sc_data_version", None))
+        return super(ReleaseScheduledChangeView, self)._post(sc_id, what, transaction, changed_by, connexion.request.get_json().get("sc_data_version", None))
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
@@ -536,15 +545,16 @@ class ReleaseScheduledChangeHistoryView(ScheduledChangeHistoryView):
 
 class ReleaseFieldView(AdminView):
     """/diff/:id/:field"""
+
     def __init__(self):
         self.table = dbo.releases
 
     def get_value(self, change_id, field):
         revision = self.table.history.getChange(change_id=change_id)
         if not revision:
-            abort(400, 'Bad change_id')
+            abort(400, "Bad change_id")
         if field not in revision:
-            raise KeyError('Bad field')
+            raise KeyError("Bad field")
         return revision[field]
 
     def format_value(self, value):
@@ -554,11 +564,11 @@ class ReleaseFieldView(AdminView):
             except ValueError:
                 pass
         elif value is None:
-            value = 'NULL'
+            value = "NULL"
         elif isinstance(value, integer_types):
             value = str(value)
         else:
-            value = text_type(value, 'utf8') if six.PY2 else str(value)
+            value = text_type(value, "utf8") if six.PY2 else str(value)
         return value
 
     def get(self, change_id, field):
@@ -570,7 +580,7 @@ class ReleaseFieldView(AdminView):
         except ValueError as msg:
             return problem(404, "Not Found", str(msg))
         value = self.format_value(value)
-        return Response(value, content_type='text/plain')
+        return Response(value, content_type="text/plain")
 
 
 class ReleaseDiffView(ReleaseFieldView):
@@ -578,19 +588,13 @@ class ReleaseDiffView(ReleaseFieldView):
 
     def get_prev_id(self, value, change_id):
         if value:
-            release_name = value['name']
+            release_name = value["name"]
             table = self.table.history
             old_revision = table.select(
-                where=[
-                    table.name == release_name,
-                    table.change_id < change_id,
-                    table.data_version != null()
-                ],
-                limit=1,
-                order_by=[table.timestamp.desc()],
+                where=[table.name == release_name, table.change_id < change_id, table.data_version != null()], limit=1, order_by=[table.timestamp.desc()]
             )
             if len(old_revision) > 0:
-                return old_revision[0]['change_id']
+                return old_revision[0]["change_id"]
 
     def get(self, change_id, field):
         try:
@@ -618,25 +622,24 @@ class ReleaseDiffView(ReleaseFieldView):
             value.splitlines(),
             fromfile="Data Version {}".format(prev_data_version),
             tofile="Data Version {}".format(data_version),
-            lineterm=""
+            lineterm="",
         )
 
-        return Response('\n'.join(result), content_type='text/plain')
+        return Response("\n".join(result), content_type="text/plain")
 
 
 class ScheduledReleaseFieldView(AdminView):
-
     def __init__(self):
         self.table = dbo.releases.scheduled_changes
 
     def get_value(self, sc_id, field=None):
         data = self.table.select(where={"sc_id": sc_id}, transaction=None)[0]
         if not data:
-            abort(400, 'Bad sc_id')
+            abort(400, "Bad sc_id")
         if not field:
             return data
         if field not in data:
-            raise KeyError('Bad field')
+            raise KeyError("Bad field")
         return data[field]
 
 
@@ -646,24 +649,24 @@ class ScheduledReleaseDiffView(ScheduledReleaseFieldView):
     def get_release(self, sc):
         data = dbo.releases.select(where={"name": sc["base_name"], "product": sc["base_product"]}, limit=1)[0]
         if not data:
-            abort(400, 'Bad sc_id')
+            abort(400, "Bad sc_id")
         return data
 
     def get(self, sc_id):
         sc = self.get_value(sc_id)
         release = self.get_release(sc)
 
-        if 'data' not in release:
+        if "data" not in release:
             return problem(400, "Bad Request", "Bad field")
 
-        previous = json.dumps(release['data'], indent=2, sort_keys=True)
-        value = json.dumps(sc["base_{}".format('data')], indent=2, sort_keys=True)
+        previous = json.dumps(release["data"], indent=2, sort_keys=True)
+        value = json.dumps(sc["base_{}".format("data")], indent=2, sort_keys=True)
         result = difflib.unified_diff(
             previous.splitlines(),
             value.splitlines(),
             fromfile="Current Version (Data Version {})".format(release["data_version"]),
             tofile="Scheduled Update (sc_id {})".format(sc["sc_id"]),
-            lineterm=""
+            lineterm="",
         )
 
-        return Response('\n'.join(result), content_type='text/plain')
+        return Response("\n".join(result), content_type="text/plain")

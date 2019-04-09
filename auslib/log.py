@@ -11,15 +11,14 @@ log_format = "%(asctime)s - %(levelname)s - PID: %(process)s - Request: %(reques
 
 
 class BalrogLogger(logging.Logger):
-
     def makeRecord(self, name, level, fn, lno, msg, args, exc_info, func=None, extra=None, sinfo=None):
         if extra is None:
             extra = {}
-        if 'requestid' not in extra:
+        if "requestid" not in extra:
             # Not all logging will be done from within a request
             # (eg, initial logging at start up). We need to be able to cope
             # with that.
-            requestid = 'None'
+            requestid = "None"
             try:
                 # "request" is a proxy object that passes along operations
                 # to the real object. _get_current_object gives us the true
@@ -34,7 +33,7 @@ class BalrogLogger(logging.Logger):
             # RuntimeError will be raised if there's no active request.
             except RuntimeError:
                 pass
-            extra['requestid'] = requestid
+            extra["requestid"] = requestid
         if six.PY2:  # pragma: no cover
             return logging.Logger.makeRecord(self, name, level, fn, lno, msg, args, exc_info, func, extra)
         return logging.Logger.makeRecord(self, name, level, fn, lno, msg, args, exc_info, func, extra, sinfo)  # pragma: no cover
@@ -53,28 +52,43 @@ class JsonLogFormatter(logging.Formatter):
     Adapted from:
     https://github.com/mozilla-services/mozservices/blob/master/mozsvc/util.py#L106
     """
+
     LOGGING_FORMAT_VERSION = "2.0"
 
     # Map from Python logging to Syslog severity levels
-    SYSLOG_LEVEL_MAP = {
-        50: 2,  # CRITICAL
-        40: 3,  # ERROR
-        30: 4,  # WARNING
-        20: 6,  # INFO
-        10: 7,  # DEBUG
-    }
+    SYSLOG_LEVEL_MAP = {50: 2, 40: 3, 30: 4, 20: 6, 10: 7}  # CRITICAL  # ERROR  # WARNING  # INFO  # DEBUG
 
     # Syslog level to use when/if python level isn't found in map
     DEFAULT_SYSLOG_LEVEL = 7
 
-    EXCLUDED_LOGRECORD_ATTRS = set((
-        'args', 'asctime', 'created', 'exc_info', 'exc_text', 'filename',
-        'funcName', 'levelname', 'levelno', 'lineno', 'module', 'msecs',
-        'message', 'msg', 'name', 'pathname', 'process', 'processName',
-        'relativeCreated', 'stack_info', 'thread', 'threadName'
-    ))
+    EXCLUDED_LOGRECORD_ATTRS = set(
+        (
+            "args",
+            "asctime",
+            "created",
+            "exc_info",
+            "exc_text",
+            "filename",
+            "funcName",
+            "levelname",
+            "levelno",
+            "lineno",
+            "module",
+            "msecs",
+            "message",
+            "msg",
+            "name",
+            "pathname",
+            "process",
+            "processName",
+            "relativeCreated",
+            "stack_info",
+            "thread",
+            "threadName",
+        )
+    )
 
-    def __init__(self, fmt=None, datefmt=None, logger_name='Balrog'):
+    def __init__(self, fmt=None, datefmt=None, logger_name="Balrog"):
         self.logger_name = logger_name
         self.hostname = socket.gethostname()
         logging.Formatter.__init__(self, fmt, datefmt)
@@ -92,8 +106,7 @@ class JsonLogFormatter(logging.Formatter):
             Logger=self.logger_name,
             Hostname=self.hostname,
             EnvVersion=self.LOGGING_FORMAT_VERSION,
-            Severity=self.SYSLOG_LEVEL_MAP.get(record.levelno,
-                                               self.DEFAULT_SYSLOG_LEVEL),
+            Severity=self.SYSLOG_LEVEL_MAP.get(record.levelno, self.DEFAULT_SYSLOG_LEVEL),
             Pid=record.process,
         )
 
@@ -116,7 +129,7 @@ class JsonLogFormatter(logging.Formatter):
             fields["error"] = repr(record.exc_info[1])
             fields["traceback"] = safer_format_traceback(*record.exc_info)
 
-        out['Fields'] = fields
+        out["Fields"] = fields
 
         return json.dumps(out)
 

@@ -7,20 +7,11 @@ except ImportError:  # pragma: no cover
 
 
 class AUSConfig(object):
-    required_options = {
-        'logging': ['logfile'],
-        'database': ['dburi']
-    }
+    required_options = {"logging": ["logfile"], "database": ["dburi"]}
     # Originally, this was done with getattr(logging, level), but it seems bad
     # to look up, and possibly return, arbitrary keys from a config file so it
     # was replaced with this simple mapping.
-    loglevels = {
-        'DEBUG': logging.DEBUG,
-        'INFO': logging.INFO,
-        'WARNING': logging.WARNING,
-        'ERROR': logging.ERROR,
-        'CRITICAL': logging.CRITICAL,
-    }
+    loglevels = {"DEBUG": logging.DEBUG, "INFO": logging.INFO, "WARNING": logging.WARNING, "ERROR": logging.ERROR, "CRITICAL": logging.CRITICAL}
 
     def __init__(self, filename):
         self.cfg = RawConfigParser()
@@ -48,17 +39,17 @@ class AUSConfig(object):
             return logging.WARNING
 
     def getDburi(self):
-        return self.cfg.get('database', 'dburi')
+        return self.cfg.get("database", "dburi")
 
     def getDomainWhitelist(self):
         # the config should have a format like this
         # domain_whitelist = download.mozilla.org:Firefox|Fennec|Thunderbird, ftp.mozilla.org:SystemAddons
         try:
             whitelist_config = dict()
-            pref = self.cfg.get('site-specific', 'domain_whitelist').split(', ')
+            pref = self.cfg.get("site-specific", "domain_whitelist").split(", ")
             for domain_pref in pref:
-                domain, products = domain_pref.split(':')
-                products = products.split('|')
+                domain, products = domain_pref.split(":")
+                products = products.split("|")
                 whitelist_config[domain] = tuple(products)
             return whitelist_config
         except (NoSectionError, NoOptionError):
@@ -75,30 +66,24 @@ class AUSConfig(object):
 
 
 class AdminConfig(AUSConfig):
-    required_options = {
-        'logging': ['logfile'],
-        'database': ['dburi'],
-        'app': ['secret_key'],
-        'site-specific': ['page_title'],
-    }
+    required_options = {"logging": ["logfile"], "database": ["dburi"], "app": ["secret_key"], "site-specific": ["page_title"]}
 
     def getSecretKey(self):
         return self.cfg.get("app", "secret_key")
 
     def getSystemAccounts(self):
         try:
-            return tuple(a.strip() for a in self.cfg.get('site-specific', 'system_accounts').split(','))
+            return tuple(a.strip() for a in self.cfg.get("site-specific", "system_accounts").split(","))
         except (NoSectionError, NoOptionError):
             return ()
 
     def getPageTitle(self):
-        return self.cfg.get('site-specific', 'page_title')
+        return self.cfg.get("site-specific", "page_title")
 
 
 class ClientConfig(AUSConfig):
-
     def getSpecialForceHosts(self):
         try:
-            return tuple(a.strip() for a in self.cfg.get('site-specific', 'specialforcehosts').split(','))
+            return tuple(a.strip() for a in self.cfg.get("site-specific", "specialforcehosts").split(","))
         except (NoSectionError, NoOptionError):
             return None

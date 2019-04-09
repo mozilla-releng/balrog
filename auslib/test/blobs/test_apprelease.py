@@ -12,12 +12,20 @@ import pytest
 from six import assertCountEqual
 
 from auslib.AUS import FAIL, SUCCEED
-from auslib.blobs.apprelease import (DesupportBlob, ProofXMLMixin,
-                                     ReleaseBlobBase, ReleaseBlobV1,
-                                     ReleaseBlobV2, ReleaseBlobV3,
-                                     ReleaseBlobV4, ReleaseBlobV5,
-                                     ReleaseBlobV6, ReleaseBlobV8,
-                                     ReleaseBlobV9, UnifiedFileUrlsMixin)
+from auslib.blobs.apprelease import (
+    DesupportBlob,
+    ProofXMLMixin,
+    ReleaseBlobBase,
+    ReleaseBlobV1,
+    ReleaseBlobV2,
+    ReleaseBlobV3,
+    ReleaseBlobV4,
+    ReleaseBlobV5,
+    ReleaseBlobV6,
+    ReleaseBlobV8,
+    ReleaseBlobV9,
+    UnifiedFileUrlsMixin,
+)
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.errors import BadDataError
 from auslib.global_state import dbo
@@ -26,27 +34,26 @@ from auslib.web.public.base import app
 
 def setUpModule():
     # Silence SQLAlchemy-Migrate's debugging logger
-    logging.getLogger('migrate').setLevel(logging.CRITICAL)
+    logging.getLogger("migrate").setLevel(logging.CRITICAL)
 
 
 class SimpleBlob(ReleaseBlobBase):
-    format_ = {'foo': None}
+    format_ = {"foo": None}
 
 
 class TestReleaseBlobBase(unittest.TestCase):
-
     def testGetResolvedPlatform(self):
-        blob = SimpleBlob(platforms=dict(a=dict(), b=dict(alias='a')))
-        self.assertEqual('a', blob.getResolvedPlatform('a'))
-        self.assertEqual('a', blob.getResolvedPlatform('b'))
+        blob = SimpleBlob(platforms=dict(a=dict(), b=dict(alias="a")))
+        self.assertEqual("a", blob.getResolvedPlatform("a"))
+        self.assertEqual("a", blob.getResolvedPlatform("b"))
 
     def testGetResolvedPlatformRaisesBadDataError(self):
-        blob = SimpleBlob(platforms=dict(a=dict(), b=dict(alias='a')))
+        blob = SimpleBlob(platforms=dict(a=dict(), b=dict(alias="a")))
         self.assertRaises(BadDataError, blob.getResolvedPlatform, "d")
 
     def testGetPlatformData(self):
         blob = SimpleBlob(platforms=dict(a=dict(foo=1)))
-        self.assertEqual(blob.getPlatformData('a'), dict(foo=1))
+        self.assertEqual(blob.getPlatformData("a"), dict(foo=1))
 
     def testGetPlatformDataRaisesBadDataError(self):
         blob = SimpleBlob(platforms=dict(a=dict(foo=1)))
@@ -66,60 +73,61 @@ class TestReleaseBlobBase(unittest.TestCase):
 
     def testGetLocaleOrTopLevelParamTopLevelOnly(self):
         blob = SimpleBlob(foo=5)
-        self.assertEqual(5, blob.getLocaleOrTopLevelParam('a', 'b', 'foo'))
+        self.assertEqual(5, blob.getLocaleOrTopLevelParam("a", "b", "foo"))
 
     def testGetLocaleOrTopLevelParamLocaleOnly(self):
         blob = SimpleBlob(platforms=dict(f=dict(locales=dict(g=dict(foo=6)))))
-        self.assertEqual(6, blob.getLocaleOrTopLevelParam('f', 'g', 'foo'))
+        self.assertEqual(6, blob.getLocaleOrTopLevelParam("f", "g", "foo"))
 
     def testGetLocaleOrTopLevelParamMissing(self):
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(foo=6)))))
-        self.assertEqual(None, blob.getLocaleOrTopLevelParam('a', 'b', 'c'))
+        self.assertEqual(None, blob.getLocaleOrTopLevelParam("a", "b", "c"))
 
     def testGetBuildIDPlatformOnly(self):
         blob = SimpleBlob(platforms=dict(a=dict(buildID=1, locales=dict(b=dict()))))
-        self.assertEqual(1, blob.getBuildID('a', 'b'))
+        self.assertEqual(1, blob.getBuildID("a", "b"))
 
     def testGetBuildIDLocaleOnly(self):
         blob = SimpleBlob(platforms=dict(c=dict(locales=dict(d=dict(buildID=9)))))
-        self.assertEqual(9, blob.getBuildID('c', 'd'))
+        self.assertEqual(9, blob.getBuildID("c", "d"))
 
     def testGetBuildIDMissingLocale(self):
         blob = SimpleBlob(platforms=dict(c=dict(locales=dict(d=dict(buildID=9)))))
-        self.assertRaises(BadDataError, blob.getBuildID, 'c', 'a')
+        self.assertRaises(BadDataError, blob.getBuildID, "c", "a")
 
     def testGetBuildIDMissingPlatform(self):
         blob = SimpleBlob(platforms=dict())
-        self.assertRaises(BadDataError, blob.getBuildID, 'c', 'a')
+        self.assertRaises(BadDataError, blob.getBuildID, "c", "a")
 
     def testGetBuildIDMissingLocalesFieldInPlatform(self):
         blob = SimpleBlob(platforms=dict(c=dict()))
-        self.assertRaises(BadDataError, blob.getBuildID, 'c', 'a')
+        self.assertRaises(BadDataError, blob.getBuildID, "c", "a")
 
     def testGetBuildIDMissingPlatformWithNoLocale(self):
         blob = SimpleBlob(platforms=dict())
-        self.assertRaises(BadDataError, blob.getBuildID, 'c', None)
+        self.assertRaises(BadDataError, blob.getBuildID, "c", None)
 
     def testGetBuildIDMissingBuildIDAtPlatformAndLocale(self):
         blob = SimpleBlob(platforms=dict(c=dict(locales=dict(d=dict()))))
-        self.assertRaises(BadDataError, blob.getBuildID, 'c', 'a')
+        self.assertRaises(BadDataError, blob.getBuildID, "c", "a")
 
     def testGetBuildIDMissingLocaleBuildIDAtPlatform(self):
         blob = SimpleBlob(platforms=dict(c=dict(buildID=9, locales=dict(d=dict()))))
-        self.assertRaises(BadDataError, blob.getBuildID, 'c', 'a')
+        self.assertRaises(BadDataError, blob.getBuildID, "c", "a")
+
     # XXX: should we support the locale overriding the platform? this should probably be invalid
 
 
 @pytest.mark.usefixtures("current_db_schema")
 class TestReleaseBlobV1(unittest.TestCase):
-
     def setUp(self):
-        self.whitelistedDomains = {'a.com': ('a',), 'boring.com': ('b',)}
-        dbo.setDb('sqlite:///:memory:')
+        self.whitelistedDomains = {"a.com": ("a",), "boring.com": ("b",)}
+        dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         self.sampleReleaseBlob = ReleaseBlobV1()
-        self.sampleReleaseBlob.loadJSON("""
+        self.sampleReleaseBlob.loadJSON(
+            """
         {
             "name": "j1",
             "schema_version": 1,
@@ -199,14 +207,13 @@ class TestReleaseBlobV1(unittest.TestCase):
                 }
             }
         }
-        """)
+        """
+        )
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlob.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
-        self.assertEqual(
-            sorted(partial_releases),
-            ['samplePartial1', 'samplePartial2', 'samplePartial3', 'samplePartial4'])
+        self.assertEqual(sorted(partial_releases), ["samplePartial1", "samplePartial2", "samplePartial3", "samplePartial4"])
 
     def testGetPartialReleaseReferences_Empty_Locales_Case(self):
         sample_release_JSON = """
@@ -259,51 +266,47 @@ class TestReleaseBlobV1(unittest.TestCase):
 
     def testGetAppv(self):
         blob = ReleaseBlobV1(appv=1)
-        self.assertEqual(1, blob.getAppv('p', 'l'))
+        self.assertEqual(1, blob.getAppv("p", "l"))
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(appv=2)))))
-        self.assertEqual(2, blob.getAppv('f', 'g'))
+        self.assertEqual(2, blob.getAppv("f", "g"))
 
     def testGetExtv(self):
         blob = ReleaseBlobV1(extv=3)
-        self.assertEqual(3, blob.getExtv('p', 'l'))
+        self.assertEqual(3, blob.getExtv("p", "l"))
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(extv=4)))))
-        self.assertEqual(4, blob.getExtv('f', 'g'))
+        self.assertEqual(4, blob.getExtv("f", "g"))
 
     def testApplicationVersion(self):
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(g=dict(extv=4)))))
-        self.assertEqual(blob.getExtv('f', 'g'), blob.getApplicationVersion('f', 'g'))
+        self.assertEqual(blob.getExtv("f", "g"), blob.getApplicationVersion("f", "g"))
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV1(fileUrls=dict(c="http://a.com/a"))
-        self.assertFalse(blob.containsForbiddenDomain("a",
-                                                      self.whitelistedDomains))
+        self.assertFalse(blob.containsForbiddenDomain("a", self.whitelistedDomains))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV1(fileUrls=dict(c="http://evil.com/a"))
-        self.assertTrue(blob.containsForbiddenDomain("a",
-                                                     self.whitelistedDomains))
+        self.assertTrue(blob.containsForbiddenDomain("a", self.whitelistedDomains))
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
-        self.assertTrue(blob.containsForbiddenDomain("a",
-                                                     self.whitelistedDomains))
+        self.assertTrue(blob.containsForbiddenDomain("a", self.whitelistedDomains))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = OrderedDict()
         updates["partial"] = dict(fileUrl="http://a.com/a")
         updates["complete"] = dict(fileUrl="http://evil.com/a")
         blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(blob.containsForbiddenDomain("a",
-                                                     self.whitelistedDomains))
+        self.assertTrue(blob.containsForbiddenDomain("a", self.whitelistedDomains))
 
 
 class TestOldVersionSpecialCases(unittest.TestCase):
-
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {'boring.com': ('h',)}
+        self.whitelistedDomains = {"boring.com": ("h",)}
         self.blob = ReleaseBlobV1()
-        self.blob.loadJSON("""
+        self.blob.loadJSON(
+            """
     {
     "name": "h",
     "schema_version": 1,
@@ -327,17 +330,24 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             }
         }
     }
-}""")
+}"""
+        )
 
     def testIsValid(self):
         # Raises on error
-        self.blob.validate('h', self.whitelistedDomains)
+        self.blob.validate("h", self.whitelistedDomains)
 
     def test2_0(self):
         updateQuery = {
-            "product": "h", "version": "2.0.0.20", "buildID": "0",
-            "buildTarget": "p", "locale": "m", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "2.0.0.20",
+            "buildID": "0",
+            "buildTarget": "p",
+            "locale": "m",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -347,9 +357,11 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         expected_header = """
 <update type="minor" version="2.0.0.20" buildID="1" detailsURL="http://example.org/details">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -358,9 +370,15 @@ class TestOldVersionSpecialCases(unittest.TestCase):
 
     def test3_0(self):
         updateQuery = {
-            "product": "h", "version": "3.0.9", "buildID": "0",
-            "buildTarget": "p", "locale": "m", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "3.0.9",
+            "buildID": "0",
+            "buildTarget": "p",
+            "locale": "m",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -370,9 +388,11 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         expected_header = """
 <update type="minor" version="3.0.9" buildID="1" detailsURL="http://example.org/details">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -381,9 +401,15 @@ class TestOldVersionSpecialCases(unittest.TestCase):
 
     def test3_5(self):
         updateQuery = {
-            "product": "h", "version": "3.5.19", "buildID": "0",
-            "buildTarget": "p", "locale": "m", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "3.5.19",
+            "buildID": "0",
+            "buildTarget": "p",
+            "locale": "m",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -393,9 +419,11 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         expected_header = """
 <update type="minor" version="12.0" buildID="1" detailsURL="http://example.org/details">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -404,9 +432,15 @@ class TestOldVersionSpecialCases(unittest.TestCase):
 
     def test3_6(self):
         updateQuery = {
-            "product": "h", "version": "3.6", "buildID": "0",
-            "buildTarget": "p", "locale": "m", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "3.6",
+            "buildID": "0",
+            "buildTarget": "p",
+            "locale": "m",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -416,9 +450,11 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         expected_header = """
 <update type="minor" version="12.0" extensionVersion="3.6" buildID="1" detailsURL="http://example.org/details">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -427,37 +463,36 @@ class TestOldVersionSpecialCases(unittest.TestCase):
 
 
 class TestNewStyleVersionBlob(unittest.TestCase):
-
     def testGetAppVersion(self):
         blob = ReleaseBlobV2(appVersion=1)
-        self.assertEqual(1, blob.getAppVersion('p', 'l'))
+        self.assertEqual(1, blob.getAppVersion("p", "l"))
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(g=dict(appVersion=2)))))
-        self.assertEqual(2, blob.getAppVersion('f', 'g'))
+        self.assertEqual(2, blob.getAppVersion("f", "g"))
 
     def testGetDisplayVersion(self):
         blob = ReleaseBlobV2(displayVersion=3)
-        self.assertEqual(3, blob.getDisplayVersion('p', 'l'))
+        self.assertEqual(3, blob.getDisplayVersion("p", "l"))
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(g=dict(displayVersion=4)))))
-        self.assertEqual(4, blob.getDisplayVersion('f', 'g'))
+        self.assertEqual(4, blob.getDisplayVersion("f", "g"))
 
     def testGetPlatformVersion(self):
         blob = ReleaseBlobV2(platformVersion=5)
-        self.assertEqual(5, blob.getPlatformVersion('p', 'l'))
+        self.assertEqual(5, blob.getPlatformVersion("p", "l"))
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(g=dict(platformVersion=6)))))
-        self.assertEqual(6, blob.getPlatformVersion('f', 'g'))
+        self.assertEqual(6, blob.getPlatformVersion("f", "g"))
 
     def testApplicationVersion(self):
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(g=dict(appVersion=6)))))
-        self.assertEqual(blob.getAppVersion('f', 'g'), blob.getApplicationVersion('f', 'g'))
+        self.assertEqual(blob.getAppVersion("f", "g"), blob.getApplicationVersion("f", "g"))
 
 
 class TestSpecialQueryParams(unittest.TestCase):
-
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {'a.com': ('h',), 'boring.com': ('h',)}
+        self.whitelistedDomains = {"a.com": ("h",), "boring.com": ("h",)}
         self.blob = ReleaseBlobV1()
-        self.blob.loadJSON("""
+        self.blob.loadJSON(
+            """
 {
     "name": "h",
     "schema_version": 1,
@@ -489,13 +524,20 @@ class TestSpecialQueryParams(unittest.TestCase):
             }
         }
     }
-}""")
+}"""
+        )
 
     def testSpecialQueryParam(self):
         updateQuery = {
-            "product": "h", "version": "0.5", "buildID": "0",
-            "buildTarget": "p", "locale": "l", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "0.5",
+            "buildID": "0",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -505,9 +547,11 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/?foo=a" hashFunction="sha512" hashValue="1" size="1"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -516,9 +560,15 @@ class TestSpecialQueryParams(unittest.TestCase):
 
     def testSpecialQueryParamForced(self):
         updateQuery = {
-            "product": "h", "version": "0.5", "buildID": "0",
-            "buildTarget": "p", "locale": "l", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "0.5",
+            "buildID": "0",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": SUCCEED,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -528,9 +578,11 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/?foo=a&force=1" hashFunction="sha512" hashValue="1" size="1"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -539,9 +591,15 @@ class TestSpecialQueryParams(unittest.TestCase):
 
     def testSpecialQueryParamForcedFail(self):
         updateQuery = {
-            "product": "h", "version": "0.5", "buildID": "0",
-            "buildTarget": "p", "locale": "l", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "0.5",
+            "buildID": "0",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": FAIL,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -551,9 +609,11 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/?foo=a&force=-1" hashFunction="sha512" hashValue="1" size="1"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -562,9 +622,15 @@ class TestSpecialQueryParams(unittest.TestCase):
 
     def testNonSpecialQueryParam(self):
         updateQuery = {
-            "product": "h", "version": "0.5", "buildID": "0",
-            "buildTarget": "p", "locale": "m", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "0.5",
+            "buildID": "0",
+            "buildTarget": "p",
+            "locale": "m",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -574,9 +640,11 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -585,9 +653,15 @@ class TestSpecialQueryParams(unittest.TestCase):
 
     def testNonSpecialQueryParamForced(self):
         updateQuery = {
-            "product": "h", "version": "0.5", "buildID": "0",
-            "buildTarget": "p", "locale": "m", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "0.5",
+            "buildID": "0",
+            "buildTarget": "p",
+            "locale": "m",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": SUCCEED,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -597,9 +671,11 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -608,9 +684,15 @@ class TestSpecialQueryParams(unittest.TestCase):
 
     def testNoSpecialDefined(self):
         updateQuery = {
-            "product": "h", "version": "0.5", "buildID": "0",
-            "buildTarget": "p", "locale": "m", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "0.5",
+            "buildID": "0",
+            "buildTarget": "p",
+            "locale": "m",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -620,9 +702,11 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -632,14 +716,19 @@ class TestSpecialQueryParams(unittest.TestCase):
 
 @pytest.mark.usefixtures("current_db_schema")
 class TestSchema2Blob(unittest.TestCase):
-
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {'a.com': ('j', 'k')}
-        dbo.setDb('sqlite:///:memory:')
+        self.whitelistedDomains = {"a.com": ("j", "k")}
+        dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
-        dbo.releases.t.insert().execute(name='j1', product='j', version='39.0', data_version=1, data=createBlob("""
+        dbo.releases.t.insert().execute(
+            name="j1",
+            product="j",
+            version="39.0",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "j1",
     "schema_version": 2,
@@ -652,9 +741,12 @@ class TestSchema2Blob(unittest.TestCase):
         }
     }
 }
-"""))
+"""
+            ),
+        )
         self.blobJ2 = ReleaseBlobV2()
-        self.blobJ2.loadJSON("""
+        self.blobJ2.loadJSON(
+            """
 {
     "name": "j2",
     "schema_version": 2,
@@ -691,9 +783,11 @@ class TestSchema2Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""
+        )
         self.blobK = ReleaseBlobV2()
-        self.blobK.loadJSON("""
+        self.blobK.loadJSON(
+            """
 {
     "name": "k",
     "schema_version": 2,
@@ -741,10 +835,12 @@ class TestSchema2Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""
+        )
 
         self.sampleReleaseBlob = ReleaseBlobV2()
-        self.sampleReleaseBlob.loadJSON("""
+        self.sampleReleaseBlob.loadJSON(
+            """
                 {
                     "name": "SampleBlob",
                     "schema_version": 2,
@@ -824,25 +920,30 @@ class TestSchema2Blob(unittest.TestCase):
                         }
                     }
                 }
-                """)
+                """
+        )
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlob.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
-        self.assertEqual(
-            sorted(partial_releases),
-            ['samplePartial1', 'samplePartial2', 'samplePartial3', 'samplePartial4'])
+        self.assertEqual(sorted(partial_releases), ["samplePartial1", "samplePartial2", "samplePartial3", "samplePartial4"])
 
     def testIsValid(self):
         # Raises on error
-        self.blobJ2.validate('j', self.whitelistedDomains)
-        self.blobK.validate('k', self.whitelistedDomains)
+        self.blobJ2.validate("j", self.whitelistedDomains)
+        self.blobK.validate("k", self.whitelistedDomains)
 
     def testSchema2CompleteOnly(self):
         updateQuery = {
-            "product": "j", "version": "35.0", "buildID": "4",
-            "buildTarget": "p", "locale": "l", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "j",
+            "version": "35.0",
+            "buildID": "4",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobJ2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -852,9 +953,11 @@ class TestSchema2Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="40.0" appVersion="40.0" platformVersion="40.0" buildID="30">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="34" size="38"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -863,9 +966,15 @@ class TestSchema2Blob(unittest.TestCase):
 
     def testSchema2WithPartial(self):
         updateQuery = {
-            "product": "j", "version": "39.0", "buildID": "28",
-            "buildTarget": "p", "locale": "l", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "j",
+            "version": "39.0",
+            "buildID": "28",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobJ2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -875,11 +984,14 @@ class TestSchema2Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="40.0" appVersion="40.0" platformVersion="40.0" buildID="30">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="34" size="38"/>
-""", """
+""",
+            """
 <patch type="partial" URL="http://a.com/j1-partial.mar" hashFunction="sha512" hashValue="5" size="6"/>
-"""]
+""",
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -888,23 +1000,33 @@ class TestSchema2Blob(unittest.TestCase):
 
     def testSchema2WithOptionalAttributes(self):
         updateQuery = {
-            "product": "k", "version": "35.0", "buildID": "4",
-            "buildTarget": "p", "locale": "l", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "k",
+            "version": "35.0",
+            "buildID": "4",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobK.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobK.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned_footer = self.blobK.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
-        expected_header = '<update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" ' \
-            'buildID="35" detailsURL="http://example.org/details/l" licenseURL="http://example.org/license/l" ' \
-            'billboardURL="http://example.org/billboard/l" showPrompt="false" showNeverForVersion="true" ' \
-            'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
+        expected_header = (
+            '<update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" '
+            'buildID="35" detailsURL="http://example.org/details/l" licenseURL="http://example.org/license/l" '
+            'billboardURL="http://example.org/billboard/l" showPrompt="false" showNeverForVersion="true" '
+            'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" '
             'alertURL="http://example.org/alert/l">'
-        expected = ["""
+        )
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/complete.mar/o/o" hashFunction="sha512" hashValue="35" size="40"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -913,23 +1035,33 @@ class TestSchema2Blob(unittest.TestCase):
 
     def testSchema2WithIsOSUpdate(self):
         updateQuery = {
-            "product": "k", "version": "35.0", "buildID": "4",
-            "buildTarget": "p", "locale": "l2", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "k",
+            "version": "35.0",
+            "buildID": "4",
+            "buildTarget": "p",
+            "locale": "l2",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobK.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobK.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned_footer = self.blobK.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
-        expected_header = '<update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" ' \
-            'buildID="35" detailsURL="http://example.org/details/l2" licenseURL="http://example.org/license/l2" ' \
-            'isOSUpdate="true" billboardURL="http://example.org/billboard/l2" showPrompt="false" ' \
-            'showNeverForVersion="true" actions="silent" openURL="http://example.org/url/l2" ' \
+        expected_header = (
+            '<update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" '
+            'buildID="35" detailsURL="http://example.org/details/l2" licenseURL="http://example.org/license/l2" '
+            'isOSUpdate="true" billboardURL="http://example.org/billboard/l2" showPrompt="false" '
+            'showNeverForVersion="true" actions="silent" openURL="http://example.org/url/l2" '
             'notificationURL="http://example.org/notification/l2" alertURL="http://example.org/alert/l2">'
-        expected = ["""
+        )
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/complete.mar/o/o" hashFunction="sha512" hashValue="45" size="50"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -938,13 +1070,11 @@ class TestSchema2Blob(unittest.TestCase):
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV2(fileUrls=dict(c="http://a.com/a"))
-        self.assertFalse(blob.containsForbiddenDomain('j',
-                                                      self.whitelistedDomains))
+        self.assertFalse(blob.containsForbiddenDomain("j", self.whitelistedDomains))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV2(fileUrls=dict(c="http://evil.com/a"))
-        self.assertTrue(blob.containsForbiddenDomain('j',
-                                                     self.whitelistedDomains))
+        self.assertTrue(blob.containsForbiddenDomain("j", self.whitelistedDomains))
 
 
 @pytest.mark.usefixtures("current_db_schema")
@@ -954,11 +1084,17 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {'a.com': ('j',)}
-        dbo.setDb('sqlite:///:memory:')
+        self.whitelistedDomains = {"a.com": ("j",)}
+        dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
-        dbo.releases.t.insert().execute(name='j1', product='j', version='0.5', data_version=1, data=createBlob("""
+        dbo.releases.t.insert().execute(
+            name="j1",
+            product="j",
+            version="0.5",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "j1",
     "schema_version": 2,
@@ -972,9 +1108,12 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         }
     }
 }
-"""))
+"""
+            ),
+        )
         self.blobJ2 = ReleaseBlobV2()
-        self.blobJ2.loadJSON("""
+        self.blobJ2.loadJSON(
+            """
 {
     "name": "j2",
     "schema_version": 2,
@@ -1004,17 +1143,24 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         }
     }
 }
-""")
+"""
+        )
 
     def testIsValid(self):
         # Raises on error
-        self.blobJ2.validate('j', self.whitelistedDomains)
+        self.blobJ2.validate("j", self.whitelistedDomains)
 
     def testCompleteOnly(self):
         updateQuery = {
-            "product": "j", "version": "0.5", "buildID": "0",
-            "buildTarget": "p", "locale": "l", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "j",
+            "version": "0.5",
+            "buildID": "0",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobJ2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1024,9 +1170,11 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="2" appVersion="2" platformVersion="2" buildID="3">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/c" hashFunction="sha512" hashValue="6" size="5"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1035,9 +1183,15 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
 
     def testCompleteAndPartial(self):
         updateQuery = {
-            "product": "j", "version": "0.5", "buildID": "1",
-            "buildTarget": "p", "locale": "l", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "j",
+            "version": "0.5",
+            "buildID": "1",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobJ2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1047,11 +1201,14 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="2" appVersion="2" platformVersion="2" buildID="3">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/c" hashFunction="sha512" hashValue="6" size="5"/>
-""", """
+""",
+            """
 <patch type="partial" URL="http://a.com/p" hashFunction="sha512" hashValue="4" size="3"/>
-"""]
+""",
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1060,28 +1217,31 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
-        self.assertTrue(blob.containsForbiddenDomain('a',
-                                                     self.whitelistedDomains))
+        self.assertTrue(blob.containsForbiddenDomain("a", self.whitelistedDomains))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = OrderedDict()
         updates["partial"] = dict(fileUrl="http://a.com/a")
         updates["complete"] = dict(fileUrl="http://evil.com/a")
         blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(blob.containsForbiddenDomain('a',
-                                                     self.whitelistedDomains))
+        self.assertTrue(blob.containsForbiddenDomain("a", self.whitelistedDomains))
 
 
 @pytest.mark.usefixtures("current_db_schema")
 class TestSchema3Blob(unittest.TestCase):
-
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {'a.com': ('f', 'g')}
-        dbo.setDb('sqlite:///:memory:')
+        self.whitelistedDomains = {"a.com": ("f", "g")}
+        dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
-        dbo.releases.t.insert().execute(name='f1', product='f', version='22.0', data_version=1, data=createBlob("""
+        dbo.releases.t.insert().execute(
+            name="f1",
+            product="f",
+            version="22.0",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "f1",
     "schema_version": 3,
@@ -1094,8 +1254,16 @@ class TestSchema3Blob(unittest.TestCase):
         }
     }
 }
-"""))
-        dbo.releases.t.insert().execute(name='f2', product='f', version='23.0', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.releases.t.insert().execute(
+            name="f2",
+            product="f",
+            version="23.0",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "f2",
     "schema_version": 3,
@@ -1108,9 +1276,12 @@ class TestSchema3Blob(unittest.TestCase):
         }
     }
 }
-"""))
+"""
+            ),
+        )
         self.blobF3 = ReleaseBlobV3()
-        self.blobF3.loadJSON("""
+        self.blobF3.loadJSON(
+            """
 {
     "name": "f3",
     "schema_version": 3,
@@ -1166,8 +1337,15 @@ class TestSchema3Blob(unittest.TestCase):
         }
     }
 }
-""")
-        dbo.releases.t.insert().execute(name='g1', product='g', version='23.0', data_version=1, data=createBlob("""
+"""
+        )
+        dbo.releases.t.insert().execute(
+            name="g1",
+            product="g",
+            version="23.0",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "g1",
     "schema_version": 3,
@@ -1180,9 +1358,12 @@ class TestSchema3Blob(unittest.TestCase):
         }
     }
 }
-"""))
+"""
+            ),
+        )
         self.blobG2 = ReleaseBlobV3()
-        self.blobG2.loadJSON("""
+        self.blobG2.loadJSON(
+            """
 {
     "name": "g2",
     "schema_version": 3,
@@ -1236,10 +1417,12 @@ class TestSchema3Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""
+        )
 
         self.sampleReleaseBlobV3 = ReleaseBlobV3()
-        self.sampleReleaseBlobV3.loadJSON("""
+        self.sampleReleaseBlobV3.loadJSON(
+            """
         {
             "name": "f3",
             "schema_version": 3,
@@ -1301,12 +1484,13 @@ class TestSchema3Blob(unittest.TestCase):
                 }
             }
         }
-        """)
+        """
+        )
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlobV3.getReferencedReleases()
         self.assertTrue(3, len(partial_releases))
-        self.assertEqual(sorted(partial_releases), ['d4', 'e3', 'g1'])
+        self.assertEqual(sorted(partial_releases), ["d4", "e3", "g1"])
 
     def testGetPartialReleaseReferences_Empty_Partials(self):
         sampleReleaseDataJSON = """
@@ -1367,14 +1551,20 @@ class TestSchema3Blob(unittest.TestCase):
 
     def testIsValid(self):
         # Raises on error
-        self.blobF3.validate('f', self.whitelistedDomains)
-        self.blobG2.validate('g', self.whitelistedDomains)
+        self.blobF3.validate("f", self.whitelistedDomains)
+        self.blobG2.validate("g", self.whitelistedDomains)
 
     def testSchema3MultipleUpdates(self):
         updateQuery = {
-            "product": "f", "version": "22.0", "buildID": "5",
-            "buildTarget": "p", "locale": "l", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "f",
+            "version": "22.0",
+            "buildID": "5",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobF3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1384,11 +1574,14 @@ class TestSchema3Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/c2" hashFunction="sha512" hashValue="31" size="30"/>
-""", """
+""",
+            """
 <patch type="partial" URL="http://a.com/p1" hashFunction="sha512" hashValue="3" size="2"/>
-"""]
+""",
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1396,9 +1589,15 @@ class TestSchema3Blob(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
-            "product": "f", "version": "23.0", "buildID": "6",
-            "buildTarget": "p", "locale": "l", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "f",
+            "version": "23.0",
+            "buildID": "6",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobF3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1408,11 +1607,14 @@ class TestSchema3Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/c1" hashFunction="sha512" hashValue="6" size="29"/>
-""", """
+""",
+            """
 <patch type="partial" URL="http://a.com/p2" hashFunction="sha512" hashValue="5" size="4"/>
-"""]
+""",
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1421,9 +1623,15 @@ class TestSchema3Blob(unittest.TestCase):
 
     def testSchema3NoPartial(self):
         updateQuery = {
-            "product": "f", "version": "20.0", "buildID": "1",
-            "buildTarget": "p", "locale": "l", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "f",
+            "version": "20.0",
+            "buildID": "1",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobF3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1433,9 +1641,11 @@ class TestSchema3Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/c2" hashFunction="sha512" hashValue="31" size="30"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1444,9 +1654,15 @@ class TestSchema3Blob(unittest.TestCase):
 
     def testSchema3NoPartialBlock(self):
         updateQuery = {
-            "product": "f", "version": "20.0", "buildID": "1",
-            "buildTarget": "p", "locale": "m", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "f",
+            "version": "20.0",
+            "buildID": "1",
+            "buildTarget": "p",
+            "locale": "m",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobF3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1456,9 +1672,11 @@ class TestSchema3Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/c2m" hashFunction="sha512" hashValue="33" size="32"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1467,9 +1685,15 @@ class TestSchema3Blob(unittest.TestCase):
 
     def testSchema3FtpSubstitutions(self):
         updateQuery = {
-            "product": "g", "version": "23.0", "buildID": "8",
-            "buildTarget": "p", "locale": "l", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "g",
+            "version": "23.0",
+            "buildID": "8",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobG2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1479,11 +1703,14 @@ class TestSchema3Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="26.0" appVersion="26.0" platformVersion="26.0" buildID="40">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="35" size="34"/>
-""", """
+""",
+            """
 <patch type="partial" URL="http://a.com/g1-partial.mar" hashFunction="sha512" hashValue="5" size="4"/>
-"""]
+""",
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1492,9 +1719,15 @@ class TestSchema3Blob(unittest.TestCase):
 
     def testSchema3BouncerSubstitutions(self):
         updateQuery = {
-            "product": "g", "version": "23.0", "buildID": "8",
-            "buildTarget": "p", "locale": "l", "channel": "c2",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "g",
+            "version": "23.0",
+            "buildID": "8",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c2",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobG2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1504,11 +1737,14 @@ class TestSchema3Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="26.0" appVersion="26.0" platformVersion="26.0" buildID="40">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/complete" hashFunction="sha512" hashValue="35" size="34"/>
-""", """
+""",
+            """
 <patch type="partial" URL="http://a.com/g1-partial" hashFunction="sha512" hashValue="5" size="4"/>
-"""]
+""",
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1517,36 +1753,37 @@ class TestSchema3Blob(unittest.TestCase):
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV3(fileUrls=dict(c="http://a.com/a"))
-        self.assertFalse(blob.containsForbiddenDomain('f',
-                                                      self.whitelistedDomains))
+        self.assertFalse(blob.containsForbiddenDomain("f", self.whitelistedDomains))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV3(fileUrls=dict(c="http://evil.com/a"))
-        self.assertTrue(blob.containsForbiddenDomain('f',
-                                                     self.whitelistedDomains))
+        self.assertTrue(blob.containsForbiddenDomain("f", self.whitelistedDomains))
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
-        self.assertTrue(blob.containsForbiddenDomain('f',
-                                                     self.whitelistedDomains))
+        self.assertTrue(blob.containsForbiddenDomain("f", self.whitelistedDomains))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
         blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(blob.containsForbiddenDomain('f',
-                                                     self.whitelistedDomains))
+        self.assertTrue(blob.containsForbiddenDomain("f", self.whitelistedDomains))
 
 
 @pytest.mark.usefixtures("current_db_schema")
 class TestSchema4Blob(unittest.TestCase):
-
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {'a.com': ('h', 'g',)}
-        dbo.setDb('sqlite:///:memory:')
+        self.whitelistedDomains = {"a.com": ("h", "g")}
+        dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
-        dbo.releases.t.insert().execute(name='h0', product='h', version='29.0', data_version=1, data=createBlob("""
+        dbo.releases.t.insert().execute(
+            name="h0",
+            product="h",
+            version="29.0",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "h0",
     "schema_version": 4,
@@ -1559,8 +1796,16 @@ class TestSchema4Blob(unittest.TestCase):
         }
     }
 }
-"""))
-        dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.releases.t.insert().execute(
+            name="h1",
+            product="h",
+            version="30.0",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "h1",
     "schema_version": 4,
@@ -1573,9 +1818,12 @@ class TestSchema4Blob(unittest.TestCase):
         }
     }
 }
-"""))
+"""
+            ),
+        )
         self.blobH2 = ReleaseBlobV4()
-        self.blobH2.loadJSON("""
+        self.blobH2.loadJSON(
+            """
 {
     "name": "h2",
     "schema_version": 4,
@@ -1643,9 +1891,11 @@ class TestSchema4Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""
+        )
         self.blobH3 = ReleaseBlobV4()
-        self.blobH3.loadJSON("""
+        self.blobH3.loadJSON(
+            """
 {
     "name": "h3",
     "schema_version": 4,
@@ -1719,11 +1969,13 @@ class TestSchema4Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""
+        )
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         sample_release_blob_v4 = ReleaseBlobV4()
-        sample_release_blob_v4.loadJSON("""
+        sample_release_blob_v4.loadJSON(
+            """
         {
             "name": "sample",
             "schema_version": 4,
@@ -1797,14 +2049,16 @@ class TestSchema4Blob(unittest.TestCase):
                 }
             }
         }
-        """)
+        """
+        )
         partial_releases = sample_release_blob_v4.getReferencedReleases()
         self.assertTrue(5, len(partial_releases))
-        self.assertEqual(sorted(partial_releases), ['h0', 'h1', 'h2', 'h3', 'h4'])
+        self.assertEqual(sorted(partial_releases), ["h0", "h1", "h2", "h3", "h4"])
 
     def testGetPartialReleaseReferences_Empty_Partials_Case(self):
         sample_release_blob_v4 = ReleaseBlobV4()
-        sample_release_blob_v4.loadJSON("""
+        sample_release_blob_v4.loadJSON(
+            """
             {
                 "name": "h1",
                 "schema_version": 4,
@@ -1817,13 +2071,15 @@ class TestSchema4Blob(unittest.TestCase):
                     }
                 }
             }
-            """)
+            """
+        )
         partial_releases = sample_release_blob_v4.getReferencedReleases()
         self.assertEqual(0, len(partial_releases))
 
     def testGetPartialReleaseReferences_Empty_Locales_Case(self):
         sample_release_blob_v4 = ReleaseBlobV4()
-        sample_release_blob_v4.loadJSON("""
+        sample_release_blob_v4.loadJSON(
+            """
         {
             "name": "sample",
             "schema_version": 4,
@@ -1882,20 +2138,27 @@ class TestSchema4Blob(unittest.TestCase):
                 }
             }
         }
-        """)
+        """
+        )
         partial_releases = sample_release_blob_v4.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
-        self.assertEqual(sorted(partial_releases), ['h0', 'h1', 'h2', 'h3'])
+        self.assertEqual(sorted(partial_releases), ["h0", "h1", "h2", "h3"])
 
     def testIsValid(self):
         # Raises on error
-        self.blobH2.validate('h', self.whitelistedDomains)
+        self.blobH2.validate("h", self.whitelistedDomains)
 
     def testSchema4WithPartials(self):
         updateQuery = {
-            "product": "h", "version": "30.0", "buildID": "10",
-            "buildTarget": "p", "locale": "l", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "30.0",
+            "buildID": "10",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1905,11 +2168,14 @@ class TestSchema4Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
-""", """
+""",
+            """
 <patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>
-"""]
+""",
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1917,9 +2183,15 @@ class TestSchema4Blob(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
-            "product": "h", "version": "30.0", "buildID": "10",
-            "buildTarget": "p", "locale": "l", "channel": "c2",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "30.0",
+            "buildID": "10",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c2",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1929,11 +2201,14 @@ class TestSchema4Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/l-complete" hashFunction="sha512" hashValue="41" size="40"/>
-""", """
+""",
+            """
 <patch type="partial" URL="http://a.com/h1-l-partial" hashFunction="sha512" hashValue="9" size="8"/>
-"""]
+""",
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1941,9 +2216,15 @@ class TestSchema4Blob(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
-            "product": "h", "version": "30.0", "buildID": "10",
-            "buildTarget": "p", "locale": "l", "channel": "c3",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "30.0",
+            "buildID": "10",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c3",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1953,11 +2234,14 @@ class TestSchema4Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>
-""", """
+""",
+            """
 <patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>
-"""]
+""",
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1966,9 +2250,15 @@ class TestSchema4Blob(unittest.TestCase):
 
     def testSchema4NoPartials(self):
         updateQuery = {
-            "product": "h", "version": "25.0", "buildID": "2",
-            "buildTarget": "p", "locale": "l", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "25.0",
+            "buildID": "2",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -1978,9 +2268,11 @@ class TestSchema4Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1988,9 +2280,15 @@ class TestSchema4Blob(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
-            "product": "h", "version": "25.0", "buildID": "2",
-            "buildTarget": "p", "locale": "l", "channel": "c2",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "25.0",
+            "buildID": "2",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c2",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -2000,9 +2298,11 @@ class TestSchema4Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/l-complete" hashFunction="sha512" hashValue="41" size="40"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -2010,9 +2310,15 @@ class TestSchema4Blob(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
-            "product": "h", "version": "25.0", "buildID": "2",
-            "buildTarget": "p", "locale": "l", "channel": "c3",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "25.0",
+            "buildID": "2",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c3",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -2022,9 +2328,11 @@ class TestSchema4Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -2033,9 +2341,15 @@ class TestSchema4Blob(unittest.TestCase):
 
     def testSchema4MismatchedLocalePartialsAndFileUrls(self):
         updateQuery = {
-            "product": "h", "version": "29.0", "buildID": "5",
-            "buildTarget": "p", "locale": "l", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "29.0",
+            "buildID": "5",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -2045,9 +2359,11 @@ class TestSchema4Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="32.0" appVersion="32.0" platformVersion="32.0" buildID="500">
 """
-        expected = ["""
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="410" size="400"/>
-"""]
+"""
+        ]
         expected_footer = "</update>"
         expected = [x.strip() for x in expected]
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -2056,7 +2372,8 @@ class TestSchema4Blob(unittest.TestCase):
 
     def testConvertFromV3(self):
         v3Blob = ReleaseBlobV3()
-        v3Blob.loadJSON("""
+        v3Blob.loadJSON(
+            """
 {
     "name": "g2",
     "schema_version": 3,
@@ -2082,41 +2399,29 @@ class TestSchema4Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""
+        )
 
         v4Blob = ReleaseBlobV4.fromV3(v3Blob)
         # Raises on error
-        v4Blob.validate('g', self.whitelistedDomains)
+        v4Blob.validate("g", self.whitelistedDomains)
 
         expected = {
             "name": "g2",
             "schema_version": 4,
             "hashFunction": "sha512",
             "fileUrls": {
-                "c1": {
-                    "partials": {
-                        "g1": "http://a.com/g1-partial.mar"
-                    },
-                    "completes": {
-                        "*": "http://a.com/complete.mar"
-                    }
-                },
-                "c2": {
-                    "partials": {
-                        "g1": "http://a.com/g1-partial",
-                    },
-                    "completes": {
-                        "*": "http://a.com/complete"
-                    }
-                }
-            }
+                "c1": {"partials": {"g1": "http://a.com/g1-partial.mar"}, "completes": {"*": "http://a.com/complete.mar"}},
+                "c2": {"partials": {"g1": "http://a.com/g1-partial"}, "completes": {"*": "http://a.com/complete"}},
+            },
         }
 
         self.assertEqual(v4Blob, expected)
 
     def testConvertFromV3Noop(self):
         v3Blob = ReleaseBlobV3()
-        v3Blob.loadJSON("""
+        v3Blob.loadJSON(
+            """
 {
     "name": "g2",
     "schema_version": 4,
@@ -2149,11 +2454,12 @@ class TestSchema4Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""
+        )
 
         v4Blob = ReleaseBlobV4.fromV3(v3Blob)
         # Raises on error
-        v4Blob.validate('g', self.whitelistedDomains)
+        v4Blob.validate("g", self.whitelistedDomains)
 
         expected = v3Blob.copy()
         expected["schema_version"] = 4
@@ -2162,43 +2468,43 @@ class TestSchema4Blob(unittest.TestCase):
 
     def testAllowedDomain(self):
         blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://a.com/c"))))
-        self.assertFalse(blob.containsForbiddenDomain('h',
-                                                      self.whitelistedDomains))
+        self.assertFalse(blob.containsForbiddenDomain("h", self.whitelistedDomains))
 
     def testAllowedDomainWrongProduct(self):
         blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://a.com/c"))))
-        self.assertTrue(blob.containsForbiddenDomain('hhh',
-                                                     self.whitelistedDomains))
+        self.assertTrue(blob.containsForbiddenDomain("hhh", self.whitelistedDomains))
 
     def testForbiddenDomainFileUrls(self):
         blob = ReleaseBlobV4(fileUrls=dict(c=dict(completes=dict(foo="http://evil.com/c"))))
-        self.assertTrue(blob.containsForbiddenDomain('h',
-                                                     self.whitelistedDomains))
+        self.assertTrue(blob.containsForbiddenDomain("h", self.whitelistedDomains))
 
     def testForbiddenDomainInLocale(self):
         blob = ReleaseBlobV4(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
-        self.assertTrue(blob.containsForbiddenDomain('h',
-                                                     self.whitelistedDomains))
+        self.assertTrue(blob.containsForbiddenDomain("h", self.whitelistedDomains))
 
     def testForbiddenDomainAndAllowedDomain(self):
         updates = dict(partials=[dict(fileUrl="http://a.com/a"), dict(fileUrl="http://evil.com/a")])
         blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
-        self.assertTrue(blob.containsForbiddenDomain('h',
-                                                     self.whitelistedDomains))
+        self.assertTrue(blob.containsForbiddenDomain("h", self.whitelistedDomains))
 
 
 @pytest.mark.usefixtures("current_db_schema")
 class TestSchema5Blob(unittest.TestCase):
-
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {'a.com': ('h',)}
-        app.config['DEBUG'] = True
-        app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
-        app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
-        dbo.setDb('sqlite:///:memory:')
+        self.whitelistedDomains = {"a.com": ("h",)}
+        app.config["DEBUG"] = True
+        app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
+        app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
+        dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        dbo.releases.t.insert().execute(name='h1', product='h', version='30.0', data_version=1, data=createBlob("""
+        dbo.releases.t.insert().execute(
+            name="h1",
+            product="h",
+            version="30.0",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "h1",
     "schema_version": 5,
@@ -2211,9 +2517,12 @@ class TestSchema5Blob(unittest.TestCase):
         }
     }
 }
-"""))
+"""
+            ),
+        )
         self.blobH2 = ReleaseBlobV5()
-        self.blobH2.loadJSON("""
+        self.blobH2.loadJSON(
+            """
 {
     "name": "h2",
     "schema_version": 5,
@@ -2275,11 +2584,13 @@ class TestSchema5Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""
+        )
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         sample_release_blob_v5 = ReleaseBlobV5()
-        sample_release_blob_v5.loadJSON("""
+        sample_release_blob_v5.loadJSON(
+            """
         {
             "name": "sample",
             "schema_version": 5,
@@ -2341,14 +2652,16 @@ class TestSchema5Blob(unittest.TestCase):
                 }
             }
         }
-        """)
+        """
+        )
         partial_releases = sample_release_blob_v5.getReferencedReleases()
         self.assertTrue(2, len(partial_releases))
-        self.assertEqual(sorted(partial_releases), ['h1', 'h2'])
+        self.assertEqual(sorted(partial_releases), ["h1", "h2"])
 
     def testGetPartialReleaseReferences_Empty_fileUrls_Case(self):
         sample_release_blob_v5 = ReleaseBlobV5()
-        sample_release_blob_v5.loadJSON("""
+        sample_release_blob_v5.loadJSON(
+            """
         {
             "name": "h2",
             "schema_version": 5,
@@ -2430,36 +2743,48 @@ class TestSchema5Blob(unittest.TestCase):
                 }
             }
         }
-        """)
+        """
+        )
         partial_releases = sample_release_blob_v5.getReferencedReleases()
         self.assertTrue(3, len(partial_releases))
-        self.assertEqual(sorted(partial_releases), ['h1', 'h2', 'h3'])
+        self.assertEqual(sorted(partial_releases), ["h1", "h2", "h3"])
 
     def testIsValid(self):
         # Raises on error
-        self.blobH2.validate('h', self.whitelistedDomains)
+        self.blobH2.validate("h", self.whitelistedDomains)
 
     def testSchema5OptionalAttributes(self):
         updateQuery = {
-            "product": "h", "version": "30.0", "buildID": "10",
-            "buildTarget": "p", "locale": "l", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "30.0",
+            "buildID": "10",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
-        expected_header = '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" ' \
-            'buildID="50" detailsURL="http://example.org/details/l" licenseURL="http://example.org/license/l" ' \
-            'billboardURL="http://example.org/billboard/l" showPrompt="false" showNeverForVersion="true" ' \
-            'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
+        expected_header = (
+            '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" '
+            'buildID="50" detailsURL="http://example.org/details/l" licenseURL="http://example.org/license/l" '
+            'billboardURL="http://example.org/billboard/l" showPrompt="false" showNeverForVersion="true" '
+            'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" '
             'alertURL="http://example.org/alert/l" promptWaitTime="12345">'
-        expected = ["""
+        )
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
-""", """
+""",
+            """
 <patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>
-"""]
+""",
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -2469,16 +2794,20 @@ class TestSchema5Blob(unittest.TestCase):
 
 @pytest.mark.usefixtures("current_db_schema")
 class TestSchema6Blob(unittest.TestCase):
-
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {'a.com': ('h',)}
-        app.config['DEBUG'] = True
-        app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
-        app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
-        dbo.setDb('sqlite:///:memory:')
+        self.whitelistedDomains = {"a.com": ("h",)}
+        app.config["DEBUG"] = True
+        app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
+        app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
+        dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        dbo.releases.t.insert().execute(name='h1', product='h', data_version=1, data=createBlob("""
+        dbo.releases.t.insert().execute(
+            name="h1",
+            product="h",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "h1",
     "schema_version": 6,
@@ -2491,9 +2820,12 @@ class TestSchema6Blob(unittest.TestCase):
         }
     }
 }
-"""))
+"""
+            ),
+        )
         self.blobH2 = ReleaseBlobV6()
-        self.blobH2.loadJSON("""
+        self.blobH2.loadJSON(
+            """
 {
     "name": "h2",
     "schema_version": 6,
@@ -2552,11 +2884,13 @@ class TestSchema6Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""
+        )
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         sample_release_blob_v6 = ReleaseBlobV6()
-        sample_release_blob_v6.loadJSON("""
+        sample_release_blob_v6.loadJSON(
+            """
         {
             "name": "h2",
             "schema_version": 6,
@@ -2615,14 +2949,16 @@ class TestSchema6Blob(unittest.TestCase):
                 }
             }
         }
-        """)
+        """
+        )
         partial_releases = sample_release_blob_v6.getReferencedReleases()
         self.assertTrue(2, len(partial_releases))
-        self.assertEqual(sorted(partial_releases), ['h1', 'h2'])
+        self.assertEqual(sorted(partial_releases), ["h1", "h2"])
 
     def testGetPartialReleaseReferences_Empty_Partials_Case(self):
         sample_release_blob_v6 = ReleaseBlobV6()
-        sample_release_blob_v6.loadJSON("""{
+        sample_release_blob_v6.loadJSON(
+            """{
             "name": "h1",
             "schema_version": 6,
             "platforms": {
@@ -2634,34 +2970,45 @@ class TestSchema6Blob(unittest.TestCase):
                 }
             }
         }
-        """)
+        """
+        )
         partial_releases = sample_release_blob_v6.getReferencedReleases()
         self.assertEqual(0, len(partial_releases))
 
     def testIsValid(self):
         # Raises on error
-        self.blobH2.validate('h', self.whitelistedDomains)
+        self.blobH2.validate("h", self.whitelistedDomains)
 
     def testSchema6OptionalAttributes(self):
         updateQuery = {
-            "product": "h", "buildID": "10",
-            "buildTarget": "p", "locale": "l", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "buildID": "10",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
-        expected_header = '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="None" ' \
-            'buildID="50" detailsURL="http://example.org/details/l" showPrompt="false" showNeverForVersion="true" ' \
-            'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
+        expected_header = (
+            '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="None" '
+            'buildID="50" detailsURL="http://example.org/details/l" showPrompt="false" showNeverForVersion="true" '
+            'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" '
             'alertURL="http://example.org/alert/l" promptWaitTime="12345">'
-        expected = ["""
+        )
+        expected = [
+            """
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
-""", """
+""",
+            """
 <patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>
-"""]
+""",
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -2670,7 +3017,8 @@ class TestSchema6Blob(unittest.TestCase):
 
     def testCheckFailForUnsuportedAttributes(self):
         self.blobH3 = ReleaseBlobV6()
-        self.blobH3.loadJSON("""
+        self.blobH3.loadJSON(
+            """
 {
     "name": "h3",
     "schema_version": 5,
@@ -2732,22 +3080,27 @@ class TestSchema6Blob(unittest.TestCase):
         }
     }
 }
-""")
-        self.assertRaises(BlobValidationError, self.blobH3.validate, 'h', self.whitelistedDomains)
+"""
+        )
+        self.assertRaises(BlobValidationError, self.blobH3.validate, "h", self.whitelistedDomains)
 
 
 @pytest.mark.usefixtures("current_db_schema")
 class TestSchema8Blob(unittest.TestCase):
-
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {'a.com': ('h',)}
-        app.config['DEBUG'] = True
-        app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
-        app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
-        dbo.setDb('sqlite:///:memory:')
+        self.whitelistedDomains = {"a.com": ("h",)}
+        app.config["DEBUG"] = True
+        app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
+        app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
+        dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        dbo.releases.t.insert().execute(name='h1', product='h', data_version=1, data=createBlob("""
+        dbo.releases.t.insert().execute(
+            name="h1",
+            product="h",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "h1",
     "schema_version": 8,
@@ -2760,9 +3113,12 @@ class TestSchema8Blob(unittest.TestCase):
         }
     }
 }
-"""))
+"""
+            ),
+        )
         self.blobH2 = ReleaseBlobV8()
-        self.blobH2.loadJSON("""
+        self.blobH2.loadJSON(
+            """
 {
     "name": "h2",
     "schema_version": 8,
@@ -2810,7 +3166,11 @@ class TestSchema8Blob(unittest.TestCase):
                             "filesize": 8,
                             "from": "h1",
                             "hashValue": "9",
-                            "binTransInclusionProof": """ + '"' + ('834charpartialsproof' * 42)[:834] + '"' + """
+                            "binTransInclusionProof": """
+            + '"'
+            + ("834charpartialsproof" * 42)[:834]
+            + '"'
+            + """
                         }
                     ],
                     "completes": [
@@ -2818,7 +3178,11 @@ class TestSchema8Blob(unittest.TestCase):
                             "filesize": 40,
                             "from": "*",
                             "hashValue": "41",
-                            "binTransInclusionProof": """ + '"' + ('834charcompletesproof' * 40)[:834] + '"' + """
+                            "binTransInclusionProof": """
+            + '"'
+            + ("834charcompletesproof" * 40)[:834]
+            + '"'
+            + """
                         }
                     ]
                 }
@@ -2826,35 +3190,48 @@ class TestSchema8Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""
+        )
 
     def testIsValid(self):
         # Raises on error
-        self.blobH2.validate('h', self.whitelistedDomains)
+        self.blobH2.validate("h", self.whitelistedDomains)
 
     def testSchema8OptionalAttributes(self):
         updateQuery = {
-            "product": "h", "buildID": "10",
-            "buildTarget": "p", "locale": "l", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "buildID": "10",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
-        expected_header = '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="None" ' \
-            'buildID="50" detailsURL="http://example.org/details/l" showPrompt="false" showNeverForVersion="true" ' \
-            'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" ' \
-            'alertURL="http://example.org/alert/l" promptWaitTime="12345" ' \
+        expected_header = (
+            '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="None" '
+            'buildID="50" detailsURL="http://example.org/details/l" showPrompt="false" showNeverForVersion="true" '
+            'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" '
+            'alertURL="http://example.org/alert/l" promptWaitTime="12345" '
             'binTransMerkleRoot="merkle_root" binTransCertificate="cert" binTransSCTList="sct_list">'
-        expected = ["""
-<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40" """ +
-                    'binTransInclusionProof="' + ('834charcompletesproof' * 40)[:834] + '"/>\n',
-                    """
-<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8" """ +
-                    'binTransInclusionProof="' + ('834charpartialsproof' * 42)[:834] + '"/>\n'
-                    ]
+        )
+        expected = [
+            """
+<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40" """
+            + 'binTransInclusionProof="'
+            + ("834charcompletesproof" * 40)[:834]
+            + '"/>\n',
+            """
+<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8" """
+            + 'binTransInclusionProof="'
+            + ("834charpartialsproof" * 42)[:834]
+            + '"/>\n',
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -2864,16 +3241,20 @@ class TestSchema8Blob(unittest.TestCase):
 
 @pytest.mark.usefixtures("current_db_schema")
 class TestSchema9Blob(unittest.TestCase):
-
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {'a.com': ('h',)}
-        app.config['DEBUG'] = True
-        app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
-        app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
-        dbo.setDb('sqlite:///:memory:')
+        self.whitelistedDomains = {"a.com": ("h",)}
+        app.config["DEBUG"] = True
+        app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
+        app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
+        dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        dbo.releases.t.insert().execute(name='h1', product='h', data_version=1, data=createBlob("""
+        dbo.releases.t.insert().execute(
+            name="h1",
+            product="h",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "h1",
     "schema_version": 9,
@@ -2889,9 +3270,12 @@ class TestSchema9Blob(unittest.TestCase):
         }
     }
 }
-"""))
+"""
+            ),
+        )
         self.blobH2 = ReleaseBlobV9()
-        self.blobH2.loadJSON("""
+        self.blobH2.loadJSON(
+            """
 {
     "name": "h2",
     "schema_version": 9,
@@ -2994,25 +3378,31 @@ class TestSchema9Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""
+        )
 
     def testWithoutActionsByLocale(self):
         updateQuery = {
-            "product": "h", "buildID": "10", "version": "30.0",
-            "buildTarget": "p", "locale": "l", "channel": "release",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "buildID": "10",
+            "version": "30.0",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "release",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/l"' \
-            ' displayVersion="31.0.2" type="minor">'
+        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/l"' ' displayVersion="31.0.2" type="minor">'
         self.assertEqual(returned_header.strip(), expected_header.strip())
 
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected = [
             '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>',
-            '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>'
+            '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>',
         ]
         expected = [x.strip() for x in expected]
         assertCountEqual(self, returned, expected)
@@ -3023,21 +3413,26 @@ class TestSchema9Blob(unittest.TestCase):
 
     def testWithoutActionsByChannel(self):
         updateQuery = {
-            "product": "h", "buildID": "10", "version": "30.0",
-            "buildTarget": "p", "locale": "de", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "buildID": "10",
+            "version": "30.0",
+            "buildTarget": "p",
+            "locale": "de",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' \
-            ' displayVersion="31.0.2" type="minor">'
+        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' ' displayVersion="31.0.2" type="minor">'
         self.assertEqual(returned_header.strip(), expected_header.strip())
 
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected = [
             '<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>',
-            '<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>'
+            '<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>',
         ]
         expected = [x.strip() for x in expected]
         assertCountEqual(self, returned, expected)
@@ -3048,21 +3443,26 @@ class TestSchema9Blob(unittest.TestCase):
 
     def testWithoutActionsByVersion(self):
         updateQuery = {
-            "product": "h", "buildID": "10", "version": "31.0",
-            "buildTarget": "p", "locale": "de", "channel": "release",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "buildID": "10",
+            "version": "31.0",
+            "buildTarget": "p",
+            "locale": "de",
+            "channel": "release",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' \
-            ' displayVersion="31.0.2" type="minor">'
+        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' ' displayVersion="31.0.2" type="minor">'
         self.assertEqual(returned_header.strip(), expected_header.strip())
 
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected = [
             '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>',
-            '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>'
+            '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>',
         ]
         expected = [x.strip() for x in expected]
         assertCountEqual(self, returned, expected)
@@ -3073,21 +3473,29 @@ class TestSchema9Blob(unittest.TestCase):
 
     def testWithActions(self):
         updateQuery = {
-            "product": "h", "buildID": "10", "version": "30.0",
-            "buildTarget": "p", "locale": "de", "channel": "release",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "buildID": "10",
+            "version": "30.0",
+            "buildTarget": "p",
+            "locale": "de",
+            "channel": "release",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        expected_header = '<update actions="showURL" appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' \
+        expected_header = (
+            '<update actions="showURL" appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"'
             ' displayVersion="31.0.2" openURL="http://example.org/url/de" type="minor">'
+        )
         self.assertEqual(returned_header.strip(), expected_header.strip())
 
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected = [
             '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>',
-            '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>'
+            '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>',
         ]
         expected = [x.strip() for x in expected]
         assertCountEqual(self, returned, expected)
@@ -3097,40 +3505,19 @@ class TestSchema9Blob(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
-@pytest.mark.parametrize("for1,for2", [
-    (
-        {"versions": ["<49.0"]},
-        {"versions": ["49.0"]}
-    ),
-    (
-        {"versions": [">49.0"]},
-        {"versions": ["49.0"]}
-    ),
-    (
-        {"versions": [">49.0"]},
-        {"versions": ["<=49.0"]}
-    ),
-    (
-        {"versions": ["<49.0"]},
-        {"versions": [">=49.0"]}
-    ),
-    (
-        {"locales": ["ja"]},
-        {"locales": ["ja-JP-mac"]},
-    ),
-    (
-        {"locales": ["de"], "channels": ["beta*"], "versions": ["<50.0"]},
-        {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}
-    ),
-    (
-        {"locales": ["de"], "channels": ["release"], "versions": ["<50.0"]},
-        {"locales": ["en-US", "fr"], "channels": ["release"], "versions": ["49.0"]}
-    ),
-    (
-        {"locales": ["de"], "channels": ["release"], "versions": ["<48.0"]},
-        {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}
-    ),
-])
+@pytest.mark.parametrize(
+    "for1,for2",
+    [
+        ({"versions": ["<49.0"]}, {"versions": ["49.0"]}),
+        ({"versions": [">49.0"]}, {"versions": ["49.0"]}),
+        ({"versions": [">49.0"]}, {"versions": ["<=49.0"]}),
+        ({"versions": ["<49.0"]}, {"versions": [">=49.0"]}),
+        ({"locales": ["ja"]}, {"locales": ["ja-JP-mac"]}),
+        ({"locales": ["de"], "channels": ["beta*"], "versions": ["<50.0"]}, {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}),
+        ({"locales": ["de"], "channels": ["release"], "versions": ["<50.0"]}, {"locales": ["en-US", "fr"], "channels": ["release"], "versions": ["49.0"]}),
+        ({"locales": ["de"], "channels": ["release"], "versions": ["<48.0"]}, {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}),
+    ],
+)
 def testSchema9CanCreateValidBlobs(for1, for2):
     good_blob = {
         "name": "good",
@@ -3139,107 +3526,39 @@ def testSchema9CanCreateValidBlobs(for1, for2):
         "appVersion": "31.0.2",
         "displayVersion": "31.0.2",
         "updateLine": [
-            {
-                "for": for1,
-                "fields": {
-                    "detailsURL": "http://example.org/details/%LOCALE%",
-                    "type": "minor"
-                }
-            },
-            {
-                "for": for2,
-                "fields": {
-                    "detailsURL": "http://example.org/specialdetails/%LOCALE%",
-                }
-            }
-        ]
+            {"for": for1, "fields": {"detailsURL": "http://example.org/details/%LOCALE%", "type": "minor"}},
+            {"for": for2, "fields": {"detailsURL": "http://example.org/specialdetails/%LOCALE%"}},
+        ],
     }
     blob = ReleaseBlobV9(**good_blob)
-    blob.validate("h", {'a.com': ('h',)})
+    blob.validate("h", {"a.com": ("h",)})
 
 
-@pytest.mark.parametrize("for1,for2", [
-    (
-        {},
-        {},
-    ),
-    (
-        {},
-        {"locales": ["de", "fr"]}
-    ),
-    (
-        {"locales": ["de"]},
-        {"locales": ["de", "fr"]}
-    ),
-    (
-        {},
-        {"channels": ["release"]}
-    ),
-    (
-        {"channels": ["release"]},
-        {"channels": ["release-cck-foo"]}
-    ),
-    (
-        {"channels": ["release*"]},
-        {"channels": ["release-cck-foo"]}
-    ),
-    (
-        {"channels": ["release-cck-foo"]},
-        {"channels": ["release-cck-*"]}
-    ),
-    (
-        {"channels": ["release*"]},
-        {"channels": ["release-cck-*"]}
-    ),
-    (
-        {"channels": ["release"]},
-        {"channels": ["release*"]}
-    ),
-    (
-        {},
-        {"versions": ["50.0"]}
-    ),
-    (
-        {"versions": ["<50.0"]},
-        {"versions": ["49.0"]}
-    ),
-    (
-        {"versions": ["49.0"]},
-        {"versions": ["<=49.0"]}
-    ),
-    (
-        {"versions": ["<50.0"]},
-        {"versions": ["<49.0"]}
-    ),
-    (
-        {"versions": [">50.0"]},
-        {"versions": [">49.0"]}
-    ),
-    (
-        {"versions": ["<50.0"]},
-        {"versions": [">49.0"]}
-    ),
-    (
-        {"versions": ["<50.0"]},
-        {"versions": [">=49.0"]}
-    ),
-    (
-        {"versions": [">49.0"]},
-        {"versions": ["<=50.0"]}
-    ),
-    (
-        {"versions": [">=49.0"]},
-        {"versions": ["<=50.0"]}
-    ),
-    (
-        {"versions": ["<=49.0"]},
-        {"versions": ["<=50.0"]}
-    ),
-    (
-        {"locales": ["de"], "channels": ["release*"], "versions": ["<50.0"]},
-        {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}
-    ),
-])
+@pytest.mark.parametrize(
+    "for1,for2",
+    [
+        ({}, {}),
+        ({}, {"locales": ["de", "fr"]}),
+        ({"locales": ["de"]}, {"locales": ["de", "fr"]}),
+        ({}, {"channels": ["release"]}),
+        ({"channels": ["release"]}, {"channels": ["release-cck-foo"]}),
+        ({"channels": ["release*"]}, {"channels": ["release-cck-foo"]}),
+        ({"channels": ["release-cck-foo"]}, {"channels": ["release-cck-*"]}),
+        ({"channels": ["release*"]}, {"channels": ["release-cck-*"]}),
+        ({"channels": ["release"]}, {"channels": ["release*"]}),
+        ({}, {"versions": ["50.0"]}),
+        ({"versions": ["<50.0"]}, {"versions": ["49.0"]}),
+        ({"versions": ["49.0"]}, {"versions": ["<=49.0"]}),
+        ({"versions": ["<50.0"]}, {"versions": ["<49.0"]}),
+        ({"versions": [">50.0"]}, {"versions": [">49.0"]}),
+        ({"versions": ["<50.0"]}, {"versions": [">49.0"]}),
+        ({"versions": ["<50.0"]}, {"versions": [">=49.0"]}),
+        ({"versions": [">49.0"]}, {"versions": ["<=50.0"]}),
+        ({"versions": [">=49.0"]}, {"versions": ["<=50.0"]}),
+        ({"versions": ["<=49.0"]}, {"versions": ["<=50.0"]}),
+        ({"locales": ["de"], "channels": ["release*"], "versions": ["<50.0"]}, {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}),
+    ],
+)
 def testSchema9CannotCreateBlobWithConflictingFields(for1, for2):
     bad_blob = {
         "name": "bad",
@@ -3248,47 +3567,37 @@ def testSchema9CannotCreateBlobWithConflictingFields(for1, for2):
         "appVersion": "31.0.2",
         "displayVersion": "31.0.2",
         "updateLine": [
-            {
-                "for": for1,
-                "fields": {
-                    "detailsURL": "http://example.org/details/%LOCALE%",
-                    "type": "minor"
-                }
-            },
-            {
-                "for": for2,
-                "fields": {
-                    "detailsURL": "http://example.org/specialdetails/%LOCALE%",
-                }
-            }
-        ]
+            {"for": for1, "fields": {"detailsURL": "http://example.org/details/%LOCALE%", "type": "minor"}},
+            {"for": for2, "fields": {"detailsURL": "http://example.org/specialdetails/%LOCALE%"}},
+        ],
     }
     blob = ReleaseBlobV9(**bad_blob)
     with pytest.raises(BlobValidationError) as excinfo:
-        blob.validate("h", {'a.com': ('h',)})
+        blob.validate("h", {"a.com": ("h",)})
     assert "Multiple values found for updateLine items: detailsURL" in str(excinfo.value)
 
 
 @pytest.mark.usefixtures("current_db_schema")
 class TestDesupportBlob(unittest.TestCase):
-
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {'a.com': ('a',), 'moo.com': ('d',)}
-        app.config['DEBUG'] = True
-        app.config['SPECIAL_FORCE_HOSTS'] = self.specialForceHosts
-        app.config['WHITELISTED_DOMAINS'] = self.whitelistedDomains
-        dbo.setDb('sqlite:///:memory:')
+        self.whitelistedDomains = {"a.com": ("a",), "moo.com": ("d",)}
+        app.config["DEBUG"] = True
+        app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
+        app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
+        dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         self.blob = DesupportBlob()
-        self.blob.loadJSON("""
+        self.blob.loadJSON(
+            """
 {
     "name": "d1",
     "schema_version": 50,
     "detailsUrl": "http://moo.com/%locale%/cow/%version%/%os%",
     "displayVersion": "50.0"
 }
-""")
+"""
+        )
 
     def testDesupport(self):
         updateQuery = {"locale": "<locale>", "version": "<version>", "buildTarget": "Darwin_x86_64-gcc3-u-i386-x86_64"}
@@ -3297,9 +3606,11 @@ class TestDesupportBlob(unittest.TestCase):
         returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected_header = ""
-        expected = ["""
+        expected = [
+            """
 <update type="minor" unsupported="true" detailsURL="http://moo.com/<locale>/cow/<version>/Darwin" displayVersion="50.0">
-"""]
+"""
+        ]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -3308,33 +3619,19 @@ class TestDesupportBlob(unittest.TestCase):
 
     def testBrokenDesupport(self):
         blob = DesupportBlob(name="d2", schema_version=50, foo="bar")
-        self.assertRaises(BlobValidationError, blob.validate, 'd',
-                          self.whitelistedDomains)
+        self.assertRaises(BlobValidationError, blob.validate, "d", self.whitelistedDomains)
 
 
 class TestUnifiedFileUrlsMixin(unittest.TestCase):
-
     def setUp(self):
         fileUrls = {
-            "c1": {
-                "partials": {
-                    "h1": "http://a.com/h1-partial.mar"
-                },
-                "completes": {
-                    "*": "http://a.com/complete.mar"
-                }
-            },
+            "c1": {"partials": {"h1": "http://a.com/h1-partial.mar"}, "completes": {"*": "http://a.com/complete.mar"}},
             "*": {
-                "partials": {
-                    "h1": "http://a.com/h1-partial-catchall",
-                    "h2": "http://a.com/h2-partial-catchall",
-                },
-                "completes": {
-                    "*": "http://a.com/complete-catchall"
-                }
-            }
+                "partials": {"h1": "http://a.com/h1-partial-catchall", "h2": "http://a.com/h2-partial-catchall"},
+                "completes": {"*": "http://a.com/complete-catchall"},
+            },
         }
-        values = {'fileUrls': fileUrls, 'p': {'OS_FTP': 'os_ftp', 'OS_BOUNCER': 'os_bouncer'}}
+        values = {"fileUrls": fileUrls, "p": {"OS_FTP": "os_ftp", "OS_BOUNCER": "os_bouncer"}}
 
         def side_effects(key, *args):
             return values[key]
@@ -3347,9 +3644,15 @@ class TestUnifiedFileUrlsMixin(unittest.TestCase):
 
     def testGetUrlGetsFromChannel(self):
         updateQuery = {
-            "product": "h", "version": "30.0", "buildID": "10",
-            "buildTarget": "p", "locale": "l", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "30.0",
+            "buildID": "10",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         patchKey = "partials"
@@ -3363,9 +3666,15 @@ class TestUnifiedFileUrlsMixin(unittest.TestCase):
 
     def testGetUrlDoesntFallBackToCatchAll(self):
         updateQuery = {
-            "product": "h", "version": "30.0", "buildID": "10",
-            "buildTarget": "p", "locale": "l", "channel": "c1",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
+            "product": "h",
+            "version": "30.0",
+            "buildID": "10",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
             "force": None,
         }
         patchKey = "partials"
@@ -3377,34 +3686,31 @@ class TestUnifiedFileUrlsMixin(unittest.TestCase):
 
 
 class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):
-
     def setUp(self):
         self.mixin_instance = ProofXMLMixin()
 
     def testGetAdditionalPatchAttributesComplete(self):
         patch = {
-            'hashValue': 'd456a23ff5a6b35146d9edf05ccc983b0b7b6695fdc11e8d4f44a704c63ae69a585c3429bb90fece5a34a59b06f54'
-                         'b1c947178b9038ce6c83a1b6ac8a86f4274',
-            'from': '*',
-            'filesize': 49376124,
-            'binTransInclusionProof': 'foobar'
+            "hashValue": "d456a23ff5a6b35146d9edf05ccc983b0b7b6695fdc11e8d4f44a704c63ae69a585c3429bb90fece5a34a59b06f54" "b1c947178b9038ce6c83a1b6ac8a86f4274",
+            "from": "*",
+            "filesize": 49376124,
+            "binTransInclusionProof": "foobar",
         }
 
-        expected_additional_patch_attributes = {'binTransInclusionProof': 'foobar'}
+        expected_additional_patch_attributes = {"binTransInclusionProof": "foobar"}
         additionalPatchAttributes = self.mixin_instance._getAdditionalPatchAttributes(patch)
 
         self.assertEqual(expected_additional_patch_attributes, additionalPatchAttributes)
 
     def testGetAdditionalPatchAttributesPartial(self):
         patch = {
-            'hashValue': 'dffd728108a176b1aeca390a420200daa9272f246587f81fde41ad3f5c44bf6de17fb7899b4353e5cbaa8528ea389'
-                         '234890221188db5bb58588ad366c2be0676',
-            'from': 'Firefox-54.0b12-build1',
-            'filesize': 28264739,
-            'binTransInclusionProof': 'barfoo'
+            "hashValue": "dffd728108a176b1aeca390a420200daa9272f246587f81fde41ad3f5c44bf6de17fb7899b4353e5cbaa8528ea389" "234890221188db5bb58588ad366c2be0676",
+            "from": "Firefox-54.0b12-build1",
+            "filesize": 28264739,
+            "binTransInclusionProof": "barfoo",
         }
 
-        expected_additional_patch_attributes = {'binTransInclusionProof': 'barfoo'}
+        expected_additional_patch_attributes = {"binTransInclusionProof": "barfoo"}
         additionalPatchAttributes = self.mixin_instance._getAdditionalPatchAttributes(patch)
 
         self.assertEqual(expected_additional_patch_attributes, additionalPatchAttributes)

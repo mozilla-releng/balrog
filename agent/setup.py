@@ -30,10 +30,6 @@ setup(
     tests_require=["pytest"],
     install_requires=requirements,
     packages=find_packages(),
-    entry_points = {
-        "console_scripts": [
-            "balrogagent = balrogagent.cmd:main",
-        ],
-    },
+    entry_points={"console_scripts": ["balrogagent = balrogagent.cmd:main"]},
     include_package_data=True,
 )

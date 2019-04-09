@@ -10,12 +10,8 @@ setup(
     author_email="release+python@mozilla.com",
     url="https://github.com/mozilla/balrog",
     license="MPL-2.0",
-
-    packages=['balrogclient'],
-
-    test_suite='balrogclient.test',
-    install_requires=[
-        'requests',
-    ],
+    packages=["balrogclient"],
+    test_suite="balrogclient.test",
+    install_requires=["requests"],
     include_package_data=True,
 )

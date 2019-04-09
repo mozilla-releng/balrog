@@ -5,7 +5,6 @@ from auslib.test.admin.views.base import ViewTest
 
 
 class TestJsonLogFormatter(ViewTest):
-
     def setUp(self):
         self.logger = logging.getLogger()
         self.orig_handlers = self.logger.handlers
@@ -22,9 +21,9 @@ class TestJsonLogFormatter(ViewTest):
         self.assertTrue(isinstance(self.logger.handlers[0].formatter, JsonLogFormatter))
 
     def testStrictTransportSecurityIsSet(self):
-        ret = self.client.get('/rules')
+        ret = self.client.get("/rules")
         self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
 
     def testContentSecurityPolicyIsSet(self):
-        ret = self.client.get('/rules')
+        ret = self.client.get("/rules")
         self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")

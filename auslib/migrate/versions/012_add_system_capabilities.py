@@ -13,5 +13,5 @@ def upgrade(migrate_engine):
 
 def downgrade(migrate_engine):
     metadata = MetaData(bind=migrate_engine)
-    Table('rules', metadata, autoload=True).c.systemCapabilities.drop()
-    Table('rules_history', metadata, autoload=True).c.systemCapabilities.drop()
+    Table("rules", metadata, autoload=True).c.systemCapabilities.drop()
+    Table("rules_history", metadata, autoload=True).c.systemCapabilities.drop()

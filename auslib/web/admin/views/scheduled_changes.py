@@ -3,12 +3,10 @@ from flask import jsonify
 from six import iteritems
 from sqlalchemy.sql.expression import null
 
-from auslib.web.admin.views.base import (AdminView, requirelogin,
-                                         serialize_signoff_requirements)
+from auslib.web.admin.views.base import AdminView, requirelogin, serialize_signoff_requirements
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
-from auslib.web.admin.views.validators import \
-    is_when_present_and_in_past_validator
+from auslib.web.admin.views.validators import is_when_present_and_in_past_validator
 from auslib.web.common.history import get_input_dict
 
 
@@ -181,8 +179,7 @@ class ScheduledChangeHistoryView(HistoryView):
         # table and the conditions table always keep their data version in sync.
         for r in revisions:
             cond = self.table.conditions.history.select(
-                where=[self.table.conditions.history.sc_id == r["sc_id"],
-                       self.table.conditions.history.data_version == r["data_version"]],
+                where=[self.table.conditions.history.sc_id == r["sc_id"], self.table.conditions.history.data_version == r["data_version"]]
             )
             r.update(cond[0])
 
@@ -200,8 +197,7 @@ class ScheduledChangeHistoryView(HistoryView):
         return _revisions
 
     def _get_filters(self, sc):
-        return [self.history_table.sc_id == sc['sc_id'],
-                self.history_table.data_version != null()]
+        return [self.history_table.sc_id == sc["sc_id"], self.history_table.data_version != null()]
 
     def _get_filters_all(self, obj):
         query = get_input_dict()
@@ -209,24 +205,23 @@ class ScheduledChangeHistoryView(HistoryView):
         where = [getattr(self.history_table, f) == query.get(f) for f in query]
         where.append(self.history_table.data_version != null())
         request = connexion.request
-        if hasattr(self.history_table, 'product' or ' channel'):
-            if request.args.get('product'):
-                where.append(self.history_table.base_product == request.args.get('product'))
-            if request.args.get('channel'):
-                where.append(self.history_table.base_channel == request.args.get('channel'))
-        if request.args.get('timestamp_from'):
-            where.append(self.history_table.timestamp >= int(request.args.get('timestamp_from')))
-        if request.args.get('timestamp_to'):
-            where.append(self.history_table.timestamp <= int(request.args.get('timestamp_to')))
+        if hasattr(self.history_table, "product" or " channel"):
+            if request.args.get("product"):
+                where.append(self.history_table.base_product == request.args.get("product"))
+            if request.args.get("channel"):
+                where.append(self.history_table.base_channel == request.args.get("channel"))
+        if request.args.get("timestamp_from"):
+            where.append(self.history_table.timestamp >= int(request.args.get("timestamp_from")))
+        if request.args.get("timestamp_to"):
+            where.append(self.history_table.timestamp <= int(request.args.get("timestamp_to")))
         return where
 
     def _get_what(self, change, changed_by, transaction):
         # There's a big 'ol assumption here that the primary Scheduled Changes
         # table and the conditions table always keep their data version in sync.
         cond_change = self.table.conditions.history.getChange(
-            data_version=change["data_version"],
-            column_values={"sc_id": change["sc_id"]},
-            transaction=transaction)
+            data_version=change["data_version"], column_values={"sc_id": change["sc_id"]}, transaction=transaction
+        )
         what = dict(
             # One could argue that we should restore scheduled_by to its value from the change,
             # but since the person who is reverting could be different, it's probably best to
@@ -256,7 +251,8 @@ class ScheduledChangeHistoryView(HistoryView):
                 history_filters_callback=self._get_filters,
                 process_revisions_callback=self._process_revisions,
                 revisions_order_by=[self.history_table.timestamp.desc()],
-                obj_not_found_msg='Scheduled change does not exist')
+                obj_not_found_msg="Scheduled change does not exist",
+            )
         except (ValueError, AssertionError) as msg:
             self.log.warning("Bad input: %s", msg)
             return problem(400, "Bad Request", "Error in fetching revisions", ext={"exception": msg})
@@ -268,7 +264,8 @@ class ScheduledChangeHistoryView(HistoryView):
                 history_filters_callback=self._get_filters_all,
                 process_revisions_callback=self._process_revisions,
                 revisions_order_by=[self.history_table.timestamp.desc()],
-                obj_not_found_msg='Scheduled change does not exist')
+                obj_not_found_msg="Scheduled change does not exist",
+            )
         except (ValueError, AssertionError) as msg:
             self.log.warning("Bad input: %s", msg)
             return problem(400, "Bad Request", "Error in fetching revisions", ext={"exception": msg})
@@ -276,11 +273,10 @@ class ScheduledChangeHistoryView(HistoryView):
     def _post(self, sc_id, transaction, changed_by):
         return self.revert_to_revision(
             get_object_callback=lambda: self._get_sc(sc_id),
-            change_field='sc_id',
-            get_what_callback=lambda change: self._get_what(change,
-                                                            changed_by,
-                                                            transaction),
+            change_field="sc_id",
+            get_what_callback=lambda change: self._get_what(change, changed_by, transaction),
             changed_by=changed_by,
-            response_message='Success',
+            response_message="Success",
             transaction=transaction,
-            obj_not_found_msg="given sc_id was not found in the database")
+            obj_not_found_msg="given sc_id was not found in the database",
+        )

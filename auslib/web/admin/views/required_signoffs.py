@@ -10,13 +10,16 @@ from auslib.web.admin.views.base import AdminView, requirelogin
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
-    EnactScheduledChangeView, ScheduledChangeHistoryView, ScheduledChangesView,
-    ScheduledChangeView, SignoffsView)
+    EnactScheduledChangeView,
+    ScheduledChangeHistoryView,
+    ScheduledChangesView,
+    ScheduledChangeView,
+    SignoffsView,
+)
 from auslib.web.common.history import get_input_dict
 
 
 class RequiredSignoffsView(AdminView):
-
     def __init__(self, table, decisionFields):
         self.table = table
         self.decisionFields = decisionFields
@@ -43,7 +46,6 @@ class RequiredSignoffsView(AdminView):
 
 
 class RequiredSignoffsHistoryAPIView(HistoryView):
-
     def __init__(self, table, decisionFields):
         self.decisionFields = decisionFields
         super(RequiredSignoffsHistoryAPIView, self).__init__(table=table)
@@ -53,17 +55,17 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
         where = [getattr(self.table.history, f) == query.get(f) for f in query]
         where.append(self.table.history.data_version != null())
         request = connexion.request
-        if hasattr(self.history_table, 'channel'):
-            if request.args.get('channel'):
-                where.append(self.history_table.channel == request.args.get('channel'))
-        if hasattr(self.history_table, 'product'):
+        if hasattr(self.history_table, "channel"):
+            if request.args.get("channel"):
+                where.append(self.history_table.channel == request.args.get("channel"))
+        if hasattr(self.history_table, "product"):
             where.append(self.history_table.product != null())
-            if request.args.get('product'):
-                where.append(self.history_table.product == request.args.get('product'))
-        if request.args.get('timestamp_from'):
-            where.append(self.history_table.timestamp >= int(request.args.get('timestamp_from')))
-        if request.args.get('timestamp_to'):
-            where.append(self.history_table.timestamp <= int(request.args.get('timestamp_to')))
+            if request.args.get("product"):
+                where.append(self.history_table.product == request.args.get("product"))
+        if request.args.get("timestamp_from"):
+            where.append(self.history_table.timestamp >= int(request.args.get("timestamp_from")))
+        if request.args.get("timestamp_to"):
+            where.append(self.history_table.timestamp <= int(request.args.get("timestamp_to")))
         return where
 
     def get(self, input_dict):
@@ -71,8 +73,8 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
             return problem(404, "Not Found", "Requested Required Signoff does not exist")
 
         try:
-            page = int(connexion.request.args.get('page', 1))
-            limit = int(connexion.request.args.get('limit', 100))
+            page = int(connexion.request.args.get("page", 1))
+            limit = int(connexion.request.args.get("limit", 100))
         except ValueError as msg:
             self.log.warning("Bad input: %s", msg)
             return problem(400, "Bad Request", str(msg))
@@ -85,17 +87,14 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
 
         where = [getattr(self.table.history, f) == input_dict.get(f) for f in self.decisionFields]
         where.append(self.table.history.data_version != null())
-        revisions = self.table.history.select(
-            where=where, limit=limit, offset=offset,
-            order_by=[self.table.history.timestamp.desc()]
-        )
+        revisions = self.table.history.select(where=where, limit=limit, offset=offset, order_by=[self.table.history.timestamp.desc()])
 
         return jsonify(count=total_count, required_signoffs=revisions)
 
     def get_all(self):
         try:
-            page = int(connexion.request.args.get('page', 1))
-            limit = int(connexion.request.args.get('limit', 100))
+            page = int(connexion.request.args.get("page", 1))
+            limit = int(connexion.request.args.get("limit", 100))
         except ValueError as msg:
             self.log.warning("Bad input: %s", msg)
             return problem(400, "Bad Request", str(msg))
@@ -103,10 +102,7 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
 
         where = self._get_filters()
         total_count = self.table.history.count(where=where)
-        revisions = self.table.history.select(
-            where=where, limit=limit, offset=offset,
-            order_by=[self.table.history.timestamp.desc()]
-        )
+        revisions = self.table.history.select(where=where, limit=limit, offset=offset, order_by=[self.table.history.timestamp.desc()])
 
         return jsonify(count=total_count, required_signoffs=revisions)
 
@@ -119,11 +115,12 @@ class ProductRequiredSignoffsView(RequiredSignoffsView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        what = {"product": connexion.request.get_json().get("product"),
-                "channel": connexion.request.get_json().get("channel"),
-                "role": connexion.request.get_json().get("role"),
-                "signoffs_required": int(connexion.request.get_json().get("signoffs_required")),
-                }
+        what = {
+            "product": connexion.request.get_json().get("product"),
+            "channel": connexion.request.get_json().get("channel"),
+            "role": connexion.request.get_json().get("role"),
+            "signoffs_required": int(connexion.request.get_json().get("signoffs_required")),
+        }
         return super(ProductRequiredSignoffsView, self)._post(what, transaction, changed_by)
 
 
@@ -134,9 +131,11 @@ class ProductRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):
         super(ProductRequiredSignoffsHistoryAPIView, self).__init__(dbo.productRequiredSignoffs, ["product", "channel", "role"])
 
     def get(self):
-        input_dict = {'product': connexion.request.args.get('product'),
-                      'role': connexion.request.args.get('role'),
-                      'channel': connexion.request.args.get('channel')}
+        input_dict = {
+            "product": connexion.request.args.get("product"),
+            "role": connexion.request.args.get("role"),
+            "channel": connexion.request.args.get("channel"),
+        }
         return super(ProductRequiredSignoffsHistoryAPIView, self).get(input_dict)
 
 
@@ -149,8 +148,7 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
     @requirelogin
     def _post(self, transaction, changed_by):
         if connexion.request.get_json().get("when", None) is None:
-            return problem(400, "Bad Request", "when cannot be set to null when scheduling a new change "
-                                               "for a Product Required Signoff")
+            return problem(400, "Bad Request", "when cannot be set to null when scheduling a new change " "for a Product Required Signoff")
         change_type = connexion.request.get_json().get("change_type")
 
         what = {}
@@ -178,8 +176,7 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
             else:
                 what["data_version"] = int(what["data_version"])
 
-        return super(ProductRequiredSignoffsScheduledChangesView, self)._post(what, transaction, changed_by,
-                                                                              change_type)
+        return super(ProductRequiredSignoffsScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
 
 
 class ProductRequiredSignoffScheduledChangeView(ScheduledChangeView):
@@ -195,14 +192,14 @@ class ProductRequiredSignoffScheduledChangeView(ScheduledChangeView):
         if sc_rs_product:
             change_type = sc_rs_product[0]["change_type"]
         else:
-            return problem(404, "Not Found", "Unknown sc_id",
-                           ext={"exception": "No scheduled change for product required signoff found for given sc_id"})
+            return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for product required signoff found for given sc_id"})
         what = {}
         for field in connexion.request.get_json():
-            if ((change_type == "insert" and field not in
-                ["when", "product", "channel", "role", "signoffs_required"]) or
-                (change_type == "update" and field not in ["when", "signoffs_required", "data_version"]) or
-                    (change_type == "delete" and field not in ["when", "data_version"])):
+            if (
+                (change_type == "insert" and field not in ["when", "product", "channel", "role", "signoffs_required"])
+                or (change_type == "update" and field not in ["when", "signoffs_required", "data_version"])
+                or (change_type == "delete" and field not in ["when", "data_version"])
+            ):
                 continue
 
             what[field] = connexion.request.get_json()[field]
@@ -213,9 +210,9 @@ class ProductRequiredSignoffScheduledChangeView(ScheduledChangeView):
         if what.get("signoffs_required", None):
             what["signoffs_required"] = int(what["signoffs_required"])
 
-        return super(ProductRequiredSignoffScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
-                                                                            connexion.request.get_json().
-                                                                            get("sc_data_version", None))
+        return super(ProductRequiredSignoffScheduledChangeView, self)._post(
+            sc_id, what, transaction, changed_by, connexion.request.get_json().get("sc_data_version", None)
+        )
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
@@ -259,10 +256,11 @@ class PermissionsRequiredSignoffsView(RequiredSignoffsView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        what = {"product": connexion.request.get_json().get("product"),
-                "role": connexion.request.get_json().get("role"),
-                "signoffs_required": int(connexion.request.get_json().get("signoffs_required")),
-                }
+        what = {
+            "product": connexion.request.get_json().get("product"),
+            "role": connexion.request.get_json().get("role"),
+            "signoffs_required": int(connexion.request.get_json().get("signoffs_required")),
+        }
         return super(PermissionsRequiredSignoffsView, self)._post(what, transaction, changed_by)
 
 
@@ -273,7 +271,7 @@ class PermissionsRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):
         super(PermissionsRequiredSignoffsHistoryAPIView, self).__init__(dbo.permissionsRequiredSignoffs, ["product", "role"])
 
     def get(self):
-        input_dict = {'product': connexion.request.args.get('product'), 'role': connexion.request.args.get('role')}
+        input_dict = {"product": connexion.request.args.get("product"), "role": connexion.request.args.get("role")}
         return super(PermissionsRequiredSignoffsHistoryAPIView, self).get(input_dict)
 
 
@@ -286,8 +284,7 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
     @requirelogin
     def _post(self, transaction, changed_by):
         if connexion.request.get_json().get("when", None) is None:
-            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change "
-                                               "for a Permissions Required Signoff")
+            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permissions Required Signoff")
         change_type = connexion.request.get_json().get("change_type")
 
         what = {}
@@ -315,8 +312,7 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
             else:
                 what["data_version"] = int(what["data_version"])
 
-        return super(PermissionsRequiredSignoffsScheduledChangesView, self)._post(what, transaction, changed_by,
-                                                                                  change_type)
+        return super(PermissionsRequiredSignoffsScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
 
 
 class PermissionsRequiredSignoffScheduledChangeView(ScheduledChangeView):
@@ -328,19 +324,18 @@ class PermissionsRequiredSignoffScheduledChangeView(ScheduledChangeView):
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         # TODO: modify UI and clients to stop sending 'change_type' in request body
-        sc_rs_permission = self.sc_table.select(where={"sc_id": sc_id},
-                                                transaction=transaction, columns=["change_type"])
+        sc_rs_permission = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
         if sc_rs_permission:
             change_type = sc_rs_permission[0]["change_type"]
         else:
-            return problem(404, "Not Found", "Unknown sc_id",
-                           ext={"exception": "No scheduled change for permission required "
-                                             "signoff found for given sc_id"})
+            return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for permission required " "signoff found for given sc_id"})
         what = {}
         for field in connexion.request.get_json():
-            if ((change_type == "insert" and field not in ["when", "product", "role", "signoffs_required"]) or
-                    (change_type == "update" and field not in ["when", "signoffs_required", "data_version"]) or
-                    (change_type == "delete" and field not in ["when", "data_version"])):
+            if (
+                (change_type == "insert" and field not in ["when", "product", "role", "signoffs_required"])
+                or (change_type == "update" and field not in ["when", "signoffs_required", "data_version"])
+                or (change_type == "delete" and field not in ["when", "data_version"])
+            ):
                 continue
             what[field] = connexion.request.get_json()[field]
 
@@ -350,9 +345,9 @@ class PermissionsRequiredSignoffScheduledChangeView(ScheduledChangeView):
         if what.get("signoffs_required", None):
             what["signoffs_required"] = int(what["signoffs_required"])
 
-        return super(PermissionsRequiredSignoffScheduledChangeView, self)._post(sc_id, what, transaction, changed_by,
-                                                                                connexion.request.get_json().
-                                                                                get("sc_data_version", None))
+        return super(PermissionsRequiredSignoffScheduledChangeView, self)._post(
+            sc_id, what, transaction, changed_by, connexion.request.get_json().get("sc_data_version", None)
+        )
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):

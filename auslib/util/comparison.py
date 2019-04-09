@@ -3,12 +3,7 @@ import re
 
 from auslib.util.versions import MozillaVersion
 
-operators = {
-    '>=': operator.ge,
-    '>': operator.gt,
-    '<': operator.lt,
-    '<=': operator.le,
-}
+operators = {">=": operator.ge, ">": operator.gt, "<": operator.lt, "<=": operator.le}
 
 
 def strip_operator(value):
@@ -21,10 +16,10 @@ def has_operator(value):
 
 def get_op(pattern):
     # only alphanumeric characters means no operator
-    if re.match(r'\w+', pattern):
+    if re.match(r"\w+", pattern):
         return operator.eq, pattern
     for op in operators:
-        m = re.match(r'(%s)([\.\w]+)' % op, pattern)
+        m = re.match(r"(%s)([\.\w]+)" % op, pattern)
         if m:
             op, operand = m.groups()
             return operators[op], operand

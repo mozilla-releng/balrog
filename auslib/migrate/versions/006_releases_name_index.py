@@ -7,11 +7,11 @@ from sqlalchemy import Index, MetaData, Table
 
 def upgrade(migrate_engine):
     metadata = MetaData(bind=migrate_engine)
-    t = Table('releases_history', metadata, autoload=True)
-    Index('name', t.c.name).create()
+    t = Table("releases_history", metadata, autoload=True)
+    Index("name", t.c.name).create()
 
 
 def downgrade(migrate_engine):
     metadata = MetaData(bind=migrate_engine)
-    t = Table('releases_history', metadata, autoload=True)
-    Index('name', t.c.name).drop()
+    t = Table("releases_history", metadata, autoload=True)
+    Index("name", t.c.name).drop()

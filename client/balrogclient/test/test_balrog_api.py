@@ -1,4 +1,3 @@
-
 try:
     # Python 2.6 backport with assertDictEqual()
     import unittest2 as unittest
@@ -16,7 +15,8 @@ class TestCsrfTokenExpiry(unittest.TestCase):
 
     def _generate_date_string(self, days_offset=0):
         from datetime import datetime, timedelta
-        return (datetime.now() + timedelta(days=days_offset)).strftime('%Y%m%d%H%M%S')
+
+        return (datetime.now() + timedelta(days=days_offset)).strftime("%Y%m%d%H%M%S")
 
     def test_valid_csrf_token_has_not_expired(self):
         tomorrow = self._generate_date_string(days_offset=1)

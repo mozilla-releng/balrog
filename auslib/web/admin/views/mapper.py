@@ -1,16 +1,32 @@
 from auslib.web.admin.views.csrf import CSRFView
 from auslib.web.admin.views.permissions import (
-    EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView,
-    PermissionScheduledChangeSignoffsView, PermissionScheduledChangesView,
-    PermissionScheduledChangeView, PermissionsView, SpecificPermissionView,
-    SpecificUserView, UserRoleView, UsersView)
+    EnactPermissionScheduledChangeView,
+    PermissionScheduledChangeHistoryView,
+    PermissionScheduledChangeSignoffsView,
+    PermissionScheduledChangesView,
+    PermissionScheduledChangeView,
+    PermissionsView,
+    SpecificPermissionView,
+    SpecificUserView,
+    UserRoleView,
+    UsersView,
+)
 from auslib.web.admin.views.releases import (
-    EnactReleaseScheduledChangeView, ReleaseDiffView, ReleaseFieldView,
-    ReleaseHistoryView, ReleaseReadOnlyView, ReleasesAPIView,
-    ReleaseScheduledChangeHistoryView, ReleaseScheduledChangeSignoffsView,
-    ReleaseScheduledChangesView, ReleaseScheduledChangeView,
-    ScheduledReleaseDiffView, SingleLocaleView, SingleReleaseColumnView,
-    SingleReleaseView)
+    EnactReleaseScheduledChangeView,
+    ReleaseDiffView,
+    ReleaseFieldView,
+    ReleaseHistoryView,
+    ReleaseReadOnlyView,
+    ReleasesAPIView,
+    ReleaseScheduledChangeHistoryView,
+    ReleaseScheduledChangeSignoffsView,
+    ReleaseScheduledChangesView,
+    ReleaseScheduledChangeView,
+    ScheduledReleaseDiffView,
+    SingleLocaleView,
+    SingleReleaseColumnView,
+    SingleReleaseView,
+)
 from auslib.web.admin.views.required_signoffs import (
     EnactPermissionsRequiredSignoffScheduledChangeView,
     EnactProductRequiredSignoffScheduledChangeView,
@@ -24,14 +40,20 @@ from auslib.web.admin.views.required_signoffs import (
     ProductRequiredSignoffScheduledChangeSignoffsView,
     ProductRequiredSignoffScheduledChangeView,
     ProductRequiredSignoffsHistoryAPIView,
-    ProductRequiredSignoffsScheduledChangesView, ProductRequiredSignoffsView)
-from auslib.web.admin.views.rules import (EnactRuleScheduledChangeView,
-                                          RuleHistoryAPIView, RulesAPIView,
-                                          RuleScheduledChangeHistoryView,
-                                          RuleScheduledChangeSignoffsView,
-                                          RuleScheduledChangesView,
-                                          RuleScheduledChangeView,
-                                          SingleRuleColumnView, SingleRuleView)
+    ProductRequiredSignoffsScheduledChangesView,
+    ProductRequiredSignoffsView,
+)
+from auslib.web.admin.views.rules import (
+    EnactRuleScheduledChangeView,
+    RuleHistoryAPIView,
+    RulesAPIView,
+    RuleScheduledChangeHistoryView,
+    RuleScheduledChangeSignoffsView,
+    RuleScheduledChangesView,
+    RuleScheduledChangeView,
+    SingleRuleColumnView,
+    SingleRuleView,
+)
 
 
 def csrf_get():

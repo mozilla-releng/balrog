@@ -6,7 +6,7 @@ from auslib.global_state import dbo
 
 
 def _heartbeat_database_fn(dbo):
-    return dbo.dockerflow.incrementWatchdogValue(changed_by='dockerflow')
+    return dbo.dockerflow.incrementWatchdogValue(changed_by="dockerflow")
 
 
 def heartbeat_response(heartbeat_database_fn):
@@ -33,16 +33,11 @@ def get_version(version_file):
             version_json = f.read()
         return Response(version_json, mimetype="application/json", headers={"Cache-Control": "no-cache"})
     else:
-        return jsonify({
-            "source": "https://github.com/mozilla/balrog",
-            "version": "unknown",
-            "commit": "unknown",
-        })
+        return jsonify({"source": "https://github.com/mozilla/balrog", "version": "unknown", "commit": "unknown"})
 
 
 # Keeping flask dockerflow endpoints here to maintain the admin api compatibility.
-def create_dockerflow_endpoints(app,
-                                heartbeat_database_fn=_heartbeat_database_fn):
+def create_dockerflow_endpoints(app, heartbeat_database_fn=_heartbeat_database_fn):
     """ Wrapper that creates the endpoints required by CloudOps' Dockerflow spec:
     https://github.com/mozilla-services/Dockerflow. This gets used by both the admin and public apps.
     :param heartbeat_database_fn: Function that calls the database when reponding to /__heartbeat__.
@@ -53,6 +48,7 @@ def create_dockerflow_endpoints(app,
     allows us to see if the connection to the database exists, is active, and if the credentials given
     are the correct ones. For more context see bug 1289178.
     """
+
     @app.route("/__heartbeat__")
     def heartbeat():
         return heartbeat_response(heartbeat_database_fn)

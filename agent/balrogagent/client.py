@@ -5,11 +5,7 @@ import time
 
 import aiohttp
 
-default_headers = {
-    "Accept-Encoding": "application/json",
-    "Accept": "application/json",
-    "Content-Type": "application/json",
-}
+default_headers = {"Accept-Encoding": "application/json", "Accept": "application/json", "Content-Type": "application/json"}
 # Refresh the tokens 5 minutes before they expire
 REFRESH_THRESHOLD = 5 * 60
 _token_cache = {}
@@ -26,16 +22,11 @@ async def _get_auth0_token(secrets, loop=None):
         expiration = entry["exp"]
         if expiration - time.time() > REFRESH_THRESHOLD:
             logging.debug("Using cached token")
-            return entry['access_token']
+            return entry["access_token"]
 
     logging.debug("Refreshing, getting new token")
     url = "https://{}/oauth/token".format(secrets["domain"])
-    payload = dict(
-        client_id=secrets["client_id"],
-        client_secret=secrets["client_secret"],
-        audience=secrets["audience"],
-        grant_type='client_credentials',
-    )
+    payload = dict(client_id=secrets["client_id"], client_secret=secrets["client_secret"], audience=secrets["audience"], grant_type="client_credentials")
     async with aiohttp.ClientSession(loop=loop) as client:
         async with client.request("POST", url, json=payload) as resp:
             resp.raise_for_status()
@@ -45,15 +36,14 @@ async def _get_auth0_token(secrets, loop=None):
             # order to guess the expiry.
             _token_cache[cache_key] = response
             _token_cache[cache_key]["exp"] = time.time() + response["expires_in"]
-            return _token_cache[cache_key]['access_token']
+            return _token_cache[cache_key]["access_token"]
 
 
 def get_url(api_root, path):
     return api_root.rstrip("/") + path
 
 
-async def request(api_root, path, auth0_secrets, method="GET", data={},
-                  headers=default_headers, loop=None):
+async def request(api_root, path, auth0_secrets, method="GET", data={}, headers=default_headers, loop=None):
     headers = headers.copy()
     url = get_url(api_root, path)
     csrf_url = get_url(api_root, "/csrf_token")
@@ -64,7 +54,7 @@ async def request(api_root, path, auth0_secrets, method="GET", data={},
     # Aiohttp does not allow cookie from urls that using IP address instead dns name,
     # so if for any reason agent needs point to IP address, the envvar "ALLOW_COOKIE_FROM_IP_URL"
     # should be set. (https://aiohttp.readthedocs.io/en/stable/client_advanced.html#cookie-safety)
-    cookie_jar = aiohttp.CookieJar(unsafe=os.environ.get('ALLOW_COOKIE_FROM_IP_URL', False))
+    cookie_jar = aiohttp.CookieJar(unsafe=os.environ.get("ALLOW_COOKIE_FROM_IP_URL", False))
 
     async with aiohttp.ClientSession(loop=loop, cookie_jar=cookie_jar) as client:
         # CSRF tokens are only required for POST/PUT/DELETE.
@@ -89,4 +79,4 @@ async def request(api_root, path, auth0_secrets, method="GET", data={},
         async with client.request(method, url, data=json.dumps(data), headers=headers) as resp:
             # Raises on 400 code or higher, we can assume things are good if we make it past this.
             resp.raise_for_status()
-            return (await resp.json())
+            return await resp.json()

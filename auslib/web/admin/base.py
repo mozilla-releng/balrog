@@ -24,14 +24,15 @@ log = logging.getLogger(__name__)
 current_dir = path.dirname(__file__)
 web_dir = path.dirname(auslib.web.__file__)
 
-spec = SpecBuilder().add_spec(path.join(current_dir, 'swagger/api.yaml'))\
-                    .add_spec(path.join(web_dir, 'common/swagger/definitions.yml'))\
-                    .add_spec(path.join(web_dir, 'common/swagger/parameters.yml'))\
-                    .add_spec(path.join(web_dir, 'common/swagger/responses.yml'))
+spec = (
+    SpecBuilder()
+    .add_spec(path.join(current_dir, "swagger/api.yaml"))
+    .add_spec(path.join(web_dir, "common/swagger/definitions.yml"))
+    .add_spec(path.join(web_dir, "common/swagger/parameters.yml"))
+    .add_spec(path.join(web_dir, "common/swagger/responses.yml"))
+)
 
-validator_map = {
-    'body': BalrogRequestBodyValidator
-}
+validator_map = {"body": BalrogRequestBodyValidator}
 
 connexion_app = connexion.App(__name__, validator_map=validator_map, debug=False)
 connexion_app.add_api(spec, strict_validation=True)
@@ -77,16 +78,15 @@ def unicode(error):
 
 @app.after_request
 def add_security_headers(response):
-    response.headers['X-Frame-Options'] = 'DENY'
-    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = app.config.get("STRICT_TRANSPORT_SECURITY", "max-age=31536000;")
     if re.match("^/ui/", request.path):
         # This enables swagger-ui to dynamically fetch and
         # load the swagger specification JSON file containing API definition and examples.
-        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
     else:
-        response.headers["Content-Security-Policy"] = \
-            app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
+        response.headers["Content-Security-Policy"] = app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
     return response
 
 

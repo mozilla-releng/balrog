@@ -14,42 +14,42 @@ from auslib.global_state import dbo
 
 try:
     import json
+
     assert json  # to shut pyflakes up
 except Exception:
     import simplejson as json
 
 mydir = os.path.dirname(os.path.abspath(__file__))
 site.addsitedir(os.path.join(mydir, ".."))
-site.addsitedir(os.path.join(mydir, "..", 'vendor/lib/python'))
+site.addsitedir(os.path.join(mydir, "..", "vendor/lib/python"))
 
 
 log = logging.getLogger(__name__)
 
 WHITELISTED_DOMAINS = {
-    'download.mozilla.org': ('Firefox',),
-    'stage-old.mozilla.org': ('Firefox',),
-    'ftp.mozilla.org': ('Firefox',),
-    'stage.mozilla.org': ('Firefox',)
+    "download.mozilla.org": ("Firefox",),
+    "stage-old.mozilla.org": ("Firefox",),
+    "ftp.mozilla.org": ("Firefox",),
+    "stage.mozilla.org": ("Firefox",),
 }
-SPECIAL_FORCE_HOSTS = ('download.mozilla.org',)
+SPECIAL_FORCE_HOSTS = ("download.mozilla.org",)
 
 
 def populateDB(testdir):
     # assuming we're already in the right directory with a db connection
     # read any rules we already have
-    rules = os.path.join(testdir, 'rules.sql')
+    rules = os.path.join(testdir, "rules.sql")
     if os.path.exists(rules):
-        f = open(rules, 'r')
+        f = open(rules, "r")
         for line in f:
-            if line.startswith('#'):
+            if line.startswith("#"):
                 continue
             dbo.engine.execute(line.strip())
     # and add any json blobs we created painstakingly, converting to compact json
-    for f in glob.glob('%s/*.json' % testdir):
-        data = json.load(open(f, 'r'))
-        product = data['name'].split('-')[0]
-        dbo.engine.execute("INSERT INTO releases (name, product, data, data_version) VALUES ('%s', '%s','%s', 1)" %
-                           (data['name'], product, json.dumps(data)))
+    for f in glob.glob("%s/*.json" % testdir):
+        data = json.load(open(f, "r"))
+        product = data["name"].split("-")[0]
+        dbo.engine.execute("INSERT INTO releases (name, product, data, data_version) VALUES ('%s', '%s','%s', 1)" % (data["name"], product, json.dumps(data)))
     # TODO - create a proper importer that walks the snippet store to find hashes ?
 
 
@@ -74,12 +74,12 @@ def getQueryFromPath(snippetPath):
     m = re.match("^(?P<product>.*?)/(?P<version>.*?)/(?P<buildTarget>.*?)/(?P<buildID>.*?)/(?P<locale>.*?)/(?P<channel>.*?)/", snippetPath)
     if m:
         update = m.groupdict()
-        update['osVersion'] = 'foo'
-        update['distribution'] = 'foo'
-        update['distVersion'] = 'foo'
-        update['headerArchitecture'] = 'Intel'
-        update['force'] = False
-        update['name'] = ''
+        update["osVersion"] = "foo"
+        update["distribution"] = "foo"
+        update["distVersion"] = "foo"
+        update["headerArchitecture"] = "Intel"
+        update["force"] = False
+        update["name"] = ""
         return update
     else:
         # raise an error ?
@@ -104,9 +104,9 @@ def walkSnippets(AUS, testPath):
         snipType = os.path.splitext(os.path.basename(f))[0]
 
         # generate the AUS snippets
-        log.debug('test-rules.walkSnippets: %s' % f)
+        log.debug("test-rules.walkSnippets: %s" % f)
         testQuery = getQueryFromPath(f.lstrip(testPath))
-        testQuery['queryVersion'] = 3
+        testQuery["queryVersion"] = 3
         release, update_type = AUS.evaluateRules(testQuery)
         if release:
             balrog_snippets = release.createSnippets(testQuery, update_type, WHITELISTED_DOMAINS, SPECIAL_FORCE_HOSTS)
@@ -115,17 +115,13 @@ def walkSnippets(AUS, testPath):
 
         if snipType in balrog_snippets:
             balrog_snippet = balrog_snippets[snipType]
-            AUS2snippet = open(f, 'r').read()
+            AUS2snippet = open(f, "r").read()
             if AUS2snippet != balrog_snippet:
-                diff = difflib.unified_diff(
-                    AUS2snippet.splitlines(),
-                    balrog_snippet.splitlines(),
-                    lineterm='',
-                    n=20)
+                diff = difflib.unified_diff(AUS2snippet.splitlines(), balrog_snippet.splitlines(), lineterm="", n=20)
                 log.info("FAIL: %s", f)
                 failCount += 1
                 for line in diff:
-                    log.info('DIFF: %s', line)
+                    log.info("DIFF: %s", line)
             else:
                 log.debug("PASS: %s", f)
                 passCount += 1
@@ -148,21 +144,20 @@ def walkSnippets(AUS, testPath):
 
 
 def isValidTestDir(d):
-    if not os.path.exists(os.path.join(d, 'rules.sql')):
+    if not os.path.exists(os.path.join(d, "rules.sql")):
         return False
-    if not os.path.exists(os.path.join(d, 'snippets')):
+    if not os.path.exists(os.path.join(d, "snippets")):
         return False
-    if not glob.glob('%s/*.json' % d):
+    if not glob.glob("%s/*.json" % d):
         return False
     return True
 
 
 if __name__ == "__main__":
     from optparse import OptionParser
+
     parser = OptionParser()
-    parser.set_defaults(
-        testDirs=[]
-    )
+    parser.set_defaults(testDirs=[])
     parser.add_option("-t", "--test-dir", dest="testDirs", action="append")
     parser.add_option("", "--dump-rules", dest="dumprules", action="store_true", help="dump rules to stdout")
     parser.add_option("", "--dump-releases", dest="dumpreleases", action="store_true", help="dump release data to stdout")
@@ -175,7 +170,7 @@ if __name__ == "__main__":
     if options.verbose:
         log_level = logging.DEBUG
 
-    logging.basicConfig(level=log_level, format='%(message)s')
+    logging.basicConfig(level=log_level, format="%(message)s")
 
     testdir = os.path.join(mydir, "..", "aus-data-snapshots")
     if not options.testDirs:
@@ -187,13 +182,13 @@ if __name__ == "__main__":
     for td in options.testDirs:
         log.info("Starting %s", td)
         if options.keepDB:
-            dbPath = os.path.join(td, 'update.db')
+            dbPath = os.path.join(td, "update.db")
             if os.path.exists(dbPath):
                 os.remove(dbPath)
-            log.info('saving db at %s' % dbPath)
-            dbPath = 'sqlite:///%s' % dbPath
+            log.info("saving db at %s" % dbPath)
+            dbPath = "sqlite:///%s" % dbPath
         else:
-            dbPath = 'sqlite:///:memory:'
+            dbPath = "sqlite:///:memory:"
         AUS = AUS_Class()
         dbo.setDb(dbPath)
         dbo.create()
@@ -211,9 +206,8 @@ if __name__ == "__main__":
         if options.dumpreleases:
             log.info("Releases are \n(name, product, data):")
             for release in dbo.releases.getReleases():
-                log.info("(%s, %s, %s, %s " % (release['name'], release['product'],
-                                               json.dumps(release['data'], indent=2)))
+                log.info("(%s, %s, %s, %s " % (release["name"], release["product"], json.dumps(release["data"], indent=2)))
             log.info("-" * 50)
 
-        result = walkSnippets(AUS, os.path.join(td, 'snippets'))
+        result = walkSnippets(AUS, os.path.join(td, "snippets"))
         log.info(result)

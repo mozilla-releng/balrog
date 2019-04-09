@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, MetaData, Table
 
 metadata = MetaData()
 
-dockerflow = Table('dockerflow', metadata, Column('watchdog', Integer, nullable=False))
+dockerflow = Table("dockerflow", metadata, Column("watchdog", Integer, nullable=False))
 
 
 def upgrade(migrate_engine):

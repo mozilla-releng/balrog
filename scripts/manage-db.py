@@ -19,19 +19,21 @@ sys.path.append(path.join(path.dirname(__file__), ".."))
 sys.path.append(path.join(path.dirname(__file__), path.join("..", "vendor", "lib", "python")))
 
 
-
 def cleanup_releases(trans, nightly_age, dryrun=True):
     # This and the subsequent queries use "%%%%%" because we end up going
     # through two levels of Python string formatting. The first is here,
     # and the second happens at a low level of SQLAlchemy when the transaction
     # is being executed.
-    query = """
+    query = (
+        """
 LEFT JOIN rules rules_mapping ON (name=rules_mapping.mapping)
 WHERE name LIKE '%%%%nightly%%%%'
 AND name NOT LIKE '%%%%latest'
 AND rules_mapping.mapping IS NULL
 AND (STR_TO_DATE(RIGHT(name, 14), "%%%%Y%%%%m%%%%d%%%%H%%%%i%%%%S") < NOW() - INTERVAL %s DAY);
-""" % nightly_age
+"""
+        % nightly_age
+    )
     if dryrun:
         todelete = trans.execute("SELECT name FROM releases" + query).fetchall()
         print("Releases rows to be deleted:")
@@ -52,7 +54,8 @@ def cleanup_releases_history(trans, dryrun=True):
             WHERE name LIKE '%%%%latest'
               AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 14 DAY)
             ORDER BY change_id
-            LIMIT %d """ % num_to_delete,
+            LIMIT %d """
+        % num_to_delete,
         nightly="""
             SELECT name, change_id
             FROM releases_history
@@ -60,7 +63,8 @@ def cleanup_releases_history(trans, dryrun=True):
               AND name NOT LIKE '%%%%latest'
               AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 7 DAY)
             ORDER BY change_id
-            LIMIT %d """ % num_to_delete
+            LIMIT %d """
+        % num_to_delete,
     )
 
     total_deleted = 0
@@ -73,12 +77,16 @@ def cleanup_releases_history(trans, dryrun=True):
                 for key, group in itertools.groupby(todelete, lambda x: x[0]):
                     print("  - %s: %s history rows" % (key, len(list(group))))
         else:
-            del_query = """
+            del_query = (
+                """
                 DELETE R.*
                 FROM releases_history R
                 WHERE R.change_id IN (   -- use a subquery to work around mysql limitation
                     SELECT X.change_id   -- of select'ing from the same table as a DML
-                    FROM ( """ + query + ") X)"
+                    FROM ( """
+                + query
+                + ") X)"
+            )
 
             results = trans.execute(del_query)
             if results:
@@ -93,7 +101,7 @@ def chunk_list(list_object, n):
     Yield successive n-sized chunks from list_object.
     """
     for i in xrange(0, len(list_object), n):
-        yield list_object[i:i + n]
+        yield list_object[i : i + n]
 
 
 def mysql_command(host, user, password, db, cmd):
@@ -106,7 +114,7 @@ def mysql_data_only_command(host, user, password, db, cmd):
     return mysql_command(host, user, password, db, "--skip-add-drop-table --no-create-info {}".format(cmd))
 
 
-def extract_active_data(trans, url, dump_location='dump.sql'):
+def extract_active_data(trans, url, dump_location="dump.sql"):
     """
     Stores sqldump data in the specified location. If not specified, stores it in current directory in file dump.sql
     If file already exists it will override that file and not append it.
@@ -130,17 +138,11 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
     # schema version if desired.
     # See https://bugzilla.mozilla.org/show_bug.cgi?id=1376331 for additional
     # background on this.
-    popen("{} > {}".format(
-        mysql_command(host, user, password, db, "--no-data"),
-        dump_location,
-    ))
+    popen("{} > {}".format(mysql_command(host, user, password, db, "--no-data"), dump_location))
 
     # Now extract the data we actually want....
     # We always want all the data from a few tables...
-    popen("{} >> {}".format(
-        mysql_data_only_command(host, user, password, db, "dockerflow rules rules_history migrate_version"),
-        dump_location,
-    ))
+    popen("{} >> {}".format(mysql_data_only_command(host, user, password, db, "dockerflow rules rules_history migrate_version"), dump_location))
 
     # Because Releases are so massive, we only want the actively used ones,
     # and very little Release history. Specifically:
@@ -159,8 +161,8 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
     release_names = set()
     for row in result:
         try:
-            release_names.add(str(row['name']))
-            release_blob = createBlob(row['data'])
+            release_names.add(str(row["name"]))
+            release_blob = createBlob(row["data"])
             release_names.update(release_blob.getReferencedReleases())
         except ValueError:
             continue
@@ -168,22 +170,28 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
         batch_generator = chunk_list(list(release_names), 30)
         for batched_release_list in batch_generator:
             query = ", ".join("'" + names + "'" for names in batched_release_list)
-            popen("{} >> {}".format(
-                mysql_data_only_command(host, user, password, db, 'releases --where="releases.name IN ({})"'.format(query)),
-                dump_location,
-            ))
+            popen("{} >> {}".format(mysql_data_only_command(host, user, password, db, 'releases --where="releases.name IN ({})"'.format(query)), dump_location))
 
-    popen("{} >> {}".format(
-        mysql_data_only_command(host, user, password, db,
-                                "releases_history --where=\"releases_history.name='Firefox-mozilla-central-nightly-latest' ORDER BY timestamp DESC LIMIT 50\""),
-        dump_location,
-    ))
+    popen(
+        "{} >> {}".format(
+            mysql_data_only_command(
+                host,
+                user,
+                password,
+                db,
+                "releases_history --where=\"releases_history.name='Firefox-mozilla-central-nightly-latest' ORDER BY timestamp DESC LIMIT 50\"",
+            ),
+            dump_location,
+        )
+    )
 
     query = "SELECT rules.mapping FROM rules WHERE rules.alias='firefox-release'"
-    popen("{} >> {}".format(
-        mysql_data_only_command(host, user, password, db, 'releases_history --where="name = ({}) ORDER BY timestamp DESC LIMIT 50"'.format(query)),
-        dump_location,
-    ))
+    popen(
+        "{} >> {}".format(
+            mysql_data_only_command(host, user, password, db, 'releases_history --where="name = ({}) ORDER BY timestamp DESC LIMIT 50"'.format(query)),
+            dump_location,
+        )
+    )
 
     # Notably absent from this dump are all Permissions, Roles, and Scheduled
     # Changes tables. Permissions & Roles are excluded to avoid leaking any
@@ -194,11 +202,12 @@ def extract_active_data(trans, url, dump_location='dump.sql'):
 
 
 def _strip_multiple_spaces(string):
-    return ' '.join(string.split())
+    return " ".join(string.split())
 
 
 if __name__ == "__main__":
     from optparse import OptionParser
+
     usage = """%s --db dburi action [options]\n""" % sys.argv[0]
     usage += "Possible actions:\n"
     usage += "  create: Create all the tables required for a new Balrog database\n"
@@ -206,8 +215,10 @@ if __name__ == "__main__":
     usage += "  downgrade: Downgrade an existing balrog table to an older version.\n"
     usage += "  extract: Extracts active data for testing. Enter an extra arg to specify the location and filename for\
             the data to stored in. "
-    usage += "  cleanup: Cleanup old data from a database. Requires an extra arg of maximum age (in days) of nightly releases. " \
-             "Anything older than this will be deleted.\n"
+    usage += (
+        "  cleanup: Cleanup old data from a database. Requires an extra arg of maximum age (in days) of nightly releases. "
+        "Anything older than this will be deleted.\n"
+    )
     usage += "  cleanup-dryrun: Show what would be removed if 'cleanup' is run."
     parser = OptionParser(usage=usage)
     parser.add_option("-d", "--db", dest="db", default=None, help="database to manage, in URI format")
@@ -222,13 +233,13 @@ if __name__ == "__main__":
     action = args[0]
 
     db = AUSDatabase(options.db, mysql_traditional_mode=True)
-    if action == 'create':
+    if action == "create":
         db.create(options.version)
-    elif action == 'upgrade':
+    elif action == "upgrade":
         db.upgrade(options.version)
-    elif action == 'downgrade':
+    elif action == "downgrade":
         db.downgrade(options.version)
-    elif action == 'extract':
+    elif action == "extract":
         with db.begin() as trans:
             if len(args) < 2:
                 extract_active_data(trans, options.db)
