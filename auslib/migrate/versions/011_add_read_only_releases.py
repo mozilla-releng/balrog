@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Boolean, MetaData, Table
+from sqlalchemy import Boolean, Column, MetaData, Table
 
 
 def upgrade(migrate_engine):

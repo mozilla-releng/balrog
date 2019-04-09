@@ -1,6 +1,5 @@
-from sqlalchemy import (
-    Table, Column, Integer, BigInteger, String, Boolean, MetaData)
-
+from sqlalchemy import (BigInteger, Boolean, Column, Integer, MetaData, String,
+                        Table)
 
 metadata = MetaData()
 

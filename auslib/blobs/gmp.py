@@ -1,7 +1,7 @@
 from auslib.AUS import isForbiddenUrl
-from auslib.util.hashes import getHashLen
 from auslib.blobs.base import Blob
 from auslib.errors import BadDataError
+from auslib.util.hashes import getHashLen
 
 
 class GMPBlobV1(Blob):

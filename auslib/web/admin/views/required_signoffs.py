@@ -1,18 +1,17 @@
 import json
-import connexion
 
+import connexion
+from flask import Response, jsonify
 from sqlalchemy.sql.expression import null
 
-from flask import jsonify, Response
-
-from auslib.web.admin.views.base import requirelogin, AdminView
-from auslib.web.admin.views.history import HistoryView
-from auslib.web.admin.views.problem import problem
-from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
-    ScheduledChangeView, EnactScheduledChangeView, SignoffsView, \
-    ScheduledChangeHistoryView
 from auslib.db import SignoffRequiredError
 from auslib.global_state import dbo
+from auslib.web.admin.views.base import AdminView, requirelogin
+from auslib.web.admin.views.history import HistoryView
+from auslib.web.admin.views.problem import problem
+from auslib.web.admin.views.scheduled_changes import (
+    EnactScheduledChangeView, ScheduledChangeHistoryView, ScheduledChangesView,
+    ScheduledChangeView, SignoffsView)
 from auslib.web.common.history import get_input_dict
 
 

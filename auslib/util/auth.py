@@ -1,9 +1,10 @@
 import json
 
-from auth0.v3.authentication import Users as auth0_Users
 import jose.jwt
-from repoze.lru import lru_cache
 import requests
+
+from auth0.v3.authentication import Users as auth0_Users
+from repoze.lru import lru_cache
 
 
 class AuthError(Exception):

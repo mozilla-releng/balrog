@@ -1,6 +1,7 @@
+import json
+
 import aiohttp
 import asynctest
-import json
 from yarl import URL
 
 from .. import client

@@ -1,6 +1,5 @@
 from sqlalchemy import MetaData, Table
 
-
 data_version_nullable_tbls = [
     'permissions_req_signoffs_scheduled_changes_conditions',
     'permissions_scheduled_changes',

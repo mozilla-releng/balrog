@@ -1,10 +1,10 @@
 import json
 import logging
-import six
 import socket
 import sys
 import traceback
 
+import six
 from flask import request
 
 log_format = "%(asctime)s - %(levelname)s - PID: %(process)s - Request: %(requestid)s - %(name)s.%(funcName)s#%(lineno)s: %(message)s"

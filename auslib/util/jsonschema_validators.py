@@ -1,8 +1,9 @@
 import json
-import jsonschema
-from jsonschema.compat import str_types
 import logging
 import operator
+
+import jsonschema
+from jsonschema.compat import str_types
 
 from auslib.util.comparison import get_op, strip_operator
 from auslib.util.versions import MozillaVersion

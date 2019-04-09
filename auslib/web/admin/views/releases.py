@@ -1,25 +1,23 @@
 import difflib
+
+import connexion
 import simplejson as json
 import six
-
-from sqlalchemy.sql.expression import null
-import connexion
-from flask import Response, jsonify, abort
+from flask import Response, abort, jsonify
 from six import integer_types, text_type
+from sqlalchemy.sql.expression import null
 
-from auslib.global_state import dbo
-from auslib.blobs.base import createBlob, BlobValidationError
+from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.db import OutdatedDataError, ReadOnlyError
-from auslib.web.admin.views.base import (
-    requirelogin, AdminView, serialize_signoff_requirements
-)
-from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
-    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView, \
-    SignoffsView
+from auslib.global_state import dbo
+from auslib.web.admin.views.base import (AdminView, requirelogin,
+                                         serialize_signoff_requirements)
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
+from auslib.web.admin.views.scheduled_changes import (
+    EnactScheduledChangeView, ScheduledChangeHistoryView, ScheduledChangesView,
+    ScheduledChangeView, SignoffsView)
 from auslib.web.common.releases import release_list, serialize_releases
-
 
 __all__ = ["SingleReleaseView", "SingleLocaleView"]
 

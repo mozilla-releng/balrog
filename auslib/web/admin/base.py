@@ -1,14 +1,16 @@
-import re
-import connexion
 import logging
-import auslib
-
+import re
 from os import path
+
+import connexion
 from flask import request
 from flask_compress import Compress
+from raven.contrib.flask import Sentry
+
+import auslib
+from auslib.dockerflow import create_dockerflow_endpoints
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import BalrogRequestBodyValidator
-from raven.contrib.flask import Sentry
 from specsynthase.specbuilder import SpecBuilder
 
 try:
@@ -36,7 +38,6 @@ connexion_app.add_api(spec, strict_validation=True)
 app = connexion_app.app
 sentry = Sentry()
 
-from auslib.dockerflow import create_dockerflow_endpoints
 
 create_dockerflow_endpoints(app)
 

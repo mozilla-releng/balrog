@@ -1,13 +1,12 @@
 import logging
-import mock
 import unittest
 
+import mock
 import pytest
 
-from auslib.global_state import dbo
-from auslib.AUS import AUS, SUCCEED, FAIL
+from auslib.AUS import AUS, FAIL, SUCCEED
 from auslib.blobs.base import createBlob
-
+from auslib.global_state import dbo
 
 ENTIRE_RANGE = range(0, 100)
 

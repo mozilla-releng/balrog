@@ -1,7 +1,8 @@
 import connexion
 from flask import Response, jsonify
-from auslib.web.admin.views.problem import problem
+
 from auslib.web.admin.views.base import AdminView
+from auslib.web.admin.views.problem import problem
 
 
 class HistoryView(AdminView):

@@ -1,15 +1,16 @@
-from connexion.decorators.validation import RequestBodyValidator
-from connexion.utils import is_null
-from connexion import problem
 import logging
-import jsonschema
 # to satisfy flake8 with the type hinting
 from typing import AnyStr, Union
-from connexion.lifecycle import ConnexionResponse
 
-from auslib.util.timestamp import getMillisecondTimestamp
+import jsonschema
+from connexion import problem
+from connexion.decorators.validation import RequestBodyValidator
+from connexion.lifecycle import ConnexionResponse
+from connexion.utils import is_null
+
 # To enable shared jsonschema validators
 import auslib.util.jsonschema_validators  # noqa
+from auslib.util.timestamp import getMillisecondTimestamp
 
 logger = logging.getLogger(__name__)
 

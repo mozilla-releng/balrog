@@ -1,10 +1,12 @@
 import logging
 import os
-import six
 
+import six
 from flask_wtf.csrf import CSRFProtect
 
+from auslib.global_state import cache, dbo
 from auslib.log import configure_logging
+from auslib.web.admin.base import app as application
 
 SYSTEM_ACCOUNTS = ["balrogagent", "balrog-ffxbld", "balrog-tbirdbld", "seabld"]
 DOMAIN_WHITELIST = {
@@ -34,8 +36,6 @@ if os.environ.get("LOG_FORMAT") == "plain":
     logging_kwargs["formatter"] = logging.Formatter
 configure_logging(**logging_kwargs)
 
-from auslib.web.admin.base import app as application
-from auslib.global_state import cache, dbo
 
 cache.make_copies = True
 # We explicitly don't want a blob_version cache here because it will cause

@@ -1,7 +1,7 @@
 import mock
 
-from auslib.web.admin.base import app
 from auslib.test.admin.views.base import ViewTest
+from auslib.web.admin.base import app
 
 
 class TestCSRFEndpoint(ViewTest):

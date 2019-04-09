@@ -1,9 +1,9 @@
-from copy import deepcopy
-import mock
 import unittest
+from copy import deepcopy
 
-from hypothesis import given, assume, settings, HealthCheck
 import hypothesis.strategies as st
+import mock
+from hypothesis import HealthCheck, assume, given, settings
 
 from auslib.blobs.base import createBlob, merge_dicts, merge_lists
 from auslib.global_state import cache

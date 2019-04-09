@@ -1,26 +1,28 @@
-import connexion
 import logging
 import re
+from os import path
+
+import connexion
+from connexion import request
+from flask import Response, make_response, send_from_directory
+from raven.contrib.flask import Sentry
+
+import auslib.web
+from auslib.AUS import AUS
+from auslib.errors import BadDataError
+from auslib.web.admin.views.problem import problem
+from specsynthase.specbuilder import SpecBuilder
 
 try:
     import html
 except ImportError:  # pragma: no cover
     import cgi as html
 
-import auslib.web
 
-from os import path
 
-from connexion import request
-from flask import make_response, send_from_directory, Response
 
-from raven.contrib.flask import Sentry
 
-from auslib.AUS import AUS
-from auslib.web.admin.views.problem import problem
-from specsynthase.specbuilder import SpecBuilder
 
-from auslib.errors import BadDataError
 
 log = logging.getLogger(__name__)
 AUS = AUS()

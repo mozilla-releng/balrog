@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
-from calendar import timegm
-from datetime import datetime
-from six.moves.http_client import HTTPSConnection
 import logging
 import os
-from socket import gaierror
 import time
+from calendar import timegm
+from datetime import datetime
+from socket import gaierror
+
+from six.moves.http_client import HTTPSConnection
 
 try:
     from urllib2 import urlopen, HTTPError, URLError

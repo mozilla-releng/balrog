@@ -1,6 +1,6 @@
 import logging
 
-from auslib.log import configure_logging, JsonLogFormatter
+from auslib.log import JsonLogFormatter, configure_logging
 from auslib.test.admin.views.base import ViewTest
 
 

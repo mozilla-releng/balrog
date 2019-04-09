@@ -1,6 +1,5 @@
 # This Python file uses the following encoding: utf-8
 import mock
-
 from six import assertCountEqual
 
 from auslib.global_state import dbo

@@ -2,13 +2,14 @@ import itertools
 
 from six import iteritems
 
-from auslib.AUS import isForbiddenUrl, getFallbackChannel
+from auslib.AUS import getFallbackChannel, isForbiddenUrl
 from auslib.blobs.base import Blob, BlobValidationError
-from auslib.global_state import dbo
 from auslib.errors import BadDataError
-from auslib.util.rulematching import matchChannel, matchVersion
+from auslib.global_state import dbo
 from auslib.util.comparison import has_operator, strip_operator
-from auslib.util.versions import MozillaVersion, decrement_version, increment_version
+from auslib.util.rulematching import matchChannel, matchVersion
+from auslib.util.versions import (MozillaVersion, decrement_version,
+                                  increment_version)
 
 
 class ReleaseBlobBase(Blob):

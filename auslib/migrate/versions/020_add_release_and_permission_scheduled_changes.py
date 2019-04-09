@@ -1,5 +1,5 @@
-from sqlalchemy import Table, Column, Integer, String, MetaData, \
-    BigInteger, Boolean, Text
+from sqlalchemy import (BigInteger, Boolean, Column, Integer, MetaData, String,
+                        Table, Text)
 
 
 def upgrade(migrate_engine):

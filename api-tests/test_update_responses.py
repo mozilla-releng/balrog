@@ -2,6 +2,7 @@ import pytest
 import requests
 from lxml import etree
 
+
 def validate_responses_helper(dtd, urls):
     for url in urls:
         response = requests.get(url)

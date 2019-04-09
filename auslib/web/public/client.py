@@ -1,17 +1,15 @@
+import logging
 import re
 import sys
 from functools import wraps
 
-from connexion import request
-
-from flask import make_response, current_app as app
-
 import six
+from connexion import request
+from flask import current_app as app
+from flask import make_response
 
-from auslib.AUS import AUS, SUCCEED, FAIL
+from auslib.AUS import AUS, FAIL, SUCCEED
 from auslib.global_state import dbo
-
-import logging
 
 try:
     from urllib import unquote

@@ -1,14 +1,14 @@
 import logging
 import os
-import simplejson as json
-from tempfile import mkstemp
 import unittest
+from tempfile import mkstemp
 
 import pytest
+import simplejson as json
 
-from auslib.global_state import dbo, cache
-from auslib.web.admin.base import app
 from auslib.blobs.base import createBlob
+from auslib.global_state import cache, dbo
+from auslib.web.admin.base import app
 
 
 def setUpModule():

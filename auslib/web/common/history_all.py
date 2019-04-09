@@ -1,18 +1,22 @@
 import json
 import logging
-from auslib.global_state import dbo
+
 from connexion import problem, request
 from sqlalchemy.sql.expression import null
-from auslib.web.common.history import HistoryHelper, get_input_dict
-from auslib.web.common.rules import get_rules
-from auslib.web.common.releases import get_releases, process_release_revisions
-from auslib.web.admin.views.permissions import UsersView, PermissionScheduledChangeHistoryView
-from auslib.web.admin.views.rules import RuleScheduledChangeHistoryView
-from auslib.web.admin.views.releases import ReleaseScheduledChangeHistoryView
-from auslib.web.admin.views.required_signoffs import ProductRequiredSignoffsHistoryAPIView, \
-    PermissionsRequiredSignoffsHistoryAPIView, ProductRequiredSignoffScheduledChangeHistoryView, \
-    PermissionsRequiredSignoffScheduledChangeHistoryView
 
+from auslib.global_state import dbo
+from auslib.web.admin.views.permissions import (
+    PermissionScheduledChangeHistoryView, UsersView)
+from auslib.web.admin.views.releases import ReleaseScheduledChangeHistoryView
+from auslib.web.admin.views.required_signoffs import (
+    PermissionsRequiredSignoffScheduledChangeHistoryView,
+    PermissionsRequiredSignoffsHistoryAPIView,
+    ProductRequiredSignoffScheduledChangeHistoryView,
+    ProductRequiredSignoffsHistoryAPIView)
+from auslib.web.admin.views.rules import RuleScheduledChangeHistoryView
+from auslib.web.common.history import HistoryHelper, get_input_dict
+from auslib.web.common.releases import get_releases, process_release_revisions
+from auslib.web.common.rules import get_rules
 
 log = logging.getLogger(__name__)
 

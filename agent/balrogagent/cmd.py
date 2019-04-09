@@ -1,8 +1,8 @@
 import asyncio
 import logging
 import time
-
 from collections import defaultdict
+
 from . import client
 from .changes import get_telemetry_uptake, telemetry_is_ready, time_is_ready
 from .log import configure_logging

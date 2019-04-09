@@ -1,32 +1,35 @@
-from collections import defaultdict
-from copy import copy
 import itertools
-from os import path
+import logging
 import pprint
 import re
-import simplejson as json
 import sys
 import time
+from collections import defaultdict
+from copy import copy
+from os import path
 
-from six import integer_types, iteritems, string_types, reraise, text_type
-
-from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-    create_engine, select, BigInteger, Boolean, join, func
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.sql.expression import null
+import simplejson as json
 import sqlalchemy.types
+from six import integer_types, iteritems, reraise, string_types, text_type
+from sqlalchemy import (BigInteger, Boolean, Column, Integer, MetaData, String,
+                        Table, Text, create_engine, func, join, select)
+from sqlalchemy.exc import SQLAlchemyError
+# A helper that sets sql_mode. This should only be used with MySQL, and
+# lets us put the database in a stricter mode that will disallow things like
+# automatic data truncation.
+# From http://www.enricozini.org/2012/tips/sa-sqlmode-traditional/
+from sqlalchemy.interfaces import PoolListener
+from sqlalchemy.sql.expression import null
 
-import migrate.versioning.schema
 import migrate.versioning.api
-
-from auslib.global_state import cache
+import migrate.versioning.schema
 from auslib.blobs.base import createBlob, merge_dicts
-from auslib.util.rulematching import matchChannel, matchVersion, matchBuildID, \
-    matchMemory, matchSimpleExpression, matchCsv, matchLocale, matchBoolean, \
-    matchRegex
+from auslib.global_state import cache
+from auslib.util.rulematching import (matchBoolean, matchBuildID, matchChannel,
+                                      matchCsv, matchLocale, matchMemory,
+                                      matchRegex, matchSimpleExpression,
+                                      matchVersion)
 from auslib.util.timestamp import getMillisecondTimestamp
-
-import logging
 
 
 def rows_to_dicts(rows):
@@ -2579,11 +2582,6 @@ def make_change_notifier_for_read_only(relayhost, port, username, password, to_a
     return bleet
 
 
-# A helper that sets sql_mode. This should only be used with MySQL, and
-# lets us put the database in a stricter mode that will disallow things like
-# automatic data truncation.
-# From http://www.enricozini.org/2012/tips/sa-sqlmode-traditional/
-from sqlalchemy.interfaces import PoolListener
 
 
 class SetSqlMode(PoolListener):

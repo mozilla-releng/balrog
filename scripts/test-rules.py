@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 
+import difflib
+import glob
+import logging
 import os
 import os.path
-import glob
 import re
-import difflib
-import time
 import site
+import time
+
+from auslib.AUS import AUS as AUS_Class
+from auslib.global_state import dbo
 
 try:
     import json
@@ -18,10 +22,7 @@ mydir = os.path.dirname(os.path.abspath(__file__))
 site.addsitedir(os.path.join(mydir, ".."))
 site.addsitedir(os.path.join(mydir, "..", 'vendor/lib/python'))
 
-from auslib.AUS import AUS as AUS_Class
-from auslib.global_state import dbo
 
-import logging
 log = logging.getLogger(__name__)
 
 WHITELISTED_DOMAINS = {

@@ -1,11 +1,15 @@
 import json
-from flask import Response
+
 from connexion import problem
+from flask import Response
+
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import (
-    requirelogin, handleGeneralExceptions, transactionHandler)
-from auslib.web.admin.views.scheduled_changes import (
-    EnactScheduledChangeView, ScheduledChangeView, ScheduledChangesView, SignoffsView)
+from auslib.web.admin.views.base import (handleGeneralExceptions, requirelogin,
+                                         transactionHandler)
+from auslib.web.admin.views.scheduled_changes import (EnactScheduledChangeView,
+                                                      ScheduledChangesView,
+                                                      ScheduledChangeView,
+                                                      SignoffsView)
 
 
 def get_emergency_shutoff(product, channel):

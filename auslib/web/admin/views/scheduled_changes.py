@@ -1,13 +1,14 @@
 import connexion
-
 from flask import jsonify
 from six import iteritems
 from sqlalchemy.sql.expression import null
 
-from auslib.web.admin.views.base import AdminView, requirelogin, serialize_signoff_requirements
+from auslib.web.admin.views.base import (AdminView, requirelogin,
+                                         serialize_signoff_requirements)
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
-from auslib.web.admin.views.validators import is_when_present_and_in_past_validator
+from auslib.web.admin.views.validators import \
+    is_when_present_and_in_past_validator
 from auslib.web.common.history import get_input_dict
 
 

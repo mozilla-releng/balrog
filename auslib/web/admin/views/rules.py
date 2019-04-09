@@ -1,16 +1,14 @@
 import connexion
-
-from jsonschema.compat import str_types
 from flask import Response, jsonify
-from auslib.web.admin.views.problem import problem
+from jsonschema.compat import str_types
+
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import (
-    requirelogin, AdminView
-)
-from auslib.web.admin.views.scheduled_changes import ScheduledChangesView, \
-    ScheduledChangeView, EnactScheduledChangeView, ScheduledChangeHistoryView,\
-    SignoffsView
+from auslib.web.admin.views.base import AdminView, requirelogin
 from auslib.web.admin.views.history import HistoryView
+from auslib.web.admin.views.problem import problem
+from auslib.web.admin.views.scheduled_changes import (
+    EnactScheduledChangeView, ScheduledChangeHistoryView, ScheduledChangesView,
+    ScheduledChangeView, SignoffsView)
 
 
 def process_rule_form(form_data):

@@ -1,17 +1,18 @@
-import simplejson as json
+import logging
 import operator
 
+import simplejson as json
 from flask_wtf import FlaskForm as Form
 from six import text_type
-from wtforms import StringField, IntegerField, SelectField, BooleanField
-from wtforms.widgets import TextInput, FileInput, HiddenInput
-from wtforms.validators import InputRequired, Optional, NumberRange, Length, Regexp, ValidationError
+from wtforms import BooleanField, IntegerField, SelectField, StringField
+from wtforms.validators import (InputRequired, Length, NumberRange, Optional,
+                                Regexp, ValidationError)
+from wtforms.widgets import FileInput, HiddenInput, TextInput
+
 from auslib.util.comparison import get_op
 from auslib.util.timestamp import getMillisecondTimestamp
 from auslib.util.versions import MozillaVersion
 
-
-import logging
 log = logging.getLogger(__name__)
 
 

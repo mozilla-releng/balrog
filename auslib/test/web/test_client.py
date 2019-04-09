@@ -1,24 +1,21 @@
 # coding: latin-1
 import logging
-import mock
 import os
-from tempfile import mkstemp
 import unittest
+from tempfile import mkstemp
 from xml.dom import minidom
 
+import mock
+import pytest
 from hypothesis import assume, example, given
 from hypothesis.strategies import characters, integers, just, text
 
-import pytest
-
 import auslib.web.public.client as client_api
-from auslib.web.public.client import extract_query_version
-
 from auslib.blobs.base import createBlob
-from auslib.global_state import dbo, cache
-from auslib.web.public.base import app
-
 from auslib.errors import BadDataError
+from auslib.global_state import cache, dbo
+from auslib.web.public.base import app
+from auslib.web.public.client import extract_query_version
 
 
 def setUpModule():

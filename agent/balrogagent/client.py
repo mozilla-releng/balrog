@@ -1,9 +1,9 @@
-import aiohttp
 import json
 import logging
 import os
 import time
 
+import aiohttp
 
 default_headers = {
     "Accept-Encoding": "application/json",

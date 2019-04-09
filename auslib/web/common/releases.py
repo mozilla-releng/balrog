@@ -1,15 +1,15 @@
 import json
 import logging
 
-from six import iteritems
-from auslib.global_state import dbo
 from connexion import problem, request
-from flask import jsonify, Response
+from flask import Response, jsonify
+from six import iteritems
 from sqlalchemy.sql.expression import null
-from auslib.web.common.csrf import get_csrf_headers
-from auslib.web.common.history import (
-    annotateRevisionDifferences, HistoryHelper)
 
+from auslib.global_state import dbo
+from auslib.web.common.csrf import get_csrf_headers
+from auslib.web.common.history import (HistoryHelper,
+                                       annotateRevisionDifferences)
 
 log = logging.getLogger(__name__)
 

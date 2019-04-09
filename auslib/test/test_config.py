@@ -1,6 +1,6 @@
 import os
-from tempfile import mkstemp
 import unittest
+from tempfile import mkstemp
 
 from auslib.config import AUSConfig
 

@@ -1,4 +1,5 @@
 import mock
+
 from auslib.global_state import dbo
 from auslib.test.admin.views.base import ViewTest
 

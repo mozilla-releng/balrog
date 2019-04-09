@@ -1,11 +1,12 @@
 import pytest
 from hypothesis import settings
 
+from auslib.global_state import dbo
+
 # Disable hypothesis testing deadlines
 settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
-from auslib.global_state import dbo
 
 
 @pytest.fixture(scope='session')

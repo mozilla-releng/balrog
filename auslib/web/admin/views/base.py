@@ -1,13 +1,15 @@
+import logging
+
 from flask import current_app as app
 from flask import request
 from flask.views import MethodView
-from auslib.global_state import dbo
-from auslib.web.admin.views.problem import problem
-from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError, \
-    SignoffRequiredError
-import logging
-from auslib.util.auth import verified_userinfo
 
+from auslib.db import (ChangeScheduledError, OutdatedDataError,
+                       PermissionDeniedError, SignoffRequiredError,
+                       UpdateMergeError)
+from auslib.global_state import dbo
+from auslib.util.auth import verified_userinfo
+from auslib.web.admin.views.problem import problem
 
 log = logging.getLogger(__name__)
 

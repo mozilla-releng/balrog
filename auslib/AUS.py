@@ -1,14 +1,15 @@
 import functools
+import logging
 from random import randint
+
+from auslib.global_state import cache, dbo
 
 try:
     from urlparse import urlparse
 except ImportError:  # pragma: no cover
     from urllib.parse import urlparse
 
-import logging
 
-from auslib.global_state import dbo, cache
 
 
 class ForceResult(object):

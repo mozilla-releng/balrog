@@ -1,5 +1,5 @@
-from sqlalchemy import Table, Column, Integer, Text, String, MetaData, \
-    BigInteger
+from sqlalchemy import (BigInteger, Column, Integer, MetaData, String, Table,
+                        Text)
 
 metadata = MetaData()
 

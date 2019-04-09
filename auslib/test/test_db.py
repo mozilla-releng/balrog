@@ -1,33 +1,31 @@
-from copy import deepcopy
 import logging
-import mock
 import os
-from os import path
-import sys
-from tempfile import mkstemp
-import unittest
 import re
-
+import sys
+import unittest
+from copy import deepcopy
 from itertools import chain
+from os import path
+from tempfile import mkstemp
 
+import mock
+import pytest
 from six import assertRaisesRegex
 from six.moves import xrange
-
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, select, String
+from sqlalchemy import (Column, Integer, MetaData, String, Table,
+                        create_engine, select)
 from sqlalchemy.engine.reflection import Inspector
 
-import pytest
-
 import migrate.versioning.api
-
-from auslib.global_state import cache, dbo
-from auslib.db import AUSDatabase, AUSTable, AlreadySetupError, \
-    AUSTransaction, TransactionError, OutdatedDataError, UpdateMergeError, \
-    ReadOnlyError, PermissionDeniedError, ChangeScheduledError, \
-    MismatchedDataVersionError, SignoffsTable, SignoffRequiredError, \
-    verify_signoffs
-from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.blobs.apprelease import ReleaseBlobV1
+from auslib.blobs.base import BlobValidationError, createBlob
+from auslib.db import (AlreadySetupError, AUSDatabase, AUSTable,
+                       AUSTransaction, ChangeScheduledError,
+                       MismatchedDataVersionError, OutdatedDataError,
+                       PermissionDeniedError, ReadOnlyError,
+                       SignoffRequiredError, SignoffsTable, TransactionError,
+                       UpdateMergeError, verify_signoffs)
+from auslib.global_state import cache, dbo
 from migrate.versioning.api import version
 
 
