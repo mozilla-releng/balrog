@@ -1,15 +1,15 @@
-import jsonschema
 import logging
 from os import path
-import simplejson as json
-import yaml
 
+import jsonschema
+import simplejson as json
 from six import string_types, text_type
 
+# To enable shared jsonschema validators
+import auslib.util.jsonschema_validators  # noqa
+import yaml
 from auslib.AUS import isSpecialURL
 from auslib.global_state import cache
-# To enable shared jsonschema validators
-import auslib.util.jsonschema_validators # noqa
 
 
 class BlobValidationError(ValueError):
@@ -23,9 +23,17 @@ def createBlob(data):
     actual blob, taking care to notice the schema"""
     # These imports need to be done here to avoid errors due to circular
     # between this module and specific blob modules like apprelease.
-    from auslib.blobs.apprelease import ReleaseBlobV1, ReleaseBlobV2, ReleaseBlobV3, \
-        ReleaseBlobV4, ReleaseBlobV5, ReleaseBlobV6, ReleaseBlobV8, ReleaseBlobV9, \
-        DesupportBlob
+    from auslib.blobs.apprelease import (
+        ReleaseBlobV1,
+        ReleaseBlobV2,
+        ReleaseBlobV3,
+        ReleaseBlobV4,
+        ReleaseBlobV5,
+        ReleaseBlobV6,
+        ReleaseBlobV8,
+        ReleaseBlobV9,
+        DesupportBlob,
+    )
     from auslib.blobs.gmp import GMPBlobV1
     from auslib.blobs.superblob import SuperBlob
     from auslib.blobs.systemaddons import SystemAddonsBlob
@@ -42,7 +50,7 @@ def createBlob(data):
         50: DesupportBlob,
         1000: GMPBlobV1,
         4000: SuperBlob,
-        5000: SystemAddonsBlob
+        5000: SystemAddonsBlob,
     }
 
     if isinstance(data, string_types):
@@ -91,7 +99,7 @@ def merge_dicts(ancestor, left, right):
             log.warning("Right is: %s", right.get(key))
         key_types = set([type(d.get(key)) for d in dicts])
         key_types.discard(type(None))
-        encoded_str_key = str(text_type(key.encode('ascii', 'replace'), 'utf-8'))
+        encoded_str_key = str(text_type(key.encode("ascii", "replace"), "utf-8"))
         if len(key_types) > 1 and not key_types.issubset([str, text_type]):
             raise ValueError("Cannot merge blobs: type mismatch for '{}'".format(encoded_str_key))
 
@@ -137,7 +145,7 @@ class Blob(dict):
 
     def validate(self, product, whitelistedDomains):
         """Raises a BlobValidationError if the blob is invalid."""
-        self.log.debug('Validating blob %s' % self)
+        self.log.debug("Validating blob %s" % self)
         validator = jsonschema.Draft4Validator(self.getSchema(), format_checker=jsonschema.draft4_format_checker)
         # Normal usage is to use .validate(), but errors raised by it return
         # a massive error message that includes the entire blob, which is way
@@ -189,10 +197,10 @@ class Blob(dict):
 
     def processSpecialForceHosts(self, url, specialForceHosts, force_arg):
         if isSpecialURL(url, specialForceHosts):
-            if '?' in url:
-                url += '&force=' + force_arg.query_value
+            if "?" in url:
+                url += "&force=" + force_arg.query_value
             else:
-                url += '?force=' + force_arg.query_value
+                url += "?force=" + force_arg.query_value
         return url
 
     def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
@@ -218,14 +226,14 @@ class Blob(dict):
         :return: Returns the outer most header. Returns the outer most header
         """
         header = ['<?xml version="1.0"?>']
-        header.append('<updates>')
+        header.append("<updates>")
         return header
 
     def getFooterXML(self):
         """
         :return: Returns the outer most footer. Returns the outer most header
         """
-        footer = '</updates>'
+        footer = "</updates>"
         return footer
 
     def getReferencedReleases(self):

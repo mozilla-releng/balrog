@@ -1,5 +1,5 @@
-from distutils.version import StrictVersion
 import re
+from distutils.version import StrictVersion
 
 from auslib.errors import BadDataError
 
@@ -7,8 +7,12 @@ from auslib.errors import BadDataError
 class PostModernMozillaVersion(StrictVersion):
     """A version class that supports Firefox versions 5.0 and up, which
        may have "a1" but not "b2" tags in them"""
-    version_re = re.compile(r"""^(\d+) \. (\d+) (\. (\d+))?
-                                (a(\d+))?$""", re.VERBOSE)
+
+    version_re = re.compile(
+        r"""^(\d+) \. (\d+) (\. (\d+))?
+                                (a(\d+))?$""",
+        re.VERBOSE,
+    )
 
 
 class ModernMozillaVersion(StrictVersion):
@@ -16,8 +20,12 @@ class ModernMozillaVersion(StrictVersion):
        Instead of just allowing "a" or "b" as prerelease tags, it allows any
        alpha. This allows us to support the once-shipped "3.6.3plugin1" and
        similar versions."""
-    version_re = re.compile(r"""^(\d+) \. (\d+) (\. (\d+))?
-                                ([a-zA-Z]+(\d+))?$""", re.VERBOSE)
+
+    version_re = re.compile(
+        r"""^(\d+) \. (\d+) (\. (\d+))?
+                                ([a-zA-Z]+(\d+))?$""",
+        re.VERBOSE,
+    )
 
 
 class AncientMozillaVersion(StrictVersion):
@@ -27,8 +35,12 @@ class AncientMozillaVersion(StrictVersion):
        similar versions.
        It also supports versions w.x.y.z by transmuting to w.x.z, which
        is useful for versions like 1.5.0.x and 2.0.0.y"""
-    version_re = re.compile(r"""^(\d+) \. (\d+) \. \d (\. (\d+))
-                                ([a-zA-Z]+(\d+))?$""", re.VERBOSE)
+
+    version_re = re.compile(
+        r"""^(\d+) \. (\d+) \. \d (\. (\d+))
+                                ([a-zA-Z]+(\d+))?$""",
+        re.VERBOSE,
+    )
 
 
 def MozillaVersion(version):

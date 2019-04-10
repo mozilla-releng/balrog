@@ -1,8 +1,10 @@
 import logging
 import os
 
+from auslib.global_state import cache, dbo
 from auslib.log import configure_logging
-
+from auslib.web.public.base import app as application
+from auslib.web.public.base import sentry
 
 SPECIAL_FORCE_HOSTS = ["http://download.mozilla.org"]
 DOMAIN_WHITELIST = {
@@ -17,22 +19,20 @@ DOMAIN_WHITELIST = {
     "ftp.mozilla.org": ("SystemAddons",),
 }
 if os.environ.get("STAGING"):
-    DOMAIN_WHITELIST.update({
-        "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-        "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-    })
+    DOMAIN_WHITELIST.update(
+        {
+            "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
+            "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
+        }
+    )
 
 # Logging needs to be set-up before importing the application to make sure that
 # logging done from other modules uses our Logger.
-logging_kwargs = {
-    "level": os.environ.get("LOG_LEVEL", logging.INFO)
-}
+logging_kwargs = {"level": os.environ.get("LOG_LEVEL", logging.INFO)}
 if os.environ.get("LOG_FORMAT") == "plain":
     logging_kwargs["formatter"] = logging.Formatter
 configure_logging(**logging_kwargs)
 
-from auslib.global_state import cache, dbo
-from auslib.web.public.base import app as application, sentry
 
 cache.make_cache("blob", 500, 3600)
 # There's probably no no need to ever expire items in the blob schema cache
@@ -59,9 +59,10 @@ application.config["SPECIAL_FORCE_HOSTS"] = SPECIAL_FORCE_HOSTS
 # the repo itself
 application.config["VERSION_FILE"] = "/app/version.json"
 
-if os.environ.get('SENTRY_DSN'):
-    application.config['SENTRY_DSN'] = os.environ.get('SENTRY_DSN')
+if os.environ.get("SENTRY_DSN"):
+    application.config["SENTRY_DSN"] = os.environ.get("SENTRY_DSN")
     from auslib.web.public.base import sentry
+
     sentry.init_app(application, register_signal=False)
 
 if os.environ.get("CACHE_CONTROL"):

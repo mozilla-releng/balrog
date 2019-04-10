@@ -41,7 +41,7 @@ class TestPublicReleasesAPI(CommonTestBase):
         ret = self.public_client.get("/api/v1/releases/{}".format(release))
         self.assertTrue(ret.status_code, 200)
         got = ret.get_json()
-        self.assertNotIn('X-CSRF-Token', ret.headers)
+        self.assertNotIn("X-CSRF-Token", ret.headers)
         self.assertEqual(got["name"], release)
         self.assertEqual(got["schema_version"], 1)
         self.assertIn("p", got["platforms"])
@@ -62,7 +62,7 @@ class TestPublicReleasesAPI(CommonTestBase):
     def test_get_release_locale(self):
         ret = self.public_client.get("/api/v1/releases/Firefox.55.0a1/builds/p/l")
         self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.headers['X-Data-Version'], '1')
+        self.assertEqual(ret.headers["X-Data-Version"], "1")
         got = ret.get_json()
         self.assertEqual(got["buildID"], "5")
 

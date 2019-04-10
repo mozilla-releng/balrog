@@ -1,7 +1,7 @@
 import unittest
-from six import unichr
 
 import pytest
+from six import unichr
 
 from auslib.global_state import dbo
 from auslib.web.public.base import app
@@ -10,7 +10,7 @@ from auslib.web.public.base import app
 @pytest.mark.usefixtures("current_db_schema")
 class UnicodeTest(unittest.TestCase):
     def setUp(self):
-        dbo.setDb('sqlite:///:memory:')
+        dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
 
@@ -19,7 +19,7 @@ class UnicodeTest(unittest.TestCase):
         # Test an arbitrary number of unicode chars
         cdec = step = 42
         while cdec < 4200:
-            channel = ''.join(unichr(c) for c in range(cdec, cdec + step) if unichr(c).isalpha())
+            channel = "".join(unichr(c) for c in range(cdec, cdec + step) if unichr(c).isalpha())
             cdec += step
             url = url.format(channel)
             ret = self.client.get(url)

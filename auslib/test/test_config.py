@@ -1,16 +1,16 @@
 import os
-from tempfile import mkstemp
 import unittest
+from tempfile import mkstemp
 
 from auslib.config import AUSConfig
 
 
 class TestAUSConfig(unittest.TestCase):
-
     def setUp(self):
         self.config_fd, self.config_file = mkstemp()
         with open(self.config_file, "w+") as f:
-            f.write("""
+            f.write(
+                """
 [database]
 ;Database to be used by AUS applications, in URI format
 dburi=sqlite:///:memory:
@@ -21,7 +21,8 @@ logfile=/foo/bar/baz
 
 [site-specific]
 domain_whitelist=a.com:c|d, boring.com:e
-""")
+"""
+            )
         self.cfg = AUSConfig(self.config_file)
 
     def tearDown(self):
@@ -29,5 +30,5 @@ domain_whitelist=a.com:c|d, boring.com:e
         os.remove(self.config_file)
 
     def testWhitelistDomains(self):
-        expected = {'a.com': ('c', 'd'), 'boring.com': ('e',)}
+        expected = {"a.com": ("c", "d"), "boring.com": ("e",)}
         self.assertEqual(expected, self.cfg.getDomainWhitelist())

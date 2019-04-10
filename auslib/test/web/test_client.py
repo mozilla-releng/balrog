@@ -1,84 +1,61 @@
 # coding: latin-1
 import logging
-import mock
 import os
-from tempfile import mkstemp
 import unittest
+from tempfile import mkstemp
 from xml.dom import minidom
 
+import mock
+import pytest
 from hypothesis import assume, example, given
 from hypothesis.strategies import characters, integers, just, text
 
-import pytest
-
 import auslib.web.public.client as client_api
-from auslib.web.public.client import extract_query_version
-
 from auslib.blobs.base import createBlob
-from auslib.global_state import dbo, cache
-from auslib.web.public.base import app
-
 from auslib.errors import BadDataError
+from auslib.global_state import cache, dbo
+from auslib.web.public.base import app
+from auslib.web.public.client import extract_query_version
 
 
 def setUpModule():
     # Silence SQLAlchemy-Migrate's debugging logger
-    logging.getLogger('migrate').setLevel(logging.CRITICAL)
+    logging.getLogger("migrate").setLevel(logging.CRITICAL)
 
 
 class TestGetSystemCapabilities(unittest.TestCase):
     def testUnprefixedInstructionSetOnly(self):
-        self.assertEqual(
-            client_api.getSystemCapabilities("SSE3"),
-            {"instructionSet": "SSE3", "memory": None, "jaws": None}
-        )
+        self.assertEqual(client_api.getSystemCapabilities("SSE3"), {"instructionSet": "SSE3", "memory": None, "jaws": None})
 
     def testUnprefixedInstructionSetAndMemory(self):
-        self.assertEqual(
-            client_api.getSystemCapabilities("SSE3,8095"),
-            {"instructionSet": "SSE3", "memory": 8095, "jaws": None}
-        )
+        self.assertEqual(client_api.getSystemCapabilities("SSE3,8095"), {"instructionSet": "SSE3", "memory": 8095, "jaws": None})
 
     def testPrefixedInstructionSetAndMemory(self):
-        self.assertEqual(
-            client_api.getSystemCapabilities("ISET:SSE2,MEM:6321"),
-            {"instructionSet": "SSE2", "memory": 6321, "jaws": None}
-        )
+        self.assertEqual(client_api.getSystemCapabilities("ISET:SSE2,MEM:6321"), {"instructionSet": "SSE2", "memory": 6321, "jaws": None})
 
     def testPrefixedInstructionSetMemoryAndJaws(self):
-        self.assertEqual(
-            client_api.getSystemCapabilities("ISET:SSE2,MEM:6321,JAWS:1"),
-            {"instructionSet": "SSE2", "memory": 6321, "jaws": True}
-        )
+        self.assertEqual(client_api.getSystemCapabilities("ISET:SSE2,MEM:6321,JAWS:1"), {"instructionSet": "SSE2", "memory": 6321, "jaws": True})
 
     def testNothingProvided(self):
-        self.assertEqual(
-            client_api.getSystemCapabilities("NA"),
-            {"instructionSet": "NA", "memory": None, "jaws": None}
-        )
+        self.assertEqual(client_api.getSystemCapabilities("NA"), {"instructionSet": "NA", "memory": None, "jaws": None})
 
     def testNonIntegerMemory(self):
         self.assertRaises(ValueError, client_api.getSystemCapabilities, ("ISET:SSE2,MEM:63T1A"))
 
     def testUnknownField(self):
-        self.assertEqual(
-            client_api.getSystemCapabilities("ISET:SSE3,MEM:6721,PROC:Intel"),
-            {"instructionSet": "SSE3", "memory": 6721, "jaws": None}
-        )
+        self.assertEqual(client_api.getSystemCapabilities("ISET:SSE3,MEM:6721,PROC:Intel"), {"instructionSet": "SSE3", "memory": 6721, "jaws": None})
 
 
 @pytest.mark.usefixtures("current_db_schema")
 class ClientTestCommon(unittest.TestCase):
     def assertHttpResponse(self, http_response):
         self.assertEqual(http_response.status_code, 200, http_response.get_data())
-        self.assertEqual(http_response.mimetype, 'text/xml')
+        self.assertEqual(http_response.mimetype, "text/xml")
 
     def assertUpdatesAreEmpty(self, http_reponse):
         self.assertHttpResponse(http_reponse)
         # An empty update contains an <updates> tag with a newline, which is what we're expecting here
-        self.assertEqual(
-            minidom.parseString(http_reponse.get_data()).getElementsByTagName('updates')[0].firstChild.nodeValue, '\n'
-        )
+        self.assertEqual(minidom.parseString(http_reponse.get_data()).getElementsByTagName("updates")[0].firstChild.nodeValue, "\n")
 
     def assertUpdateEqual(self, http_reponse, expected_xml_string):
         self.assertHttpResponse(http_reponse)
@@ -108,27 +85,34 @@ class ClientTestBase(ClientTestCommon):
 
     def setUp(self):
         self.version_fd, self.version_file = mkstemp()
-        app.config['DEBUG'] = True
-        app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
-        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b', 'c', 'e', 'f', 'response-a', 'response-b', 's', 'responseblob-a',
-                                                       'responseblob-b', 'q', 'fallback', 'distTest')}
+        app.config["DEBUG"] = True
+        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
+        app.config["WHITELISTED_DOMAINS"] = {
+            "a.com": ("b", "c", "e", "f", "response-a", "response-b", "s", "responseblob-a", "responseblob-b", "q", "fallback", "distTest")
+        }
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
-            f.write("""
+            f.write(
+                """
 {
   "source":"https://github.com/mozilla/balrog",
   "version":"1.0",
   "commit":"abcdef123456"
 }
-""")
-        dbo.setDb('sqlite:///:memory:')
+"""
+            )
+        dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        dbo.setDomainWhitelist({'a.com': ('b', 'c', 'e', 'distTest')})
+        dbo.setDomainWhitelist({"a.com": ("b", "c", "e", "distTest")})
         self.client = app.test_client()
-        dbo.permissions.t.insert().execute(permission='admin', username='bill', data_version=1)
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='b', update_type='minor', product='b',
-                                     data_version=1, alias="moz-releng")
-        dbo.releases.t.insert().execute(name='b', product='b', data_version=1, data=createBlob("""
+        dbo.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", data_version=1, alias="moz-releng")
+        dbo.releases.t.insert().execute(
+            name="b",
+            product="b",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "b",
     "schema_version": 1,
@@ -159,11 +143,17 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
+"""
+            ),
+        )
 
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='s', update_type='minor', product='s',
-                                     instructionSet="SSE", data_version=1)
-        dbo.releases.t.insert().execute(name='s', product='s', data_version=1, data=createBlob("""
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="s", update_type="minor", product="s", instructionSet="SSE", data_version=1)
+        dbo.releases.t.insert().execute(
+            name="s",
+            product="s",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "s",
     "schema_version": 1,
@@ -186,10 +176,16 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping='q', update_type='minor', product='q',
-                                     fallbackMapping='fallback', data_version=1)
-        dbo.releases.t.insert().execute(name='q', product='q', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping="q", update_type="minor", product="q", fallbackMapping="fallback", data_version=1)
+        dbo.releases.t.insert().execute(
+            name="q",
+            product="q",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "q",
     "schema_version": 1,
@@ -212,8 +208,15 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
-        dbo.releases.t.insert().execute(name='fallback', product='q', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.releases.t.insert().execute(
+            name="fallback",
+            product="q",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "fallback",
     "schema_version": 1,
@@ -236,10 +239,16 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='c', update_type='minor', product='c',
-                                     distribution='default', data_version=1)
-        dbo.releases.t.insert().execute(name='c', product='c', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c", distribution="default", data_version=1)
+        dbo.releases.t.insert().execute(
+            name="c",
+            product="c",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "c",
     "schema_version": 1,
@@ -262,10 +271,24 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='distTest', update_type='minor', product='distTest',
-                                     distribution='mozilla1,mozilla2,mozilla3', data_version=1)
-        dbo.releases.t.insert().execute(name='distTest', product='distTest', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=100,
+            mapping="distTest",
+            update_type="minor",
+            product="distTest",
+            distribution="mozilla1,mozilla2,mozilla3",
+            data_version=1,
+        )
+        dbo.releases.t.insert().execute(
+            name="distTest",
+            product="distTest",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "distTest",
     "schema_version": 1,
@@ -288,11 +311,17 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
+"""
+            ),
+        )
 
-        dbo.rules.t.insert().execute(priority=80, backgroundRate=100, mapping='c2', update_type='minor', product='c',
-                                     data_version=1)
-        dbo.releases.t.insert().execute(name='c2', product='c', data_version=1, data=createBlob("""
+        dbo.rules.t.insert().execute(priority=80, backgroundRate=100, mapping="c2", update_type="minor", product="c", data_version=1)
+        dbo.releases.t.insert().execute(
+            name="c2",
+            product="c",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "c2",
     "schema_version": 1,
@@ -315,9 +344,16 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='d', update_type='minor', product='d', data_version=1)
-        dbo.releases.t.insert().execute(name='d', product='d', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="d", update_type="minor", product="d", data_version=1)
+        dbo.releases.t.insert().execute(
+            name="d",
+            product="d",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "d",
     "schema_version": 1,
@@ -340,10 +376,17 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
+"""
+            ),
+        )
 
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping='e', update_type='minor', product='e', data_version=1)
-        dbo.releases.t.insert().execute(name='e', product='e', data_version=1, data=createBlob("""
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping="e", update_type="minor", product="e", data_version=1)
+        dbo.releases.t.insert().execute(
+            name="e",
+            product="e",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "e",
     "schema_version": 1,
@@ -364,15 +407,23 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
+"""
+            ),
+        )
 
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f",
-                                     channel="a", memory="<=8000", data_version=1)
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f",
-                                     channel="b", memory="9000", data_version=1)
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f",
-                                     channel="c", memory=">10000", data_version=1)
-        dbo.releases.t.insert().execute(name="f", product="f", data_version=1, data=createBlob("""
+        dbo.rules.t.insert().execute(
+            priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f", channel="a", memory="<=8000", data_version=1
+        )
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f", channel="b", memory="9000", data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f", channel="c", memory=">10000", data_version=1
+        )
+        dbo.releases.t.insert().execute(
+            name="f",
+            product="f",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "f",
     "schema_version": 1,
@@ -395,39 +446,55 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
+"""
+            ),
+        )
 
-        dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
-                                     mapping='gmp', update_type='minor',
-                                     product='gmp',
-                                     data_version=1)
-        dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
-                                     mapping='gmp-with-one-response-product', update_type='minor',
-                                     product='gmp-with-one-response-product',
-                                     data_version=1)
-        dbo.rules.t.insert().execute(priority=190, backgroundRate=100,
-                                     mapping='response-a', update_type='minor',
-                                     product='response-a',
-                                     data_version=1)
-        dbo.rules.t.insert().execute(priority=180, backgroundRate=100,
-                                     mapping='response-b', update_type='minor',
-                                     product='response-b', data_version=1)
-        dbo.releases.t.insert().execute(name='gmp-with-one-response-product',
-                                        product='gmp-with-one-response-product', data_version=1, data=createBlob("""
+        dbo.rules.t.insert().execute(priority=200, backgroundRate=100, mapping="gmp", update_type="minor", product="gmp", data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=200,
+            backgroundRate=100,
+            mapping="gmp-with-one-response-product",
+            update_type="minor",
+            product="gmp-with-one-response-product",
+            data_version=1,
+        )
+        dbo.rules.t.insert().execute(priority=190, backgroundRate=100, mapping="response-a", update_type="minor", product="response-a", data_version=1)
+        dbo.rules.t.insert().execute(priority=180, backgroundRate=100, mapping="response-b", update_type="minor", product="response-b", data_version=1)
+        dbo.releases.t.insert().execute(
+            name="gmp-with-one-response-product",
+            product="gmp-with-one-response-product",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "superblob",
     "schema_version": 4000,
     "products": ["response-a"]
 }
-"""))
-        dbo.releases.t.insert().execute(name='gmp', product='gmp', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.releases.t.insert().execute(
+            name="gmp",
+            product="gmp",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "superblob",
     "schema_version": 4000,
     "products": ["response-a", "response-b"]
 }
-"""))
-        dbo.releases.t.insert().execute(name='response-a', product='response-a', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.releases.t.insert().execute(
+            name="response-a",
+            product="response-a",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "response-a",
     "schema_version": 1,
@@ -462,8 +529,15 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
-        dbo.releases.t.insert().execute(name='response-b', product='response-b', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.releases.t.insert().execute(
+            name="response-b",
+            product="response-b",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "response-b",
     "schema_version": 1,
@@ -485,24 +559,34 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
-        dbo.rules.t.insert().execute(priority=180, backgroundRate=100,
-                                     mapping='systemaddons-uninstall', update_type='minor',
-                                     product='systemaddons-uninstall', data_version=1)
-        dbo.releases.t.insert().execute(name='systemaddons-uninstall',
-                                        product='systemaddons-uninstall', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(
+            priority=180, backgroundRate=100, mapping="systemaddons-uninstall", update_type="minor", product="systemaddons-uninstall", data_version=1
+        )
+        dbo.releases.t.insert().execute(
+            name="systemaddons-uninstall",
+            product="systemaddons-uninstall",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "fake",
     "schema_version": 5000,
     "hashFunction": "SHA512",
     "uninstall": true
 }
-"""))
-        dbo.rules.t.insert().execute(priority=180, backgroundRate=100,
-                                     mapping='systemaddons', update_type='minor',
-                                     product='systemaddons', data_version=1)
-        dbo.releases.t.insert().execute(name='systemaddons',
-                                        product='systemaddons', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(priority=180, backgroundRate=100, mapping="systemaddons", update_type="minor", product="systemaddons", data_version=1)
+        dbo.releases.t.insert().execute(
+            name="systemaddons",
+            product="systemaddons",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "fake",
     "schema_version": 5000,
@@ -521,12 +605,24 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
+"""
+            ),
+        )
 
-        dbo.rules.t.insert().execute(priority=1000, backgroundRate=0, mapping='product_that_should_not_be_updated-1.1',
-                                     update_type='minor', product='product_that_should_not_be_updated',
-                                     data_version=1)
-        dbo.releases.t.insert().execute(name='product_that_should_not_be_updated-1.1', product='product_that_should_not_be_updated', data_version=1, data=createBlob("""
+        dbo.rules.t.insert().execute(
+            priority=1000,
+            backgroundRate=0,
+            mapping="product_that_should_not_be_updated-1.1",
+            update_type="minor",
+            product="product_that_should_not_be_updated",
+            data_version=1,
+        )
+        dbo.releases.t.insert().execute(
+            name="product_that_should_not_be_updated-1.1",
+            product="product_that_should_not_be_updated",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "product_that_should_not_be_updated-1.1",
     "schema_version": 1,
@@ -549,12 +645,24 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
+"""
+            ),
+        )
 
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='product_that_should_not_be_updated-2.0',
-                                     update_type='minor', product='product_that_should_not_be_updated',
-                                     data_version=1)
-        dbo.releases.t.insert().execute(name='product_that_should_not_be_updated-2.0', product='product_that_should_not_be_updated', data_version=1, data=createBlob("""
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=100,
+            mapping="product_that_should_not_be_updated-2.0",
+            update_type="minor",
+            product="product_that_should_not_be_updated",
+            data_version=1,
+        )
+        dbo.releases.t.insert().execute(
+            name="product_that_should_not_be_updated-2.0",
+            product="product_that_should_not_be_updated",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "product_that_should_not_be_updated-2.0",
     "schema_version": 1,
@@ -577,32 +685,59 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
-        dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
-                                     mapping='superblobaddon-with-multiple-response-blob', update_type='minor',
-                                     product='superblobaddon-with-multiple-response-blob',
-                                     data_version=1)
-        dbo.rules.t.insert().execute(priority=200, backgroundRate=100,
-                                     mapping='superblobaddon-with-one-response-blob', update_type='minor',
-                                     product='superblobaddon-with-one-response-blob',
-                                     data_version=1)
-        dbo.releases.t.insert().execute(name='superblobaddon-with-one-response-blob',
-                                        product='superblobaddon-with-one-response-blob', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(
+            priority=200,
+            backgroundRate=100,
+            mapping="superblobaddon-with-multiple-response-blob",
+            update_type="minor",
+            product="superblobaddon-with-multiple-response-blob",
+            data_version=1,
+        )
+        dbo.rules.t.insert().execute(
+            priority=200,
+            backgroundRate=100,
+            mapping="superblobaddon-with-one-response-blob",
+            update_type="minor",
+            product="superblobaddon-with-one-response-blob",
+            data_version=1,
+        )
+        dbo.releases.t.insert().execute(
+            name="superblobaddon-with-one-response-blob",
+            product="superblobaddon-with-one-response-blob",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "superblobaddon",
     "schema_version": 4000,
     "blobs": ["responseblob-a"]
 }
-"""))
-        dbo.releases.t.insert().execute(name='superblobaddon-with-multiple-response-blob',
-                                        product='superblobaddon-with-multiple-response-blob', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.releases.t.insert().execute(
+            name="superblobaddon-with-multiple-response-blob",
+            product="superblobaddon-with-multiple-response-blob",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "superblobaddon",
     "schema_version": 4000,
     "blobs": ["responseblob-a", "responseblob-b"]
 }
-"""))
-        dbo.releases.t.insert().execute(name='responseblob-a', product='responseblob-a', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.releases.t.insert().execute(
+            name="responseblob-a",
+            product="responseblob-a",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "responseblob-a",
     "schema_version": 5000,
@@ -643,8 +778,15 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
-        dbo.releases.t.insert().execute(name='responseblob-b', product='responseblob-b', data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.releases.t.insert().execute(
+            name="responseblob-b",
+            product="responseblob-b",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "responseblob-b",
     "schema_version": 5000,
@@ -664,7 +806,9 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""))
+"""
+            ),
+        )
 
     def tearDown(self):
         os.close(self.version_fd)
@@ -672,206 +816,249 @@ class ClientTestBase(ClientTestCommon):
 
 
 class ClientTest(ClientTestBase):
-
     def testGetHeaderArchitectureWindows(self):
-        self.assertEqual(client_api.getHeaderArchitecture('WINNT_x86-msvc', 'Firefox Intel Windows'), 'Intel')
+        self.assertEqual(client_api.getHeaderArchitecture("WINNT_x86-msvc", "Firefox Intel Windows"), "Intel")
 
     def testGetHeaderArchitectureMacIntel(self):
-        self.assertEqual(client_api.getHeaderArchitecture('Darwin_x86-gcc3-u-ppc-i386', 'Firefox Intel Mac'), 'Intel')
+        self.assertEqual(client_api.getHeaderArchitecture("Darwin_x86-gcc3-u-ppc-i386", "Firefox Intel Mac"), "Intel")
 
     def testGetHeaderArchitectureMacPPC(self):
-        self.assertEqual(client_api.getHeaderArchitecture('Darwin_ppc-gcc3-u-ppc-i386', 'Firefox PPC Mac'), 'PPC')
+        self.assertEqual(client_api.getHeaderArchitecture("Darwin_ppc-gcc3-u-ppc-i386", "Firefox PPC Mac"), "PPC")
 
     def testDontUpdateToYourself(self):
-        ret = self.client.get('/update/3/b/1.0/2/p/l/a/a/a/a/update.xml')
+        ret = self.client.get("/update/3/b/1.0/2/p/l/a/a/a/a/update.xml")
         self.assertUpdatesAreEmpty(ret)
 
     def testDontUpdateBackwards(self):
-        ret = self.client.get('/update/3/b/1.0/5/p/l/a/a/a/a/update.xml')
+        ret = self.client.get("/update/3/b/1.0/5/p/l/a/a/a/a/update.xml")
         self.assertUpdatesAreEmpty(ret)
 
     def testDontDecreaseVersion(self):
-        ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
+        ret = self.client.get("/update/3/c/15.0/1/p/l/a/a/default/a/update.xml")
         self.assertUpdatesAreEmpty(ret)
 
     def testVersion1Get(self):
         ret = self.client.get("/update/1/b/1.0/1/p/l/a/update.xml")
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testVersion2Get(self):
-        ret = self.client.get('/update/2/b/1.0/0/p/l/a/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/2/b/1.0/0/p/l/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testVersion2GetIgnoresRuleWithDistribution(self):
-        ret = self.client.get('/update/2/c/10.0/1/p/l/a/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/2/c/10.0/1/p/l/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="15.0" extensionVersion="15.0" buildID="51">
         <patch type="complete" URL="http://a.com/x" hashFunction="sha512" hashValue="53" size="52"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testVersion3Get(self):
-        ret = self.client.get('/update/3/a/1.0/1/a/a/a/a/a/a/update.xml')
+        ret = self.client.get("/update/3/a/1.0/1/a/a/a/a/a/a/update.xml")
         self.assertUpdatesAreEmpty(ret)
 
     def testVersion3GetWithUpdate(self):
-        ret = self.client.get('/update/3/b/1.0/1/p/l/a/a/a/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/3/b/1.0/1/p/l/a/a/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testVersion3GetWithDistribution(self):
-        ret = self.client.get('/update/3/c/1.0/1/p/l/a/a/default/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/3/c/1.0/1/p/l/a/a/default/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="10.0" extensionVersion="10.0" buildID="11">
         <patch type="complete" URL="http://a.com/y" hashFunction="sha512" hashValue="13" size="12"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testVersion4GetWithDistribution(self):
-        ret = self.client.get('/update/4/c/1.0/1/p/l/a/a/default/a/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/4/c/1.0/1/p/l/a/a/default/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="10.0" extensionVersion="10.0" buildID="11">
         <patch type="complete" URL="http://a.com/y" hashFunction="sha512" hashValue="13" size="12"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testVersion6GetWithDistribution(self):
-        ret = self.client.get('/update/6/c/1.0/1/p/l/a/a/SSE/default/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/6/c/1.0/1/p/l/a/a/SSE/default/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="10.0" extensionVersion="10.0" buildID="11">
         <patch type="complete" URL="http://a.com/y" hashFunction="sha512" hashValue="13" size="12"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testVersion6GetWithDistributionInList(self):
-        ret = self.client.get('/update/6/distTest/1.0/1/p/l/a/a/SSE/mozilla2/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/6/distTest/1.0/1/p/l/a/a/SSE/mozilla2/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="10.0" extensionVersion="10.0" buildID="11">
         <patch type="complete" URL="http://a.com/distTest" hashFunction="sha512" hashValue="13" size="12"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testVersion6GetWithDistributionNotInList(self):
-        ret = self.client.get('/update/6/distTest/1.0/1/p/l/a/a/SSE/notinlist/a/update.xml')
+        ret = self.client.get("/update/6/distTest/1.0/1/p/l/a/a/SSE/notinlist/a/update.xml")
         self.assertUpdatesAreEmpty(ret)
 
     def testVersion6GetNotMatchSubstringDistribution(self):
-        ret = self.client.get('/update/6/distTest/1.0/1/p/l/a/a/SSE/zilla/a/update.xml')
+        ret = self.client.get("/update/6/distTest/1.0/1/p/l/a/a/SSE/zilla/a/update.xml")
         self.assertUpdatesAreEmpty(ret)
 
     def testVersion6GetDoesntMatchWrongDistribution(self):
-        ret = self.client.get('/update/6/c/1.0/1/p/l/a/a/SSE/a/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/6/c/1.0/1/p/l/a/a/SSE/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="15.0" extensionVersion="15.0" buildID="51">
         <patch type="complete" URL="http://a.com/x" hashFunction="sha512" hashValue="53" size="52"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testVersion4Get(self):
-        ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testVersion6GetWithInstructionSetMatch(self):
-        ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="5">
         <patch type="complete" URL="http://a.com/s" hashFunction="sha512" hashValue="5" size="5"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testVersion6GetWithLessThanEqualToMemory(self):
-        ret = self.client.get('/update/6/f/1.0/1/p/l/a/a/ISET:SSE3,MEM:8000/a/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/6/f/1.0/1/p/l/a/a/ISET:SSE3,MEM:8000/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="35">
         <patch type="complete" URL="http://a.com/f" hashFunction="sha512" hashValue="34" size="33"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testVersion6GetWithExactMemory(self):
-        ret = self.client.get('/update/6/f/1.0/1/p/l/b/a/ISET:SSE3,MEM:9000/a/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/6/f/1.0/1/p/l/b/a/ISET:SSE3,MEM:9000/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="35">
         <patch type="complete" URL="http://a.com/f" hashFunction="sha512" hashValue="34" size="33"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testVersion6GetWithGreaterThanMemory(self):
-        ret = self.client.get('/update/6/f/1.0/1/p/l/c/a/ISET:SSE3,MEM:11000/a/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/6/f/1.0/1/p/l/c/a/ISET:SSE3,MEM:11000/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="35">
         <patch type="complete" URL="http://a.com/f" hashFunction="sha512" hashValue="34" size="33"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testVersion6GetWithFallbackMapping(self):
-        ret = self.client.get('/update/6/q/1.0/1/p/l/a/a/a/a/1/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/6/q/1.0/1/p/l/a/a/a/a/1/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="5">
         <patch type="complete" URL="http://a.com/fallback" hashFunction="sha512" hashValue="5" size="5"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testShouldNotServeUpdateForOldVersion(self):
-        ret = self.client.get('/update/6/q/2.0/1/p/l/a/a/a/a/1/update.xml')
+        ret = self.client.get("/update/6/q/2.0/1/p/l/a/a/a/a/1/update.xml")
         self.assertUpdatesAreEmpty(ret)
 
     def testVersion6GetWithoutInstructionSetMatch(self):
-        ret = self.client.get('/update/6/s/1.0/1/p/l/a/a/SSE2/a/a/update.xml')
+        ret = self.client.get("/update/6/s/1.0/1/p/l/a/a/SSE2/a/a/update.xml")
         self.assertUpdatesAreEmpty(ret)
 
     def testGetURLNotInWhitelist(self):
-        ret = self.client.get('/update/3/d/20.0/1/p/l/a/a/a/a/update.xml')
+        ret = self.client.get("/update/3/d/20.0/1/p/l/a/a/a/a/update.xml")
         self.assertHttpResponse(ret)
-        self.assertEqual(minidom.parseString(ret.get_data()).getElementsByTagName('updates')[0].firstChild.nodeValue,
-                         '\n    ')
+        self.assertEqual(minidom.parseString(ret.get_data()).getElementsByTagName("updates")[0].firstChild.nodeValue, "\n    ")
 
     def testEmptySnippetMissingExtv(self):
-        ret = self.client.get('/update/3/e/20.0/1/p/l/a/a/a/a/update.xml')
+        ret = self.client.get("/update/3/e/20.0/1/p/l/a/a/a/a/update.xml")
         self.assertUpdatesAreEmpty(ret)
 
     def testUnicodeAcceptedInURLFields(self):
@@ -910,70 +1097,76 @@ class ClientTest(ClientTestBase):
             self.assertEqual(ret.status_code, 200)
 
     def testRobotsExists(self):
-        ret = self.client.get('/robots.txt')
+        ret = self.client.get("/robots.txt")
         self.assertEqual(ret.status_code, 200)
-        self.assertEqual(ret.mimetype, 'text/plain')
-        self.assertTrue('User-agent' in ret.get_data(as_text=True))
+        self.assertEqual(ret.mimetype, "text/plain")
+        self.assertTrue("User-agent" in ret.get_data(as_text=True))
 
     def testContributeJsonExists(self):
-        ret = self.client.get('/contribute.json')
+        ret = self.client.get("/contribute.json")
         self.assertEqual(ret.status_code, 200)
         self.assertTrue(ret.get_json())
-        self.assertEqual(ret.mimetype, 'application/json')
+        self.assertEqual(ret.mimetype, "application/json")
 
     def testBadAvastURLsFromBug1125231(self):
         # Some versions of Avast have a bug in them that prepends "x86 "
         # to the locale. We need to make sure we handle this case correctly
         # so that these people can keep up to date.
-        ret = self.client.get('/update/4/b/1.0/1/p/x86 l/a/a/a/a/1/update.xml')
+        ret = self.client.get("/update/4/b/1.0/1/p/x86 l/a/a/a/a/1/update.xml")
         self.assertHttpResponse(ret)
         # Compare the Avast-style URL to the non-messed up equivalent. They
         # should get the same update XML.
-        ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+        ret2 = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
         self.assertHttpResponse(ret2)
         self.assertEqual(ret.get_data(), ret2.get_data())
 
     def testFixForBug1125231DoesntBreakXhLocale(self):
-        ret = self.client.get('/update/4/b/1.0/1/p/xh/a/a/a/a/1/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/4/b/1.0/1/p/xh/a/a/a/a/1/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/x" hashFunction="sha512" hashValue="6" size="5"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testAvastURLsWithBadQueryArgs(self):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1%3Favast=1")
         self.assertHttpResponse(ret)
-        ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1')
+        ret2 = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1")
         self.assertHttpResponse(ret2)
         self.assertEqual(ret.get_data(), ret2.get_data())
 
     def testAvastURLsWithUnescapedBadQueryArgs(self):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1?avast=1")
         self.assertHttpResponse(ret)
-        ret2 = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1')
+        ret2 = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1")
         self.assertHttpResponse(ret2)
         self.assertEqual(ret.get_data(), ret2.get_data())
 
     def testAvastURLsWithGoodQueryArgs(self):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1&avast=1")
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z?force=1" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
-""")
+""",
+        )
 
-    @given(text(alphabet=characters(blacklist_categories=('Cs', 'Po')), max_size=128))
-    @example('')
+    @given(text(alphabet=characters(blacklist_categories=("Cs", "Po")), max_size=128))
+    @example("")
     @example('1" name="Firefox 54.0" isOSUpdate="false" installDate="1498012260998')
-    @example('1)')
+    @example("1)")
     @example('"|sleep 7 #')
     def testForceParamWithBadInputs(self, x):
-        assume(x != '1')
+        assume(x != "1")
         force_output = """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
@@ -985,68 +1178,88 @@ class ClientTest(ClientTestBase):
         self.assertUpdateEqual(ret, force_output)
 
     def testDeprecatedEsrVersionStyleGetsUpdates(self):
-        ret = self.client.get('/update/3/b/1.0esrpre/1/p/l/a/a/a/a/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/3/b/1.0esrpre/1/p/l/a/a/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testGetWithResponseProducts(self):
-        ret = self.client.get('/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <addons>
         <patch type="complete" URL="http://a.com/public" hashFunction="sha512" hashValue="23" size="22"/>
         <patch type="complete" URL="http://a.com/b" hashFunction="sha512" hashValue="23" size="27777777"/>
     </addons>
 </updates>
-""")
+""",
+        )
 
     def testGetWithResponseProductsWithAbsentRule(self):
-        ret = self.client.get('/update/4/gmp/1.0/1/q/l/a/a/a/a/1/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/4/gmp/1.0/1/q/l/a/a/a/a/1/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <addons>
         <patch type="complete" URL="http://a.com/public-q" hashFunction="sha512" hashValue="23" size="22"/>
     </addons>
 </updates>
-""")
+""",
+        )
 
     def testGetWithResponseProductsWithOneRule(self):
-        ret = self.client.get('/update/4/gmp-with-one-response-product/1.0/1/q/l/a/a/a/a/1/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/4/gmp-with-one-response-product/1.0/1/q/l/a/a/a/a/1/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <addons>
         <patch type="complete" URL="http://a.com/public-q" hashFunction="sha512" hashValue="23" size="22"/>
     </addons>
 </updates>
-""")
+""",
+        )
 
     def testSystemAddonsBlobWithUninstall(self):
-        ret = self.client.get('/update/4/systemaddons-uninstall/1.0/1/z/p/a/b/c/d/1/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/4/systemaddons-uninstall/1.0/1/z/p/a/b/c/d/1/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <addons>
     </addons>
 </updates>
-""")
+""",
+        )
 
     def testSystemAddonsBlobWithoutUninstall(self):
-        ret = self.client.get('/update/4/systemaddons/1.0/1/z/p/a/b/c/d/1/update.xml')
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        ret = self.client.get("/update/4/systemaddons/1.0/1/z/p/a/b/c/d/1/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
 
 
 </updates>
-""")
+""",
+        )
 
     def testSuperBlobAddOnMultipleUpdates(self):
-        ret = self.client.get('/update/3/superblobaddon-with-multiple-response-blob/1.0/1/p/l/a/a/a/a/update.xml')
+        ret = self.client.get("/update/3/superblobaddon-with-multiple-response-blob/1.0/1/p/l/a/a/a/a/update.xml")
         # update / 3 / gg / 3 / 1 / p / l / a / a / a / a / update.xml?force = 0
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <addons>
         <addon id="c" URL="http://a.com/e" hashFunction="SHA512" hashValue="3" size="2" version="1"/>
@@ -1054,35 +1267,39 @@ class ClientTest(ClientTestBase):
         <addon id="b" URL="http://a.com/b" hashFunction="sha512" hashValue="23" size="27" version="1"/>
     </addons>
 </updates>
-""")
+""",
+        )
 
     def testSuperBlobAddOnOneUpdates(self):
-        ret = self.client.get('/update/3/superblobaddon-with-one-response-blob/1.0/1/p/l/a/a/a/a/update.xml')
+        ret = self.client.get("/update/3/superblobaddon-with-one-response-blob/1.0/1/p/l/a/a/a/a/update.xml")
         # update / 3 / gg / 3 / 1 / p / l / a / a / a / a / update.xml?force = 0
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <addons>
         <addon id="c" URL="http://a.com/e" hashFunction="SHA512" hashValue="3" size="2" version="1"/>
         <addon id="d" URL="http://a.com/c" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
     </addons>
 </updates>
-""")
+""",
+        )
 
     def testUpdateBackgroundRateSetTo0(self):
-        ret = self.client.get('/update/3/product_that_should_not_be_updated/1.0/1/p/l/a/a/a/a/update.xml')
+        ret = self.client.get("/update/3/product_that_should_not_be_updated/1.0/1/p/l/a/a/a/a/update.xml")
         self.assertUpdatesAreEmpty(ret)
 
-    @given(just('x'))
-    @example(invalid_version='1x')
-    @example(invalid_version='x1')
+    @given(just("x"))
+    @example(invalid_version="1x")
+    @example(invalid_version="x1")
     def testUpdateInvalidQueryVersion(self, invalid_version):
-        query_version = extract_query_version('/update/{}/a/b/c/update.xml'.format(invalid_version))
+        query_version = extract_query_version("/update/{}/a/b/c/update.xml".format(invalid_version))
         self.assertEqual(query_version, 0)
 
     @given(integers(min_value=1, max_value=100))
     @example(qv=1)
     def testUpdateQueryVersion(self, qv):
-        query_version = extract_query_version('/update/{}/a/b/c/update.xml'.format(qv))
+        query_version = extract_query_version("/update/{}/a/b/c/update.xml".format(qv))
         self.assertEqual(query_version, qv)
 
     # TODO: switch to text() after https://bugzilla.mozilla.org/show_bug.cgi?id=1387049 is ready
@@ -1152,9 +1369,13 @@ class ClientTestMig64(ClientTestCommon):
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
         dbo.setDomainWhitelist({"a.com": ("a", "b", "c")})
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a",
-                                     data_version=1)
-        dbo.releases.t.insert().execute(name="a", product="a", data_version=1, data=createBlob("""
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a", data_version=1)
+        dbo.releases.t.insert().execute(
+            name="a",
+            product="a",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "a",
     "schema_version": 1,
@@ -1177,10 +1398,16 @@ class ClientTestMig64(ClientTestCommon):
         }
     }
 }
-"""))
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b",
-                                     mig64=True, data_version=1)
-        dbo.releases.t.insert().execute(name="b", product="b", data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", mig64=True, data_version=1)
+        dbo.releases.t.insert().execute(
+            name="b",
+            product="b",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "b",
     "schema_version": 1,
@@ -1203,10 +1430,16 @@ class ClientTestMig64(ClientTestCommon):
         }
     }
 }
-"""))
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c",
-                                     mig64=False, data_version=1)
-        dbo.releases.t.insert().execute(name="c", product="c", data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c", mig64=False, data_version=1)
+        dbo.releases.t.insert().execute(
+            name="c",
+            product="c",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "c",
     "schema_version": 1,
@@ -1229,7 +1462,9 @@ class ClientTestMig64(ClientTestCommon):
         }
     }
 }
-"""))
+"""
+            ),
+        )
 
     def testRuleFalseQueryNull(self):
         ret = self.client.get("/update/3/c/1.0/2/p/l/a/a/a/a/update.xml")
@@ -1245,33 +1480,42 @@ class ClientTestMig64(ClientTestCommon):
 
     def testRuleTrueQueryTrue(self):
         ret = self.client.get("/update/3/b/1.0/2/p/l/a/a/a/a/update.xml?mig64=1")
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="2.0" extensionVersion="2.0" buildID="12">
         <patch type="complete" URL="http://a.com/z1" hashFunction="sha512" hashValue="14" size="13"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testRuleNullQueryNull(self):
         ret = self.client.get("/update/3/a/1.0/1/p/l/a/a/a/a/update.xml")
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testRuleNullQueryTrue(self):
         ret = self.client.get("/update/3/a/1.0/1/p/l/a/a/a/a/update.xml?mig64=1")
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
-""")
+""",
+        )
 
 
 class ClientTestJaws(ClientTestCommon):
@@ -1297,9 +1541,13 @@ class ClientTestJaws(ClientTestCommon):
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
         dbo.setDomainWhitelist({"a.com": ("a", "b", "c")})
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a",
-                                     data_version=1)
-        dbo.releases.t.insert().execute(name="a", product="a", data_version=1, data=createBlob("""
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a", data_version=1)
+        dbo.releases.t.insert().execute(
+            name="a",
+            product="a",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "a",
     "schema_version": 1,
@@ -1322,10 +1570,16 @@ class ClientTestJaws(ClientTestCommon):
         }
     }
 }
-"""))
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b",
-                                     jaws=True, data_version=1)
-        dbo.releases.t.insert().execute(name="b", product="b", data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", jaws=True, data_version=1)
+        dbo.releases.t.insert().execute(
+            name="b",
+            product="b",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "b",
     "schema_version": 1,
@@ -1348,10 +1602,16 @@ class ClientTestJaws(ClientTestCommon):
         }
     }
 }
-"""))
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c",
-                                     jaws=False, data_version=1)
-        dbo.releases.t.insert().execute(name="c", product="c", data_version=1, data=createBlob("""
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c", jaws=False, data_version=1)
+        dbo.releases.t.insert().execute(
+            name="c",
+            product="c",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "c",
     "schema_version": 1,
@@ -1374,7 +1634,9 @@ class ClientTestJaws(ClientTestCommon):
         }
     }
 }
-"""))
+"""
+            ),
+        )
 
     def testRuleFalseQueryNull(self):
         ret = self.client.get("/update/6/c/1.0/2/p/l/a/a/a/a/a/update.xml")
@@ -1386,13 +1648,16 @@ class ClientTestJaws(ClientTestCommon):
 
     def testRuleFalseQueryFalse(self):
         ret = self.client.get("/update/6/c/1.0/2/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:0/a/a/update.xml")
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="3.0" extensionVersion="3.0" buildID="22">
         <patch type="complete" URL="http://a.com/z2" hashFunction="sha512" hashValue="24" size="23"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testRuleTrueQueryNull(self):
         ret = self.client.get("/update/6/b/1.0/2/p/l/a/a/a/a/a/update.xml")
@@ -1400,13 +1665,16 @@ class ClientTestJaws(ClientTestCommon):
 
     def testRuleTrueQueryTrue(self):
         ret = self.client.get("/update/6/b/1.0/2/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:1/a/a/update.xml")
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="2.0" extensionVersion="2.0" buildID="12">
         <patch type="complete" URL="http://a.com/z1" hashFunction="sha512" hashValue="14" size="13"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testRuleTrueQueryFalse(self):
         ret = self.client.get("/update/6/b/1.0/2/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:0/a/a/update.xml")
@@ -1414,33 +1682,42 @@ class ClientTestJaws(ClientTestCommon):
 
     def testRuleNullQueryNull(self):
         ret = self.client.get("/update/6/a/1.0/1/p/l/a/a/a/a/a/update.xml")
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testRuleNullQueryTrue(self):
         ret = self.client.get("/update/6/a/1.0/1/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:1/a/a/update.xml")
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
-""")
+""",
+        )
 
     def testRuleNullQueryFalse(self):
         ret = self.client.get("/update/6/a/1.0/1/p/l/a/a/ISET:SSE3,MEM:8096,JAWS:0/a/a/update.xml")
-        self.assertUpdateEqual(ret, """<?xml version="1.0"?>
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
 </updates>
-""")
+""",
+        )
 
 
 class ClientTestEmergencyShutoff(ClientTestBase):
@@ -1456,25 +1733,23 @@ class ClientTestEmergencyShutoff(ClientTestBase):
         cache.reset()
 
     def testShutoffUpdates(self):
-        update_query = '/update/3/b/1.0/1/p/l/a/a/a/a/update.xml'
+        update_query = "/update/3/b/1.0/1/p/l/a/a/a/a/update.xml"
         ret = self.client.get(update_query)
         self.assertUpdateEqual(ret, self.update_xml)
 
-        dbo.emergencyShutoffs.t.insert().execute(
-            product='b', channel='a', data_version=1)
+        dbo.emergencyShutoffs.t.insert().execute(product="b", channel="a", data_version=1)
 
         ret = self.client.get(update_query)
         self.assertUpdatesAreEmpty(ret)
 
     def testShutoffUpdatesCache(self):
         # Create the updates_disabled cache for this test
-        cache.make_cache('updates_disabled', 10, 100)
-        update_query = '/update/3/b/1.0/1/p/l/a/a/a/a/update.xml'
+        cache.make_cache("updates_disabled", 10, 100)
+        update_query = "/update/3/b/1.0/1/p/l/a/a/a/a/update.xml"
         ret = self.client.get(update_query)
         self.assertUpdateEqual(ret, self.update_xml)
 
-        dbo.emergencyShutoffs.t.insert().execute(
-            product='b', channel='a', data_version=1)
+        dbo.emergencyShutoffs.t.insert().execute(product="b", channel="a", data_version=1)
 
         # We should actually get the same update here since the disabled
         # updates check has been cached
@@ -1482,12 +1757,11 @@ class ClientTestEmergencyShutoff(ClientTestBase):
         self.assertUpdateEqual(ret, self.update_xml)
 
     def testShutoffUpdatesFallbackChannel(self):
-        update_query = '/update/3/b/1.0/1/p/l/a-cck-foo/a/a/a/update.xml'
+        update_query = "/update/3/b/1.0/1/p/l/a-cck-foo/a/a/a/update.xml"
         ret = self.client.get(update_query)
         self.assertUpdateEqual(ret, self.update_xml)
 
-        dbo.emergencyShutoffs.t.insert().execute(
-            product='b', channel='a', data_version=1)
+        dbo.emergencyShutoffs.t.insert().execute(product="b", channel="a", data_version=1)
 
         ret = self.client.get(update_query)
         self.assertUpdatesAreEmpty(ret)
@@ -1499,130 +1773,130 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
        error handlers works!"""
 
     def setUp(self):
-        app.config['DEBUG'] = True
+        app.config["DEBUG"] = True
         app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a",)}
-        dbo.setDb('sqlite:///:memory:')
+        dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
 
     def testCacheControlIsSet(self):
-        ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
+        ret = self.client.get("/update/3/c/15.0/1/p/l/a/a/default/a/update.xml")
         self.assertEqual(ret.headers.get("Cache-Control"), "public, max-age=90")
 
     def testCacheControlIsNotSetFor404(self):
-        ret = self.client.get('/whizzybang')
+        ret = self.client.get("/whizzybang")
         self.assertEqual(ret.headers.get("Cache-Control"), None)
 
     def testContentSecurityPolicyIsSet(self):
-        ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
+        ret = self.client.get("/update/3/c/15.0/1/p/l/a/a/default/a/update.xml")
         self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
 
     def testContentSecurityPolicyIsSetFor404(self):
-        ret = self.client.get('/whizzybang')
+        ret = self.client.get("/whizzybang")
         self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
 
     def testContentSecurityPolicyIsSetFor400(self):
-        with mock.patch('auslib.web.public.client.get_update_blob') as m:
-            m.side_effect = BadDataError('I break!')
-            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+        with mock.patch("auslib.web.public.client.get_update_blob") as m:
+            m.side_effect = BadDataError("I break!")
+            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
 
     def testContentSecurityPolicyIsSetFor500(self):
-        with mock.patch('auslib.web.public.client.get_update_blob') as m:
-            m.side_effect = Exception('I break!')
-            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+        with mock.patch("auslib.web.public.client.get_update_blob") as m:
+            m.side_effect = Exception("I break!")
+            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
 
     def testStrictTransportSecurityIsSet(self):
-        ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
+        ret = self.client.get("/update/3/c/15.0/1/p/l/a/a/default/a/update.xml")
         self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
 
     def testStrictTransportSecurityIsSetFor404(self):
-        ret = self.client.get('/whizzybang')
+        ret = self.client.get("/whizzybang")
         self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
 
     def testStrictTransportSecurityIsSetFor400(self):
-        with mock.patch('auslib.web.public.client.get_update_blob') as m:
-            m.side_effect = BadDataError('I break!')
-            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+        with mock.patch("auslib.web.public.client.get_update_blob") as m:
+            m.side_effect = BadDataError("I break!")
+            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
 
     def testStrictTransportSecurityIsSetFor500(self):
-        with mock.patch('auslib.web.public.client.get_update_blob') as m:
-            m.side_effect = Exception('I break!')
-            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+        with mock.patch("auslib.web.public.client.get_update_blob") as m:
+            m.side_effect = Exception("I break!")
+            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.headers.get("Strict-Transport-Security"), "max-age=31536000;")
 
     def testXContentTypeOptionsIsSet(self):
-        ret = self.client.get('/update/3/c/15.0/1/p/l/a/a/default/a/update.xml')
+        ret = self.client.get("/update/3/c/15.0/1/p/l/a/a/default/a/update.xml")
         self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
 
     def testXContentTypeOptionsIsSetFor404(self):
-        ret = self.client.get('/whizzybang')
+        ret = self.client.get("/whizzybang")
         self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
 
     def testXContentTypeOptionsIsSetFor400(self):
-        with mock.patch('auslib.web.public.client.get_update_blob') as m:
-            m.side_effect = BadDataError('I break!')
-            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+        with mock.patch("auslib.web.public.client.get_update_blob") as m:
+            m.side_effect = BadDataError("I break!")
+            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
 
     def testXContentTypeOptionsIsSetFor500(self):
-        with mock.patch('auslib.web.public.client.get_update_blob') as m:
-            m.side_effect = Exception('I break!')
-            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+        with mock.patch("auslib.web.public.client.get_update_blob") as m:
+            m.side_effect = Exception("I break!")
+            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.headers.get("X-Content-Type-Options"), "nosniff")
 
     def testEmptySnippetOn404(self):
-        ret = self.client.get('/update/whizzybang')
+        ret = self.client.get("/update/whizzybang")
         self.assertUpdatesAreEmpty(ret)
 
-    @given(just('/whizzybang'))
-    @example(path='/')
-    @example(path='/api/v1')
-    @example(path='/api/v1/releases/')
-    @example(path='/api/v1/rules/')
+    @given(just("/whizzybang"))
+    @example(path="/")
+    @example(path="/api/v1")
+    @example(path="/api/v1/releases/")
+    @example(path="/api/v1/rules/")
     def test404ResponseForNonUpdateEndpoint(self, path):
         ret = self.client.get(path)
         self.assertEqual(ret.status_code, 404)
 
     def testErrorMessageOn500(self):
-        with mock.patch('auslib.web.public.client.getQueryFromURL') as m:
-            m.side_effect = Exception('I break!')
-            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+        with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
+            m.side_effect = Exception("I break!")
+            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual('I break!', ret.get_data(as_text=True))
+            self.assertEqual("I break!", ret.get_data(as_text=True))
 
     def testErrorMessageOn500withSimpleArgs(self):
-        with mock.patch('auslib.web.public.client.getQueryFromURL') as m:
-            m.side_effect = Exception('I break!')
+        with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
+            m.side_effect = Exception("I break!")
             m.side_effect.args = ("one", "two", "three")
-            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual('one two three', ret.get_data(as_text=True))
+            self.assertEqual("one two three", ret.get_data(as_text=True))
 
     def testErrorMessageOn500withComplexArgs(self):
-        with mock.patch('auslib.web.public.client.getQueryFromURL') as m:
-            m.side_effect = Exception('I break!')
+        with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
+            m.side_effect = Exception("I break!")
             m.side_effect.args = ("one", ("two", "three"))
-            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
             self.assertEqual("one ('two', 'three')", ret.get_data(as_text=True))
 
     def testEscapedOutputOn500(self):
-        with mock.patch('auslib.web.public.client.getQueryFromURL') as m:
-            m.side_effect = Exception('50.1.0zibj5<img src%3da onerror%3dalert(document.domain)>')
-            ret = self.client.get('/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml')
+        with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
+            m.side_effect = Exception("50.1.0zibj5<img src%3da onerror%3dalert(document.domain)>")
+            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual('50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt;', ret.get_data(as_text=True))
+            self.assertEqual("50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt;", ret.get_data(as_text=True))
 
     def testEscapedOutputOn400(self):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
-            m.side_effect = BadDataError('Version number 50.1.0zibj5<img src%3da onerror%3dalert(document.domain)> is invalid.')
+            m.side_effect = BadDataError("Version number 50.1.0zibj5<img src%3da onerror%3dalert(document.domain)> is invalid.")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             error_message = ret.get_data(as_text=True)
             self.assertEqual(ret.status_code, 400, error_message)
@@ -1644,21 +1918,25 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
             self.assertTrue(sentry.captureException.called)
-            self.assertEqual('exterminate!', ret.get_data(as_text=True))
+            self.assertEqual("exterminate!", ret.get_data(as_text=True))
 
     def testNonSubstitutedUrlVariablesReturnEmptyUpdate(self):
-        request1 = '/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml'
-        request2 = '/update/2/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/update.xml'
-        request3 = '/update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/' \
-            'update.xml'
-        request4 = '/update/4/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/' \
-            '%MOZ_VERSION%/update.xml'
-        request5 = '/update/5/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/' \
-            '%IMEI%/update.xml'
-        request6 = '/update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/' \
-            '%DISTRIBUTION_VERSION%/update.xml'
+        request1 = "/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml"
+        request2 = "/update/2/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/update.xml"
+        request3 = "/update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/" "update.xml"
+        request4 = (
+            "/update/4/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/"
+            "%MOZ_VERSION%/update.xml"
+        )
+        request5 = (
+            "/update/5/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/" "%IMEI%/update.xml"
+        )
+        request6 = (
+            "/update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/"
+            "%DISTRIBUTION_VERSION%/update.xml"
+        )
 
-        with mock.patch('auslib.web.public.client') as mock_cr_view:
+        with mock.patch("auslib.web.public.client") as mock_cr_view:
             for request in [request1, request2, request3, request4, request5, request6]:
                 ret = self.client.get(request)
                 self.assertUpdatesAreEmpty(ret)
@@ -1688,16 +1966,22 @@ class ClientTestCompactXML(ClientTestCommon):
 
     def setUp(self):
         self.version_fd, self.version_file = mkstemp()
-        app.config['DEBUG'] = True
-        app.config['SPECIAL_FORCE_HOSTS'] = ('http://a.com',)
-        app.config['WHITELISTED_DOMAINS'] = {'a.com': ('b',)}
-        dbo.setDb('sqlite:///:memory:')
+        app.config["DEBUG"] = True
+        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
+        app.config["WHITELISTED_DOMAINS"] = {"a.com": ("b",)}
+        dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        dbo.setDomainWhitelist({'a.com': ('b',)})
+        dbo.setDomainWhitelist({"a.com": ("b",)})
         self.client = app.test_client()
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping='Firefox-mozilla-central-nightly-latest',
-                                     update_type='minor', product='b', data_version=1)
-        dbo.releases.t.insert().execute(name='Firefox-mozilla-central-nightly-latest', product='b', data_version=1, data=createBlob("""
+        dbo.rules.t.insert().execute(
+            priority=90, backgroundRate=100, mapping="Firefox-mozilla-central-nightly-latest", update_type="minor", product="b", data_version=1
+        )
+        dbo.releases.t.insert().execute(
+            name="Firefox-mozilla-central-nightly-latest",
+            product="b",
+            data_version=1,
+            data=createBlob(
+                """
 {
     "name": "Firefox-mozilla-central-nightly-latest",
     "schema_version": 1,
@@ -1720,18 +2004,26 @@ class ClientTestCompactXML(ClientTestCommon):
         }
     }
 }
-"""))
+"""
+            ),
+        )
 
     def testGoodNightly(self):
-        ret = self.client.get('/update/6/b/1.0/20181212121212/p/l/a/a/a/a/a/update.xml')
-        self.assertUpdateTextEqual(ret, u"""<?xml version="1.0"?>
+        ret = self.client.get("/update/6/b/1.0/20181212121212/p/l/a/a/a/a/a/update.xml")
+        self.assertUpdateTextEqual(
+            ret,
+            """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="30000101000000">
         <patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/>
     </update>
-</updates>""")
+</updates>""",
+        )
 
     def testBrokenNightly(self):
-        ret = self.client.get('/update/6/b/1.0/20190103220533/p/l/a/a/a/a/a/update.xml')
-        self.assertUpdateTextEqual(ret, u'<?xml version="1.0"?><updates><update type="minor" version="1.0" extensionVersion="1.0" buildID="30000101000000">'
-                                        u'<patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/></update></updates>')
+        ret = self.client.get("/update/6/b/1.0/20190103220533/p/l/a/a/a/a/a/update.xml")
+        self.assertUpdateTextEqual(
+            ret,
+            '<?xml version="1.0"?><updates><update type="minor" version="1.0" extensionVersion="1.0" buildID="30000101000000">'
+            '<patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/></update></updates>',
+        )

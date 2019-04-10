@@ -20,11 +20,10 @@ class SystemAddonsBlob(Blob):
     def getResolvedPlatform(self, addon, platform):
         platforms = self.get("addons", {}).get(addon, {}).get("platforms", {})
         if platform in platforms:
-            return self.get('addons', {}).get(addon, {}).get('platforms', {}).get(platform, {}).get('alias', platform)
+            return self.get("addons", {}).get(addon, {}).get("platforms", {}).get(platform, {}).get("alias", platform)
         if "default" in platforms:
             return "default"
-        raise BadDataError("No platform '%s' or default in addon '%s'",
-                           platform, addon)
+        raise BadDataError("No platform '%s' or default in addon '%s'", platform, addon)
 
     def getPlatformData(self, addon, platform):
         platform = self.getResolvedPlatform(addon, platform)
@@ -56,7 +55,7 @@ class SystemAddonsBlob(Blob):
     # them in SystemAddon blobs, similar to GMP.
     def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         # In case we have an uninstall blob, we won't have the addons section
-        if self.get('addons') is None:
+        if self.get("addons") is None:
             return []
         buildTarget = updateQuery["buildTarget"]
 
@@ -68,21 +67,22 @@ class SystemAddonsBlob(Blob):
             url = platformData["fileUrl"]
             if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
                 continue
-            addonXML.append('        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>' %
-                            (addon, url, self["hashFunction"], platformData["hashValue"],
-                             platformData["filesize"], addonInfo["version"]))
+            addonXML.append(
+                '        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>'
+                % (addon, url, self["hashFunction"], platformData["hashValue"], platformData["filesize"], addonInfo["version"])
+            )
 
         return addonXML
 
     def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         if self.get("uninstall", False) or self.hasUpdates(updateQuery, whitelistedDomains):
-            return '    <addons>'
+            return "    <addons>"
         else:
             return ""
 
     def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         if self.get("uninstall", False) or self.hasUpdates(updateQuery, whitelistedDomains):
-            return '    </addons>'
+            return "    </addons>"
         else:
             return ""
 
@@ -90,9 +90,9 @@ class SystemAddonsBlob(Blob):
         """Returns True if the blob contains any file URLs that contain a
            domain that we're not allowed to serve updates to."""
 
-        for addon in self.get('addons', {}).values():
-            for platform in addon.get('platforms', {}).values():
-                if 'fileUrl' in platform:
+        for addon in self.get("addons", {}).values():
+            for platform in addon.get("platforms", {}).values():
+                if "fileUrl" in platform:
                     if isForbiddenUrl(platform["fileUrl"], product, whitelistedDomains):
                         return True
 

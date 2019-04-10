@@ -1,15 +1,17 @@
-from connexion.decorators.validation import RequestBodyValidator
-from connexion.utils import is_null
-from connexion import problem
 import logging
-import jsonschema
+
 # to satisfy flake8 with the type hinting
 from typing import AnyStr, Union
-from connexion.lifecycle import ConnexionResponse
 
-from auslib.util.timestamp import getMillisecondTimestamp
+import jsonschema
+from connexion import problem
+from connexion.decorators.validation import RequestBodyValidator
+from connexion.lifecycle import ConnexionResponse
+from connexion.utils import is_null
+
 # To enable shared jsonschema validators
 import auslib.util.jsonschema_validators  # noqa
+from auslib.util.timestamp import getMillisecondTimestamp
 
 logger = logging.getLogger(__name__)
 
@@ -23,18 +25,17 @@ class BalrogRequestBodyValidator(RequestBodyValidator):
             self.validator.validate(data)
         except jsonschema.ValidationError as exception:
             # Add field name to the error response
-            exception_field = ''
+            exception_field = ""
             for i in exception.path:
-                exception_field = i + ': '
+                exception_field = i + ": "
             if exception.__cause__ is not None:
-                exception_message = exception.__cause__.message + ' ' + exception_field + exception.message
+                exception_message = exception.__cause__.message + " " + exception_field + exception.message
             else:
                 exception_message = exception_field + exception.message
             # Some exceptions could contain unicode characters - if we don't replace them
             # we could end up with a UnicodeEncodeError.
-            logger.error("{url} validation error: {error}".
-                         format(url=url, error=exception_message.encode("utf-8", "replace")))
-            return problem(400, 'Bad Request', exception_message)
+            logger.error("{url} validation error: {error}".format(url=url, error=exception_message.encode("utf-8", "replace")))
+            return problem(400, "Bad Request", exception_message)
 
         return None
 

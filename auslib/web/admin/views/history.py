@@ -1,7 +1,8 @@
 import connexion
 from flask import Response, jsonify
-from auslib.web.admin.views.problem import problem
+
 from auslib.web.admin.views.base import AdminView
+from auslib.web.admin.views.problem import problem
 
 
 class HistoryView(AdminView):
@@ -17,13 +18,15 @@ class HistoryView(AdminView):
         self.history_table = table.history
         super(HistoryView, self).__init__(*args, **kwargs)
 
-    def get_revisions(self,
-                      get_object_callback,
-                      history_filters_callback,
-                      revisions_order_by,
-                      process_revisions_callback=None,
-                      obj_not_found_msg='Requested object does not exist',
-                      response_key='revisions'):
+    def get_revisions(
+        self,
+        get_object_callback,
+        history_filters_callback,
+        revisions_order_by,
+        process_revisions_callback=None,
+        obj_not_found_msg="Requested object does not exist",
+        response_key="revisions",
+    ):
         """Get revisions for Releases, Rules or ScheduledChanges.
         Uses callable parameters to handle specific AUS object data.
 
@@ -47,8 +50,8 @@ class HistoryView(AdminView):
         @param response_key: Dictionary key to wrap returned revisions.
         @type response_key: string
         """
-        page = int(connexion.request.args.get('page', 1))
-        limit = int(connexion.request.args.get('limit', 10))
+        page = int(connexion.request.args.get("page", 1))
+        limit = int(connexion.request.args.get("limit", 10))
 
         obj = get_object_callback()
         if not obj:
@@ -59,28 +62,26 @@ class HistoryView(AdminView):
         filters = history_filters_callback(obj)
         total_count = self.history_table.count(where=filters)
 
-        revisions = self.history_table.select(
-            where=filters,
-            limit=limit,
-            offset=offset,
-            order_by=revisions_order_by)
+        revisions = self.history_table.select(where=filters, limit=limit, offset=offset, order_by=revisions_order_by)
 
         if process_revisions_callback:
             revisions = process_revisions_callback(revisions)
 
         ret = dict()
         ret[response_key] = revisions
-        ret['count'] = total_count
+        ret["count"] = total_count
         return jsonify(ret)
 
-    def revert_to_revision(self,
-                           get_object_callback,
-                           change_field,
-                           get_what_callback,
-                           changed_by,
-                           response_message,
-                           transaction,
-                           obj_not_found_msg='Requested object does not exist'):
+    def revert_to_revision(
+        self,
+        get_object_callback,
+        change_field,
+        get_what_callback,
+        changed_by,
+        response_message,
+        transaction,
+        obj_not_found_msg="Requested object does not exist",
+    ):
         """Reverts Releases, Rules or ScheduledChanges object to specific
         revision. Uses callable parameters to handle specific AUS object data.
 
@@ -112,7 +113,7 @@ class HistoryView(AdminView):
 
         change_id = None
         if connexion.request.get_json():
-            change_id = connexion.request.get_json().get('change_id')
+            change_id = connexion.request.get_json().get("change_id")
         if not change_id:
             self.log.warning("Bad input: %s", "no change_id")
             return problem(400, "Bad Request", "No change_id passed in the request body")
@@ -126,15 +127,11 @@ class HistoryView(AdminView):
         if change[change_field] != obj_id:
             return problem(400, "Bad Request", "Bad {0} passed in the request".format(change_field))
 
-        old_data_version = obj['data_version']
+        old_data_version = obj["data_version"]
 
         # now we're going to make a new insert based on this
         what = get_what_callback(change)
         where = dict()
         where[change_field] = obj_id
-        self.table.update(changed_by=changed_by,
-                          where=where,
-                          what=what,
-                          old_data_version=old_data_version,
-                          transaction=transaction)
+        self.table.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
         return Response(response_message)

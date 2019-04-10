@@ -1,9 +1,10 @@
 import json
 
-from auth0.v3.authentication import Users as auth0_Users
 import jose.jwt
-from repoze.lru import lru_cache
 import requests
+
+from auth0.v3.authentication import Users as auth0_Users
+from repoze.lru import lru_cache
 
 
 class AuthError(Exception):
@@ -25,28 +26,16 @@ def get_access_token(request):
     # we will remove support for X-Authorization.
     auth = request.headers.get("Authorization", None)
     if not auth:
-        raise AuthError({
-            "code": "authorization_header_missing",
-            "description": "Authorization header is expected"
-        }, 401)
+        raise AuthError({"code": "authorization_header_missing", "description": "Authorization header is expected"}, 401)
 
     parts = auth.split()
 
     if parts[0].lower() != "bearer":
-        raise AuthError({
-            "code": "invalid_header",
-            "description": "Authorization header must start with Bearer"},
-            401)
+        raise AuthError({"code": "invalid_header", "description": "Authorization header must start with Bearer"}, 401)
     elif len(parts) == 1:
-        raise AuthError({
-            "code": "invalid_header",
-            "description": "Token not found"},
-            401)
+        raise AuthError({"code": "invalid_header", "description": "Token not found"}, 401)
     elif len(parts) > 2:
-        raise AuthError({
-            "code": "invalid_header",
-            "description": "Authorization header must be Bearer token"},
-            401)
+        raise AuthError({"code": "invalid_header", "description": "Authorization header must be Bearer token"}, 401)
 
     token = parts[1]
     return token
@@ -73,34 +62,16 @@ def verified_userinfo(request, auth_domain, auth_audience):
     try:
         unverified_header = jose.jwt.get_unverified_header(access_token)
     except jose.jwt.JWTError:
-        raise AuthError({
-            "code": "invalid_header",
-            "description": "Invalid header. Use an RS256 signed JWT Access Token"},
-            401)
+        raise AuthError({"code": "invalid_header", "description": "Invalid header. Use an RS256 signed JWT Access Token"}, 401)
     if unverified_header["alg"] == "HS256":
-        raise AuthError({
-            "code": "invalid_header",
-            "description": "Invalid header. Use an RS256 signed JWT Access Token"},
-            401)
+        raise AuthError({"code": "invalid_header", "description": "Invalid header. Use an RS256 signed JWT Access Token"}, 401)
     rsa_key = {}
     for key in jwks["keys"]:
         if key["kid"] == unverified_header["kid"]:
-            rsa_key = {
-                "kty": key["kty"],
-                "kid": key["kid"],
-                "use": key["use"],
-                "n": key["n"],
-                "e": key["e"]
-            }
+            rsa_key = {"kty": key["kty"], "kid": key["kid"], "use": key["use"], "n": key["n"], "e": key["e"]}
     if rsa_key:
         try:
-            payload = jose.jwt.decode(
-                access_token,
-                rsa_key,
-                algorithms=["RS256"],
-                audience=auth_audience,
-                issuer="https://{}/".format(auth_domain),
-            )
+            payload = jose.jwt.decode(access_token, rsa_key, algorithms=["RS256"], audience=auth_audience, issuer="https://{}/".format(auth_domain))
             try:
                 payload.update(get_additional_userinfo(auth_domain, access_token))
             except ValueError:
@@ -109,33 +80,15 @@ def verified_userinfo(request, auth_domain, auth_audience):
                 # thing we have to an e-mail address for them
                 payload["email"] = payload.get("azp")
             if not payload.get("email"):
-                raise AuthError({
-                    "code": "no_email",
-                    "description": "no email address found in access or id tokens"},
-                    401)
+                raise AuthError({"code": "no_email", "description": "no email address found in access or id tokens"}, 401)
             return payload
         except jose.jwt.ExpiredSignatureError:
-            raise AuthError({
-                "code": "token_expired",
-                "description": "token is expired"},
-                401)
+            raise AuthError({"code": "token_expired", "description": "token is expired"}, 401)
         except jose.jwt.JWTClaimsError:
-            raise AuthError({
-                "code": "invalid_claims",
-                "description": "incorrect claims, please check the audience and issuer"},
-                401)
+            raise AuthError({"code": "invalid_claims", "description": "incorrect claims, please check the audience and issuer"}, 401)
         except ValueError:
-            raise AuthError({
-                "code": "incomplete_validation",
-                "description": "couldn't find additional userinfo from access token"},
-                401)
+            raise AuthError({"code": "incomplete_validation", "description": "couldn't find additional userinfo from access token"}, 401)
         except Exception:
-            raise AuthError({
-                "code": "invalid_header",
-                "description": "Unable to parse authentication token."},
-                401)
+            raise AuthError({"code": "invalid_header", "description": "Unable to parse authentication token."}, 401)
     else:
-        raise AuthError({
-            "code": "invalid_key",
-            "description": "Unable to find RSA key."},
-            401)
+        raise AuthError({"code": "invalid_key", "description": "Unable to find RSA key."}, 401)

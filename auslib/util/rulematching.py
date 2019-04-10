@@ -9,16 +9,16 @@ def matchRegex(foo, bar):
     # matches. Eg, 3.6* matches 3.6, 3.6.1, 3.6b3, etc.
     # Channel length must be strictly greater than two
     # And globbing is allowed at the end of channel-name only
-    if foo.endswith('*'):
-        if(len(foo) >= 3):
-            test = foo.replace('.', r'\.').replace('*', r'\*', foo.count('*') - 1)
-            test = '^{}.*$'.format(test[:-1])
+    if foo.endswith("*"):
+        if len(foo) >= 3:
+            test = foo.replace(".", r"\.").replace("*", r"\*", foo.count("*") - 1)
+            test = "^{}.*$".format(test[:-1])
             if re.match(test, bar):
                 return True
             return False
         else:
             return False
-    elif (foo == bar):
+    elif foo == bar:
         return True
     else:
         return False
@@ -32,7 +32,7 @@ def matchCsv(csvString, queryString, substring=True):
        to support globbing as well."""
     if csvString is None:
         return True
-    for part in csvString.split(','):
+    for part in csvString.split(","):
         if substring and part in queryString:
             return True
         elif part == queryString:
@@ -52,7 +52,7 @@ def matchSimpleExpressionSubRule(subRuleString, queryString, substring):
     for rule in subRuleString:
         if substring and rule not in queryString:
             return False
-        elif not substring and rule not in queryString.split(','):
+        elif not substring and rule not in queryString.split(","):
             return False
     return True
 
@@ -69,7 +69,7 @@ def matchSimpleExpression(ruleString, queryString, substring=True):
     if ruleString is None:
         return True
 
-    decomposedRules = [[rule.strip() for rule in subRule.split('&&')] for subRule in ruleString.split(',')]
+    decomposedRules = [[rule.strip() for rule in subRule.split("&&")] for subRule in ruleString.split(",")]
 
     for subRule in decomposedRules:
         if matchSimpleExpressionSubRule(subRule, queryString, substring):
@@ -97,7 +97,7 @@ def matchVersion(ruleVersion, queryVersion):
     """Decides whether a version from the rules matches an incoming version.
        If the ruleVersion is null, we match any queryVersion. If it's not
        null, we must either match exactly, or match a comparison operator."""
-    logging.debug('ruleVersion: %s, queryVersion: %s', ruleVersion, queryVersion)
+    logging.debug("ruleVersion: %s, queryVersion: %s", ruleVersion, queryVersion)
     if ruleVersion is None:
         return True
     rulesVersionList = ruleVersion.split(",")

@@ -3,6 +3,8 @@ def upgrade(migrate_engine):
     # Migration disabled prior to code going to production. This was replaced by
     # a two part migration that added instructionSet in one migration, and
     # removed systemRequirements in another.
+
+
 #    metadata = MetaData(bind=migrate_engine)
 #    Table('rules', metadata, autoload=True).c.systemCapabilities.alter(name="instructionSet")
 #    Table('rules_history', metadata, autoload=True).c.systemCapabilities.alter(name="instructionSet")
@@ -15,6 +17,8 @@ def downgrade(migrate_engine):
     # Migration disabled prior to code going to production. This was replaced by
     # a two part migration that added instructionSet in one migration, and
     # removed systemRequirements in another.
+
+
 #    metadata = MetaData(bind=migrate_engine)
 #    Table('rules', metadata, autoload=True).c.instructionSet.alter(name="systemCapabilities")
 #    Table('rules_history', metadata, autoload=True).c.instructionSet.alter(name="systemCapabilities")

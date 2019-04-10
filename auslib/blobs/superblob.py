@@ -33,7 +33,7 @@ class SuperBlob(Blob):
         """
         :return: Header specific to GMP and systemaddons superblob
         """
-        return '    <addons>'
+        return "    <addons>"
 
     def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        return '    </addons>'
+        return "    </addons>"

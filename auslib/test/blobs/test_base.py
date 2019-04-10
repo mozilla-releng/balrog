@@ -1,16 +1,15 @@
-from copy import deepcopy
-import mock
 import unittest
+from copy import deepcopy
 
-from hypothesis import given, assume, settings, HealthCheck
 import hypothesis.strategies as st
+import mock
+from hypothesis import HealthCheck, assume, given, settings
 
 from auslib.blobs.base import createBlob, merge_dicts, merge_lists
 from auslib.global_state import cache
 
 
 class TestCreateBlob(unittest.TestCase):
-
     def setUp(self):
         cache.reset()
         cache.make_cache("blob_schema", 50, 10000)
@@ -26,10 +25,7 @@ class TestCreateBlob(unittest.TestCase):
         self.assertEqual(blob, dict(schema_version=2, name="blah"))
 
     def testLoadDict(self):
-        data = dict(
-            schema_version=1,
-            name="foo"
-        )
+        data = dict(schema_version=1, name="foo")
         blob = createBlob(data)
         self.assertEqual(blob, data)
 
@@ -46,25 +42,12 @@ class TestCreateBlob(unittest.TestCase):
                 "type": "object",
                 "required": ["schema_version", "name"],
                 "additionalProperties": False,
-                "properties": {
-                    "schema_version": {
-                        "type": "number"
-                    },
-                    "name": {
-                        "type": "string"
-                    }
-                }
+                "properties": {"schema_version": {"type": "number"}, "name": {"type": "string"}},
             }
-            blob = createBlob(dict(
-                schema_version=1,
-                name="foo",
-            ))
-            blob.validate('fake', [])
-            blob = createBlob(dict(
-                schema_version=1,
-                name="foo",
-            ))
-            blob.validate('fake', [])
+            blob = createBlob(dict(schema_version=1, name="foo"))
+            blob.validate("fake", [])
+            blob = createBlob(dict(schema_version=1, name="foo"))
+            blob.validate("fake", [])
 
             self.assertEqual(yaml_load.call_count, 1)
 
@@ -113,48 +96,30 @@ def unique_items_only(i):
 # but only generates JSON data with a dict as the top level object.
 useful_dict = st.dictionaries(st.text(), useful_values | st.lists(useful_values, max_size=10, unique_by=unique_items_only), max_size=10)
 useful_list = st.lists(useful_values | useful_dict, max_size=10, unique_by=unique_items_only)
-json = st.dictionaries(st.text(),
-                       st.recursive(useful_values,
-                                    lambda x: useful_list | useful_dict,
-                                    max_leaves=20),
-                       max_size=10)
+json = st.dictionaries(st.text(), st.recursive(useful_values, lambda x: useful_list | useful_dict, max_leaves=20), max_size=10)
 
 
 def test_merge_dicts_simple_additions():
-    base = {
-        "nothing": "nothing",
-    }
+    base = {"nothing": "nothing"}
     left = deepcopy(base)
     right = deepcopy(base)
     expected = deepcopy(base)
     left["foo"] = "foo"
     right["bar"] = "bar"
     got = merge_dicts(base, left, right)
-    expected = {
-        "foo": "foo",
-        "bar": "bar",
-        "nothing": "nothing",
-    }
+    expected = {"foo": "foo", "bar": "bar", "nothing": "nothing"}
     assert got == expected
 
 
 def test_merge_dicts_simple_changes():
-    base = {
-        "foo": "oof",
-        "bar": "rab",
-        "nothing": "nothing",
-    }
+    base = {"foo": "oof", "bar": "rab", "nothing": "nothing"}
     left = deepcopy(base)
     right = deepcopy(base)
     expected = deepcopy(base)
     left["foo"] = "foo"
     right["bar"] = "bar"
     got = merge_dicts(base, left, right)
-    expected = {
-        "foo": "foo",
-        "bar": "bar",
-        "nothing": "nothing",
-    }
+    expected = {"foo": "foo", "bar": "bar", "nothing": "nothing"}
     assert got == expected
 
 
@@ -232,7 +197,7 @@ def test_merge_dicts_mismatched_types(base):
 def test_merge_dicts_unicode_and_str_are_equal():
     base = {"foo": "bar"}
     left = {"foo": "bar", "blah": "crap", "abc": "def"}
-    right = {u"foo": u"bar", u"blah": u"crap", u"ghi": u"jkl"}
+    right = {"foo": "bar", "blah": "crap", "ghi": "jkl"}
     expected = {"foo": "bar", "blah": "crap", "abc": "def", "ghi": "jkl"}
     got = merge_dicts(base, left, right)
     assert got == expected

@@ -1,10 +1,10 @@
-from sqlalchemy import Table, Column, Integer, String, MetaData, \
-    BigInteger, Boolean
+from sqlalchemy import BigInteger, Boolean, Column, Integer, MetaData, String, Table
 
 metadata = MetaData()
 
 rules_scheduled_changes = Table(
-    "rules_scheduled_changes", metadata,
+    "rules_scheduled_changes",
+    metadata,
     Column("sc_id", Integer, primary_key=True, autoincrement=True),
     Column("scheduled_by", String(100), nullable=False),
     Column("complete", Boolean, default=False),
@@ -31,12 +31,13 @@ rules_scheduled_changes = Table(
     Column("base_comment", String(500)),
     Column("base_whitelist", String(100)),
     Column("base_alias", String(50)),
-    Column("base_data_version", Integer)
+    Column("base_data_version", Integer),
 )
 
 
 rules_scheduled_changes_history = Table(
-    "rules_scheduled_changes_history", metadata,
+    "rules_scheduled_changes_history",
+    metadata,
     Column("change_id", Integer, primary_key=True, autoincrement=True),
     Column("changed_by", String(100), nullable=False),
     Column("sc_id", Integer, nullable=False, autoincrement=True),
@@ -65,7 +66,7 @@ rules_scheduled_changes_history = Table(
     Column("base_comment", String(500)),
     Column("base_whitelist", String(100)),
     Column("base_alias", String(50)),
-    Column("base_data_version", Integer)
+    Column("base_data_version", Integer),
 )
 
 

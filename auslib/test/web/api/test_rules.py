@@ -26,26 +26,43 @@ class TestPublicRulesAPI(CommonTestBase):
         self.assertEqual(ret.status_code, 200, ret.get_data())
         got = ret.get_json()
         self.assertTrue(got, "Rule not found by rule_id={}".format(rule_id))
-        self.assertEqual(ret.headers['X-Data-Version'], '1')
-        self.assertNotIn('X-CSRF-Token', ret.headers)
+        self.assertEqual(ret.headers["X-Data-Version"], "1")
+        self.assertNotIn("X-CSRF-Token", ret.headers)
         self.assertEqual(got["rule_id"], rule_id)
         self.assertEqual(got["mapping"], "Firefox.55.0a1")
         self.assertEqual(got["product"], "Firefox")
 
     def test_get_rule_by_alias(self):
-        expected = dict(rule_id=1, priority=90, backgroundRate=100, mapping="Fennec.55.0a1",
-                        update_type="minor", product="Fennec", data_version=1,
-                        alias="moz-releng", buildID=None, buildTarget=None,
-                        channel=None, comment=None, distVersion=None,
-                        distribution=None, fallbackMapping=None,
-                        headerArchitecture=None, locale=None, version=None,
-                        osVersion=None, memory=None, instructionSet=None, mig64=None,
-                        jaws=None)
+        expected = dict(
+            rule_id=1,
+            priority=90,
+            backgroundRate=100,
+            mapping="Fennec.55.0a1",
+            update_type="minor",
+            product="Fennec",
+            data_version=1,
+            alias="moz-releng",
+            buildID=None,
+            buildTarget=None,
+            channel=None,
+            comment=None,
+            distVersion=None,
+            distribution=None,
+            fallbackMapping=None,
+            headerArchitecture=None,
+            locale=None,
+            version=None,
+            osVersion=None,
+            memory=None,
+            instructionSet=None,
+            mig64=None,
+            jaws=None,
+        )
         ret = self.public_client.get("/api/v1/rules/moz-releng")
         self.assertEqual(ret.status_code, 200, ret.get_data())
         got = ret.get_json()
         self.assertEqual(got, expected)
-        self.assertEqual(ret.headers['X-Data-Version'], '1')
+        self.assertEqual(ret.headers["X-Data-Version"], "1")
 
     def test_rule_not_found(self):
         ret = self.public_client.get("/api/v1/rules/404")

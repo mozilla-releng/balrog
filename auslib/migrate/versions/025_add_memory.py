@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, MetaData, Table
+from sqlalchemy import Column, MetaData, String, Table
 
 
 def upgrade(migrate_engine):
@@ -19,7 +19,7 @@ def upgrade(migrate_engine):
 
 def downgrade(migrate_engine):
     metadata = MetaData(bind=migrate_engine)
-    Table('rules', metadata, autoload=True).c.memory.drop()
-    Table('rules_history', metadata, autoload=True).c.memory.drop()
-    Table('rules_scheduled_changes', metadata, autoload=True).c.base_memory.drop()
-    Table('rules_scheduled_changes_history', metadata, autoload=True).c.base_memory.drop()
+    Table("rules", metadata, autoload=True).c.memory.drop()
+    Table("rules_history", metadata, autoload=True).c.memory.drop()
+    Table("rules_scheduled_changes", metadata, autoload=True).c.base_memory.drop()
+    Table("rules_scheduled_changes_history", metadata, autoload=True).c.base_memory.drop()

@@ -1,12 +1,13 @@
+import logging
+
 from flask import current_app as app
 from flask import request
 from flask.views import MethodView
+
+from auslib.db import ChangeScheduledError, OutdatedDataError, PermissionDeniedError, SignoffRequiredError, UpdateMergeError
 from auslib.global_state import dbo
-from auslib.web.admin.views.problem import problem
-from auslib.db import OutdatedDataError, PermissionDeniedError, UpdateMergeError, ChangeScheduledError, \
-    SignoffRequiredError
-import logging
 from auslib.util.auth import AuthError, verified_userinfo
+from auslib.web.admin.views.problem import problem
 
 
 log = logging.getLogger(__name__)
@@ -14,10 +15,10 @@ log = logging.getLogger(__name__)
 
 def requirelogin(f):
     def decorated(*args, **kwargs):
-        username = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])['email']
+        username = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])["email"]
         if not username:
             log.warning("Login Required")
-            return problem(401, 'Unauthenticated', 'Login Required')
+            return problem(401, "Unauthenticated", "Login Required")
         # Machine to machine accounts are identified by uninformative clientIds
         # In order to keep Balrog permissions more readable, we map them to
         # more useful usernames, which are stored in the app config.
@@ -28,8 +29,9 @@ def requirelogin(f):
         # to be restrictive enough.
         elif not dbo.isKnownUser(username):
             log.warning("Authorization Required")
-            return problem(403, 'Forbidden', 'Authorization Required')
+            return problem(403, "Forbidden", "Authorization Required")
         return f(*args, changed_by=username, **kwargs)
+
     return decorated
 
 
@@ -39,8 +41,7 @@ def handleGeneralExceptions(messages):
             try:
                 return f(*args, **kwargs)
             except OutdatedDataError as e:
-                msg = "Couldn't perform the request %s. Outdated Data Version. " \
-                      "old_data_version doesn't match current data_version" % messages
+                msg = "Couldn't perform the request %s. Outdated Data Version. " "old_data_version doesn't match current data_version" % messages
                 log.warning("Bad input: %s", msg)
                 log.warning(e)
                 # using connexion.problem results in TypeError: 'ConnexionResponse' object is not callable
@@ -48,8 +49,7 @@ def handleGeneralExceptions(messages):
                 # for validation purpose
                 return problem(400, "Bad Request", "OutdatedDataError", ext={"exception": msg})
             except UpdateMergeError as e:
-                msg = "Couldn't perform the request %s due to merge error. " \
-                      "Is there a scheduled change that conflicts with yours?" % messages
+                msg = "Couldn't perform the request %s due to merge error. " "Is there a scheduled change that conflicts with yours?" % messages
                 log.warning("Bad input: %s", msg)
                 log.warning(e)
                 return problem(400, "Bad Request", "UpdateMergeError", ext={"exception": msg})
@@ -72,7 +72,9 @@ def handleGeneralExceptions(messages):
                 msg = "Bad input: {}".format(e)
                 log.warning(msg)
                 return problem(400, "Bad Request", "ValueError", ext={"exception": msg})
+
         return decorated
+
     return wrap
 
 
@@ -99,7 +101,6 @@ def transactionHandler(request_handler):
 
 
 class AdminView(MethodView):
-
     def __init__(self, *args, **kwargs):
         self.log = logging.getLogger(self.__class__.__name__)
         MethodView.__init__(self, *args, **kwargs)

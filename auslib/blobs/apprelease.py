@@ -2,17 +2,16 @@ import itertools
 
 from six import iteritems
 
-from auslib.AUS import isForbiddenUrl, getFallbackChannel
+from auslib.AUS import getFallbackChannel, isForbiddenUrl
 from auslib.blobs.base import Blob, BlobValidationError
-from auslib.global_state import dbo
 from auslib.errors import BadDataError
-from auslib.util.rulematching import matchChannel, matchVersion
+from auslib.global_state import dbo
 from auslib.util.comparison import has_operator, strip_operator
+from auslib.util.rulematching import matchChannel, matchVersion
 from auslib.util.versions import MozillaVersion, decrement_version, increment_version
 
 
 class ReleaseBlobBase(Blob):
-
     def __init__(self, **kwargs):
         Blob.__init__(self, **kwargs)
 
@@ -35,14 +34,14 @@ class ReleaseBlobBase(Blob):
 
     def getResolvedPlatform(self, platform):
         try:
-            return self['platforms'][platform].get('alias', platform)
+            return self["platforms"][platform].get("alias", platform)
         except KeyError:
             raise BadDataError("Can't find platform '%s'", platform)
 
     def getPlatformData(self, platform):
         platform = self.getResolvedPlatform(platform)
         try:
-            return self['platforms'][platform]
+            return self["platforms"][platform]
         except KeyError:
             raise BadDataError("Can't find platform '%s'", platform)
 
@@ -56,7 +55,7 @@ class ReleaseBlobBase(Blob):
     def getLocaleOrTopLevelParam(self, platform, locale, param):
         try:
             platform = self.getResolvedPlatform(platform)
-            return self['platforms'][platform]['locales'][locale][param]
+            return self["platforms"][platform]["locales"][locale][param]
         except (BadDataError, KeyError):
             try:
                 return self[param]
@@ -65,17 +64,16 @@ class ReleaseBlobBase(Blob):
 
     def getBuildID(self, platform, locale):
         platform = self.getResolvedPlatform(platform)
-        if locale not in self['platforms'].get(platform, {}) \
-                                          .get('locales', {}):
+        if locale not in self["platforms"].get(platform, {}).get("locales", {}):
             raise BadDataError("No such locale '%s' in platform '%s'" % (locale, platform))
         try:
-            return self['platforms'][platform]['locales'][locale]['buildID']
+            return self["platforms"][platform]["locales"][locale]["buildID"]
         except KeyError:
-            if platform not in self['platforms']:
+            if platform not in self["platforms"]:
                 raise BadDataError("No such platform '%s'" % (platform))
-            if 'buildID' not in self['platforms'][platform].keys():
+            if "buildID" not in self["platforms"][platform].keys():
                 raise BadDataError("No buildID for platform '%s'" % (platform))
-            return self['platforms'][platform]['buildID']
+            return self["platforms"][platform]["buildID"]
 
     def _getFromRelease(self, patch):
         # "*" is a special case for the "from" field that means "any release".
@@ -99,7 +97,7 @@ class ReleaseBlobBase(Blob):
         if fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
             return None
         # don't return an update if an older release isn't in the DB for some reason
-        if patch['from'] != '*' and fromRelease is None:
+        if patch["from"] != "*" and fromRelease is None:
             return None
 
         try:
@@ -121,15 +119,20 @@ class ReleaseBlobBase(Blob):
         # the update entirely? Right now, another patch type could still
         # return an update. Eg, the partial could contain a forbidden domain
         # but the complete could still return an update from an accepted one.
-        if isForbiddenUrl(url, updateQuery['product'], whitelistedDomains):
+        if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
             return None
 
-        patchXML = '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"' % \
-            (patchType, url, self["hashFunction"], patch["hashValue"], patch["filesize"])
+        patchXML = '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"' % (
+            patchType,
+            url,
+            self["hashFunction"],
+            patch["hashValue"],
+            patch["filesize"],
+        )
         additionalPatchAttributes = self._getAdditionalPatchAttributes(patch)
         for attribute in additionalPatchAttributes:
             patchXML += ' %s="%s"' % (attribute, additionalPatchAttributes[attribute])
-        patchXML += '/>'
+        patchXML += "/>"
 
         return patchXML
 
@@ -137,7 +140,7 @@ class ReleaseBlobBase(Blob):
         return self._getUpdateLineXML(updateQuery, update_type)
 
     def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        return '    </update>'
+        return "    </update>"
 
     def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         """This method, along with getHeaderXML and getFooterXML are the entry point
@@ -180,22 +183,22 @@ class ReleaseBlobBase(Blob):
         return patches
 
     def shouldServeUpdate(self, updateQuery):
-        buildTarget = updateQuery['buildTarget']
-        locale = updateQuery['locale']
+        buildTarget = updateQuery["buildTarget"]
+        locale = updateQuery["locale"]
         releaseVersion = self.getApplicationVersion(buildTarget, locale)
         if not releaseVersion:
             self.log.debug("Matching rule has no application version, will not serve update.")
             return False
         releaseVersion = MozillaVersion(releaseVersion)
-        queryVersion = MozillaVersion(updateQuery['version'])
+        queryVersion = MozillaVersion(updateQuery["version"])
         if queryVersion > releaseVersion:
             self.log.debug("Matching rule has older version than request, will not serve update.")
             return False
         elif releaseVersion == queryVersion:
-            if updateQuery['buildID'] >= self.getBuildID(updateQuery['buildTarget'], updateQuery['locale']):
+            if updateQuery["buildID"] >= self.getBuildID(updateQuery["buildTarget"], updateQuery["locale"]):
                 self.log.debug("Matching rule has older buildid than request, will not serve update.")
                 return False
-        if updateQuery['buildTarget'] not in self['platforms'].keys():
+        if updateQuery["buildTarget"] not in self["platforms"].keys():
             return False
 
         return True
@@ -204,7 +207,7 @@ class ReleaseBlobBase(Blob):
         """Returns True if the blob contains any file URLs that contain a
            domain that we're not allowed to serve updates to."""
         # Check the top level URLs, if the exist.
-        for c in self.get('fileUrls', {}).values():
+        for c in self.get("fileUrls", {}).values():
             # New-style
             if isinstance(c, dict):
                 for from_ in c.values():
@@ -217,25 +220,22 @@ class ReleaseBlobBase(Blob):
                     return True
 
         # And also the locale-level URLs.
-        for platform in self.get('platforms', {}).values():
-            for locale in platform.get('locales', {}).values():
-                for type_ in ('partial', 'complete'):
-                    if type_ in locale and 'fileUrl' in locale[type_]:
-                        if isForbiddenUrl(locale[type_]['fileUrl'], product,
-                                          whitelistedDomains):
+        for platform in self.get("platforms", {}).values():
+            for locale in platform.get("locales", {}).values():
+                for type_ in ("partial", "complete"):
+                    if type_ in locale and "fileUrl" in locale[type_]:
+                        if isForbiddenUrl(locale[type_]["fileUrl"], product, whitelistedDomains):
                             return True
-                for type_ in ('partials', 'completes'):
+                for type_ in ("partials", "completes"):
                     for update in locale.get(type_, {}):
-                        if 'fileUrl' in update:
-                            if isForbiddenUrl(update["fileUrl"], product,
-                                              whitelistedDomains):
+                        if "fileUrl" in update:
+                            if isForbiddenUrl(update["fileUrl"], product, whitelistedDomains):
                                 return True
 
         return False
 
 
 class SeparatedFileUrlsMixin(object):
-
     def _getFtpFilename(self, patchKey, from_):
         return self.get("ftpFilenames", {}).get(patchKey, "")
 
@@ -244,8 +244,8 @@ class SeparatedFileUrlsMixin(object):
 
     def _getUrl(self, updateQuery, patchKey, patch, specialForceHosts):
         platformData = self.getPlatformData(updateQuery["buildTarget"])
-        if 'fileUrl' in patch:
-            url = patch['fileUrl']
+        if "fileUrl" in patch:
+            url = patch["fileUrl"]
         else:
             ftpFilename = self._getFtpFilename(patchKey, patch["from"])
             bouncerProduct = self._getBouncerProduct(patchKey, patch["from"])
@@ -255,33 +255,32 @@ class SeparatedFileUrlsMixin(object):
             # should try nonetheless. Non-fallback cases shouldn't
             # be hitting any exceptions here.
             try:
-                url = self['fileUrls'][updateQuery['channel']]
+                url = self["fileUrls"][updateQuery["channel"]]
             except KeyError:
                 try:
-                    url = self['fileUrls'][getFallbackChannel(updateQuery['channel'])]
+                    url = self["fileUrls"][getFallbackChannel(updateQuery["channel"])]
                 except KeyError:
                     self.log.debug("Couldn't find fileUrl for")
                     raise
 
-            url = url.replace('%LOCALE%', updateQuery['locale'])
-            url = url.replace('%OS_FTP%', platformData['OS_FTP'])
-            url = url.replace('%FILENAME%', ftpFilename)
-            url = url.replace('%PRODUCT%', bouncerProduct)
-            url = url.replace('%OS_BOUNCER%', platformData['OS_BOUNCER'])
-            url = url.replace('%locale%', updateQuery['locale'])
-            url = url.replace('%os_ftp%', platformData['OS_FTP'])
-            url = url.replace('%filename%', ftpFilename)
-            url = url.replace('%product%', bouncerProduct)
-            url = url.replace('%os_bouncer%', platformData['OS_BOUNCER'])
+            url = url.replace("%LOCALE%", updateQuery["locale"])
+            url = url.replace("%OS_FTP%", platformData["OS_FTP"])
+            url = url.replace("%FILENAME%", ftpFilename)
+            url = url.replace("%PRODUCT%", bouncerProduct)
+            url = url.replace("%OS_BOUNCER%", platformData["OS_BOUNCER"])
+            url = url.replace("%locale%", updateQuery["locale"])
+            url = url.replace("%os_ftp%", platformData["OS_FTP"])
+            url = url.replace("%filename%", ftpFilename)
+            url = url.replace("%product%", bouncerProduct)
+            url = url.replace("%os_bouncer%", platformData["OS_BOUNCER"])
         # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
-        if updateQuery['force']:
-            url = self.processSpecialForceHosts(url, specialForceHosts, updateQuery['force'])
+        if updateQuery["force"]:
+            url = self.processSpecialForceHosts(url, specialForceHosts, updateQuery["force"])
 
         return url
 
 
 class SingleUpdateXMLMixin(object):
-
     def _getPatchesXML(self, localeData, updateQuery, whitelistedDomains, specialForceHosts):
         patches = []
         for patchKey in ("complete", "partial"):
@@ -305,19 +304,20 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
     It was deprecated by https://bugzilla.mozilla.org/show_bug.cgi?id=530872 during
     Gecko 2.0 development (aka 1.9.3).
     """
+
     jsonschema = "apprelease-v1.yml"
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV1 directly
         Blob.__init__(self, **kwargs)
-        if 'schema_version' not in self.keys():
-            self['schema_version'] = 1
+        if "schema_version" not in self.keys():
+            self["schema_version"] = 1
 
     def getAppv(self, platform, locale):
-        return self.getLocaleOrTopLevelParam(platform, locale, 'appv')
+        return self.getLocaleOrTopLevelParam(platform, locale, "appv")
 
     def getExtv(self, platform, locale):
-        return self.getLocaleOrTopLevelParam(platform, locale, 'extv')
+        return self.getLocaleOrTopLevelParam(platform, locale, "extv")
 
     def getApplicationVersion(self, platform, locale):
         """ We used extv as the application version for v1 schema, while appv
@@ -330,12 +330,10 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         release references
         """
         referencedReleases = set()
-        for platform in self.get('platforms', {}):
-            for locale in self['platforms'][platform].get('locales', {}):
-                if self['platforms'][platform]['locales'][locale].get('partial'):
-                    referencedReleases.add(
-                        self['platforms'][platform]['locales'][locale]['partial']['from']
-                    )
+        for platform in self.get("platforms", {}):
+            for locale in self["platforms"][platform].get("locales", {}):
+                if self["platforms"][platform]["locales"][locale].get("partial"):
+                    referencedReleases.add(self["platforms"][platform]["locales"][locale]["partial"]["from"])
         return referencedReleases
 
     # TODO: kill me when aus3.m.o is dead, and snippet tests have been
@@ -355,7 +353,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
                 continue
 
             url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
-            if isForbiddenUrl(url, updateQuery['product'], whitelistedDomains):
+            if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
                 break
 
             snippet = [
@@ -387,7 +385,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
             snippets["partial"] = partial
 
         for s in snippets.keys():
-            self.log.debug('%s\n%s' % (s, snippets[s].rstrip()))
+            self.log.debug("%s\n%s" % (s, snippets[s].rstrip()))
         return snippets
 
     def _getUpdateLineXML(self, updateQuery, update_type):
@@ -397,8 +395,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         extv = self.getExtv(buildTarget, locale)
         buildid = self.getBuildID(buildTarget, locale)
 
-        updateLine = '    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % \
-            (update_type, appv, extv, buildid)
+        updateLine = '    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % (update_type, appv, extv, buildid)
         if "detailsUrl" in self:
             details = self["detailsUrl"].replace("%LOCALE%", locale)
             details = details.replace("%locale%", locale)
@@ -420,9 +417,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         this method, but that doesn't have access to the updateQuery to lookup
         the version making the request.
         """
-        xml = super(ReleaseBlobV1, self).getInnerHeaderXML(updateQuery, update_type,
-                                                           whitelistedDomains,
-                                                           specialForceHosts)
+        xml = super(ReleaseBlobV1, self).getInnerHeaderXML(updateQuery, update_type, whitelistedDomains, specialForceHosts)
 
         if self.get("oldVersionSpecialCases"):
             query_ver = MozillaVersion(updateQuery["version"])
@@ -430,30 +425,27 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
             real_extv = self.getExtv(updateQuery["buildTarget"], updateQuery["locale"])
             if query_ver >= MozillaVersion("2.0") and query_ver < MozillaVersion("3.5"):
                 # 2.0 and 3.0 need a fake version, and extVersion omitted
-                xml = xml.replace('version="%s"' % real_appv,
-                                  'version="%s"' % updateQuery["version"])
-                xml = xml.replace('extensionVersion="%s" ' % real_extv, '')
+                xml = xml.replace('version="%s"' % real_appv, 'version="%s"' % updateQuery["version"])
+                xml = xml.replace('extensionVersion="%s" ' % real_extv, "")
             elif query_ver >= MozillaVersion("3.5") and query_ver < MozillaVersion("3.6"):
                 # 3.5 needs extVersion omitted
-                xml = xml.replace('extensionVersion="%s" ' % real_extv, '')
+                xml = xml.replace('extensionVersion="%s" ' % real_extv, "")
             elif query_ver >= MozillaVersion("3.6") and query_ver < MozillaVersion("4.0"):
                 # 3.6 needs a fake extensionVersion
-                xml = xml.replace('extensionVersion="%s"' % real_extv,
-                                  'extensionVersion="%s"' % updateQuery["version"])
+                xml = xml.replace('extensionVersion="%s"' % real_extv, 'extensionVersion="%s"' % updateQuery["version"])
             # and we don't use ReleaseBlobV1 to serve anything to 4.0 or later
         return xml
 
 
 class NewStyleVersionsMixin(object):
-
     def getAppVersion(self, platform, locale):
-        return self.getLocaleOrTopLevelParam(platform, locale, 'appVersion')
+        return self.getLocaleOrTopLevelParam(platform, locale, "appVersion")
 
     def getDisplayVersion(self, platform, locale):
-        return self.getLocaleOrTopLevelParam(platform, locale, 'displayVersion')
+        return self.getLocaleOrTopLevelParam(platform, locale, "displayVersion")
 
     def getPlatformVersion(self, platform, locale):
-        return self.getLocaleOrTopLevelParam(platform, locale, 'platformVersion')
+        return self.getLocaleOrTopLevelParam(platform, locale, "platformVersion")
 
     def getApplicationVersion(self, platform, locale):
         """ For v2 schema, appVersion really is the app version """
@@ -470,8 +462,13 @@ class NewStyleVersionsMixin(object):
 
         localeData = self.getLocaleData(buildTarget, locale)
 
-        updateLine = '    <update type="%s" displayVersion="%s" appVersion="%s" platformVersion="%s" buildID="%s"' % \
-            (update_type, displayVersion, appVersion, platformVersion, buildid)
+        updateLine = '    <update type="%s" displayVersion="%s" appVersion="%s" platformVersion="%s" buildID="%s"' % (
+            update_type,
+            displayVersion,
+            appVersion,
+            platformVersion,
+            buildid,
+        )
         if "detailsUrl" in self:
             details = self["detailsUrl"].replace("%LOCALE%", locale)
             details = details.replace("%locale%", locale)
@@ -515,19 +512,19 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         Removed:
          * oldVersionSpecialCases
     """
+
     jsonschema = "apprelease-v2.yml"
 
     # for the benefit of get*XML and createSnippets
-    optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
-                 'actions', 'openURL', 'notificationURL', 'alertURL')
+    optional_ = ("billboardURL", "showPrompt", "showNeverForVersion", "actions", "openURL", "notificationURL", "alertURL")
     # params that can have %LOCALE% interpolated
-    interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
+    interpolable_ = ("billboardURL", "openURL", "notificationURL", "alertURL")
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV2 directly
         Blob.__init__(self, **kwargs)
-        if 'schema_version' not in self.keys():
-            self['schema_version'] = 2
+        if "schema_version" not in self.keys():
+            self["schema_version"] = 2
 
     # TODO: kill me when aus3.m.o is dead, and snippet tests have been
     # converted to unit tests.
@@ -546,7 +543,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
                 continue
 
             url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
-            if isForbiddenUrl(url, updateQuery['product'], whitelistedDomains):
+            if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
                 break
 
             snippet = [
@@ -582,7 +579,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
             snippets[patchKey] = "\n".join(snippet) + "\n"
 
         for s in snippets.keys():
-            self.log.debug('%s\n%s' % (s, snippets[s].rstrip()))
+            self.log.debug("%s\n%s" % (s, snippets[s].rstrip()))
         return snippets
 
     def getReferencedReleases(self):
@@ -591,17 +588,14 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         release references
         """
         referencedReleases = set()
-        for platform in self.get('platforms', {}):
-            for locale in self['platforms'][platform].get('locales', {}):
-                if self['platforms'][platform]['locales'][locale].get('partial'):
-                    referencedReleases.add(
-                        self['platforms'][platform]['locales'][locale]['partial']['from']
-                    )
+        for platform in self.get("platforms", {}):
+            for locale in self["platforms"][platform].get("locales", {}):
+                if self["platforms"][platform]["locales"][locale].get("partial"):
+                    referencedReleases.add(self["platforms"][platform]["locales"][locale]["partial"]["from"])
         return referencedReleases
 
 
 class MultipleUpdatesXMLMixin(object):
-
     def _getPatchesXML(self, localeData, updateQuery, whitelistedDomains, specialForceHosts):
         patches = []
         for patchKey, patchType in (("completes", "complete"), ("partials", "partial")):
@@ -624,19 +618,19 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
                * remove "partial" and "complete" from locale level
                * add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
     """
+
     jsonschema = "apprelease-v3.yml"
 
     # for the benefit of get*XML
-    optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
-                 'actions', 'openURL', 'notificationURL', 'alertURL')
+    optional_ = ("billboardURL", "showPrompt", "showNeverForVersion", "actions", "openURL", "notificationURL", "alertURL")
     # params that can have %LOCALE% interpolated
-    interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
+    interpolable_ = ("billboardURL", "openURL", "notificationURL", "alertURL")
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV3 directly
         Blob.__init__(self, **kwargs)
-        if 'schema_version' not in self.keys():
-            self['schema_version'] = 3
+        if "schema_version" not in self.keys():
+            self["schema_version"] = 3
 
     def _getFtpFilename(self, patchKey, from_):
         return self.get("ftpFilenames", {}).get(patchKey, {}).get(from_, "")
@@ -654,24 +648,21 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         release references
         """
         referencedReleases = set()
-        for platform in self.get('platforms', {}):
-            for locale in self['platforms'][platform].get('locales', {}):
-                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
-                    referencedReleases.add(
-                        partial['from']
-                    )
+        for platform in self.get("platforms", {}):
+            for locale in self["platforms"][platform].get("locales", {}):
+                for partial in self["platforms"][platform]["locales"][locale].get("partials", {}):
+                    referencedReleases.add(partial["from"])
         return referencedReleases
 
 
 class UnifiedFileUrlsMixin(object):
-
     def _getUrl(self, updateQuery, patchKey, patch, specialForceHosts):
         platformData = self.getPlatformData(updateQuery["buildTarget"])
         from_ = patch["from"]
         # A fileUrl in the deep-down patch section takes priority over anything
         # else.
-        if 'fileUrl' in patch:
-            url = patch['fileUrl']
+        if "fileUrl" in patch:
+            url = patch["fileUrl"]
         else:
             # There's three "channels" that any given request could get
             # a fileUrl from, in order of preference:
@@ -680,11 +671,7 @@ class UnifiedFileUrlsMixin(object):
             # 3) In the catch-all "channel" ("*").
             # When a channel is present in 'fileUrls' then we don't fall back to the
             # 'catch-all' block if a product is missing from the channel block
-            channels = [
-                updateQuery['channel'],
-                getFallbackChannel(updateQuery['channel']),
-                "*",
-            ]
+            channels = [updateQuery["channel"], getFallbackChannel(updateQuery["channel"]), "*"]
             url = None
             for c in channels:
                 config_block = self.get("fileUrls", {}).get(c, {})
@@ -697,16 +684,16 @@ class UnifiedFileUrlsMixin(object):
                 self.log.debug("Couldn't find fileUrl")
                 raise ValueError("Couldn't find fileUrl")
 
-            url = url.replace('%LOCALE%', updateQuery['locale'])
-            url = url.replace('%OS_FTP%', platformData['OS_FTP'])
-            url = url.replace('%OS_BOUNCER%', platformData['OS_BOUNCER'])
-            url = url.replace('%locale%', updateQuery['locale'])
-            url = url.replace('%os_ftp%', platformData['OS_FTP'])
-            url = url.replace('%os_bouncer%', platformData['OS_BOUNCER'])
+            url = url.replace("%LOCALE%", updateQuery["locale"])
+            url = url.replace("%OS_FTP%", platformData["OS_FTP"])
+            url = url.replace("%OS_BOUNCER%", platformData["OS_BOUNCER"])
+            url = url.replace("%locale%", updateQuery["locale"])
+            url = url.replace("%os_ftp%", platformData["OS_FTP"])
+            url = url.replace("%os_bouncer%", platformData["OS_BOUNCER"])
 
         # pass on forcing for special hosts (eg download.m.o for mozilla metrics)
-        if updateQuery['force']:
-            url = self.processSpecialForceHosts(url, specialForceHosts, updateQuery['force'])
+        if updateQuery["force"]:
+            url = self.processSpecialForceHosts(url, specialForceHosts, updateQuery["force"])
 
         return url
 
@@ -721,19 +708,19 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         ** Combine fileUrls, bouncerProducts, and ftpFilenames into a larger data structure,
            still called "fileUrls". (See below for a more detailed description.)
     """
+
     jsonschema = "apprelease-v4.yml"
 
     # for the benefit of get*XML
-    optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
-                 'actions', 'openURL', 'notificationURL', 'alertURL')
+    optional_ = ("billboardURL", "showPrompt", "showNeverForVersion", "actions", "openURL", "notificationURL", "alertURL")
     # params that can have %LOCALE% interpolated
-    interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
+    interpolable_ = ("billboardURL", "openURL", "notificationURL", "alertURL")
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV4 directly
         Blob.__init__(self, **kwargs)
-        if 'schema_version' not in self.keys():
-            self['schema_version'] = 4
+        if "schema_version" not in self.keys():
+            self["schema_version"] = 4
 
     @classmethod
     def fromV3(cls, v3Blob):
@@ -742,7 +729,7 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         v4Blob.update(v3Blob)
         # These 3 sections changed between v3 and v4, we'll fill out the data
         # in the new format, but we need to clear them out first.
-        for k in ('fileUrls', 'ftpFilenames', 'bouncerProducts'):
+        for k in ("fileUrls", "ftpFilenames", "bouncerProducts"):
             if k in v4Blob:
                 del v4Blob[k]
 
@@ -754,7 +741,7 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
             return v4Blob
 
         v4Blob["fileUrls"] = {}
-        for channel, baseUrl in iteritems(v3Blob.get('fileUrls')):
+        for channel, baseUrl in iteritems(v3Blob.get("fileUrls")):
             if channel not in v4Blob["fileUrls"]:
                 v4Blob["fileUrls"][channel] = {}
 
@@ -782,14 +769,12 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         release references
         """
         referencedReleases = set()
-        for platform in self.get('platforms', {}):
-            for locale in self['platforms'][platform].get('locales', {}):
-                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
-                    referencedReleases.add(
-                        partial['from']
-                    )
-        for fileUrlKey in self.get('fileUrls', {}):
-            for partial in self['fileUrls'][fileUrlKey].get('partials', {}):
+        for platform in self.get("platforms", {}):
+            for locale in self["platforms"][platform].get("locales", {}):
+                for partial in self["platforms"][platform]["locales"][locale].get("partials", {}):
+                    referencedReleases.add(partial["from"])
+        for fileUrlKey in self.get("fileUrls", {}):
+            for partial in self["fileUrls"][fileUrlKey].get("partials", {}):
                 referencedReleases.add(partial)
 
         return referencedReleases
@@ -804,20 +789,19 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     Changes from ReleaseBlobV4:
         * Support optional promptWaitTime attribute
     """
+
     jsonschema = "apprelease-v5.yml"
 
     # for the benefit of get*XML
-    optional_ = ('billboardURL', 'showPrompt', 'showNeverForVersion',
-                 'actions', 'openURL', 'notificationURL', 'alertURL',
-                 'promptWaitTime')
+    optional_ = ("billboardURL", "showPrompt", "showNeverForVersion", "actions", "openURL", "notificationURL", "alertURL", "promptWaitTime")
     # params that can have %LOCALE% interpolated
-    interpolable_ = ('billboardURL', 'openURL', 'notificationURL', 'alertURL')
+    interpolable_ = ("billboardURL", "openURL", "notificationURL", "alertURL")
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV5 directly
         Blob.__init__(self, **kwargs)
-        if 'schema_version' not in self.keys():
-            self['schema_version'] = 5
+        if "schema_version" not in self.keys():
+            self["schema_version"] = 5
 
     def getReferencedReleases(self):
         """
@@ -825,14 +809,12 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         release references
         """
         referencedReleases = set()
-        for platform in self.get('platforms', {}):
-            for locale in self['platforms'][platform].get('locales', {}):
-                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
-                    referencedReleases.add(
-                        partial['from']
-                    )
-        for fileUrlKey in self.get('fileUrls', {}):
-            for partial in self['fileUrls'][fileUrlKey].get('partials', {}):
+        for platform in self.get("platforms", {}):
+            for locale in self["platforms"][platform].get("locales", {}):
+                for partial in self["platforms"][platform]["locales"][locale].get("partials", {}):
+                    referencedReleases.add(partial["from"])
+        for fileUrlKey in self.get("fileUrls", {}):
+            for partial in self["fileUrls"][fileUrlKey].get("partials", {}):
                 referencedReleases.add(partial)
 
         return referencedReleases
@@ -848,20 +830,19 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         * https://bugzilla.mozilla.org/show_bug.cgi?id=1296685
 
     """
+
     jsonschema = "apprelease-v6.yml"
 
     # for the benefit of get*XML
-    optional_ = ('showPrompt', 'showNeverForVersion',
-                 'actions', 'openURL', 'notificationURL', 'alertURL',
-                 'promptWaitTime')
+    optional_ = ("showPrompt", "showNeverForVersion", "actions", "openURL", "notificationURL", "alertURL", "promptWaitTime")
     # params that can have %LOCALE% interpolated
-    interpolable_ = ('openURL', 'notificationURL', 'alertURL')
+    interpolable_ = ("openURL", "notificationURL", "alertURL")
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV6 directly
         Blob.__init__(self, **kwargs)
-        if 'schema_version' not in self.keys():
-            self['schema_version'] = 6
+        if "schema_version" not in self.keys():
+            self["schema_version"] = 6
 
     def getReferencedReleases(self):
         """
@@ -869,26 +850,23 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         release references
         """
         referencedReleases = set()
-        for platform in self.get('platforms', {}):
-            for locale in self['platforms'][platform].get('locales', {}):
-                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
-                    referencedReleases.add(
-                        partial['from']
-                    )
-        for fileUrlKey in self.get('fileUrls', {}):
-            for partial in self['fileUrls'][fileUrlKey].get('partials', {}):
+        for platform in self.get("platforms", {}):
+            for locale in self["platforms"][platform].get("locales", {}):
+                for partial in self["platforms"][platform]["locales"][locale].get("partials", {}):
+                    referencedReleases.add(partial["from"])
+        for fileUrlKey in self.get("fileUrls", {}):
+            for partial in self["fileUrls"][fileUrlKey].get("partials", {}):
                 referencedReleases.add(partial)
 
         return referencedReleases
 
 
 class ProofXMLMixin(object):
-
     def _getAdditionalPatchAttributes(self, patch):
         additionalPatchAttributes = {}
 
-        if 'binTransInclusionProof' in patch:
-            additionalPatchAttributes['binTransInclusionProof'] = patch["binTransInclusionProof"]
+        if "binTransInclusionProof" in patch:
+            additionalPatchAttributes["binTransInclusionProof"] = patch["binTransInclusionProof"]
 
         return additionalPatchAttributes
 
@@ -903,21 +881,30 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
         * https://bugzilla.mozilla.org/show_bug.cgi?id=1384296
 
     """
+
     jsonschema = "apprelease-v8.yml"
 
     # for the benefit of get*XML
-    optional_ = ('showPrompt', 'showNeverForVersion',
-                 'actions', 'openURL', 'notificationURL', 'alertURL',
-                 'promptWaitTime', 'binTransMerkleRoot',
-                 'binTransCertificate', 'binTransSCTList')
+    optional_ = (
+        "showPrompt",
+        "showNeverForVersion",
+        "actions",
+        "openURL",
+        "notificationURL",
+        "alertURL",
+        "promptWaitTime",
+        "binTransMerkleRoot",
+        "binTransCertificate",
+        "binTransSCTList",
+    )
     # params that can have %LOCALE% interpolated
-    interpolable_ = ('openURL', 'notificationURL', 'alertURL')
+    interpolable_ = ("openURL", "notificationURL", "alertURL")
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV8 directly
         Blob.__init__(self, **kwargs)
-        if 'schema_version' not in self.keys():
-            self['schema_version'] = 8
+        if "schema_version" not in self.keys():
+            self["schema_version"] = 8
 
     def getReferencedReleases(self):
         """
@@ -925,14 +912,12 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
         release references
         """
         referencedReleases = set()
-        for platform in self.get('platforms', {}):
-            for locale in self['platforms'][platform].get('locales', {}):
-                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
-                    referencedReleases.add(
-                        partial['from']
-                    )
-        for fileUrlKey in self.get('fileUrls', {}):
-            for partial in self['fileUrls'][fileUrlKey].get('partials', {}):
+        for platform in self.get("platforms", {}):
+            for locale in self["platforms"][platform].get("locales", {}):
+                for partial in self["platforms"][platform]["locales"][locale].get("partials", {}):
+                    referencedReleases.add(partial["from"])
+        for fileUrlKey in self.get("fileUrls", {}):
+            for partial in self["fileUrls"][fileUrlKey].get("partials", {}):
                 referencedReleases.add(partial)
 
         return referencedReleases
@@ -948,15 +933,16 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         * https://bugzilla.mozilla.org/show_bug.cgi?id=1400016
 
     """
+
     jsonschema = "apprelease-v9.yml"
 
     # params that can have %LOCALE% interpolated
-    interpolable_ = ('openURL', 'notificationURL', 'alertURL', 'detailsURL',)
+    interpolable_ = ("openURL", "notificationURL", "alertURL", "detailsURL")
 
     def __init__(self, **kwargs):
         Blob.__init__(self, **kwargs)
-        if 'schema_version' not in self.keys():
-            self['schema_version'] = 9
+        if "schema_version" not in self.keys():
+            self["schema_version"] = 9
 
     def _getUpdateLineXML(self, updateQuery, update_type):
         attrs = {
@@ -1004,7 +990,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         return updateLine
 
     def getApplicationVersion(self, platform, locale):
-        return self.getLocaleOrTopLevelParam(platform, locale, 'appVersion')
+        return self.getLocaleOrTopLevelParam(platform, locale, "appVersion")
 
     def validate(self, *args, **kwargs):
         super(ReleaseBlobV9, self).validate(*args, **kwargs)
@@ -1110,14 +1096,12 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         release references
         """
         referencedReleases = set()
-        for platform in self.get('platforms', {}):
-            for locale in self['platforms'][platform].get('locales', {}):
-                for partial in self['platforms'][platform]['locales'][locale].get('partials', {}):
-                    referencedReleases.add(
-                        partial['from']
-                    )
-        for fileUrlKey in self.get('fileUrls', {}):
-            for partial in self['fileUrls'][fileUrlKey].get('partials', {}):
+        for platform in self.get("platforms", {}):
+            for locale in self["platforms"][platform].get("locales", {}):
+                for partial in self["platforms"][platform]["locales"][locale].get("partials", {}):
+                    referencedReleases.add(partial["from"])
+        for fileUrlKey in self.get("fileUrls", {}):
+            for partial in self["fileUrls"][fileUrlKey].get("partials", {}):
                 referencedReleases.add(partial)
 
         return referencedReleases
@@ -1134,34 +1118,40 @@ class DesupportBlob(Blob):
             </update>
         </updates>
     """
+
     jsonschema = "desupport.yml"
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init DesupportBlob directly
         Blob.__init__(self, **kwargs)
-        if 'schema_version' not in self.keys():
-            self['schema_version'] = 50
+        if "schema_version" not in self.keys():
+            self["schema_version"] = 50
 
     def shouldServeUpdate(self, updateQuery):
         # desupport messages should always be returned
         return True
 
     def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        return ''
+        return ""
 
     def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        tmp_url = self['detailsUrl'].replace("%LOCALE%", updateQuery['locale'])\
-                                    .replace("%VERSION%", updateQuery['version'])\
-                                    .replace("%OS%", updateQuery['buildTarget'].split('_')[0])
-        tmp_url = tmp_url.replace("%locale%", updateQuery['locale']) \
-            .replace("%version%", updateQuery['version']) \
-            .replace("%os%", updateQuery['buildTarget'].split('_')[0])
+        tmp_url = (
+            self["detailsUrl"]
+            .replace("%LOCALE%", updateQuery["locale"])
+            .replace("%VERSION%", updateQuery["version"])
+            .replace("%OS%", updateQuery["buildTarget"].split("_")[0])
+        )
+        tmp_url = (
+            tmp_url.replace("%locale%", updateQuery["locale"])
+            .replace("%version%", updateQuery["version"])
+            .replace("%os%", updateQuery["buildTarget"].split("_")[0])
+        )
         xml = []
         xml.append('    <update type="%s" unsupported="true" detailsURL="%s" displayVersion="%s">' % (update_type, tmp_url, self["displayVersion"]))
         return xml
 
     def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        return '</update>'
+        return "</update>"
 
     def containsForbiddenDomain(self, product, whitelistedDomains):
         # Although DesupportBlob contains a domain (detailsUrl), that attribute

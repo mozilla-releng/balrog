@@ -10,9 +10,10 @@ class TestSchema1Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {"a.com": ('gg',), 'boring.com': ('gg',)}
+        self.whitelistedDomains = {"a.com": ("gg",), "boring.com": ("gg",)}
         self.blob1 = SystemAddonsBlob()
-        self.blob1.loadJSON("""
+        self.blob1.loadJSON(
+            """
 {
     "name": "fake",
     "schema_version": 5000,
@@ -58,72 +59,90 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
 }
-""")
+"""
+        )
         self.blob2 = SystemAddonsBlob()
-        self.blob2.loadJSON("""
+        self.blob2.loadJSON(
+            """
 {
     "name": "fake",
     "schema_version": 5000,
     "hashFunction": "SHA512",
     "uninstall": true
 }
-""")
+"""
+        )
         self.blob3 = SystemAddonsBlob()
-        self.blob3.loadJSON("""
+        self.blob3.loadJSON(
+            """
 {
     "name": "fake",
     "schema_version": 5000,
     "hashFunction": "SHA512",
     "uninstall": false
 }
-""")
+"""
+        )
         self.empty_blob = SystemAddonsBlob()
-        self.empty_blob.loadJSON("""
+        self.empty_blob.loadJSON(
+            """
 {
     "name": "fake",
     "schema_version": 5000,
     "hashFunction": "SHA512",
     "addons": {}
 }
-""")
+"""
+        )
 
     def testXML(self):
         updateQuery = {
-            "product": "gg", "version": "3", "buildID": "1",
-            "buildTarget": "p", "locale": "l", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "product": "gg",
+            "version": "3",
+            "buildID": "1",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
+            "force": 0,
         }
         returned_header = self.blob1.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob1.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob1.getInnerFooterXML(updateQuery, "minor",
-                                                       self.whitelistedDomains,
-                                                       self.specialForceHosts)
+        returned_footer = self.blob1.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
-        expected_header = '    <addons>'
-        expected = ["""
+        expected_header = "    <addons>"
+        expected = [
+            """
 <addon id="c" URL="http://a.com/blah" hashFunction="SHA512" hashValue="3" size="2" version="1"/>
-""", """
+""",
+            """
 <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
-"""]
+""",
+        ]
         expected = [x.strip() for x in expected]
-        expected_footer = '    </addons>'
+        expected_footer = "    </addons>"
         self.assertEqual(returned_header, expected_header)
         assertCountEqual(self, returned, expected)
         self.assertEqual(returned_footer, expected_footer)
 
     def testXMLWhenEmptyAndNotUninstall(self):
         updateQuery = {
-            "product": "gg", "version": "3", "buildID": "1",
-            "buildTarget": "t", "locale": "l", "channel": "a",
-            "osVersion": "z", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "product": "gg",
+            "version": "3",
+            "buildID": "1",
+            "buildTarget": "t",
+            "locale": "l",
+            "channel": "a",
+            "osVersion": "z",
+            "distribution": "a",
+            "distVersion": "a",
+            "force": 0,
         }
         returned_header = self.empty_blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.empty_blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.empty_blob.getInnerFooterXML(updateQuery, "minor",
-                                                            self.whitelistedDomains,
-                                                            self.specialForceHosts)
+        returned_footer = self.empty_blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected_header = ""
         expected = []
@@ -135,16 +154,20 @@ class TestSchema1Blob(unittest.TestCase):
 
     def testXMLWhenUninstall(self):
         updateQuery = {
-            "product": "gg", "version": "3", "buildID": "1",
-            "buildTarget": "p", "locale": "l", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "product": "gg",
+            "version": "3",
+            "buildID": "1",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
+            "force": 0,
         }
         returned_header = self.blob2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob2.getInnerFooterXML(updateQuery, "minor",
-                                                       self.whitelistedDomains,
-                                                       self.specialForceHosts)
+        returned_footer = self.blob2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected_header = "    <addons>"
         expected = []
@@ -157,16 +180,20 @@ class TestSchema1Blob(unittest.TestCase):
 
     def testXMLNoAddonsNoUninstallBlob(self):
         updateQuery = {
-            "product": "gg", "version": "3", "buildID": "1",
-            "buildTarget": "p", "locale": "l", "channel": "a",
-            "osVersion": "a", "distribution": "a", "distVersion": "a",
-            "force": 0
+            "product": "gg",
+            "version": "3",
+            "buildID": "1",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
+            "force": 0,
         }
         returned_header = self.blob3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob3.getInnerFooterXML(updateQuery, "minor",
-                                                       self.whitelistedDomains,
-                                                       self.specialForceHosts)
+        returned_footer = self.blob3.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected_header = ""
         expected = []
@@ -179,7 +206,8 @@ class TestSchema1Blob(unittest.TestCase):
 
     def testContainsForbiddenDomain(self):
         blob = SystemAddonsBlob()
-        blob.loadJSON("""
+        blob.loadJSON(
+            """
 {
     "name": "fake",
     "schema_version": 1000,
@@ -197,13 +225,14 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
 }
-""")
-        self.assertTrue(blob.containsForbiddenDomain('gg',
-                                                     self.whitelistedDomains))
+"""
+        )
+        self.assertTrue(blob.containsForbiddenDomain("gg", self.whitelistedDomains))
 
     def testDoesNotContainForbiddenDomain(self):
         blob = SystemAddonsBlob()
-        blob.loadJSON("""
+        blob.loadJSON(
+            """
 {
     "name": "fake",
     "schema_version": 1000,
@@ -221,60 +250,67 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
 }
-""")
-        self.assertFalse(blob.containsForbiddenDomain('gg',
-                                                      self.whitelistedDomains))
+"""
+        )
+        self.assertFalse(blob.containsForbiddenDomain("gg", self.whitelistedDomains))
 
     def testAddonLayoutEmptyAddons(self):
 
         # Correct layout with empty addons
 
         blob = SystemAddonsBlob()
-        blob.loadJSON("""
+        blob.loadJSON(
+            """
     {
         "name": "fake",
         "schema_version": 5000,
         "hashFunction": "SHA512",
         "addons": {}
     }
-    """)
-        blob.validate('gg', self.whitelistedDomains)
+    """
+        )
+        blob.validate("gg", self.whitelistedDomains)
 
     def testAddonLayoutWithUninstall(self):
 
         # Correct layout with no addons, and with uninstall
 
         blob = SystemAddonsBlob()
-        blob.loadJSON("""
+        blob.loadJSON(
+            """
     {
         "name": "fake",
         "schema_version": 5000,
         "hashFunction": "SHA512",
         "uninstall": false
     }
-    """)
-        blob.validate('gg', self.whitelistedDomains)
+    """
+        )
+        blob.validate("gg", self.whitelistedDomains)
 
     def testAddonLayoutNoAddonsNoUninstall(self):
 
         # Incorrect layout with no addons and no uninstall
 
         blob = SystemAddonsBlob()
-        blob.loadJSON("""
+        blob.loadJSON(
+            """
     {
         "name": "fake",
         "schema_version": 5000,
         "hashFunction": "SHA512"
     }
-    """)
-        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
+    """
+        )
+        self.assertRaises(Exception, blob.validate, "gg", self.whitelistedDomains)
 
     def testAddonLayoutTwoPlatforms(self):
 
         # Correct layout with one addon and two platforms
 
         blob = SystemAddonsBlob()
-        blob.loadJSON("""
+        blob.loadJSON(
+            """
     {
         "name": "fake",
         "schema_version": 5000,
@@ -295,15 +331,17 @@ class TestSchema1Blob(unittest.TestCase):
             }
         }
     }
-    """)
-        blob.validate('gg', self.whitelistedDomains)
+    """
+        )
+        blob.validate("gg", self.whitelistedDomains)
 
     def testAddonLayoutNoVersion(self):
 
         # Incorrect layout with missing version for an addon name
 
         blob = SystemAddonsBlob()
-        blob.loadJSON("""
+        blob.loadJSON(
+            """
     {
         "name": "fake",
         "schema_version": 5000,
@@ -323,15 +361,17 @@ class TestSchema1Blob(unittest.TestCase):
             }
         }
     }
-    """)
-        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
+    """
+        )
+        self.assertRaises(Exception, blob.validate, "gg", self.whitelistedDomains)
 
     def testAddonLayoutEmptyPlatforms(self):
 
         # Correct layout with empty platforms
 
         blob = SystemAddonsBlob()
-        blob.loadJSON("""
+        blob.loadJSON(
+            """
     {
         "name": "fake",
         "schema_version": 5000,
@@ -343,15 +383,17 @@ class TestSchema1Blob(unittest.TestCase):
             }
         }
     }
-    """)
-        blob.validate('gg', self.whitelistedDomains)
+    """
+        )
+        blob.validate("gg", self.whitelistedDomains)
 
     def testAddonLayoutEmptyPlatformName(self):
 
         # Incorrect layout with empty platform name
 
         blob = SystemAddonsBlob()
-        blob.loadJSON("""
+        blob.loadJSON(
+            """
     {
         "name": "fake",
         "schema_version": 5000,
@@ -370,15 +412,17 @@ class TestSchema1Blob(unittest.TestCase):
             }
         }
     }
-    """)
-        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
+    """
+        )
+        self.assertRaises(Exception, blob.validate, "gg", self.whitelistedDomains)
 
     def testAddonLayoutNoFilesize(self):
 
         # Incorrect layout with missing filesize
 
         blob = SystemAddonsBlob()
-        blob.loadJSON("""
+        blob.loadJSON(
+            """
     {
         "name": "fake",
         "schema_version": 5000,
@@ -398,5 +442,6 @@ class TestSchema1Blob(unittest.TestCase):
             }
         }
     }
-    """)
-        self.assertRaises(Exception, blob.validate, 'gg', self.whitelistedDomains)
+    """
+        )
+        self.assertRaises(Exception, blob.validate, "gg", self.whitelistedDomains)

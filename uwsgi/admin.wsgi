@@ -1,10 +1,12 @@
 import logging
 import os
-import six
 
+import six
 from flask_wtf.csrf import CSRFProtect
 
+from auslib.global_state import cache, dbo
 from auslib.log import configure_logging
+from auslib.web.admin.base import app as application
 
 SYSTEM_ACCOUNTS = ["balrogagent", "balrog-ffxbld", "balrog-tbirdbld", "seabld"]
 DOMAIN_WHITELIST = {
@@ -20,22 +22,20 @@ DOMAIN_WHITELIST = {
 }
 if os.environ.get("STAGING"):
     SYSTEM_ACCOUNTS.extend(["balrog-stage-ffxbld", "balrog-stage-tbirdbld"])
-    DOMAIN_WHITELIST.update({
-        "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-        "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-    })
+    DOMAIN_WHITELIST.update(
+        {
+            "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
+            "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
+        }
+    )
 
 # Logging needs to be set-up before importing the application to make sure that
 # logging done from other modules uses our Logger.
-logging_kwargs = {
-    "level": os.environ.get("LOG_LEVEL", logging.INFO)
-}
+logging_kwargs = {"level": os.environ.get("LOG_LEVEL", logging.INFO)}
 if os.environ.get("LOG_FORMAT") == "plain":
     logging_kwargs["formatter"] = logging.Formatter
 configure_logging(**logging_kwargs)
 
-from auslib.web.admin.base import app as application
-from auslib.global_state import cache, dbo
 
 cache.make_copies = True
 # We explicitly don't want a blob_version cache here because it will cause
@@ -50,7 +50,7 @@ cache.make_cache("blob", 500, 3600)
 cache.make_cache("blob_schema", 50, 24 * 60 * 60)
 # Users cache to identify if an user is known by Balrog and
 # has at least one permission.
-cache.make_cache('users', 1, 300)
+cache.make_cache("users", 1, 300)
 
 dbo.setDb(os.environ["DBURI"])
 if os.environ.get("NOTIFY_TO_ADDR"):
@@ -71,6 +71,7 @@ dbo.setDomainWhitelist(DOMAIN_WHITELIST)
 application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
 application.config["PAGE_TITLE"] = "Balrog Administration"
 application.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+
 
 class JSONCSRFProtect(CSRFProtect):
     def _get_csrf_token(self):
@@ -118,6 +119,7 @@ application.config["SESSION_COOKIE_SAMESITE"] = "Strict"
 if os.environ.get("SENTRY_DSN"):
     application.config["SENTRY_DSN"] = os.environ.get("SENTRY_DSN")
     from auslib.web.admin.base import sentry
+
     sentry.init_app(application)
 
 # version.json is created when the Docker image is built, and contains details
@@ -160,8 +162,12 @@ config_dir = os.path.dirname(frontend_config)
 if not os.path.exists(config_dir):
     os.makedirs(config_dir)
 with open(frontend_config, "w+") as f:
-    f.write("""
+    f.write(
+        """
 angular.module('config', [])
 
 .constant('Auth0Config', {});
-""".format(auth0_config))
+""".format(
+            auth0_config
+        )
+    )

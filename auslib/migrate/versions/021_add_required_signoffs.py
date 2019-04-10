@@ -1,5 +1,4 @@
-from sqlalchemy import Table, Column, Integer, String, MetaData, \
-    BigInteger, Boolean
+from sqlalchemy import BigInteger, Boolean, Column, Integer, MetaData, String, Table
 
 
 def upgrade(migrate_engine):
@@ -9,8 +8,9 @@ def upgrade(migrate_engine):
     elif migrate_engine.name == "sqlite":
         bigintType = Integer
 
-    product_required_signoffs = Table( # noqa
-        "product_req_signoffs", metadata,
+    product_required_signoffs = Table(  # noqa
+        "product_req_signoffs",
+        metadata,
         Column("product", String(15), primary_key=True),
         Column("channel", String(75), primary_key=True),
         Column("role", String(50), primary_key=True),
@@ -19,7 +19,8 @@ def upgrade(migrate_engine):
     )
 
     product_required_signoffs_history = Table(
-        "product_req_signoffs_history", metadata,
+        "product_req_signoffs_history",
+        metadata,
         Column("change_id", Integer, primary_key=True, autoincrement=True),
         Column("changed_by", String(100), nullable=False),
         Column("product", String(15), nullable=False),
@@ -30,8 +31,9 @@ def upgrade(migrate_engine):
     )
     product_required_signoffs_history.append_column(Column("timestamp", bigintType, nullable=False))
 
-    product_required_signoffs_scheduled_changes = Table( # noqa
-        "product_req_signoffs_scheduled_changes", metadata,
+    product_required_signoffs_scheduled_changes = Table(  # noqa
+        "product_req_signoffs_scheduled_changes",
+        metadata,
         Column("sc_id", Integer, primary_key=True, autoincrement=True),
         Column("scheduled_by", String(100), nullable=False),
         Column("complete", Boolean, default=False),
@@ -45,7 +47,8 @@ def upgrade(migrate_engine):
     )
 
     product_required_signoffs_scheduled_changes_history = Table(
-        "product_req_signoffs_scheduled_changes_history", metadata,
+        "product_req_signoffs_scheduled_changes_history",
+        metadata,
         Column("change_id", Integer, primary_key=True, autoincrement=True),
         Column("changed_by", String(100), nullable=False),
         Column("sc_id", Integer, nullable=False, autoincrement=True),
@@ -62,14 +65,16 @@ def upgrade(migrate_engine):
     product_required_signoffs_scheduled_changes_history.append_column(Column("timestamp", bigintType, nullable=False))
 
     product_required_signoffs_scheduled_changes_conditions = Table(
-        "product_req_signoffs_scheduled_changes_conditions", metadata,
+        "product_req_signoffs_scheduled_changes_conditions",
+        metadata,
         Column("sc_id", Integer, primary_key=True, autoincrement=True),
         Column("data_version", Integer),
     )
     product_required_signoffs_scheduled_changes_conditions.append_column(Column("when", bigintType))
 
     product_required_signoffs_scheduled_changes_conditions_history = Table(
-        "product_req_signoffs_scheduled_changes_conditions_history", metadata,
+        "product_req_signoffs_scheduled_changes_conditions_history",
+        metadata,
         Column("change_id", Integer, primary_key=True, autoincrement=True),
         Column("changed_by", String(100), nullable=False),
         Column("sc_id", Integer, nullable=False),
@@ -78,15 +83,17 @@ def upgrade(migrate_engine):
     product_required_signoffs_scheduled_changes_conditions_history.append_column(Column("timestamp", bigintType, nullable=False))
     product_required_signoffs_scheduled_changes_conditions_history.append_column(Column("when", bigintType))
 
-    product_required_signoffs_scheduled_changes_signoffs = Table( # noqa
-        "product_req_signoffs_scheduled_changes_signoffs", metadata,
+    product_required_signoffs_scheduled_changes_signoffs = Table(  # noqa
+        "product_req_signoffs_scheduled_changes_signoffs",
+        metadata,
         Column("sc_id", Integer, primary_key=True, autoincrement=False),
         Column("username", String(100), primary_key=True),
         Column("role", String(50), nullable=False),
     )
 
-    product_required_signoffs_scheduled_changes_signoffs_history = Table( # noqa
-        "product_req_signoffs_scheduled_changes_signoffs_history", metadata,
+    product_required_signoffs_scheduled_changes_signoffs_history = Table(  # noqa
+        "product_req_signoffs_scheduled_changes_signoffs_history",
+        metadata,
         Column("change_id", Integer, primary_key=True, autoincrement=True),
         Column("changed_by", String(100), nullable=False),
         Column("sc_id", Integer, nullable=False, autoincrement=False),
@@ -95,8 +102,9 @@ def upgrade(migrate_engine):
     )
     product_required_signoffs_scheduled_changes_signoffs_history.append_column(Column("timestamp", bigintType, nullable=False))
 
-    permissions_signoffs = Table( # noqa
-        "permissions_req_signoffs", metadata,
+    permissions_signoffs = Table(  # noqa
+        "permissions_req_signoffs",
+        metadata,
         Column("product", String(15), primary_key=True),
         Column("role", String(50), primary_key=True),
         Column("signoffs_required", Integer, nullable=False),
@@ -104,7 +112,8 @@ def upgrade(migrate_engine):
     )
 
     permissions_signoffs_history = Table(
-        "permissions_req_signoffs_history", metadata,
+        "permissions_req_signoffs_history",
+        metadata,
         Column("change_id", Integer, primary_key=True, autoincrement=True),
         Column("changed_by", String(100), nullable=False),
         Column("product", String(15), nullable=False),
@@ -114,8 +123,9 @@ def upgrade(migrate_engine):
     )
     permissions_signoffs_history.append_column(Column("timestamp", bigintType, nullable=False))
 
-    permissions_signoffs_scheduled_changes = Table( # noqa
-        "permissions_req_signoffs_scheduled_changes", metadata,
+    permissions_signoffs_scheduled_changes = Table(  # noqa
+        "permissions_req_signoffs_scheduled_changes",
+        metadata,
         Column("sc_id", Integer, primary_key=True, autoincrement=True),
         Column("scheduled_by", String(100), nullable=False),
         Column("complete", Boolean, default=False),
@@ -128,7 +138,8 @@ def upgrade(migrate_engine):
     )
 
     permissions_signoffs_scheduled_changes_history = Table(
-        "permissions_req_signoffs_scheduled_changes_history", metadata,
+        "permissions_req_signoffs_scheduled_changes_history",
+        metadata,
         Column("change_id", Integer, primary_key=True, autoincrement=True),
         Column("changed_by", String(100), nullable=False),
         Column("sc_id", Integer, nullable=False, autoincrement=True),
@@ -144,14 +155,16 @@ def upgrade(migrate_engine):
     permissions_signoffs_scheduled_changes_history.append_column(Column("timestamp", bigintType, nullable=False))
 
     permissions_signoffs_scheduled_changes_conditions = Table(
-        "permissions_req_signoffs_scheduled_changes_conditions", metadata,
+        "permissions_req_signoffs_scheduled_changes_conditions",
+        metadata,
         Column("sc_id", Integer, primary_key=True, autoincrement=True),
         Column("data_version", Integer),
     )
     permissions_signoffs_scheduled_changes_conditions.append_column(Column("when", bigintType))
 
     permissions_signoffs_scheduled_changes_conditions_history = Table(
-        "permissions_req_signoffs_scheduled_changes_conditions_history", metadata,
+        "permissions_req_signoffs_scheduled_changes_conditions_history",
+        metadata,
         Column("change_id", Integer, primary_key=True, autoincrement=True),
         Column("changed_by", String(100), nullable=False),
         Column("sc_id", Integer, nullable=False),
@@ -160,15 +173,17 @@ def upgrade(migrate_engine):
     permissions_signoffs_scheduled_changes_conditions_history.append_column(Column("timestamp", bigintType, nullable=False))
     permissions_signoffs_scheduled_changes_conditions_history.append_column(Column("when", bigintType))
 
-    permissions_signoffs_scheduled_changes_signoffs = Table( # noqa
-        "permissions_req_signoffs_scheduled_changes_signoffs", metadata,
+    permissions_signoffs_scheduled_changes_signoffs = Table(  # noqa
+        "permissions_req_signoffs_scheduled_changes_signoffs",
+        metadata,
         Column("sc_id", Integer, primary_key=True, autoincrement=False),
         Column("username", String(100), primary_key=True),
         Column("role", String(50), nullable=False),
     )
 
-    permissions_signoffs_scheduled_changes_signoffs_history = Table( # noqa
-        "permissions_req_signoffs_scheduled_changes_signoffs_history", metadata,
+    permissions_signoffs_scheduled_changes_signoffs_history = Table(  # noqa
+        "permissions_req_signoffs_scheduled_changes_signoffs_history",
+        metadata,
         Column("change_id", Integer, primary_key=True, autoincrement=True),
         Column("changed_by", String(100), nullable=False),
         Column("sc_id", Integer, nullable=False, autoincrement=False),

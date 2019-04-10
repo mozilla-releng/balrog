@@ -2,20 +2,21 @@ import json
 
 import arrow
 import six
-
 from connexion import request
 from flask import Response, jsonify
-from six import text_type, string_types
+from six import string_types, text_type
 
 
-class HistoryHelper():
-    def __init__(self,
-                 hist_table,
-                 order_by,
-                 get_object_callback,
-                 history_filters_callback,
-                 process_revisions_callback=None,
-                 obj_not_found_msg='Requested object does not exist'):
+class HistoryHelper:
+    def __init__(
+        self,
+        hist_table,
+        order_by,
+        get_object_callback,
+        history_filters_callback,
+        process_revisions_callback=None,
+        obj_not_found_msg="Requested object does not exist",
+    ):
         self.hist_table = hist_table
         self.order_by = order_by
         self.fn_history_filters = history_filters_callback
@@ -23,38 +24,33 @@ class HistoryHelper():
         self.fn_get_object = get_object_callback
         self.obj_not_found_msg = obj_not_found_msg
 
-    def get_history(self, response_key='revisions'):
-        page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 10))
+    def get_history(self, response_key="revisions"):
+        page = int(request.args.get("page", 1))
+        limit = int(request.args.get("limit", 10))
         assert page >= 1
 
         obj = self.fn_get_object()
         if not obj:
-            return Response(status=404,
-                            response=self.obj_not_found_msg)
+            return Response(status=404, response=self.obj_not_found_msg)
 
         offset = limit * (page - 1)
 
         filters = self.fn_history_filters(obj, self.hist_table)
         total_count = self.hist_table.count(where=filters)
 
-        revisions = self.hist_table.select(
-            where=filters,
-            limit=limit,
-            offset=offset,
-            order_by=self.order_by)
+        revisions = self.hist_table.select(where=filters, limit=limit, offset=offset, order_by=self.order_by)
 
         if self.fn_process_revisions:
             revisions = self.fn_process_revisions(revisions)
 
         ret = {}
         ret[response_key] = revisions
-        ret['count'] = total_count
+        ret["count"] = total_count
         return jsonify(ret)
 
 
 def get_input_dict():
-    reserved_filter_params = ['limit', 'product', 'channel', 'page', 'timestamp_from', 'timestamp_to']
+    reserved_filter_params = ["limit", "product", "channel", "page", "timestamp_from", "timestamp_to"]
     args = request.args
     query_keys = []
     query = {}
@@ -67,7 +63,7 @@ def get_input_dict():
     return query
 
 
-history_keys = ('timestamp', 'change_id', 'data_version', 'changed_by')
+history_keys = ("timestamp", "change_id", "data_version", "changed_by")
 
 
 def annotateRevisionDifferences(revisions):
@@ -85,7 +81,7 @@ def annotateRevisionDifferences(revisions):
                     different.append(key)
             # prep the value for being shown in revision_row.html
             if value is None:
-                value = 'NULL'
+                value = "NULL"
             elif isinstance(value, dict):
                 try:
                     value = json.dumps(value, indent=2, sort_keys=True)
@@ -94,10 +90,10 @@ def annotateRevisionDifferences(revisions):
             elif isinstance(value, int):
                 value = text_type(value)
             elif not isinstance(value, string_types):
-                value = text_type(value, 'utf8') if six.PY2 else str(value)
+                value = text_type(value, "utf8") if six.PY2 else str(value)
             rev[key] = value
 
-        rev['_different'] = different
+        rev["_different"] = different
         # Divide by 1000 because the timestamp from the database is to the millisecond,
         # but stored as an integer
-        rev['_time_ago'] = arrow.get(rev['timestamp'] / 1000).humanize()
+        rev["_time_ago"] = arrow.get(rev["timestamp"] / 1000).humanize()

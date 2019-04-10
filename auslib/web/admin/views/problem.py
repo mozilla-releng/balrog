@@ -1,4 +1,5 @@
 import json
+
 from flask import Response
 
 
@@ -34,14 +35,13 @@ def problem(status, title, detail, type=None, instance=None, headers=None, ext=N
     :rtype: Response
     """
     if not type:
-        type = 'about:blank'
+        type = "about:blank"
 
-    problem_response = {'type': type, 'title': title, 'detail': detail, 'status': status}
+    problem_response = {"type": type, "title": title, "detail": detail, "status": status}
     if instance:
-        problem_response['instance'] = instance
+        problem_response["instance"] = instance
     if ext:
         problem_response.update(ext)
 
-    mimetype = content_type = 'application/json'
-    return Response(response=json.dumps(problem_response), status=status, mimetype=mimetype,
-                    content_type=content_type, headers=headers)
+    mimetype = content_type = "application/json"
+    return Response(response=json.dumps(problem_response), status=status, mimetype=mimetype, content_type=content_type, headers=headers)

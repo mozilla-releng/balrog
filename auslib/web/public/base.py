@@ -1,45 +1,42 @@
-import connexion
 import logging
 import re
+from os import path
+
+import connexion
+from connexion import request
+from flask import Response, make_response, send_from_directory
+from raven.contrib.flask import Sentry
+
+import auslib.web
+from auslib.AUS import AUS
+from auslib.errors import BadDataError
+from auslib.web.admin.views.problem import problem
+from specsynthase.specbuilder import SpecBuilder
 
 try:
     import html
 except ImportError:  # pragma: no cover
     import cgi as html
 
-import auslib.web
-
-from os import path
-
-from connexion import request
-from flask import make_response, send_from_directory, Response
-
-from raven.contrib.flask import Sentry
-
-from auslib.AUS import AUS
-from auslib.web.admin.views.problem import problem
-from specsynthase.specbuilder import SpecBuilder
-
-from auslib.errors import BadDataError
 
 log = logging.getLogger(__name__)
 AUS = AUS()
 sentry = Sentry()
 
-connexion_app = connexion.App(__name__,
-                              specification_dir='.')
+connexion_app = connexion.App(__name__, specification_dir=".")
 app = connexion_app.app
 
 current_dir = path.dirname(__file__)
 web_dir = path.dirname(auslib.web.__file__)
-spec = SpecBuilder().add_spec(path.join(current_dir, 'swagger/api.yml'))\
-                    .add_spec(path.join(current_dir, 'swagger/public_api_spec.yml'))\
-                    .add_spec(path.join(web_dir, 'common/swagger/definitions.yml'))\
-                    .add_spec(path.join(web_dir, 'common/swagger/parameters.yml'))\
-                    .add_spec(path.join(web_dir, 'common/swagger/responses.yml'))
-connexion_app.add_api(spec,
-                      validate_responses=True,
-                      strict_validation=True)
+spec = (
+    SpecBuilder()
+    .add_spec(path.join(current_dir, "swagger/api.yml"))
+    .add_spec(path.join(current_dir, "swagger/public_api_spec.yml"))
+    .add_spec(path.join(web_dir, "common/swagger/definitions.yml"))
+    .add_spec(path.join(web_dir, "common/swagger/parameters.yml"))
+    .add_spec(path.join(web_dir, "common/swagger/responses.yml"))
+)
+connexion_app.add_api(spec, validate_responses=True, strict_validation=True)
 
 
 @app.after_request
@@ -53,10 +50,9 @@ def apply_security_headers(response):
     if re.match("^/ui/", request.path):
         # This enables swagger-ui to dynamically fetch and
         # load the swagger specification JSON file containing API definition and examples.
-        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
     else:
-        response.headers["Content-Security-Policy"] = \
-            app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
+        response.headers["Content-Security-Policy"] = app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
     return response
 
 
@@ -65,7 +61,7 @@ def fourohfour(error):
     if re.match("^/update", request.path):
         """We don't return 404s for AUS /update endpoints. Instead, we return empty XML files"""
         response = make_response('<?xml version="1.0"?>\n<updates>\n</updates>')
-        response.mimetype = 'text/xml'
+        response.mimetype = "text/xml"
         return response
     return Response(status=404, mimetype="text/plain", response=error.description)
 
@@ -111,12 +107,12 @@ def generic(error):
 
 # Keeping static files endpoints here due to an issue when returning response for static files.
 # Similar issue: https://github.com/zalando/connexion/issues/401
-@app.route('/robots.txt')
+@app.route("/robots.txt")
 def robots():
     return send_from_directory(app.static_folder, "robots.txt")
 
 
-@app.route('/contribute.json')
+@app.route("/contribute.json")
 def contributejson():
     return send_from_directory(app.static_folder, "contribute.json")
 
@@ -127,13 +123,14 @@ def set_cache_control():
     # different users ("public").
     # and a maximum age of 90 seconds, to keep our TTL low.
     # We bumped this from 60s -> 90s in November, 2016.
-    setattr(app, 'cacheControl', app.config.get("CACHE_CONTROL", "public, max-age=90"))
+    setattr(app, "cacheControl", app.config.get("CACHE_CONTROL", "public, max-age=90"))
 
 
-@app.route('/debug/api.yml')
+@app.route("/debug/api.yml")
 def get_yaml():
-    if app.config.get('SWAGGER_DEBUG', False):
+    if app.config.get("SWAGGER_DEBUG", False):
         import yaml
+
         app_spec = yaml.dump(spec)
-        return Response(mimetype='text/plain', response=app_spec)
+        return Response(mimetype="text/plain", response=app_spec)
     return Response(status=404)

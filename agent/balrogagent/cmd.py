@@ -1,32 +1,24 @@
 import asyncio
 import logging
 import time
-
 from collections import defaultdict
+
 from . import client
 from .changes import get_telemetry_uptake, telemetry_is_ready, time_is_ready
 from .log import configure_logging
 
-SCHEDULED_CHANGE_ENDPOINTS = ['rules',
-                              'releases',
-                              'permissions',
-                              'emergency_shutoff',
-                              'required_signoffs/product',
-                              'required_signoffs/permissions']
+SCHEDULED_CHANGE_ENDPOINTS = ["rules", "releases", "permissions", "emergency_shutoff", "required_signoffs/product", "required_signoffs/permissions"]
 
 
-async def run_agent(loop, balrog_api_root, telemetry_api_root, auth0_secrets,
-                    sleeptime=30, once=False, raise_exceptions=False):
+async def run_agent(loop, balrog_api_root, telemetry_api_root, auth0_secrets, sleeptime=30, once=False, raise_exceptions=False):
 
     while True:
         try:
             for endpoint in SCHEDULED_CHANGE_ENDPOINTS:
                 logging.debug("Looking for active scheduled changes for endpoint %s..." % endpoint)
-                resp = await client.request(balrog_api_root,
-                                            "/scheduled_changes/%s" % endpoint,
-                                            loop=loop, auth0_secrets=auth0_secrets)
+                resp = await client.request(balrog_api_root, "/scheduled_changes/%s" % endpoint, loop=loop, auth0_secrets=auth0_secrets)
                 sc = resp["scheduled_changes"]
-                if endpoint == 'rules':
+                if endpoint == "rules":
                     # Rules are sorted by priority, when available. Deletions will not have
                     # a priority set, so we treat them as the lowest priority possible.
                     sc = sorted(sc, key=lambda k: (k["when"], k["priority"] or 0), reverse=True)
@@ -49,8 +41,8 @@ async def run_agent(loop, balrog_api_root, telemetry_api_root, auth0_secrets,
                         logging.debug("Unknown change type!")
 
                     # Check if all the required signoffs have been obtained
-                    required_signoffs = change.get('required_signoffs') or {}
-                    signoffs = change.get('signoffs') or {}
+                    required_signoffs = change.get("required_signoffs") or {}
+                    signoffs = change.get("signoffs") or {}
                     if not verify_signoffs(required_signoffs, signoffs):
                         logging.debug("Signoff requirements unmet, marking as not ready")
                         ready = False
@@ -88,9 +80,7 @@ def verify_signoffs(required_signoffs, signoffs):
 def main():
     import os
 
-    logging_kwargs = {
-        "level": os.environ.get("LOG_LEVEL", logging.INFO)
-    }
+    logging_kwargs = {"level": os.environ.get("LOG_LEVEL", logging.INFO)}
     if os.environ.get("LOG_FORMAT") == "plain":
         logging_kwargs["formatter"] = logging.Formatter
     configure_logging(**logging_kwargs)
@@ -102,14 +92,7 @@ def main():
     )
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(
-        run_agent(
-            loop,
-            os.environ["BALROG_API_ROOT"],
-            os.environ["TELEMETRY_API_ROOT"],
-            auth0_secrets=auth0_secrets,
-        )
-    )
+    loop.run_until_complete(run_agent(loop, os.environ["BALROG_API_ROOT"], os.environ["TELEMETRY_API_ROOT"], auth0_secrets=auth0_secrets))
 
 
 if __name__ == "__main__":

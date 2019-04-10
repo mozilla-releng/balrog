@@ -1,11 +1,11 @@
-import mock
 import unittest
+
+import mock
 
 from auslib.util.cache import MaybeCacher
 
 
 class TestMaybeCacher(unittest.TestCase):
-
     def testNoCaching(self):
         with mock.patch("auslib.util.cache.ExpiringLRUCache") as lru:
             cache = MaybeCacher()
