@@ -1,5 +1,5 @@
 angular.module("app").controller('RequiredSignoffsController',
-function($scope, $modal, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Permissions, Page) {
+function($scope, $modal, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredSignoffs, Permissions, Page, Auth0) {
 
   Page.setTitle('Signoffs');
 
@@ -14,6 +14,7 @@ function($scope, $modal, $q, CSRF, ProductRequiredSignoffs, PermissionsRequiredS
   $scope.selected_product = null;
   $scope.state = "current";
   $scope.current_user = localStorage.getItem("username");
+  $scope.auth0 = Auth0;
   $scope.user_roles = [];
 
   // All of the initial loads happen asynchronously. We keep track of these so we can

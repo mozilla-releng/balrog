@@ -24,13 +24,13 @@
         <div class="collapse navbar-collapse" ng-class="{'in':!navCollapsed}">
           <ul class="nav navbar-nav navbar-right" ng-controller="NavController">
             <li ng-class="{active: isOn('/')}"><a href="/">Home</a></li>
-            <li ng-show="auth0.isAuthenticated()" class="dropdown nav" ng-class="{active: isOn('/rules')}">
+            <li class="dropdown nav" ng-class="{active: isOn('/rules')}">
                 <a href="/rules">Rules <span class="caret"></span></a>
                 <ul class="dropdown-menu dropdown-menu-left">
                     <li><a href="/rules/scheduled_changes">Scheduled Changes</a></li>
                 </ul>
             </li>
-            <li ng-show="auth0.isAuthenticated()" class="dropdown nav" ng-class="{active: isOn('/releases')}">
+            <li class="dropdown nav" ng-class="{active: isOn('/releases')}">
                 <a href="/releases">Releases <span class="caret"></span></a>
                 <ul class="dropdown-menu dropdown-menu-left">
                     <li><a href="/releases/scheduled_changes">Scheduled Changes</a></li>
@@ -48,7 +48,7 @@
                 <a href="/required_signoffs">Required Signoffs</a>
             </li>
 
-            <li ng-show="auth0.isAuthenticated()" ng-class="{active: isOn('/change_logs')}">
+            <li ng-class="{active: isOn('/change_logs')}">
               <a href="/change_logs">Change Logs</a>
             </li>
             <li ng-class="{dropdown: auth0.isAuthenticated(), nav: auth0.isAuthenticated()}">

@@ -9,7 +9,7 @@
     <span>found)</span>
   </span>
 
-  <button ng-show="!scheduled_changes_rules_count" class="btn btn-primary btn-xs" ng-click="openNewScheduledRuleChangeModal()">
+  <button ng-show="auth.isAuthenticated() && !scheduled_changes_rules_count" class="btn btn-primary btn-xs" ng-click="openNewScheduledRuleChangeModal()">
     Create a new Rule with a Scheduled Change
     <i class="glyphicon glyphicon-plus"></i>
   </button>
@@ -54,16 +54,18 @@
     <h3 class="panel-title">
       <div style="float: right">
         <i ng-if="scheduled_changes_rules_count && $first && (currentPage == 1)">Current</i>
-        <button ng-show="!sc_id && (!isEmpty(sc['required_signoffs']) &&
-          !sc['signoffs'].hasOwnProperty(current_user))" class="btn btn-xs btn-primary" ng-click="signoff(sc)">
-          Signoff as...
-        </button>
-        <button ng-show="!sc_id && (!isEmpty(sc['signoffs']) &&
-          sc['signoffs'].hasOwnProperty(current_user))" class="btn btn-xs btn-danger" ng-click="revokeSignoff(sc)">
-          Revoke your Signoff
-        </button>
-        <button ng-show="!scheduled_changes_rules_count && !sc.complete" class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
-        <button ng-show="!scheduled_changes_rules_count && !sc.complete" class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
+        <span ng-show="auth0.isAuthenticated()">
+          <button ng-show="!sc_id && (!isEmpty(sc['required_signoffs']) &&
+            !sc['signoffs'].hasOwnProperty(current_user))" class="btn btn-xs btn-primary" ng-click="signoff(sc)">
+            Signoff as...
+          </button>
+          <button ng-show="!sc_id && (!isEmpty(sc['signoffs']) &&
+            sc['signoffs'].hasOwnProperty(current_user))" class="btn btn-xs btn-danger" ng-click="revokeSignoff(sc)">
+            Revoke your Signoff
+          </button>
+          <button ng-show="!scheduled_changes_rules_count && !sc.complete" class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
+          <button ng-show="!scheduled_changes_rules_count && !sc.complete" class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
+        </span>
         <a ng-show="!scheduled_changes_rules_count" class="btn btn-default btn-xs" ng-href="/scheduled_changes/rules/{{ sc.sc_id }}">History</a>
       </div>
 

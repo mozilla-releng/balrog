@@ -5,6 +5,10 @@ angular.module("app").factory('Permissions', function($http, $q, ScheduledChange
     },
     getUserInfo: function(username) {
       var deferred = $q.defer();
+      if (username === null) {
+        deferred.resolve({"permissions": {}, "roles": {}});
+        return deferred.promise;
+      }
       var url = '/api/users/' + encodeURIComponent(username);
       // TODO: can probably remove this header setting because we use headers.common.blah now
       $http.get(url, config={"headers": {"Authorization": "Bearer " + localStorage.getItem("accessToken")}})
