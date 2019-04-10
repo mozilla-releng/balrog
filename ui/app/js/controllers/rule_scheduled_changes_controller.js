@@ -1,11 +1,12 @@
 angular.module("app").controller("RuleScheduledChangesController",
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Permissions, Page, ProductRequiredSignoffs) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Permissions, Page, ProductRequiredSignoffs, Auth0) {
 
   Page.setTitle('Scheduled Rule Changes');
 
   $scope.loading = true;
   $scope.failed = false;
   $scope.current_user = localStorage.getItem("username");
+  $scope.auth0 = Auth0;
   $scope.user_roles = [];
 
   $scope.sc_id = parseInt($routeParams.sc_id, 10);

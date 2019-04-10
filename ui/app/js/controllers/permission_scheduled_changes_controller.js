@@ -1,6 +1,6 @@
 angular.module("app").controller("PermissionScheduledChangesController",
 function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, $modal, $route, Releases, Page,
-         PermissionsRequiredSignoffs) {
+         PermissionsRequiredSignoffs, Auth0) {
 
   Page.setTitle('Scheduled Permission Changes');
 
@@ -8,6 +8,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Rules, Search, 
   $scope.failed = false;
 
   $scope.current_user = localStorage.getItem("username");
+  $scope.auth0 = Auth0;
   $scope.user_roles = [];
 
   Permissions.getUserInfo($scope.current_user)

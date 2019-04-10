@@ -86,9 +86,17 @@ def merge_dicts(ancestor, left, right):
      * A type mismatch of unicode vs string is OK as long as the text is the same
        (Any other type mismatches result in a failure to merge.)
     """
+    # We can't use "logging" directly, because it ignores our custom code in log.py
+    log = logging.getLogger(__name__)
     result = {}
     dicts = (ancestor, left, right)
     for key in set(key for d in dicts for key in d.keys()):
+        # Extra logging information to help debug https://bugzilla.mozilla.org/show_bug.cgi?id=1501167
+        # This is a very large message, so we limit it as much as possible to reduce spam.
+        if key == "completes" and ancestor.get("appVersion") and "a1" not in ancestor["appVersion"]:
+            log.warning("Ancestor is: %s", ancestor.get(key))
+            log.warning("Left is: %s", left.get(key))
+            log.warning("Right is: %s", right.get(key))
         key_types = set([type(d.get(key)) for d in dicts])
         key_types.discard(type(None))
         encoded_str_key = str(text_type(key.encode("ascii", "replace"), "utf-8"))

@@ -6,8 +6,9 @@ from flask.views import MethodView
 
 from auslib.db import ChangeScheduledError, OutdatedDataError, PermissionDeniedError, SignoffRequiredError, UpdateMergeError
 from auslib.global_state import dbo
-from auslib.util.auth import verified_userinfo
+from auslib.util.auth import AuthError, verified_userinfo
 from auslib.web.admin.views.problem import problem
+
 
 log = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ def handleGeneralExceptions(messages):
                 log.warning(msg)
                 log.warning(e)
                 return problem(400, "Bad Request", "SignoffRequiredError", ext={"exception": msg})
-            except PermissionDeniedError as e:
+            except (PermissionDeniedError, AuthError) as e:
                 msg = "Permission denied to perform the request. {}".format(e)
                 log.warning(msg)
                 return problem(403, "Forbidden", "PermissionDeniedError", ext={"exception": msg})

@@ -39,7 +39,7 @@
     <span ng-bind="hasFilter() ? 'found' : 'in total'"></span>)
     </span>
 
-    <button class="btn btn-primary btn-xs" ng-show="!username" ng-click="openNewModal()">
+    <button class="btn btn-primary btn-xs" ng-show="auth0.isAuthenticated() && !username" ng-click="openNewModal()">
     Add a new permission
     <i class="glyphicon glyphicon-plus"></i>
   </button>
@@ -61,8 +61,8 @@
       <h3 class="panel-title">
         <div style="float: right">
           <i ng-show="username && $first">Current</i>
-          <button ng-show="!username" class="btn btn-default btn-xs" ng-click="openNewScheduledPermissionChangeModal(user)">Schedule a Change</button>
-          <button ng-show="!username" class="btn btn-default btn-xs" ng-click="openUpdateModal(user)">Update</button>
+          <button ng-show="auth0.isAuthenticated() && !username" class="btn btn-default btn-xs" ng-click="openNewScheduledPermissionChangeModal(user)">Schedule a Change</button>
+          <button ng-show="auth0.isAuthenticated() && !username" class="btn btn-default btn-xs" ng-click="openUpdateModal(user)">Update</button>
         </div>
         <span title="Username" ng-bind-html="highlightSearch(user.username, 'username')"></span>
       </h3>

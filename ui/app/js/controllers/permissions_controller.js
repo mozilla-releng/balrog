@@ -1,5 +1,5 @@
 angular.module("app").controller('PermissionsController',
-function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal, Page, PermissionsRequiredSignoffs, Helpers) {
+function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal, Page, PermissionsRequiredSignoffs, Helpers, Auth0) {
 
   Page.setTitle('Permissions');
 
@@ -8,6 +8,7 @@ function($scope, $routeParams, $location, $timeout, Permissions, Search, $modal,
   $scope.username = $routeParams.username;
   $scope.users = [];
   $scope.tab = 1;
+  $scope.auth0 = Auth0;
 
 
   if ($scope.username) {

@@ -32,8 +32,8 @@ class SpecificUserView(AdminView):
     """/users/:username
     Returns all of the details about the named user."""
 
-    @requirelogin
     @handleGeneralExceptions("GET")
+    @requirelogin
     def get(self, username, changed_by):
         permissions = dbo.permissions.getUserPermissions(username, changed_by)
 
@@ -46,8 +46,8 @@ class SpecificUserView(AdminView):
 class PermissionsView(AdminView):
     """/users/:username/permissions"""
 
-    @requirelogin
     @handleGeneralExceptions("GET")
+    @requirelogin
     def get(self, username, changed_by):
         permissions = dbo.permissions.getUserPermissions(username, changed_by)
         return jsonify(permissions)
@@ -56,8 +56,8 @@ class PermissionsView(AdminView):
 class SpecificPermissionView(AdminView):
     """/users/:username/permissions/:permission"""
 
-    @requirelogin
     @handleGeneralExceptions("GET")
+    @requirelogin
     def get(self, username, permission, changed_by):
         try:
             perm = dbo.permissions.getUserPermissions(username, changed_by)[permission]
