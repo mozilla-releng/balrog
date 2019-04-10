@@ -2013,6 +2013,10 @@ class Releases(AUSTable):
                     try:
                         what['data'] = createBlob(merge_dicts(ancestor_blob, tip_blob, blob))
                         self.log.warning("Successfully merged release %s at data_version %s with the latest version.", name, old_data_version)
+                        # ancestor_change is checked for None a few lines up
+                        self.log.warning("ancestor_change is change_id %s, data_version %s",
+                                         ancestor_change.get("change_id"), ancestor_change.get("data_version"))
+                        self.log.warning("tip release is data_version %s", tip_release.get("data_version"))
                     except ValueError:
                         self.log.exception("Couldn't merge release %s at data_version %s with the latest version.", name, old_data_version)
                         # ancestor_change is checked for None a few lines up
