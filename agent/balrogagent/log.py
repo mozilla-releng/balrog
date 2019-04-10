@@ -24,7 +24,7 @@ class JsonLogFormatter(logging.Formatter):
     LOGGING_FORMAT_VERSION = "2.0"
 
     # Map from Python logging to Syslog severity levels
-    SYSLOG_LEVEL_MAP = {50: 2, 40: 3, 30: 4, 20: 6, 10: 7}  # CRITICAL  # ERROR  # WARNING  # INFO  # DEBUG
+    SYSLOG_LEVEL_MAP = {logging.DEBUG: 2, logging.ERROR: 3, logging.WARNING: 4, logging.INFO: 6, logging.DEBUG: 7}
 
     # Syslog level to use when/if python level isn't found in map
     DEFAULT_SYSLOG_LEVEL = 7
