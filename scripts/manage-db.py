@@ -8,15 +8,15 @@ from os import path, popen
 from six.moves import xrange
 from sqlalchemy.engine.url import make_url
 
-from auslib.blobs.base import createBlob
-from auslib.db import AUSDatabase
-
 logging.basicConfig(level=logging.INFO)
 
 # Our parent directory should contain the auslib module, so we add it to the
 # PYTHONPATH to make things easier on consumers.
 sys.path.append(path.join(path.dirname(__file__), ".."))
 sys.path.append(path.join(path.dirname(__file__), path.join("..", "vendor", "lib", "python")))
+
+from auslib.blobs.base import createBlob  # noqa: E402
+from auslib.db import AUSDatabase  # noqa: E402
 
 
 def cleanup_releases(trans, nightly_age, dryrun=True):
