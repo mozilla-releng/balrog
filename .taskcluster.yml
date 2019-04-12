@@ -42,3 +42,8 @@ tasks:
         - "/bin/bash"
         - "-c"
         - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd balrog && tox -e py27"
+    metadata:
+      name: "Run python2 tests"
+      description: "Run python2 tests"
+      owner: ${event.pusher.name}@users.noreply.github.com
+      source: ${event.repository.url}
