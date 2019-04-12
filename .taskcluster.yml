@@ -1,344 +1,44 @@
-# There's a lot going on in this file, and a lot of duplicated logic across multiple tasks.
-# Here's a summary of what we're doing for CI and Release:
-#  - We run backend, frontend, agent, and client tests on every push
-#    to the master branch, and every pull request.
-#
-#    - Ideally, we'd run tests for pushes to any branch, but every time
-#      a tag is created, it makes a push event that overrides the tests
-#      that already ran on that commit on the master branch. Limiting
-#      push events to the master branch avoids the messiness this
-#      generates.
-#
-#  - We build new docker images upon every push to the master branch.
-#    These show up on Dockerhub with tags that reference the commit.
-#
-#  - We build new docker images upon every Release (the official kind
-#    that are created through the Github UI -- not just tags). These
-#    show up on Dockerhub with tags that reference the Release version.
-#
-# Things we would like to do in the future:
-#  - Block all docker image creation tasks on tests passing. This is blocked
-#    on support for decision tasks (https://bugzilla.mozilla.org/show_bug.cgi?id=1252144).
-#
-#  - Build and publish the client library whenever a Release happens.
-#
-version: 0
-allowPullRequests: public
-metadata:
-  name: Balrog
-  description: Balrog CI Tasks
-  owner: "{{ event.head.user.email }}"
-  source: "{{ event.head.repo.url }}"
+version: 1
+policy:
+  pullRequests: public
 tasks:
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:coveralls
+  - taskId: {$eval: as_slugid("py2-image")}
+    created: {$fromNow: ""}
+    deadline: {$fromNow: "1 hour"}
+    provisionerId: aws-provisioner-v1
+    workerType: github-worker
     payload:
       maxRunTime: 1200
-      image: "taskcluster/image_builder:0.1.3"
+      image: "taskcluster/image_builder:0.1.5"
+      features:
+        dind: true
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && tox -e py27-docker"
-      features:
-        dind: true
-        taskclusterProxy: true
-    extra:
-      github:
-        env: true
-        events:
-          - pull_request.opened
-          - pull_request.synchronize
-          - pull_request.reopened
-          - push
-        branches:
-          - master
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd balrog && docker build -t balrogtest -f Dockerfile.dev . && docker save -o /balrogtest.tar balrogtest"
+      artifacts:
+        public/balrogtest.tar:
+          path: /balrogtest.tar
+          type: file
     metadata:
-      name: Balrog back-end tests
-      description: Balrog Python tests
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
-
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:coveralls
+      name: "Build test runner image"
+      description: "Build test runner image"
+      owner: ${event.pusher.name}@users.noreply.github.com
+      source: ${event.repository.url}
+  - taskId: {$eval: as_slugid("py2-tests")}
+    dependencies:
+      - ${eval: as_slugid("py2-image")}
+    created: {$fromNow: ""}
+    deadline: {$fromNow: "1 hour"}
+    provisionerId: aws-provisioner-v1
+    workerType: github-worker
     payload:
       maxRunTime: 1200
-      image: "taskcluster/image_builder:0.1.3"
+      image:
+        path: "public/balrogtest.tar"
+        type: "task-image"
+        task-image: {$eval: as_slugid("py2-image")}
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && tox -e py37-docker"
-      features:
-        dind: true
-        taskclusterProxy: true
-    extra:
-      github:
-        env: true
-        events:
-          - pull_request.opened
-          - pull_request.synchronize
-          - pull_request.reopened
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog Python 3.7 back-end tests
-      description: Balrog Python tests
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
-
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    payload:
-      maxRunTime: 1200
-      image: "node:0.10"
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog/ui && git checkout $GITHUB_HEAD_BRANCH && npm install && npm test"
-      features:
-        dind: true
-    extra:
-      github:
-        env: true
-        events:
-          - pull_request.opened
-          - pull_request.synchronize
-          - pull_request.reopened
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog front-end tests
-      description: Balrog JavaScript tests
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
-
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    payload:
-      maxRunTime: 1200
-      image: "mozillareleases/python-test-runner"
-      env:
-        NO_VOLUME_MOUNT: 1
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd agent && bash run-tests.sh"
-      features:
-        dind: true
-    extra:
-      github:
-        env: true
-        events:
-          - pull_request.opened
-          - pull_request.synchronize
-          - pull_request.reopened
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog Agent Tests
-      description: Balrog Agent Tests
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
-
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    payload:
-      maxRunTime: 1200
-      image: "mozillareleases/python-test-runner"
-      env:
-        NO_VOLUME_MOUNT: 1
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd client && bash run-tests.sh"
-      features:
-        dind: true
-    extra:
-      github:
-        env: true
-        events:
-          - pull_request.opened
-          - pull_request.synchronize
-          - pull_request.reopened
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog Python Client Tests
-      description: Balrog Python Client Tests
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
-
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
-    payload:
-      maxRunTime: 3600
-      image: "taskcluster/image_builder:0.1.3"
-      features:
-        dind: true
-        taskclusterProxy: true
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh Dockerfile latest ${GITHUB_HEAD_BRANCH}-${GITHUB_HEAD_SHA} latest-py2 ${GITHUB_HEAD_BRANCH}-${GITHUB_HEAD_SHA}-py2"
-    extra:
-      github:
-        env: true
-        events:
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog Docker Image Creation (py2)
-      description: Balrog Docker Image Creation (py2)
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
-
-
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
-    payload:
-      maxRunTime: 3600
-      image: "taskcluster/image_builder:0.1.3"
-      features:
-        dind: true
-        taskclusterProxy: true
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog/agent && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh latest ${GITHUB_HEAD_BRANCH}-${GITHUB_HEAD_SHA}"
-    extra:
-      github:
-        env: true
-        events:
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog Agent Docker Image Creation
-      description: Balrog Agent Docker Image Creation
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
-
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
-    payload:
-      maxRunTime: 3600
-      image: "taskcluster/image_builder:0.1.3"
-      features:
-        dind: true
-        taskclusterProxy: true
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone -b {{ event.version }} {{ event.head.repo.url }} balrog && cd balrog && scripts/push-dockerimage.sh Dockerfile {{ event.version }} {{ event.version }}-py2"
-    extra:
-      github:
-        env: true
-        events:
-          - release
-    routes:
-      - index.project.balrog.releases.latest.app
-      - index.project.balrog.releases.latest.app-py2
-      - index.project.balrog.releases.{{ event.version }}.app
-      - index.project.balrog.releases.{{ event.version }}.app-py2
-    metadata:
-      name: Balrog Docker Image Creation (release event) (py2)
-      description: Balrog Docker Image Creation (release event) (py2)
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
-
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
-    payload:
-      maxRunTime: 3600
-      image: "taskcluster/image_builder:0.1.3"
-      features:
-        dind: true
-        taskclusterProxy: true
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone -b {{ event.version }} {{ event.head.repo.url }} balrog && cd balrog/agent && scripts/push-dockerimage.sh {{ event.version }}"
-    extra:
-      github:
-        env: true
-        events:
-          - release
-    routes:
-      - index.project.balrog.releases.latest.agent
-      - index.project.balrog.releases.{{ event.version }}.agent
-    metadata:
-      name: Balrog Agent Docker Image Creation (release event)
-      description: Balrog Agent Docker Image Creation (release event)
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
-
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
-    payload:
-      maxRunTime: 3600
-      image: "taskcluster/image_builder:0.1.3"
-      features:
-        dind: true
-        taskclusterProxy: true
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh Dockerfile.py3 latest-py3 ${GITHUB_HEAD_BRANCH}-${GITHUB_HEAD_SHA}-py3"
-    extra:
-      github:
-        env: true
-        events:
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog Docker Image Creation (py3)
-      description: Balrog Docker Image Creation (py3)
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
-
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
-    payload:
-      maxRunTime: 3600
-      image: "taskcluster/image_builder:0.1.3"
-      features:
-        dind: true
-        taskclusterProxy: true
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone -b {{ event.version }} {{ event.head.repo.url }} balrog && cd balrog && scripts/push-dockerimage.sh Dockerfile.py3 {{ event.version }}-py3"
-    extra:
-      github:
-        env: true
-        events:
-          - release
-    routes:
-      - index.project.balrog.releases.latest.app-py3
-      - index.project.balrog.releases.{{ event.version }}.app-py3
-    metadata:
-      name: Balrog Docker Image Creation (release event) (py3)
-      description: Balrog Docker Image Creation (release event) (py3)
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd balrog && tox -e py27"
