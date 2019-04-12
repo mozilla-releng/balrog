@@ -15,7 +15,7 @@ tasks:
                       then: '${event.pusher.email}',
                       else: '${event.pull_request.user.login}@users.noreply.github.com'}
       in:
-        $map: [["py27", "Dockerfile.dev"], ["py37", "Dockerfile.py3.dev"]]
+        $map: [["py37", "Dockerfile.py3.dev"]]
         # TODO: can we just use python:x.y images instead of building our own?
         each(py):
           taskId: {$eval: as_slugid(py[1])}
@@ -57,9 +57,9 @@ tasks:
             command:
               - "/bin/bash"
               - "-c"
-              - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && tox -e ${py[0]}"
+              - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && ${py[0]}"
           metadata:
-            name: "Run python2 tests"
-            description: "Run python2 tests"
+            name: "${py[0]} backend tests"
+            description: "${py[0]} backend tests"
             owner: ${owner_email}
             source: ${repo_url}
