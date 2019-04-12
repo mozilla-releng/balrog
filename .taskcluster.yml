@@ -16,9 +16,9 @@ tasks:
                       else: '${event.pull_request.user.login}@users.noreply.github.com'}
       in:
         $map: [["py37", "Dockerfile.py3.dev"]]
-        # TODO: can we just use python:x.y images instead of building our own?
         each(py):
-          - taskId: {$eval: as_slugid(py[1])}
+          -
+            taskId: {$eval: as_slugid(py[1])}
             created: {$fromNow: ""}
             deadline: {$fromNow: "1 hour"}
             provisionerId: aws-provisioner-v1
@@ -41,7 +41,8 @@ tasks:
               description: "Build test runner image"
               owner: ${owner_email}
               source: ${repo_url}
-          - taskId: {$eval: as_slugid(py[0])}
+          - 
+            taskId: {$eval: as_slugid(py[0])}
             dependencies:
               - {$eval: as_slugid(py[1])}
             created: {$fromNow: ""}
