@@ -15,7 +15,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone ${event.pull_request.head.repo.clone_url} balrog && cd balrog && git checkout ${event.pull_request.head.ref} && cd balrog && docker build -t balrogtest -f Dockerfile.dev . && docker save -o /balrogtest.tar balrogtest"
+        - "git clone ${event.pull_request.head.repo.clone_url} balrog && cd balrog && git checkout ${event.pull_request.head.ref} && docker build -t balrogtest -f Dockerfile.dev . && docker save -o /balrogtest.tar balrogtest"
       artifacts:
         public/balrogtest.tar:
           path: /balrogtest.tar
@@ -41,7 +41,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone ${event.pull_request.head.repo.clone_url} balrog && cd balrog && git checkout ${event.pull_request.head.ref} && cd balrog && tox -e py27"
+        - "git clone ${event.pull_request.head.repo.clone_url} balrog && cd balrog && git checkout ${event.pull_request.head.ref} && tox -e py27"
     metadata:
       name: "Run python2 tests"
       description: "Run python2 tests"
