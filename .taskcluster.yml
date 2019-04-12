@@ -15,9 +15,9 @@ tasks:
                       then: '${event.pusher.email}',
                       else: '${event.pull_request.user.login}@users.noreply.github.com'}
       in:
-        $map: [["py37", "Dockerfile.py3.dev"]]
+        $map: [["py37", "Dockerfile.test"]]
         each(py):
-          -
+          [
             taskId: {$eval: as_slugid(py[1])}
             created: {$fromNow: ""}
             deadline: {$fromNow: "1 hour"}
@@ -41,7 +41,7 @@ tasks:
               description: "Build test runner image"
               owner: ${owner_email}
               source: ${repo_url}
-          - 
+            ,
             taskId: {$eval: as_slugid(py[0])}
             dependencies:
               - {$eval: as_slugid(py[1])}
@@ -64,3 +64,4 @@ tasks:
               description: "${py[0]} backend tests"
               owner: ${owner_email}
               source: ${repo_url}
+          ]
