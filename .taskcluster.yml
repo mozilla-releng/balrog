@@ -2,48 +2,63 @@ version: 1
 policy:
   pullRequests: public
 tasks:
-  - taskId: {$eval: as_slugid("py2-image")}
-    created: {$fromNow: ""}
-    deadline: {$fromNow: "1 hour"}
-    provisionerId: aws-provisioner-v1
-    workerType: github-worker
-    payload:
-      maxRunTime: 1200
-      image: "taskcluster/image_builder:0.1.5"
-      features:
-        dind: true
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone ${event.pull_request.head.repo.clone_url} balrog && cd balrog && git checkout ${event.pull_request.head.ref} && docker build -t balrogtest -f Dockerfile.dev . && docker save -o /balrogtest.tar balrogtest"
-      artifacts:
-        public/balrogtest.tar:
-          path: /balrogtest.tar
-          type: file
-    metadata:
-      name: "Build test runner image"
-      description: "Build test runner image"
-      owner: ${event.sender.login}@users.noreply.github.com
-      source: ${event.repository.url}
-  - taskId: {$eval: as_slugid("py2-tests")}
-    dependencies:
-      - {$eval: as_slugid("py2-image")}
-    created: {$fromNow: ""}
-    deadline: {$fromNow: "1 hour"}
-    provisionerId: aws-provisioner-v1
-    workerType: github-worker
-    payload:
-      maxRunTime: 1200
-      image:
-        path: "public/balrogtest.tar"
-        type: "task-image"
-        taskId: {$eval: as_slugid("py2-image")}
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone ${event.pull_request.head.repo.clone_url} balrog && cd balrog && git checkout ${event.pull_request.head.ref} && tox -e py27"
-    metadata:
-      name: "Run python2 tests"
-      description: "Run python2 tests"
-      owner: ${event.sender.login}@users.noreply.github.com
-      source: ${event.repository.url}
+  - $if: 'tasks_for in ["github-push", "github-pull-request"]'
+    then:
+      $let:
+        repo_url: {$if: 'tasks_for == "github-push"',
+                   then: '${event.repository.clone_url}',
+                   else: '${event.pull_request.head.repo.clone_url}'}
+        head_sha: {$if: 'tasks_for == "github-push"',
+                   then: '${event.after}',
+                   else: '${event.pull_request.head.sha}'}
+        owner_email: {$if: 'tasks_for == "github-push"',
+                      then: '${event.pusher.email}',
+                      else: '${event.pull_request.user.login}@users.noreply.github.com'}
+      in:
+        $map: [["py27", "Dockerfile.dev"], ["py37", "Dockerfile.py3.dev"]]
+        each(py):
+          taskId: {$eval: as_slugid(py[0] + "-image")}
+          created: {$fromNow: ""}
+          deadline: {$fromNow: "1 hour"}
+          provisionerId: aws-provisioner-v1
+          workerType: github-worker
+          payload:
+            maxRunTime: 1200
+            image: "taskcluster/image_builder:0.1.5"
+            features:
+              dind: true
+            command:
+              - "/bin/bash"
+              - "-c"
+              - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && docker build -t balrogtest -f ${py[0]} . && docker save -o /balrogtest.tar balrogtest"
+            artifacts:
+              public/balrogtest.tar:
+                path: /balrogtest.tar
+                type: file
+          metadata:
+            name: "Build test runner image"
+            description: "Build test runner image"
+            owner: ${owner_email}
+            source: ${repo_url}
+        - taskId: {$eval: as_slugid(py[0] + "-tests")}
+          dependencies:
+            - {$eval: as_slugid(py[0] + "-image")}
+          created: {$fromNow: ""}
+          deadline: {$fromNow: "1 hour"}
+          provisionerId: aws-provisioner-v1
+          workerType: github-worker
+          payload:
+            maxRunTime: 1200
+            image:
+              path: "public/balrogtest.tar"
+              type: "task-image"
+              taskId: {$eval: as_slugid(py[0] + "-image")}
+            command:
+              - "/bin/bash"
+              - "-c"
+              - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && tox -e ${py[0]}"
+          metadata:
+            name: "Run python2 tests"
+            description: "Run python2 tests"
+            owner: ${owner_email}
+            source: ${repo_url}
