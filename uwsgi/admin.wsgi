@@ -4,9 +4,7 @@ import os
 import six
 from flask_wtf.csrf import CSRFProtect
 
-from auslib.global_state import cache, dbo
 from auslib.log import configure_logging
-from auslib.web.admin.base import app as application
 
 SYSTEM_ACCOUNTS = ["balrogagent", "balrog-ffxbld", "balrog-tbirdbld", "seabld"]
 DOMAIN_WHITELIST = {
@@ -36,6 +34,8 @@ if os.environ.get("LOG_FORMAT") == "plain":
     logging_kwargs["formatter"] = logging.Formatter
 configure_logging(**logging_kwargs)
 
+from auslib.global_state import cache, dbo  # noqa
+from auslib.web.admin.base import app as application  # noqa
 
 cache.make_copies = True
 # We explicitly don't want a blob_version cache here because it will cause
