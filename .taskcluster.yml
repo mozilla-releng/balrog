@@ -2,23 +2,23 @@ version: 1
 policy:
   pullRequests: public
 tasks:
-  - $if: 'tasks_for in ["github-push", "github-pull-request"]'
-    then:
-      $let:
-        repo_url: {$if: 'tasks_for == "github-push"',
-                   then: '${event.repository.clone_url}',
-                   else: '${event.pull_request.head.repo.clone_url}'}
-        head_sha: {$if: 'tasks_for == "github-push"',
-                   then: '${event.after}',
-                   else: '${event.pull_request.head.sha}'}
-        owner_email: {$if: 'tasks_for == "github-push"',
-                      then: '${event.pusher.email}',
-                      else: '${event.pull_request.user.login}@users.noreply.github.com'}
-      in:
-        $map: [["py37", "Dockerfile.test"]]
+  $if: 'tasks_for in ["github-push", "github-pull-request"]'
+  then:
+    $let:
+      repo_url: {$if: 'tasks_for == "github-push"',
+                 then: '${event.repository.clone_url}',
+                 else: '${event.pull_request.head.repo.clone_url}'}
+      head_sha: {$if: 'tasks_for == "github-push"',
+                 then: '${event.after}',
+                 else: '${event.pull_request.head.sha}'}
+      owner_email: {$if: 'tasks_for == "github-push"',
+                    then: '${event.pusher.email}',
+                    else: '${event.pull_request.user.login}@users.noreply.github.com'}
+    in:
+      $flatten:
+        $map: [["py27", "Dockerfile.test"], ["py37", "Dockerfile.test"]]
         each(py):
-          [
-            taskId: {$eval: as_slugid(py[1])}
+          - taskId: "${as_slugid(py[1])}"
             created: {$fromNow: ""}
             deadline: {$fromNow: "1 hour"}
             provisionerId: aws-provisioner-v1
@@ -41,10 +41,9 @@ tasks:
               description: "Build test runner image"
               owner: ${owner_email}
               source: ${repo_url}
-            ,
-            taskId: {$eval: as_slugid(py[0])}
+          - taskId: "${as_slugid(py[0])}"
             dependencies:
-              - {$eval: as_slugid(py[1])}
+              - "${as_slugid(py[1])}"
             created: {$fromNow: ""}
             deadline: {$fromNow: "1 hour"}
             provisionerId: aws-provisioner-v1
@@ -54,7 +53,7 @@ tasks:
               image:
                 path: "public/balrogtest.tar"
                 type: "task-image"
-                taskId: {$eval: as_slugid(py[1])}
+                taskId: "${as_slugid(py[1])}"
               command:
                 - "/bin/bash"
                 - "-c"
@@ -64,4 +63,3 @@ tasks:
               description: "${py[0]} backend tests"
               owner: ${owner_email}
               source: ${repo_url}
-          ]
