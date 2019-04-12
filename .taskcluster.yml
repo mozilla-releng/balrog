@@ -15,7 +15,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd balrog && docker build -t balrogtest -f Dockerfile.dev . && docker save -o /balrogtest.tar balrogtest"
+        - "git clone ${event.pull_request.head.repo.clone_url} balrog && cd balrog && git checkout ${event.pull_request.head.ref} && cd balrog && docker build -t balrogtest -f Dockerfile.dev . && docker save -o /balrogtest.tar balrogtest"
       artifacts:
         public/balrogtest.tar:
           path: /balrogtest.tar
@@ -26,8 +26,8 @@ tasks:
       owner: ${event.sender.login}@users.noreply.github.com
       source: ${event.repository.url}
   - taskId: {$eval: as_slugid("py2-tests")}
-    #dependencies:
-    #  - ${eval: as_slugid("py2-image")}
+    dependencies:
+      - {$eval: as_slugid("py2-image")}
     created: {$fromNow: ""}
     deadline: {$fromNow: "1 hour"}
     provisionerId: aws-provisioner-v1
@@ -37,11 +37,11 @@ tasks:
       image:
         path: "public/balrogtest.tar"
         type: "task-image"
-        task-image: {$eval: as_slugid("py2-image")}
+        taskId: {$eval: as_slugid("py2-image")}
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd balrog && tox -e py27"
+        - "git clone ${event.pull_request.head.repo.clone_url} balrog && cd balrog && git checkout ${event.pull_request.head.ref} && cd balrog && tox -e py27"
     metadata:
       name: "Run python2 tests"
       description: "Run python2 tests"
