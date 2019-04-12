@@ -26,8 +26,8 @@ tasks:
       owner: ${event.sender.login}@users.noreply.github.com
       source: ${event.repository.url}
   - taskId: {$eval: as_slugid("py2-tests")}
-    dependencies:
-      - ${eval: as_slugid("py2-image")}
+    #dependencies:
+    #  - ${eval: as_slugid("py2-image")}
     created: {$fromNow: ""}
     deadline: {$fromNow: "1 hour"}
     provisionerId: aws-provisioner-v1
