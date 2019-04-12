@@ -23,7 +23,7 @@ tasks:
     metadata:
       name: "Build test runner image"
       description: "Build test runner image"
-      owner: ${event.pusher.name}@users.noreply.github.com
+      owner: ${event.sender.login}@users.noreply.github.com
       source: ${event.repository.url}
   - taskId: {$eval: as_slugid("py2-tests")}
     dependencies:
@@ -45,5 +45,5 @@ tasks:
     metadata:
       name: "Run python2 tests"
       description: "Run python2 tests"
-      owner: ${event.pusher.name}@users.noreply.github.com
+      owner: ${event.sender.login}@users.noreply.github.com
       source: ${event.repository.url}
