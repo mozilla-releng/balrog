@@ -1,10 +1,7 @@
 import logging
 import os
 
-from auslib.global_state import cache, dbo
 from auslib.log import configure_logging
-from auslib.web.public.base import app as application
-from auslib.web.public.base import sentry
 
 SPECIAL_FORCE_HOSTS = ["http://download.mozilla.org"]
 DOMAIN_WHITELIST = {
@@ -33,6 +30,8 @@ if os.environ.get("LOG_FORMAT") == "plain":
     logging_kwargs["formatter"] = logging.Formatter
 configure_logging(**logging_kwargs)
 
+from auslib.global_state import cache, dbo  # noqa
+from auslib.web.public.base import app as application  # noqa
 
 cache.make_cache("blob", 500, 3600)
 # There's probably no no need to ever expire items in the blob schema cache
