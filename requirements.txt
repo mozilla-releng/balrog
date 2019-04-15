@@ -286,9 +286,9 @@ sphinxcontrib-qthelp==1.0.2; python_version>='3' \
 sphinxcontrib-serializinghtml==1.1.1; python_version>='3' \
     --hash=sha256:01d9b2617d7e8ddf7a00cae091f08f9fa4db587cc160b493141ee56710810932 \
     --hash=sha256:392187ac558863b8aff0d76dc78e0731fed58f3b06e2b00e22995dcdb630f213
-sphinxcontrib-htmlhelp==1.0.1; python_version>='3' \
-    --hash=sha256:0d691ca8edf5995fbacfe69b191914256071a94cbad03c3688dca47385c9206c \
-    --hash=sha256:e31c8271f5a8f04b620a500c0442a7d5cfc1a732fa5c10ec363f90fe72af0cb8
+sphinxcontrib-htmlhelp==1.0.2; python_version>='3' \
+    --hash=sha256:4670f99f8951bd78cd4ad2ab962f798f5618b17675c35c5ac3b2132a14ea8422 \
+    --hash=sha256:d4fd39a65a625c9df86d7fa8a2d9f3cd8299a3a4b15db63b50aac9e161d8eff7
 sphinxcontrib-devhelp==1.0.1; python_version>='3' \
     --hash=sha256:6c64b077937330a9128a4da74586e8c2130262f014689b4b89e2d08ee7294a34 \
     --hash=sha256:9512ecb00a2b0821a146736b39f7aeb90759834b07e81e8cc23a9c70bacb9981
