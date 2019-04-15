@@ -57,7 +57,7 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && ${py[0]}"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && tox ${py[0]}"
             metadata:
               name: "${py[0]} backend tests"
               description: "${py[0]} backend tests"
