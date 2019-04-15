@@ -15,5 +15,3 @@ COPY auslib/ /app/auslib/
 COPY scripts/ /app/scripts/
 COPY uwsgi/ /app/uwsgi/
 COPY MANIFEST.in requirements.txt requirements-test.txt setup.py tox.ini version.txt /app/
-
-ENTRYPOINT ["/bin/bash", "--login"]
