@@ -16,7 +16,7 @@ tasks:
                     else: '${event.pull_request.user.login}@users.noreply.github.com'}
     in:
       $flatten:
-        $map: [["py27", "Dockerfile.test"], ["py37", "Dockerfile.test"]]
+        $map: [["py37", "Dockerfile.test"]]
         each(py):
           - taskId: "${as_slugid(py[1])}"
             created: {$fromNow: ""}
