@@ -5,7 +5,6 @@ import logging
 import sys
 from os import path, popen
 
-from six.moves import xrange
 from sqlalchemy.engine.url import make_url
 
 logging.basicConfig(level=logging.INFO)
@@ -100,7 +99,7 @@ def chunk_list(list_object, n):
     """
     Yield successive n-sized chunks from list_object.
     """
-    for i in xrange(0, len(list_object), n):
+    for i in range(0, len(list_object), n):
         yield list_object[i : i + n]
 
 

@@ -9,7 +9,6 @@ import unittest
 
 import mock
 import pytest
-from six import assertCountEqual
 
 from auslib.AUS import FAIL, SUCCEED
 from auslib.blobs.apprelease import (
@@ -365,7 +364,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def test3_0(self):
@@ -396,7 +395,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def test3_5(self):
@@ -427,7 +426,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def test3_6(self):
@@ -458,7 +457,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
@@ -555,7 +554,7 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSpecialQueryParamForced(self):
@@ -586,7 +585,7 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSpecialQueryParamForcedFail(self):
@@ -617,7 +616,7 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testNonSpecialQueryParam(self):
@@ -648,7 +647,7 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testNonSpecialQueryParamForced(self):
@@ -679,7 +678,7 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testNoSpecialDefined(self):
@@ -710,7 +709,7 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
@@ -961,7 +960,7 @@ class TestSchema2Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema2WithPartial(self):
@@ -995,7 +994,7 @@ class TestSchema2Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema2WithOptionalAttributes(self):
@@ -1030,7 +1029,7 @@ class TestSchema2Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema2WithIsOSUpdate(self):
@@ -1065,7 +1064,7 @@ class TestSchema2Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testAllowedDomain(self):
@@ -1178,7 +1177,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testCompleteAndPartial(self):
@@ -1212,7 +1211,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testForbiddenDomainInLocale(self):
@@ -1585,7 +1584,7 @@ class TestSchema3Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
@@ -1618,7 +1617,7 @@ class TestSchema3Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema3NoPartial(self):
@@ -1649,7 +1648,7 @@ class TestSchema3Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema3NoPartialBlock(self):
@@ -1680,7 +1679,7 @@ class TestSchema3Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema3FtpSubstitutions(self):
@@ -1714,7 +1713,7 @@ class TestSchema3Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema3BouncerSubstitutions(self):
@@ -1748,7 +1747,7 @@ class TestSchema3Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testAllowedDomain(self):
@@ -2179,7 +2178,7 @@ class TestSchema4Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
@@ -2212,7 +2211,7 @@ class TestSchema4Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
@@ -2245,7 +2244,7 @@ class TestSchema4Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema4NoPartials(self):
@@ -2276,7 +2275,7 @@ class TestSchema4Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
@@ -2306,7 +2305,7 @@ class TestSchema4Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
         updateQuery = {
@@ -2336,7 +2335,7 @@ class TestSchema4Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testSchema4MismatchedLocalePartialsAndFileUrls(self):
@@ -2788,7 +2787,7 @@ class TestSchema5Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
@@ -3012,7 +3011,7 @@ class TestSchema6Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testCheckFailForUnsuportedAttributes(self):
@@ -3235,7 +3234,7 @@ class TestSchema8Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
 
@@ -3405,7 +3404,7 @@ class TestSchema9Blob(unittest.TestCase):
             '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>',
         ]
         expected = [x.strip() for x in expected]
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
 
         returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         expected_footer = "</update>"
@@ -3435,7 +3434,7 @@ class TestSchema9Blob(unittest.TestCase):
             '<patch type="partial" URL="http://a.com/h1-partial.mar" hashFunction="sha512" hashValue="9" size="8"/>',
         ]
         expected = [x.strip() for x in expected]
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
 
         returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         expected_footer = "</update>"
@@ -3465,7 +3464,7 @@ class TestSchema9Blob(unittest.TestCase):
             '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>',
         ]
         expected = [x.strip() for x in expected]
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
 
         returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         expected_footer = "</update>"
@@ -3498,7 +3497,7 @@ class TestSchema9Blob(unittest.TestCase):
             '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>',
         ]
         expected = [x.strip() for x in expected]
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
 
         returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         expected_footer = "</update>"
@@ -3614,7 +3613,7 @@ class TestDesupportBlob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testBrokenDesupport(self):

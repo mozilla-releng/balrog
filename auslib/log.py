@@ -4,7 +4,6 @@ import socket
 import sys
 import traceback
 
-import six
 from flask import request
 
 log_format = "%(asctime)s - %(levelname)s - PID: %(process)s - Request: %(requestid)s - %(name)s.%(funcName)s#%(lineno)s: %(message)s"
@@ -34,8 +33,6 @@ class BalrogLogger(logging.Logger):
             except RuntimeError:
                 pass
             extra["requestid"] = requestid
-        if six.PY2:  # pragma: no cover
-            return logging.Logger.makeRecord(self, name, level, fn, lno, msg, args, exc_info, func, extra)
         return logging.Logger.makeRecord(self, name, level, fn, lno, msg, args, exc_info, func, extra, sinfo)  # pragma: no cover
 
 

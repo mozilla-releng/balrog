@@ -1,6 +1,5 @@
 # This Python file uses the following encoding: utf-8
 import mock
-from six import assertCountEqual
 
 from auslib.global_state import dbo
 from auslib.test.admin.views.base import ViewTest
@@ -1019,7 +1018,7 @@ class TestSingleColumn_JSON(ViewTest):
         ret = self._get("/rules/columns/product")
         returned_data = ret.get_json()
         self.assertEqual(returned_data["count"], expected["count"])
-        assertCountEqual(self, returned_data["product"], expected["product"])
+        self.assertCountEqual(returned_data["product"], expected["product"])
 
     def testGetRuleColumn404(self):
         ret = self.client.get("/rules/columns/blah")

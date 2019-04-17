@@ -1875,7 +1875,9 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual("one two three", ret.get_data(as_text=True))
+            data = ret.get_data(as_text=True)
+            for arg in ("one", "two", "three"):
+                self.assertIn(arg, data)
 
     def testErrorMessageOn500withComplexArgs(self):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
@@ -1884,7 +1886,9 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual("one ('two', 'three')", ret.get_data(as_text=True))
+            data = ret.get_data(as_text=True)
+            for arg in ("one", "two", "three"):
+                self.assertIn(arg, data)
 
     def testEscapedOutputOn500(self):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m:

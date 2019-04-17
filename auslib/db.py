@@ -2,7 +2,6 @@ import itertools
 import logging
 import pprint
 import re
-import sys
 import time
 from collections import defaultdict
 from copy import copy
@@ -10,7 +9,6 @@ from os import path
 
 import simplejson as json
 import sqlalchemy.types
-from six import integer_types, iteritems, reraise, string_types, text_type
 from sqlalchemy import BigInteger, Boolean, Column, Integer, MetaData, String, Table, Text, create_engine, func, join, select
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -178,7 +176,7 @@ def verify_signoffs(potential_required_signoffs, signoffs):
         signoffs_given[signoff["role"]] += 1
     for rs in potential_required_signoffs:
         required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
-    for role, signoffs_required in iteritems(required_signoffs):
+    for role, signoffs_required in required_signoffs.items():
         if signoffs_given[role] < signoffs_required:
             raise SignoffRequiredError("Not enough signoffs for role '{}'".format(role))
 
@@ -206,7 +204,9 @@ class AUSTransaction(object):
             if exc_type:
                 self.log.debug("exc is:", exc_info=True)
                 self.rollback()
-                reraise(exc_type, exc_value, exc_traceback)
+                e = exc_type(exc_value)
+                e.__traceback__ = exc_traceback
+                raise e
             # Also need to check for exceptions during commit!
             try:
                 self.commit()
@@ -226,25 +226,21 @@ class AUSTransaction(object):
         try:
             self.log.debug("Attempting to execute %s" % statement)
             return self.conn.execute(statement)
-        except Exception:
+        except Exception as exc:
             self.log.debug("Caught exception")
             # We want to raise our own Exception, so that errors are easily
             # caught by consumers. The dance below lets us do that without
             # losing the original Traceback, which will be much more
             # informative than one starting from this point.
-            klass, e, tb = sys.exc_info()
             self.rollback()
-            e = TransactionError(e.args)
-            reraise(TransactionError, e, tb)
+            raise TransactionError() from exc
 
     def commit(self):
         try:
             self.trans.commit()
-        except Exception:
-            klass, e, tb = sys.exc_info()
+        except Exception as exc:
             self.rollback()
-            e = TransactionError(e.args)
-            reraise(TransactionError, e, tb)
+            raise TransactionError() from exc
 
     def rollback(self):
         self.trans.rollback()
@@ -349,7 +345,7 @@ class AUSTable(object):
            @rtype: sqlalchemy.sql.expression.Select
         """
         if columns:
-            table_columns = [(self.t.c[col] if isinstance(col, string_types) else col) for col in columns]
+            table_columns = [(self.t.c[col] if isinstance(col, str) else col) for col in columns]
             query = select(table_columns, order_by=order_by, limit=limit, offset=offset, distinct=distinct)
         else:
             query = self.t.select(order_by=order_by, limit=limit, offset=offset, distinct=distinct)
@@ -375,7 +371,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in iteritems(where)]
+            where = [getattr(self, k) == v for k, v in where.items()]
 
         query = self._selectStatement(where=where, **kwargs)
 
@@ -527,7 +523,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in iteritems(where)]
+            where = [getattr(self, k) == v for k, v in where.items()]
 
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
@@ -633,7 +629,7 @@ class AUSTable(object):
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
         if hasattr(where, "keys"):
-            where = [getattr(self, k) == v for k, v in iteritems(where)]
+            where = [getattr(self, k) == v for k, v in where.items()]
 
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
@@ -924,7 +920,7 @@ class ConditionsTable(AUSTable):
         if set(conditions) - set(self.condition_groups):
             raise ValueError("Unknown conditions in: {}".format(conditions))
 
-        self.enabled_condition_groups = {k: v for k, v in iteritems(self.condition_groups) if k in conditions}
+        self.enabled_condition_groups = {k: v for k, v in self.condition_groups.items() if k in conditions}
 
         self.table = Table("{}_conditions".format(baseName), metadata, Column("sc_id", Integer, primary_key=True))
 
@@ -942,12 +938,12 @@ class ConditionsTable(AUSTable):
         super(ConditionsTable, self).__init__(db, dialect, history=history, versioned=True)
 
     def validate(self, conditions):
-        conditions = {k: v for k, v in iteritems(conditions) if conditions[k]}
+        conditions = {k: v for k, v in conditions.items() if conditions[k]}
         if not conditions:
             raise ValueError("No conditions found")
 
         for c in conditions:
-            for condition, args in iteritems(self.condition_groups):
+            for condition, args in self.condition_groups.items():
                 if c in args:
                     if c in itertools.chain(*self.enabled_condition_groups.values()):
                         break
@@ -1040,7 +1036,7 @@ class ScheduledChangeTable(AUSTable):
         with the base table ones prefixed."""
         ret = {}
         base_columns = [c.name for c in self.baseTable.t.get_children()]
-        for k, v in iteritems(columns):
+        for k, v in columns.items():
             if k in base_columns:
                 ret["base_%s" % k] = v
             else:
@@ -1890,7 +1886,7 @@ class Releases(AUSTable):
                 raise KeyError("Couldn't find release with name '%s'" % name)
 
         def get_data_version(obj):
-            if isinstance(obj, integer_types):
+            if isinstance(obj, int):
                 return obj
             return obj["data_version"]
 
@@ -2470,7 +2466,7 @@ class UTF8PrettyPrinter(pprint.PrettyPrinter):
     Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
 
     def format(self, object, context, maxlevels, level):
-        if isinstance(object, text_type):
+        if isinstance(object, str):
             return pprint._safe_repr(object.encode("utf8"), context, maxlevels, level)
         return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
 

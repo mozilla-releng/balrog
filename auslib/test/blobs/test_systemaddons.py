@@ -1,7 +1,5 @@
 import unittest
 
-from six import assertCountEqual
-
 from auslib.blobs.systemaddons import SystemAddonsBlob
 
 
@@ -124,7 +122,7 @@ class TestSchema1Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "    </addons>"
         self.assertEqual(returned_header, expected_header)
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer, expected_footer)
 
     def testXMLWhenEmptyAndNotUninstall(self):
@@ -149,7 +147,7 @@ class TestSchema1Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = ""
         self.assertEqual(returned_header, expected_header)
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer, expected_footer)
 
     def testXMLWhenUninstall(self):
@@ -174,7 +172,7 @@ class TestSchema1Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = "    </addons>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
         self.assertEqual(returned_footer, expected_footer)
 
@@ -200,7 +198,7 @@ class TestSchema1Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         expected_footer = ""
         self.assertEqual(returned_header.strip(), expected_header.strip())
-        assertCountEqual(self, returned, expected)
+        self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
         self.assertEqual(returned_footer, expected_footer)
 

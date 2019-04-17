@@ -70,6 +70,7 @@ def getCleanQueryFromURL(url):
     # easy to pretend Unicode doesn't exist. (Which is why this block is only for Python 2 --
     # encoding to ascii in Python 3 gives us "bytes", which causes a whole mess of problems
     # later.)
+    # TODO: what to do here for Python 3?
     if six.PY2:
         for field in query:
             if field == "queryVersion":

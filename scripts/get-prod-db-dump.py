@@ -5,9 +5,8 @@ import os
 import time
 from calendar import timegm
 from datetime import datetime
+from http.client import HTTPSConnection
 from socket import gaierror
-
-from six.moves.http_client import HTTPSConnection
 
 try:
     from urllib2 import urlopen, HTTPError, URLError

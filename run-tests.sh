@@ -2,17 +2,7 @@
 
 # TODO: When we can run docker-compose in Taskcluster, we should use
 # docker-compose-test.yml instead of running docker directly.
-PYTHON_VERSION=${2:-py27}
-if [[ $PYTHON_VERSION == "py27" ]];
-then
-    docker build  -t balrogtest -f Dockerfile.dev .
-elif [[ $PYTHON_VERSION == "py37" ]];
-then
-    docker build  -t balrogtest -f Dockerfile.py3.dev .
-else
-    echo "Invalid Python Version $PYTHON_VERSION"
-    exit 1
-fi
+docker build -t balrogtest -f Dockerfile.dev .
 
 # When running in Taskcluster, we want to send coverage data. To do that we need the repo token
 # that is stored in the Secrets Service. We cannot access that from within the test container,
