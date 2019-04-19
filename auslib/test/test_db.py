@@ -3696,8 +3696,8 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertRaises(ValueError, self.releases.delete, {"name": "fallback"}, changed_by="me", old_data_version=1)
 
     def testDeleteReleaseWhenReadOnly(self):
-        self.releasesReadonly.t.insert().execute(release_name='a', data_version=1)
-        self.assertRaises(ReadOnlyError, self.releases.delete, {"name": "a"}, changed_by='me', old_data_version=2)
+        self.releasesReadonly.t.insert().execute(release_name="a", data_version=1)
+        self.assertRaises(ReadOnlyError, self.releases.delete, {"name": "a"}, changed_by="me", old_data_version=2)
 
     # Ideally we'd run these, but they end up raising a ValueError because they are mapped to,
     # so we never see a SignoffRequiredError
@@ -3730,12 +3730,12 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertRaises(SignoffRequiredError, self.releases.update, {"name": "h"}, {"data": newBlob}, "bill", 1)
 
     def testIsReadOnly(self):
-        self.releasesReadonly.t.insert().execute(release_name='a', data_version=1)
-        self.assertEqual(self.releases.isReadOnly('a'), True)
+        self.releasesReadonly.t.insert().execute(release_name="a", data_version=1)
+        self.assertEqual(self.releases.isReadOnly("a"), True)
 
     def testProceedIfNotReadOnly(self):
-        self.releasesReadonly.t.insert().execute(release_name='a', data_version=1)
-        self.assertRaises(ReadOnlyError, self.releases._proceedIfNotReadOnly, 'a')
+        self.releasesReadonly.t.insert().execute(release_name="a", data_version=1)
+        self.assertRaises(ReadOnlyError, self.releases._proceedIfNotReadOnly, "a")
 
     def testGetRulesMatchingQueryChannelCheckMinLengthGlobbing(self):
         # To ensure length of ruleChannel is >=3
@@ -3822,87 +3822,69 @@ class TestReleasesReadOnly(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions = dbo.permissions
         self.productRequiredSignoffs = dbo.productRequiredSignoffs
 
-        self.releases.t.insert().execute(
-            name='a', product='a', data=createBlob(
-                dict(name='a', schema_version=1, hashFunction='sha512')), data_version=1)
-        self.releases.t.insert().execute(
-            name='f', product='f', data=createBlob(
-                dict(name='f', schema_version=1, hashFunction='sha512')), data_version=1)
-        self.releases.t.insert().execute(
-            name='k', product='k', data=createBlob(
-                dict(name='k', schema_version=1, hashFunction='sha512')), data_version=1)
+        self.releases.t.insert().execute(name="a", product="a", data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), data_version=1)
+        self.releases.t.insert().execute(name="f", product="f", data=createBlob(dict(name="f", schema_version=1, hashFunction="sha512")), data_version=1)
+        self.releases.t.insert().execute(name="k", product="k", data=createBlob(dict(name="k", schema_version=1, hashFunction="sha512")), data_version=1)
 
-        self.rules.t.insert().execute(
-            rule_id=1, product="a", channel="z", mapping="a",
-            backgroundRate=100, priority=100, update_type="minor", data_version=1)
+        self.rules.t.insert().execute(rule_id=1, product="a", channel="z", mapping="a", backgroundRate=100, priority=100, update_type="minor", data_version=1)
 
         self.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
         self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.permissions.t.insert().execute(
-            permission="release_read_only", username="bob",
-            options=dict(products=["k"], actions=['set', 'unset']), data_version=1)
-        self.permissions.t.insert().execute(
-            permission="release", username="john", data_version=1)
+            permission="release_read_only", username="bob", options=dict(products=["k"], actions=["set", "unset"]), data_version=1
+        )
+        self.permissions.t.insert().execute(permission="release", username="john", data_version=1)
         self.permissions.user_roles.t.insert().execute(username="bill", role="bar", data_version=1)
         self.permissions.user_roles.t.insert().execute(username="bob", role="bar", data_version=1)
-        self.productRequiredSignoffs.t.insert().execute(
-            product="a", channel="z", role="bar", signoffs_required=2, data_version=1)
+        self.productRequiredSignoffs.t.insert().execute(product="a", channel="z", role="bar", signoffs_required=2, data_version=1)
 
     def test_insert(self):
-        release_readonly = dict(release_name='a')
-        self.releasesReadonly.insert('me', **release_readonly)
-        releases_readonly = self.releasesReadonly.select(where={'release_name': 'a'}, limit=1)
+        release_readonly = dict(release_name="a")
+        self.releasesReadonly.insert("me", **release_readonly)
+        releases_readonly = self.releasesReadonly.select(where={"release_name": "a"}, limit=1)
         self.assertTrue(releases_readonly)
 
     def test_insert_no_admin(self):
-        release_readonly = dict(release_name='k')
-        self.releasesReadonly.insert('bob', **release_readonly)
-        releases_readonly = self.releasesReadonly.select(where={'release_name': 'k'}, limit=1)
+        release_readonly = dict(release_name="k")
+        self.releasesReadonly.insert("bob", **release_readonly)
+        releases_readonly = self.releasesReadonly.select(where={"release_name": "k"}, limit=1)
         self.assertTrue(releases_readonly)
 
     def test_insert_release_not_exists(self):
-        release_readonly = dict(release_name='y')
-        self.assertRaises(
-            ValueError, self.releasesReadonly.insert, changed_by='me', **release_readonly)
+        release_readonly = dict(release_name="y")
+        self.assertRaises(ValueError, self.releasesReadonly.insert, changed_by="me", **release_readonly)
 
     def test_delete(self):
-        self.releasesReadonly.t.insert().execute(release_name='f', data_version=1)
-        self.releasesReadonly.delete(
-            changed_by='me', old_data_version=1, where={'release_name': 'f'})
-        releases_readonly = self.releasesReadonly.select(where={'release_name': 'f'})
+        self.releasesReadonly.t.insert().execute(release_name="f", data_version=1)
+        self.releasesReadonly.delete(changed_by="me", old_data_version=1, where={"release_name": "f"})
+        releases_readonly = self.releasesReadonly.select(where={"release_name": "f"})
         self.assertFalse(releases_readonly)
 
     def test_delete_no_admin(self):
-        self.releasesReadonly.t.insert().execute(release_name='k', data_version=1)
-        self.releasesReadonly.delete(
-            changed_by='bob', old_data_version=1, where={'release_name': 'k'})
-        releases_readonly = self.releasesReadonly.select(where={'release_name': 'k'})
+        self.releasesReadonly.t.insert().execute(release_name="k", data_version=1)
+        self.releasesReadonly.delete(changed_by="bob", old_data_version=1, where={"release_name": "k"})
+        releases_readonly = self.releasesReadonly.select(where={"release_name": "k"})
         self.assertFalse(releases_readonly)
 
     def test_is_readonly(self):
-        self.releasesReadonly.t.insert().execute(release_name='f', data_version=1)
-        self.assertTrue(self.releasesReadonly.is_readonly('f'))
-        self.assertFalse(self.releasesReadonly.is_readonly('k'))
+        self.releasesReadonly.t.insert().execute(release_name="f", data_version=1)
+        self.assertTrue(self.releasesReadonly.is_readonly("f"))
+        self.assertFalse(self.releasesReadonly.is_readonly("k"))
 
     def test_insert_with_no_permission(self):
-        release_readonly = dict(release_name='k')
-        self.assertRaises(
-            PermissionDeniedError, self.releasesReadonly.insert, changed_by='john', **release_readonly)
+        release_readonly = dict(release_name="k")
+        self.assertRaises(PermissionDeniedError, self.releasesReadonly.insert, changed_by="john", **release_readonly)
 
     def test_delete_with_no_permission(self):
-        release_readonly = dict(release_name='k')
-        self.releasesReadonly.t.insert().execute(release_name='k', data_version=1)
-        self.assertRaises(
-            PermissionDeniedError, self.releasesReadonly.delete,
-            changed_by='john', where=release_readonly, old_data_version=1)
+        release_readonly = dict(release_name="k")
+        self.releasesReadonly.t.insert().execute(release_name="k", data_version=1)
+        self.assertRaises(PermissionDeniedError, self.releasesReadonly.delete, changed_by="john", where=release_readonly, old_data_version=1)
 
     def test_delete_require_signoffs(self):
-        self.releasesReadonly.t.insert().execute(release_name='a', data_version=1)
-        signoffs = [{'username': 'bob', 'role': 'bar'},
-                    {'username': 'bill', 'role': 'bar'}]
-        self.releasesReadonly.delete(
-            changed_by='me', old_data_version=1, where={'release_name': 'a'}, signoffs=signoffs)
-        releases_readonly = self.releasesReadonly.select(where={'release_name': 'a'})
+        self.releasesReadonly.t.insert().execute(release_name="a", data_version=1)
+        signoffs = [{"username": "bob", "role": "bar"}, {"username": "bill", "role": "bar"}]
+        self.releasesReadonly.delete(changed_by="me", old_data_version=1, where={"release_name": "a"}, signoffs=signoffs)
+        releases_readonly = self.releasesReadonly.select(where={"release_name": "a"})
         self.assertFalse(releases_readonly)
 
 
@@ -4376,9 +4358,9 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
 
     def testAddRelease(self):
         blob = ReleaseBlobV1(name="d", hashFunction="sha512")
-        self.releases.insert(changed_by="bill", name='d', product='d', data=blob)
-        expected = [('d', 'd', createBlob(dict(name="d", schema_version=1, hashFunction="sha512")), 1)]
-        self.assertEqual(self.releases.t.select().where(self.releases.name == 'd').execute().fetchall(), expected)
+        self.releases.insert(changed_by="bill", name="d", product="d", data=blob)
+        expected = [("d", "d", createBlob(dict(name="d", schema_version=1, hashFunction="sha512")), 1)]
+        self.assertEqual(self.releases.t.select().where(self.releases.name == "d").execute().fetchall(), expected)
 
     def testAddReleaseAlreadyExists(self):
         blob = ReleaseBlobV1(name="a", hashFunction="sha512")
@@ -4387,20 +4369,20 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
     def testUpdateRelease(self):
         blob = ReleaseBlobV1(name="a", hashFunction="sha512")
         self.releases.update({"name": "a"}, {"product": "z", "data": blob}, "bill", 1)
-        expected = [('a', 'z', createBlob(dict(name='a', schema_version=1, hashFunction="sha512")), 2)]
-        self.assertEqual(self.releases.t.select().where(self.releases.name == 'a').execute().fetchall(), expected)
+        expected = [("a", "z", createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), 2)]
+        self.assertEqual(self.releases.t.select().where(self.releases.name == "a").execute().fetchall(), expected)
 
     def testUpdateReleaseWhenReadOnly(self):
         blob = ReleaseBlobV1(name="a", hashFunction="sha512")
         # set release 'a' to read-only
-        self.releasesReadonly.t.insert().execute(release_name='a', data_version=1)
+        self.releasesReadonly.t.insert().execute(release_name="a", data_version=1)
         self.assertRaises(ReadOnlyError, self.releases.update, {"name": "a"}, {"product": "z", "data": blob}, "me", 2)
 
     def testUpdateReleaseWithBlob(self):
         blob = ReleaseBlobV1(name="b", schema_version=1, hashFunction="sha512")
         self.releases.update({"name": "b"}, {"product": "z", "data": blob}, "bill", 1)
-        expected = [('b', 'z', createBlob(dict(name='b', schema_version=1, hashFunction="sha512")), 2)]
-        self.assertEqual(self.releases.t.select().where(self.releases.name == 'b').execute().fetchall(), expected)
+        expected = [("b", "z", createBlob(dict(name="b", schema_version=1, hashFunction="sha512")), 2)]
+        self.assertEqual(self.releases.t.select().where(self.releases.name == "b").execute().fetchall(), expected)
 
     def testUpdateReleaseInvalidBlob(self):
         blob = ReleaseBlobV1(name="2", hashFunction="sha512")
@@ -4679,9 +4661,10 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
 
     def testAddLocaleWhenReadOnly(self):
         data = {"complete": {"filesize": 1, "from": "*", "hashValue": "abc"}}
-        self.releasesReadonly.t.insert().execute(release_name='a', data_version=1)
-        self.assertRaises(ReadOnlyError, self.releases.addLocaleToRelease, name='a', product='a', platform='p', locale='c', data=data, old_data_version=1,
-                          changed_by='bill')
+        self.releasesReadonly.t.insert().execute(release_name="a", data_version=1)
+        self.assertRaises(
+            ReadOnlyError, self.releases.addLocaleToRelease, name="a", product="a", platform="p", locale="c", data=data, old_data_version=1, changed_by="bill"
+        )
 
     def testAddMergeableOutdatedData(self):
         ancestor_blob = createBlob(
@@ -5644,69 +5627,70 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
     def setUpClass(cls):
         cls.db_tables = set(
             [
-            "dockerflow",
-            # TODO: dive into this more
-            # Migrate version only exists in production-like databases.
-            # "migrate_version", # noqa
-            "permissions",
-            "permissions_history",
-            "permissions_scheduled_changes",
-            "permissions_scheduled_changes_conditions",
-            "permissions_scheduled_changes_conditions_history",
-            "permissions_scheduled_changes_history",
-            "permissions_scheduled_changes_signoffs",
-            "permissions_scheduled_changes_signoffs_history",
-            "permissions_req_signoffs",
-            "permissions_req_signoffs_history",
-            "permissions_req_signoffs_scheduled_changes",
-            "permissions_req_signoffs_scheduled_changes_conditions",
-            "permissions_req_signoffs_scheduled_changes_conditions_history",
-            "permissions_req_signoffs_scheduled_changes_history",
-            "permissions_req_signoffs_scheduled_changes_signoffs",
-            "permissions_req_signoffs_scheduled_changes_signoffs_history",
-            "product_req_signoffs",
-            "product_req_signoffs_history",
-            "product_req_signoffs_scheduled_changes",
-            "product_req_signoffs_scheduled_changes_conditions",
-            "product_req_signoffs_scheduled_changes_conditions_history",
-            "product_req_signoffs_scheduled_changes_history",
-            "product_req_signoffs_scheduled_changes_signoffs",
-            "product_req_signoffs_scheduled_changes_signoffs_history",
-            "releases",
-            "releases_history",
-            "releases_scheduled_changes",
-            "releases_scheduled_changes_conditions",
-            "releases_scheduled_changes_conditions_history",
-            "releases_scheduled_changes_history",
-            "releases_scheduled_changes_signoffs",
-            "releases_scheduled_changes_signoffs_history",
-            "rules",
-            "rules_history",
-            "rules_scheduled_changes",
-            "rules_scheduled_changes_conditions",
-            "rules_scheduled_changes_conditions_history",
-            "rules_scheduled_changes_history",
-            "rules_scheduled_changes_signoffs",
-            "rules_scheduled_changes_signoffs_history",
-            "user_roles",
-            "user_roles_history",
-            "emergency_shutoffs",
-            "emergency_shutoffs_history",
-            "emergency_shutoffs_scheduled_changes",
-            "emergency_shutoffs_scheduled_changes_history",
-            "emergency_shutoffs_scheduled_changes_conditions",
-            "emergency_shutoffs_scheduled_changes_conditions_history",
-            "emergency_shutoffs_scheduled_changes_signoffs",
-            "emergency_shutoffs_scheduled_changes_signoffs_history",
-            "releases_readonly",
-            "releases_readonly_history",
-            "releases_readonly_scheduled_changes",
-            "releases_readonly_scheduled_changes_history",
-            "releases_readonly_scheduled_changes_conditions",
-            "releases_readonly_scheduled_changes_conditions_history",
-            "releases_readonly_scheduled_changes_signoffs",
-            "releases_readonly_scheduled_changes_signoffs_history",
-        ])
+                "dockerflow",
+                # TODO: dive into this more
+                # Migrate version only exists in production-like databases.
+                # "migrate_version", # noqa
+                "permissions",
+                "permissions_history",
+                "permissions_scheduled_changes",
+                "permissions_scheduled_changes_conditions",
+                "permissions_scheduled_changes_conditions_history",
+                "permissions_scheduled_changes_history",
+                "permissions_scheduled_changes_signoffs",
+                "permissions_scheduled_changes_signoffs_history",
+                "permissions_req_signoffs",
+                "permissions_req_signoffs_history",
+                "permissions_req_signoffs_scheduled_changes",
+                "permissions_req_signoffs_scheduled_changes_conditions",
+                "permissions_req_signoffs_scheduled_changes_conditions_history",
+                "permissions_req_signoffs_scheduled_changes_history",
+                "permissions_req_signoffs_scheduled_changes_signoffs",
+                "permissions_req_signoffs_scheduled_changes_signoffs_history",
+                "product_req_signoffs",
+                "product_req_signoffs_history",
+                "product_req_signoffs_scheduled_changes",
+                "product_req_signoffs_scheduled_changes_conditions",
+                "product_req_signoffs_scheduled_changes_conditions_history",
+                "product_req_signoffs_scheduled_changes_history",
+                "product_req_signoffs_scheduled_changes_signoffs",
+                "product_req_signoffs_scheduled_changes_signoffs_history",
+                "releases",
+                "releases_history",
+                "releases_scheduled_changes",
+                "releases_scheduled_changes_conditions",
+                "releases_scheduled_changes_conditions_history",
+                "releases_scheduled_changes_history",
+                "releases_scheduled_changes_signoffs",
+                "releases_scheduled_changes_signoffs_history",
+                "rules",
+                "rules_history",
+                "rules_scheduled_changes",
+                "rules_scheduled_changes_conditions",
+                "rules_scheduled_changes_conditions_history",
+                "rules_scheduled_changes_history",
+                "rules_scheduled_changes_signoffs",
+                "rules_scheduled_changes_signoffs_history",
+                "user_roles",
+                "user_roles_history",
+                "emergency_shutoffs",
+                "emergency_shutoffs_history",
+                "emergency_shutoffs_scheduled_changes",
+                "emergency_shutoffs_scheduled_changes_history",
+                "emergency_shutoffs_scheduled_changes_conditions",
+                "emergency_shutoffs_scheduled_changes_conditions_history",
+                "emergency_shutoffs_scheduled_changes_signoffs",
+                "emergency_shutoffs_scheduled_changes_signoffs_history",
+                "releases_readonly",
+                "releases_readonly_history",
+                "releases_readonly_scheduled_changes",
+                "releases_readonly_scheduled_changes_history",
+                "releases_readonly_scheduled_changes_conditions",
+                "releases_readonly_scheduled_changes_conditions_history",
+                "releases_readonly_scheduled_changes_signoffs",
+                "releases_readonly_scheduled_changes_signoffs_history",
+            ]
+        )
 
         # autoincrement isn't tested as Sqlite does not support this outside of INTEGER PRIMARY KEYS.
         # If the testing db is ever switched to mysql, this should be revisited.
@@ -6028,7 +6012,8 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             "releases_readonly_scheduled_changes_conditions",
             "releases_readonly_scheduled_changes_conditions_history",
             "releases_readonly_scheduled_changes_signoffs",
-            "releases_readonly_scheduled_changes_signoffs_history"]
+            "releases_readonly_scheduled_changes_signoffs_history",
+        ]
         if upgrade:
             for table in release_readonly_tables:
                 self.assertIn(table, metadata.tables)

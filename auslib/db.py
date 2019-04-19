@@ -1753,12 +1753,7 @@ class Rules(AUSTable):
 class Releases(AUSTable):
     def __init__(self, db, metadata, dialect):
         self.domainWhitelist = []
-        self.table = Table(
-            "releases",
-            metadata,
-            Column("name", String(100), primary_key=True),
-            Column("product", String(15), nullable=False),
-        )
+        self.table = Table("releases", metadata, Column("name", String(100), primary_key=True), Column("product", String(15), nullable=False))
         if dialect == "mysql":
             from sqlalchemy.dialects.mysql import LONGTEXT
 
@@ -1855,8 +1850,8 @@ class Releases(AUSTable):
                 if len(refs) > 0:
                     row["rule_ids"] = [ref[1] for ref in refs]
                 else:
-                    row['rule_ids'] = []
-                row['read_only'] = self.isReadOnly(row['name'], transaction=transaction)
+                    row["rule_ids"] = []
+                row["read_only"] = self.isReadOnly(row["name"], transaction=transaction)
 
         return rows
 
@@ -2440,53 +2435,45 @@ class EmergencyShutoffs(AUSTable):
 
 class ReleasesReadonly(AUSTable):
     def __init__(self, db, metadata, dialect):
-        self.table = Table('releases_readonly', metadata,
-                           Column('release_name', String(100), nullable=False, primary_key=True))
+        self.table = Table("releases_readonly", metadata, Column("release_name", String(100), nullable=False, primary_key=True))
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         for row in affected_rows:
-            if 'release_name' in row:
-                row['name'] = row['release_name']
+            if "release_name" in row:
+                row["name"] = row["release_name"]
         return self.db.releases.getPotentialRequiredSignoffs(affected_rows, transaction=transaction)
 
     def is_readonly(self, release_name, transaction=None):
-        release_readonly = self.select(
-            where={'release_name': release_name}, columns=[self.release_name], limit=1)
+        release_readonly = self.select(where={"release_name": release_name}, columns=[self.release_name], limit=1)
         return bool(release_readonly)
 
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
-        release_info = self.get_release_info(columns['release_name'], transaction=transaction)
+        release_info = self.get_release_info(columns["release_name"], transaction=transaction)
 
         if not release_info:
-            raise ValueError('Release {} does not exists.'.format(columns['release_name']))
+            raise ValueError("Release {} does not exists.".format(columns["release_name"]))
 
-        product = release_info['product']
+        product = release_info["product"]
 
-        if not self.db.hasPermission(changed_by, 'release_read_only', 'set', product, transaction):
-            raise PermissionDeniedError(
-                '{} is not allowed to mark {} products read only'.format(changed_by, product))
+        if not self.db.hasPermission(changed_by, "release_read_only", "set", product, transaction):
+            raise PermissionDeniedError("{} is not allowed to mark {} products read only".format(changed_by, product))
 
-        super(ReleasesReadonly, self).insert(
-            changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        super(ReleasesReadonly, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
 
     def delete(self, where, changed_by, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
         release_readonly = self.select(where=where, transaction=transaction)[0]
-        release_info = self.get_release_info(release_readonly['release_name'], transaction=transaction)
-        product = release_info['product']
-        if not self.db.hasPermission(changed_by, 'release_read_only', 'unset', product, transaction):
-            raise PermissionDeniedError(
-                '{} is not allowed to mark {} products read write'.format(changed_by, product))
+        release_info = self.get_release_info(release_readonly["release_name"], transaction=transaction)
+        product = release_info["product"]
+        if not self.db.hasPermission(changed_by, "release_read_only", "unset", product, transaction):
+            raise PermissionDeniedError("{} is not allowed to mark {} products read write".format(changed_by, product))
 
         if not dryrun:
-            potential_required_signoffs = self.getPotentialRequiredSignoffs(
-                [release_info], transaction=transaction)
+            potential_required_signoffs = self.getPotentialRequiredSignoffs([release_info], transaction=transaction)
             potential_required_signoffs = [obj for v in potential_required_signoffs.values() for obj in v]
             verify_signoffs(potential_required_signoffs, signoffs)
 
-        super(ReleasesReadonly, self).delete(
-            changed_by=changed_by, where=where, old_data_version=old_data_version,
-            transaction=transaction, dryrun=dryrun)
+        super(ReleasesReadonly, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
     def get_release_info(self, release_name, transaction=None):
         release_info = self.db.releases.getReleaseInfo(names=[release_name], transaction=transaction)

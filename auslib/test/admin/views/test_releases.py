@@ -334,8 +334,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=3)), "Data: %s" % ret.get_data())
 
         # Outdated Data Error on same release
-        ret = self._post('/releases/ee', data=dict(hashFunction="sha512",
-                                                   name='ee', product='ee', data_version=1))
+        ret = self._post("/releases/ee", data=dict(hashFunction="sha512", name="ee", product="ee", data_version=1))
         self.assertStatusCode(ret, 400)
 
         blob = json.loads(blob)
@@ -477,7 +476,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 403)
 
     def testDeleteReadOnlyRelease(self):
-        dbo.releasesReadonly.t.insert().execute({'release_name': 'd', 'data_version': 1})
+        dbo.releasesReadonly.t.insert().execute({"release_name": "d", "data_version": 1})
         ret = self._delete("/releases/d", username="bill", qs=dict(data_version=2))
         self.assertStatusCode(ret, 403)
 
@@ -916,9 +915,9 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 401)
 
     def testLocalePutReadOnlyRelease(self):
-        dbo.releasesReadonly.t.insert().execute({'release_name': 'ab', 'data_version': 1})
+        dbo.releasesReadonly.t.insert().execute({"release_name": "ab", "data_version": 1})
         data = json.dumps({"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}})
-        ret = self._put('/releases/ab/builds/p/l', data=dict(data=data, product='a', data_version=1, schema_version=1))
+        ret = self._put("/releases/ab/builds/p/l", data=dict(data=data, product="a", data_version=1, schema_version=1))
         self.assertStatusCode(ret, 403)
 
     def testLocalePutWithProductAdmin(self):
@@ -1836,12 +1835,7 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEqual(db_data, expected)
 
         base_row = dict(dbo.releases.t.select().where(dbo.releases.name == "a").execute().fetchall()[0])
-        base_expected = {
-            "name": "a",
-            "product": "a",
-            "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
-            "data_version": 2,
-        }
+        base_expected = {"name": "a", "product": "a", "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"}, "data_version": 2}
         self.assertEqual(base_row, base_expected)
 
     def testEnactScheduledChangeNewRelease(self):
@@ -1866,12 +1860,7 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEqual(db_data, expected)
 
         base_row = dict(dbo.releases.t.select().where(dbo.releases.name == "m").execute().fetchall()[0])
-        base_expected = {
-            "name": "m",
-            "product": "m",
-            "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1},
-            "data_version": 1,
-        }
+        base_expected = {"name": "m", "product": "m", "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1}, "data_version": 1}
         self.assertEqual(base_row, base_expected)
 
     def testEnactScheduledChangeDeleteRelease(self):
