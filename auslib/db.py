@@ -1856,7 +1856,7 @@ class Releases(AUSTable):
                     row["rule_ids"] = [ref[1] for ref in refs]
                 else:
                     row['rule_ids'] = []
-                row['read_only'] = self.is_readonly(row['name'], transaction=transaction)
+                row['read_only'] = self.isReadOnly(row['name'], transaction=transaction)
 
         return rows
 
