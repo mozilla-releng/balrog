@@ -4034,6 +4034,25 @@ paths:
           $ref: '#/responses/resourceNotFound'
 
   /releases_readonly/{release}:
+    get:
+      summary: Get release readonly.
+      description: Get release marked as readOnly.
+      tags:
+        - Releases
+        - Release Readonly
+      operationId: auslib.web.admin.releases_readonly.get
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+      responses:
+        '200':
+          description: Release readonly with data_version.
+        '404':
+          $ref: '#/responses/invalidFormData'
+
     post:
       summary: Set the release as readonly.
       description: Set the release as readonly.

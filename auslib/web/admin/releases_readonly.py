@@ -1,3 +1,4 @@
+import json
 import time
 
 from connexion import problem
@@ -9,6 +10,26 @@ from auslib.web.admin.views.base import (
 
 from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView, ScheduledChangeView, ScheduledChangesView, SignoffsView)
+
+
+@handleGeneralExceptions('GET')
+def get(release):
+    where = dict(release_name=release)
+    releases_read_only = dbo.releasesReadonly.select(where=where)
+
+    if not releases_read_only:
+        return problem(
+            status=404, title="Not Found",
+            detail="Release readonly not found.",
+            ext={"exception": "Release readonly not found."})
+
+    release_read_only = releases_read_only[0]
+    headers = {'X-Data-Version': release_read_only['data_version']}
+
+    return Response(
+        response=json.dumps(release_read_only),
+        headers=headers,
+        mimetype='application/json')
 
 
 @requirelogin

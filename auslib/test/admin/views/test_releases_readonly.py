@@ -24,6 +24,17 @@ class TestReleasesReadOnly(ViewTest):
         dbo.releasesReadonly.scheduled_changes.conditions.t.insert().execute(
             sc_id=1, data_version=1, when=1000000)
 
+    def test_get(self):
+        resp = self._get('/releases_readonly/K')
+        self.assertStatusCode(resp, 200)
+        data = resp.get_json()
+        self.assertEqual(data['release_name'], 'K')
+        self.assertEqual(data['data_version'], 1)
+
+    def test_get_not_found(self):
+        resp = self._get('/releases_readonly/ZZZ')
+        self.assertStatusCode(resp, 404)
+
     def test_set_readonly(self):
         release_name = 'a'
         resp = self._post('/releases_readonly/{}'.format(release_name))
