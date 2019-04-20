@@ -12,12 +12,16 @@
   </dl>
 
 </div>
-<div class="form-group" ng-class="{'has-error': errors.detail}">
+<div class="form-group" style="margin: 10px;" ng-class="{'has-error': errors.detail}">
     <p class="help-block" ng-show="errors.detail">{{ errors.detail }}</p>
 </div>
-<div class="form-group" ng-class="{'has-error': errors.exception}">
+<div class="form-group" style="margin: 10px;" ng-class="{'has-error': errors.exception}">
     <p class="help-block" ng-show="errors.exception">{{ errors.exception }}</p>
 </div>
+
+<show-signoff-requirements style="margin: 10px;" ng-if="changeRequiresSignoffs()" requirements="release_readonly.required_signoffs"></show-signoff-requirements>
+
+
 <div class="modal-footer">
   <div ng-show="saving" small-loader></div>
   <button class="btn btn-primary" ng-show="!saving" ng-click="saveChanges()">Yes</button>

@@ -20,6 +20,18 @@ angular.module('app').factory('ReleasesReadonly', function($http, ScheduledChang
             };
             return $http.delete('/api/releases_readonly/' + encodeURIComponent(release_name), config);
         },
+        
+        scheduleReadWriteReleaseChange: function(release_readonly, csrf_token) {
+            when = new Date();
+            when.setSeconds(when.getSeconds() + 10);
+
+            data = angular.copy(release_readonly);
+            data.change_type = 'delete';
+            data.csrf_token = csrf_token;
+            data.when = when.getTime();
+
+            return $http.post('/api/scheduled_changes/releases_readonly', data);
+        },
 
         signoff: function(sc_id, csrf_token) {
 

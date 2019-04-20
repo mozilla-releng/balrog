@@ -5,6 +5,7 @@ from connexion import problem
 from flask import Response
 
 from auslib.global_state import dbo
+from auslib.util.signoffs import serialize_signoff_requirements
 from auslib.web.admin.views.base import requirelogin, handleGeneralExceptions, transactionHandler
 
 from auslib.web.admin.views.scheduled_changes import EnactScheduledChangeView, ScheduledChangeView, ScheduledChangesView, SignoffsView
@@ -19,6 +20,9 @@ def get(release):
         return problem(status=404, title="Not Found", detail="Release readonly not found.", ext={"exception": "Release readonly not found."})
 
     release_read_only = releases_read_only[0]
+    required_signoffs = dbo.releasesReadonly.getPotentialRequiredSignoffs(releases_read_only)
+    release_read_only["required_signoffs"] = serialize_signoff_requirements(required_signoffs[release_read_only["release_name"]])
+    
     headers = {"X-Data-Version": release_read_only["data_version"]}
 
     return Response(response=json.dumps(release_read_only), headers=headers, mimetype="application/json")
@@ -57,6 +61,7 @@ def scheduled_changes():
 
 @requirelogin
 @transactionHandler
+@handleGeneralExceptions("POST")
 def schedule_release_read_write(sc_release_readonly, changed_by, transaction):
     if "csrf_token" in sc_release_readonly:
         del sc_release_readonly["csrf_token"]

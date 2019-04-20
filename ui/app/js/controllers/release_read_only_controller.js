@@ -9,6 +9,11 @@ function ($scope, $modalInstance, CSRF, ReleasesReadonly, release) {
     ReleasesReadonly.getReleaseReadonly(release.name)
       .then(function(response) {
         $scope.release_readonly = response.data;
+        var signoffs = $scope.release_readonly.required_signoffs;
+        $scope.release_readonly.required_signoffs = {
+          length: Object.keys(signoffs).length,
+          roles: signoffs
+        };
       })
       .finally(function () {
         $scope.loading = false;
@@ -42,6 +47,23 @@ function ($scope, $modalInstance, CSRF, ReleasesReadonly, release) {
       .finally($scope.operationComplete);
   };
 
+  $scope.scheduleReadWriteReleaseChange = function(csrf_token) {
+    ReleasesReadonly.scheduleReadWriteReleaseChange($scope.release_readonly, csrf_token)
+    .success(function() {
+      sweetAlert(
+        'Release', 'Release was scheduled to be modifiable successfully!', 'success');
+      $modalInstance.close();
+    })
+    .error($scope.responseError)
+    .finally($scope.operationComplete);
+  };
+
+  $scope.changeRequiresSignoffs = function() {
+    return $scope.release_readonly &&
+      $scope.release_readonly.required_signoffs &&
+      $scope.release_readonly.required_signoffs.length > 0;
+  };
+
   $scope.responseError = function(response) {
     if (typeof response === 'object') {
       $scope.errors = response;
@@ -63,7 +85,11 @@ function ($scope, $modalInstance, CSRF, ReleasesReadonly, release) {
     CSRF.getToken()
       .then(function(csrf_token) {
         if($scope.release.read_only) {
-          $scope.makeReadWrite(csrf_token);
+          if($scope.changeRequiresSignoffs()) {
+            $scope.scheduleReadWriteReleaseChange(csrf_token);
+          } else {
+            $scope.makeReadWrite(csrf_token);
+          }
         } else {
           $scope.makeReadonly(csrf_token);
         }
