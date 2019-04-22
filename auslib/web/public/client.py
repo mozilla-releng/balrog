@@ -3,7 +3,6 @@ import re
 import sys
 from functools import wraps
 
-import six
 from connexion import request
 from flask import current_app as app
 from flask import make_response
@@ -66,16 +65,12 @@ def getCleanQueryFromURL(url):
     # The lower level of Balrog is not ready to support Unicode yet, and any valid data will
     # not contain Unicode characters - so for now, we simply encode to ascii and replace the
     # Unicode characters.
-    # This is something that we should revisit when we upgrade to Python 3, as it will be as
-    # easy to pretend Unicode doesn't exist. (Which is why this block is only for Python 2 --
-    # encoding to ascii in Python 3 gives us "bytes", which causes a whole mess of problems
-    # later.)
-    # TODO: what to do here for Python 3?
-    if six.PY2:
-        for field in query:
-            if field == "queryVersion":
-                continue
-            query[field] = query[field].encode("ascii", "replace")
+    # Until the lower level of Balrog supports Unicode better, the simplest thing to do
+    # is simply pretend these strings are ascii (which is the case for any valid query).
+    for field in query:
+        if field == "queryVersion":
+            continue
+        query[field] = query[field].encode("ascii", "replace").decode()
     # Some versions of Avast make requests and blindly append "?avast=1" to
     # them, which breaks query string parsing if ?force=1 is already
     # there. Because we're nice people we'll fix it up.
