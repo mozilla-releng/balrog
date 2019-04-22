@@ -4,7 +4,7 @@ import itertools
 import logging
 import sys
 from os import path
-from subprocess import Popen, PIPE
+from subprocess import run
 
 from six.moves import xrange
 from sqlalchemy.engine.url import make_url
@@ -140,15 +140,11 @@ def extract_active_data(trans, url, dump_location="dump.sql"):
     # See https://bugzilla.mozilla.org/show_bug.cgi?id=1376331 for additional
     # background on this.
     with open(dump_location, "w+") as dump_file:
-        with Popen(mysql_command(host, user, password, db, "--no-data").split(), stdout=PIPE) as proc:
-            stdout, _ = proc.communicate()
-            dump_file.write(stdout.decode("ascii"))
+        run(mysql_command(host, user, password, db, "--no-data").split(), stdout=dump_file)
 
         # Now extract the data we actually want....
         # We always want all the data from a few tables...
-        with Popen(mysql_data_only_command(host, user, password, db, "dockerflow rules rules_history migrate_version").split(), stdout=PIPE) as proc:
-            stdout, _ = proc.communicate()
-            dump_file.write(stdout.decode("ascii"))
+        run(mysql_data_only_command(host, user, password, db, "dockerflow rules rules_history migrate_version").split(), stdout=dump_file)
 
         # Because Releases are so massive, we only want the actively used ones,
         # and very little Release history. Specifically:
@@ -178,22 +174,16 @@ def extract_active_data(trans, url, dump_location="dump.sql"):
                 query = ", ".join("'" + names + "'" for names in batched_release_list)
                 cmd = mysql_data_only_command(host, user, password, db, "releases").split()
                 cmd.append('--where="releases.name IN ({})"'.format(query))
-                with Popen(cmd, stdout=PIPE) as proc:
-                    stdout, _ = proc.communicate()
-                    dump_file.write(stdout.decode("ascii"))
+                run(cmd, stdout=dump_file)
 
         cmd = mysql_data_only_command(host, user, password, db, "releases_history").split()
         cmd.append("--where=\"release_history.name='Firefox-mozilla-central-nightly-latest' ORDER BY timestamp DESC LIMIT 50\"")
-        with Popen(cmd, stdout=PIPE) as proc:
-            stdout, _ = proc.communicate()
-            dump_file.write(stdout.decode("ascii"))
+        run(cmd, stdout=dump_file)
 
         query = "SELECT rules.mapping FROM rules WHERE rules.alias='firefox-release'"
         cmd = mysql_data_only_command(host, user, password, db, "releases_history").split()
         cmd.append('--where="name = ({}) ORDER BY timestamp DESC LIMIT 50"'.format(query))
-        with Popen(cmd, stdout=PIPE) as proc:
-            stdout, _ = proc.communicate()
-            dump_file.write(stdout.decode("ascii"))
+        run(cmd, stdout=dump_file)
 
         # Notably absent from this dump are all Permissions, Roles, and Scheduled
         # Changes tables. Permissions & Roles are excluded to avoid leaking any
