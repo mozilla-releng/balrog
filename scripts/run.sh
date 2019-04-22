@@ -1,25 +1,4 @@
 #!/bin/bash
-PYTHON_VERSION="py37"
-
-build_front_end() {
-    cd /app/ui
-    npm install
-    npm run build
-    cd -
-}
-
-run_back_end_tests() {
-  PYTHON_VERSION=${1:-py37}
-  shift
-  cd /app
-  tox $@ -e $PYTHON_VERSION
-}
-
-run_front_end_tests() {
-  build_front_end
-  cd /app/ui/
-  npm test
-}
 
 if [ $1 == "public" ]; then
    exec uwsgi --ini /app/uwsgi/public.ini --python-autoreload 1
@@ -87,35 +66,17 @@ elif [ $1 == "create-local-admin" ]; then
     mysql -h $DB_HOST -u balrogadmin --password=balrogadmin -e "insert into user_roles (username, role, data_version) values (\"${LOCAL_ADMIN}\", \"releng\", 1)" balrog
     exit $?
 elif [ $1 == "test" ]; then
-    shift
-    rc=0
-    coveralls=0
-    if [[ $1 == "backend" ]]; then
-        shift
-        coveralls=1
-        run_back_end_tests $@
-        rc=$?
-    elif [[ $1 == "frontend" ]]; then
-        run_front_end_tests
-        rc=$?
+    coveralls=1
+    cd /app
+    tox
+    rc=$?
+    if [[ $rc == 0 ]]; then
+        echo "All tests pass!!!"
     else
-        coveralls=1
-        run_back_end_tests $@
-        backend_rc=$?
-        run_front_end_tests
-        frontend_rc=$?
-        echo
-
-        if [[ $backend_rc == 0 && $frontend_rc == 0 ]]; then
-            echo "All tests pass!!!"
-            exit 0
-        else
-            echo "FAIL FAIL FAIL FAIL FAIL FAIL FAIL FAIL. Some tests failed, see above for details."
-            exit 1
-        fi
+        echo "FAIL FAIL FAIL FAIL FAIL FAIL FAIL FAIL. Some tests failed, see above for details."
     fi
     # Only send coverage data for the authoritative Balrog repo.
-    if [[ $PYTHON_VERSION == "py37" && $coveralls == 1 && $GITHUB_BASE_REPO_URL == "https://github.com/mozilla/balrog.git" ]];
+    if [[ $GITHUB_BASE_REPO_URL == "https://github.com/mozilla/balrog.git" ]];
     then
         # COVERALLS_REPO_TOKEN is already in the environment
         export CIRCLECI=1

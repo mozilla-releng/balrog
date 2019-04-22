@@ -1,5 +1,3 @@
-# TODO: This image doesn't work for frontend tests, and a jessie version doesn't exist.
-# We should probably move them to their own container
 FROM python:3.7-slim-stretch
 
 MAINTAINER bhearsum@mozilla.com

@@ -66,13 +66,13 @@ tasks:
     workerType: "{{ taskcluster.docker.workerType }}"
     payload:
       maxRunTime: 1200
-      image: "mozillareleases/python-test-runner"
+      image: "node:0.10"
       env:
         NO_VOLUME_MOUNT: 1
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh frontend"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog/ui && git checkout $GITHUB_HEAD_BRANCH && npm install && npm test"
       features:
         dind: true
     extra:
