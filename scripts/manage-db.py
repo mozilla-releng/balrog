@@ -3,7 +3,8 @@
 import itertools
 import logging
 import sys
-from os import path, popen
+from os import path
+from subprocess import run
 
 from six.moves import xrange
 from sqlalchemy.engine.url import make_url
@@ -138,67 +139,58 @@ def extract_active_data(trans, url, dump_location="dump.sql"):
     # schema version if desired.
     # See https://bugzilla.mozilla.org/show_bug.cgi?id=1376331 for additional
     # background on this.
-    popen("{} > {}".format(mysql_command(host, user, password, db, "--no-data"), dump_location))
+    with open(dump_location, "w+") as dump_file:
+        run(mysql_command(host, user, password, db, "--no-data").split(), stdout=dump_file, check=True)
 
-    # Now extract the data we actually want....
-    # We always want all the data from a few tables...
-    popen("{} >> {}".format(mysql_data_only_command(host, user, password, db, "dockerflow rules rules_history migrate_version"), dump_location))
+        # Now extract the data we actually want....
+        # We always want all the data from a few tables...
+        run(mysql_data_only_command(host, user, password, db, "dockerflow rules rules_history migrate_version").split(), stdout=dump_file, check=True)
 
-    # Because Releases are so massive, we only want the actively used ones,
-    # and very little Release history. Specifically:
-    #   - All releases referenced by a Rule or a Active Scheduled Rule Change
-    #   - All releases referenced by a Release from the above query
-    #   - 50 rows of history for the "Firefox-mozilla-central-nightly-latest" Release
-    #   - Full history for the Release currently referenced by the "firefox-release" Rule.
-    query_release_mapping = """SELECT DISTINCT releases.* \
-        FROM releases, rules, rules_scheduled_changes \
-        WHERE (releases.name IN (rules.mapping, rules.fallbackMapping))
-          OR (rules_scheduled_changes.complete = 0 AND
-              releases.name IN (rules_scheduled_changes.base_mapping, rules_scheduled_changes.base_fallbackMapping))
-        """
+        # Because Releases are so massive, we only want the actively used ones,
+        # and very little Release history. Specifically:
+        #   - All releases referenced by a Rule or a Active Scheduled Rule Change
+        #   - All releases referenced by a Release from the above query
+        #   - 50 rows of history for the "Firefox-mozilla-central-nightly-latest" Release
+        #   - Full history for the Release currently referenced by the "firefox-release" Rule.
+        query_release_mapping = """SELECT DISTINCT releases.* \
+            FROM releases, rules, rules_scheduled_changes \
+            WHERE (releases.name IN (rules.mapping, rules.fallbackMapping))
+            OR (rules_scheduled_changes.complete = 0 AND
+                releases.name IN (rules_scheduled_changes.base_mapping, rules_scheduled_changes.base_fallbackMapping))
+            """
 
-    result = trans.execute(query_release_mapping).fetchall()
-    release_names = set()
-    for row in result:
-        try:
-            release_names.add(str(row["name"]))
-            release_blob = createBlob(row["data"])
-            release_names.update(release_blob.getReferencedReleases())
-        except ValueError:
-            continue
-    if release_names:
-        batch_generator = chunk_list(list(release_names), 30)
-        for batched_release_list in batch_generator:
-            query = ", ".join("'" + names + "'" for names in batched_release_list)
-            popen("{} >> {}".format(mysql_data_only_command(host, user, password, db, 'releases --where="releases.name IN ({})"'.format(query)), dump_location))
+        result = trans.execute(query_release_mapping).fetchall()
+        release_names = set()
+        for row in result:
+            try:
+                release_names.add(str(row["name"]))
+                release_blob = createBlob(row["data"])
+                release_names.update(release_blob.getReferencedReleases())
+            except ValueError:
+                continue
+        if release_names:
+            batch_generator = chunk_list(list(release_names), 30)
+            for batched_release_list in batch_generator:
+                query = ", ".join("'" + names + "'" for names in batched_release_list)
+                cmd = mysql_data_only_command(host, user, password, db, "releases").split()
+                cmd.append('--where="releases.name IN ({})"'.format(query))
+                run(cmd, stdout=dump_file, check=True)
 
-    popen(
-        "{} >> {}".format(
-            mysql_data_only_command(
-                host,
-                user,
-                password,
-                db,
-                "releases_history --where=\"releases_history.name='Firefox-mozilla-central-nightly-latest' ORDER BY timestamp DESC LIMIT 50\"",
-            ),
-            dump_location,
-        )
-    )
+        cmd = mysql_data_only_command(host, user, password, db, "releases_history").split()
+        cmd.append("--where=\"release_history.name='Firefox-mozilla-central-nightly-latest' ORDER BY timestamp DESC LIMIT 50\"")
+        run(cmd, stdout=dump_file, check=True)
 
-    query = "SELECT rules.mapping FROM rules WHERE rules.alias='firefox-release'"
-    popen(
-        "{} >> {}".format(
-            mysql_data_only_command(host, user, password, db, 'releases_history --where="name = ({}) ORDER BY timestamp DESC LIMIT 50"'.format(query)),
-            dump_location,
-        )
-    )
+        query = "SELECT rules.mapping FROM rules WHERE rules.alias='firefox-release'"
+        cmd = mysql_data_only_command(host, user, password, db, "releases_history").split()
+        cmd.append('--where="name = ({}) ORDER BY timestamp DESC LIMIT 50"'.format(query))
+        run(cmd, stdout=dump_file, check=True)
 
-    # Notably absent from this dump are all Permissions, Roles, and Scheduled
-    # Changes tables. Permissions & Roles are excluded to avoid leaking any
-    # account information from production. Scheduled Changes are not included
-    # to avoid any potential confusion when a dump is imported.
-    # Eg: Scheduled Changes may enact shortly after a user starts their Balrog
-    # instance without any interaction, which would be confusing.
+        # Notably absent from this dump are all Permissions, Roles, and Scheduled
+        # Changes tables. Permissions & Roles are excluded to avoid leaking any
+        # account information from production. Scheduled Changes are not included
+        # to avoid any potential confusion when a dump is imported.
+        # Eg: Scheduled Changes may enact shortly after a user starts their Balrog
+        # instance without any interaction, which would be confusing.
 
 
 def _strip_multiple_spaces(string):
