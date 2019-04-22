@@ -1,6 +1,6 @@
 # Some people have reported problems with the balrogui API proxy not working correctly.
 # This appears to be the same problem reported in https://github.com/docker/compose/issues/2172,
-# and seems to only occur with certain(older) versions of docker-compose.
+# and seems to only occur with certain (older) versions of docker-compose.
 version: '2.1'
 services:
   balrogadmin:
@@ -32,7 +32,7 @@ services:
       - LOCALDEV=1
       - FRONTEND_CONFIG=/app/ui/generated/js/config.js
       - AUTH0_CLIENT_ID=GlZhJQfx52b7MLQ19AjuTJHieiB4oh1j
-      - AUTH0_REDIRECT_URI=https://localhost:18010/login
+      - AUTH0_REDIRECT_URI=https://localhost:8010/login
       - AUTH0_DOMAIN=balrog-localdev.auth0.com
       - AUTH0_AUDIENCE=balrog-localdev
       - AUTH0_RESPONSE_TYPE=token id_token
