@@ -140,11 +140,11 @@ def extract_active_data(trans, url, dump_location="dump.sql"):
     # See https://bugzilla.mozilla.org/show_bug.cgi?id=1376331 for additional
     # background on this.
     with open(dump_location, "w+") as dump_file:
-        run(mysql_command(host, user, password, db, "--no-data").split(), stdout=dump_file)
+        run(mysql_command(host, user, password, db, "--no-data").split(), stdout=dump_file, check=True)
 
         # Now extract the data we actually want....
         # We always want all the data from a few tables...
-        run(mysql_data_only_command(host, user, password, db, "dockerflow rules rules_history migrate_version").split(), stdout=dump_file)
+        run(mysql_data_only_command(host, user, password, db, "dockerflow rules rules_history migrate_version").split(), stdout=dump_file, check=True)
 
         # Because Releases are so massive, we only want the actively used ones,
         # and very little Release history. Specifically:
@@ -174,16 +174,16 @@ def extract_active_data(trans, url, dump_location="dump.sql"):
                 query = ", ".join("'" + names + "'" for names in batched_release_list)
                 cmd = mysql_data_only_command(host, user, password, db, "releases").split()
                 cmd.append('--where="releases.name IN ({})"'.format(query))
-                run(cmd, stdout=dump_file)
+                run(cmd, stdout=dump_file, check=True)
 
         cmd = mysql_data_only_command(host, user, password, db, "releases_history").split()
         cmd.append("--where=\"release_history.name='Firefox-mozilla-central-nightly-latest' ORDER BY timestamp DESC LIMIT 50\"")
-        run(cmd, stdout=dump_file)
+        run(cmd, stdout=dump_file, check=True)
 
         query = "SELECT rules.mapping FROM rules WHERE rules.alias='firefox-release'"
         cmd = mysql_data_only_command(host, user, password, db, "releases_history").split()
         cmd.append('--where="name = ({}) ORDER BY timestamp DESC LIMIT 50"'.format(query))
-        run(cmd, stdout=dump_file)
+        run(cmd, stdout=dump_file, check=True)
 
         # Notably absent from this dump are all Permissions, Roles, and Scheduled
         # Changes tables. Permissions & Roles are excluded to avoid leaking any
