@@ -217,7 +217,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh Dockerfile.py3 latest-py3 ${GITHUB_HEAD_BRANCH}-${GITHUB_HEAD_SHA}-py3"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh Dockerfile latest-py3 ${GITHUB_HEAD_BRANCH}-${GITHUB_HEAD_SHA}-py3"
     extra:
       github:
         env: true
@@ -244,7 +244,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone -b {{ event.version }} {{ event.head.repo.url }} balrog && cd balrog && scripts/push-dockerimage.sh Dockerfile.py3 {{ event.version }}-py3"
+        - "git clone -b {{ event.version }} {{ event.head.repo.url }} balrog && cd balrog && scripts/push-dockerimage.sh Dockerfile {{ event.version }}-py3"
     extra:
       github:
         env: true
