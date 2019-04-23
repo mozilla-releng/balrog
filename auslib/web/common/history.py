@@ -1,10 +1,8 @@
 import json
 
 import arrow
-import six
 from connexion import request
 from flask import Response, jsonify
-from six import string_types, text_type
 
 
 class HistoryHelper:
@@ -88,9 +86,9 @@ def annotateRevisionDifferences(revisions):
                 except ValueError:
                     pass
             elif isinstance(value, int):
-                value = text_type(value)
-            elif not isinstance(value, string_types):
-                value = text_type(value, "utf8") if six.PY2 else str(value)
+                value = str(value)
+            elif not isinstance(value, str):
+                value = str(value)
             rev[key] = value
 
         rev["_different"] = different

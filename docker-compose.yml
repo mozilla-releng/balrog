@@ -147,6 +147,7 @@ services:
         timeout: 30s
         retries: 50
 
+
   balrogdb:
     build:
       context: .

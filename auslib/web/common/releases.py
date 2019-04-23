@@ -3,7 +3,6 @@ import logging
 
 from connexion import problem, request
 from flask import Response, jsonify
-from six import iteritems
 from sqlalchemy.sql.expression import null
 
 from auslib.global_state import dbo
@@ -20,7 +19,7 @@ def strip_data(release):
     simplified view of the release by removing its largest field,
     data, which is of no use except when serving clients.
     """
-    return dict((k, v) for (k, v) in iteritems(release) if k != "data")
+    return dict((k, v) for (k, v) in release.items() if k != "data")
 
 
 def release_list(request):

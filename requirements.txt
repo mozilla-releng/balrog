@@ -11,8 +11,6 @@ flask-compress==1.4.0 \
 flask-wtf==0.14.2 \
     --hash=sha256:5d14d55cfd35f613d99ee7cba0fc3fbbe63ba02f544d349158c14ca15561cc36 \
     --hash=sha256:d9a9e366b32dcbb98ef17228e76be15702cd2600675668bca23f63a7947fd5ac
-functools32==3.2.3-2; python_version=='2.7' \
-    --hash=sha256:89d824aa6c358c421a234d7f9ee0bd75933a67c29588ce50aaa3acdf4d403fa0 --hash=sha256:f6253dfbe0538ad2e387bd8fdfd9293c925d63553f5813c4e587745416501e6d
 itsdangerous==1.1.0 \
     --hash=sha256:b12271b2047cb23eeb98c8b5622e2e5c5e9abd9784a153e9d8ef9cb4dd09d749 \
     --hash=sha256:321b033d07f2a4136d3ec762eac9f16a10ccd60f53c0c91af90217ace7ba1f19
@@ -106,11 +104,7 @@ snowballstemmer==1.2.1 \
 contextlib2==0.5.5 \
     --hash=sha256:f5260a6e679d2ff42ec91ec5252f4eeffdcf21053db9113bd0a8e4d953769c00 \
     --hash=sha256:509f9419ee91cdd00ba34443217d5ca51f5a364a404e1dce9e8979cea969ca48
-sphinx==1.8.5; python_version=='2.7' \
-    --hash=sha256:9f3e17c64b34afc653d7c5ec95766e03043cc6d80b0de224f59b6b6e19d37c3c \
-    --hash=sha256:c7658aab75c920288a8cf6f09f244c6cfdae30d82d803ac1634d9f223a80ca08 \
-    # pyup: ignore
-sphinx==2.0.1; python_version>='3' \
+sphinx==2.0.1 \
     --hash=sha256:423280646fb37944dd3c85c58fb92a20d745793a9f6c511f59da82fa97cd404b \
     --hash=sha256:de930f42600a4fef993587633984cc5027dedba2464bcf00ddace26b40f8d9ce
 pbr==5.1.3 \
@@ -129,8 +123,8 @@ Werkzeug==0.15.2 \
     --hash=sha256:0a73e8bb2ff2feecfc5d56e6f458f5b99290ef34f565ffb2665801ff7de6af7a \
     --hash=sha256:7fad9770a8778f9576693f0cc29c7dcc36964df916b83734f4431c0e612a7fbc
 wtforms==2.2.1 \
-    --hash=sha256:e3ee092c827582c50877cdbd49e9ce6d2c5c1f6561f849b3b068c1b8029626f1 \
-    --hash=sha256:0cdbac3e7f6878086c334aa25dc5a33869a3954e9d1e015130d65a69309b3b61
+    --hash=sha256:0cdbac3e7f6878086c334aa25dc5a33869a3954e9d1e015130d65a69309b3b61 \
+    --hash=sha256:e3ee092c827582c50877cdbd49e9ce6d2c5c1f6561f849b3b068c1b8029626f1
 raven==6.10.0 \
     --hash=sha256:44a13f87670836e153951af9a3c80405d36b43097db869a36e92809673692ce4 \
     --hash=sha256:3fa6de6efa2493a7c827472e984ce9b020797d0da16f1db67197bcc23c8fae54
@@ -274,21 +268,21 @@ pyasn1==0.4.5 \
 auth0-python==3.7.1 \
     --hash=sha256:609e347ea3c4fb8b23e42cba7da4259051d7fd00cae3333427e233a040f7d0e1 \
     --hash=sha256:e04cc8812a721c1bd96bf25b405ada6b52c4f3acee1ffc03ffe9f2a527a41751
-sphinxcontrib-jsmath==1.0.1; python_version>='3' \
+sphinxcontrib-jsmath==1.0.1 \
     --hash=sha256:2ec2eaebfb78f3f2078e73666b1415417a116cc848b72e5172e596c871103178 \
     --hash=sha256:a9925e4a4587247ed2191a22df5f6970656cb8ca2bd6284309578f2153e0c4b8
-sphinxcontrib-applehelp==1.0.1; python_version>='3' \
+sphinxcontrib-applehelp==1.0.1 \
     --hash=sha256:edaa0ab2b2bc74403149cb0209d6775c96de797dfd5b5e2a71981309efab3897 \
     --hash=sha256:fb8dee85af95e5c30c91f10e7eb3c8967308518e0f7488a2828ef7bc191d0d5d
-sphinxcontrib-qthelp==1.0.2; python_version>='3' \
+sphinxcontrib-qthelp==1.0.2 \
     --hash=sha256:513049b93031beb1f57d4daea74068a4feb77aa5630f856fcff2e50de14e9a20 \
     --hash=sha256:79465ce11ae5694ff165becda529a600c754f4bc459778778c7017374d4d406f
-sphinxcontrib-serializinghtml==1.1.1; python_version>='3' \
+sphinxcontrib-serializinghtml==1.1.1 \
     --hash=sha256:01d9b2617d7e8ddf7a00cae091f08f9fa4db587cc160b493141ee56710810932 \
     --hash=sha256:392187ac558863b8aff0d76dc78e0731fed58f3b06e2b00e22995dcdb630f213
-sphinxcontrib-htmlhelp==1.0.2; python_version>='3' \
+sphinxcontrib-htmlhelp==1.0.2 \
     --hash=sha256:4670f99f8951bd78cd4ad2ab962f798f5618b17675c35c5ac3b2132a14ea8422 \
     --hash=sha256:d4fd39a65a625c9df86d7fa8a2d9f3cd8299a3a4b15db63b50aac9e161d8eff7
-sphinxcontrib-devhelp==1.0.1; python_version>='3' \
+sphinxcontrib-devhelp==1.0.1 \
     --hash=sha256:6c64b077937330a9128a4da74586e8c2130262f014689b4b89e2d08ee7294a34 \
     --hash=sha256:9512ecb00a2b0821a146736b39f7aeb90759834b07e81e8cc23a9c70bacb9981

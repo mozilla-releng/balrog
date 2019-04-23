@@ -1,7 +1,6 @@
 import logging
 import os
 
-import six
 from flask_wtf.csrf import CSRFProtect
 
 from auslib.log import configure_logging

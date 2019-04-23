@@ -1,7 +1,6 @@
 import unittest
 
 import pytest
-from six import unichr
 
 from auslib.global_state import dbo
 from auslib.web.public.base import app
@@ -19,7 +18,7 @@ class UnicodeTest(unittest.TestCase):
         # Test an arbitrary number of unicode chars
         cdec = step = 42
         while cdec < 4200:
-            channel = "".join(unichr(c) for c in range(cdec, cdec + step) if unichr(c).isalpha())
+            channel = "".join(chr(c) for c in range(cdec, cdec + step) if chr(c).isalpha())
             cdec += step
             url = url.format(channel)
             ret = self.client.get(url)

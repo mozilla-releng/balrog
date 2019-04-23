@@ -64,47 +64,15 @@ tasks:
 
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:coveralls
     payload:
       maxRunTime: 1200
-      image: "mozillareleases/python-test-runner"
+      image: "node:0.10"
       env:
         NO_VOLUME_MOUNT: 1
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh backend py37"
-      features:
-        dind: true
-        taskclusterProxy: true
-    extra:
-      github:
-        env: true
-        events:
-          - pull_request.opened
-          - pull_request.synchronize
-          - pull_request.reopened
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog Python 3.7 back-end tests
-      description: Balrog Python tests
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
-
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    payload:
-      maxRunTime: 1200
-      image: "mozillareleases/python-test-runner"
-      env:
-        NO_VOLUME_MOUNT: 1
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh frontend"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog/ui && git checkout $GITHUB_HEAD_BRANCH && npm install && npm test"
       features:
         dind: true
     extra:
@@ -194,34 +162,6 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh Dockerfile latest ${GITHUB_HEAD_BRANCH}-${GITHUB_HEAD_SHA} latest-py2 ${GITHUB_HEAD_BRANCH}-${GITHUB_HEAD_SHA}-py2"
-    extra:
-      github:
-        env: true
-        events:
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog Docker Image Creation (py2)
-      description: Balrog Docker Image Creation (py2)
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
-
-
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
-    payload:
-      maxRunTime: 3600
-      image: "taskcluster/image_builder:0.1.3"
-      features:
-        dind: true
-        taskclusterProxy: true
-      command:
-        - "/bin/bash"
-        - "-c"
         - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog/agent && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh latest ${GITHUB_HEAD_BRANCH}-${GITHUB_HEAD_SHA}"
     extra:
       github:
@@ -233,36 +173,6 @@ tasks:
     metadata:
       name: Balrog Agent Docker Image Creation
       description: Balrog Agent Docker Image Creation
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
-
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
-    payload:
-      maxRunTime: 3600
-      image: "taskcluster/image_builder:0.1.3"
-      features:
-        dind: true
-        taskclusterProxy: true
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone -b {{ event.version }} {{ event.head.repo.url }} balrog && cd balrog && scripts/push-dockerimage.sh Dockerfile {{ event.version }} {{ event.version }}-py2"
-    extra:
-      github:
-        env: true
-        events:
-          - release
-    routes:
-      - index.project.balrog.releases.latest.app
-      - index.project.balrog.releases.latest.app-py2
-      - index.project.balrog.releases.{{ event.version }}.app
-      - index.project.balrog.releases.{{ event.version }}.app-py2
-    metadata:
-      name: Balrog Docker Image Creation (release event) (py2)
-      description: Balrog Docker Image Creation (release event) (py2)
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
 

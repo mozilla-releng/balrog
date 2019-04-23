@@ -1,6 +1,5 @@
 from os import path
 
-import six
 from setuptools import find_packages, setup
 
 here = path.abspath(path.dirname(__file__))
@@ -13,13 +12,6 @@ with open(path.join(here, "requirements.txt")) as f:
     for line in f:
         # Skip lines with hash values
         if not line.strip().startswith("--"):
-            version_skip = [
-                "python_version=='2" in line and not six.PY2,
-                "python_version=='3" in line and not six.PY3,
-                "python_version>='3" in line and not six.PY3,
-            ]
-            if any(version_skip):
-                continue
             requirements.append(line.split(";")[0].split()[0])
 
 

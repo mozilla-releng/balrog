@@ -1,26 +1,17 @@
-# NOTE: The only supported way to use the Balrog dev image is with a volume mount of /app.
-# Because of this, the only things we do in the Dockerfile are install things to
-# system locations (some system packages and some python packages).
-# Things that are fully local to /app (such as npm requirements and the built UI)
-# are done as needed in the entrypoint.
-FROM python:2.7-slim-jessie
+FROM python:3.7-slim-stretch
 
 MAINTAINER bhearsum@mozilla.com
 
-# jessie has been archived, and this repo is no longer valid
-# the upstream image has not been updated yet
-# see https://github.com/debuerreotype/docker-debian-artifacts/issues/66
-RUN sed -i '/jessie-updates/d' /etc/apt/sources.list  # Now archived
-
-# Some versions of the python:2.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
-# Node and npm are to build the frontend. nodejs-legacy is needed by this version of npm.
+# netcat is needed for health checks
+# Some versions of the python:3.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
+# default-libmysqlclient-dev is required to use SQLAlchemy with MySQL
 # mysql-client is needed to import sample data
-# libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
-# libfontconfig1 is required by phantomjs
-# git is needed to send coverage information
+# curl is needed to pull sample data
+# gcc is needed to compile some python packages
+# xz-utils is needed to unpack sampled ata
+# git is needed to send coverage reports
 RUN apt-get -q update \
-    && apt-get -q --yes install netcat libpcre3 libpcre3-dev nodejs nodejs-legacy npm libmysqlclient-dev mysql-client \
-                                libfontconfig1 netcat git curl xz-utils \
+    && apt-get -q --yes install netcat libpcre3 libpcre3-dev default-libmysqlclient-dev mysql-client curl gcc xz-utils git \
     && apt-get clean
 
 WORKDIR /app
