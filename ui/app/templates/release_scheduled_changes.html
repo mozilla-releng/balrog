@@ -94,7 +94,7 @@
     </div>
     <div class="left" style="float: left">
       <h5 title="Scheduled By">
-        Scheduled By: <b>{{ sc.scheduled_by ? scheduled_by : current_user }}</b>
+        Scheduled By: <b>{{ sc.scheduled_by ? sc.scheduled_by : current_user }}</b>
       </h5>
       <h5 ng-show="sc.when" title="When">
         When: <b><span ng-bind-html="formatMoment(sc.when)"></span></b>
