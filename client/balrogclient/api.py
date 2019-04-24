@@ -162,7 +162,12 @@ class API(object):
         before = time.time()
         access_token = _get_auth0_token(self.auth0_secrets)
         auth = BearerAuth(access_token)
-        req = self.session.request(method=method, url=url, data=json.dumps(data), timeout=self.timeout, verify=self.verify, auth=auth, headers=headers)
+        # Don't dump data to json unless it actually exists. Otherwise we end up with a string of
+        # 'None', which is not intended, and is not actually supported by some servers for HEAD/GET
+        # requests.
+        if data:
+            data = json.dumps(data)
+        req = self.session.request(method=method, url=url, data=data, timeout=self.timeout, verify=self.verify, auth=auth, headers=headers)
         try:
             if self.raise_exceptions:
                 req.raise_for_status()
