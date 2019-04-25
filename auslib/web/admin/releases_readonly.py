@@ -22,7 +22,7 @@ def get(release):
     release_read_only = releases_read_only[0]
     required_signoffs = dbo.releasesReadonly.getPotentialRequiredSignoffs(releases_read_only)
     release_read_only["required_signoffs"] = serialize_signoff_requirements(required_signoffs[release_read_only["release_name"]])
-    
+
     headers = {"X-Data-Version": release_read_only["data_version"]}
 
     return Response(response=json.dumps(release_read_only), headers=headers, mimetype="application/json")
@@ -77,6 +77,7 @@ def schedule_release_read_write(sc_release_readonly, changed_by, transaction):
 
 @requirelogin
 @transactionHandler
+@handleGeneralExceptions("DELETE")
 def delete_scheduled_release_read_write(sc_id, changed_by, transaction, **kwargs):
     view = ScheduledChangeView("releases_readonly", dbo.releasesReadonly)
     return view._delete(sc_id, transaction, changed_by)

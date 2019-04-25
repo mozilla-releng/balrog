@@ -33,6 +33,10 @@ angular.module('app').factory('ReleasesReadonly', function($http, ScheduledChang
             return $http.post('/api/scheduled_changes/releases_readonly', data);
         },
 
+        scheduledChanges: function() {
+            return $http.get('/api/scheduled_changes/releases_readonly');
+        },
+
         signoff: function(sc_id, csrf_token) {
 
         },

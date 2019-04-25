@@ -1,5 +1,5 @@
 angular.module("app").controller("ReleaseScheduledChangesController",
-function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Releases, Permissions, Page) {
+function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Releases, ReleasesReadonly, Permissions, Page) {
 
   Page.setTitle('Scheduled Release Changes');
 
@@ -73,6 +73,27 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
         });
       };
 
+  function timestampToDate(when) {
+    // "when" is a unix timestamp, but it's much easier to work with Date objects,
+    // so we convert it to that before rendering.
+    return when ? new Date(when) : null;
+  }
+
+  function mergeScheduledChangesReleaseReadonly(releaseReadonlySC) {
+    // Releases.getRelease(releaseReadonlySC.release_name)
+    //   .success(function(response) {
+    //     console.log(response.name);
+    //   })
+    //   .error(function() {
+    //     console.error(arguments);
+    //   });
+    if(!$scope.scheduled_changes) {
+      $scope.scheduled_changes = []
+    }
+    releaseReadonlySC.isReadonlyStateChange = true;
+    $scope.scheduled_changes.push(releaseReadonlySC);
+  }
+
   if ($scope.sc_id) {
     $scope.$watch("currentPage", function(newPage) {
       loadPage(newPage);
@@ -81,22 +102,27 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
 
   Releases.getScheduledChanges()
   .success(function(response) {
-    // "when" is a unix timestamp, but it's much easier to work with Date objects,
-    // so we convert it to that before rendering.
     $scope.scheduled_changes = response.scheduled_changes.map(function(sc) {
-      if (sc.when !== null) {
-        sc.when = new Date(sc.when);
-      }
+      sc.when = timestampToDate(sc.when);
       return sc;
     });
   })
   .error(function() {
     console.error(arguments);
     $scope.failed = true;
-  })
-  .finally(function() {
-    $scope.loading = false;
   });
+
+  ReleasesReadonly.scheduledChanges()
+    .success(function(response) {
+      response.scheduled_changes.forEach(mergeScheduledChangesReleaseReadonly);
+    })
+    .error(function() {
+      console.error(arguments);
+      $scope.failed = true;
+    })
+    .finally(function() {
+      $scope.loading = false;
+    });
 }
   $scope.$watch("ordering_str", function(value) {
     $scope.ordering = value.value.split(",");
