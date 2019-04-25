@@ -217,7 +217,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh Dockerfile latest-py3 ${GITHUB_HEAD_BRANCH}-${GITHUB_HEAD_SHA}-py3"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh Dockerfile latest ${GITHUB_HEAD_BRANCH}-${GITHUB_HEAD_SHA}"
     extra:
       github:
         env: true
@@ -226,8 +226,8 @@ tasks:
         branches:
           - master
     metadata:
-      name: Balrog Docker Image Creation (py3)
-      description: Balrog Docker Image Creation (py3)
+      name: Balrog Docker Image Creation
+      description: Balrog Docker Image Creation
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
 
@@ -244,17 +244,17 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "git clone -b {{ event.version }} {{ event.head.repo.url }} balrog && cd balrog && scripts/push-dockerimage.sh Dockerfile {{ event.version }}-py3"
+        - "git clone -b {{ event.version }} {{ event.head.repo.url }} balrog && cd balrog && scripts/push-dockerimage.sh Dockerfile {{ event.version }}"
     extra:
       github:
         env: true
         events:
           - release
     routes:
-      - index.project.balrog.releases.latest.app-py3
-      - index.project.balrog.releases.{{ event.version }}.app-py3
+      - index.project.balrog.releases.latest.app
+      - index.project.balrog.releases.{{ event.version }}.app
     metadata:
-      name: Balrog Docker Image Creation (release event) (py3)
-      description: Balrog Docker Image Creation (release event) (py3)
+      name: Balrog Docker Image Creation (release event)
+      description: Balrog Docker Image Creation (release event)
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
