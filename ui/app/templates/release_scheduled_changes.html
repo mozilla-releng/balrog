@@ -61,15 +61,16 @@
             Revoke your Signoff
           </button>
         </span>
-        <button class="btn btn-default btn-xs" ng-click="openDataModal(sc)">View Data</button>
+        <button class="btn btn-default btn-xs" ng-show="!sc.isReadonlyStateChange" ng-click="openDataModal(sc)">View Data</button>
         <span ng-show="auth0.isAuthenticated()">
-          <button ng-show="!scheduled_changes_count && !sc.complete" class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
+          <button ng-show="!scheduled_changes_count && !sc.complete && !sc.isReadonlyStateChange" class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
           <button ng-show="!scheduled_changes_count && !sc.complete" class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
         </span>
-        <a ng-show="!scheduled_changes_count" class="btn btn-default btn-xs" ng-href="/scheduled_changes/releases/{{ sc.sc_id }}">History</a>
+        <a ng-show="!scheduled_changes_count && !sc.isReadonlyStateChange" class="btn btn-default btn-xs" ng-href="/scheduled_changes/releases/{{ sc.sc_id }}">History</a>
       </div>
 
-      <i title="Product" ng-show="sc.name">{{ sc.name }}</i>
+      <i title="Product" ng-show="sc.getName()">{{ sc.getName() }}</i>
+      <strong ng-show="sc.isReadonlyStateChange"><i>[Changing the release state to read/write]</i></strong>
     </h3>
   </div>
   <div class="panel-body">

@@ -80,13 +80,6 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
   }
 
   function mergeScheduledChangesReleaseReadonly(releaseReadonlySC) {
-    // Releases.getRelease(releaseReadonlySC.release_name)
-    //   .success(function(response) {
-    //     console.log(response.name);
-    //   })
-    //   .error(function() {
-    //     console.error(arguments);
-    //   });
     if(!$scope.scheduled_changes) {
       $scope.scheduled_changes = []
     }
@@ -94,35 +87,58 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
     $scope.scheduled_changes.push(releaseReadonlySC);
   }
 
+  function handleLoadingError() {
+    console.error(arguments);
+    $scope.failed = true;
+  }
+
   if ($scope.sc_id) {
     $scope.$watch("currentPage", function(newPage) {
       loadPage(newPage);
     });
   } else {
-
-  Releases.getScheduledChanges()
-  .success(function(response) {
-    $scope.scheduled_changes = response.scheduled_changes.map(function(sc) {
-      sc.when = timestampToDate(sc.when);
-      return sc;
-    });
-  })
-  .error(function() {
-    console.error(arguments);
-    $scope.failed = true;
-  });
-
-  ReleasesReadonly.scheduledChanges()
-    .success(function(response) {
-      response.scheduled_changes.forEach(mergeScheduledChangesReleaseReadonly);
-    })
-    .error(function() {
-      console.error(arguments);
-      $scope.failed = true;
-    })
-    .finally(function() {
-      $scope.loading = false;
-    });
+    Releases.getScheduledChanges()
+      .then(function(response) {
+        $scope.scheduled_changes = response.data.scheduled_changes.map(function(sc) {
+          sc.when = timestampToDate(sc.when);
+          return sc;
+        });
+      },handleLoadingError)
+      .then(function() {
+        ReleasesReadonly.scheduledChanges()
+          .then(function(response) {
+            response.data.scheduled_changes.forEach(mergeScheduledChangesReleaseReadonly);
+          }, handleLoadingError)
+          .then(function() {
+            $scope.scheduled_changes
+              .filter(function(sc) {
+                return sc.isReadonlyStateChange;
+              })
+              .forEach(function(sc) {
+                Releases.getReleasesByName(sc.release_name)
+                  .then(function(response) {
+                    releases = response.data.releases;
+                    if(releases) {
+                      sc.product = releases[0].product;
+                    }                    
+                  }, handleLoadingError);
+              })
+          }, handleLoadingError)
+          .then(function() {
+            $scope.scheduled_changes.forEach(function(sc) {
+              sc.getName = function() {
+                if(this.isReadonlyStateChange) {
+                  return this.release_name;
+                } else {
+                  return this.name;
+                }
+              }
+            });
+          });
+      })
+      .finally(function() {
+        $scope.loading = false;
+      });
 }
   $scope.$watch("ordering_str", function(value) {
     $scope.ordering = value.value.split(",");

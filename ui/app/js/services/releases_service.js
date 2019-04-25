@@ -15,6 +15,10 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges, 
     getReleases: function() {
       return $http.get('/api/releases');
     },
+    getReleasesByName: function(namePrefix) {
+      url = '/api/releases?name_prefix=' + encodeURIComponent(namePrefix);
+      return $http.get(url);
+    },
     getProducts: function(){
       return $http.get('/api/releases/columns/product');
     },
