@@ -81,7 +81,7 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
 
   function mergeScheduledChangesReleaseReadonly(releaseReadonlySC) {
     if(!$scope.scheduled_changes) {
-      $scope.scheduled_changes = []
+      $scope.scheduled_changes = [];
     }
     releaseReadonlySC.isReadonlyStateChange = true;
     $scope.scheduled_changes.push(releaseReadonlySC);
@@ -122,7 +122,7 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
                       sc.product = releases[0].product;
                     }                    
                   }, handleLoadingError);
-              })
+              });
           }, handleLoadingError)
           .then(function() {
             $scope.scheduled_changes.forEach(function(sc) {
@@ -132,7 +132,7 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
                 } else {
                   return this.name;
                 }
-              }
+              };
             });
           });
       })
@@ -227,10 +227,10 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
       backdrop: "static",
       resolve: {
         object_name: function() {
-          return "Release";
+          return sc.isReadonlyStateChange ? "ReleasesReadonly" : "Release";
         },
         service: function() {
-          return Releases;
+          return sc.isReadonlyStateChange ? ReleasesReadonly : Releases;
         },
         current_user: function() {
           return $scope.current_user;
@@ -245,7 +245,7 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
           return sc;
         },
         pk: function() {
-          return {"name": sc["name"]};
+          return {"name": sc.getName()};
         },
         // todo: add more stuff here
         data: function() {
@@ -264,10 +264,10 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
       backdrop: "static",
       resolve: {
         object_name: function() {
-          return "Release";
+          return sc.isReadonlyStateChange ? "ReleasesReadonly" : "Release";
         },
         service: function() {
-          return Releases;
+          return sc.isReadonlyStateChange ? ReleasesReadonly : Releases;
         },
         current_user: function() {
           return $scope.current_user;
@@ -276,7 +276,7 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
           return sc;
         },
         pk: function() {
-          return {"name": sc["name"]};
+          return {"name": sc.getName()};
         },
         data: function() {
           return {
@@ -310,6 +310,12 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
       resolve: {
         sc: function() {
           return sc;
+        },
+        object_name: function() {
+          return sc.isReadonlyStateChange ? "ReleasesReadonly" : "Release";
+        },
+        service: function() {
+          return sc.isReadonlyStateChange ? ReleasesReadonly : Releases;
         },
         scheduled_changes: function() {
           return $scope.scheduled_changes;

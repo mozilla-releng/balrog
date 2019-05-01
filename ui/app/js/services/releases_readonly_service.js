@@ -37,12 +37,22 @@ angular.module('app').factory('ReleasesReadonly', function($http, ScheduledChang
             return $http.get('/api/scheduled_changes/releases_readonly');
         },
 
-        signoff: function(sc_id, csrf_token) {
-
+        deleteScheduledChange: function(sc_id, data, csrf_token) {
+            var url = "/api/scheduled_changes/releases_readonly/" + sc_id;
+            url += '?data_version=' + data.sc_data_version;
+            url += '&csrf_token=' + encodeURIComponent(csrf_token);
+            return $http.delete(url);
         },
 
-        revokeSignoff: function(sc_id, csrf_token) {
+        signoffOnScheduledChange: function(sc_id, data) {
+            var url = ScheduledChanges.signoffsUrl("releases_readonly", sc_id);
+            return $http.post(url, data);
+        },
 
+        revokeSignoffOnScheduledChange: function(sc_id, data) {
+            var url = ScheduledChanges.signoffsUrl("releases_readonly", sc_id);
+            url += "?csrf_token=" + encodeURIComponent(data["csrf_token"]);
+            return $http.delete(url, data);
         }
     };
 
