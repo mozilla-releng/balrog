@@ -104,7 +104,6 @@ async def main(loop, balrog_api, bucket_name):
         storage = Storage(session=session)
         bucket = storage.get_bucket(bucket_name)
 
-        print(balrog_api)
         async with session.get("{}/releases".format(balrog_api)) as resp:
             for r in (await resp.json())["releases"]:
                 releases[r["name"]] = r["data_version"]
@@ -113,6 +112,7 @@ async def main(loop, balrog_api, bucket_name):
         for r in releases:
             if any(pat in r for pat in skip_patterns):
                 print("Skipping {} because it matches a skip pattern".format(r))
+                continue
             n += 1
             if n == 10:
                 break
