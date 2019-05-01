@@ -4162,7 +4162,6 @@ paths:
             type: object
             allOf:
               - $ref: '#/definitions/CSRFModel'
-              # - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/ReleasesReadonlyModel'
             properties:
               change_type:
@@ -4173,7 +4172,7 @@ paths:
                   - delete
                 minLength: 1
                 maxLength: 50
-                example: update
+                example: delete
       responses:
         '200':
           description: Returns sc_id of change

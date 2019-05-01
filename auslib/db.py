@@ -2101,7 +2101,7 @@ class Releases(AUSTable):
             cache.invalidate("blob_version", release["name"])
 
     def isReadOnly(self, name, transaction=None):
-        return self.db.releasesReadonly.is_readonly(name, transaction=None)
+        return self.db.releasesReadonly.is_readonly(name, transaction=transaction)
 
     def _proceedIfNotReadOnly(self, name, transaction=None):
         if self.isReadOnly(name, transaction):
@@ -2445,7 +2445,7 @@ class ReleasesReadonly(AUSTable):
         return self.db.releases.getPotentialRequiredSignoffs(affected_rows, transaction=transaction)
 
     def is_readonly(self, release_name, transaction=None):
-        release_readonly = self.select(where={"release_name": release_name}, columns=[self.release_name], limit=1)
+        release_readonly = self.select(where={"release_name": release_name}, columns=[self.release_name], limit=1, transaction=transaction)
         return bool(release_readonly)
 
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):

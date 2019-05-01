@@ -22,13 +22,9 @@ angular.module('app').factory('ReleasesReadonly', function($http, ScheduledChang
         },
         
         scheduleReadWriteReleaseChange: function(release_readonly, csrf_token) {
-            when = new Date();
-            when.setSeconds(when.getSeconds() + 10);
-
             data = angular.copy(release_readonly);
             data.change_type = 'delete';
             data.csrf_token = csrf_token;
-            data.when = when.getTime();
 
             return $http.post('/api/scheduled_changes/releases_readonly', data);
         },
