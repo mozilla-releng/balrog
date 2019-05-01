@@ -7,7 +7,15 @@ from . import client
 from .changes import get_telemetry_uptake, telemetry_is_ready, time_is_ready
 from .log import configure_logging
 
-SCHEDULED_CHANGE_ENDPOINTS = ["rules", "releases", "permissions", "emergency_shutoff", "required_signoffs/product", "required_signoffs/permissions"]
+SCHEDULED_CHANGE_ENDPOINTS = [
+    "rules",
+    "releases",
+    "releases_readonly",
+    "permissions",
+    "emergency_shutoff",
+    "required_signoffs/product",
+    "required_signoffs/permissions",
+]
 
 
 async def run_agent(loop, balrog_api_root, telemetry_api_root, auth0_secrets, sleeptime=30, once=False, raise_exceptions=False):
