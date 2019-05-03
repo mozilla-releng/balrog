@@ -13,25 +13,17 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
   $scope.maxSize = 10;
   $scope.auth0 = Auth0;
 
-  function loadPage(newPage) {
-    Releases.getHistory($scope.release_name, $scope.pageSize, newPage)
-    .success(function(response) {
-      // it's the same release, but this works
-      $scope.releases = response.revisions;
-      $scope.releases_count = response.count;
-    })
-    .error(function() {
-      console.error(arguments);
-      $scope.failed = true;
-    })
-    .finally(function() {
-      $scope.loading = false;
-    });
-  }
-
   if ($scope.release_name) {
-    $scope.$watch("currentPage", function(newPage) {
-      loadPage(newPage);
+    Releases.getHistory($scope.release_name)
+    .then(function(response, err) {
+      if (err) {
+        sweetAlert("Failed to load release revisions:", err);
+      }
+      else {
+        $scope.releases = response;
+        $scope.releases_count = response.length;
+        $scope.loading = false;
+      }
     });
   } else {
     Releases.getReleases()
@@ -64,8 +56,8 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
   if ($scope.release_name) {
     $scope.ordering_options = [
       {
-        text: "Data Version",
-        value: "-data_version"
+        text: "Timestamp",
+        value: "-timestamp"
       },
     ];
   } else {
@@ -151,9 +143,12 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
         release: function () {
           return release;
         },
+        previous_version: function() {
+          return null;
+        },
         diff: function() {
           return false;
-        }
+        },
       }
     });
   };
@@ -170,9 +165,18 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
         release: function () {
           return release;
         },
+        previous_version: function() {
+          var i = $scope.releases.indexOf(release);
+          if (i === $scope.releases.length-1) {
+            return null;
+          }
+          else {
+            return $scope.releases[i+1];
+          }
+        },
         diff: function() {
           return true;
-        }
+        },
       }
     });
   };

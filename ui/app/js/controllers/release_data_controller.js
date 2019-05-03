@@ -1,19 +1,35 @@
 angular.module('app').controller('ReleaseDataCtrl',
-function($scope, $http, $modalInstance, Releases, Rules, release, diff) {
+function($scope, $http, $modalInstance, Releases, Rules, release, diff, previous_version) {
   $scope.release = release;
   $scope.diff = diff;
+  $scope.previous_version = previous_version;
 
-  if (release.change_id) {
+  if (release.timestamp) {
     if (diff) {
-      Releases.getDiff(release.change_id)
-      .then(function(response) {
-        $scope.release.diff = response.data;
-      });
-
+      if (previous_version) {
+        Releases.getData(release.data_url)
+        .then(function(data) {
+          Releases.getData(previous_version.data_url)
+          .then(function(previous_data) {
+            $scope.release.diff = JsDiff.createTwoFilesPatch(
+              "Data Version " + previous_version.data_version,
+              "Data Version " + release.data_version,
+              previous_data,
+              data
+            );
+          });
+        });
+      }
+      else {
+        Releases.getData(release.data_url)
+        .then(function(data) {
+          $scope.release.diff = JsDiff.createTwoFilesPatch(null, "Data Version " + release.data_version, "", data);
+        });
+      }
     } else {
-      Releases.getData(release.change_id)
-      .then(function(response) {
-        $scope.release.data = response.data;
+      Releases.getData(release.data_url)
+      .then(function(data) {
+        $scope.release.data = data;
       });
     }
 

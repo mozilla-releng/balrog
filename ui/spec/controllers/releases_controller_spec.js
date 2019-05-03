@@ -36,6 +36,7 @@ var sample_releases = {
       "product": "B2G",
       "version": "34.0a2",
       "name": "B2G-mozilla-aurora-kitkat-nightly-20140923151000",
+      "data_link": "fake",
       "required_signoffs": {},
     },
     {
@@ -43,6 +44,7 @@ var sample_releases = {
       "product": "B2G",
       "version": "34.0a2",
       "name": "B2G-mozilla-aurora-kitkat-nightly-20140923160203",
+      "data_link": "fake",
       "required_signoffs": {},
     },
     {
@@ -50,6 +52,7 @@ var sample_releases = {
       "product": "Fennec",
       "version": "30.0a2",
       "name": "Fennec-mozilla-aurora-nightly-20140410004003",
+      "data_link": "fake",
       "required_signoffs": {},
     }
   ],
@@ -247,61 +250,6 @@ describe("controller: ReleasesController", function() {
       this.$httpBackend.expectGET('/api/releases')
       .respond(200, JSON.stringify(sample_releases));
       this.scope.openRevertModal(sample_revisions.revisions[0]);
-    });
-  });
-
-});
-
-
-describe("controller: ReleasesController By Id", function() {
-
-  beforeEach(function() {
-    module("app");
-  });
-
-  beforeEach(inject(function($controller, $rootScope, $location, Releases, $httpBackend) {
-    this.$location = $location;
-    this.$httpBackend = $httpBackend;
-    this.scope = $rootScope.$new();
-    // this.redirect = spyOn($location, 'path');
-    $controller('ReleasesController', {
-      $scope: this.scope,
-      $location: $location,
-      Releases: Releases,
-      $routeParams: {name: sample_releases.releases[0].name}
-    });
-  }));
-
-  afterEach(function() {
-    this.$httpBackend.verifyNoOutstandingRequest();
-    this.$httpBackend.verifyNoOutstandingExpectation();
-  });
-
-  describe("fetching specific releases", function() {
-
-    it("should return all revisions by name", function() {
-      inject(function($route, $location, $rootScope) {
-        expect($route.current).toBeUndefined();
-        this.$httpBackend.expectGET(
-          '/api/releases/' + sample_releases.releases[0].name +
-          '/revisions?limit=20&page=1')
-        .respond(200, JSON.stringify(sample_revisions));
-
-        $location.path('/releases/firefox-11-build1');
-        $rootScope.$digest();
-        expect($route.current.controller).toEqual('ReleasesController');
-
-        this.$httpBackend.flush();
-        var $scope = this.scope;
-        expect($scope.releases.length).toEqual(2);
-        expect($scope.releases).toEqual(sample_revisions.revisions);
-
-
-        var default_ordering = $scope.ordering_options[0];
-        expect($scope.ordering).toEqual(default_ordering.value.split(','));
-        // let's be explicit, it should be hardcoded to be -data_version
-        expect($scope.ordering).toEqual(['-data_version']);
-      });
     });
   });
 

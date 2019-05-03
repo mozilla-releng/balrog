@@ -6,3 +6,18 @@ angular.module("app").run(function($location, $http, Auth0) {
     });
   }
 });
+
+angular.module("app").factory("GCloudHttpInterceptor", function() {
+    return {
+        "request": function(config) {
+            if (config.url.includes("googleapis.com")) {
+                delete config.headers.Authorization;
+            }
+            return config;
+        }
+    };
+});
+
+angular.module("app").config(function($httpProvider) {
+    $httpProvider.interceptors.push("GCloudHttpInterceptor");
+});

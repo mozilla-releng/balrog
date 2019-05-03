@@ -2,7 +2,7 @@
     <h3 class="modal-title">Release Data for {{ release.name || sc.name }}</h3>
 </div>
 <div class="modal-body">
-  <pre ng-if="!diff">{{ (release.data || sc.data) | json}}</pre>
+  <pre ng-if="!diff">{{ release.data || sc.data }}</pre>
   <pre ng-if="diff">{{ release.diff || sc.diff }}</pre>
 </div>
 <div class="modal-footer">

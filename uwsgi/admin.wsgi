@@ -187,8 +187,8 @@ with open(frontend_config, "w+") as f:
         """
 angular.module('config', [])
 
-.constant('Auth0Config', {});
-""".format(
-            auth0_config
-        )
-    )
+.constant('Auth0Config', {})
+.constant('GCSConfig', {{
+    'releases_history_bucket': 'https://www.googleapis.com/storage/v1/b/{}/o'
+}});
+""".format(auth0_config, os.environ["RELEASES_HISTORY_BUCKET"]))

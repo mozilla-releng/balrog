@@ -28,11 +28,13 @@ module.exports = function(lineman) {
 
         "vendor/js/auth0.js",
         "vendor/js/angular-auth0.js",
+
+        "vendor/js/jsdiff.js",
       ],
       app: [
         "app/js/app.js",
         "app/js/app.run.js",
-        "app/js/**/*.js"
+        "app/js/**/*.js",
       ]
     },
 
