@@ -17,6 +17,7 @@ from sqlalchemy.sql.expression import null
 
 import migrate.versioning.api
 import migrate.versioning.schema
+
 from auslib.blobs.base import createBlob, merge_dicts
 from auslib.global_state import cache
 from auslib.util.rulematching import (
@@ -804,107 +805,6 @@ class History(AUSTable):
             self.log.debug("Found %s changes when querying by change_id, should have been 1", len(changes))
             return None
         return changes[0]
-
-    def getPrevChange(self, change_id, row_primary_keys, transaction=None):
-        """ Returns the most recent change to a given row in the base table """
-        where = [self.change_id < change_id]
-        for i in range(0, len(self.base_primary_key)):
-            self_prim = getattr(self, self.base_primary_key[i])
-            where.append((self_prim == row_primary_keys[i]))
-
-        changes = self.select(where=where, transaction=transaction, limit=1, order_by=self.change_id.desc())
-        length = len(changes)
-        if length == 0:
-            self.log.debug("No previous changes found")
-            return None
-        return changes[0]
-
-    def _stripNullColumns(self, change):
-        # We know a bunch of columns are going to be empty...easier to strip them out
-        # than to be super verbose (also should let this test continue to work even
-        # if the schema changes).
-        for key in change.copy().keys():
-            if change[key] is None:
-                del change[key]
-        return change
-
-    def _stripHistoryColumns(self, change):
-        """ Will strip history specific columns as well as data_version from the given change """
-        del change["change_id"]
-        del change["changed_by"]
-        del change["timestamp"]
-        del change["data_version"]
-        return change
-
-    def _isNull(self, change, row_primary_keys):
-        # Define a row that's empty except for the primary keys
-        # This is what the NULL rows for inserts and deletes will look like.
-        null_row = dict()
-        for i in range(0, len(self.base_primary_key)):
-            null_row[self.base_primary_key[i]] = row_primary_keys[i]
-        return self._stripNullColumns(change) == null_row
-
-    def _isDelete(self, cur_base_state, row_primary_keys):
-        return self._isNull(cur_base_state.copy(), row_primary_keys)
-
-    def _isInsert(self, prev_base_state, row_primary_keys):
-        return self._isNull(prev_base_state.copy(), row_primary_keys)
-
-    def _isUpdate(self, cur_base_state, prev_base_state, row_primary_keys):
-        return (not self._isNull(cur_base_state.copy(), row_primary_keys)) and (not self._isNull(prev_base_state.copy(), row_primary_keys))
-
-    def rollbackChange(self, change_id, changed_by, transaction=None):
-        """ Rollback the change given by the change_id,
-        Will handle all cases: insert, delete, update """
-
-        change = self.getChange(change_id=change_id, transaction=transaction)
-
-        # Get the values of the primary keys for the given row
-        row_primary_keys = [0] * len(self.base_primary_key)
-        for i in range(0, len(self.base_primary_key)):
-            row_primary_keys[i] = change[self.base_primary_key[i]]
-
-        # Strip the History Specific Columns from the cahgnes
-        prev_base_state = self._stripHistoryColumns(self.getPrevChange(change_id, row_primary_keys, transaction))
-        cur_base_state = self._stripHistoryColumns(change.copy())
-
-        # Define a row that's empty except for the primary keys
-        # This is what the NULL rows for inserts and deletes will look like.
-        null_row = dict()
-        for i in range(0, len(self.base_primary_key)):
-            null_row[self.base_primary_key[i]] = row_primary_keys[i]
-
-        # If the row has all NULLS, then the operation we're rolling back is a DELETE
-        # We need to do an insert, with the data from the previous change
-        if self._isDelete(cur_base_state, row_primary_keys):
-            self.log.debug("reverting a DELETE")
-            self.baseTable.insert(changed_by=changed_by, transaction=transaction, **prev_base_state)
-
-        # If the previous change is NULL, then the operation is an INSERT
-        # We will need to do a delete.
-        elif self._isInsert(prev_base_state, row_primary_keys):
-            self.log.debug("reverting an INSERT")
-            where = []
-            for i in range(0, len(self.base_primary_key)):
-                self_prim = getattr(self.baseTable, self.base_primary_key[i])
-                where.append((self_prim == row_primary_keys[i]))
-
-            self.baseTable.delete(changed_by=changed_by, transaction=transaction, where=where, old_data_version=change["data_version"])
-
-        elif self._isUpdate(cur_base_state, prev_base_state, row_primary_keys):
-            # If this operation is an UPDATE
-            # We will need to do an update to the previous change's state
-            self.log.debug("reverting an UPDATE")
-            where = []
-            for i in range(0, len(self.base_primary_key)):
-                self_prim = getattr(self.baseTable, self.base_primary_key[i])
-                where.append((self_prim == row_primary_keys[i]))
-
-            what = prev_base_state
-            old_data_version = change["data_version"]
-            self.baseTable.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
-        else:
-            self.log.debug("ERROR, change doesn't correspond to any known operation")
 
 
 class ConditionsTable(AUSTable):

@@ -3,11 +3,9 @@ import logging
 
 from connexion import problem, request
 from flask import Response, jsonify
-from sqlalchemy.sql.expression import null
 
 from auslib.global_state import dbo
 from auslib.web.common.csrf import get_csrf_headers
-from auslib.web.common.history import HistoryHelper, annotateRevisionDifferences
 
 log = logging.getLogger(__name__)
 
@@ -73,32 +71,6 @@ def get_release(release, with_csrf_header=False):
 
 def get_release_with_csrf_header(release):
     return get_release(release, with_csrf_header=True)
-
-
-def _get_filters(release, history_table):
-    return [history_table.name == release["name"], history_table.data_version != null()]
-
-
-def process_release_revisions(revisions):
-    annotateRevisionDifferences(revisions)
-    return [strip_data(revision) for revision in revisions]
-
-
-def get_release_history(release):
-    history_table = dbo.releases.history
-    order_by = [history_table.timestamp.desc()]
-    history_helper = HistoryHelper(
-        hist_table=history_table,
-        order_by=order_by,
-        get_object_callback=lambda: _get_release(release),
-        history_filters_callback=_get_filters,
-        process_revisions_callback=process_release_revisions,
-    )
-    try:
-        return history_helper.get_history()
-    except (ValueError, AssertionError) as e:
-        log.warning("Bad input: %s", json.dumps(e.args))
-        return problem(400, "Bad Request", "Invalid input", ext={"data": e.args})
 
 
 def get_release_single_locale(release, platform, locale, with_csrf_header=False):

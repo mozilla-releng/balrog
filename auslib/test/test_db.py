@@ -467,65 +467,6 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertEqual(ret, 1234567890122)
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testHistoryUpdateRollback(self):
-        # Update one of the rows
-        self.test.t.update(values=dict(foo=99, data_version=2)).where(self.test.id == 2).execute()
-        self.test.history.t.insert(values=dict(changed_by="heather", change_id=1, timestamp=1000, id=2, data_version=2, foo=99)).execute()
-
-        # Update it again (this is the update we will rollback)
-        self.test.t.update(values=dict(foo=100, data_version=3)).where(self.test.id == 2).execute()
-        self.test.history.t.insert(values=dict(changed_by="heather", change_id=2, timestamp=1000, id=2, data_version=3, foo=100)).execute()
-
-        # Rollback the second update
-        self.test.history.rollbackChange(2, "heather")
-
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret[-1], (3, "heather", 1000, 2, 99, 4))
-
-        ret = self.test.t.select().where(self.test.id == 2).execute().fetchall()
-        self.assertEqual(ret, [(2, 99, 4)])
-
-    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testHistoryInsertRollback(self):
-        ret = self.test.t.select().execute().fetchall()
-
-        # Insert the item
-        self.test.t.insert(values=dict(foo=271, data_version=1, id=4)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=1, timestamp=999, id=4, data_version=None, foo=None)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=2, timestamp=1000, id=4, data_version=1, foo=271)).execute()
-
-        # Rollback the 'insert'
-        self.test.history.rollbackChange(2, "george")
-
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret[-1], (3, "george", 1000, 4, None, None))
-
-        ret = self.test.t.select().execute().fetchall()
-        self.assertEqual(len(ret), 3, msg=ret)
-
-    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testHistoryDeleteRollback(self):
-        ret = self.test.t.select().execute().fetchall()
-
-        # Insert the thing we are going to delete
-        self.test.t.insert(values=dict(foo=271, data_version=1, id=4)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=1, timestamp=999, id=4, data_version=None, foo=None)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=2, timestamp=1000, id=4, data_version=1, foo=271)).execute()
-
-        # Delete it
-        self.test.t.delete().where(self.test.id == 4).execute()
-        self.test.history.t.insert(values=dict(changed_by="bobby", change_id=3, timestamp=1000, id=4, data_version=None, foo=None)).execute()
-
-        # Rollback the 'delete'
-        self.test.history.rollbackChange(3, "george")
-
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret[-1], (5, "george", 1000, 4, 271, 1))
-
-        ret = self.test.t.select().execute().fetchall()
-        self.assertEqual(len(ret), 4, msg=ret)
-
-    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryGetChangeWithChangeID(self):
         self.test.insert(changed_by="george", id=4, foo=0)
         ret = self.test.history.getChange(change_id=1)
@@ -584,57 +525,6 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
         self.test.update(changed_by="heather", where=[self.test.id1 == 2, self.test.id2 == 1], what=dict(foo=99), old_data_version=1)
         ret = self.test.history.t.select().execute().fetchone()
         self.assertEqual(ret, (1, "heather", 1000, 2, 1, 99, 2))
-
-    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testMultiplePrimaryHistoryUpdateRollback(self):
-        self.test.t.update(values=dict(foo=99, data_version=2)).where(self.test.id1 == 2).where(self.test.id2 == 1).execute()
-        self.test.history.t.insert(values=dict(changed_by="heather", change_id=1, timestamp=1000, id1=2, id2=1, data_version=2, foo=99)).execute()
-
-        self.test.t.update(values=dict(foo=100, data_version=3)).where(self.test.id1 == 2).where(self.test.id2 == 1).execute()
-        self.test.history.t.insert(values=dict(changed_by="heather", change_id=2, timestamp=1000, id1=2, id2=1, data_version=3, foo=100)).execute()
-
-        self.test.history.rollbackChange(2, "heather")
-
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret[-1], (3, "heather", 1000, 2, 1, 99, 4))
-
-        ret = self.test.t.select().where(self.test.id1 == 2).where(self.test.id2 == 1).execute().fetchall()
-        self.assertEqual(ret, [(2, 1, 99, 4)])
-
-    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testMultiplePrimaryHistoryInsertRollback(self):
-        ret = self.test.t.select().execute().fetchall()
-
-        self.test.t.insert(values=dict(foo=271, data_version=1, id1=4, id2=31)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=1, timestamp=999, id1=4, id2=31, data_version=None, foo=None)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=2, timestamp=1000, id1=4, id2=31, data_version=1, foo=271)).execute()
-
-        self.test.history.rollbackChange(2, "george")
-
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret[-1], (3, "george", 1000, 4, 31, None, None))
-
-        ret = self.test.t.select().execute().fetchall()
-        self.assertEqual(len(ret), 4, msg=ret)
-
-    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testMultiplePrimaryHistoryDeleteRollback(self):
-        ret = self.test.t.select().execute().fetchall()
-
-        self.test.t.insert(values=dict(foo=271, data_version=1, id1=4, id2=3)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=1, timestamp=999, id1=4, id2=3, data_version=None, foo=None)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=2, timestamp=1000, id1=4, id2=3, data_version=1, foo=271)).execute()
-
-        self.test.t.delete().where(self.test.id1 == 4).where(self.test.id2 == 3).execute()
-        self.test.history.t.insert(values=dict(changed_by="bobby", change_id=3, timestamp=1000, id1=4, id2=3, data_version=None, foo=None)).execute()
-
-        self.test.history.rollbackChange(3, "george")
-
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret[-1], (5, "george", 1000, 4, 3, 271, 1))
-
-        ret = self.test.t.select().execute().fetchall()
-        self.assertEqual(len(ret), 5, msg=ret)
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryKeyHistoryGetChangeWithDataVersion(self):
