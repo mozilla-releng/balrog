@@ -37,6 +37,12 @@ services:
       - AUTH0_AUDIENCE=balrog-localdev
       - AUTH0_RESPONSE_TYPE=token id_token
       - AUTH0_SCOPE=full-user-credentials openid profile email
+      # By default, we disable writes to releases history for local development
+      # and read existing history from the production bucket.
+      # If you want to test release history writes, you need to set up your own
+      # bucket, change this variable, and provide credentials in google.json.
+      - RELEASES_HISTORY_BUCKET=balrog-stage-release-history-v1
+      - GOOGLE_APPLICATION_CREDENTIALS=google.json
       # Grab mail information from the local environment
       - SMTP_HOST
       - SMTP_PORT

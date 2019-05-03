@@ -1,7 +1,11 @@
 import logging
 import os
+import os.path
+import sys
 
 from flask_wtf.csrf import CSRFProtect
+
+from google.cloud import storage
 
 from auslib.log import configure_logging
 
@@ -17,7 +21,7 @@ DOMAIN_WHITELIST = {
     "redirector.gvt1.com": ("Widevine",),
     "ftp.mozilla.org": ("SystemAddons",),
 }
-if os.environ.get("STAGING"):
+if os.environ.get("STAGING") or os.environ.get("LOCALDEV"):
     SYSTEM_ACCOUNTS.extend(["balrog-stage-ffxbld", "balrog-stage-tbirdbld"])
     DOMAIN_WHITELIST.update(
         {
@@ -25,6 +29,7 @@ if os.environ.get("STAGING"):
             "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
         }
     )
+
 
 # Logging needs to be set-up before importing the application to make sure that
 # logging done from other modules uses our Logger.
@@ -51,7 +56,24 @@ cache.make_cache("blob_schema", 50, 24 * 60 * 60)
 # has at least one permission.
 cache.make_cache("users", 1, 300)
 
-dbo.setDb(os.environ["DBURI"])
+# Ensure that the necessary information is passed for releases history
+# to be written, unless we're in a local dev environment.
+if not os.environ.get("LOCALDEV"):
+    log = logging.getLogger(__file__)
+    if not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")):
+        log.critical("GOOGLE_APPLICATION_CREDENTIALS must be provided")
+        sys.exit(1)
+    if not os.environ.get("RELEASES_HISTORY_BUCKET"):
+        log.critical("RELEASES_HISTORY_BUCKET must be provided")
+        sys.exit(1)
+
+# Set up the releases history bucket, if enabled.
+releases_history_bucket = None
+if os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")) and os.environ.get("RELEASES_HISTORY_BUCKET"):
+    storage_client = storage.Client()
+    releases_history_bucket = storage_client.get_bucket(os.environ["RELEASES_HISTORY_BUCKET"])
+
+dbo.setDb(os.environ["DBURI"], releases_history_bucket)
 if os.environ.get("NOTIFY_TO_ADDR"):
     use_tls = False
     if os.environ.get("SMTP_TLS"):
