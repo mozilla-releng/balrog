@@ -410,8 +410,7 @@ class AUSTable(object):
         query, unconsumed_columns = self._insertStatement(**data)
         ret = trans.execute(query)
         if self.history:
-            for q in self.history.forInsert(ret.inserted_primary_key, data, changed_by):
-                trans.execute(q)
+            self.history.forInsert(ret.inserted_primary_key, data, changed_by, trans)
         if self.onInsert:
             pk_columns = self.t.primary_key.columns.keys()
             pk_values = ret.inserted_primary_key
@@ -486,7 +485,7 @@ class AUSTable(object):
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to delete row, old_data_version doesn't match current data_version")
         if self.history:
-            trans.execute(self.history.forDelete(row, changed_by))
+            self.history.forDelete(row, changed_by, trans)
         if self.scheduled_changes:
             # If this table has active scheduled changes we cannot allow it to be deleted
             sc_where = [self.scheduled_changes.complete == False]  # noqa
@@ -596,7 +595,7 @@ class AUSTable(object):
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         if self.history:
-            trans.execute(self.history.forUpdate(new_row, changed_by))
+            self.history.forUpdate(new_row, changed_by, trans)
         if self.scheduled_changes:
             self.scheduled_changes.mergeUpdate(orig_row, what, changed_by, trans)
         return ret
@@ -707,7 +706,7 @@ class History(AUSTable):
             self.table.append_column(newcol)
         AUSTable.__init__(self, db, dialect, history=False, versioned=False)
 
-    def forInsert(self, insertedKeys, columns, changed_by):
+    def forInsert(self, insertedKeys, columns, changed_by, trans):
         """Inserts cause two rows in the History table to be created. The first
            one records the primary key data and NULLs for other row data. This
            represents that the row did not exist prior to the insert. The
@@ -715,7 +714,6 @@ class History(AUSTable):
            reflect this. The second row records the full data of the row at the
            time of insert."""
         primary_key_data = {}
-        queries = []
         for i in range(0, len(self.base_primary_key)):
             name = self.base_primary_key[i]
             primary_key_data[name] = insertedKeys[i]
@@ -724,12 +722,11 @@ class History(AUSTable):
 
         ts = getMillisecondTimestamp()
         query, _ = self._insertStatement(changed_by=changed_by, timestamp=ts - 1, **primary_key_data)
-        queries.append(query)
+        trans.execute(query)
         query, _ = self._insertStatement(changed_by=changed_by, timestamp=ts, **columns)
-        queries.append(query)
-        return queries
+        trans.execute(query)
 
-    def forDelete(self, rowData, changed_by):
+    def forDelete(self, rowData, changed_by, trans):
         """Deletes cause a single row to be created, which only contains the
            primary key data. This represents that the row no longer exists."""
         row = {}
@@ -740,9 +737,9 @@ class History(AUSTable):
         row["changed_by"] = changed_by
         row["timestamp"] = getMillisecondTimestamp()
         query, _ = self._insertStatement(**row)
-        return query
+        trans.execute(query)
 
-    def forUpdate(self, rowData, changed_by):
+    def forUpdate(self, rowData, changed_by, trans):
         """Updates cause a single row to be created, which contains the full,
            new data of the row at the time of the update."""
         row = {}
@@ -752,7 +749,7 @@ class History(AUSTable):
         row["changed_by"] = changed_by
         row["timestamp"] = getMillisecondTimestamp()
         query, _ = self._insertStatement(**row)
-        return query
+        trans.execute(query)
 
     def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
         """ Returns the unique change that matches the give change_id or
