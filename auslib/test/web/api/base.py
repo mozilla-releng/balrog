@@ -148,7 +148,6 @@ class CommonTestBase(unittest.TestCase):
             ),
         )
 
-        dbo.releases.history.t.insert().execute(change_id=1, changed_by="usr", timestamp=10, name="q", product="q", data_version=1)
         dbo.rules.t.insert().execute(
             rule_id=4, priority=90, backgroundRate=100, mapping="Firefox.55.0a1", update_type="minor", product="Firefox", mig64=True, data_version=1
         )

@@ -202,12 +202,12 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = select([dbo.releases.data]).where(dbo.releases.name == "dd").execute().fetchone()[0]
         self.assertEqual(ret, result_blob)
 
-        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "dd").execute().fetchall()
-        self.assertEqual(len(history_rows), 4)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], json.loads(ancestor_blob))
-        self.assertEqual(history_rows[2]["data"], json.loads(blob1))
-        self.assertEqual(history_rows[3]["data"], result_blob)
+        history_entries = dbo.releases.history.data["dd"]
+
+        self.assertEqual(len(history_entries), 3)
+        self.assertEqual(history_entries["dd-1"], json.loads(ancestor_blob))
+        self.assertEqual(history_entries["dd-2"], json.loads(blob1))
+        self.assertEqual(history_entries["dd-3"], result_blob)
 
     def testReleasePutUpdateConflictingOutdatedData(self):
         ancestor_blob = """
@@ -296,11 +296,10 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._put("/releases/dd", data=dict(blob=blob2, name="dd", product="dd", data_version=1))
         self.assertStatusCode(ret, 400)
 
-        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "dd").execute().fetchall()
-        self.assertEqual(len(history_rows), 3)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], json.loads(ancestor_blob))
-        self.assertEqual(history_rows[2]["data"], json.loads(blob1))
+        history_entries = dbo.releases.history.data["dd"]
+        self.assertEqual(len(history_entries), 2)
+        self.assertEqual(history_entries["dd-1"], json.loads(ancestor_blob))
+        self.assertEqual(history_entries["dd-2"], json.loads(blob1))
 
     def testReleasePostUpdateOutdatedDataNotBlob(self):
         blob = """
@@ -338,20 +337,11 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 400)
 
         blob = json.loads(blob)
-        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "ee").execute().fetchall()
-        self.assertEqual(len(history_rows), 4)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[0]["data_version"], None)
-        self.assertEqual(history_rows[0]["read_only"], False)
-        self.assertEqual(history_rows[1]["data"], {"name": "ee", "schema_version": 1, "hashFunction": "sha512"})
-        self.assertEqual(history_rows[1]["data_version"], 1)
-        self.assertEqual(history_rows[1]["read_only"], False)
-        self.assertEqual(history_rows[2]["data"], blob)
-        self.assertEqual(history_rows[2]["data_version"], 2)
-        self.assertEqual(history_rows[2]["read_only"], False)
-        self.assertEqual(history_rows[3]["data"], blob)
-        self.assertEqual(history_rows[3]["data_version"], 3)
-        self.assertEqual(history_rows[3]["read_only"], False)
+        history_entries = dbo.releases.history.data["ee"]
+        self.assertEqual(len(history_entries), 3)
+        self.assertEqual(history_entries["ee-1"], {"name": "ee", "schema_version": 1, "hashFunction": "sha512"})
+        self.assertEqual(history_entries["ee-2"], blob)
+        self.assertEqual(history_entries["ee-3"], blob)
 
     def testReleasePostMismatchedName(self):
         data = json.dumps(dict(name="eee", schema_version=1))
@@ -518,11 +508,10 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertEqual(ret, expected)
 
-        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "ab").execute().fetchall()
-        self.assertEqual(len(history_rows), 3)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
-        self.assertEqual(history_rows[2]["data"], expected)
+        history_entries = dbo.releases.history.data["ab"]
+        self.assertEqual(len(history_entries), 2)
+        self.assertEqual(history_entries["ab-1"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
+        self.assertEqual(history_entries["ab-2"], expected)
 
     def testLocalePutOutdatedDataError(self):
         data = json.dumps({"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}})
@@ -536,11 +525,10 @@ class TestReleasesAPI_JSON(ViewTest):
             "platforms": {"p": {"locales": {"l": {"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}}}},
         }
 
-        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "ab").execute().fetchall()
-        self.assertEqual(len(history_rows), 3)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
-        self.assertEqual(history_rows[2]["data"], expected)
+        history_entries = dbo.releases.history.data["ab"]
+        self.assertEqual(len(history_entries), 2)
+        self.assertEqual(history_entries["ab-1"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
+        self.assertEqual(history_entries["ab-2"], expected)
 
         data = json.dumps({"complete": {"filesize": 435, "from": "*", "hashValue": "def"}})
         ret = self._put("/releases/ab/builds/p/l", data=dict(data=data, product="a", data_version=1, schema_version=1))
@@ -548,11 +536,10 @@ class TestReleasesAPI_JSON(ViewTest):
 
         # Ensure that history wasn't created for second request.
         # See https://bugzilla.mozilla.org/show_bug.cgi?id=1246993 for background.
-        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "ab").execute().fetchall()
-        self.assertEqual(len(history_rows), 3)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
-        self.assertEqual(history_rows[2]["data"], expected)
+        history_entries = dbo.releases.history.data["ab"]
+        self.assertEqual(len(history_entries), 2)
+        self.assertEqual(history_entries["ab-1"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
+        self.assertEqual(history_entries["ab-2"], expected)
 
     def testLocalePutSpecificPermission(self):
         data = json.dumps({"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}})
@@ -584,11 +571,10 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertEqual(ret, expected)
 
-        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "ab").execute().fetchall()
-        self.assertEqual(len(history_rows), 3)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
-        self.assertEqual(history_rows[2]["data"], expected)
+        history_entries = dbo.releases.history.data["ab"]
+        self.assertEqual(len(history_entries), 2)
+        self.assertEqual(history_entries["ab-1"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
+        self.assertEqual(history_entries["ab-2"], expected)
 
     def testLocalePutWithBadHashFunction(self):
         data = json.dumps(dict(complete=dict(filesize="435")))
@@ -642,11 +628,10 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertEqual(ret, expected)
 
-        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "e").execute().fetchall()
-        self.assertEqual(len(history_rows), 3)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "e", "schema_version": 1, "hashFunction": "sha512"})
-        self.assertEqual(history_rows[2]["data"], expected)
+        history_entries = dbo.releases.history.data["e"]
+        self.assertEqual(len(history_entries), 2)
+        self.assertEqual(history_entries["e-1"], {"name": "e", "schema_version": 1, "hashFunction": "sha512"})
+        self.assertEqual(history_entries["e-2"], expected)
 
     def testLocalePutAppend(self):
         data = json.dumps({"partial": {"filesize": 234, "from": "c", "hashValue": "abc", "fileUrl": "http://good.com/blah"}})
@@ -686,7 +671,7 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertEqual(ret, expected)
 
-        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "d").execute().fetchall()
+        history_entries = dbo.releases.history.data["d"]
         interim_blob = createBlob(
             """
 {
@@ -709,10 +694,9 @@ class TestReleasesAPI_JSON(ViewTest):
 }
 """
         )
-        self.assertEqual(len(history_rows), 3)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], interim_blob)
-        self.assertEqual(history_rows[2]["data"], expected)
+        self.assertEqual(len(history_entries), 2)
+        self.assertEqual(history_entries["d-1"], interim_blob)
+        self.assertEqual(history_entries["d-2"], expected)
 
     def testLocalePutForNewReleaseWithAlias(self):
         data = json.dumps({"complete": {"filesize": 678, "from": "*", "hashValue": "abc"}})
@@ -749,11 +733,10 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertEqual(ret, expected)
 
-        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "e").execute().fetchall()
-        self.assertEqual(len(history_rows), 3)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "e", "schema_version": 1, "hashFunction": "sha512"})
-        self.assertEqual(history_rows[2]["data"], expected)
+        history_entries = dbo.releases.history.data["e"]
+        self.assertEqual(len(history_entries), 2)
+        self.assertEqual(history_entries["e-1"], {"name": "e", "schema_version": 1, "hashFunction": "sha512"})
+        self.assertEqual(history_entries["e-2"], expected)
 
     def testLocalePutAppendWithAlias(self):
         data = json.dumps({"partial": {"filesize": 123, "from": "c", "hashValue": "abc", "fileUrl": "http://good.com/blah"}})
@@ -800,7 +783,7 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertEqual(ret, expected)
 
-        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "d").execute().fetchall()
+        history_entries = dbo.releases.history.data["d"]
         interim_blob = createBlob(
             """
 {
@@ -823,10 +806,9 @@ class TestReleasesAPI_JSON(ViewTest):
 }
 """
         )
-        self.assertEqual(len(history_rows), 3)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], interim_blob)
-        self.assertEqual(history_rows[2]["data"], expected)
+        self.assertEqual(len(history_entries), 2)
+        self.assertEqual(history_entries["d-1"], interim_blob)
+        self.assertEqual(history_entries["d-2"], expected)
 
     def testLocalePutWithCopy(self):
         data = json.dumps({"partial": {"filesize": 123, "from": "b", "hashValue": "abc"}})
@@ -859,10 +841,9 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertEqual(ret, expected)
 
-        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "ab").execute().fetchall()
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
-        self.assertEqual(history_rows[2]["data"], expected)
+        history_entries = dbo.releases.history.data["ab"]
+        self.assertEqual(history_entries["ab-1"], {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
+        self.assertEqual(history_entries["ab-2"], expected)
 
         ret = select([dbo.releases.data]).where(dbo.releases.name == "b").execute().fetchone()[0]
         expected = createBlob(
@@ -889,11 +870,10 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertEqual(ret, expected)
 
-        history_rows = dbo.releases.history.t.select().where(dbo.releases.history.name == "b").execute().fetchall()
-        self.assertEqual(len(history_rows), 3)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], {"name": "b", "schema_version": 1, "hashFunction": "sha512"})
-        self.assertEqual(history_rows[2]["data"], expected)
+        history_entries = dbo.releases.history.data["b"]
+        self.assertEqual(len(history_entries), 2)
+        self.assertEqual(history_entries["b-1"], {"name": "b", "schema_version": 1, "hashFunction": "sha512"})
+        self.assertEqual(history_entries["b-2"], expected)
 
     def testLocalePutBadJSON(self):
         ret = self._put("/releases/ab/builds/p/l", data=dict(data="a", product="a"))
