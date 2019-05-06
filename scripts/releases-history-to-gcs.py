@@ -65,7 +65,7 @@ async def get_releases(session, balrog_api):
             yield (r["name"], r["data_version"])
 
 
-async def process_release(r, session, balrog_api, bucket, sem):
+async def process_release(r, session, balrog_api, bucket, sem, loop):
     releases = defaultdict(int)
     uploads = defaultdict(lambda: defaultdict(int))
 
@@ -75,17 +75,13 @@ async def process_release(r, session, balrog_api, bucket, sem):
             old_version = await (await session.get("{}/history/view/release/{}/data".format(balrog_api, rev["change_id"]))).text()
         old_version_hash = hashlib.md5(old_version.encode("ascii")).digest()
         try:
-            async with sem:
-                # TODO: need to handle errors here somehow. they keep crashing the script
-                current_blob = await bucket.get_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
+            current_blob = await bucket.get_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
             current_blob_hash = base64.b64decode(current_blob.md5Hash)
         except aiohttp.ClientResponseError:
             current_blob_hash = None
         if old_version_hash != current_blob_hash:
-            async with sem:
-                # TODO: need to handle errors here somehow. they keep crashing the script
-                blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
-                await blob.upload(old_version, session)
+            blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
+            await blob.upload(old_version, session)
             uploads[r]["uploaded"] += 1
         else:
             uploads[r]["existing"] += 1
@@ -98,6 +94,7 @@ async def main(loop, balrog_api, bucket_name, concurrency):
     sem = asyncio.Semaphore(concurrency)
     releases = defaultdict(int)
     uploads = defaultdict(lambda: defaultdict(int))
+    tasks = []
 
     n = 0
 
@@ -105,25 +102,27 @@ async def main(loop, balrog_api, bucket_name, concurrency):
         storage = Storage(session=session)
         bucket = storage.get_bucket(bucket_name)
 
-        async with session.get("{}/releases".format(balrog_api)) as resp:
-            for r in (await resp.json())["releases"]:
-                release_name = r["name"]
-                release_futures = []
+        to_process = (await (await session.get("{}/releases".format(balrog_api))).json())["releases"]
+        for r in to_process:
+            release_name = r["name"]
 
-                if any(pat in release_name for pat in skip_patterns):
-                    print("Skipping {} because it matches a skip pattern".format(release_name), flush=True)
-                    continue
-                n += 1
-                if n == 5:
-                    break
+            if any(pat in release_name for pat in skip_patterns):
+                print("Skipping {} because it matches a skip pattern".format(release_name), flush=True)
+                continue
 
-                print("Processing {}".format(release_name), flush=True)
-                processed_releases, processed_uploads = await process_release(release_name, session, balrog_api, bucket, sem)
-                for rel in processed_releases:
-                    releases[rel] += processed_releases[rel]
-                for u in processed_uploads:
-                    uploads[u]["uploaded"] += processed_uploads[u]["uploaded"]
-                    uploads[u]["existing"] += processed_uploads[u]["existing"]
+            n += 1
+            if n == 15:
+                break
+
+            print("Processing {}".format(release_name), flush=True)
+            tasks.append(loop.create_task(process_release(release_name, session, balrog_api, bucket, sem, loop)))
+
+        for processed_releases, processed_uploads in await asyncio.gather(*tasks, loop=loop):
+            for rel in processed_releases:
+                releases[rel] += processed_releases[rel]
+            for u in processed_uploads:
+                uploads[u]["uploaded"] += processed_uploads[u]["uploaded"]
+                uploads[u]["existing"] += processed_uploads[u]["existing"]
 
 
     for r in releases:
