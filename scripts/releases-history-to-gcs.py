@@ -137,6 +137,7 @@ if len(sys.argv) > 3:
     limit_to = int(sys.argv[3])
 else:
     limit_to = None
+# Default concurrency is quite low because calls to /revisions endpoints are quite resource intensive
 if len(sys.argv) > 4:
     concurrency = int(sys.argv[4])
 else:
