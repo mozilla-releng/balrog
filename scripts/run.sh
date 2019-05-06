@@ -78,7 +78,7 @@ elif [ $1 == "sync-to-gcs" ]; then
         echo "\${GOOGLE_APPLICATION_CREDENTIALS} must be set!"
         exit 1
     fi
-    python scripts/releases-history-to-gcs.py ${BALROG_API_ROOT} ${RELEASES_HISTORY_BUCKET}
+    python scripts/releases-history-to-gcs.py ${BALROG_API_ROOT} ${RELEASES_HISTORY_BUCKET} ${GCS_SYNC_CONCURRENCY}
     exit $?
 elif [ $1 == "test" ]; then
     coveralls=1

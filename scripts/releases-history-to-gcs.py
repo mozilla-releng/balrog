@@ -55,7 +55,7 @@ skip_patterns = ("-nightly-",)
 
 
 async def get_revisions(r, session, balrog_api, sem):
-    async with sem, session.get("{}/releases/{}/revisions".format(balrog_api, r)) as resp:
+    async with sem, session.get("{}/releases/{}/revisions?limit=10000".format(balrog_api, r)) as resp:
         return (await resp.json())["revisions"]
 
 
@@ -66,40 +66,39 @@ async def get_releases(session, balrog_api):
 
 
 async def process_release(r, session, balrog_api, bucket, sem):
-    futures = []
+    results = defaultdict(lambda: defaultdict(int))
 
     for rev in await get_revisions(r, session, balrog_api, sem):
         async with sem:
             old_version = await (await session.get("{}/history/view/release/{}/data".format(balrog_api, rev["change_id"]))).text()
         old_version_hash = hashlib.md5(old_version.encode("ascii")).digest()
         try:
-            current_blob = await bucket.get_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
+            async with sem:
+                # TODO: need to handle errors here somehow. they keep crashing the script
+                current_blob = await bucket.get_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
             current_blob_hash = base64.b64decode(current_blob.md5Hash)
         except aiohttp.ClientResponseError:
             current_blob_hash = None
         if old_version_hash != current_blob_hash:
-            blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
-            futures.append(blob.upload(old_version, session))
+            async with sem:
+                # TODO: need to handle errors here somehow. they keep crashing the script
+                blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
+                await blob.upload(old_version, session)
+            results[r]["uploaded"] += 1
         else:
-            # The caller wants to be able to count the number of revisions that were uploaded
-            # or already exist in GCS. Making sure we have a result to count for every
-            # revision is the simplest way to do this.
-            async def noop():
-                return r
-            futures.append(noop())
+            results[r]["existing"] += 1
 
-    return asyncio.gather(*futures)
+    return results
 
 
-async def main(loop, balrog_api, bucket_name):
-    # limit the number of connections to balrog at any one time
-    sem = asyncio.Semaphore(20)
-    uploads = defaultdict(int)
+async def main(loop, balrog_api, bucket_name, concurrency):
+    # limit the number of connections at any one time
+    sem = asyncio.Semaphore(concurrency)
+    uploads = defaultdict(lambda: defaultdict(int))
     releases = {}
 
     n = 0
 
-    # TODO: ok to share the session between balrog and gcs?
     async with aiohttp.ClientSession(loop=loop) as session:
         storage = Storage(session=session)
         bucket = storage.get_bucket(bucket_name)
@@ -111,43 +110,33 @@ async def main(loop, balrog_api, bucket_name):
         release_futures = []
         for r in releases:
             if any(pat in r for pat in skip_patterns):
-                print("Skipping {} because it matches a skip pattern".format(r))
+                print("Skipping {} because it matches a skip pattern".format(r), flush=True)
                 continue
             n += 1
-            if n == 10:
+            if n == 15:
                 break
 
-            release_futures.append(process_release(r, session, balrog_api, bucket, sem))
-
-        done, pending = await asyncio.wait(release_futures, timeout=30)
-        for d in done:
-            for res in await d.result():
-                if "name" in res:
-                    name = res["name"].split("/")[0]
-                else:
-                    name = res
-                uploads[name] += 1
-
-        while pending:
-            print("{} releases left to process...".format(len(pending)))
-            done, pending = await asyncio.wait(pending, timeout=30)
-            for d in done:
-                for res in await d.result():
-                    if "name" in res:
-                        name = res["name"].split("/")[0]
-                    else:
-                        name = res
-                    uploads[name] += 1
+            print("Processing {}".format(r), flush=True)
+            results = await process_release(r, session, balrog_api, bucket, sem)
+            for res in results:
+                uploads[res]["uploaded"] += results[res]["uploaded"]
+                uploads[res]["existing"] += results[res]["existing"]
 
 
     for r in releases:
+        revs_in_gcs = uploads[r]["uploaded"] + uploads[r]["existing"]
+        print("INFO: {}: Found {} existing revisions, uploaded {} new ones".format(r, uploads[r]["existing"], uploads[r]["uploaded"]))
         if r not in uploads:
             print("WARNING: {} was found in the Balrog API but does not exist in GCS".format(r))
-        elif releases[r] != uploads[r]:
-            print("WARNING: {} has a data version of {} in the Balrog API, but {} revisions exist in GCS".format(r, releases[r], uploads[r]))
+        elif releases[r] != revs_in_gcs:
+            print("WARNING: {} has a data version of {} in the Balrog API, but {} revisions exist in GCS".format(r, releases[r], revs_in_gcs))
 
 balrog_api = sys.argv[1]
 bucket_name = sys.argv[2]
+if len(sys.argv) > 3:
+    concurrency = sys.argv[3]
+else:
+    concurrency = 100
 loop = asyncio.get_event_loop()
 ignore_aiohttp_ssl_error(loop)
-loop.run_until_complete(main(loop, balrog_api, bucket_name))
+loop.run_until_complete(main(loop, balrog_api, bucket_name, concurrency))
