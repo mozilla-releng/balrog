@@ -66,9 +66,11 @@ async def get_releases(session, balrog_api):
 
 
 async def process_release(r, session, balrog_api, bucket, sem):
-    results = defaultdict(lambda: defaultdict(int))
+    releases = defaultdict(int)
+    uploads = defaultdict(lambda: defaultdict(int))
 
     for rev in await get_revisions(r, session, balrog_api, sem):
+        releases[r] += 1
         async with sem:
             old_version = await (await session.get("{}/history/view/release/{}/data".format(balrog_api, rev["change_id"]))).text()
         old_version_hash = hashlib.md5(old_version.encode("ascii")).digest()
@@ -84,18 +86,18 @@ async def process_release(r, session, balrog_api, bucket, sem):
                 # TODO: need to handle errors here somehow. they keep crashing the script
                 blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
                 await blob.upload(old_version, session)
-            results[r]["uploaded"] += 1
+            uploads[r]["uploaded"] += 1
         else:
-            results[r]["existing"] += 1
+            uploads[r]["existing"] += 1
 
-    return results
+    return releases, uploads
 
 
 async def main(loop, balrog_api, bucket_name, concurrency):
     # limit the number of connections at any one time
     sem = asyncio.Semaphore(concurrency)
+    releases = defaultdict(int)
     uploads = defaultdict(lambda: defaultdict(int))
-    releases = {}
 
     n = 0
 
@@ -105,22 +107,23 @@ async def main(loop, balrog_api, bucket_name, concurrency):
 
         async with session.get("{}/releases".format(balrog_api)) as resp:
             for r in (await resp.json())["releases"]:
-                releases[r["name"]] = r["data_version"]
+                release_name = r["name"]
+                release_futures = []
 
-        release_futures = []
-        for r in releases:
-            if any(pat in r for pat in skip_patterns):
-                print("Skipping {} because it matches a skip pattern".format(r), flush=True)
-                continue
-            n += 1
-            if n == 15:
-                break
+                if any(pat in release_name for pat in skip_patterns):
+                    print("Skipping {} because it matches a skip pattern".format(release_name), flush=True)
+                    continue
+                n += 1
+                if n == 5:
+                    break
 
-            print("Processing {}".format(r), flush=True)
-            results = await process_release(r, session, balrog_api, bucket, sem)
-            for res in results:
-                uploads[res]["uploaded"] += results[res]["uploaded"]
-                uploads[res]["existing"] += results[res]["existing"]
+                print("Processing {}".format(release_name), flush=True)
+                processed_releases, processed_uploads = await process_release(release_name, session, balrog_api, bucket, sem)
+                for rel in processed_releases:
+                    releases[rel] += processed_releases[rel]
+                for u in processed_uploads:
+                    uploads[u]["uploaded"] += processed_uploads[u]["uploaded"]
+                    uploads[u]["existing"] += processed_uploads[u]["existing"]
 
 
     for r in releases:
