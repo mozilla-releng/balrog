@@ -55,20 +55,16 @@ skip_patterns = ("-nightly-",)
 
 
 async def get_revisions(r, session, balrog_api, sem):
-    async with sem, session.get("{}/releases/{}/revisions?limit=10000".format(balrog_api, r)) as resp:
-        return (await resp.json())["revisions"]
-
-
-async def get_releases(session, balrog_api):
-    async with session.get("{}/releases".format(balrog_api)) as resp:
-        for r in (await resp.json())["releases"]:
-            yield (r["name"], r["data_version"])
+    async with sem:
+        async with session.get("{}/releases/{}/revisions?limit=10000".format(balrog_api, r)) as resp:
+            return (await resp.json())["revisions"]
 
 
 async def process_release(r, session, balrog_api, bucket, sem, loop):
     releases = defaultdict(int)
     uploads = defaultdict(lambda: defaultdict(int))
 
+    print("Processing {}".format(r), flush=True)
     for rev in await get_revisions(r, session, balrog_api, sem):
         releases[r] += 1
         async with sem:
@@ -89,7 +85,7 @@ async def process_release(r, session, balrog_api, bucket, sem, loop):
     return releases, uploads
 
 
-async def main(loop, balrog_api, bucket_name, concurrency):
+async def main(loop, balrog_api, bucket_name, limit_to, concurrency):
     # limit the number of connections at any one time
     sem = asyncio.Semaphore(concurrency)
     releases = defaultdict(int)
@@ -106,15 +102,15 @@ async def main(loop, balrog_api, bucket_name, concurrency):
         for r in to_process:
             release_name = r["name"]
 
+            if limit_to and n >= limit_to:
+                break
+
+            n += 1
+
             if any(pat in release_name for pat in skip_patterns):
                 print("Skipping {} because it matches a skip pattern".format(release_name), flush=True)
                 continue
 
-            n += 1
-            if n == 15:
-                break
-
-            print("Processing {}".format(release_name), flush=True)
             tasks.append(loop.create_task(process_release(release_name, session, balrog_api, bucket, sem, loop)))
 
         for processed_releases, processed_uploads in await asyncio.gather(*tasks, loop=loop):
@@ -136,9 +132,13 @@ async def main(loop, balrog_api, bucket_name, concurrency):
 balrog_api = sys.argv[1]
 bucket_name = sys.argv[2]
 if len(sys.argv) > 3:
-    concurrency = sys.argv[3]
+    limit_to = int(sys.argv[3])
 else:
-    concurrency = 100
+    limit_to = None
+if len(sys.argv) > 4:
+    concurrency = int(sys.argv[4])
+else:
+    concurrency = 5
 loop = asyncio.get_event_loop()
 ignore_aiohttp_ssl_error(loop)
-loop.run_until_complete(main(loop, balrog_api, bucket_name, concurrency))
+loop.run_until_complete(main(loop, balrog_api, bucket_name, limit_to, concurrency))
