@@ -131,17 +131,18 @@ async def main(loop, balrog_api, bucket_name, limit_to, concurrency):
             print("WARNING: {} has a data version of {} in the Balrog API, but {} revisions exist in GCS".format(r, releases[r], revs_in_gcs))
 
 
-balrog_api = sys.argv[1]
-bucket_name = sys.argv[2]
-if len(sys.argv) > 3:
-    limit_to = int(sys.argv[3])
-else:
-    limit_to = None
-# Default concurrency is quite low because calls to /revisions endpoints are quite resource intensive
-if len(sys.argv) > 4:
-    concurrency = int(sys.argv[4])
-else:
-    concurrency = 5
-loop = asyncio.get_event_loop()
-ignore_aiohttp_ssl_error(loop)
-loop.run_until_complete(main(loop, balrog_api, bucket_name, limit_to, concurrency))
+if __name__ == "__main__":
+    balrog_api = sys.argv[1]
+    bucket_name = sys.argv[2]
+    if len(sys.argv) > 3:
+        limit_to = int(sys.argv[3])
+    else:
+        limit_to = None
+    # Default concurrency is quite low because calls to /revisions endpoints are quite resource intensive
+    if len(sys.argv) > 4:
+        concurrency = int(sys.argv[4])
+    else:
+        concurrency = 5
+    loop = asyncio.get_event_loop()
+    ignore_aiohttp_ssl_error(loop)
+    loop.run_until_complete(main(loop, balrog_api, bucket_name, limit_to, concurrency))
