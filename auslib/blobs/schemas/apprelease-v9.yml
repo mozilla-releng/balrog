@@ -101,6 +101,9 @@
               promptWaitTime:
                 type: number
                 description: The number of seconds to wait before showing the dialog which prompts users to restart, overrides the in-app preference
+              disableBITS:
+                type: boolean
+                description: Whether or not to disable background downloads with BITS on the client
     # Top level fileUrls are useful primarily for release style builds,
     # where the URLs are predictable and only vary by locale and platform.
     # It"s worth noting that while we normally serve different channels
