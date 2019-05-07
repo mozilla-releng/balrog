@@ -122,7 +122,7 @@ class TestReleaseBlobBase(unittest.TestCase):
 class TestReleaseBlobV1(unittest.TestCase):
     def setUp(self):
         self.whitelistedDomains = {"a.com": ("a",), "boring.com": ("b",)}
-        dbo.setDb("sqlite:///:memory:", releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         self.sampleReleaseBlob = ReleaseBlobV1()
@@ -719,7 +719,7 @@ class TestSchema2Blob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {"a.com": ("j", "k")}
-        dbo.setDb("sqlite:///:memory:", releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(
@@ -1085,7 +1085,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {"a.com": ("j",)}
-        dbo.setDb("sqlite:///:memory:", releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(
@@ -1232,7 +1232,7 @@ class TestSchema3Blob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {"a.com": ("f", "g")}
-        dbo.setDb("sqlite:///:memory:", releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(
@@ -1774,7 +1774,7 @@ class TestSchema4Blob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {"a.com": ("h", "g")}
-        dbo.setDb("sqlite:///:memory:", releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(
@@ -2496,7 +2496,7 @@ class TestSchema5Blob(unittest.TestCase):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
         app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
-        dbo.setDb("sqlite:///:memory:", releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(
             name="h1",
@@ -2800,7 +2800,7 @@ class TestSchema6Blob(unittest.TestCase):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
         app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
-        dbo.setDb("sqlite:///:memory:", releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(
             name="h1",
@@ -3093,7 +3093,7 @@ class TestSchema8Blob(unittest.TestCase):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
         app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
-        dbo.setDb("sqlite:///:memory:", releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(
             name="h1",
@@ -3247,7 +3247,7 @@ class TestSchema9Blob(unittest.TestCase):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
         app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
-        dbo.setDb("sqlite:///:memory:", releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(
             name="h1",
@@ -3585,7 +3585,7 @@ class TestDesupportBlob(unittest.TestCase):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
         app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
-        dbo.setDb("sqlite:///:memory:", releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         self.blob = DesupportBlob()
         self.blob.loadJSON(

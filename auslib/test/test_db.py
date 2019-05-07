@@ -549,7 +549,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
 @pytest.mark.usefixtures("current_db_schema")
 class ScheduledChangesTableMixin(object):
     def setUp(self):
-        self.db = AUSDatabase(self.dburi, releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        self.db = AUSDatabase(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(self.db.engine)
         self.engine = self.db.engine
         self.metadata = self.db.metadata
@@ -3434,7 +3434,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
-        dbo.setDb(self.dburi, releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        dbo.setDb(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         self.rules = dbo.rules
         self.releases = dbo.releases
@@ -3925,7 +3925,7 @@ class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):
 class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
-        dbo.setDb(self.dburi, releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        dbo.setDb(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         cache.reset()
         cache.make_copies = True
@@ -4119,7 +4119,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
-        self.db = AUSDatabase(self.dburi, releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        self.db = AUSDatabase(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(self.db.engine)
         self.releases = self.db.releases
         self.releases.t.insert().execute(

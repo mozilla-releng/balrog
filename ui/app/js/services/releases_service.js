@@ -21,7 +21,15 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges, 
     getHistory: function(name) {
       var deferred = $q.defer();
       var releases = [];
-      var baseUrl = GCSConfig['releases_history_bucket'] + '?prefix=' + name + '/' + '&delimeter=/';
+      var bucket = null;
+      if (name.includes('nightly')) {
+        bucket = GCSConfig['nightly_history_bucket'];
+      }
+      else {
+        bucket = GCSConfig['releases_history_bucket'];
+      }
+
+      var baseUrl = bucket + '?prefix=' + name + '/' + '&delimeter=/';
 
       function parseReleases(raw_releases) {
         raw_releases.forEach(function(r) {

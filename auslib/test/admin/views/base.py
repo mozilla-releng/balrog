@@ -60,7 +60,7 @@ class ViewTest(unittest.TestCase):
 }
 """
             )
-        dbo.setDb("sqlite:///:memory:", releases_history_bucket="fake", releases_history_class=FakeGCSHistory)
+        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
 
         self.orig_releases_history = dbo.releases.history
         # TODO: need a better mock, or maybe a Fake that stores history in memory?

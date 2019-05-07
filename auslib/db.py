@@ -673,39 +673,47 @@ class AUSTable(object):
 
 
 class GCSHistory:
-    def __init__(self, db, dialect, metadata, baseTable, bucket, identifier_column, data_column):
-        self.bucket = bucket
+    def __init__(self, db, dialect, metadata, baseTable, buckets, identifier_column, data_column):
+        self.buckets = buckets
         self.identifier_column = identifier_column
         self.data_column = data_column
 
+    def _getBucket(self, identifier):
+        for substring, bucket in self.buckets.items():
+            if substring in identifier:
+                return bucket
+        else:
+            raise KeyError("Couldn't find bucket to place {} history in.".format(identifier))
+
     def forInsert(self, insertedKeys, columns, changed_by, trans):
         timestamp = getMillisecondTimestamp()
+        identifier = columns.get(self.identifier_column)
         for data_version, ts, data in ((None, timestamp - 1, ""), (columns.get("data_version"), timestamp, json.dumps(columns[self.data_column]))):
-            bname = "{}/{}-{}-{}.json".format(columns.get(self.identifier_column), data_version, ts, changed_by)
-            blob = self.bucket.blob(bname)
+            bname = "{}/{}-{}-{}.json".format(identifier, data_version, ts, changed_by)
+            blob = self._getBucket(identifier).blob(bname)
             blob.upload_from_string(data, content_type="application/json")
 
     def forDelete(self, rowData, changed_by, trans):
-        bname = "{}/{}-{}-{}.json".format(rowData.get(self.identifier_column), rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
-        blob = self.bucket.blob(bname)
+        identifier = rowData.get(self.identifier_column)
+        bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
+        blob = self._getBucket(identifier).blob(bname)
         blob.upload_from_string("", content_type="application/json")
 
     def forUpdate(self, rowData, changed_by, trans):
-        bname = "{}/{}-{}-{}.json".format(rowData.get(self.identifier_column), rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
-        blob = self.bucket.blob(bname)
+        identifier = rowData.get(self.identifier_column)
+        bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
+        blob = self._getBucket(identifier).blob(bname)
         blob.upload_from_string(json.dumps(rowData[self.data_column]), content_type="application/json")
 
     def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
         if self.identifier_column not in column_values or not data_version:
             raise ValueError("Cannot find GCS changes without {} and data_version".format(self.identifier_column))
-        blobs = [b for b in self.bucket.list_blobs(prefix="{}/{}".format(column_values[self.identifier_column], data_version))]
+        identifier = column_values[self.identifier_column]
+        bucket = self._getBucket(identifier)
+        blobs = [b for b in bucket.list_blobs(prefix="{}/{}".format(identifier, data_version))]
         if len(blobs) != 1:
             raise ValueError("Found {} blobs instead of 1".format(len(blobs)))
-        return {
-            self.identifier_column: column_values[self.identifier_column],
-            "data_version": data_version,
-            self.data_column: json.loads(blobs[0].download_as_string()),
-        }
+        return {self.identifier_column: identifier, "data_version": data_version, self.data_column: json.loads(blobs[0].download_as_string())}
 
 
 class HistoryTable(AUSTable):
@@ -1696,7 +1704,7 @@ class Rules(AUSTable):
 
 
 class Releases(AUSTable):
-    def __init__(self, db, metadata, dialect, history_bucket, historyClass):
+    def __init__(self, db, metadata, dialect, history_buckets, historyClass):
         self.domainWhitelist = []
 
         self.table = Table(
@@ -1714,8 +1722,8 @@ class Releases(AUSTable):
             dataType = Text
         self.table.append_column(Column("data", BlobColumn(dataType), nullable=False))
         historyKwargs = {}
-        if history_bucket:
-            historyKwargs["bucket"] = history_bucket
+        if history_buckets:
+            historyKwargs["buckets"] = history_buckets
             historyKwargs["identifier_column"] = "name"
             historyKwargs["data_column"] = "data"
         else:
@@ -2546,15 +2554,15 @@ class AUSDatabase(object):
     engine = None
     migrate_repo = path.join(path.dirname(__file__), "migrate")
 
-    def __init__(self, dburi=None, mysql_traditional_mode=False, releases_history_bucket=None, releases_history_class=GCSHistory):
+    def __init__(self, dburi=None, mysql_traditional_mode=False, releases_history_buckets=None, releases_history_class=GCSHistory):
         """Create a new AUSDatabase. Before this object is useful, dburi must be
            set, either through the constructor or setDburi()"""
         if dburi:
-            self.setDburi(dburi, mysql_traditional_mode, releases_history_bucket, releases_history_class)
+            self.setDburi(dburi, mysql_traditional_mode, releases_history_buckets, releases_history_class)
         self.log = logging.getLogger(self.__class__.__name__)
         self.systemAccounts = []
 
-    def setDburi(self, dburi, mysql_traditional_mode=False, releases_history_bucket=None, releases_history_class=GCSHistory):
+    def setDburi(self, dburi, mysql_traditional_mode=False, releases_history_buckets=None, releases_history_class=GCSHistory):
         """Setup the database connection. Note that SQLAlchemy only opens a connection
            to the database when it needs to, however."""
         if self.engine:
@@ -2567,7 +2575,7 @@ class AUSDatabase(object):
         self.engine = create_engine(self.dburi, pool_recycle=60, listeners=listeners)
         dialect = self.engine.name
         self.rulesTable = Rules(self, self.metadata, dialect)
-        self.releasesTable = Releases(self, self.metadata, dialect, releases_history_bucket, releases_history_class)
+        self.releasesTable = Releases(self, self.metadata, dialect, releases_history_buckets, releases_history_class)
         self.permissionsTable = Permissions(self, self.metadata, dialect)
         self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
         self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)

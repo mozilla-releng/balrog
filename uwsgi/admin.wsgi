@@ -63,17 +63,28 @@ if not os.environ.get("LOCALDEV"):
     if not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")):
         log.critical("GOOGLE_APPLICATION_CREDENTIALS must be provided")
         sys.exit(1)
-    if not os.environ.get("RELEASES_HISTORY_BUCKET"):
-        log.critical("RELEASES_HISTORY_BUCKET must be provided")
+    if not os.environ.get("RELEASES_HISTORY_BUCKET") or not os.environ.get("NIGHTLY_HISTORY_BUCKET"):
+        log.critical("RELEASES_HISTORY_BUCKET and NIGHTLY_HISTORY_BUCKET must be provided")
         sys.exit(1)
 
 # Set up the releases history bucket, if enabled.
 releases_history_bucket = None
-if os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")) and os.environ.get("RELEASES_HISTORY_BUCKET"):
+if os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")) and os.environ.get("RELEASES_HISTORY_BUCKET") and os.environ.get("NIGHTLY_HISTORY_BUCKET"):
     storage_client = storage.Client()
     releases_history_bucket = storage_client.get_bucket(os.environ["RELEASES_HISTORY_BUCKET"])
+    nightly_history_bucket = storage_client.get_bucket(os.environ["NIGHTLY_HISTORY_BUCKET"])
 
-dbo.setDb(os.environ["DBURI"], releases_history_bucket)
+# Order is important here, we fall through to the last entry. This works because dictionary keys
+# are returned in insertion order when iterated on.
+# Turn off formatting because it is clearer to have these listed one after another
+# fmt: off
+buckets = {
+    "nightly": nightly_history_bucket,
+    "": releases_history_bucket,
+}
+# fmt: on
+
+dbo.setDb(os.environ["DBURI"], buckets)
 if os.environ.get("NOTIFY_TO_ADDR"):
     use_tls = False
     if os.environ.get("SMTP_TLS"):
@@ -189,6 +200,10 @@ angular.module('config', [])
 
 .constant('Auth0Config', {})
 .constant('GCSConfig', {{
-    'releases_history_bucket': 'https://www.googleapis.com/storage/v1/b/{}/o'
+    'nightly_history_bucket': 'https://www.googleapis.com/storage/v1/b/{}/o',
+    'releases_history_bucket': 'https://www.googleapis.com/storage/v1/b/{}/o',
 }});
-""".format(auth0_config, os.environ["RELEASES_HISTORY_BUCKET"]))
+""".format(
+            auth0_config, os.environ["NIGHTLY_HISTORY_BUCKET"], os.environ["RELEASES_HISTORY_BUCKET"]
+        )
+    )

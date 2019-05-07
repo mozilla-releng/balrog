@@ -14,13 +14,13 @@ class DbWrapper(object):
     def __init__(self):
         self.db = None
 
-    def setDb(self, dburi, releases_history_bucket=None, releases_history_class=None):
+    def setDb(self, dburi, releases_history_buckets=None, releases_history_class=None):
         from auslib.db import AUSDatabase, GCSHistory
 
-        if not releases_history_class and releases_history_bucket is not None:
+        if not releases_history_class and releases_history_buckets is not None:
             releases_history_class = GCSHistory
 
-        self.db = AUSDatabase(dburi, releases_history_bucket=releases_history_bucket, releases_history_class=releases_history_class)
+        self.db = AUSDatabase(dburi, releases_history_buckets=releases_history_buckets, releases_history_class=releases_history_class)
 
     def __getattr__(self, name):
         if not self.db:
