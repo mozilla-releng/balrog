@@ -5,6 +5,15 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--
+        Content-Security-Policy explanation:
+        * img-src: gravatar & githubusercontent for user avatars
+        * frame-src: *.auth0.com to allow bearer token renewals in the background
+        * connect-src: *.auth0.com to allow auth0 to redirect back to us after login
+        * script-src: unsafe-{eval,inline} because some of our dependencies require it
+        * style-src: unsafe-inline because some of our dependencies require it. fonts.googleapis.com, because we load a font from it (in a weird way that injects it to the app at runtime)
+        * font-src: fonts.googleapis.com because we load a font from it
+    -->
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'self'; img-src 'self' *.gravatar.com *.githubusercontent.com; frame-src https://*.auth0.com/; connect-src https://*.auth0.com/; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com/; font-src 'self' https://fonts.gstatic.com">
     <link rel="stylesheet" type="text/css" href="/css/app.css" media="all" />
