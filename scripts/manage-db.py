@@ -172,7 +172,7 @@ def extract_active_data(trans, url, dump_location="dump.sql"):
             for batched_release_list in batch_generator:
                 query = ", ".join("'" + names + "'" for names in batched_release_list)
                 cmd = mysql_data_only_command(host, user, password, db, "releases").split()
-                cmd.append('--where=releases.name IN ({})'.format(query))
+                cmd.append("--where=releases.name IN ({})".format(query))
                 run(cmd, stdout=dump_file, check=True)
 
         cmd = mysql_data_only_command(host, user, password, db, "releases_history").split()
