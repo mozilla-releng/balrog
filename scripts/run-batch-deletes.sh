@@ -26,11 +26,23 @@ while true; do
 
     printf "Deleting..."
     # DBURI and MAX_AGE should be in the environment
-    DELETED=$(python ./manage-db.py -d "$DBURI" cleanup "$MAX_AGE" 2>/dev/null | awk '/Total/ {print $3}')
+    DELETED=$(python ./manage-db.py -d "$DBURI" cleanup "$MAX_AGE" 2>/dev/null)
+    if ! [ "$?" -eq "0" ]; then
+        echo "manage-db.py didn't exit cleanly"
+        continue
+    fi
+    DELETED=$(echo "$DELETED" | awk '/Total/ {print $3}')
+    ORIG_DELETED=$DELETED
+    # Sometimes DELETED ends up not being set for some reason, which breaks
+    # the `expr` expressions below, and gets the script stuck in a loop.
+    if ! [ "$DELETED" -eq "$DELETED" ] 2>/dev/null; then
+        DELETED=0
+    fi
     TOTAL=$(expr $TOTAL + $DELETED)
     NOW=$(date '+%s')
     printf "%d rows removed >>> %d seconds remaining. %d deleted.\n" $DELETED $(expr $TIL - $NOW) $TOTAL
 
+    echo "Original value for \$DELETED: $ORIG_DELETED"
     if [ $DELETED -eq 0 ]; then
         echo "Nothing left to do"
         exit 0
