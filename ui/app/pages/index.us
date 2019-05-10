@@ -9,7 +9,7 @@
         Content-Security-Policy explanation:
         * img-src: gravatar & githubusercontent for user avatars
         * frame-src: *.auth0.com to allow bearer token renewals in the background
-        * connect-src: self to allow access to Balrog's API. *.auth0.com to allow us to pull public keys from auth0 to validate the login
+        * connect-src: *.auth0.com to allow us to pull public keys from auth0 to validate the login
         * script-src: unsafe-{eval,inline} because some of our dependencies require it
         * style-src: unsafe-inline because some of our dependencies require it. fonts.googleapis.com, because we load a font from it (in a weird way that injects it to the app at runtime)
         * font-src: fonts.googleapis.com because we load a font from it
