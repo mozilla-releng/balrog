@@ -13,9 +13,10 @@
         * script-src: unsafe-{eval,inline} because some of our dependencies require it
         * style-src: unsafe-inline because some of our dependencies require it. fonts.googleapis.com, because we load a font from it (in a weird way that injects it to the app at runtime)
         * font-src: fonts.googleapis.com because we load a font from it
+        * frame-ancestors: none because there's no valid reason to embed Balrog in another page
     -->
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'self'; img-src 'self' *.gravatar.com *.githubusercontent.com; frame-src https://*.auth0.com/; connect-src 'self' https://*.auth0.com/; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com/; font-src 'self' https://fonts.gstatic.com">
+          content="default-src 'self'; img-src 'self' *.gravatar.com *.githubusercontent.com; frame-src https://*.auth0.com/; connect-src 'self' https://*.auth0.com/; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com/; font-src 'self' https://fonts.gstatic.com; frame-ancestors: none">
     <link rel="stylesheet" type="text/css" href="/css/app.css" media="all" />
     <link rel="icon" href="img/favicon.png" type="image/png" />
   </head>
