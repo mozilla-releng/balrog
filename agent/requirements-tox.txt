@@ -1,6 +1,6 @@
-tox==3.9.0 \
-    --hash=sha256:1b166b93d2ce66bb7b253ba944d2be89e0c9d432d49eeb9da2988b4902a4684e \
-    --hash=sha256:665cbdd99f5c196dd80d1d8db8c8cf5d48b1ae1f778bccd1bdf14d5aaf4ca0fc
+tox==3.10.0 \
+    --hash=sha256:5d6b9e7ad99a93b00ecd509e13552600d38eedd2b035ba24709f850b23f51254 \
+    --hash=sha256:fee5b4fa2fb1638b57879a1fcaefbfd16201d8d7ecb9956406855a85d518ac4c
 pluggy==0.11.0 \
     --hash=sha256:25a1bc1d148c9a640211872b4ff859878d422bccb59c9965e04eed468a0aa180 \
     --hash=sha256:964cedd2b27c492fbf0b7f58b3284a09cf7f99b0f715941fb24a439b3af1bd1a
