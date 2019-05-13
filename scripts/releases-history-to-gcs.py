@@ -88,7 +88,7 @@ async def process_release(r, session, balrog_api, bucket, sem, loop):
     return releases, uploads
 
 
-async def main(loop, balrog_api, bucket_name, limit_to, concurrency, skip_toplevel_keys):
+async def main(loop, balrog_api, bucket_name, limit_to, concurrency, skip_toplevel_keys, whitelist):
     # limit the number of connections at any one time
     sem = asyncio.Semaphore(concurrency)
     releases = defaultdict(int)
@@ -117,6 +117,10 @@ async def main(loop, balrog_api, bucket_name, limit_to, concurrency, skip_toplev
 
             if skip_toplevel_keys and release_name in toplevel_keys:
                 print("Skipping {} because it is an existing toplevel key".format(release_name), flush=True)
+                continue
+
+            if whitelist and release_name not in whitelist:
+                print("Skipping {} because it is not in the whitelist".format(release_name), flush=True)
                 continue
 
             if limit_to and n >= limit_to:
@@ -159,7 +163,10 @@ if __name__ == "__main__":
     else:
         concurrency = 5
 
-    skip_toplevel_keys = os.environ.get("SKIP_TOPLEVEL_KEYS", True)
+    skip_toplevel_keys = bool(int(os.environ.get("SKIP_TOPLEVEL_KEYS", True)))
+    whitelist = os.environ.get("ONLY_SYNC_RELEASES", None)
+    if whitelist:
+        whitelist = whitelist.split()
     loop = asyncio.get_event_loop()
     ignore_aiohttp_ssl_error(loop)
-    loop.run_until_complete(main(loop, balrog_api, bucket_name, limit_to, concurrency, skip_toplevel_keys))
+    loop.run_until_complete(main(loop, balrog_api, bucket_name, limit_to, concurrency, skip_toplevel_keys, whitelist))
