@@ -28,7 +28,7 @@ RUN apt-get install -q --yes gcc && \
 COPY auslib/ /app/auslib/
 COPY ui/ /app/ui/
 COPY uwsgi/ /app/uwsgi/
-COPY scripts/manage-db.py scripts/run-batch-deletes.sh scripts/run.sh scripts/reset-stage-db.sh scripts/get-prod-db-dump.py /app/scripts/
+COPY scripts/manage-db.py scripts/run-batch-deletes.sh scripts/run.sh scripts/reset-stage-db.sh scripts/get-prod-db-dump.py scripts/releases-history-to-gcs.py /app/scripts/
 COPY version.json /app/
 
 WORKDIR /app
