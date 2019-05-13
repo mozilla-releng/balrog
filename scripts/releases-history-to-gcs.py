@@ -4,6 +4,7 @@ import asyncio
 import base64
 from collections import defaultdict
 import hashlib
+import os
 import ssl
 import sys
 
@@ -87,7 +88,7 @@ async def process_release(r, session, balrog_api, bucket, sem, loop):
     return releases, uploads
 
 
-async def main(loop, balrog_api, bucket_name, limit_to, concurrency):
+async def main(loop, balrog_api, bucket_name, limit_to, concurrency, skip_toplevel_keys):
     # limit the number of connections at any one time
     sem = asyncio.Semaphore(concurrency)
     releases = defaultdict(int)
@@ -100,9 +101,23 @@ async def main(loop, balrog_api, bucket_name, limit_to, concurrency):
         storage = Storage(session=session)
         bucket = storage.get_bucket(bucket_name)
 
+        toplevel_keys = []
+        if skip_toplevel_keys:
+            batch = await storage.list_objects(bucket_name, params={"delimiter": "/"})
+            while batch:
+                toplevel_keys.extend([name.rstrip("/") for name in batch.get("prefixes")])
+                if batch.get("nextPageToken"):
+                    batch = await storage.list_objects(bucket_name, params={"delimiter": "/", "pageToken": batch["nextPageToken"]})
+                else:
+                    batch = None
+
         to_process = (await (await session.get("{}/releases".format(balrog_api))).json())["releases"]
         for r in to_process:
             release_name = r["name"]
+
+            if skip_toplevel_keys and release_name in toplevel_keys:
+                print("Skipping {} because it is an existing toplevel key".format(release_name), flush=True)
+                continue
 
             if limit_to and n >= limit_to:
                 break
@@ -143,6 +158,8 @@ if __name__ == "__main__":
         concurrency = int(sys.argv[4])
     else:
         concurrency = 5
+
+    skip_toplevel_keys = os.environ.get("SKIP_TOPLEVEL_KEYS", True)
     loop = asyncio.get_event_loop()
     ignore_aiohttp_ssl_error(loop)
-    loop.run_until_complete(main(loop, balrog_api, bucket_name, limit_to, concurrency))
+    loop.run_until_complete(main(loop, balrog_api, bucket_name, limit_to, concurrency, skip_toplevel_keys))
