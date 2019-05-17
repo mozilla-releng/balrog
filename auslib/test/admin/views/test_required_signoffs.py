@@ -17,6 +17,13 @@ class TestProductRequiredSignoffs(ViewTest):
         ]
         self.assertEqual(got["required_signoffs"], expected)
 
+    def testGetRequiredSignoffsWithArgs(self):
+        ret = self._get("/required_signoffs/product", qs={"product": "fake", "channel": "e"})
+        got = ret.get_json()
+        self.assertEqual(got["count"], 1)
+        expected = [{"product": "fake", "channel": "e", "role": "releng", "signoffs_required": 1, "data_version": 1}]
+        self.assertEqual(got["required_signoffs"], expected)
+
     def testAddRequiredSignoff(self):
         ret = self._post("/required_signoffs/product", data=dict(product="fake", channel="b", role="releng", signoffs_required=1))
         self.assertStatusCode(ret, 201)
@@ -352,6 +359,46 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
                     "original_row": dbo.productRequiredSignoffs.select({"product": "fake", "channel": "j", "role": "releng"})[0],
+                },
+            ],
+        }
+        self.assertEqual(ret.get_json(), expected)
+
+    def testGetScheduledChangesWithArgs(self):
+        ret = self._get("/scheduled_changes/required_signoffs/product", qs={"product": "fake", "channel": "a"})
+        expected = {
+            "count": 2,
+            "scheduled_changes": [
+                {
+                    "sc_id": 1,
+                    "when": 100000000,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "complete": False,
+                    "sc_data_version": 1,
+                    "product": "fake",
+                    "channel": "a",
+                    "role": "relman",
+                    "signoffs_required": 1,
+                    "data_version": None,
+                    "signoffs": {"bill": "releng"},
+                    "required_signoffs": {"releng": 1},
+                },
+                {
+                    "sc_id": 2,
+                    "when": 200000000,
+                    "scheduled_by": "bill",
+                    "change_type": "update",
+                    "complete": False,
+                    "sc_data_version": 1,
+                    "product": "fake",
+                    "channel": "a",
+                    "role": "releng",
+                    "signoffs_required": 2,
+                    "data_version": 1,
+                    "signoffs": {"bill": "releng"},
+                    "required_signoffs": {"releng": 1},
+                    "original_row": dbo.productRequiredSignoffs.select({"product": "fake", "channel": "a", "role": "releng"})[0],
                 },
             ],
         }
