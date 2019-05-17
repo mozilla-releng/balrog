@@ -106,6 +106,8 @@ if not os.environ.get("INSECURE_SESSION_COOKIE"):
 # https://www.owasp.org/index.php/HttpOnly#What_is_HttpOnly.3F
 application.config["SESSION_COOKIE_HTTPONLY"] = True
 
+application.config["CORS_ORIGINS"] = os.environ.get("CORS_ORIGINS", "").split()
+
 # Strict Samesite cookies means that the session cookie will never be sent
 # when loading any page or making any request where the referrer is some
 # other site. For example, a link to Balrog from Gmail will not send the session
