@@ -1,7 +1,7 @@
 import json
 
 import connexion
-from flask import Response, jsonify
+from flask import Response, jsonify, request
 from sqlalchemy.sql.expression import null
 
 from auslib.db import SignoffRequiredError
@@ -25,8 +25,8 @@ class RequiredSignoffsView(AdminView):
         self.decisionFields = decisionFields
         super(RequiredSignoffsView, self).__init__()
 
-    def get(self):
-        rows = self.table.select()
+    def get(self, where=None):
+        rows = self.table.select(where=where)
         return jsonify({"count": len(rows), "required_signoffs": [dict(rs) for rs in rows]})
 
     def _post(self, what, transaction, changed_by):
@@ -112,6 +112,13 @@ class ProductRequiredSignoffsView(RequiredSignoffsView):
 
     def __init__(self):
         super(ProductRequiredSignoffsView, self).__init__(dbo.productRequiredSignoffs, ["product", "channel", "role"])
+
+    def get(self):
+        where = {}
+        for param in ("product", "channel"):
+            if param in request.args:
+                where[param] = request.args[param]
+        return super(ProductRequiredSignoffsView, self).get(where=where)
 
     @requirelogin
     def _post(self, transaction, changed_by):
@@ -253,6 +260,12 @@ class PermissionsRequiredSignoffsView(RequiredSignoffsView):
 
     def __init__(self):
         super(PermissionsRequiredSignoffsView, self).__init__(dbo.permissionsRequiredSignoffs, ["product", "role"])
+
+    def get(self):
+        where = {}
+        if "product" in request.args:
+            where["product"] = request.args["product"]
+        return super(PermissionsRequiredSignoffsView, self).get(where=where)
 
     @requirelogin
     def _post(self, transaction, changed_by):
