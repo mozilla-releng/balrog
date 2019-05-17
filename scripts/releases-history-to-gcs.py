@@ -72,12 +72,14 @@ async def process_release(r, session, balrog_db, bucket, sem, loop):
         else:
             old_version_hash = hashlib.md5(rev["data"].encode("ascii")).digest()
         try:
-            current_blob = await bucket.get_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
+            async with sem:
+                current_blob = await bucket.get_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
             current_blob_hash = base64.b64decode(current_blob.md5Hash)
         except aiohttp.ClientResponseError:
             current_blob_hash = None
         if old_version_hash != current_blob_hash:
-            blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
+            async with sem:
+                blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
             await blob.upload(rev["data"], session)
             uploads[r]["uploaded"] += 1
         else:
