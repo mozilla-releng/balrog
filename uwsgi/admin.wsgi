@@ -106,6 +106,11 @@ if not os.environ.get("INSECURE_SESSION_COOKIE"):
 # https://www.owasp.org/index.php/HttpOnly#What_is_HttpOnly.3F
 application.config["SESSION_COOKIE_HTTPONLY"] = True
 
+# This isn't needed for the current UI, which is hosted at the same origin
+# as the API. When we roll out the new, React-based UI, it may be hosted
+# elsewhere in which case we'll need CloudOps to set this for us.
+# In the meantime, this allows us to set it to "*" for local development
+# to enable the new UI to work there.
 application.config["CORS_ORIGINS"] = os.environ.get("CORS_ORIGINS", "").split()
 
 # Strict Samesite cookies means that the session cookie will never be sent
