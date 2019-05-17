@@ -10,6 +10,8 @@ import sys
 
 import aiohttp
 
+from sqlalchemy import create_engine
+
 from gcloud.aio.storage import Storage
 
 
@@ -57,22 +59,15 @@ def ignore_aiohttp_ssl_error(loop, aiohttpversion="3.5.4"):
 skip_patterns = ("-nightly-",)
 
 
-async def get_revisions(r, session, balrog_api, sem):
-    async with sem:
-        async with session.get("{}/releases/{}/revisions?limit=10000".format(balrog_api, r)) as resp:
-            return (await resp.json())["revisions"]
-
-
-async def process_release(r, session, balrog_api, bucket, sem, loop):
+async def process_release(r, session, balrog_db, bucket, sem, loop):
     releases = defaultdict(int)
     uploads = defaultdict(lambda: defaultdict(int))
 
     print("Processing {}".format(r), flush=True)
-    for rev in await get_revisions(r, session, balrog_api, sem):
+    revisions = balrog_db.execute(f"SELECT data_version, timestamp, changed_by, data FROM releases_history WHERE name='{r}'")
+    for rev in revisions:
         releases[r] += 1
-        async with sem:
-            old_version = await (await session.get("{}/history/view/release/{}/data".format(balrog_api, rev["change_id"]))).text()
-        old_version_hash = hashlib.md5(old_version.encode("ascii")).digest()
+        old_version_hash = hashlib.md5(rev["data"].encode("ascii")).digest()
         try:
             current_blob = await bucket.get_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
             current_blob_hash = base64.b64decode(current_blob.md5Hash)
@@ -80,7 +75,7 @@ async def process_release(r, session, balrog_api, bucket, sem, loop):
             current_blob_hash = None
         if old_version_hash != current_blob_hash:
             blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
-            await blob.upload(old_version, session)
+            await blob.upload(rev["data"], session)
             uploads[r]["uploaded"] += 1
         else:
             uploads[r]["existing"] += 1
@@ -88,7 +83,7 @@ async def process_release(r, session, balrog_api, bucket, sem, loop):
     return releases, uploads
 
 
-async def main(loop, balrog_api, bucket_name, limit_to, concurrency, skip_toplevel_keys, whitelist):
+async def main(loop, balrog_db, bucket_name, limit_to, concurrency, skip_toplevel_keys, whitelist):
     # limit the number of connections at any one time
     sem = asyncio.Semaphore(concurrency)
     releases = defaultdict(int)
@@ -111,9 +106,9 @@ async def main(loop, balrog_api, bucket_name, limit_to, concurrency, skip_toplev
                 else:
                     batch = None
 
-        to_process = (await (await session.get("{}/releases".format(balrog_api))).json())["releases"]
+        to_process = balrog_db.execute("SELECT DISTINCT name FROM releases_history").fetchall()
         for r in to_process:
-            release_name = r["name"]
+            release_name = r[0]
 
             if skip_toplevel_keys and release_name in toplevel_keys:
                 print("Skipping {} because it is an existing toplevel key".format(release_name), flush=True)
@@ -132,7 +127,7 @@ async def main(loop, balrog_api, bucket_name, limit_to, concurrency, skip_toplev
                 print("Skipping {} because it matches a skip pattern".format(release_name), flush=True)
                 continue
 
-            tasks.append(loop.create_task(process_release(release_name, session, balrog_api, bucket, sem, loop)))
+            tasks.append(loop.create_task(process_release(release_name, session, balrog_db, bucket, sem, loop)))
 
         for processed_releases, processed_uploads in await asyncio.gather(*tasks, loop=loop):
             for rel in processed_releases:
@@ -151,7 +146,7 @@ async def main(loop, balrog_api, bucket_name, limit_to, concurrency, skip_toplev
 
 
 if __name__ == "__main__":
-    balrog_api = sys.argv[1]
+    dburi = sys.argv[1]
     bucket_name = sys.argv[2]
     if len(sys.argv) > 3:
         limit_to = int(sys.argv[3])
@@ -169,4 +164,6 @@ if __name__ == "__main__":
         whitelist = whitelist.split()
     loop = asyncio.get_event_loop()
     ignore_aiohttp_ssl_error(loop)
-    loop.run_until_complete(main(loop, balrog_api, bucket_name, limit_to, concurrency, skip_toplevel_keys, whitelist))
+
+    balrog_db = create_engine(dburi)
+    loop.run_until_complete(main(loop, balrog_db, bucket_name, limit_to, concurrency, skip_toplevel_keys, whitelist))

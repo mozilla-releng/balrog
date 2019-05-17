@@ -66,8 +66,8 @@ elif [ $1 == "create-local-admin" ]; then
     mysql -h $DB_HOST -u balrogadmin --password=balrogadmin -e "insert into user_roles (username, role, data_version) values (\"${LOCAL_ADMIN}\", \"releng\", 1)" balrog
     exit $?
 elif [ $1 == "sync-to-gcs" ]; then
-    if [ -z "${BALROG_API_ROOT}" ]; then
-        echo "\${BALROG_API_ROOT} must be set!"
+    if [ -z "${DBURI}" ]; then
+        echo "\${DBURI} must be set!"
         exit 1
     fi
     if [ -z "${RELEASES_HISTORY_BUCKET}" ]; then
@@ -78,7 +78,7 @@ elif [ $1 == "sync-to-gcs" ]; then
         echo "\${GOOGLE_APPLICATION_CREDENTIALS} must be set!"
         exit 1
     fi
-    python scripts/releases-history-to-gcs.py ${BALROG_API_ROOT} ${RELEASES_HISTORY_BUCKET} ${LIMIT_TO_TOTAL_RELEASES} ${GCS_SYNC_CONCURRENCY}
+    python scripts/releases-history-to-gcs.py ${DBURI} ${RELEASES_HISTORY_BUCKET} ${LIMIT_TO_TOTAL_RELEASES} ${GCS_SYNC_CONCURRENCY}
     exit $?
 elif [ $1 == "test" ]; then
     coveralls=1
