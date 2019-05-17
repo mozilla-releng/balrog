@@ -152,6 +152,13 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
     def __init__(self):
         super(ProductRequiredSignoffsScheduledChangesView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
 
+    def get(self):
+        where = {}
+        for param in ("product", "channel"):
+            if param in request.args:
+                where[f"base_{param}"] = request.args[param]
+        return super(ProductRequiredSignoffsScheduledChangesView, self).get(where=where)
+
     @requirelogin
     def _post(self, transaction, changed_by):
         if connexion.request.get_json().get("when", None) is None:
@@ -293,6 +300,12 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
     def __init__(self):
         super(PermissionsRequiredSignoffsScheduledChangesView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
+
+    def get(self):
+        where = {}
+        if "product" in request.args:
+            where["base_product"] = request.args["product"]
+        return super(PermissionsRequiredSignoffsScheduledChangesView, self).get(where=where)
 
     @requirelogin
     def _post(self, transaction, changed_by):

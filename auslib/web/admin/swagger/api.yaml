@@ -2879,6 +2879,8 @@ paths:
         description: Returns scheduled changes for required signoffs of products.
       parameters:
         - $ref: '#/parameters/allSCParam'
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/channelParam'
       responses:
         '200':
           description: Returns JSON object of list of all scheduled changes for required signoffs of products plus total count
@@ -3156,6 +3158,8 @@ paths:
         description: Returns scheduled changes for required signoffs of permissions.
       parameters:
         - $ref: '#/parameters/allSCParam'
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/channelParam'
       responses:
         '200':
           description: Returns JSON object of list of all scheduled changes for required signoffs of permissions plus total count
