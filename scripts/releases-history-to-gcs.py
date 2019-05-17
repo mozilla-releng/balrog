@@ -67,7 +67,10 @@ async def process_release(r, session, balrog_db, bucket, sem, loop):
     revisions = balrog_db.execute(f"SELECT data_version, timestamp, changed_by, data FROM releases_history WHERE name='{r}'")
     for rev in revisions:
         releases[r] += 1
-        old_version_hash = hashlib.md5(rev["data"].encode("ascii")).digest()
+        if rev["data"] is None:
+            old_version_hash = None
+        else:
+            old_version_hash = hashlib.md5(rev["data"].encode("ascii")).digest()
         try:
             current_blob = await bucket.get_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
             current_blob_hash = base64.b64decode(current_blob.md5Hash)
