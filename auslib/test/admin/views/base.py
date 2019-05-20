@@ -8,7 +8,7 @@ import simplejson as json
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import cache, dbo
-from auslib.test.fakes import FakeGCSHistory
+from auslib.test.fakes import FakeGCSHistory, FakeBlob
 from auslib.web.admin.base import app
 
 
@@ -115,9 +115,23 @@ class ViewTest(unittest.TestCase):
         )
         dbo.releases.t.insert().execute(name="a", product="a", data=createBlob(dict(name="a", hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(name="ab", product="a", data=createBlob(dict(name="ab", hashFunction="sha512", schema_version=1)), data_version=1)
-        dbo.releases.history.data["ab"]["ab-1"] = createBlob(dict(name="ab", hashFunction="sha512", schema_version=1))
+        dbo.releases.history.bucket.blobs["ab/None-456-bob.json"] = FakeBlob("")
+        dbo.releases.history.bucket.blobs["ab/1-456-bob.json"] = FakeBlob("""
+{
+    "name": "ab",
+    "hashFunction": "sha512",
+    "schema_version": 1
+}
+""")
         dbo.releases.t.insert().execute(name="b", product="b", data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)), data_version=1)
-        dbo.releases.history.data["b"]["b-1"] = createBlob(dict(name="b", hashFunction="sha512", schema_version=1))
+        dbo.releases.history.bucket.blobs["b/None-567-bob.json"] = FakeBlob("")
+        dbo.releases.history.bucket.blobs["b/1-567-bob.json"] = FakeBlob("""
+{
+    "name": "b",
+    "hashFunction": "sha512",
+    "schema_version": 1
+}
+""")
         dbo.releases.t.insert().execute(name="c", product="c", data=createBlob(dict(name="c", hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
             name="d",
@@ -146,8 +160,8 @@ class ViewTest(unittest.TestCase):
 """
             ),
         )
-        dbo.releases.history.data["d"]["d-1"] = createBlob(
-            """
+        dbo.releases.history.bucket.blobs["d/None-678-bob.json"] = FakeBlob("")
+        dbo.releases.history.bucket.blobs["d/1-678-bob.json"] = FakeBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -166,8 +180,7 @@ class ViewTest(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         dbo.rules.t.insert().execute(
             rule_id=1,
             priority=100,

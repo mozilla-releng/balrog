@@ -1,22 +1,40 @@
-from collections import defaultdict
+import json
+
+from auslib.db import GCSHistory
 
 
-class FakeGCSHistory:
+class FakeBlob:
+    def __init__(self, data=None):
+        self.data = data
+
+    def upload_from_string(self, body, *args, **kwargs):
+        self.data = body
+
+
+class FakeBucket:
+    def __init__(self):
+        self.blobs = {}
+
+    def blob(self, blob_name, *args, **kwargs):
+        self.blobs[blob_name] = FakeBlob()
+        return self.blobs[blob_name]
+
+
+class FakeGCSHistory(GCSHistory):
     def __init__(self, *args, **kwargs):
-        self.data = defaultdict(dict)
+        self.bucket = FakeBucket()
+        self.identifier_column = "name"
+        self.data_column = "data"
 
-    def forInsert(self, insertedKeys, columns, changed_by, transaction):
-        name = "{}-{}".format(columns.get("name"), columns.get("data_version"))
-        self.data[columns.get("name")][name] = columns.get("data")
-
-    def forDelete(self, rowData, changed_by, transaction):
-        name = "{}-{}".format(rowData.get("name"), rowData.get("data_version"))
-        self.data[rowData.get("name")][name] = ""
-
-    def forUpdate(self, rowData, changed_by, transaction):
-        name = "{}-{}".format(rowData.get("name"), rowData.get("data_version"))
-        self.data[rowData.get("name")][name] = rowData.get("data")
+    def _getBucket(self, identifier):
+        return self.bucket
 
     def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
-        name = "{}-{}".format(column_values["name"], data_version)
-        return {"name": column_values["name"], "data_version": data_version, "data": self.data[column_values["name"]][name]}
+        name = column_values["name"]
+        prefix = f"{name}/{data_version}-"
+        data = None
+        for bname, blob in self.bucket.blobs.items():
+            if bname.startswith(prefix):
+                data = blob.data
+                break
+        return {"name": column_values["name"], "data_version": data_version, "data": json.loads(data)}

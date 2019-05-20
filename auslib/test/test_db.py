@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import re
@@ -4624,11 +4625,12 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
             self.releases.update({"name": "p"}, {"product": "z", "data": blob2}, changed_by="bill", old_data_version=1, transaction=trans)
         ret = select([self.releases.data]).where(self.releases.name == "p").execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
-        history_entries = self.releases.history.data["p"]
-        self.assertEqual(len(history_entries), 3)
-        self.assertEqual(history_entries["p-1"], ancestor_blob)
-        self.assertEqual(history_entries["p-2"], blob1)
-        self.assertEqual(history_entries["p-3"], result_blob)
+        history_entries = [blob.data for name, blob in self.releases.history.bucket.blobs.items() if name.startswith("p")]
+        self.assertEqual(len(history_entries), 4)
+        self.assertEqual(history_entries[0], "")
+        self.assertEqual(json.loads(history_entries[1]), ancestor_blob)
+        self.assertEqual(json.loads(history_entries[2]), blob1)
+        self.assertEqual(json.loads(history_entries[3]), result_blob)
 
     def testAddMergeableWithChangesToList(self):
         ancestor_blob = createBlob(
@@ -4781,11 +4783,12 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
             self.releases.update({"name": "release4"}, {"product": "z", "data": blob2}, changed_by="bill", old_data_version=1, transaction=trans)
         ret = select([self.releases.data]).where(self.releases.name == "release4").execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
-        history_entries = self.releases.history.data["release4"]
-        self.assertEqual(len(history_entries), 3)
-        self.assertEqual(history_entries["release4-1"], ancestor_blob)
-        self.assertEqual(history_entries["release4-2"], blob1)
-        self.assertEqual(history_entries["release4-3"], result_blob)
+        history_entries = [blob.data for name, blob in self.releases.history.bucket.blobs.items() if name.startswith("release4")]
+        self.assertEqual(len(history_entries), 4)
+        self.assertEqual(history_entries[0], "")
+        self.assertEqual(json.loads(history_entries[1]), ancestor_blob)
+        self.assertEqual(json.loads(history_entries[2]), blob1)
+        self.assertEqual(json.loads(history_entries[3]), result_blob)
 
     def testAddConflictingOutdatedData(self):
         ancestor_blob = createBlob(
@@ -4895,10 +4898,11 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
                 old_data_version=1,
                 transaction=trans,
             )
-        history_entries = self.releases.history.data["p"]
-        self.assertEqual(len(history_entries), 2)
-        self.assertEqual(history_entries["p-1"], ancestor_blob)
-        self.assertEqual(history_entries["p-2"], blob1)
+        history_entries = [blob.data for name, blob in self.releases.history.bucket.blobs.items() if name.startswith("p")]
+        self.assertEqual(len(history_entries), 3)
+        self.assertEqual(history_entries[0], "")
+        self.assertEqual(json.loads(history_entries[1]), ancestor_blob)
+        self.assertEqual(json.loads(history_entries[2]), blob1)
 
     def testAddLocaleToReleaseDoesMerging(self):
         ancestor_blob = createBlob(
@@ -4999,13 +5003,14 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
             )
         ret = select([self.releases.data]).where(self.releases.name == "release4").execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
-        history_entries = self.releases.history.data["release4"]
-        self.assertEqual(len(history_entries), 3)
+        history_entries = [blob.data for name, blob in self.releases.history.bucket.blobs.items() if name.startswith("release4")]
+        self.assertEqual(len(history_entries), 4)
         interim_blob = deepcopy(ancestor_blob)
         interim_blob["platforms"]["p"]["locales"]["l"] = {"partials": [{"filesize": 567, "from": "release2", "hashValue": "ghi"}]}
-        self.assertEqual(history_entries["release4-1"], ancestor_blob)
-        self.assertEqual(history_entries["release4-2"], interim_blob)
-        self.assertEqual(history_entries["release4-3"], result_blob)
+        self.assertEqual(history_entries[0], "")
+        self.assertEqual(json.loads(history_entries[1]), ancestor_blob)
+        self.assertEqual(json.loads(history_entries[2]), interim_blob)
+        self.assertEqual(json.loads(history_entries[3]), result_blob)
 
 
 @pytest.mark.usefixtures("current_db_schema")
