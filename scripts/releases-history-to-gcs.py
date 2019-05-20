@@ -59,14 +59,33 @@ def ignore_aiohttp_ssl_error(loop, aiohttpversion="3.5.4"):
 skip_patterns = ("-nightly-",)
 
 
-async def process_release(r, session, balrog_db, bucket, sem, loop):
+def timeout_monkeypatch(storage, timeout_override):
+    orig_download_metadata = storage.download_metadata
+    orig_upload = storage.upload
+
+    async def download_metadata(self, *args, **kwargs):
+        kwargs["timeout"] = timeout_override
+        return await orig_download_metadata(self, *args, **kwargs)
+
+    async def upload(self, *args, **kwargs):
+        kwargs["timeout"] = timeout_override
+        return await orig_upload(self, *args, **kwargs)
+
+    storage.download_metadata = download_metadata
+    storage.upload = upload
+
+    return storage
+
+
+async def process_release(r, session, balrog_db, bucket, mysql_sem, gcs_sem, loop):
     releases = defaultdict(int)
     uploads = defaultdict(lambda: defaultdict(int))
 
     print("Processing {}".format(r), flush=True)
-    # TODO: do we need to wrap this in the semaphore?
-    async with sem:
-        revisions = await loop.run_in_executor(None, balrog_db.execute, f"SELECT data_version, timestamp, changed_by, data FROM releases_history WHERE name='{r}'")
+    async with mysql_sem:
+        revisions = await loop.run_in_executor(
+            None, balrog_db.execute, f"SELECT data_version, timestamp, changed_by, data FROM releases_history WHERE name='{r}'"
+        )
     for rev in revisions:
         releases[r] += 1
         if rev["data"] is None:
@@ -74,13 +93,13 @@ async def process_release(r, session, balrog_db, bucket, sem, loop):
         else:
             old_version_hash = hashlib.md5(rev["data"].encode("ascii")).digest()
         try:
-            async with sem:
+            async with gcs_sem:
                 current_blob = await bucket.get_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
             current_blob_hash = base64.b64decode(current_blob.md5Hash)
         except aiohttp.ClientResponseError:
             current_blob_hash = None
         if old_version_hash != current_blob_hash:
-            async with sem:
+            async with gcs_sem:
                 blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
             await blob.upload(rev["data"], session)
             uploads[r]["uploaded"] += 1
@@ -90,9 +109,10 @@ async def process_release(r, session, balrog_db, bucket, sem, loop):
     return releases, uploads
 
 
-async def main(loop, balrog_db, bucket_name, limit_to, concurrency, skip_toplevel_keys, whitelist):
+async def main(loop, balrog_db, bucket_name, limit_to, mysql_concurrency, gcs_concurrency, skip_toplevel_keys, whitelist, gcs_timeout):
     # limit the number of connections at any one time
-    sem = asyncio.Semaphore(concurrency)
+    mysql_sem = asyncio.Semaphore(mysql_concurrency)
+    gcs_sem = asyncio.Semaphore(gcs_concurrency)
     releases = defaultdict(int)
     uploads = defaultdict(lambda: defaultdict(int))
     tasks = []
@@ -100,7 +120,7 @@ async def main(loop, balrog_db, bucket_name, limit_to, concurrency, skip_topleve
     n = 0
 
     async with aiohttp.ClientSession(loop=loop) as session:
-        storage = Storage(session=session)
+        storage = timeout_monkeypatch(Storage(session=session), gcs_timeout)
         bucket = storage.get_bucket(bucket_name)
 
         toplevel_keys = []
@@ -134,7 +154,7 @@ async def main(loop, balrog_db, bucket_name, limit_to, concurrency, skip_topleve
                 print("Skipping {} because it matches a skip pattern".format(release_name), flush=True)
                 continue
 
-            tasks.append(loop.create_task(process_release(release_name, session, balrog_db, bucket, sem, loop)))
+            tasks.append(loop.create_task(process_release(release_name, session, balrog_db, bucket, mysql_sem, gcs_sem, loop)))
 
         for processed_releases, processed_uploads in await asyncio.gather(*tasks, loop=loop):
             for rel in processed_releases:
@@ -159,18 +179,16 @@ if __name__ == "__main__":
         limit_to = int(sys.argv[3])
     else:
         limit_to = None
-    # Default concurrency is quite low because calls to /revisions endpoints are quite resource intensive
-    if len(sys.argv) > 4:
-        concurrency = int(sys.argv[4])
-    else:
-        concurrency = 5
 
+    mysql_concurrency = int(os.environ.get("MYSQL_CONCURRENCY", 10))
+    gcs_concurrency = int(os.environ.get("GCS_SYNC_CONCURRENCY", 10))
     skip_toplevel_keys = bool(int(os.environ.get("SKIP_TOPLEVEL_KEYS", True)))
     whitelist = os.environ.get("ONLY_SYNC_RELEASES", None)
+    gcs_timeout = int(os.environ.get("GCS_TIMEOUT", 60))
     if whitelist:
         whitelist = whitelist.split()
     loop = asyncio.get_event_loop()
     ignore_aiohttp_ssl_error(loop)
 
     balrog_db = create_engine(dburi)
-    loop.run_until_complete(main(loop, balrog_db, bucket_name, limit_to, concurrency, skip_toplevel_keys, whitelist))
+    loop.run_until_complete(main(loop, balrog_db, bucket_name, limit_to, mysql_concurrency, gcs_concurrency, skip_toplevel_keys, whitelist, gcs_timeout))

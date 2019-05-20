@@ -78,7 +78,7 @@ elif [ $1 == "sync-to-gcs" ]; then
         echo "\${GOOGLE_APPLICATION_CREDENTIALS} must be set!"
         exit 1
     fi
-    python scripts/releases-history-to-gcs.py ${DBURI} ${RELEASES_HISTORY_BUCKET} ${LIMIT_TO_TOTAL_RELEASES} ${GCS_SYNC_CONCURRENCY}
+    python scripts/releases-history-to-gcs.py ${DBURI} ${RELEASES_HISTORY_BUCKET} ${LIMIT_TO_TOTAL_RELEASES}
     exit $?
 elif [ $1 == "test" ]; then
     coveralls=1
