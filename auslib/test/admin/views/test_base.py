@@ -27,3 +27,8 @@ class TestJsonLogFormatter(ViewTest):
     def testContentSecurityPolicyIsSet(self):
         ret = self.client.get("/rules")
         self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
+
+    def testCORSIsSet(self):
+        ret = self.client.get("/rules")
+        self.assertEqual(ret.headers.get("Access-Control-Allow-Headers"), "Authorization")
+        self.assertEqual(ret.headers.get("Access-Control-Allow-Origin"), "*")

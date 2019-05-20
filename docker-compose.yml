@@ -45,6 +45,7 @@ services:
       - RELEASES_HISTORY_BUCKET=bhearsum_releases_history
       - NIGHTLY_HISTORY_BUCKET=bhearsum_nightly_history
       - GOOGLE_APPLICATION_CREDENTIALS=google.json
+      - CORS_ORIGINS=*
       # Grab mail information from the local environment
       - SMTP_HOST
       - SMTP_PORT

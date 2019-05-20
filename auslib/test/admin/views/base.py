@@ -50,6 +50,7 @@ class ViewTest(unittest.TestCase):
         app.config["AUTH_DOMAIN"] = "balrog.test.dev"
         app.config["AUTH_AUDIENCE"] = "balrog test"
         app.config["M2M_ACCOUNT_MAPPING"] = {}
+        app.config["CORS_ORIGINS"] = "*"
         with open(self.version_file, "w+") as f:
             f.write(
                 """
