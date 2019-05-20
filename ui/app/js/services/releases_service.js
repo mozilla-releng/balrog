@@ -18,7 +18,7 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges, 
     getProducts: function(){
       return $http.get('/api/releases/columns/product');
     },
-    getHistory: function(name) {
+    getHistory: function(name, product) {
       var deferred = $q.defer();
       var releases = [];
       var bucket = null;
@@ -36,6 +36,7 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges, 
           var parts = r.name.replace(name + "/", "").replace(".json", "").split("-");
           var release = {
             "name": name,
+            "product": product,
             // Sometimes data version in None, which will show up as NaN. Meh?
             "data_version": parseInt(parts[0]),
             "timestamp": parseInt(parts[1]),

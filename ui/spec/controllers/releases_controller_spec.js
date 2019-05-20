@@ -4,6 +4,7 @@ var sample_revisions = {
     {
       "product": "Firefox",
       "name": "Firefox-33.0-build1",
+      "data_url": "fake",
       "change_id": 713662,
       "changed_by": "ffxbld",
       "data_version": 1,
@@ -16,6 +17,7 @@ var sample_revisions = {
     {
       "product": "Firefox",
       "name": "Firefox-33.0-build1",
+      "data_url": "fake",
       "change_id": 713663,
       "changed_by": "ffxbld",
       "data_version": 2,
@@ -249,6 +251,8 @@ describe("controller: ReleasesController", function() {
     it("should be possible to open the revert modal", function() {
       this.$httpBackend.expectGET('/api/releases')
       .respond(200, JSON.stringify(sample_releases));
+      this.$httpBackend.expectGET('fake')
+      .respond(200, "fake");
       this.scope.openRevertModal(sample_revisions.revisions[0]);
     });
   });

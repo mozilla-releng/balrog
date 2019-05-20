@@ -14,16 +14,19 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
   $scope.auth0 = Auth0;
 
   if ($scope.release_name) {
-    Releases.getHistory($scope.release_name)
-    .then(function(response, err) {
-      if (err) {
-        sweetAlert("Failed to load release revisions:", err);
-      }
-      else {
-        $scope.releases = response;
-        $scope.releases_count = response.length;
-        $scope.loading = false;
-      }
+    Releases.getRelease($scope.release_name)
+    .success(function(release_response, err) {
+      Releases.getHistory($scope.release_name, release_response.product)
+      .then(function(response, err) {
+        if (err) {
+          sweetAlert("Failed to load release revisions:", err);
+        }
+        else {
+          $scope.releases = response;
+          $scope.releases_count = response.length;
+          $scope.loading = false;
+        }
+      });
     });
   } else {
     Releases.getReleases()
