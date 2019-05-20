@@ -114,10 +114,7 @@ class ProductRequiredSignoffsView(RequiredSignoffsView):
         super(ProductRequiredSignoffsView, self).__init__(dbo.productRequiredSignoffs, ["product", "channel", "role"])
 
     def get(self):
-        where = {}
-        for param in ("product", "channel"):
-            if param in request.args:
-                where[param] = request.args[param]
+        where = {param: request.args[param] for param in ("product", "channel") if param in request.args}
         return super(ProductRequiredSignoffsView, self).get(where=where)
 
     @requirelogin
@@ -153,10 +150,7 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
         super(ProductRequiredSignoffsScheduledChangesView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
 
     def get(self):
-        where = {}
-        for param in ("product", "channel"):
-            if param in request.args:
-                where[f"base_{param}"] = request.args[param]
+        where = {f"base_{param}": request.args[param] for param in ("product", "channel") if param in request.args}
         return super(ProductRequiredSignoffsScheduledChangesView, self).get(where=where)
 
     @requirelogin
@@ -269,9 +263,7 @@ class PermissionsRequiredSignoffsView(RequiredSignoffsView):
         super(PermissionsRequiredSignoffsView, self).__init__(dbo.permissionsRequiredSignoffs, ["product", "role"])
 
     def get(self):
-        where = {}
-        if "product" in request.args:
-            where["product"] = request.args["product"]
+        where = {param: request.args[param] for param in ("product",) if param in request.args}
         return super(PermissionsRequiredSignoffsView, self).get(where=where)
 
     @requirelogin
@@ -302,9 +294,7 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
         super(PermissionsRequiredSignoffsScheduledChangesView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
 
     def get(self):
-        where = {}
-        if "product" in request.args:
-            where["base_product"] = request.args["product"]
+        where = {f"base_{param}": request.args[param] for param in ("product",) if param in request.args}
         return super(PermissionsRequiredSignoffsScheduledChangesView, self).get(where=where)
 
     @requirelogin
