@@ -64,7 +64,9 @@ async def process_release(r, session, balrog_db, bucket, sem, loop):
     uploads = defaultdict(lambda: defaultdict(int))
 
     print("Processing {}".format(r), flush=True)
-    revisions = await loop.run_in_executor(None, balrog_db.execute, f"SELECT data_version, timestamp, changed_by, data FROM releases_history WHERE name='{r}'")
+    # TODO: do we need to wrap this in the semaphore?
+    async with sem:
+        revisions = await loop.run_in_executor(None, balrog_db.execute, f"SELECT data_version, timestamp, changed_by, data FROM releases_history WHERE name='{r}'")
     for rev in revisions:
         releases[r] += 1
         if rev["data"] is None:
