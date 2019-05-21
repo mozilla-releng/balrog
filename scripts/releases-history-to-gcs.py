@@ -3,6 +3,7 @@
 import asyncio
 import base64
 from collections import defaultdict
+from concurrent.futures import TimeoutError
 import hashlib
 import os
 import ssl
@@ -85,9 +86,18 @@ async def process_release(r, session, balrog_db, bucket, mysql_sem, gcs_sem, loo
     print("Processing {}".format(r), flush=True)
     try:
         async with mysql_sem:
-            revisions = await loop.run_in_executor(
-                None, balrog_db.execute, f"SELECT data_version, timestamp, changed_by, data FROM releases_history WHERE name='{r}'"
-            )
+            for attempt in range(1, 6):
+                try:
+                    revisions = await loop.run_in_executor(
+                        None, balrog_db.execute, f"SELECT data_version, timestamp, changed_by, data FROM releases_history WHERE name='{r}'"
+                    )
+                    break
+                except:
+                    exc = traceback.format_exc()
+                    print(f"Caught exception while selecting {r} history from db:\n{exc}")
+                    if attempt == 5:
+                        raise
+                    await asyncio.sleep(5)
             for rev in revisions:
                 releases[r] += 1
                 if rev["data"] is None:
@@ -95,16 +105,35 @@ async def process_release(r, session, balrog_db, bucket, mysql_sem, gcs_sem, loo
                 else:
                     old_version_hash = hashlib.md5(rev["data"].encode("ascii")).digest()
                 try:
-                    async with gcs_sem:
-                        current_blob = await bucket.get_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
-                    current_blob_hash = base64.b64decode(current_blob.md5Hash)
+                    for attempt in range(1, 6):
+                        try:
+                            async with gcs_sem:
+                                current_blob = await bucket.get_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
+                                current_blob_hash = base64.b64decode(current_blob.md5Hash)
+                                break
+                        except TimeoutError:
+                            exc = traceback.format_exc()
+                            print(f"Caught exception while selecting {r} history from db:\n{exc}")
+                            if attempt == 5:
+                                raise
+                            await asyncio.sleep(5)
                 except aiohttp.ClientResponseError:
                     current_blob_hash = None
                 if old_version_hash != current_blob_hash:
-                    async with gcs_sem:
-                        blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
-                    await blob.upload(rev["data"], session)
-                    uploads[r]["uploaded"] += 1
+                    for attempt in range(1, 6):
+                        try:
+                            print("uploading")
+                            async with gcs_sem:
+                                blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
+                            await blob.upload(rev["data"], session)
+                            uploads[r]["uploaded"] += 1
+                            break
+                        except:
+                            exc = traceback.format_exc()
+                            print(f"Caught exception while selecting {r} history from db:\n{exc}")
+                            if attempt == 5:
+                                raise
+                            await asyncio.sleep(5)
                 else:
                     uploads[r]["existing"] += 1
     except:
