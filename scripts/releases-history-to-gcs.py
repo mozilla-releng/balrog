@@ -7,6 +7,7 @@ import hashlib
 import os
 import ssl
 import sys
+import traceback
 
 import aiohttp
 
@@ -82,29 +83,33 @@ async def process_release(r, session, balrog_db, bucket, mysql_sem, gcs_sem, loo
     uploads = defaultdict(lambda: defaultdict(int))
 
     print("Processing {}".format(r), flush=True)
-    async with mysql_sem:
-        revisions = await loop.run_in_executor(
-            None, balrog_db.execute, f"SELECT data_version, timestamp, changed_by, data FROM releases_history WHERE name='{r}'"
-        )
-        for rev in revisions:
-            releases[r] += 1
-            if rev["data"] is None:
-                old_version_hash = None
-            else:
-                old_version_hash = hashlib.md5(rev["data"].encode("ascii")).digest()
-            try:
-                async with gcs_sem:
-                    current_blob = await bucket.get_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
-                current_blob_hash = base64.b64decode(current_blob.md5Hash)
-            except aiohttp.ClientResponseError:
-                current_blob_hash = None
-            if old_version_hash != current_blob_hash:
-                async with gcs_sem:
-                    blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
-                await blob.upload(rev["data"], session)
-                uploads[r]["uploaded"] += 1
-            else:
-                uploads[r]["existing"] += 1
+    try:
+        async with mysql_sem:
+            revisions = await loop.run_in_executor(
+                None, balrog_db.execute, f"SELECT data_version, timestamp, changed_by, data FROM releases_history WHERE name='{r}'"
+            )
+            for rev in revisions:
+                releases[r] += 1
+                if rev["data"] is None:
+                    old_version_hash = None
+                else:
+                    old_version_hash = hashlib.md5(rev["data"].encode("ascii")).digest()
+                try:
+                    async with gcs_sem:
+                        current_blob = await bucket.get_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
+                    current_blob_hash = base64.b64decode(current_blob.md5Hash)
+                except aiohttp.ClientResponseError:
+                    current_blob_hash = None
+                if old_version_hash != current_blob_hash:
+                    async with gcs_sem:
+                        blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
+                    await blob.upload(rev["data"], session)
+                    uploads[r]["uploaded"] += 1
+                else:
+                    uploads[r]["existing"] += 1
+    except:
+        exc = traceback.format_exc()
+        print(f"Hit exception while processing{r}\n{exc}")
 
     return releases, uploads
 
