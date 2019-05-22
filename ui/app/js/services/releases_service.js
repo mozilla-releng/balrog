@@ -85,7 +85,7 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges, 
       var deferred = $q.defer();
       $http.get(link)
       .success(function(response) {
-        deferred.resolve(JSON.stringify(response, null, "  "));
+        deferred.resolve(stringify(response, { cmp: function(a, b) { return a.key < b.key ? -1 : 1; }, space: 2 }));
       })
       .error(function() {
         deferred.reject(arguments);

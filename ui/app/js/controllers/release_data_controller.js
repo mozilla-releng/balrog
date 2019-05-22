@@ -36,7 +36,7 @@ function($scope, $http, $modalInstance, Releases, Rules, release, diff, previous
   } else {
     Releases.getRelease(release.name)
     .then(function(response) {
-      $scope.release.data = response.data;
+      $scope.release.data = stringify(response.data, { cmp: function(a, b) { return a.key < b.key ? -1 : 1; }, space: 2});
     });
   }
 
