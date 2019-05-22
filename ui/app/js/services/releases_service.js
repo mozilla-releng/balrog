@@ -32,19 +32,21 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges, 
       var baseUrl = bucket + '?prefix=' + name + '/' + '&delimeter=/';
 
       function parseReleases(raw_releases) {
-        raw_releases.forEach(function(r) {
-          var parts = r.name.replace(name + "/", "").replace(".json", "").split("-");
-          var release = {
-            "name": name,
-            "product": product,
-            // Sometimes data version in None, which will show up as NaN. Meh?
-            "data_version": parseInt(parts[0]),
-            "timestamp": parseInt(parts[1]),
-            "changed_by": parts[2],
-            "data_url": r.mediaLink,
-          };
-          releases.push(release);
-        });
+        if (raw_releases) {
+          raw_releases.forEach(function(r) {
+            var parts = r.name.replace(name + "/", "").replace(".json", "").split("-");
+            var release = {
+              "name": name,
+              "product": product,
+              // Sometimes data version in None, which will show up as NaN. Meh?
+              "data_version": parseInt(parts[0]),
+              "timestamp": parseInt(parts[1]),
+              "changed_by": parts[2],
+              "data_url": r.mediaLink,
+            };
+            releases.push(release);
+          });
+        }
       }
 
       function getReleases(url, pageToken) {
