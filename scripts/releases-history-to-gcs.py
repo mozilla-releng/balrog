@@ -113,7 +113,7 @@ async def process_release(r, session, balrog_db, bucket, mysql_sem, gcs_sem, loo
                                 break
                         except TimeoutError:
                             exc = traceback.format_exc()
-                            print(f"Caught exception while selecting {r} history from db:\n{exc}")
+                            print(f"Caught exception while getting current md5 for {r} from gcs:\n{exc}")
                             if attempt == 5:
                                 raise
                             await asyncio.sleep(5)
@@ -122,7 +122,6 @@ async def process_release(r, session, balrog_db, bucket, mysql_sem, gcs_sem, loo
                 if old_version_hash != current_blob_hash:
                     for attempt in range(1, 6):
                         try:
-                            print("uploading")
                             async with gcs_sem:
                                 blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
                             await blob.upload(rev["data"], session)
@@ -130,7 +129,7 @@ async def process_release(r, session, balrog_db, bucket, mysql_sem, gcs_sem, loo
                             break
                         except:
                             exc = traceback.format_exc()
-                            print(f"Caught exception while selecting {r} history from db:\n{exc}")
+                            print(f"Caught exception while uploading new revision of {r}:\n{exc}")
                             if attempt == 5:
                                 raise
                             await asyncio.sleep(5)
