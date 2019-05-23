@@ -5,6 +5,8 @@ import sys
 
 from flask_wtf.csrf import CSRFProtect
 
+from google.api_core.exceptions import Forbidden
+from google.auth.credentials import AnonymousCredentials
 from google.cloud import storage
 
 from auslib.log import configure_logging
@@ -38,6 +40,8 @@ if os.environ.get("LOG_FORMAT") == "plain":
     logging_kwargs["formatter"] = logging.Formatter
 configure_logging(**logging_kwargs)
 
+log = logging.getLogger(__file__)
+
 from auslib.global_state import cache, dbo  # noqa
 from auslib.web.admin.base import app as application  # noqa
 
@@ -56,33 +60,46 @@ cache.make_cache("blob_schema", 50, 24 * 60 * 60)
 # has at least one permission.
 cache.make_cache("users", 1, 300)
 
-# Ensure that the necessary information is passed for releases history
-# to be written, unless we're in a local dev environment.
+if not os.environ.get("RELEASES_HISTORY_BUCKET") or not os.environ.get("NIGHTLY_HISTORY_BUCKET"):
+    log.critical("RELEASES_HISTORY_BUCKET and NIGHTLY_HISTORY_BUCKET must be provided")
+    sys.exit(1)
 if not os.environ.get("LOCALDEV"):
-    log = logging.getLogger(__file__)
     if not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")):
         log.critical("GOOGLE_APPLICATION_CREDENTIALS must be provided")
         sys.exit(1)
-    if not os.environ.get("RELEASES_HISTORY_BUCKET") or not os.environ.get("NIGHTLY_HISTORY_BUCKET"):
-        log.critical("RELEASES_HISTORY_BUCKET and NIGHTLY_HISTORY_BUCKET must be provided")
-        sys.exit(1)
 
-# Set up the releases history bucket, if enabled.
-releases_history_bucket = None
-if os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")) and os.environ.get("RELEASES_HISTORY_BUCKET") and os.environ.get("NIGHTLY_HISTORY_BUCKET"):
+if os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")):
     storage_client = storage.Client()
-    releases_history_bucket = storage_client.get_bucket(os.environ["RELEASES_HISTORY_BUCKET"])
-    nightly_history_bucket = storage_client.get_bucket(os.environ["NIGHTLY_HISTORY_BUCKET"])
+else:
+    # Will never be used for deployed environments, because we ensure GOOGLE_APPLICATION_CREDENTIALS
+    # is provided for them.
+    storage_client = storage.Client.create_anonymous_client()
 
-# Order is important here, we fall through to the last entry. This works because dictionary keys
-# are returned in insertion order when iterated on.
-# Turn off formatting because it is clearer to have these listed one after another
-# fmt: off
-buckets = {
-    "nightly": nightly_history_bucket,
-    "": releases_history_bucket,
-}
-# fmt: on
+# Check if we have write access, and set the bucket configuration appropriately
+# There's basically two cases here:
+#   * Credentials have been provided and can write to the buckets, or no credentials have been provided -> enable writes
+#   * Credentials have not been provided, or they can't write to the bucket
+#     * If we're local dev disable writes
+#     * If we're anywhere else, raise an Exception (local dev is the only place where we can be sure we can safely disable them)
+try:
+    # Order is important here, we fall through to the last entry. This works because dictionary keys
+    # are returned in insertion order when iterated on.
+    # Turn off formatting because it is clearer to have these listed one after another
+    # fmt: off
+    buckets = {
+        "nightly": storage_client.bucket(os.environ["NIGHTLY_HISTORY_BUCKET"]),
+        "": storage_client.bucket(os.environ["RELEASES_HISTORY_BUCKET"]),
+    # fmt: on
+    }
+    for bucket in buckets.values():
+        blob = bucket.blob("startuptest")
+        blob.upload_from_string("startuptest", content_type="text/plain")
+except (ValueError, Forbidden) as e:
+    if not os.environ.get("LOCALDEV"):
+        if isinstance(e, Forbidden) or (isinstance(e, ValueError) and"Anonymous credentials" not in e.args[0]):
+            raise
+    log.info("Disabling releases_history writes")
+    buckets = None
 
 dbo.setDb(os.environ["DBURI"], buckets)
 if os.environ.get("NOTIFY_TO_ADDR"):
