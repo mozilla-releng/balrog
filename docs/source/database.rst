@@ -334,8 +334,14 @@ Changes to the Permissions table may also require signoff. These Required Signof
 History Tables
 --------------
 Change attribution and recording is embedded deeply into Balrog.
-The rules, releases, permissions, required signoffs, and all associated scheduled changes tables have a corresponding history table that records the time a change was made and who made it.
+The rules, permissions, required signoffs, and all associated scheduled changes tables have a corresponding history table that records the time a change was made and who made it.
 This allows us to look back in time when debugging issues, attribute changes to people (aka blame), and quickly roll back bad changes.
+
+----------------
+Releases History
+----------------
+
+We also store history for changes to the releases table, but due to its immense size and data type, it is stored in Google Cloud Storage instead of the database. We use two separate buckets for it: one for nightly releases, which has a short expiration window and another for non-nightly releases, which is kept forever.
 
   .. _scheduledChanges:
 

@@ -15,9 +15,9 @@ These instructions assume you have the following installed (if not, you can foll
 -   `Docker <https://docs.docker.com/engine/getstarted/step_one/>`_
 -   `Tox <http://tox.readthedocs.io/en/latest/install.html>`_ (Optional)
 
------------------------
-Cloning the  Repository
------------------------
+----------------------
+Cloning the Repository
+----------------------
 
 -   Fork the `Balrog Repository <https://github.com/mozilla/balrog>`_ on GitHub.
 -   Clone the fork using
@@ -49,6 +49,8 @@ You'll need to use the "Sign in..." button to do anything useful with the admin 
 
     $ export LOCAL_ADMIN=<email address you signed in with>
     $ docker-compose run balrogadmin create-local-admin
+
+By default, Balrog will import a copy of the production database, so you can more easily replicate issues found in production. Also by default, releases history will be read from the production Google Cloud Storage buckets, but you will not be able to write to it. If you need to do so for some reason, you will need to create your own buckets, and provide a `google.json` file in the root of the repository that can read and write to your buckets. More details on that can be found in `docker-compose.yml`.
 
 
 -------------
