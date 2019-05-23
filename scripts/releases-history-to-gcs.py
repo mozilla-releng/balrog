@@ -79,7 +79,21 @@ def timeout_monkeypatch(storage, timeout_override):
     return storage
 
 
-async def process_release(r, session, balrog_db, bucket, mysql_sem, gcs_sem, loop):
+async def gather_gcloud_md5s(session, storage, bucket_name, loop):
+    md5s = {}
+    res = await storage.list_objects(bucket_name, session=session)
+    nextPageToken = res.get("nextPageToken")
+    for i in res.get("items"):
+        md5s[i["name"]] = i["md5Hash"]
+    while nextPageToken:
+        res = await storage.list_objects(bucket_name, session=session, params={"pageToken": nextPageToken})
+        nextPageToken = res.get("nextPageToken")
+        for i in res.get("items"):
+            md5s[i["name"]] = i["md5Hash"]
+    return md5s
+
+
+async def process_release(r, session, balrog_db, bucket, mysql_sem, gcs_sem, loop, gcloud_md5s):
     releases = defaultdict(int)
     uploads = defaultdict(lambda: defaultdict(int))
 
@@ -104,21 +118,7 @@ async def process_release(r, session, balrog_db, bucket, mysql_sem, gcs_sem, loo
                     old_version_hash = None
                 else:
                     old_version_hash = hashlib.md5(rev["data"].encode("ascii")).digest()
-                try:
-                    for attempt in range(1, 6):
-                        try:
-                            async with gcs_sem:
-                                current_blob = await bucket.get_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
-                                current_blob_hash = base64.b64decode(current_blob.md5Hash)
-                                break
-                        except TimeoutError:
-                            exc = traceback.format_exc()
-                            print(f"Caught exception while getting current md5 for {r} from gcs:\n{exc}")
-                            if attempt == 5:
-                                raise
-                            await asyncio.sleep(5)
-                except aiohttp.ClientResponseError:
-                    current_blob_hash = None
+                current_blob_hash = base64.b64decode(gcloud_md5s.get("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"])))
                 if old_version_hash != current_blob_hash:
                     for attempt in range(1, 6):
                         try:
@@ -156,6 +156,8 @@ async def main(loop, balrog_db, bucket_name, limit_to, mysql_concurrency, gcs_co
         storage = timeout_monkeypatch(Storage(session=session), gcs_timeout)
         bucket = storage.get_bucket(bucket_name)
 
+        md5s = await gather_gcloud_md5s(session, storage, bucket_name, loop)
+
         toplevel_keys = []
         if skip_toplevel_keys:
             batch = await storage.list_objects(bucket_name, params={"delimiter": "/"})
@@ -187,7 +189,7 @@ async def main(loop, balrog_db, bucket_name, limit_to, mysql_concurrency, gcs_co
                 print("Skipping {} because it matches a skip pattern".format(release_name), flush=True)
                 continue
 
-            tasks.append(loop.create_task(process_release(release_name, session, balrog_db, bucket, mysql_sem, gcs_sem, loop)))
+            tasks.append(loop.create_task(process_release(release_name, session, balrog_db, bucket, mysql_sem, gcs_sem, loop, md5s)))
 
         for processed_releases, processed_uploads in await asyncio.gather(*tasks, loop=loop):
             for rel in processed_releases:
