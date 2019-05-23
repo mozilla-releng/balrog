@@ -118,7 +118,10 @@ async def process_release(r, session, balrog_db, bucket, mysql_sem, gcs_sem, loo
                     old_version_hash = None
                 else:
                     old_version_hash = hashlib.md5(rev["data"].encode("ascii")).digest()
-                current_blob_hash = base64.b64decode(gcloud_md5s.get("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"])))
+                current_blob_hash = None
+                current_md5 = gcloud_md5s.get("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
+                if current_md5:
+                    current_blob_hash = base64.b64decode(current_md5)
                 if old_version_hash != current_blob_hash:
                     for attempt in range(1, 6):
                         try:
