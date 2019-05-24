@@ -120,7 +120,10 @@ def matchBuildID(ruleBuildID, queryBuildID):
        operator."""
     if ruleBuildID is None:
         return True
-    return string_compare(queryBuildID, ruleBuildID)
+    if isinstance(queryBuildID, int):
+        return int_compare(queryBuildID, ruleBuildID)
+    else:
+        return string_compare(queryBuildID, ruleBuildID)
 
 
 def matchMemory(ruleMemory, queryMemory):

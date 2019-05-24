@@ -5,7 +5,7 @@ from auslib.blobs.base import Blob, BlobValidationError
 from auslib.errors import BadDataError
 from auslib.global_state import dbo
 from auslib.util.comparison import has_operator, strip_operator
-from auslib.util.rulematching import matchChannel, matchVersion
+from auslib.util.rulematching import matchChannel, matchVersion, matchBuildID
 from auslib.util.versions import MozillaVersion, decrement_version, increment_version
 
 
@@ -966,6 +966,9 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                 elif condition == "versions":
                     if any(map(lambda v: matchVersion(v, updateQuery["version"]), values)):
                         matches = True
+                elif condition == "buildIDs":
+                    if any(map(lambda v: matchBuildID(v, updateQuery["buildID"]), values)):
+                        matches = True
                 condition_results.append(matches)
 
             if all(condition_results):
@@ -1013,7 +1016,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                 continue
             # If there are overlapping fields, we need to see if what they apply to overlap in any way
             condition_results = []
-            for cond in ("channels", "locales", "versions"):
+            for cond in ("channels", "locales", "versions", "buildIDs"):
                 matches = False
                 # If a condition is not specified for a group, it always matches anything
                 if cond not in group1["for"] or cond not in group2["for"]:
@@ -1075,6 +1078,46 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
 
                             # Once we have comparable versions, we can check them!
                             if matchVersion(value1, comparable_values[1]) or matchVersion(value2, comparable_values[0]):
+                                matches = True
+                                break
+                elif cond == "buildIDs":
+                    for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
+                        # Any exact match between two concrete versions or two
+                        # comparisons means we have version overlap.
+                        if value1 == value2:
+                            matches = True
+                            break
+                        # If only one version has an operator we can easily
+                        # see if it matches the other, concrete version.
+                        elif has_operator(value1) and not has_operator(value2):
+                            if matchBuildID(value1, value2):
+                                matches = True
+                                break
+                        elif has_operator(value2) and not has_operator(value1):
+                            if matchBuildID(value2, value1):
+                                matches = True
+                                break
+                        # Finally, check for matches if both versions have operators
+                        else:
+                            # We need to find a precise version from each version comparison
+                            # to know whether or not there is overlap.
+                            comparable_values = []
+                            for v in (value1, value2):
+                                # If the comparison is <= or >=, we can simple use the version
+                                # in the string as the comparable version.
+                                if "=" in v:
+                                    comparable_values.append(strip_operator(v))
+                                # If it's a plain < or > comparison, we need to use the "next"
+                                # or "previous" version.
+                                elif v.startswith("<"):
+                                    comparable_values.append(str(int(strip_operator(v)) - 1))
+                                elif v.startswith(">"):
+                                    comparable_values.append(str(int(strip_operator(v)) + 1))
+                            if len(comparable_values) != 2:
+                                raise BlobValidationError("Couldn't find a comparable value for one of: %s, %s".format(value1, value2))
+
+                            # Once we have comparable versions, we can check them!
+                            if matchBuildID(value1, comparable_values[1]) or matchBuildID(value2, comparable_values[0]):
                                 matches = True
                                 break
 
