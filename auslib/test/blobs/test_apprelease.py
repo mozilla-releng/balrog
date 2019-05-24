@@ -3490,9 +3490,7 @@ class TestSchema9Blob(unittest.TestCase):
 
         returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
-        expected = [
-            '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>',
-        ]
+        expected = ['<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>']
         expected = [x.strip() for x in expected]
         self.assertCountEqual(returned, expected)
 
