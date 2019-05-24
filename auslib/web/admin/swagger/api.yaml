@@ -975,6 +975,9 @@ paths:
       externalDocs:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#product-required-signoffs"
         description: Returns list of all product required signoffs.
+      parameters:
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/channelParam'
       responses:
         '200':
           description: Returns JSON object of list of all product required signoffs plus total count
@@ -1134,6 +1137,8 @@ paths:
       externalDocs:
         url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs"
         description: Returns list of all permissions required signoffs.
+      parameters:
+        - $ref: '#/parameters/productParam'
       responses:
         '200':
           description: Returns JSON object of list of all permissions required signoffs plus total count
@@ -2691,6 +2696,8 @@ paths:
         description: Returns scheduled changes for required signoffs of products.
       parameters:
         - $ref: '#/parameters/allSCParam'
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/channelParam'
       responses:
         '200':
           description: Returns JSON object of list of all scheduled changes for required signoffs of products plus total count
@@ -2968,6 +2975,8 @@ paths:
         description: Returns scheduled changes for required signoffs of permissions.
       parameters:
         - $ref: '#/parameters/allSCParam'
+        - $ref: '#/parameters/productParam'
+        - $ref: '#/parameters/channelParam'
       responses:
         '200':
           description: Returns JSON object of list of all scheduled changes for required signoffs of permissions plus total count
