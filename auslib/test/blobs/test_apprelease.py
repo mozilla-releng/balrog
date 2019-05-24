@@ -3682,7 +3682,7 @@ class TestSchema9Blob(unittest.TestCase):
         ({"locales": ["de"], "channels": ["beta*"], "versions": ["<50.0"]}, {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}),
         ({"locales": ["de"], "channels": ["release"], "versions": ["<50.0"]}, {"locales": ["en-US", "fr"], "channels": ["release"], "versions": ["49.0"]}),
         ({"locales": ["de"], "channels": ["release"], "versions": ["<48.0"]}, {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}),
-        ({"buildIDs": ["<20190516215225"]}, {"buildIDs": [">=20190516215225"]}),
+        ({"buildIDs": ["<30"]}, {"buildIDs": [">=30"]}),
     ],
 )
 def testSchema9CanCreateValidBlobs(for1, for2):
@@ -3724,7 +3724,7 @@ def testSchema9CanCreateValidBlobs(for1, for2):
         ({"versions": [">=49.0"]}, {"versions": ["<=50.0"]}),
         ({"versions": ["<=49.0"]}, {"versions": ["<=50.0"]}),
         ({"locales": ["de"], "channels": ["release*"], "versions": ["<50.0"]}, {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}),
-        ({"buildIDs": ["<20190616215225"]}, {"buildIDs": [">=20190516215225"]}),
+        ({"buildIDs": ["<30"]}, {"buildIDs": [">=20"]}),
     ],
 )
 def testSchema9CannotCreateBlobWithConflictingFields(for1, for2):
