@@ -1087,16 +1087,6 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                         if value1 == value2:
                             matches = True
                             break
-                        # If only one version has an operator we can easily
-                        # see if it matches the other, concrete version.
-                        elif has_operator(value1) and not has_operator(value2):
-                            if matchBuildID(value1, value2):
-                                matches = True
-                                break
-                        elif has_operator(value2) and not has_operator(value1):
-                            if matchBuildID(value2, value1):
-                                matches = True
-                                break
                         # Finally, check for matches if both versions have operators
                         else:
                             # We need to find a precise version from each version comparison
