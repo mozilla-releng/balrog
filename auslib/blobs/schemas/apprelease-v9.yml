@@ -68,6 +68,12 @@
                 items:
                   type: string
                   format: version
+              buildIDs:
+                type: array
+                description: A list of buildID matching strings. Exact buildIDs may be specified, or comparisons with <, >, <=, or <= operators.
+                items:
+                  type: string
+                  format: buildID
           fields:
             type: object
             additionalProperties: false

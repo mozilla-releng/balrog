@@ -3294,7 +3294,8 @@ class TestSchema9Blob(unittest.TestCase):
             "for": {
                 "locales": ["de", "en-US"],
                 "channels": ["release*"],
-                "versions": ["<31.0"]
+                "versions": ["<31.0"],
+                "buildIDs": ["<20"]
             },
             "fields": {
                 "actions": "showURL",
@@ -3464,6 +3465,33 @@ class TestSchema9Blob(unittest.TestCase):
             '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>',
             '<patch type="partial" URL="http://a.com/h1-partial-catchall" hashFunction="sha512" hashValue="9" size="8"/>',
         ]
+        expected = [x.strip() for x in expected]
+        self.assertCountEqual(returned, expected)
+
+        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_footer = "</update>"
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
+
+    def testWithoutActionsByBuildID(self):
+        updateQuery = {
+            "product": "h",
+            "buildID": "30",
+            "version": "30.0",
+            "buildTarget": "p",
+            "locale": "de",
+            "channel": "release",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
+            "force": None,
+        }
+        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' ' displayVersion="31.0.2" type="minor">'
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+
+        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = [x.strip() for x in returned]
+        expected = ['<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>']
         expected = [x.strip() for x in expected]
         self.assertCountEqual(returned, expected)
 
@@ -3653,6 +3681,8 @@ class TestSchema9Blob(unittest.TestCase):
         ({"locales": ["de"], "channels": ["beta*"], "versions": ["<50.0"]}, {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}),
         ({"locales": ["de"], "channels": ["release"], "versions": ["<50.0"]}, {"locales": ["en-US", "fr"], "channels": ["release"], "versions": ["49.0"]}),
         ({"locales": ["de"], "channels": ["release"], "versions": ["<48.0"]}, {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}),
+        ({"buildIDs": ["<30"]}, {"buildIDs": [">=30"]}),
+        ({"buildIDs": ["<=30"]}, {"buildIDs": [">30"]}),
     ],
 )
 def testSchema9CanCreateValidBlobs(for1, for2):
@@ -3694,6 +3724,9 @@ def testSchema9CanCreateValidBlobs(for1, for2):
         ({"versions": [">=49.0"]}, {"versions": ["<=50.0"]}),
         ({"versions": ["<=49.0"]}, {"versions": ["<=50.0"]}),
         ({"locales": ["de"], "channels": ["release*"], "versions": ["<50.0"]}, {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}),
+        ({"buildIDs": ["<30"]}, {"buildIDs": [">=20"]}),
+        ({"buildIDs": [">=20"]}, {"buildIDs": ["<30"]}),
+        ({"buildIDs": ["<30"]}, {"buildIDs": ["<30"]}),
     ],
 )
 def testSchema9CannotCreateBlobWithConflictingFields(for1, for2):
