@@ -9,13 +9,13 @@
         Content-Security-Policy explanation:
         * img-src: gravatar & githubusercontent & i1.wp.com for user avatars (which can't be locked down to a specific path due to CSP format)
         * frame-src: *.auth0.com to allow bearer token renewals in the background
-        * connect-src: *.auth0.com to allow us to pull public keys from auth0 to validate the login
+        * connect-src: *.auth0.com to allow us to pull public keys from auth0 to validate the login. www.googleapis.com to allow us to load releases history
         * script-src: unsafe-{eval,inline} because some of our dependencies require it
         * style-src: unsafe-inline because some of our dependencies require it. fonts.googleapis.com, because we load a font from it (in a weird way that injects it to the app at runtime)
         * font-src: fonts.googleapis.com because we load a font from it
     -->
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'none'; img-src 'self' https://*.gravatar.com https://*.githubusercontent.com https://i1.wp.com; frame-src https://*.auth0.com/; connect-src 'self' https://*.auth0.com/; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com/; font-src 'self' https://fonts.gstatic.com">
+          content="default-src 'none'; img-src 'self' https://*.gravatar.com https://*.githubusercontent.com https://i1.wp.com; frame-src https://*.auth0.com/; connect-src 'self' https://*.auth0.com/ https://www.googleapis.com/; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com/; font-src 'self' https://fonts.gstatic.com">
     <link rel="stylesheet" type="text/css" href="/css/app.css" media="all" />
     <link rel="icon" href="img/favicon.png" type="image/png" />
   </head>
