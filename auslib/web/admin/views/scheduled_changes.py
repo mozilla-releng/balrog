@@ -19,11 +19,14 @@ class ScheduledChangesView(AdminView):
         self.sc_table = table.scheduled_changes
         super(ScheduledChangesView, self).__init__()
 
-    def get(self):
+    def get(self, where=None):
         if connexion.request.args.get("all"):
-            rows = self.sc_table.select()
+            rows = self.sc_table.select(where=where)
         else:
-            rows = self.sc_table.select(where={"complete": False})
+            if where is None:
+                where = {}
+            where["complete"] = False
+            rows = self.sc_table.select(where=where)
         ret = {"count": len(rows), "scheduled_changes": []}
         for row in rows:
             scheduled_change = {"signoffs": {}, "required_signoffs": {}}

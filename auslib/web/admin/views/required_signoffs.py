@@ -1,7 +1,7 @@
 import json
 
 import connexion
-from flask import Response, jsonify
+from flask import Response, jsonify, request
 from sqlalchemy.sql.expression import null
 
 from auslib.db import SignoffRequiredError
@@ -25,8 +25,8 @@ class RequiredSignoffsView(AdminView):
         self.decisionFields = decisionFields
         super(RequiredSignoffsView, self).__init__()
 
-    def get(self):
-        rows = self.table.select()
+    def get(self, where=None):
+        rows = self.table.select(where=where)
         return jsonify({"count": len(rows), "required_signoffs": [dict(rs) for rs in rows]})
 
     def _post(self, what, transaction, changed_by):
@@ -113,6 +113,10 @@ class ProductRequiredSignoffsView(RequiredSignoffsView):
     def __init__(self):
         super(ProductRequiredSignoffsView, self).__init__(dbo.productRequiredSignoffs, ["product", "channel", "role"])
 
+    def get(self):
+        where = {param: request.args[param] for param in ("product", "channel") if param in request.args}
+        return super(ProductRequiredSignoffsView, self).get(where=where)
+
     @requirelogin
     def _post(self, transaction, changed_by):
         what = {
@@ -144,6 +148,10 @@ class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
     def __init__(self):
         super(ProductRequiredSignoffsScheduledChangesView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
+
+    def get(self):
+        where = {f"base_{param}": request.args[param] for param in ("product", "channel") if param in request.args}
+        return super(ProductRequiredSignoffsScheduledChangesView, self).get(where=where)
 
     @requirelogin
     def _post(self, transaction, changed_by):
@@ -254,6 +262,10 @@ class PermissionsRequiredSignoffsView(RequiredSignoffsView):
     def __init__(self):
         super(PermissionsRequiredSignoffsView, self).__init__(dbo.permissionsRequiredSignoffs, ["product", "role"])
 
+    def get(self):
+        where = {param: request.args[param] for param in ("product",) if param in request.args}
+        return super(PermissionsRequiredSignoffsView, self).get(where=where)
+
     @requirelogin
     def _post(self, transaction, changed_by):
         what = {
@@ -280,6 +292,10 @@ class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
 
     def __init__(self):
         super(PermissionsRequiredSignoffsScheduledChangesView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
+
+    def get(self):
+        where = {f"base_{param}": request.args[param] for param in ("product",) if param in request.args}
+        return super(PermissionsRequiredSignoffsScheduledChangesView, self).get(where=where)
 
     @requirelogin
     def _post(self, transaction, changed_by):
