@@ -204,7 +204,7 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = select([dbo.releases.data]).where(dbo.releases.name == "dd").execute().fetchone()[0]
         self.assertDictEqual(ret, result_blob)
 
-        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("dd")]
+        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("dd/")]
 
         self.assertEqual(len(history_entries), 4)
         self.assertEqual(history_entries[0], "")
@@ -299,7 +299,7 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._put("/releases/dd", data=dict(blob=blob2, name="dd", product="dd", data_version=1))
         self.assertStatusCode(ret, 400)
 
-        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("dd")]
+        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("dd/")]
         self.assertEqual(len(history_entries), 3)
         self.assertEqual(history_entries[0], "")
         self.assertDictEqual(json.loads(history_entries[1]), json.loads(ancestor_blob))
@@ -341,7 +341,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 400)
 
         blob = json.loads(blob)
-        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ee")]
+        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ee/")]
         self.assertEqual(len(history_entries), 4)
         self.assertEqual(history_entries[0], "")
         self.assertDictEqual(json.loads(history_entries[1]), {"name": "ee", "schema_version": 1, "hashFunction": "sha512"})
@@ -513,7 +513,7 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertDictEqual(ret, expected)
 
-        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ab")]
+        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ab/")]
 
         self.assertEqual(len(history_entries), 3)
         self.assertEqual(history_entries[0], "")
@@ -532,7 +532,7 @@ class TestReleasesAPI_JSON(ViewTest):
             "platforms": {"p": {"locales": {"l": {"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}}}}},
         }
 
-        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ab")]
+        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ab/")]
         self.assertEqual(len(history_entries), 3)
         self.assertEqual(history_entries[0], "")
         self.assertDictEqual(json.loads(history_entries[1]), {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
@@ -544,7 +544,7 @@ class TestReleasesAPI_JSON(ViewTest):
 
         # Ensure that history wasn't created for second request.
         # See https://bugzilla.mozilla.org/show_bug.cgi?id=1246993 for background.
-        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ab")]
+        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ab/")]
         self.assertEqual(len(history_entries), 3)
         self.assertEqual(history_entries[0], "")
         self.assertDictEqual(json.loads(history_entries[1]), {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
@@ -580,7 +580,7 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertDictEqual(ret, expected)
 
-        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ab")]
+        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ab/")]
         self.assertEqual(len(history_entries), 3)
         self.assertEqual(history_entries[0], "")
         self.assertDictEqual(json.loads(history_entries[1]), {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
@@ -638,7 +638,7 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertDictEqual(ret, expected)
 
-        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("e")]
+        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("e/")]
         self.assertEqual(len(history_entries), 3)
         self.assertEqual(history_entries[0], "")
         self.assertDictEqual(json.loads(history_entries[1]), {"name": "e", "schema_version": 1, "hashFunction": "sha512"})
@@ -682,7 +682,7 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertDictEqual(ret, expected)
 
-        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("d")]
+        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("d/")]
         interim_blob = createBlob(
             """
 {
@@ -745,7 +745,7 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertDictEqual(ret, expected)
 
-        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("e")]
+        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("e/")]
         self.assertEqual(len(history_entries), 3)
         self.assertEqual(history_entries[0], "")
         self.assertDictEqual(json.loads(history_entries[1]), {"name": "e", "schema_version": 1, "hashFunction": "sha512"})
@@ -796,7 +796,7 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertDictEqual(ret, expected)
 
-        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("d")]
+        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("d/")]
         interim_blob = createBlob(
             """
 {
@@ -855,7 +855,7 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertDictEqual(ret, expected)
 
-        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ab")]
+        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ab/")]
         self.assertEqual(history_entries[0], "")
         self.assertDictEqual(json.loads(history_entries[1]), {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
         self.assertDictEqual(json.loads(history_entries[2]), expected)
@@ -885,7 +885,7 @@ class TestReleasesAPI_JSON(ViewTest):
         )
         self.assertDictEqual(ret, expected)
 
-        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("b")]
+        history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("b/")]
         self.assertEqual(len(history_entries), 3)
         self.assertEqual(history_entries[0], "")
         self.assertDictEqual(json.loads(history_entries[1]), {"name": "b", "schema_version": 1, "hashFunction": "sha512"})
