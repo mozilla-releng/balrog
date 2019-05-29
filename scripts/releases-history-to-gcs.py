@@ -126,7 +126,7 @@ async def process_release(r, session, balrog_db, bucket, mysql_sem, gcs_sem, loo
                         try:
                             async with gcs_sem:
                                 blob = bucket.new_blob("{}/{}-{}-{}.json".format(r, rev["data_version"], rev["timestamp"], rev["changed_by"]))
-                            await blob.upload(rev["data"], session)
+                                await blob.upload(rev["data"], session)
                             uploads[r]["uploaded"] += 1
                             break
                         except:  # noqa: E722
