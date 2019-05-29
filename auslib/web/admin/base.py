@@ -84,7 +84,7 @@ def add_security_headers(response):
     response.headers["Access-Control-Allow-Headers"] = "Authorization"
     if "*" in app.config["CORS_ORIGINS"]:
         response.headers["Access-Control-Allow-Origin"] = "*"
-    elif request.headers["Origin"] in app.config["CORS_ORIGINS"]:
+    elif "Origin" in request.headers and request.headers["Origin"] in app.config["CORS_ORIGINS"]:
         response.headers["Access-Control-Allow-Origin"] = request.headers["Origin"]
     if re.match("^/ui/", request.path):
         # This enables swagger-ui to dynamically fetch and
