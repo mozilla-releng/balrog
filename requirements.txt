@@ -110,8 +110,8 @@ sphinx==2.1.0 \
 pbr==5.2.1 \
     --hash=sha256:0ce920b865091450bbcd452b35cf6d6eb8a6d9ce13ad2210d6e77557f85cf32b \
     --hash=sha256:93d2dc6ee0c9af4dbc70bc1251d0e545a9910ca8863774761f92716dece400b6
-SQLAlchemy==1.3.3 \
-    --hash=sha256:91c54ca8345008fceaec987e10924bf07dcab36c442925357e5a467b36a38319
+SQLAlchemy==1.3.4 \
+    --hash=sha256:c7fef198b43ef31dfd783d094fd5ee435ce8717592e6784c45ba337254998017
 sqlalchemy-migrate==0.12.0 \
     --hash=sha256:8cfada30bbcf79a83b3a2d1bcd637de7e1f43e390d54de33e4f3249fd9aacfae \
     --hash=sha256:c0ef4165e47a049b3e7ce77637a40df31db7648c08f5a2f3cd26a53ad0b95ab4
