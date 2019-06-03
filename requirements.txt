@@ -360,9 +360,9 @@ multidict==4.5.2 \
 gcloud-aio-storage==4.2.0 \
     --hash=sha256:a052e272b4ff5b813247a7e26388ab08c2a37d178da9b20b30afd14e1e0234e5 \
     --hash=sha256:b78a0283ed40b531b6e0159292efe5a804c2b5de0961bfe78db8b24d5b0f23a8
-gcloud-aio-auth==2.0.1 \
-    --hash=sha256:76e0b0eba2140a1c3d645b651336707f24876bbda7ffd5489d748bcba513346f \
-    --hash=sha256:ecfcfe084097f2089604f3e3cbb4e7db1bdc6375c6cc99a8ec07fb416ff2e539
+gcloud-aio-auth==2.1.1 \
+    --hash=sha256:2877be8ce30f32001b44d87919930c4c0d2250519301cc7889da9a9da011cafd \
+    --hash=sha256:54bac8b135dcb3c9572fc58ea7a034e5504f5211db7d9de20791b3c0ae2bb7d3
 PyJWT==1.7.1 \
     --hash=sha256:5c6eca3c2940464d106b99ba83b00c6add741c9becaec087fb7ccdefea71350e \
     --hash=sha256:8d59a976fb773f3e6a39c85636357c4f0e242707394cadadd9814f5cbaa20e96
