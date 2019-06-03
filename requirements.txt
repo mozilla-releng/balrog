@@ -357,9 +357,9 @@ multidict==4.5.2 \
     --hash=sha256:d1071414dd06ca2eafa90c85a079169bfeb0e5f57fd0b45d44c092546fcd6fd9 \
     --hash=sha256:d3be11ac43ab1a3e979dac80843b42226d5d3cccd3986f2e03152720a4297cd7 \
     --hash=sha256:db603a1c235d110c860d5f39988ebc8218ee028f07a7cbc056ba6424372ca31b
-gcloud-aio-storage==4.1.0 \
-    --hash=sha256:88cab4b2b9f5c425cbdb7665c1f456650cf0835b66bd9d6f602d0bf23be3caf6 \
-    --hash=sha256:dc3515cd4a9ef6f2cdcb12f75fa552dfa4d6483961412626140c7c67f45e671c
+gcloud-aio-storage==4.2.0 \
+    --hash=sha256:a052e272b4ff5b813247a7e26388ab08c2a37d178da9b20b30afd14e1e0234e5 \
+    --hash=sha256:b78a0283ed40b531b6e0159292efe5a804c2b5de0961bfe78db8b24d5b0f23a8
 gcloud-aio-auth==2.0.1 \
     --hash=sha256:76e0b0eba2140a1c3d645b651336707f24876bbda7ffd5489d748bcba513346f \
     --hash=sha256:ecfcfe084097f2089604f3e3cbb4e7db1bdc6375c6cc99a8ec07fb416ff2e539
