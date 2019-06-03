@@ -107,9 +107,9 @@ contextlib2==0.5.5 \
 sphinx==2.0.1 \
     --hash=sha256:423280646fb37944dd3c85c58fb92a20d745793a9f6c511f59da82fa97cd404b \
     --hash=sha256:de930f42600a4fef993587633984cc5027dedba2464bcf00ddace26b40f8d9ce
-pbr==5.2.0 \
-    --hash=sha256:6901995b9b686cb90cceba67a0f6d4d14ae003cd59bc12beb61549bdfbe3bc89 \
-    --hash=sha256:d950c64aeea5456bbd147468382a5bb77fe692c13c9f00f0219814ce5b642755
+pbr==5.2.1 \
+    --hash=sha256:0ce920b865091450bbcd452b35cf6d6eb8a6d9ce13ad2210d6e77557f85cf32b \
+    --hash=sha256:93d2dc6ee0c9af4dbc70bc1251d0e545a9910ca8863774761f92716dece400b6
 SQLAlchemy==1.3.3 \
     --hash=sha256:91c54ca8345008fceaec987e10924bf07dcab36c442925357e5a467b36a38319
 sqlalchemy-migrate==0.12.0 \
