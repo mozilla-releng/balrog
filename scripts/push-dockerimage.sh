@@ -45,9 +45,6 @@ for tag in ${tags[*]}; do
     docker tag buildtemp "mozilla/balrog:${tag}"
     echo "Pushing Docker image tagged with ${tag}"
     docker push mozilla/balrog:${tag}
-    # Pull the image to print its digest. cloudops-deploylib verifies the
-    # images comparing their digests to the digests in the logs
-    docker pull mozilla/balrog:${tag}
 done
 
 sha256=$(docker images --no-trunc mozilla/balrog | grep "${tags[0]}" | awk '/^mozilla/ {print $3}')
