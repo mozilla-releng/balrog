@@ -3,13 +3,11 @@ import difflib
 import connexion
 import simplejson as json
 from flask import Response, abort, jsonify
-from sqlalchemy.sql.expression import null
 
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.db import OutdatedDataError, ReadOnlyError
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import AdminView, requirelogin, serialize_signoff_requirements
-from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,
@@ -331,39 +329,6 @@ class ReleaseReadOnlyView(AdminView):
         return Response(status=201, response=json.dumps(dict(new_data_version=data_version)))
 
 
-class ReleaseHistoryView(HistoryView):
-    """/releases/:release/revisions"""
-
-    def __init__(self):
-        super(ReleaseHistoryView, self).__init__(dbo.releases)
-
-    def _get_what(self, change):
-        return dict(data=createBlob(change["data"]), product=change["product"])
-
-    def _get_release(self, release):
-        releases = self.table.getReleases(name=release, limit=1)
-        return releases[0] if releases else None
-
-    @requirelogin
-    def _post(self, release, transaction, changed_by):
-        try:
-            return self.revert_to_revision(
-                get_object_callback=lambda: self._get_release(release),
-                change_field="name",
-                get_what_callback=self._get_what,
-                changed_by=changed_by,
-                response_message="Excellent!",
-                transaction=transaction,
-                obj_not_found_msg="bad release",
-            )
-        except BlobValidationError as e:
-            self.log.warning("Bad input: %s", e.args)
-            return problem(400, "Bad Request", "Invalid input blob: %s" % e.args, ext={"data": e.errors})
-        except ValueError as e:
-            self.log.warning("Bad input: %s", e.args)
-            return problem(400, "Bad Request", "Invalid input", ext={"data": e.args})
-
-
 class ReleasesAPIView(AdminView):
     """/releases"""
 
@@ -539,91 +504,6 @@ class ReleaseScheduledChangeHistoryView(ScheduledChangeHistoryView):
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         return super(ReleaseScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
-
-
-class ReleaseFieldView(AdminView):
-    """/diff/:id/:field"""
-
-    def __init__(self):
-        self.table = dbo.releases
-
-    def get_value(self, change_id, field):
-        revision = self.table.history.getChange(change_id=change_id)
-        if not revision:
-            abort(400, "Bad change_id")
-        if field not in revision:
-            raise KeyError("Bad field")
-        return revision[field]
-
-    def format_value(self, value):
-        if isinstance(value, dict):
-            try:
-                value = json.dumps(value, indent=2, sort_keys=True)
-            except ValueError:
-                pass
-        elif value is None:
-            value = "NULL"
-        elif isinstance(value, int):
-            value = str(value)
-        else:
-            value = str(value)
-        return value
-
-    def get(self, change_id, field):
-        try:
-            value = self.get_value(change_id, field)
-        except KeyError as msg:
-            self.log.warning("Bad input: %s", field)
-            return problem(400, "Bad Request", str(msg))
-        except ValueError as msg:
-            return problem(404, "Not Found", str(msg))
-        value = self.format_value(value)
-        return Response(value, content_type="text/plain")
-
-
-class ReleaseDiffView(ReleaseFieldView):
-    """/diff/:id/:field"""
-
-    def get_prev_id(self, value, change_id):
-        if value:
-            release_name = value["name"]
-            table = self.table.history
-            old_revision = table.select(
-                where=[table.name == release_name, table.change_id < change_id, table.data_version != null()], limit=1, order_by=[table.timestamp.desc()]
-            )
-            if len(old_revision) > 0:
-                return old_revision[0]["change_id"]
-
-    def get(self, change_id, field):
-        try:
-            value = self.get_value(change_id, field)
-            data_version = self.get_value(change_id, "data_version")
-
-            prev_id = self.get_prev_id(value, change_id)
-            if prev_id:
-                previous = self.get_value(prev_id, field)
-                prev_data_version = self.get_value(prev_id, "data_version")
-            else:
-                previous = ""
-                prev_data_version = ""
-
-        except (KeyError, TypeError, IndexError) as msg:
-            return problem(400, "Bad Request", str(msg))
-        except ValueError as msg:
-            return problem(404, "Not Found", str(msg))
-
-        value = self.format_value(value)
-        previous = self.format_value(previous)
-
-        result = difflib.unified_diff(
-            previous.splitlines(),
-            value.splitlines(),
-            fromfile="Data Version {}".format(prev_data_version),
-            tofile="Data Version {}".format(data_version),
-            lineterm="",
-        )
-
-        return Response("\n".join(result), content_type="text/plain")
 
 
 class ScheduledReleaseFieldView(AdminView):

@@ -17,6 +17,7 @@ from sqlalchemy.sql.expression import null
 
 import migrate.versioning.api
 import migrate.versioning.schema
+
 from auslib.blobs.base import createBlob, merge_dicts
 from auslib.global_state import cache
 from auslib.util.rulematching import (
@@ -286,7 +287,17 @@ class AUSTable(object):
     """
 
     def __init__(
-        self, db, dialect, history=True, versioned=True, scheduled_changes=False, scheduled_changes_kwargs={}, onInsert=None, onUpdate=None, onDelete=None
+        self,
+        db,
+        dialect,
+        historyClass=None,
+        historyKwargs={},
+        versioned=True,
+        scheduled_changes=False,
+        scheduled_changes_kwargs={},
+        onInsert=None,
+        onUpdate=None,
+        onDelete=None,
     ):
         self.db = db
         self.t = self.table
@@ -304,8 +315,8 @@ class AUSTable(object):
             if col.primary_key:
                 self.primary_key.append(col)
         # Set-up a history table to do logging in, if required
-        if history:
-            self.history = History(db, dialect, self.t.metadata, self)
+        if historyClass:
+            self.history = historyClass(db, dialect, self.t.metadata, self, **historyKwargs)
         else:
             self.history = None
         # Set-up a scheduled changes table if required
@@ -409,8 +420,7 @@ class AUSTable(object):
         query, unconsumed_columns = self._insertStatement(**data)
         ret = trans.execute(query)
         if self.history:
-            for q in self.history.forInsert(ret.inserted_primary_key, data, changed_by):
-                trans.execute(q)
+            self.history.forInsert(ret.inserted_primary_key, data, changed_by, trans)
         if self.onInsert:
             pk_columns = self.t.primary_key.columns.keys()
             pk_values = ret.inserted_primary_key
@@ -485,7 +495,7 @@ class AUSTable(object):
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to delete row, old_data_version doesn't match current data_version")
         if self.history:
-            trans.execute(self.history.forDelete(row, changed_by))
+            self.history.forDelete(row, changed_by, trans)
         if self.scheduled_changes:
             # If this table has active scheduled changes we cannot allow it to be deleted
             sc_where = [self.scheduled_changes.complete == False]  # noqa
@@ -595,7 +605,7 @@ class AUSTable(object):
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
         if self.history:
-            trans.execute(self.history.forUpdate(new_row, changed_by))
+            self.history.forUpdate(new_row, changed_by, trans)
         if self.scheduled_changes:
             self.scheduled_changes.mergeUpdate(orig_row, what, changed_by, trans)
         return ret
@@ -662,7 +672,51 @@ class AUSTable(object):
         return self.history.select(transaction=transaction, limit=limit, order_by=self.history.timestamp.desc())
 
 
-class History(AUSTable):
+class GCSHistory:
+    def __init__(self, db, dialect, metadata, baseTable, buckets, identifier_column, data_column):
+        self.buckets = buckets
+        self.identifier_column = identifier_column
+        self.data_column = data_column
+
+    def _getBucket(self, identifier):
+        for substring, bucket in self.buckets.items():
+            if substring in identifier:
+                return bucket
+        else:
+            raise KeyError("Couldn't find bucket to place {} history in.".format(identifier))
+
+    def forInsert(self, insertedKeys, columns, changed_by, trans):
+        timestamp = getMillisecondTimestamp()
+        identifier = columns.get(self.identifier_column)
+        for data_version, ts, data in ((None, timestamp - 1, ""), (columns.get("data_version"), timestamp, json.dumps(columns[self.data_column]))):
+            bname = "{}/{}-{}-{}.json".format(identifier, data_version, ts, changed_by)
+            blob = self._getBucket(identifier).blob(bname)
+            blob.upload_from_string(data, content_type="application/json")
+
+    def forDelete(self, rowData, changed_by, trans):
+        identifier = rowData.get(self.identifier_column)
+        bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
+        blob = self._getBucket(identifier).blob(bname)
+        blob.upload_from_string("", content_type="application/json")
+
+    def forUpdate(self, rowData, changed_by, trans):
+        identifier = rowData.get(self.identifier_column)
+        bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
+        blob = self._getBucket(identifier).blob(bname)
+        blob.upload_from_string(json.dumps(rowData[self.data_column]), content_type="application/json")
+
+    def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
+        if self.identifier_column not in column_values or not data_version:
+            raise ValueError("Cannot find GCS changes without {} and data_version".format(self.identifier_column))
+        identifier = column_values[self.identifier_column]
+        bucket = self._getBucket(identifier)
+        blobs = [b for b in bucket.list_blobs(prefix="{}/{}".format(identifier, data_version))]
+        if len(blobs) != 1:
+            raise ValueError("Found {} blobs instead of 1".format(len(blobs)))
+        return {self.identifier_column: identifier, "data_version": data_version, self.data_column: json.loads(blobs[0].download_as_string())}
+
+
+class HistoryTable(AUSTable):
     """Represents a history table that may be attached to another AUSTable.
        History tables mirror the structure of their `baseTable', with the exception
        that nullable and primary_key attributes are always overwritten to be
@@ -704,9 +758,9 @@ class History(AUSTable):
                 # unless they have been explicitely set to True or False.
                 newcol.unique = None
             self.table.append_column(newcol)
-        AUSTable.__init__(self, db, dialect, history=False, versioned=False)
+        AUSTable.__init__(self, db, dialect, historyClass=None, versioned=False)
 
-    def forInsert(self, insertedKeys, columns, changed_by):
+    def forInsert(self, insertedKeys, columns, changed_by, trans):
         """Inserts cause two rows in the History table to be created. The first
            one records the primary key data and NULLs for other row data. This
            represents that the row did not exist prior to the insert. The
@@ -714,7 +768,6 @@ class History(AUSTable):
            reflect this. The second row records the full data of the row at the
            time of insert."""
         primary_key_data = {}
-        queries = []
         for i in range(0, len(self.base_primary_key)):
             name = self.base_primary_key[i]
             primary_key_data[name] = insertedKeys[i]
@@ -723,12 +776,11 @@ class History(AUSTable):
 
         ts = getMillisecondTimestamp()
         query, _ = self._insertStatement(changed_by=changed_by, timestamp=ts - 1, **primary_key_data)
-        queries.append(query)
+        trans.execute(query)
         query, _ = self._insertStatement(changed_by=changed_by, timestamp=ts, **columns)
-        queries.append(query)
-        return queries
+        trans.execute(query)
 
-    def forDelete(self, rowData, changed_by):
+    def forDelete(self, rowData, changed_by, trans):
         """Deletes cause a single row to be created, which only contains the
            primary key data. This represents that the row no longer exists."""
         row = {}
@@ -739,9 +791,9 @@ class History(AUSTable):
         row["changed_by"] = changed_by
         row["timestamp"] = getMillisecondTimestamp()
         query, _ = self._insertStatement(**row)
-        return query
+        trans.execute(query)
 
-    def forUpdate(self, rowData, changed_by):
+    def forUpdate(self, rowData, changed_by, trans):
         """Updates cause a single row to be created, which contains the full,
            new data of the row at the time of the update."""
         row = {}
@@ -751,7 +803,7 @@ class History(AUSTable):
         row["changed_by"] = changed_by
         row["timestamp"] = getMillisecondTimestamp()
         query, _ = self._insertStatement(**row)
-        return query
+        trans.execute(query)
 
     def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
         """ Returns the unique change that matches the give change_id or
@@ -805,107 +857,6 @@ class History(AUSTable):
             return None
         return changes[0]
 
-    def getPrevChange(self, change_id, row_primary_keys, transaction=None):
-        """ Returns the most recent change to a given row in the base table """
-        where = [self.change_id < change_id]
-        for i in range(0, len(self.base_primary_key)):
-            self_prim = getattr(self, self.base_primary_key[i])
-            where.append((self_prim == row_primary_keys[i]))
-
-        changes = self.select(where=where, transaction=transaction, limit=1, order_by=self.change_id.desc())
-        length = len(changes)
-        if length == 0:
-            self.log.debug("No previous changes found")
-            return None
-        return changes[0]
-
-    def _stripNullColumns(self, change):
-        # We know a bunch of columns are going to be empty...easier to strip them out
-        # than to be super verbose (also should let this test continue to work even
-        # if the schema changes).
-        for key in change.copy().keys():
-            if change[key] is None:
-                del change[key]
-        return change
-
-    def _stripHistoryColumns(self, change):
-        """ Will strip history specific columns as well as data_version from the given change """
-        del change["change_id"]
-        del change["changed_by"]
-        del change["timestamp"]
-        del change["data_version"]
-        return change
-
-    def _isNull(self, change, row_primary_keys):
-        # Define a row that's empty except for the primary keys
-        # This is what the NULL rows for inserts and deletes will look like.
-        null_row = dict()
-        for i in range(0, len(self.base_primary_key)):
-            null_row[self.base_primary_key[i]] = row_primary_keys[i]
-        return self._stripNullColumns(change) == null_row
-
-    def _isDelete(self, cur_base_state, row_primary_keys):
-        return self._isNull(cur_base_state.copy(), row_primary_keys)
-
-    def _isInsert(self, prev_base_state, row_primary_keys):
-        return self._isNull(prev_base_state.copy(), row_primary_keys)
-
-    def _isUpdate(self, cur_base_state, prev_base_state, row_primary_keys):
-        return (not self._isNull(cur_base_state.copy(), row_primary_keys)) and (not self._isNull(prev_base_state.copy(), row_primary_keys))
-
-    def rollbackChange(self, change_id, changed_by, transaction=None):
-        """ Rollback the change given by the change_id,
-        Will handle all cases: insert, delete, update """
-
-        change = self.getChange(change_id=change_id, transaction=transaction)
-
-        # Get the values of the primary keys for the given row
-        row_primary_keys = [0] * len(self.base_primary_key)
-        for i in range(0, len(self.base_primary_key)):
-            row_primary_keys[i] = change[self.base_primary_key[i]]
-
-        # Strip the History Specific Columns from the cahgnes
-        prev_base_state = self._stripHistoryColumns(self.getPrevChange(change_id, row_primary_keys, transaction))
-        cur_base_state = self._stripHistoryColumns(change.copy())
-
-        # Define a row that's empty except for the primary keys
-        # This is what the NULL rows for inserts and deletes will look like.
-        null_row = dict()
-        for i in range(0, len(self.base_primary_key)):
-            null_row[self.base_primary_key[i]] = row_primary_keys[i]
-
-        # If the row has all NULLS, then the operation we're rolling back is a DELETE
-        # We need to do an insert, with the data from the previous change
-        if self._isDelete(cur_base_state, row_primary_keys):
-            self.log.debug("reverting a DELETE")
-            self.baseTable.insert(changed_by=changed_by, transaction=transaction, **prev_base_state)
-
-        # If the previous change is NULL, then the operation is an INSERT
-        # We will need to do a delete.
-        elif self._isInsert(prev_base_state, row_primary_keys):
-            self.log.debug("reverting an INSERT")
-            where = []
-            for i in range(0, len(self.base_primary_key)):
-                self_prim = getattr(self.baseTable, self.base_primary_key[i])
-                where.append((self_prim == row_primary_keys[i]))
-
-            self.baseTable.delete(changed_by=changed_by, transaction=transaction, where=where, old_data_version=change["data_version"])
-
-        elif self._isUpdate(cur_base_state, prev_base_state, row_primary_keys):
-            # If this operation is an UPDATE
-            # We will need to do an update to the previous change's state
-            self.log.debug("reverting an UPDATE")
-            where = []
-            for i in range(0, len(self.base_primary_key)):
-                self_prim = getattr(self.baseTable, self.base_primary_key[i])
-                where.append((self_prim == row_primary_keys[i]))
-
-            what = prev_base_state
-            old_data_version = change["data_version"]
-            self.baseTable.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
-        else:
-            self.log.debug("ERROR, change doesn't correspond to any known operation")
-
 
 class ConditionsTable(AUSTable):
     # Scheduled changes may only have a single type of condition, but some
@@ -914,7 +865,7 @@ class ConditionsTable(AUSTable):
     # processing.
     condition_groups = {"time": ("when",), "uptake": ("telemetry_product", "telemetry_channel", "telemetry_uptake")}
 
-    def __init__(self, db, dialect, metadata, baseName, conditions, history=True):
+    def __init__(self, db, dialect, metadata, baseName, conditions, historyClass=HistoryTable):
         if not conditions:
             raise ValueError("No conditions enabled, cannot initialize conditions for for {}".format(baseName))
         if set(conditions) - set(self.condition_groups):
@@ -935,7 +886,7 @@ class ConditionsTable(AUSTable):
             else:
                 self.table.append_column(Column("when", BigInteger))
 
-        super(ConditionsTable, self).__init__(db, dialect, history=history, versioned=True)
+        super(ConditionsTable, self).__init__(db, dialect, historyClass=historyClass, versioned=True)
 
     def validate(self, conditions):
         conditions = {k: v for k, v in conditions.items() if conditions[k]}
@@ -974,7 +925,7 @@ class ScheduledChangeTable(AUSTable):
     columns of its base, and adding the necessary ones to provide the schedule.
     By default, ScheduledChangeTables enable History on themselves."""
 
-    def __init__(self, db, dialect, metadata, baseTable, conditions=("time", "uptake"), history=True):
+    def __init__(self, db, dialect, metadata, baseTable, conditions=("time", "uptake"), historyClass=HistoryTable):
         table_name = "{}_scheduled_changes".format(baseTable.t.name)
         self.baseTable = baseTable
         self.table = Table(
@@ -985,7 +936,7 @@ class ScheduledChangeTable(AUSTable):
             Column("complete", Boolean, default=False),
             Column("change_type", String(50), nullable=False),
         )
-        self.conditions = ConditionsTable(db, dialect, metadata, table_name, conditions, history=history)
+        self.conditions = ConditionsTable(db, dialect, metadata, table_name, conditions, historyClass=historyClass)
         # Signoffs are configurable at runtime, which means that we always need
         # a Signoffs table, even if it may not be used immediately.
         self.signoffs = SignoffsTable(db, metadata, dialect, table_name)
@@ -1027,7 +978,7 @@ class ScheduledChangeTable(AUSTable):
 
             self.table.append_column(newcol)
 
-        super(ScheduledChangeTable, self).__init__(db, dialect, history=history, versioned=True)
+        super(ScheduledChangeTable, self).__init__(db, dialect, historyClass=historyClass, versioned=True)
 
     def _prefixColumns(self, columns):
         """Helper function which takes key/value pairs of columns for this
@@ -1371,7 +1322,9 @@ class RequiredSignoffsTable(AUSTable):
         self.table.append_column(Column("role", String(50), primary_key=True))
         self.table.append_column(Column("signoffs_required", Integer, nullable=False))
 
-        super(RequiredSignoffsTable, self).__init__(db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
+        super(RequiredSignoffsTable, self).__init__(
+            db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=HistoryTable
+        )
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = {"rs": []}
@@ -1467,7 +1420,7 @@ class SignoffsTable(AUSTable):
         )
         # Because Signoffs cannot be modified, there's no possibility of an
         # update race, so they do not need to be versioned.
-        super(SignoffsTable, self).__init__(db, dialect, versioned=False)
+        super(SignoffsTable, self).__init__(db, dialect, versioned=False, historyClass=HistoryTable)
 
     def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
         if "sc_id" not in columns or "role" not in columns:
@@ -1536,7 +1489,7 @@ class Rules(AUSTable):
             Column("comment", String(500)),
         )
 
-        AUSTable.__init__(self, db, dialect, scheduled_changes=True)
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True, historyClass=HistoryTable)
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = {}
@@ -1751,7 +1704,7 @@ class Rules(AUSTable):
 
 
 class Releases(AUSTable):
-    def __init__(self, db, metadata, dialect):
+    def __init__(self, db, metadata, dialect, history_buckets, historyClass):
         self.domainWhitelist = []
 
         self.table = Table(
@@ -1768,7 +1721,17 @@ class Releases(AUSTable):
         else:
             dataType = Text
         self.table.append_column(Column("data", BlobColumn(dataType), nullable=False))
-        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
+        historyKwargs = {}
+        if history_buckets:
+            historyKwargs["buckets"] = history_buckets
+            historyKwargs["identifier_column"] = "name"
+            historyKwargs["data_column"] = "data"
+        else:
+            # Can't have history without a bucket
+            historyClass = None
+        AUSTable.__init__(
+            self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=historyClass, historyKwargs=historyKwargs
+        )
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = {}
@@ -2139,7 +2102,7 @@ class Releases(AUSTable):
 class UserRoles(AUSTable):
     def __init__(self, db, metadata, dialect):
         self.table = Table("user_roles", metadata, Column("username", String(100), primary_key=True), Column("role", String(50), primary_key=True))
-        super(UserRoles, self).__init__(db, dialect)
+        super(UserRoles, self).__init__(db, dialect, historyClass=HistoryTable)
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False):
         raise AttributeError("User roles cannot be modified (only granted and revoked)")
@@ -2175,7 +2138,7 @@ class Permissions(AUSTable):
             Column("options", JSONColumn),
         )
         self.user_roles = UserRoles(db, metadata, dialect)
-        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=HistoryTable)
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = {"rs": []}
@@ -2396,7 +2359,7 @@ class Permissions(AUSTable):
 class Dockerflow(AUSTable):
     def __init__(self, db, metadata, dialect):
         self.table = Table("dockerflow", metadata, Column("watchdog", Integer, nullable=False))
-        AUSTable.__init__(self, db, dialect, history=False, versioned=False)
+        AUSTable.__init__(self, db, dialect, historyClass=None, versioned=False)
 
     def getDockerflowEntry(self, transaction=None):
         return self.select(transaction=transaction)[0]
@@ -2429,7 +2392,7 @@ class EmergencyShutoffs(AUSTable):
             Column("product", String(15), nullable=False, primary_key=True),
             Column("channel", String(75), nullable=False, primary_key=True),
         )
-        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=HistoryTable)
 
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         if not self.db.hasPermission(changed_by, "emergency_shutoff", "create", columns.get("product"), transaction):
@@ -2591,15 +2554,15 @@ class AUSDatabase(object):
     engine = None
     migrate_repo = path.join(path.dirname(__file__), "migrate")
 
-    def __init__(self, dburi=None, mysql_traditional_mode=False):
+    def __init__(self, dburi=None, mysql_traditional_mode=False, releases_history_buckets=None, releases_history_class=GCSHistory):
         """Create a new AUSDatabase. Before this object is useful, dburi must be
            set, either through the constructor or setDburi()"""
         if dburi:
-            self.setDburi(dburi, mysql_traditional_mode)
+            self.setDburi(dburi, mysql_traditional_mode, releases_history_buckets, releases_history_class)
         self.log = logging.getLogger(self.__class__.__name__)
         self.systemAccounts = []
 
-    def setDburi(self, dburi, mysql_traditional_mode=False):
+    def setDburi(self, dburi, mysql_traditional_mode=False, releases_history_buckets=None, releases_history_class=GCSHistory):
         """Setup the database connection. Note that SQLAlchemy only opens a connection
            to the database when it needs to, however."""
         if self.engine:
@@ -2612,7 +2575,7 @@ class AUSDatabase(object):
         self.engine = create_engine(self.dburi, pool_recycle=60, listeners=listeners)
         dialect = self.engine.name
         self.rulesTable = Rules(self, self.metadata, dialect)
-        self.releasesTable = Releases(self, self.metadata, dialect)
+        self.releasesTable = Releases(self, self.metadata, dialect, releases_history_buckets, releases_history_class)
         self.permissionsTable = Permissions(self, self.metadata, dialect)
         self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
         self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)

@@ -45,57 +45,6 @@ AND (STR_TO_DATE(RIGHT(name, 14), "%%%%Y%%%%m%%%%d%%%%H%%%%i%%%%S") < NOW() - IN
         trans.execute("DELETE releases FROM releases" + query)
 
 
-def cleanup_releases_history(trans, dryrun=True):
-    num_to_delete = 100
-    queries = dict(
-        dated="""
-            SELECT name, change_id
-            FROM releases_history
-            WHERE name LIKE '%%%%latest'
-              AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 14 DAY)
-            ORDER BY change_id
-            LIMIT %d """
-        % num_to_delete,
-        nightly="""
-            SELECT name, change_id
-            FROM releases_history
-            WHERE name LIKE '%%%%nightly%%%%'
-              AND name NOT LIKE '%%%%latest'
-              AND timestamp<1000*UNIX_TIMESTAMP(NOW()-INTERVAL 7 DAY)
-            ORDER BY change_id
-            LIMIT %d """
-        % num_to_delete,
-    )
-
-    total_deleted = 0
-
-    for name, query in queries.items():
-        if dryrun:
-            todelete = trans.execute(query).fetchall()
-            if todelete:
-                print("releases_history (%s) rows to be deleted:" % name)
-                for key, group in itertools.groupby(todelete, lambda x: x[0]):
-                    print("  - %s: %s history rows" % (key, len(list(group))))
-        else:
-            del_query = (
-                """
-                DELETE R.*
-                FROM releases_history R
-                WHERE R.change_id IN (   -- use a subquery to work around mysql limitation
-                    SELECT X.change_id   -- of select'ing from the same table as a DML
-                    FROM ( """
-                + query
-                + ") X)"
-            )
-
-            results = trans.execute(del_query)
-            if results:
-                print("Deleted %s '%s' records" % (results.rowcount, name))
-                total_deleted += results.rowcount
-
-    print("Total Deleted: %d" % total_deleted)
-
-
 def chunk_list(list_object, n):
     """
     Yield successive n-sized chunks from list_object.
@@ -145,12 +94,9 @@ def extract_active_data(trans, url, dump_location="dump.sql"):
         # We always want all the data from a few tables...
         run(mysql_data_only_command(host, user, password, db, "dockerflow rules rules_history migrate_version").split(), stdout=dump_file, check=True)
 
-        # Because Releases are so massive, we only want the actively used ones,
-        # and very little Release history. Specifically:
+        # Because Releases are so massive, we only want the actively used ones. Specifically:
         #   - All releases referenced by a Rule or a Active Scheduled Rule Change
         #   - All releases referenced by a Release from the above query
-        #   - 50 rows of history for the "Firefox-mozilla-central-nightly-latest" Release
-        #   - Full history for the Release currently referenced by the "firefox-release" Rule.
         query_release_mapping = """SELECT DISTINCT releases.* \
             FROM releases, rules, rules_scheduled_changes \
             WHERE (releases.name IN (rules.mapping, rules.fallbackMapping))
@@ -174,15 +120,6 @@ def extract_active_data(trans, url, dump_location="dump.sql"):
                 cmd = mysql_data_only_command(host, user, password, db, "releases").split()
                 cmd.append("--where=releases.name IN ({})".format(query))
                 run(cmd, stdout=dump_file, check=True)
-
-        cmd = mysql_data_only_command(host, user, password, db, "releases_history").split()
-        cmd.append("--where=\"release_history.name='Firefox-mozilla-central-nightly-latest' ORDER BY timestamp DESC LIMIT 50\"")
-        run(cmd, stdout=dump_file, check=True)
-
-        query = "SELECT rules.mapping FROM rules WHERE rules.alias='firefox-release'"
-        cmd = mysql_data_only_command(host, user, password, db, "releases_history").split()
-        cmd.append('--where="name = ({}) ORDER BY timestamp DESC LIMIT 50"'.format(query))
-        run(cmd, stdout=dump_file, check=True)
 
         # Notably absent from this dump are all Permissions, Roles, and Scheduled
         # Changes tables. Permissions & Roles are excluded to avoid leaking any
@@ -244,7 +181,5 @@ if __name__ == "__main__":
         with db.begin() as trans:
             if action == "cleanup":
                 cleanup_releases(trans, nightly_age, dryrun=False)
-                cleanup_releases_history(trans, dryrun=False)
             else:
                 cleanup_releases(trans, nightly_age, dryrun=True)
-                cleanup_releases_history(trans, dryrun=True)

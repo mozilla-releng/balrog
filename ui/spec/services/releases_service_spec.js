@@ -42,30 +42,6 @@ describe("Service: Releases", function() {
     this.$httpBackend.flush();
   }));
 
-  it('should return all releases history', inject(function(Releases) {
-    var sample_response = {
-      revisions: [{
-        change_id: 123,
-        product: "Firefox",
-        data_version: 3,
-      }, {
-        change_id: 122,
-        product: "Firefoxy",
-        data_version: 2,
-      }],
-      count: 2
-    };
-    var limit = 10;
-    var page = 1;
-    this.$httpBackend.expectGET('/api/releases/1/revisions?limit=' + limit + '&page=' + page)
-    .respond(200, JSON.stringify(sample_response));
-    Releases.getHistory(1, limit, page).success(function(response) {
-      expect(response.count).toEqual(2);
-      expect(response.revisions).toEqual(sample_response.revisions);
-    });
-    this.$httpBackend.flush();
-  }));
-
   it('should return an individual release', inject(function(Releases) {
     var sample_response = {
       change_id: 123,
@@ -76,32 +52,6 @@ describe("Service: Releases", function() {
     this.$httpBackend.expectGET('/api/releases/1')
     .respond(200, JSON.stringify(sample_response));
     Releases.getRelease(1).success(function(response) {
-      expect(response).toEqual(sample_response);
-    });
-    this.$httpBackend.flush();
-  }));
-
-  it('should return an data on an individual release', inject(function(Releases) {
-    var sample_response = {
-      platforms: 'test test'
-    };
-    this.$httpBackend.expectGET('/api/history/view/release/123/data')
-    .respond(200, JSON.stringify(sample_response));
-    Releases.getData(123).success(function(response) {
-      expect(response).toEqual(sample_response);
-    });
-    this.$httpBackend.flush();
-  }));
-
-  it('should return an diff data on an individual release', inject(function(Releases) {
-    var sample_response = 'this is not valid json\n' +
-    '{' +
-    '- "platforms": "old",' +
-    '+ "platforms": "new",' +
-    '}';
-    this.$httpBackend.expectGET('/api/history/diff/release/123/data')
-    .respond(200, sample_response);
-    Releases.getDiff(123).success(function(response) {
       expect(response).toEqual(sample_response);
     });
     this.$httpBackend.flush();

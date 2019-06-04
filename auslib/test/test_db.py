@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import re
@@ -13,7 +14,7 @@ import pytest
 from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, select
 from sqlalchemy.engine.reflection import Inspector
 
-import migrate.versioning.api
+# import migrate.versioning.api
 from auslib.blobs.apprelease import ReleaseBlobV1
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.db import (
@@ -22,6 +23,7 @@ from auslib.db import (
     AUSTable,
     AUSTransaction,
     ChangeScheduledError,
+    HistoryTable,
     MismatchedDataVersionError,
     OutdatedDataError,
     PermissionDeniedError,
@@ -33,6 +35,7 @@ from auslib.db import (
     verify_signoffs,
 )
 from auslib.global_state import cache, dbo
+from auslib.test.fakes import FakeGCSHistory
 from migrate.versioning.api import version
 
 
@@ -192,12 +195,12 @@ class TestTableMixin(object):
         class TestTable(AUSTable):
             def __init__(self, db, metadata):
                 self.table = Table("test", metadata, Column("id", Integer, primary_key=True, autoincrement=True), Column("foo", Integer))
-                AUSTable.__init__(self, db, "sqlite")
+                AUSTable.__init__(self, db, "sqlite", historyClass=HistoryTable)
 
         class TestAutoincrementTable(AUSTable):
             def __init__(self, db, metadata):
                 self.table = Table("test-autoincrement", metadata, Column("id", Integer, primary_key=True, autoincrement=True), Column("foo", Integer))
-                AUSTable.__init__(self, db, "sqlite")
+                AUSTable.__init__(self, db, "sqlite", historyClass=HistoryTable)
 
         self.test = TestTable("fake", self.metadata)
         self.testAutoincrement = TestAutoincrementTable("fake", self.metadata)
@@ -221,7 +224,7 @@ class TestMultiplePrimaryTableMixin(object):
                     Column("id2", Integer, primary_key=True, autoincrement=False),
                     Column("foo", Integer),
                 )
-                AUSTable.__init__(self, db, "sqlite")
+                AUSTable.__init__(self, db, "sqlite", historyClass=HistoryTable)
 
         self.test = TestTable("fake", self.metadata)
         self.metadata.create_all()
@@ -467,65 +470,6 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertEqual(ret, 1234567890122)
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testHistoryUpdateRollback(self):
-        # Update one of the rows
-        self.test.t.update(values=dict(foo=99, data_version=2)).where(self.test.id == 2).execute()
-        self.test.history.t.insert(values=dict(changed_by="heather", change_id=1, timestamp=1000, id=2, data_version=2, foo=99)).execute()
-
-        # Update it again (this is the update we will rollback)
-        self.test.t.update(values=dict(foo=100, data_version=3)).where(self.test.id == 2).execute()
-        self.test.history.t.insert(values=dict(changed_by="heather", change_id=2, timestamp=1000, id=2, data_version=3, foo=100)).execute()
-
-        # Rollback the second update
-        self.test.history.rollbackChange(2, "heather")
-
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret[-1], (3, "heather", 1000, 2, 99, 4))
-
-        ret = self.test.t.select().where(self.test.id == 2).execute().fetchall()
-        self.assertEqual(ret, [(2, 99, 4)])
-
-    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testHistoryInsertRollback(self):
-        ret = self.test.t.select().execute().fetchall()
-
-        # Insert the item
-        self.test.t.insert(values=dict(foo=271, data_version=1, id=4)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=1, timestamp=999, id=4, data_version=None, foo=None)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=2, timestamp=1000, id=4, data_version=1, foo=271)).execute()
-
-        # Rollback the 'insert'
-        self.test.history.rollbackChange(2, "george")
-
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret[-1], (3, "george", 1000, 4, None, None))
-
-        ret = self.test.t.select().execute().fetchall()
-        self.assertEqual(len(ret), 3, msg=ret)
-
-    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testHistoryDeleteRollback(self):
-        ret = self.test.t.select().execute().fetchall()
-
-        # Insert the thing we are going to delete
-        self.test.t.insert(values=dict(foo=271, data_version=1, id=4)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=1, timestamp=999, id=4, data_version=None, foo=None)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=2, timestamp=1000, id=4, data_version=1, foo=271)).execute()
-
-        # Delete it
-        self.test.t.delete().where(self.test.id == 4).execute()
-        self.test.history.t.insert(values=dict(changed_by="bobby", change_id=3, timestamp=1000, id=4, data_version=None, foo=None)).execute()
-
-        # Rollback the 'delete'
-        self.test.history.rollbackChange(3, "george")
-
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret[-1], (5, "george", 1000, 4, 271, 1))
-
-        ret = self.test.t.select().execute().fetchall()
-        self.assertEqual(len(ret), 4, msg=ret)
-
-    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryGetChangeWithChangeID(self):
         self.test.insert(changed_by="george", id=4, foo=0)
         ret = self.test.history.getChange(change_id=1)
@@ -586,57 +530,6 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
         self.assertEqual(ret, (1, "heather", 1000, 2, 1, 99, 2))
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testMultiplePrimaryHistoryUpdateRollback(self):
-        self.test.t.update(values=dict(foo=99, data_version=2)).where(self.test.id1 == 2).where(self.test.id2 == 1).execute()
-        self.test.history.t.insert(values=dict(changed_by="heather", change_id=1, timestamp=1000, id1=2, id2=1, data_version=2, foo=99)).execute()
-
-        self.test.t.update(values=dict(foo=100, data_version=3)).where(self.test.id1 == 2).where(self.test.id2 == 1).execute()
-        self.test.history.t.insert(values=dict(changed_by="heather", change_id=2, timestamp=1000, id1=2, id2=1, data_version=3, foo=100)).execute()
-
-        self.test.history.rollbackChange(2, "heather")
-
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret[-1], (3, "heather", 1000, 2, 1, 99, 4))
-
-        ret = self.test.t.select().where(self.test.id1 == 2).where(self.test.id2 == 1).execute().fetchall()
-        self.assertEqual(ret, [(2, 1, 99, 4)])
-
-    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testMultiplePrimaryHistoryInsertRollback(self):
-        ret = self.test.t.select().execute().fetchall()
-
-        self.test.t.insert(values=dict(foo=271, data_version=1, id1=4, id2=31)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=1, timestamp=999, id1=4, id2=31, data_version=None, foo=None)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=2, timestamp=1000, id1=4, id2=31, data_version=1, foo=271)).execute()
-
-        self.test.history.rollbackChange(2, "george")
-
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret[-1], (3, "george", 1000, 4, 31, None, None))
-
-        ret = self.test.t.select().execute().fetchall()
-        self.assertEqual(len(ret), 4, msg=ret)
-
-    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testMultiplePrimaryHistoryDeleteRollback(self):
-        ret = self.test.t.select().execute().fetchall()
-
-        self.test.t.insert(values=dict(foo=271, data_version=1, id1=4, id2=3)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=1, timestamp=999, id1=4, id2=3, data_version=None, foo=None)).execute()
-        self.test.history.t.insert(values=dict(changed_by="george", change_id=2, timestamp=1000, id1=4, id2=3, data_version=1, foo=271)).execute()
-
-        self.test.t.delete().where(self.test.id1 == 4).where(self.test.id2 == 3).execute()
-        self.test.history.t.insert(values=dict(changed_by="bobby", change_id=3, timestamp=1000, id1=4, id2=3, data_version=None, foo=None)).execute()
-
-        self.test.history.rollbackChange(3, "george")
-
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret[-1], (5, "george", 1000, 4, 3, 271, 1))
-
-        ret = self.test.t.select().execute().fetchall()
-        self.assertEqual(len(ret), 5, msg=ret)
-
-    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryKeyHistoryGetChangeWithDataVersion(self):
         self.test.insert(changed_by="george", id1=4, id2=5, foo=0)
         ret = self.test.history.getChange(data_version=1, column_values={"id1": 4, "id2": 5})
@@ -657,7 +550,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
 @pytest.mark.usefixtures("current_db_schema")
 class ScheduledChangesTableMixin(object):
     def setUp(self):
-        self.db = AUSDatabase(self.dburi)
+        self.db = AUSDatabase(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(self.db.engine)
         self.engine = self.db.engine
         self.metadata = self.db.metadata
@@ -671,7 +564,7 @@ class ScheduledChangesTableMixin(object):
                     Column("foo", String(15), nullable=False),
                     Column("bar", String(15)),
                 )
-                super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
+                super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, versioned=True, historyClass=HistoryTable)
 
             def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
                 for row in affected_rows:
@@ -893,7 +786,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
                 self.table = Table(
                     "test_table2", metadata, Column("foo_name", String(15), primary_key=True), Column("foo", String(15)), Column("bar", String(15))
                 )
-                super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
+                super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, versioned=True)
 
             def getPotentialRequiredSignoffs(self, *args, **kwargs):
                 return None
@@ -925,7 +818,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
                     Column("bar", String(15), primary_key=True, nullable=False),
                     Column("baz", String(15)),
                 )
-                super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, history=False, versioned=True)
+                super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, historyClass=None, versioned=True)
 
         table = TestTable(self.db, self.metadata)
         self.metadata.create_all()
@@ -947,7 +840,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
                 self.table = Table(
                     "test_table2", metadata, Column("fooid", Integer, primary_key=True), Column("foo", String(15), primary_key=True), Column("bar", String(15))
                 )
-                super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
+                super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, versioned=True)
 
             def getPotentialRequiredSignoffs(self, *args, **kwargs):
                 return None
@@ -1009,7 +902,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
                 self.table = Table(
                     "test_table2", metadata, Column("fooid", Integer, primary_key=True), Column("foo", String(15), primary_key=True), Column("bar", String(15))
                 )
-                super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, history=True, versioned=True)
+                super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, versioned=True)
 
             def getPotentialRequiredSignoffs(self, *args, **kwargs):
                 return None
@@ -1394,7 +1287,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
                     Column("bar", String(15)),
                 )
                 super(TestTable, self).__init__(
-                    db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, history=True, versioned=True
+                    db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, versioned=True, historyClass=HistoryTable
                 )
 
             def getPotentialRequiredSignoffs(self, *args, **kwargs):
@@ -1458,9 +1351,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
                     Column("foo", String(15), nullable=False),
                     Column("bar", String(15)),
                 )
-                super(TestTable2, self).__init__(
-                    db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": []}, history=True, versioned=True
-                )
+                super(TestTable2, self).__init__(db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": []}, versioned=True)
 
             def getPotentialRequiredSignoffs(self, *args, **kwargs):
                 return None
@@ -1478,7 +1369,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
                     Column("bar", String(15)),
                 )
                 super(TestTable3, self).__init__(
-                    db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time", "blech"]}, history=True, versioned=True
+                    db, "sqlite", scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time", "blech"]}, versioned=True
                 )
 
             def getPotentialRequiredSignoffs(self, *args, **kwargs):
@@ -3544,7 +3435,7 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
-        dbo.setDb(self.dburi)
+        dbo.setDb(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         self.rules = dbo.rules
         self.releases = dbo.releases
@@ -3582,7 +3473,6 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testAllTablesCreated(self):
         self.assertTrue(dbo.releases)
-        self.assertTrue(dbo.releases.history)
         self.assertTrue(dbo.releases.scheduled_changes)
         self.assertTrue(dbo.releases.scheduled_changes.history)
         self.assertTrue(dbo.releases.scheduled_changes.conditions)
@@ -4036,7 +3926,7 @@ class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):
 class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
-        dbo.setDb(self.dburi)
+        dbo.setDb(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         cache.reset()
         cache.make_copies = True
@@ -4230,7 +4120,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
 
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
-        self.db = AUSDatabase(self.dburi)
+        self.db = AUSDatabase(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(self.db.engine)
         self.releases = self.db.releases
         self.releases.t.insert().execute(
@@ -4735,12 +4625,12 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
             self.releases.update({"name": "p"}, {"product": "z", "data": blob2}, changed_by="bill", old_data_version=1, transaction=trans)
         ret = select([self.releases.data]).where(self.releases.name == "p").execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
-        history_rows = self.releases.history.t.select().where(self.releases.history.name == "p").execute().fetchall()
-        self.assertEqual(len(history_rows), 4)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], ancestor_blob)
-        self.assertEqual(history_rows[2]["data"], blob1)
-        self.assertEqual(history_rows[3]["data"], result_blob)
+        history_entries = [blob.data for name, blob in self.releases.history.bucket.blobs.items() if name.startswith("p")]
+        self.assertEqual(len(history_entries), 4)
+        self.assertEqual(history_entries[0], "")
+        self.assertEqual(json.loads(history_entries[1]), ancestor_blob)
+        self.assertEqual(json.loads(history_entries[2]), blob1)
+        self.assertEqual(json.loads(history_entries[3]), result_blob)
 
     def testAddMergeableWithChangesToList(self):
         ancestor_blob = createBlob(
@@ -4893,12 +4783,12 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
             self.releases.update({"name": "release4"}, {"product": "z", "data": blob2}, changed_by="bill", old_data_version=1, transaction=trans)
         ret = select([self.releases.data]).where(self.releases.name == "release4").execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
-        history_rows = self.releases.history.t.select().where(self.releases.history.name == "release4").execute().fetchall()
-        self.assertEqual(len(history_rows), 4)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], ancestor_blob)
-        self.assertEqual(history_rows[2]["data"], blob1)
-        self.assertEqual(history_rows[3]["data"], result_blob)
+        history_entries = [blob.data for name, blob in self.releases.history.bucket.blobs.items() if name.startswith("release4")]
+        self.assertEqual(len(history_entries), 4)
+        self.assertEqual(history_entries[0], "")
+        self.assertEqual(json.loads(history_entries[1]), ancestor_blob)
+        self.assertEqual(json.loads(history_entries[2]), blob1)
+        self.assertEqual(json.loads(history_entries[3]), result_blob)
 
     def testAddConflictingOutdatedData(self):
         ancestor_blob = createBlob(
@@ -5008,11 +4898,11 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
                 old_data_version=1,
                 transaction=trans,
             )
-        history_rows = self.releases.history.t.select().where(self.releases.history.name == "p").execute().fetchall()
-        self.assertEqual(len(history_rows), 3)
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], ancestor_blob)
-        self.assertEqual(history_rows[2]["data"], blob1)
+        history_entries = [blob.data for name, blob in self.releases.history.bucket.blobs.items() if name.startswith("p")]
+        self.assertEqual(len(history_entries), 3)
+        self.assertEqual(history_entries[0], "")
+        self.assertEqual(json.loads(history_entries[1]), ancestor_blob)
+        self.assertEqual(json.loads(history_entries[2]), blob1)
 
     def testAddLocaleToReleaseDoesMerging(self):
         ancestor_blob = createBlob(
@@ -5113,14 +5003,14 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
             )
         ret = select([self.releases.data]).where(self.releases.name == "release4").execute().fetchone()[0]
         self.assertEqual(result_blob, ret)
-        history_rows = self.releases.history.t.select().where(self.releases.history.name == "release4").execute().fetchall()
-        self.assertEqual(len(history_rows), 4)
+        history_entries = [blob.data for name, blob in self.releases.history.bucket.blobs.items() if name.startswith("release4")]
+        self.assertEqual(len(history_entries), 4)
         interim_blob = deepcopy(ancestor_blob)
         interim_blob["platforms"]["p"]["locales"]["l"] = {"partials": [{"filesize": 567, "from": "release2", "hashValue": "ghi"}]}
-        self.assertEqual(history_rows[0]["data"], None)
-        self.assertEqual(history_rows[1]["data"], ancestor_blob)
-        self.assertEqual(history_rows[2]["data"], interim_blob)
-        self.assertEqual(history_rows[3]["data"], result_blob)
+        self.assertEqual(history_entries[0], "")
+        self.assertEqual(json.loads(history_entries[1]), ancestor_blob)
+        self.assertEqual(json.loads(history_entries[2]), interim_blob)
+        self.assertEqual(json.loads(history_entries[3]), result_blob)
 
 
 @pytest.mark.usefixtures("current_db_schema")
@@ -5599,7 +5489,6 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
                 "product_req_signoffs_scheduled_changes_signoffs",
                 "product_req_signoffs_scheduled_changes_signoffs_history",
                 "releases",
-                "releases_history",
                 "releases_scheduled_changes",
                 "releases_scheduled_changes_conditions",
                 "releases_scheduled_changes_conditions_history",
@@ -5721,11 +5610,12 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
     def testAllTablesExist(self):
         self.assertEqual(set(self.db.metadata.tables.keys()), self.db_tables)
 
-    def testModelIsSameAsRepository(self):
-        db2 = self._get_migrated_db()
-        diff = migrate.versioning.api.compare_model_to_db(db2.engine, self.db.migrate_repo, self.db.metadata)
-        if diff:
-            self.fail(str(diff))
+    # TODO: re-enable me after releases_history migration is in place
+    # def testModelIsSameAsRepository(self):
+    #    db2 = self._get_migrated_db()
+    #    diff = migrate.versioning.api.compare_model_to_db(db2.engine, self.db.migrate_repo, self.db.metadata)
+    #    if diff:
+    #        self.fail(str(diff))
 
     def testColumnAttributesAreSameAsDb(self):
         table_instances = []
@@ -5952,6 +5842,8 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             pass
 
         versions_migrate_tests_dict = {
+            # This version removes the releases_history table, which is verified by other tests
+            32: _noop,
             31: self._test_rules_longer_distribution,
             30: self._add_emergency_shutoff_tables,
             29: self._add_jaws_test,

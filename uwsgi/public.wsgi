@@ -15,7 +15,7 @@ DOMAIN_WHITELIST = {
     "redirector.gvt1.com": ("Widevine",),
     "ftp.mozilla.org": ("SystemAddons",),
 }
-if os.environ.get("STAGING"):
+if os.environ.get("STAGING") or os.environ.get("LOCALDEV"):
     DOMAIN_WHITELIST.update(
         {
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),

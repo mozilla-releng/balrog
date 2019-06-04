@@ -6,6 +6,9 @@ angular.module('config', [])
     'AUTH0_CLIENT_ID': 'fake',
     'AUTH0_AUDIENCE': 'fake',
     'AUTH0_REDIRECT_URI': 'fake',
+})
+.constant('GCSConfig', {
+    'buckets': {
+        '-': 'fake',
+    },
 });
-
-

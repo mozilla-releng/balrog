@@ -8,6 +8,7 @@ import simplejson as json
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import cache, dbo
+from auslib.test.fakes import FakeGCSHistory, FakeBlob
 from auslib.web.admin.base import app
 
 
@@ -60,7 +61,15 @@ class ViewTest(unittest.TestCase):
 }
 """
             )
-        dbo.setDb("sqlite:///:memory:")
+        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+
+        self.orig_releases_history = dbo.releases.history
+        # TODO: need a better mock, or maybe a Fake that stores history in memory?
+        # only the merge tests benefit from having history
+        # the rest are fine if we just let history be None
+        # maybe we should mock this only in the tests we care about?
+        dbo.releases.history = FakeGCSHistory()
+
         dbo.setDomainWhitelist({"good.com": ("a", "b", "c", "d")})
         self.metadata.create_all(dbo.engine)
         dbo.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
@@ -106,26 +115,26 @@ class ViewTest(unittest.TestCase):
         )
         dbo.releases.t.insert().execute(name="a", product="a", data=createBlob(dict(name="a", hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(name="ab", product="a", data=createBlob(dict(name="ab", hashFunction="sha512", schema_version=1)), data_version=1)
-        dbo.releases.history.t.insert().execute(change_id=1, timestamp=5, changed_by="bill", name="ab")
-        dbo.releases.history.t.insert().execute(
-            change_id=2,
-            timestamp=6,
-            changed_by="bill",
-            name="ab",
-            product="a",
-            data=createBlob(dict(name="ab", hashFunction="sha512", schema_version=1)),
-            data_version=1,
+        dbo.releases.history.bucket.blobs["ab/None-456-bob.json"] = FakeBlob("")
+        dbo.releases.history.bucket.blobs["ab/1-456-bob.json"] = FakeBlob(
+            """
+{
+    "name": "ab",
+    "hashFunction": "sha512",
+    "schema_version": 1
+}
+"""
         )
         dbo.releases.t.insert().execute(name="b", product="b", data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)), data_version=1)
-        dbo.releases.history.t.insert().execute(change_id=5, timestamp=15, changed_by="bill", name="b")
-        dbo.releases.history.t.insert().execute(
-            change_id=6,
-            timestamp=16,
-            changed_by="bill",
-            name="b",
-            product="b",
-            data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)),
-            data_version=1,
+        dbo.releases.history.bucket.blobs["b/None-567-bob.json"] = FakeBlob("")
+        dbo.releases.history.bucket.blobs["b/1-567-bob.json"] = FakeBlob(
+            """
+{
+    "name": "b",
+    "hashFunction": "sha512",
+    "schema_version": 1
+}
+"""
         )
         dbo.releases.t.insert().execute(name="c", product="c", data=createBlob(dict(name="c", hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
@@ -155,16 +164,9 @@ class ViewTest(unittest.TestCase):
 """
             ),
         )
-        dbo.releases.history.t.insert().execute(change_id=3, timestamp=9, changed_by="bill", name="d")
-        dbo.releases.history.t.insert().execute(
-            change_id=4,
-            timestamp=10,
-            changed_by="bill",
-            name="d",
-            product="d",
-            data_version=1,
-            data=createBlob(
-                """
+        dbo.releases.history.bucket.blobs["d/None-678-bob.json"] = FakeBlob("")
+        dbo.releases.history.bucket.blobs["d/1-678-bob.json"] = FakeBlob(
+            """
 {
     "name": "d",
     "schema_version": 1,
@@ -184,7 +186,6 @@ class ViewTest(unittest.TestCase):
     }
 }
 """
-            ),
         )
         dbo.rules.t.insert().execute(
             rule_id=1,
@@ -244,6 +245,7 @@ class ViewTest(unittest.TestCase):
         os.close(self.version_fd)
         os.remove(self.version_file)
         self.view_base.verified_userinfo = self.orig_base_verified_userinfo
+        dbo.releases.history = self.orig_releases_history
 
     def _get(self, url, qs={}, username=None):
         headers = {"Accept-Encoding": "application/json", "Accept": "application/json"}

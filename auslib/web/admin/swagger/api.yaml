@@ -448,34 +448,6 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
-  /releases/history:
-    get:
-      summary: Returns a list of releases and it's scheduled change history.
-      description: >
-        Returns a list of releases and it's scheduled change history.
-      tags:
-        - "History Histories Releases"
-      operationId: auslib.web.common.history_all.releases_history
-      consumes: []
-      produces: [application/json]
-      externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put"
-        description: "Returns a list of releases and releases scheduled change history"
-      parameters:
-        - $ref: '#/parameters/productParam'
-        - $ref: '#/parameters/limitParam'
-        - $ref: '#/parameters/pageParam'
-        - $ref: '#/parameters/changedByParam'
-        - $ref: '#/parameters/changeIdParam'
-        - $ref: '#/parameters/historyDataVersionParam'
-        - $ref: '#/parameters/timestampFromParam'
-        - $ref: '#/parameters/timestampToParam'
-      responses:
-        '200':
-          description: Successfully fetched releases and it's scheduled change histories
-        '400':
-          $ref: '#/responses/invalidFormData'
-
   /permissions/history:
     get:
       summary: Returns a list of permissions and it's scheduled change history.
@@ -575,32 +547,6 @@ paths:
         '400':
           $ref: '#/responses/invalidFormData'
 
-  /history/diff/release/{change_id}/{field}:
-    get:
-      summary: Returns a diff of the value of the named field
-      description: >
-        Returns a diff of the value of the named field from the named object at the specified change_id vs the previous change to that object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#history-view-object-change-id-field)
-      tags:
-        - History
-      operationId: auslib.web.admin.views.mapper.release_diff_history_get
-      consumes: []
-      produces:
-        - application/json
-        - text/plain
-      externalDocs:
-        description: "Returns a diff of the value of the named field from the named object at the specified change_id vs the previous change to that object"
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#history-view-object-change-id-field"
-      parameters:
-        - $ref: '#/parameters/change_id_param'
-        - $ref: '#/parameters/field_name_param'
-      responses:
-        '200':
-          description: Successfully fetched the requested diff value
-        '400':
-          $ref: '#/responses/invalidFormData'
-        '404':
-          $ref: '#/responses/resourceNotFound'
-
   /scheduled_change/diff/release/{sc_id}:
     get:
       summary: Returns a diff of the sc for the provided id
@@ -621,32 +567,6 @@ paths:
       responses:
         '200':
           description: Successfully fetched the requested diff value
-        '400':
-          $ref: '#/responses/invalidFormData'
-        '404':
-          $ref: '#/responses/resourceNotFound'
-
-  /history/view/release/{change_id}/{field}:
-    get:
-      summary: Returns the value of the named field from the named object at specified change_id
-      description: >
-        Returns the value of the named field from the named object at the specified change_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#history-view-object-change-id-field)
-      tags:
-        - History
-      operationId: auslib.web.admin.views.mapper.release_view_history_get
-      consumes: []
-      produces:
-        - application/json
-        - text/plain
-      externalDocs:
-        description: "Returns the value of the named field from the named object at the specified change_id"
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#history-view-object-change-id-field"
-      parameters:
-        - $ref: '#/parameters/change_id_param'
-        - $ref: '#/parameters/field_name_param'
-      responses:
-        '200':
-          description: Successfully fetched the requested value
         '400':
           $ref: '#/responses/invalidFormData'
         '404':
@@ -1040,109 +960,6 @@ paths:
           $ref: '#/responses/unauthenticatedUser'
         '403':
           $ref: '#/responses/unauthorizedUser'
-
-  /releases/{release}/revisions:
-    get:
-      summary: Returns previous versions of the named Release
-      description: >
-        Returns previous versions of the named Release in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-revisions)
-      tags:
-        - Releases
-      operationId: auslib.web.common.releases.get_release_history
-      consumes: []
-      produces:
-        - application/json
-      externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-revisions"
-        description: Returns previous versions of the named Release
-      parameters:
-        - $ref: '#/parameters/releaseParam'
-        - $ref: '#/parameters/pageParam'
-        - $ref: '#/parameters/limitParam'
-      responses:
-        '200':
-          description: Returns JSON object of list of release revisions plus total count
-          schema:
-            type: object
-            required:
-              - revisions
-            allOf:
-              - $ref: "#/definitions/CountModel"
-              - type: object
-                properties:
-                  revisions:
-                    description: array where each element is a release revision object
-                    type: array
-                    minItems: 0
-                    items:
-                      type: object
-                      allOf:
-                        - $ref: "#/definitions/HistoryModel"
-                        - $ref: '#/definitions/DataVersionModel'
-                        - $ref: '#/definitions/ProductModel'
-                        - $ref: '#/definitions/ReleaseName'
-                        - type: object
-                          properties:
-                            read_only:
-                              description: Flag that indicates whether release is marked read_only or not.
-                              type: string
-                              enum: [ "True", "False"]
-                              example: "True"
-                            _different:
-                              description: list of columns that were modified in revision
-                              type: array
-                              uniqueItems: true
-                              minItems: 0
-                              items:
-                                type: string
-                                format: ascii
-                              example: ["product", "data"]
-                            _time_ago:
-                              description: Time passed since the particular change
-                              type: string
-                              format: ascii
-                              example: "1 day ago"
-                      required:
-                        - name
-                        - product
-                        - data_version
-                        - read_only
-                        - _different
-                        - _time_ago
-        '400':
-          $ref: '#/responses/invalidFormData'
-        '404':
-          $ref: '#/responses/resourceNotFound'
-
-    post:
-      summary: Reverts the release to a previous revision
-      description: >
-        Reverts the named Release to the version identified by the change_id given in the request body. The request body must be a JSON object containing a 'change_id' key. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-revisions)
-      tags:
-        - Releases
-      operationId: auslib.web.admin.views.mapper.release_history_view_post
-      consumes:
-        - application/json
-      produces:
-        - application/json
-        - text/html
-      externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-revisions"
-        description: "Reverts the release to a previous revision."
-      parameters:
-        - $ref: '#/parameters/releaseParam'
-        - $ref: '#/parameters/change_id_body_param'
-      responses:
-        '200':
-          description: Successfully reverted back the release revision
-        '400':
-          $ref: '#/responses/invalidFormData'
-        '401':
-          $ref: '#/responses/unauthenticatedUser'
-        '403':
-          $ref: '#/responses/unauthorizedUser'
-        '404':
-          $ref: '#/responses/resourceNotFound'
 
   /required_signoffs/product:
     get:

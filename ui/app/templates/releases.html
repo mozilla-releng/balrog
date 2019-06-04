@@ -70,7 +70,7 @@
 
 
 <div class="panel panel-default"
-     ng-repeat="release in filtered_items = (releases | filter:filterBySearch) | startFrom:(disableFilter || !release_name) && ((currentPage - 1)*pageSize) | orderBy:ordering | limitTo:pageSize">
+     ng-repeat="release in filtered_items = (releases | filter:filterBySearch) | startFrom:((currentPage - 1)*pageSize) | orderBy:ordering | limitTo:pageSize">
   <div class="panel-heading">
     <h3 class="panel-title">
       <div style="float:right">
