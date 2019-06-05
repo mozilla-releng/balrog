@@ -195,9 +195,6 @@ tasks:
         env: true
         events:
           - release
-    routes:
-      - index.project.balrog.releases.latest.agent
-      - index.project.balrog.releases.{{ event.version }}.agent
     metadata:
       name: Balrog Agent Docker Image Creation (release event)
       description: Balrog Agent Docker Image Creation (release event)
@@ -250,9 +247,6 @@ tasks:
         env: true
         events:
           - release
-    routes:
-      - index.project.balrog.releases.latest.app
-      - index.project.balrog.releases.{{ event.version }}.app
     metadata:
       name: Balrog Docker Image Creation (release event)
       description: Balrog Docker Image Creation (release event)
