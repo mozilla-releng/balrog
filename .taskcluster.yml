@@ -22,6 +22,7 @@
 #
 #  - Build and publish the client library whenever a Release happens.
 #
+# TODO: add test runner; builder for new UI here
 version: 0
 allowPullRequests: public
 metadata:
