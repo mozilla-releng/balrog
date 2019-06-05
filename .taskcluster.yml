@@ -22,7 +22,6 @@
 #
 #  - Build and publish the client library whenever a Release happens.
 #
-# TODO: add test runner; builder for new UI here
 version: 0
 allowPullRequests: public
 metadata:
@@ -257,5 +256,83 @@ tasks:
     metadata:
       name: Balrog Docker Image Creation (release event)
       description: Balrog Docker Image Creation (release event)
+      owner: "{{ event.head.user.email }}"
+      source: "{{ event.head.repo.url }}"
+
+  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
+    workerType: "{{ taskcluster.docker.workerType }}"
+    payload:
+      maxRunTime: 1200
+      image: "node:current"
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog/react-ui && git checkout $GITHUB_HEAD_BRANCH && yarn install && yarn lint && yarn test"
+      features:
+        dind: true
+    extra:
+      github:
+        env: true
+        events:
+          - pull_request.opened
+          - pull_request.synchronize
+          - pull_request.reopened
+          - push
+        branches:
+          - master
+    metadata:
+      name: Balrog React UI tests
+      description: Balrog React UI tests
+      owner: "{{ event.head.user.email }}"
+      source: "{{ event.head.repo.url }}"
+
+  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
+    workerType: "{{ taskcluster.docker.workerType }}"
+    payload:
+      maxRunTime: 1200
+      image: "node:current"
+      # TODO: may need to publish, but only to stage?
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog/react-ui && git checkout $GITHUB_HEAD_BRANCH && yarn build"
+      features:
+        dind: true
+    extra:
+      github:
+        env: true
+        events:
+          - pull_request.opened
+          - pull_request.synchronize
+          - pull_request.reopened
+          - push
+        branches:
+          - master
+    metadata:
+      name: Balrog React UI build
+      description: Balrog React UI build
+      owner: "{{ event.head.user.email }}"
+      source: "{{ event.head.repo.url }}"
+
+  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
+    workerType: "{{ taskcluster.docker.workerType }}"
+    payload:
+      maxRunTime: 1200
+      image: "node:current"
+      command:
+        - "/bin/bash"
+        - "-c"
+        # TODO: Add publish, possibly with "s3-deploy"?
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog/react-ui && git checkout $GITHUB_HEAD_BRANCH && yarn build"
+      features:
+        dind: true
+    extra:
+      github:
+        env: true
+        events:
+          - release
+    metadata:
+      name: Balrog React UI build & publish
+      description: Balrog React UI build & publish
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
