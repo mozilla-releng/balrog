@@ -310,14 +310,17 @@ tasks:
 
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
+    scopes:
+      - secrets:get:repo:github.com/mozilla/balrog:s3-production
     payload:
+      env:
+        TC_SECRET_URL: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-production
       maxRunTime: 1200
       image: "node:current"
       command:
         - "/bin/bash"
         - "-c"
-        # TODO: Add publish, possibly with "s3-deploy"?
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog/react-ui && git checkout $GITHUB_HEAD_BRANCH && yarn install && yarn build"
+        - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog/react-ui && git checkout $GITHUB_HEAD_BRANCH && yarn install && yarn build && ./scripts/deploy"
       features:
         dind: true
     extra:
