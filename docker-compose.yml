@@ -110,7 +110,7 @@ services:
 
 
   balrogreactui:
-    image: node:current
+    build: ./react-ui
     depends_on:
       balrogadmin:
         condition: service_healthy
