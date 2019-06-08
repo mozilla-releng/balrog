@@ -1404,6 +1404,13 @@ class TestReleasesScheduledChanges(ViewTest):
         dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="bill", role="releng")
         dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="ben", role="releng")
 
+        dbo.releases.t.insert().execute(
+            name="z", product="z", read_only=True, data=createBlob(dict(name="z", hashFunction="sha512", schema_version=1)), data_version=1
+        )
+        dbo.productRequiredSignoffs.t.insert().execute(product="z", channel="z", role="releng", signoffs_required=1, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="z", channel="z", role="relman", signoffs_required=1, data_version=1)
+        dbo.rules.t.insert().execute(rule_id=42, product="z", channel="z", mapping="z", priority=10, data_version=1, update_type="minor")
+
     def testGetScheduledChanges(self):
         ret = self._get("/scheduled_changes/releases")
         expected = {
@@ -1667,6 +1674,20 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertDictEqual(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeUpdateToReadWrite(self):
+        data = {"change_type": "update", "name": "z", "when": 4200024, "read_only": False, "data_version": 1}
+        resp = self._post("/scheduled_changes/releases", data=data)
+        self.assertStatusCode(resp, 200)
+
+        sc_id = resp.json["sc_id"]
+        rows = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == sc_id).execute().fetchall()
+        self.assertTrue(rows)
+
+        sc = dict(rows[0])
+        self.assertIn("base_read_only", sc)
+        self.assertFalse(sc["base_read_only"])
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledUnknownScheduledChangeID(self):
         data = {
             "data": '{"name": "a", "hashFunction": "sha512", "extv": "3.0", "schema_version": 1}',
@@ -1911,6 +1932,21 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         self.assertDictEqual(base_row, base_expected)
 
+    def testEnactScheduledChangeUpdateReadWrite(self):
+        dbo.releases.scheduled_changes.t.insert().execute(
+            sc_id=42, scheduled_by="bill", complete=False, change_type="update", base_read_only=False, base_data_version=1, base_name="z", data_version=1
+        )
+        dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=42, when=230000000, data_version=1)
+        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=42, username="bill", role="releng")
+        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=42, username="ben", role="relman")
+
+        resp = self._post("/scheduled_changes/releases/42/enact")
+        self.assertStatusCode(resp, 200)
+
+        row = dbo.releases.t.select().where(dbo.releases.name == "z").execute().fetchall()[0]
+        release = dict(row)
+        self.assertFalse(release["read_only"])
+
     def testEnactScheduledChangeNewRelease(self):
         ret = self._post("/scheduled_changes/releases/1/enact")
         self.assertEqual(ret.status_code, 200, ret.get_data())
@@ -2064,6 +2100,13 @@ class TestSingleColumn_JSON(ViewTest):
 
 
 class TestReadOnlyView(ViewTest):
+    def setUp(self):
+        super().setUp()
+        dbo.releases.t.insert().execute(name="z", product="z", data=createBlob(dict(name="z", hashFunction="sha512", schema_version=1)), data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="z", channel="z", role="releng", signoffs_required=1, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="z", channel="z", role="relman", signoffs_required=1, data_version=1)
+        dbo.rules.t.insert().execute(rule_id=42, product="z", channel="z", mapping="z", priority=10, data_version=1, update_type="minor")
+
     def testReadOnlyGet(self):
         ret = self._get("/releases/b/read_only")
         is_read_only = dbo.releases.t.select(dbo.releases.name == "b").execute().first()["read_only"]
@@ -2084,7 +2127,7 @@ class TestReadOnlyView(ViewTest):
         self.assertEqual(read_only, True)
 
     def testReadOnlySetFalseAdmin(self):
-        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
+        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "b").execute()
         data = dict(name="b", read_only="", product="b", data_version=2)
         ret = self._put("/releases/b/read_only", username="bill", data=data)
         self.assertStatusCode(ret, 201)
@@ -2126,6 +2169,19 @@ class TestReadOnlyView(ViewTest):
         data_unset = dict(name="b", read_only="", product="b", data_version=2)
         ret = self._put("/releases/b/read_only", username="bob", data=data_unset)
         self.assertStatusCode(ret, 403)
+
+    def testNoRequireSignoffsToMakeReadonly(self):
+        data = dict(name="z", read_only=True, product="z", data_version=1)
+        ret = self._put("/releases/z/read_only", username="bill", data=data)
+        self.assertStatusCode(ret, 201)
+        read_only = dbo.releases.isReadOnly(name="z")
+        self.assertTrue(read_only)
+
+    def testRequireSignoffsToMakeReadWrite(self):
+        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "z").execute()
+        data = dict(name="z", read_only=False, product="z", data_version=2)
+        ret = self._put("/releases/z/read_only", username="bill", data=data)
+        self.assertStatusCode(ret, 400)
 
 
 class TestRuleIdsReturned(ViewTest):
