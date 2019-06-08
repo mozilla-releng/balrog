@@ -314,17 +314,14 @@ class ReleaseReadOnlyView(AdminView):
 
         data_version = connexion.request.get_json().get("data_version")
         is_release_read_only = dbo.releases.isReadOnly(release)
+        where = {"name": release}
 
         if connexion.request.get_json().get("read_only"):
             if not is_release_read_only:
-                dbo.releases.update(
-                    where={"name": release}, what={"read_only": True}, changed_by=changed_by, old_data_version=data_version, transaction=transaction
-                )
+                dbo.releases.change_readonly(where, True, changed_by, old_data_version=data_version, transaction=transaction)
                 data_version += 1
         else:
-            dbo.releases.update(
-                where={"name": release}, what={"read_only": False}, changed_by=changed_by, old_data_version=data_version, transaction=transaction
-            )
+            dbo.releases.change_readonly(where, False, changed_by, old_data_version=data_version, transaction=transaction)
             data_version += 1
         return Response(status=201, response=json.dumps(dict(new_data_version=data_version)))
 
