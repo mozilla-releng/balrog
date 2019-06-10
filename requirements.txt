@@ -286,9 +286,9 @@ sphinxcontrib-htmlhelp==1.0.2 \
 sphinxcontrib-devhelp==1.0.1 \
     --hash=sha256:6c64b077937330a9128a4da74586e8c2130262f014689b4b89e2d08ee7294a34 \
     --hash=sha256:9512ecb00a2b0821a146736b39f7aeb90759834b07e81e8cc23a9c70bacb9981
-google-cloud-storage==1.15.0 \
-    --hash=sha256:0e02039f37d3e4531090f72d1200ad78316625503644864f81c1d6b91516bfa7 \
-    --hash=sha256:d66bfed1fd51f392ee361b5b7d84efd912f47db52a28722ee2e3994f0a54698d
+google-cloud-storage==1.16.1 \
+    --hash=sha256:10b8a708d71b45589e06d0dc2bcc614e1d1c921902df8d22e374af1fb346ab68 \
+    --hash=sha256:4a2a0e2486b1977a4f3e382ed0be118933ecb6a92dc6b2c3d0b56ef8d76ac7a9
 google-api-core==1.9.0 \
     --hash=sha256:5dcf8895690b4b95c1d96f77a314fcc5674a5e2db925343b3f67df3f0882967e \
     --hash=sha256:fc1fea74bd863fb71486066e0c6b3a4dad26fb70ec61a0edcada8637feb77c68
