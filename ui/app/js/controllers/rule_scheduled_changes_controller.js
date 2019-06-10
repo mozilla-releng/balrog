@@ -281,6 +281,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           release: function () {
             return response;
           },
+          previous_version: function() {
+            return null;
+          },
           diff: function() {
             return false;
           }
