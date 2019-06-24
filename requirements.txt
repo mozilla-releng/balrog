@@ -104,9 +104,9 @@ snowballstemmer==1.2.1 \
 contextlib2==0.5.5 \
     --hash=sha256:f5260a6e679d2ff42ec91ec5252f4eeffdcf21053db9113bd0a8e4d953769c00 \
     --hash=sha256:509f9419ee91cdd00ba34443217d5ca51f5a364a404e1dce9e8979cea969ca48
-sphinx==2.1.1 \
-    --hash=sha256:15143166e786c7faa76fa990d3b6b38ebffe081ef81cffd1d656b07f3b28a1fa \
-    --hash=sha256:5fd62ba64235d77a81554d47ff6b17578171b6dbbc992221e9ebc684898fff59
+sphinx==2.1.2 \
+    --hash=sha256:22538e1bbe62b407cf5a8aabe1bb15848aa66bb79559f42f5202bbce6b757a69 \
+    --hash=sha256:f9a79e746b87921cabc3baa375199c6076d1270cee53915dbd24fdbeaaacc427
 pbr==5.3.1 \
     --hash=sha256:9181e2a34d80f07a359ff1d0504fad3a47e00e1cf2c475b0aa7dcb030af54c40 \
     --hash=sha256:94bdc84da376b3dd5061aa0c3b6faffe943ee2e56fa4ff9bd63e1643932f34fc
