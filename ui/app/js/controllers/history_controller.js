@@ -282,6 +282,9 @@ angular
           release: function () {
             return revision;
           },
+          previous_version: function() {
+            return null;
+          },
           diff: function() {
             return true;
           }

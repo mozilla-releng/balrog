@@ -158,7 +158,7 @@ class API(object):
             logging.debug("Data sent: %s", sanitised_data)
         else:
             logging.debug("Data sent: %s", data)
-        headers = {"Accept-Encoding": "application/json", "Accept": "application/json", "Content-Type": "application/json"}
+        headers = {"Accept-Encoding": "application/json", "Accept": "application/json", "Content-Type": "application/json", "Referer": self.api_root}
         before = time.time()
         access_token = _get_auth0_token(self.auth0_secrets)
         auth = BearerAuth(access_token)

@@ -69,11 +69,8 @@ async def request(api_root, path, auth0_secrets, method="GET", data={}, headers=
         # https, which means it won't send back the session token by default,
         # which breaks csrf token validation. Changing the cookies to insecure
         # will let them be sent back, but it's a horrible back.
-        # Checking for this specific api_root makes sure it's only enabled for
-        # our deployed environments.
-        if api_root == "http://localhost:81/api":
-            for c in client.cookie_jar:
-                c["secure"] = False
+        for c in client.cookie_jar:
+            c["secure"] = False
 
         logging.debug("Sending %s request to %s", method, url)
         async with client.request(method, url, data=json.dumps(data), headers=headers) as resp:
