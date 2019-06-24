@@ -33,7 +33,7 @@ tasks:
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
-      - secrets:get:repo:github.com/testbhearsum/balrog:coveralls
+      - secrets:get:repo:github.com/mozilla/balrog:coveralls
     payload:
       maxRunTime: 1200
       image: "mozillareleases/python-test-runner"
@@ -152,7 +152,7 @@ tasks:
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
-      - secrets:get:repo:github.com/testbhearsum/balrog:dockerhub
+      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
     payload:
       maxRunTime: 3600
       image: "taskcluster/image_builder:0.1.3"
@@ -179,7 +179,7 @@ tasks:
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
-      - secrets:get:repo:github.com/testbhearsum/balrog:dockerhub
+      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
     payload:
       maxRunTime: 3600
       image: "taskcluster/image_builder:0.1.3"
@@ -204,7 +204,7 @@ tasks:
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
-      - secrets:get:repo:github.com/testbhearsum/balrog:dockerhub
+      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
     payload:
       maxRunTime: 3600
       image: "taskcluster/image_builder:0.1.3"
@@ -231,7 +231,7 @@ tasks:
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
-      - secrets:get:repo:github.com/testbhearsum/balrog:dockerhub
+      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
     payload:
       maxRunTime: 3600
       image: "taskcluster/image_builder:0.1.3"
@@ -285,7 +285,6 @@ tasks:
     payload:
       maxRunTime: 1200
       image: "node:current"
-      # TODO: may need to publish, but only to stage?
       command:
         - "/bin/bash"
         - "-c"
@@ -311,10 +310,11 @@ tasks:
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:s3-production
+      - secrets:get:repo:github.com/mozilla/balrog:s3-stage
     payload:
       env:
         TC_SECRET_URL: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-production
+        WEBSITE_BUCKET: FIXME
       maxRunTime: 1200
       image: "node:current"
       command:
