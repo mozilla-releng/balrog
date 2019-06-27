@@ -313,7 +313,7 @@ tasks:
       - secrets:get:repo:github.com/mozilla/balrog:s3-stage
     payload:
       env:
-        TC_SECRET_URL: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-production
+        TC_SECRET_URL: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage
         WEBSITE_BUCKET: FIXME
       maxRunTime: 1200
       image: "node:current"
