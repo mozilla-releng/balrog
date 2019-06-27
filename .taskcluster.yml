@@ -262,8 +262,6 @@ tasks:
         - "/bin/bash"
         - "-c"
         - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd react-ui && yarn install && yarn lint && yarn test"
-      features:
-        dind: true
     extra:
       github:
         env: true
@@ -289,8 +287,6 @@ tasks:
         - "/bin/bash"
         - "-c"
         - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd react-ui && yarn install && yarn build"
-      features:
-        dind: true
     extra:
       github:
         env: true
@@ -321,8 +317,6 @@ tasks:
         - "/bin/bash"
         - "-c"
         - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd react-ui && yarn install && yarn build && ./scripts/deploy"
-      features:
-        dind: true
     extra:
       github:
         env: true
