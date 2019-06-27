@@ -20,13 +20,16 @@ class ScheduledChangesView(AdminView):
         super(ScheduledChangesView, self).__init__()
 
     def get(self, where=None):
-        if connexion.request.args.get("all"):
-            rows = self.sc_table.select(where=where)
-        else:
-            if where is None:
-                where = {}
+        if where is None:
+            where = {}
+        rule_id = connexion.request.args.get("rule_id")
+
+        if connexion.request.args.get("all") is None:
             where["complete"] = False
-            rows = self.sc_table.select(where=where)
+        if rule_id:
+            where["base_rule_id"] = rule_id
+
+        rows = self.sc_table.select(where=where)
         ret = {"count": len(rows), "scheduled_changes": []}
         for row in rows:
             scheduled_change = {"signoffs": {}, "required_signoffs": {}}
