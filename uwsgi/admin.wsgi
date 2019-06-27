@@ -3,8 +3,6 @@ import os
 import os.path
 import sys
 
-from flask_wtf.csrf import CSRFProtect
-
 from google.api_core.exceptions import Forbidden
 from google.auth.credentials import AnonymousCredentials
 from google.cloud import storage
@@ -120,28 +118,6 @@ dbo.setDomainWhitelist(DOMAIN_WHITELIST)
 application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
 application.config["PAGE_TITLE"] = "Balrog Administration"
 application.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
-
-
-class JSONCSRFProtect(CSRFProtect):
-    def _get_csrf_token(self):
-        from flask import current_app, request
-
-        def get_token():
-            token = CSRFProtect._get_csrf_token(self)
-            yield token
-            field_name = current_app.config["WTF_CSRF_FIELD_NAME"]
-            if request.json:
-                token = request.json.get(field_name)
-                yield token
-            token = request.args.get(field_name)
-            yield token
-
-        for token in get_token():
-            if token:
-                return token
-
-
-JSONCSRFProtect(application)
 
 
 # Secure cookies should be enabled when we're using https (otherwise the
