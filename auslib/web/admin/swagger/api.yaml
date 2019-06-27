@@ -1939,9 +1939,6 @@ paths:
                       allOf:
                         - $ref: '#/definitions/SCSignoffsModel'
                         - $ref: '#/definitions/SCRulesItemBase'
-                        - properties:
-                            original_row:
-                              $ref: '#/definitions/RuleObject'
 
     post:
       summary: create scheduled change for rules.
@@ -2190,12 +2187,6 @@ paths:
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/OptionsModel'
                         - $ref: '#/definitions/PermissionsModel'
-                        - properties:
-                            original_row:
-                              allOf:
-                                - $ref: '#/definitions/DataVersionNullable'
-                                - $ref: '#/definitions/PermissionsModel'
-                                - $ref: '#/definitions/OptionsModel'
                       required:
                         - change_type
                         - data_version
@@ -2453,14 +2444,6 @@ paths:
                         - $ref: '#/definitions/ReleaseReadOnly'
                         - $ref: '#/definitions/ReleaseDataObject'
                         - $ref: '#/definitions/ReleaseName'
-                        - properties:
-                            original_row:
-                              allOf:
-                                - $ref: '#/definitions/ReleaseDataObject'
-                                - $ref: '#/definitions/ReleaseName'
-                                - $ref: '#/definitions/DataVersionNullable'
-                                - $ref: '#/definitions/ProductNullable'
-                                - $ref: '#/definitions/ReleaseReadOnly'
                       required:
                         - change_type
                         - data_version
@@ -2727,14 +2710,6 @@ paths:
                         - $ref: '#/definitions/ProductModel'
                         - $ref: '#/definitions/RoleModel'
                         - $ref: '#/definitions/ChannelModel'
-                        - properties:
-                            original_row:
-                              allOf:
-                                - $ref: '#/definitions/DataVersionNullable'
-                                - $ref: '#/definitions/SignoffsRequiredNullable'
-                                - $ref: '#/definitions/ProductModel'
-                                - $ref: '#/definitions/RoleModel'
-                                - $ref: '#/definitions/ChannelModel'
                       required:
                         - change_type
                         - data_version
@@ -3005,13 +2980,6 @@ paths:
                         - $ref: '#/definitions/SignoffsRequiredNullable'
                         - $ref: '#/definitions/ProductModel'
                         - $ref: '#/definitions/RoleModel'
-                        - properties:
-                            original_row:
-                              allOf:
-                                - $ref: '#/definitions/DataVersionNullable'
-                                - $ref: '#/definitions/SignoffsRequiredNullable'
-                                - $ref: '#/definitions/ProductModel'
-                                - $ref: '#/definitions/RoleModel'
                       required:
                         - change_type
                         - data_version
@@ -3768,9 +3736,6 @@ paths:
                       allOf:
                         - $ref: '#/definitions/SCSignoffsModel'
                         - $ref: '#/definitions/EmergencyShutOffModel'
-                        - properties:
-                            original_row:
-                              $ref: '#/definitions/EmergencyShutOffModel'
 
     post:
       summary: Create scheduled change for emergency shut off.

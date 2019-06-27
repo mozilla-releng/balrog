@@ -54,7 +54,6 @@ class ScheduledChangesView(AdminView):
                 # inserts, because it doesn't exist yet!
                 if row["change_type"] != "insert":
                     original_row = self.table.select(where=base_pk)[0]
-                    scheduled_change["original_row"] = original_row
                     affected_rows.append(original_row)
                 # We don't need to consider the future version of the row when
                 # looking for required signoffs, because it won't exist when

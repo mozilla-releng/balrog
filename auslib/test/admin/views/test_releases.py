@@ -1427,7 +1427,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.releases.select({"name": "a"})[0],
                 },
                 {
                     "sc_id": 4,
@@ -1443,7 +1442,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"ben": "releng", "bill": "releng"},
                     "required_signoffs": {},
-                    "original_row": dbo.releases.select({"name": "ab"})[0],
                 },
             ],
         }
@@ -1483,7 +1481,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.releases.select({"name": "a"})[0],
                 },
                 {
                     "sc_id": 3,
@@ -1499,7 +1496,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {},
                     "required_signoffs": {},
-                    # No original_row for complete changes.
                 },
                 {
                     "sc_id": 4,
@@ -1515,7 +1511,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"ben": "releng", "bill": "releng"},
                     "required_signoffs": {},
-                    "original_row": dbo.releases.select({"name": "ab"})[0],
                 },
             ],
         }
