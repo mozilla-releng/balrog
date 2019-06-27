@@ -95,7 +95,11 @@ class ScheduledChangeView(AdminView):
         base_row = {}
         base_pk = {}
 
-        for k, v in self.sc_table.select({"sc_id": sc_id})[0].items():
+        sc = self.sc_table.select({"sc_id": sc_id})
+        if not sc:
+            return problem(404, "Bad Request", "Scheduled change does not exist")
+
+        for k, v in sc[0].items():
             if k == "data_version":
                 scheduled_change["sc_data_version"] = v
             else:
