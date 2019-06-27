@@ -348,6 +348,10 @@ def scheduled_change_permissions_rs_signoffs_delete(sc_id):
     return PermissionsRequiredSignoffScheduledChangeSignoffsView().delete(sc_id)
 
 
+def scheduled_change_rule_get(sc_id):
+    return RuleScheduledChangeView().get(sc_id)
+
+
 def scheduled_change_rules_post(sc_id):
     """POST /scheduled_changes/rules/<int:sc_id>"""
     return RuleScheduledChangeView().post(sc_id)
