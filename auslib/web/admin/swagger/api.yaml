@@ -2004,25 +2004,6 @@ paths:
           $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/rules/{sc_id}:
-    get:
-      summary: Get a specific scheduled change
-      description: Get a specific scheduled change
-      tags:
-        - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rule_get
-      produces:
-        - application/json
-      parameters:
-        - $ref: '#/parameters/sc_id_param'
-      responses:
-        '200':
-          $ref: '#/responses/updateExistingObject'
-        '401':
-          $ref: '#/responses/unauthenticatedUser'
-        '403':
-          $ref: '#/responses/unauthorizedUser'
-        '404':
-          $ref: '#/responses/resourceNotFound'
     post:
       summary: Modifies existing scheduled change for a Rule.
       description: >
