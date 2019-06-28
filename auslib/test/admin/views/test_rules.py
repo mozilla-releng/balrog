@@ -433,7 +433,6 @@ class TestSingleRuleView_JSON(ViewTest):
             jaws=None,
         )
         self.assertEqual(ret.get_json(), expected)
-        self.assertIn("X-CSRF-Token", ret.headers)
 
     def testGetRuleByAlias(self):
         ret = self._get("/rules/frodo")
@@ -779,7 +778,7 @@ class TestSingleRuleView_JSON(ViewTest):
         ret = self._get("/rules/1")
         self.assertEqual(ret.status_code, 200)
         self.assertTrue("c" in ret.get_data(as_text=True), msg=ret.get_data())
-        for h in ("X-CSRF-Token", "X-Data-Version"):
+        for h in ("X-Data-Version",):
             self.assertTrue(h in ret.headers, msg=ret.headers)
 
     def testDeleteRule(self):
