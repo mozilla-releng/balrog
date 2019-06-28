@@ -1525,7 +1525,7 @@ class TestRuleScheduledChanges(ViewTest):
                     "change_type": "update",
                     "signoffs": {},
                     "required_signoffs": {},
-                },
+                }
             ],
         }
         self.assertEqual(ret.get_json(), expected)

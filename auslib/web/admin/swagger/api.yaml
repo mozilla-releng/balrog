@@ -202,7 +202,7 @@ parameters:
   rule_id_query:
     name: rule_id
     in: query
-    description: Field value to uniquely identfiy a rule
+    description: A rule_id
     type: integer
     minimum: 1
     required: false
@@ -210,7 +210,7 @@ parameters:
   release_name_query:
     name: name
     in: query
-    description: Field value to uniquely identify a release
+    description: A release name
     type: string
     format: ascii
     maxLength: 100

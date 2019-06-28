@@ -1466,7 +1466,7 @@ class TestReleasesScheduledChanges(ViewTest):
                     "data_version": None,
                     "signoffs": {},
                     "required_signoffs": {},
-                },
+                }
             ],
         }
         self.assertDictEqual(ret.get_json(), expected)
