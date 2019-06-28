@@ -22,12 +22,9 @@ class ScheduledChangesView(AdminView):
     def get(self, where=None):
         if where is None:
             where = {}
-        rule_id = connexion.request.args.get("rule_id")
 
         if connexion.request.args.get("all") is None:
             where["complete"] = False
-        if rule_id:
-            where["base_rule_id"] = rule_id
 
         rows = self.sc_table.select(where=where)
         ret = {"count": len(rows), "scheduled_changes": []}
