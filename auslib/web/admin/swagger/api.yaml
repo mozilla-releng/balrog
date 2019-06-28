@@ -106,7 +106,7 @@ parameters:
     description: valid csrf token
     type: string
     format: ascii
-    required: true
+    required: false
 
   dataVersionParam:
     name: data_version
@@ -3954,8 +3954,6 @@ definitions:
     title: CSRF Token
     description: CSRF Token in POST/PUT or UPDATE requests
     type: object
-    required:
-      - csrf_token
     properties:
       csrf_token:
         type: string
