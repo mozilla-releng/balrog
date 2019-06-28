@@ -207,6 +207,15 @@ parameters:
     minimum: 1
     required: false
 
+  release_name_query:
+    name: name
+    in: query
+    description: Field value to uniquely identify a release
+    type: string
+    format: ascii
+    maxLength: 100
+    required: false
+
   change_id_param:
     name: change_id
     in: path
@@ -2424,6 +2433,7 @@ paths:
         description: Returns scheduled changes for releases.
       parameters:
         - $ref: '#/parameters/allSCParam'
+        - $ref: '#/parameters/release_name_query'
       responses:
         '200':
           description: Returns JSON object of list of all scheduled changes for releases plus total count
