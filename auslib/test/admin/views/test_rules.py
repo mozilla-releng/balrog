@@ -1300,7 +1300,6 @@ class TestRuleScheduledChanges(ViewTest):
                     "change_type": "update",
                     "signoffs": {},
                     "required_signoffs": {},
-                    "original_row": dbo.rules.getRule(1),
                 },
                 {
                     "sc_id": 2,
@@ -1409,7 +1408,6 @@ class TestRuleScheduledChanges(ViewTest):
                     "change_type": "delete",
                     "signoffs": {},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.rules.getRule(4),
                 },
                 {
                     "sc_id": 6,
@@ -1482,8 +1480,52 @@ class TestRuleScheduledChanges(ViewTest):
                     "change_type": "update",
                     "signoffs": {},
                     "required_signoffs": {"releng": 1, "relman": 1},
-                    "original_row": dbo.rules.getRule(6),
                 },
+            ],
+        }
+        self.assertEqual(ret.get_json(), expected)
+
+    def testGetScheduledChangesByRuleId(self):
+        ret = self._get("/scheduled_changes/rules", qs={"rule_id": 1})
+        expected = {
+            "count": 1,
+            "scheduled_changes": [
+                {
+                    "sc_id": 1,
+                    "when": 1000000,
+                    "scheduled_by": "bill",
+                    "complete": False,
+                    "sc_data_version": 1,
+                    "rule_id": 1,
+                    "priority": 100,
+                    "version": "3.5",
+                    "buildTarget": "d",
+                    "backgroundRate": 100,
+                    "mapping": "b",
+                    "update_type": "minor",
+                    "data_version": 1,
+                    "alias": None,
+                    "product": "a",
+                    "channel": "a",
+                    "buildID": None,
+                    "locale": None,
+                    "memory": None,
+                    "mig64": None,
+                    "osVersion": None,
+                    "distribution": None,
+                    "fallbackMapping": None,
+                    "distVersion": None,
+                    "headerArchitecture": None,
+                    "comment": None,
+                    "instructionSet": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                    "telemetry_uptake": None,
+                    "jaws": None,
+                    "change_type": "update",
+                    "signoffs": {},
+                    "required_signoffs": {},
+                }
             ],
         }
         self.assertEqual(ret.get_json(), expected)
@@ -1528,7 +1570,6 @@ class TestRuleScheduledChanges(ViewTest):
                     "change_type": "update",
                     "signoffs": {},
                     "required_signoffs": {},
-                    "original_row": dbo.rules.getRule(1),
                 },
                 {
                     "sc_id": 2,
@@ -1674,7 +1715,6 @@ class TestRuleScheduledChanges(ViewTest):
                     "change_type": "delete",
                     "signoffs": {},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.rules.getRule(4),
                 },
                 {
                     "sc_id": 6,
@@ -1747,7 +1787,6 @@ class TestRuleScheduledChanges(ViewTest):
                     "change_type": "update",
                     "signoffs": {},
                     "required_signoffs": {"releng": 1, "relman": 1},
-                    "original_row": dbo.rules.getRule(6),
                 },
             ],
         }

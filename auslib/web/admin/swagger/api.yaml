@@ -199,6 +199,23 @@ parameters:
     minimum: 0
     required: true
 
+  rule_id_query:
+    name: rule_id
+    in: query
+    description: A rule_id
+    type: integer
+    minimum: 1
+    required: false
+
+  release_name_query:
+    name: name
+    in: query
+    description: A release name
+    type: string
+    format: ascii
+    maxLength: 100
+    required: false
+
   change_id_param:
     name: change_id
     in: path
@@ -1919,6 +1936,7 @@ paths:
         description: Returns scheduled changes for rules.
       parameters:
         - $ref: '#/parameters/allSCParam'
+        - $ref: '#/parameters/rule_id_query'
       responses:
         '200':
           description: Returns JSON object of list of all scheduled changes for rules plus total count
@@ -1939,9 +1957,6 @@ paths:
                       allOf:
                         - $ref: '#/definitions/SCSignoffsModel'
                         - $ref: '#/definitions/SCRulesItemBase'
-                        - properties:
-                            original_row:
-                              $ref: '#/definitions/RuleObject'
 
     post:
       summary: create scheduled change for rules.
@@ -2190,12 +2205,6 @@ paths:
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/OptionsModel'
                         - $ref: '#/definitions/PermissionsModel'
-                        - properties:
-                            original_row:
-                              allOf:
-                                - $ref: '#/definitions/DataVersionNullable'
-                                - $ref: '#/definitions/PermissionsModel'
-                                - $ref: '#/definitions/OptionsModel'
                       required:
                         - change_type
                         - data_version
@@ -2424,6 +2433,7 @@ paths:
         description: Returns scheduled changes for releases.
       parameters:
         - $ref: '#/parameters/allSCParam'
+        - $ref: '#/parameters/release_name_query'
       responses:
         '200':
           description: Returns JSON object of list of all scheduled changes for releases plus total count
@@ -2453,14 +2463,6 @@ paths:
                         - $ref: '#/definitions/ReleaseReadOnly'
                         - $ref: '#/definitions/ReleaseDataObject'
                         - $ref: '#/definitions/ReleaseName'
-                        - properties:
-                            original_row:
-                              allOf:
-                                - $ref: '#/definitions/ReleaseDataObject'
-                                - $ref: '#/definitions/ReleaseName'
-                                - $ref: '#/definitions/DataVersionNullable'
-                                - $ref: '#/definitions/ProductNullable'
-                                - $ref: '#/definitions/ReleaseReadOnly'
                       required:
                         - change_type
                         - data_version
@@ -2727,14 +2729,6 @@ paths:
                         - $ref: '#/definitions/ProductModel'
                         - $ref: '#/definitions/RoleModel'
                         - $ref: '#/definitions/ChannelModel'
-                        - properties:
-                            original_row:
-                              allOf:
-                                - $ref: '#/definitions/DataVersionNullable'
-                                - $ref: '#/definitions/SignoffsRequiredNullable'
-                                - $ref: '#/definitions/ProductModel'
-                                - $ref: '#/definitions/RoleModel'
-                                - $ref: '#/definitions/ChannelModel'
                       required:
                         - change_type
                         - data_version
@@ -3005,13 +2999,6 @@ paths:
                         - $ref: '#/definitions/SignoffsRequiredNullable'
                         - $ref: '#/definitions/ProductModel'
                         - $ref: '#/definitions/RoleModel'
-                        - properties:
-                            original_row:
-                              allOf:
-                                - $ref: '#/definitions/DataVersionNullable'
-                                - $ref: '#/definitions/SignoffsRequiredNullable'
-                                - $ref: '#/definitions/ProductModel'
-                                - $ref: '#/definitions/RoleModel'
                       required:
                         - change_type
                         - data_version
@@ -3768,9 +3755,6 @@ paths:
                       allOf:
                         - $ref: '#/definitions/SCSignoffsModel'
                         - $ref: '#/definitions/EmergencyShutOffModel'
-                        - properties:
-                            original_row:
-                              $ref: '#/definitions/EmergencyShutOffModel'
 
     post:
       summary: Create scheduled change for emergency shut off.

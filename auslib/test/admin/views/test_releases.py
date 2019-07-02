@@ -1427,7 +1427,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.releases.select({"name": "a"})[0],
                 },
                 {
                     "sc_id": 4,
@@ -1443,8 +1442,31 @@ class TestReleasesScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"ben": "releng", "bill": "releng"},
                     "required_signoffs": {},
-                    "original_row": dbo.releases.select({"name": "ab"})[0],
                 },
+            ],
+        }
+        self.assertDictEqual(ret.get_json(), expected)
+
+    def testGetScheduledChangesByName(self):
+        ret = self._get("/scheduled_changes/releases", qs={"name": "m"})
+        expected = {
+            "count": 1,
+            "scheduled_changes": [
+                {
+                    "sc_id": 1,
+                    "when": 4000000000,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "complete": False,
+                    "sc_data_version": 1,
+                    "name": "m",
+                    "product": "m",
+                    "data": {"name": "m", "hashFunction": "sha512", "schema_version": 1},
+                    "read_only": False,
+                    "data_version": None,
+                    "signoffs": {},
+                    "required_signoffs": {},
+                }
             ],
         }
         self.assertDictEqual(ret.get_json(), expected)
@@ -1483,7 +1505,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.releases.select({"name": "a"})[0],
                 },
                 {
                     "sc_id": 3,
@@ -1499,7 +1520,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {},
                     "required_signoffs": {},
-                    # No original_row for complete changes.
                 },
                 {
                     "sc_id": 4,
@@ -1515,7 +1535,6 @@ class TestReleasesScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"ben": "releng", "bill": "releng"},
                     "required_signoffs": {},
-                    "original_row": dbo.releases.select({"name": "ab"})[0],
                 },
             ],
         }
