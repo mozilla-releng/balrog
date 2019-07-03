@@ -51,7 +51,6 @@ def get_jwks(auth_domain):
 
 @lru_cache(2048)
 def get_additional_userinfo(auth_domain, access_token):
-    print(auth0_Users(auth_domain).userinfo(access_token))
     return auth0_Users(auth_domain).userinfo(access_token)
 
 
