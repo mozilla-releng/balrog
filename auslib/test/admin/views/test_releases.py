@@ -1386,10 +1386,6 @@ class TestReleasesScheduledChanges(ViewTest):
             base_data_version=1,
         )
         dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=4, when=230000000, data_version=1)
-        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=8, changed_by="bill", timestamp=25, sc_id=4)
-        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=9, changed_by="bill", timestamp=26, sc_id=4, when=230000000, data_version=1
-        )
         dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="bill", role="releng")
         dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="ben", role="releng")
 
@@ -1399,6 +1395,13 @@ class TestReleasesScheduledChanges(ViewTest):
         dbo.productRequiredSignoffs.t.insert().execute(product="z", channel="z", role="releng", signoffs_required=1, data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="z", channel="z", role="relman", signoffs_required=1, data_version=1)
         dbo.rules.t.insert().execute(rule_id=42, product="z", channel="z", mapping="z", priority=10, data_version=1, update_type="minor")
+
+        dbo.releases.t.insert().execute(
+            name="ZA", product="ZA", read_only=True, data=createBlob(dict(name="ZA", hashFunction="sha512", schema_version=1)), data_version=1
+        )
+        dbo.productRequiredSignoffs.t.insert().execute(product="ZA", channel="z", role="releng", signoffs_required=1, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="ZA", channel="w", role="relman", signoffs_required=1, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="ZA", channel="y", role="releng", signoffs_required=2, data_version=1)
 
     def testGetScheduledChanges(self):
         ret = self._get("/scheduled_changes/releases")
@@ -1673,7 +1676,6 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertTrue(rows)
 
         sc = dict(rows[0])
-        self.assertIn("base_read_only", sc)
         self.assertFalse(sc["base_read_only"])
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
@@ -1935,6 +1937,33 @@ class TestReleasesScheduledChanges(ViewTest):
         row = dbo.releases.t.select().where(dbo.releases.name == "z").execute().fetchall()[0]
         release = dict(row)
         self.assertFalse(release["read_only"])
+
+    def testEnactScheduledChangesUpdateReadWrite_RequiredSignoffsForProduct(self):
+        dbo.releases.scheduled_changes.t.insert().execute(
+            sc_id=4200024, scheduled_by="bill", complete=False, change_type="update", base_read_only=False, base_data_version=1, base_name="ZA", data_version=1
+        )
+        dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=4200024, when=230000000, data_version=1)
+        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4200024, username="bill", role="releng")
+        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4200024, username="julie", role="releng")
+        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4200024, username="mary", role="relman")
+
+        resp = self._post("/scheduled_changes/releases/4200024/enact")
+        self.assertStatusCode(resp, 200)
+        row = dbo.releases.t.select().where(dbo.releases.name == "ZA").execute().fetchall()[0]
+        release = dict(row)
+        self.assertFalse(release["read_only"])
+
+    def testEnactScheduledChangesUpdateReadWrite_RequiredSignoffsForProduct_NoSignoffsGiven(self):
+        dbo.releases.scheduled_changes.t.insert().execute(
+            sc_id=4200024, scheduled_by="bill", complete=False, change_type="update", base_read_only=False, base_data_version=1, base_name="ZA", data_version=1
+        )
+        dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=4200024, when=230000000, data_version=1)
+
+        resp = self._post("/scheduled_changes/releases/4200024/enact")
+        self.assertStatusCode(resp, 400)
+        row = dbo.releases.t.select().where(dbo.releases.name == "ZA").execute().fetchall()[0]
+        release = dict(row)
+        self.assertTrue(release["read_only"])
 
     def testEnactScheduledChangeNewRelease(self):
         ret = self._post("/scheduled_changes/releases/1/enact")
