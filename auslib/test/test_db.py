@@ -3550,6 +3550,11 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions.user_roles.t.insert().execute(username="bill", role="bar", data_version=1)
         self.permissions.user_roles.t.insert().execute(username="me", role="bar", data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="b", channel="h", role="bar", signoffs_required=2, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="Z", channel="a", role="foo", signoffs_required=1, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="Z", channel="b", role="bar", signoffs_required=2, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="Z", channel="b", role="foo", signoffs_required=2, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="Z", channel="c", role="baz", signoffs_required=1, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="Z", channel="d", role="bar", signoffs_required=4, data_version=1)
 
     def tearDown(self):
         dbo.reset()
@@ -3804,6 +3809,22 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         )
         rules = self._stripNullColumns(rules)
         self.assertEqual(rules, expected)
+
+    def testGetPotentialRequiredSignoffsForProduct(self):
+        release = {"name": "Z", "product": "Z"}
+        signoffs_required = self.releases.getPotentialRequiredSignoffsForProduct(release)
+        self.assertIn("rs", signoffs_required)
+        self.assertEqual(len(signoffs_required["rs"]), 3)
+        signoffs_by_role = {rs["role"]: rs["signoffs_required"] for signoffs in signoffs_required.values() for rs in signoffs}
+        self.assertEqual(signoffs_by_role["foo"], 2)
+        self.assertEqual(signoffs_by_role["bar"], 4)
+        self.assertEqual(signoffs_by_role["baz"], 1)
+
+    def testGetPotentialRequiredSignoffsForProductNoSignoffsRequired(self):
+        release = {"name": "ZA", "product": "ZA"}
+        signoffs_required = self.releases.getPotentialRequiredSignoffsForProduct(release)
+        self.assertIn("rs", signoffs_required)
+        self.assertEqual(len(signoffs_required["rs"]), 0)
 
 
 @pytest.mark.usefixtures("current_db_schema")

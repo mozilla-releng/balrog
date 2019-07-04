@@ -1799,6 +1799,18 @@ class Releases(AUSTable):
             potential_required_signoffs["rs"] = []
         return potential_required_signoffs
 
+    def getPotentialRequiredSignoffsForProduct(self, release, transaction=None):
+        potential_required_signoffs = {"rs": []}
+        where = [self.db.productRequiredSignoffs.product == release["product"]]
+        product_rs = self.db.productRequiredSignoffs.select(where=where, transaction=transaction)
+        if product_rs:
+            role_map = defaultdict(list)
+            for rs in product_rs:
+                role_map[rs["role"]].append(rs)
+            signoffs_required = [max(signoffs, default=None, key=lambda k: k["signoffs_required"]) for signoffs in role_map.values()]
+            potential_required_signoffs["rs"] = signoffs_required
+        return potential_required_signoffs
+
     def setDomainWhitelist(self, domainWhitelist):
         self.domainWhitelist = domainWhitelist
 
@@ -1945,7 +1957,7 @@ class Releases(AUSTable):
             name = current_release["name"]
 
             if "read_only" in what and current_release["read_only"] != what["read_only"]:
-                self.change_readonly(where, what["read_only"], changed_by, old_data_version, transaction, dryrun, signoffs)
+                self.change_readonly(where, what["read_only"], changed_by, old_data_version, transaction=transaction, dryrun=dryrun, signoffs=signoffs)
                 continue
 
             if "product" in what or "data" in what:
@@ -2131,7 +2143,15 @@ class Releases(AUSTable):
                 raise PermissionDeniedError(f"{changed_by} is not allowed to mark {product} products read write")
 
         if not dryrun and not is_readonly:
-            potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([release], transaction=transaction).values() for obj in v]
+
+            def _getPotentialRequiredSignoffs(required_signoffs):
+                return [obj for v in required_signoffs for obj in v]
+
+            potential_required_signoffs = _getPotentialRequiredSignoffs(self.getPotentialRequiredSignoffs([release], transaction=transaction).values())
+            if not potential_required_signoffs:
+                potential_required_signoffs = _getPotentialRequiredSignoffs(
+                    self.getPotentialRequiredSignoffsForProduct(release, transaction=transaction).values()
+                )
             verify_signoffs(potential_required_signoffs, signoffs)
         super().update(where, {"read_only": is_readonly}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
