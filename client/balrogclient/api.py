@@ -14,6 +14,13 @@ REFRESH_THRESHOLD = 5 * 60
 _token_cache = {}
 
 
+def _json_log_data(data):
+    log = json.dumps(data)
+    if len(log) > 100:
+        log = log[:80] + "<...{} characters elided ...>".format(len(log) - 80)
+    return log
+
+
 def is_csrf_token_expired(token):
     """Checks whether a CSRF token is still valid
 
@@ -156,9 +163,9 @@ class API(object):
         if data is not None and "csrf_token" in data:
             sanitised_data = data.copy()
             del sanitised_data["csrf_token"]
-            logging.debug("Data sent: %s", sanitised_data)
+            logging.debug("Data sent: %s", _json_log_data(sanitised_data))
         else:
-            logging.debug("Data sent: %s", data)
+            logging.debug("Data sent: %s", _json_log_data(data))
         headers = {"Accept-Encoding": "application/json", "Accept": "application/json", "Content-Type": "application/json", "Referer": self.api_root}
         before = time.time()
         access_token = _get_auth0_token(self.auth0_secrets, session=self.session)
