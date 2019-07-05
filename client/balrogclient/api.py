@@ -31,7 +31,7 @@ def is_csrf_token_expired(token):
     return False
 
 
-def _get_auth0_token(secrets):
+def _get_auth0_token(secrets, session):
     """Get Auth0 token
 
     See https://auth0.com/docs/api/authentication#regular-web-app-login-flow43 for the description
@@ -48,7 +48,7 @@ def _get_auth0_token(secrets):
     url = "https://{}/oauth/token".format(secrets["domain"])
     payload = dict(client_id=secrets["client_id"], client_secret=secrets["client_secret"], audience=secrets["audience"], grant_type="client_credentials")
     headers = {"Content-Type": "application/json"}
-    request = requests.post(url, data=json.dumps(payload), headers=headers)
+    request = session.post(url, data=json.dumps(payload), headers=headers)
     response = request.json()
     # In order to know exact expiration we would need to decode the token, what
     # requires more dependencies. Instead we use the returned "expires_in" in
@@ -98,7 +98,7 @@ class API(object):
     prerequest_url_template = None
     url_template_vars = None
 
-    def __init__(self, auth0_secrets, api_root="https://aus4-admin-dev.allizom.org/api", ca_certs=True, timeout=60, raise_exceptions=True):
+    def __init__(self, auth0_secrets, api_root="https://aus4-admin-dev.allizom.org/api", ca_certs=True, timeout=60, raise_exceptions=True, session=None):
         """ Creates an API object which wraps REST API of Balrog server.
 
         api_root: API root URL of balrog server
@@ -110,12 +110,13 @@ class API(object):
                   CA bundle.
         timeout : request timeout
         raise_exceptions: controls exception handling of python-requests.
+        session: requests esssion to use for API calls
         """
         self.api_root = api_root.rstrip("/")
         self.verify = ca_certs
         self.timeout = timeout
         self.raise_exceptions = raise_exceptions
-        self.session = requests.session()
+        self.session = session or requests.session()
         self.csrf_token = None
         self.auth0_secrets = auth0_secrets
 
@@ -160,7 +161,7 @@ class API(object):
             logging.debug("Data sent: %s", data)
         headers = {"Accept-Encoding": "application/json", "Accept": "application/json", "Content-Type": "application/json", "Referer": self.api_root}
         before = time.time()
-        access_token = _get_auth0_token(self.auth0_secrets)
+        access_token = _get_auth0_token(self.auth0_secrets, session=self.session)
         auth = BearerAuth(access_token)
         # Don't dump data to json unless it actually exists. Otherwise we end up with a string of
         # 'None', which is not intended, and is not actually supported by some servers for HEAD/GET
