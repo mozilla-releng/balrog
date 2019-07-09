@@ -43,6 +43,19 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
       $scope.page_size_pair = [{id: 20, name: '20'},
         {id: 50, name: '50'}, 
         {id: $scope.releases_count, name: 'All'}];
+
+      Releases.getScheduledChanges().success(function(sc_response) {
+        if (sc_response.count > 0) {
+          $scope.releases.forEach(function(release) {
+            var scheduled_change = sc_response.scheduled_changes.find(function(sc) {
+              return sc.name === release.name;
+            });
+            if (scheduled_change) {
+              release.sc = scheduled_change;
+            }
+          });
+        }
+      });
     })
     .error(function() {
       console.error(arguments);
@@ -317,4 +330,8 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
     });
   };
   /* End openReadOnlyModal */
+
+  $scope.isScheduledToBeModifiable = function(release) {
+    return release.read_only && !!release.sc && !release.sc.read_only;
+  }
 });

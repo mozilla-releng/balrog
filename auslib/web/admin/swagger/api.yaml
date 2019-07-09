@@ -2534,6 +2534,7 @@ paths:
               - $ref: '#/definitions/ReleaseDataField'
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/ReleaseName'
+              - $ref: '#/definitions/ReleaseReadOnly'
             required:
               - change_type
               - name
