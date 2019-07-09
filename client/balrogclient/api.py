@@ -56,6 +56,7 @@ def _get_auth0_token(secrets, session):
     payload = dict(client_id=secrets["client_id"], client_secret=secrets["client_secret"], audience=secrets["audience"], grant_type="client_credentials")
     headers = {"Content-Type": "application/json"}
     request = session.post(url, data=json.dumps(payload), headers=headers)
+    request.raise_for_status()
     response = request.json()
     # In order to know exact expiration we would need to decode the token, what
     # requires more dependencies. Instead we use the returned "expires_in" in
