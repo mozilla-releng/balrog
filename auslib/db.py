@@ -2448,7 +2448,7 @@ def send_email(relayhost, port, username, password, to_addr, from_addr, table, s
     msg["from"] = from_addr
 
     try:
-        conn = SMTP()
+        conn = SMTP(relayhost)
         conn.connect(relayhost, port)
         conn.ehlo()
         if use_tls:
