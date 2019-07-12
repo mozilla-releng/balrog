@@ -9,6 +9,9 @@ const useStyles = makeStyles({
     'html, body': {
       height: '100%',
     },
+    '#root': {
+      height: '100%',
+    },
   },
 });
 

@@ -9,7 +9,6 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import TextField from '@material-ui/core/TextField';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
-import ListSubheader from '@material-ui/core/ListSubheader';
 import Button from '@material-ui/core/Button';
 import MenuItem from '@material-ui/core/MenuItem';
 import MagnifyIcon from 'mdi-react/MagnifyIcon';
@@ -106,13 +105,19 @@ export default function HistoryForm(props) {
                 {changedBy}
               </TextField>
             </ListItem>
-            <ListSubheader>From</ListSubheader>
             <ListItem>
-              <DateTimePicker onDateTimeChange={handleDateTimeStartChange} />
+              <DateTimePicker
+                label="From"
+                onDateTimeChange={handleDateTimeStartChange}
+                value={new Date()}
+              />
             </ListItem>
-            <ListSubheader>To</ListSubheader>
             <ListItem>
-              <DateTimePicker onDateTimeChange={handleDateTimeEndChange} />
+              <DateTimePicker
+                label="To"
+                onDateTimeChange={handleDateTimeEndChange}
+                value={new Date()}
+              />
             </ListItem>
           </List>
           <div className={classes.actions}>

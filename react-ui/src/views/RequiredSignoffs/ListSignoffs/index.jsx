@@ -2,7 +2,6 @@ import React, { Fragment, useEffect, useState } from 'react';
 import { titleCase } from 'change-case';
 import classNames from 'classnames';
 import { view, lensPath } from 'ramda';
-import ErrorPanel from '@mozilla-frontend-infra/components/ErrorPanel';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import { makeStyles } from '@material-ui/styles';
 import Fab from '@material-ui/core/Fab';
@@ -14,6 +13,7 @@ import TextField from '@material-ui/core/TextField';
 import PlusIcon from 'mdi-react/PlusIcon';
 import Dashboard from '../../../components/Dashboard';
 import SignoffCard from '../../../components/SignoffCard';
+import ErrorPanel from '../../../components/ErrorPanel';
 import SignoffCardEntry from '../../../components/SignoffCardEntry';
 import Link from '../../../utils/Link';
 import getRequiredSignoffs from '../utils/getRequiredSignoffs';
@@ -70,7 +70,7 @@ function ListSignoffs() {
 
   return (
     <Dashboard title="Required Signoffs">
-      {error && <ErrorPanel error={error} />}
+      {error && <ErrorPanel fixed error={error} />}
       {loading && <Spinner loading />}
       {requiredSignoffs && (
         <Fragment>

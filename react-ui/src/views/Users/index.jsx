@@ -1,10 +1,18 @@
 import React from 'react';
-import Dashboard from '../../components/Dashboard';
+import { Switch } from 'react-router-dom';
+import RouteWithProps from '../../components/RouteWithProps';
+import routes from './routes';
 
-export default function Users() {
+export default function Users(props) {
+  const {
+    match: { path },
+  } = props;
+
   return (
-    <Dashboard title="Users">
-      <div>USERS!</div>
-    </Dashboard>
+    <Switch>
+      {routes(path).map(({ routes, ...routeProps }) => (
+        <RouteWithProps key={routeProps.path || 'not-found'} {...routeProps} />
+      ))}
+    </Switch>
   );
 }

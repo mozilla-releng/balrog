@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Redirect } from 'react-router-dom';
+import { withUser } from '../../utils/AuthContext';
 
 /**
  * Conditionally render a component based on location, with non-react-router
@@ -7,6 +8,8 @@ import { Route } from 'react-router-dom';
  */
 function RouteWithProps(props) {
   const {
+    user,
+    requiresAuth,
     component: Component,
     path,
     exact,
@@ -25,11 +28,15 @@ function RouteWithProps(props) {
       sensitive={sensitive}
       render={({ staticContext, ...renderProps }) => (
         <Suspense fallback={null}>
-          <Component {...renderProps} {...rest} />
+          {requiresAuth && !user ? (
+            <Redirect to="/" />
+          ) : (
+            <Component {...renderProps} {...rest} />
+          )}
         </Suspense>
       )}
     />
   );
 }
 
-export default RouteWithProps;
+export default withUser(RouteWithProps);

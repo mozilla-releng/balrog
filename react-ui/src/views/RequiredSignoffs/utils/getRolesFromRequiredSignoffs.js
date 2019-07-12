@@ -9,13 +9,22 @@ export default (rs, product, channel) => {
   return roles.map(([name, role]) => {
     const isRoleScheduled = 'sc' in role;
 
-    return [
+    return {
       name,
-      isRoleScheduled ? role.sc.signoffs_required : role.signoffs_required,
-      {
+      signoffs_required: role.signoffs_required,
+      data_version: role.data_version,
+      sc: isRoleScheduled
+        ? {
+            sc_id: role.sc.sc_id,
+            signoffs_required: role.sc.signoffs_required,
+            data_version: role.sc.sc_data_version,
+            change_type: role.sc.change_type,
+          }
+        : null,
+      metadata: {
         isAdditionalRole: false,
         id: `${product}-${channel}-${name}`,
       },
-    ];
+    };
   });
 };

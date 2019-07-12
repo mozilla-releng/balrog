@@ -1,9 +1,7 @@
-import axios from 'axios';
 import { stringify } from 'qs';
+import axios from 'axios';
 
-const baseUrl = `${process.env.BALROG_ROOT_URL}/api`;
 const getHistory = params => {
-  const url = `${baseUrl}/${params.object}/history`;
   const qs = stringify(
     {
       changed_by: params.changedBy,
@@ -15,7 +13,7 @@ const getHistory = params => {
     { addQueryPrefix: true }
   );
 
-  return axios.get(`${url}${qs}`);
+  return axios.get(`/${params.object}/history/${qs}`);
 };
 
 // History factory

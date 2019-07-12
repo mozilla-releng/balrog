@@ -14,10 +14,14 @@ module.exports = {
         devServer: {
           host: process.env.HOST || DEFAULT_HOST,
           port,
+          historyApiFallback: {
+            disableDotRule: true,
+          },
         },
         html: {
           title: 'Balrog Admin',
-          favicon: `${__dirname}/src/images/favicon.png`
+          favicon: `${__dirname}/src/images/favicon.png`,
+          template: 'src/index.html',
         },
         env: {
           HOST: DEFAULT_HOST,

@@ -1,11 +1,13 @@
 import React from 'react';
-import { string, bool, object, func } from 'prop-types';
+import { arrayOf, string, bool, object, func } from 'prop-types';
 import classNames from 'classnames';
 import Downshift from 'downshift';
+import { equals } from 'ramda';
 import { makeStyles } from '@material-ui/styles';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
+import ChipList from './ChipList';
 
 const useStyles = makeStyles(theme => ({
   paper: {
@@ -28,13 +30,52 @@ const useStyles = makeStyles(theme => ({
  * with auto complete capabilities.
  */
 function AutoCompleteText({
+  onValueChange,
+  value,
   label,
   required,
   getSuggestions,
   inputProps,
+  selectedItems,
+  onSelectedItemsChange,
+  multi,
   ...props
 }) {
   const classes = useStyles();
+  const handleChipDelete = item => {
+    const chips = selectedItems.filter(selectedItem => selectedItem !== item);
+
+    if (onSelectedItemsChange) {
+      onSelectedItemsChange(chips);
+    }
+  };
+
+  const handleChipAdd = item => {
+    const chips = new Set([...selectedItems, item]);
+    const updatedChips = Array.from(chips);
+
+    // Avoid duplicate chips
+    if (!equals(updatedChips, selectedItems)) {
+      if (onSelectedItemsChange) {
+        onSelectedItemsChange(updatedChips);
+      }
+    }
+
+    // Clear input value to give space for more selections
+    onValueChange('');
+  };
+
+  const handleStateChange = changes => {
+    if ('selectedItem' in changes) {
+      onValueChange(changes.selectedItem);
+
+      if (multi) {
+        handleChipAdd(changes.selectedItem);
+      }
+    } else if ('inputValue' in changes) {
+      onValueChange(changes.inputValue);
+    }
+  };
 
   function renderSuggestion({
     suggestion,
@@ -59,7 +100,10 @@ function AutoCompleteText({
   }
 
   return (
-    <Downshift {...props}>
+    <Downshift
+      {...props}
+      selectedItem={value || ''}
+      onStateChange={handleStateChange}>
       {({
         getInputProps,
         getItemProps,
@@ -69,12 +113,36 @@ function AutoCompleteText({
         isOpen,
         selectedItem,
       }) => (
-        <div>
+        <div className={classNames({ [classes.multiWrapper]: multi })}>
           <TextField
             label={label}
             required={required}
             fullWidth
-            InputProps={getInputProps(inputProps)}
+            InputProps={{
+              ...getInputProps({
+                onKeyDown(event) {
+                  if (event.key === 'Backspace' && !inputValue) {
+                    handleChipDelete(selectedItems[selectedItems.length - 1]);
+                  }
+
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+
+                    if (multi && selectedItem && highlightedIndex === null) {
+                      handleChipAdd(selectedItem);
+                    }
+                  }
+                },
+              }),
+              startAdornment: multi ? (
+                <ChipList
+                  selectedItems={selectedItems}
+                  onItemDelete={handleChipDelete}
+                />
+              ) : (
+                undefined
+              ),
+            }}
           />
           {getSuggestions && (
             <div className={classes.paperWrapper} {...getMenuProps()}>
@@ -100,17 +168,29 @@ function AutoCompleteText({
 }
 
 AutoCompleteText.propTypes = {
+  // Callback triggered when the value of the text field is changed.
+  onValueChange: func.isRequired,
+  value: string.isRequired,
   getSuggestions: func,
   inputProps: object,
   label: string,
   required: bool,
+  // Selected items for when `multi` is set to `true`.
+  selectedItems: arrayOf(string),
+  // Callback triggered when the list of chips change.
+  onSelectedItemsChange: func,
+  // If true, the text field will allow multi text selection
+  multi: bool,
 };
 
 AutoCompleteText.defaultProps = {
   getSuggestions: null,
+  selectedItems: [],
+  onSelectedItemsChange: null,
   inputProps: {},
   label: '',
   required: false,
+  multi: false,
 };
 
 export default AutoCompleteText;

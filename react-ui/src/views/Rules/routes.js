@@ -9,6 +9,11 @@ export default path => [
   {
     component: Rule,
     path: `${path}/create`,
+    isNewRule: true,
+  },
+  {
+    component: Rule,
+    path: `${path}/:ruleId`,
   },
   {
     component: ListRules,

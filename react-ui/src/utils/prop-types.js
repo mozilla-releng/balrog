@@ -1,4 +1,12 @@
-import { bool, number, shape, string, oneOfType } from 'prop-types';
+import {
+  bool,
+  number,
+  shape,
+  string,
+  oneOfType,
+  arrayOf,
+  object,
+} from 'prop-types';
 
 export const signoffEntry = shape({
   channel: string,
@@ -31,4 +39,13 @@ export const rule = shape({
   rule_id: oneOfType([number, string]),
   update_type: string,
   version: string,
+});
+
+export const release = shape({
+  data_version: number,
+  name: string,
+  product: string,
+  read_only: bool,
+  required_signoffs: object,
+  rule_ids: arrayOf(number),
 });

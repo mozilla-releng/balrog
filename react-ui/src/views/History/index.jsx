@@ -1,10 +1,10 @@
 import React, { Fragment, useState } from 'react';
-import ErrorPanel from '@mozilla-frontend-infra/components/ErrorPanel';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import DataTable from '../../components/DataTable';
 import HistoryForm from '../../components/HistoryForm';
 import Dashboard from '../../components/Dashboard';
+import ErrorPanel from '../../components/ErrorPanel';
 import { getHistory } from '../../utils/History';
 import tryCatch from '../../utils/tryCatch';
 
@@ -23,7 +23,7 @@ function History() {
   return (
     <Dashboard title="History">
       <Fragment>
-        {error && <ErrorPanel error={error} />}
+        {error && <ErrorPanel fixed error={error} />}
         <HistoryForm onSubmit={handleFormSubmit} />
         <DataTable
           headers={['sno', 'Object', 'Changed By', 'Date', 'Data Version']}

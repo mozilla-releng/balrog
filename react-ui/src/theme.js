@@ -24,12 +24,9 @@ export default createMuiTheme({
       right: SPACING.TRIPLE,
     },
     textEllipsis: {
+      whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      '&:hover': {
-        overflow: 'unset',
-        textOverflow: 'unset',
-      },
     },
   },
   overrides: {
