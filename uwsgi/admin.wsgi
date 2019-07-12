@@ -161,7 +161,7 @@ application.config["SESSION_COOKIE_HTTPONLY"] = True
 # elsewhere in which case we'll need CloudOps to set this for us.
 # In the meantime, this allows us to set it to "*" for local development
 # to enable the new UI to work there.
-application.config["CORS_ORIGINS"] = os.environ.get("CORS_ORIGINS", "").split()
+application.config["CORS_ORIGINS"] = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",")]
 
 # Strict Samesite cookies means that the session cookie will never be sent
 # when loading any page or making any request where the referrer is some
