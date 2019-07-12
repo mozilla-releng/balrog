@@ -19,4 +19,4 @@ aws s3 sync \
     --metadata-directive "REPLACE" \
     --cache-control "max-age=300" \
     --delete \
-    ./public/ "s3://${WEBSITE_BUCKET}/"
+    ./build/ "s3://${WEBSITE_BUCKET}/"
