@@ -306,17 +306,19 @@ tasks:
   - provisionerId: "{{ taskcluster.docker.provisionerId }}"
     workerType: "{{ taskcluster.docker.workerType }}"
     scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:s3-stage
+      - secrets:get:repo:github.com/mozilla/balrog:s3-stage-aws-creds
+      - secrets:get:repo:github.com/mozilla/balrog:s3-stage-app-config
     payload:
       env:
-        TC_SECRET_URL: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage
-        WEBSITE_BUCKET: FIXME
+        AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage-aws-creds
+        APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage-app-config
+        WEBSITE_BUCKET: balrog-stage-balrog-static-admin-stage-static-website
       maxRunTime: 1200
       image: "node:current"
       command:
         - "/bin/bash"
         - "-c"
-        - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd react-ui && yarn install && yarn build && ./scripts/deploy"
+        - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd react-ui && yarn install && ./scripts/deploy"
     extra:
       github:
         env: true
