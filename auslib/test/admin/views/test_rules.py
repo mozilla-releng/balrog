@@ -149,6 +149,13 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEqual(r[0]["memory"], "<7373")
         self.assertEqual(r[0]["data_version"], 1)
 
+    def testCreateRuleWithInvalidMemory(self):
+        for invalid in ("<", "=", "=12", "=>896", "=<896", "abc"):
+            ret = self._post(
+                "/rules", data=dict(backgroundRate=33, mapping="c", priority=0, memory=invalid, product="Firefox", update_type="minor", channel="nightly")
+            )
+        self.assertEqual(ret.status_code, 400, "does not match")
+
     def testCreateRuleWithMig64(self):
         ret = self._post("/rules", data=dict(backgroundRate=33, mapping="c", priority=0, mig64=True, product="Firefox", update_type="minor", channel="nightly"))
         rule_id = int(ret.get_data())

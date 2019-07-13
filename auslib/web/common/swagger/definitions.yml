@@ -338,6 +338,7 @@ definitions:
         format: ascii
         minLength: 0
         maxLength: 100
+        pattern: "(^[<>0-9][=]?[0-9]*\\d$)"
         example: '<8000'
 
       fallbackMapping:
