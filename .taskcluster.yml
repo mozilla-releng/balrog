@@ -166,9 +166,6 @@ tasks:
         env: true
         events:
           - release
-    routes:
-      - index.project.balrog.releases.latest.agent
-      - index.project.balrog.releases.{{ event.version }}.agent
     metadata:
       name: Balrog Agent Docker Image Creation (release event)
       description: Balrog Agent Docker Image Creation (release event)
@@ -221,11 +218,85 @@ tasks:
         env: true
         events:
           - release
-    routes:
-      - index.project.balrog.releases.latest.app
-      - index.project.balrog.releases.{{ event.version }}.app
     metadata:
       name: Balrog Docker Image Creation (release event)
       description: Balrog Docker Image Creation (release event)
+      owner: "{{ event.head.user.email }}"
+      source: "{{ event.head.repo.url }}"
+
+  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
+    workerType: "{{ taskcluster.docker.workerType }}"
+    payload:
+      maxRunTime: 1200
+      image: "node:current"
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd react-ui && yarn install && yarn lint && yarn test"
+    extra:
+      github:
+        env: true
+        events:
+          - pull_request.opened
+          - pull_request.synchronize
+          - pull_request.reopened
+          - push
+        branches:
+          - master
+    metadata:
+      name: Balrog React UI tests
+      description: Balrog React UI tests
+      owner: "{{ event.head.user.email }}"
+      source: "{{ event.head.repo.url }}"
+
+  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
+    workerType: "{{ taskcluster.docker.workerType }}"
+    payload:
+      maxRunTime: 1200
+      image: "node:current"
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd react-ui && yarn install && yarn build"
+    extra:
+      github:
+        env: true
+        events:
+          - pull_request.opened
+          - pull_request.synchronize
+          - pull_request.reopened
+          - push
+        branches:
+          - master
+    metadata:
+      name: Balrog React UI build
+      description: Balrog React UI build
+      owner: "{{ event.head.user.email }}"
+      source: "{{ event.head.repo.url }}"
+
+  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
+    workerType: "{{ taskcluster.docker.workerType }}"
+    scopes:
+      - secrets:get:repo:github.com/mozilla/balrog:s3-stage-aws-creds
+      - secrets:get:repo:github.com/mozilla/balrog:s3-stage-app-config
+    payload:
+      env:
+        AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage-aws-creds
+        APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage-app-config
+        WEBSITE_BUCKET: balrog-stage-balrog-static-admin-stage-static-website
+      maxRunTime: 1200
+      image: "node:current"
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd react-ui && yarn install && ./scripts/deploy"
+    extra:
+      github:
+        env: true
+        events:
+          - release
+    metadata:
+      name: Balrog React UI build & publish
+      description: Balrog React UI build & publish
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
