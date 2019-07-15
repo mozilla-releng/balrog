@@ -198,6 +198,14 @@ class RuleScheduledChangesView(ScheduledChangesView):
     def __init__(self):
         super(RuleScheduledChangesView, self).__init__("rules", dbo.rules)
 
+    def get(self):
+        where = {}
+        rule_id = connexion.request.args.get("rule_id")
+        if rule_id:
+            where["base_rule_id"] = rule_id
+
+        return super(RuleScheduledChangesView, self).get(where)
+
     @requirelogin
     def _post(self, transaction, changed_by):
         if connexion.request.get_json().get("when", None) is None:

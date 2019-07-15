@@ -440,7 +440,6 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng", "mary": "relman"},
                     "required_signoffs": {"releng": 1, "relman": 1},
-                    "original_row": dbo.permissions.select({"permission": "release_locale", "username": "ashanti"})[0],
                 },
                 {
                     "sc_id": 4,
@@ -455,7 +454,6 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng", "mary": "relman"},
                     "required_signoffs": {"releng": 1, "relman": 1},
-                    "original_row": dbo.permissions.select({"permission": "scheduled_change", "username": "mary"})[0],
                 },
                 {
                     "sc_id": 5,
@@ -484,7 +482,6 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.permissions.select({"permission": "release", "username": "bob"})[0],
                 },
             ],
         }
@@ -522,7 +519,6 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng", "mary": "relman"},
                     "required_signoffs": {"releng": 1, "relman": 1},
-                    "original_row": dbo.permissions.select({"permission": "release_locale", "username": "ashanti"})[0],
                 },
                 {
                     "sc_id": 3,
@@ -537,7 +533,6 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "data_version": None,
                     "signoffs": {},
                     "required_signoffs": {},
-                    # No original_row on completed changes.
                 },
                 {
                     "sc_id": 4,
@@ -552,7 +547,6 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng", "mary": "relman"},
                     "required_signoffs": {"releng": 1, "relman": 1},
-                    "original_row": dbo.permissions.select({"permission": "scheduled_change", "username": "mary"})[0],
                 },
                 {
                     "sc_id": 5,
@@ -581,7 +575,6 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.permissions.select({"permission": "release", "username": "bob"})[0],
                 },
             ],
         }

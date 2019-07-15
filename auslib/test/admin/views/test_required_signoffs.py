@@ -342,7 +342,6 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.productRequiredSignoffs.select({"product": "fake", "channel": "a", "role": "releng"})[0],
                 },
                 {
                     "sc_id": 4,
@@ -358,7 +357,6 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.productRequiredSignoffs.select({"product": "fake", "channel": "j", "role": "releng"})[0],
                 },
             ],
         }
@@ -398,7 +396,6 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.productRequiredSignoffs.select({"product": "fake", "channel": "a", "role": "releng"})[0],
                 },
             ],
         }
@@ -438,7 +435,6 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.productRequiredSignoffs.select({"product": "fake", "channel": "a", "role": "releng"})[0],
                 },
                 {
                     "sc_id": 3,
@@ -454,7 +450,6 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                     "data_version": None,
                     "signoffs": {},
                     "required_signoffs": {},
-                    # No original_row for completed changes.
                 },
                 {
                     "sc_id": 4,
@@ -470,7 +465,6 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.productRequiredSignoffs.select({"product": "fake", "channel": "j", "role": "releng"})[0],
                 },
             ],
         }
@@ -1087,7 +1081,6 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.permissionsRequiredSignoffs.select({"product": "fake", "role": "releng"})[0],
                 },
                 {
                     "sc_id": 4,
@@ -1102,7 +1095,6 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.permissionsRequiredSignoffs.select({"product": "blah", "role": "releng"})[0],
                 },
             ],
         }
@@ -1140,7 +1132,6 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.permissionsRequiredSignoffs.select({"product": "fake", "role": "releng"})[0],
                 },
                 {
                     "sc_id": 3,
@@ -1169,7 +1160,6 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
                     "data_version": 1,
                     "signoffs": {"bill": "releng"},
                     "required_signoffs": {"releng": 1},
-                    "original_row": dbo.permissionsRequiredSignoffs.select({"product": "blah", "role": "releng"})[0],
                 },
             ],
         }

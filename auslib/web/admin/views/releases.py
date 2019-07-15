@@ -395,6 +395,14 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
     def __init__(self):
         super(ReleaseScheduledChangesView, self).__init__("releases", dbo.releases)
 
+    def get(self):
+        where = {}
+        name = connexion.request.args.get("name")
+        if name:
+            where["base_name"] = name
+
+        return super(ReleaseScheduledChangesView, self).get(where)
+
     @requirelogin
     def _post(self, transaction, changed_by):
         if connexion.request.get_json().get("when", None) is None:

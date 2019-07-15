@@ -20,13 +20,13 @@ class ScheduledChangesView(AdminView):
         super(ScheduledChangesView, self).__init__()
 
     def get(self, where=None):
-        if connexion.request.args.get("all"):
-            rows = self.sc_table.select(where=where)
-        else:
-            if where is None:
-                where = {}
+        if where is None:
+            where = {}
+
+        if connexion.request.args.get("all") is None:
             where["complete"] = False
-            rows = self.sc_table.select(where=where)
+
+        rows = self.sc_table.select(where=where)
         ret = {"count": len(rows), "scheduled_changes": []}
         for row in rows:
             scheduled_change = {"signoffs": {}, "required_signoffs": {}}
@@ -54,7 +54,6 @@ class ScheduledChangesView(AdminView):
                 # inserts, because it doesn't exist yet!
                 if row["change_type"] != "insert":
                     original_row = self.table.select(where=base_pk)[0]
-                    scheduled_change["original_row"] = original_row
                     affected_rows.append(original_row)
                 # We don't need to consider the future version of the row when
                 # looking for required signoffs, because it won't exist when

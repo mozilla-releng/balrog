@@ -81,7 +81,8 @@ def add_security_headers(response):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = app.config.get("STRICT_TRANSPORT_SECURITY", "max-age=31536000;")
-    response.headers["Access-Control-Allow-Headers"] = "Authorization"
+    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+    response.headers["Access-Control-Allow-Methods"] = "OPTIONS, GET, POST, PUT, DELETE"
     if "*" in app.config["CORS_ORIGINS"]:
         response.headers["Access-Control-Allow-Origin"] = "*"
     elif "Origin" in request.headers and request.headers["Origin"] in app.config["CORS_ORIGINS"]:

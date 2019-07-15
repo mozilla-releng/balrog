@@ -99,8 +99,8 @@ requests==2.22.0 \
 alabaster==0.7.12 \
     --hash=sha256:446438bdcca0e05bd45ea2de1668c1d9b032e1a9154c2c259092d77031ddd359 \
     --hash=sha256:a661d72d58e6ea8a57f7a86e37d86716863ee5e92788398526d58b26a4e4dc02
-snowballstemmer==1.2.1 \
-    --hash=sha256:919f26a68b2c17a7634da993d91339e288964f93c274f1343e3bbbe2096e1128 --hash=sha256:9f3bcd3c401c3e862ec0ebe6d2c069ebc012ce142cce209c098ccb5b09136e89
+snowballstemmer==1.9.0 \
+    --hash=sha256:9f3b9ffe0809d174f7047e121431acf99c89a7040f0ca84f94ba53a498e6d0c9
 contextlib2==0.5.5 \
     --hash=sha256:f5260a6e679d2ff42ec91ec5252f4eeffdcf21053db9113bd0a8e4d953769c00 \
     --hash=sha256:509f9419ee91cdd00ba34443217d5ca51f5a364a404e1dce9e8979cea969ca48
@@ -196,9 +196,9 @@ typing==3.7.4 \
     --hash=sha256:38566c558a0a94d6531012c8e917b1b8518a41e418f7f15f00e129cc80162ad3 \
     --hash=sha256:53765ec4f83a2b720214727e319607879fec4acde22c4fbb54fa2604e79e44ce \
     --hash=sha256:84698954b4e6719e912ef9a42a2431407fe3755590831699debda6fba92aac55
-spec-synthase==0.1.10 \
-    --hash=sha256:7b9d597d6d6c8666e9d48e4d68c02d521c2faba73b96619fd974c95be3e5456c \
-    --hash=sha256:d297c3fa44fb6d0488ea300ec853d73768f3d0a33821f516352daa410db76684
+spec-synthase==0.1.11 \
+    --hash=sha256:62396a95541cec2f792fe4f1f10e610e3dbdcdee843ee8f65dc243e8bb387c86 \
+    --hash=sha256:9507c2f83a1c0a6fb7e18c0fa4eb9cc7a3d874e964b7c55dd2b531e5c70598bf
 sqlparse==0.3.0 \
     --hash=sha256:40afe6b8d4b1117e7dff5504d7a8ce07d9a1b15aeeade8a2d10f130a834f8177 \
     --hash=sha256:7c3dca29c022744e95b547e867cee89f4fce4373f3549ccd8797d8eb52cdb873
@@ -277,9 +277,9 @@ sphinxcontrib-applehelp==1.0.1 \
 sphinxcontrib-qthelp==1.0.2 \
     --hash=sha256:513049b93031beb1f57d4daea74068a4feb77aa5630f856fcff2e50de14e9a20 \
     --hash=sha256:79465ce11ae5694ff165becda529a600c754f4bc459778778c7017374d4d406f
-sphinxcontrib-serializinghtml==1.1.1 \
-    --hash=sha256:01d9b2617d7e8ddf7a00cae091f08f9fa4db587cc160b493141ee56710810932 \
-    --hash=sha256:392187ac558863b8aff0d76dc78e0731fed58f3b06e2b00e22995dcdb630f213
+sphinxcontrib-serializinghtml==1.1.3 \
+    --hash=sha256:c0efb33f8052c04fd7a26c0a07f1678e8512e0faec19f4aa8f2473a8b81d5227 \
+    --hash=sha256:db6615af393650bf1151a6cd39120c29abaf93cc60db8c48eb2dddbfdc3a9768
 sphinxcontrib-htmlhelp==1.0.2 \
     --hash=sha256:4670f99f8951bd78cd4ad2ab962f798f5618b17675c35c5ac3b2132a14ea8422 \
     --hash=sha256:d4fd39a65a625c9df86d7fa8a2d9f3cd8299a3a4b15db63b50aac9e161d8eff7
@@ -289,9 +289,9 @@ sphinxcontrib-devhelp==1.0.1 \
 google-cloud-storage==1.16.1 \
     --hash=sha256:10b8a708d71b45589e06d0dc2bcc614e1d1c921902df8d22e374af1fb346ab68 \
     --hash=sha256:4a2a0e2486b1977a4f3e382ed0be118933ecb6a92dc6b2c3d0b56ef8d76ac7a9
-google-api-core==1.12.0 \
-    --hash=sha256:7ccfab741a333e8d4259d4bcd93d587ebacee0a41316d93440a9c0c230a999c6 \
-    --hash=sha256:a302404746347c3098c13b47c5d9b1a2fbbe4b3118d9e79b32b21e54b7bd1aeb
+google-api-core==1.13.0 \
+    --hash=sha256:72a1c8966bdbd70a72de32760368aec399fe6a5c2a6675d9476cb9ae27046de7 \
+    --hash=sha256:f45d74aef41e1de49ceadebf382e1291ddcbe431a8b533aff8a1140a35531465
 google-cloud-core==1.0.2 \
     --hash=sha256:7b61a06de4d63780bcf7889cb17f00f5058fdd211ad86c74367408eea37d9f00 \
     --hash=sha256:8f86399d8399448ccac5890239e6234f120dd619d22c41115ff548a851ec2be2

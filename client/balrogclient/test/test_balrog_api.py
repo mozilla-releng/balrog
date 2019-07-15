@@ -1,30 +1,42 @@
-try:
-    # Python 2.6 backport with assertDictEqual()
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+# -*- coding: utf-8 -*-
 
-from balrogclient import is_csrf_token_expired
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+from __future__ import absolute_import, print_function
+
+import logging
+
+from requests import Session
+from requests_mock import Adapter
+
+from balrogclient.api import API
+
+AUTH0_SECRETS = {
+    "client_id": "some-client",
+    "client_secret": "super-secret",
+    "audience": "tests",
+    "domain": "auth0.test",
+}
 
 
-class TestCsrfTokenExpiry(unittest.TestCase):
-    """
-    is_csrf_token_expired expects a token
-    of the form %Y%m%d%H%M%S##foo
-    """
+def test_log_lines_truncated(caplog):
+    session = Session()
+    adapter = Adapter()
+    session.mount("https://", adapter)
+    adapter.register_uri(
+        "POST",
+        "https://auth0.test/oauth/token",
+        json={"expires_in": 3600, "access_token": "the-token"},
+    )
+    adapter.register_uri("GET", "https://api/")
 
-    def _generate_date_string(self, days_offset=0):
-        from datetime import datetime, timedelta
+    caplog.set_level(logging.DEBUG)
 
-        return (datetime.now() + timedelta(days=days_offset)).strftime("%Y%m%d%H%M%S")
+    api = API(AUTH0_SECRETS, session=session)
+    api.do_request("https://api/", {"data": "a" * 100}, "GET")
 
-    def test_valid_csrf_token_has_not_expired(self):
-        tomorrow = self._generate_date_string(days_offset=1)
-        self.assertFalse(is_csrf_token_expired(tomorrow))
-
-    def test_valid_csrf_token_has_expired(self):
-        yesterday = self._generate_date_string(days_offset=-1)
-        self.assertTrue(is_csrf_token_expired(yesterday))
-
-    def test_invalid_csrf_token(self):
-        pass
+    logs = [message.split(': ', 1)[1] for message in caplog.messages if message.startswith("Data sent: ")]
+    assert logs == ['{"data": "' + 'a'*70 + "<...32 characters elided ...>"]
+    print(logs)

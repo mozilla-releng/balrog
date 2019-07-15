@@ -1,6 +1,6 @@
 [run]
 branch = True
-include = auslib/*
+source = auslib/*
 omit = auslib/migrate/*
 
 [report]

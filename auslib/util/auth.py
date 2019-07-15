@@ -1,5 +1,3 @@
-import json
-
 import jose.jwt
 import requests
 
@@ -53,7 +51,7 @@ def get_jwks(auth_domain):
 
 @lru_cache(2048)
 def get_additional_userinfo(auth_domain, access_token):
-    return json.loads(auth0_Users(auth_domain).userinfo(access_token))
+    return auth0_Users(auth_domain).userinfo(access_token)
 
 
 def verified_userinfo(request, auth_domain, auth_audience):
@@ -72,13 +70,15 @@ def verified_userinfo(request, auth_domain, auth_audience):
     if rsa_key:
         try:
             payload = jose.jwt.decode(access_token, rsa_key, algorithms=["RS256"], audience=auth_audience, issuer="https://{}/".format(auth_domain))
-            try:
-                payload.update(get_additional_userinfo(auth_domain, access_token))
-            except ValueError:
-                # Failed to parse json, probably a machine token
+            if "gty" in payload:
+                # The gty field being present means it is a machine token
                 # azp in machine tokens is their clientId, which is the closest
                 # thing we have to an e-mail address for them
                 payload["email"] = payload.get("azp")
+            else:
+                # Otherwise, assume it's a human, and gather additional information
+                # about them.
+                payload.update(get_additional_userinfo(auth_domain, access_token))
             if not payload.get("email"):
                 raise AuthError({"code": "no_email", "description": "no email address found in access or id tokens"}, 401)
             return payload
@@ -88,7 +88,5 @@ def verified_userinfo(request, auth_domain, auth_audience):
             raise AuthError({"code": "invalid_claims", "description": "incorrect claims, please check the audience and issuer"}, 401)
         except ValueError:
             raise AuthError({"code": "incomplete_validation", "description": "couldn't find additional userinfo from access token"}, 401)
-        except Exception:
-            raise AuthError({"code": "invalid_header", "description": "Unable to parse authentication token."}, 401)
     else:
         raise AuthError({"code": "invalid_key", "description": "Unable to find RSA key."}, 401)
