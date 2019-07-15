@@ -289,7 +289,7 @@ tasks:
       command:
         - "/bin/bash"
         - "-c"
-        - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd react-ui && yarn install && ./scripts/deploy"
+        - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd react-ui && yarn install && bash ./scripts/deploy"
     extra:
       github:
         env: true
