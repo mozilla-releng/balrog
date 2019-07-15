@@ -372,6 +372,10 @@ def scheduled_change_permissions_delete(sc_id):
     return PermissionScheduledChangeView().delete(sc_id)
 
 
+def scheduled_change_releases_get_by_id(sc_id):
+    return ReleaseScheduledChangeView().get(sc_id)
+
+
 def scheduled_change_releases_post(sc_id):
     """POST /scheduled_changes/releases/<int:sc_id>"""
     return ReleaseScheduledChangeView().post(sc_id)
