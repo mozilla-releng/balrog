@@ -9,6 +9,44 @@ from auslib.web.admin.views.validators import is_when_present_and_in_past_valida
 from auslib.web.common.history import get_input_dict
 
 
+def add_signoff_information(row, table, sc_table):
+    scheduled_change = {"signoffs": {}, "required_signoffs": {}}
+    base_row = {}
+    base_pk = {}
+
+    for k, v in row.items():
+        if k == "data_version":
+            scheduled_change["sc_data_version"] = v
+        else:
+            if k.startswith("base_"):
+                k = k.replace("base_", "")
+                base_row[k] = v
+                if getattr(table, k).primary_key:
+                    base_pk[k] = v
+            scheduled_change[k] = v
+
+    for signoff in sc_table.signoffs.select({"sc_id": row["sc_id"]}):
+        scheduled_change["signoffs"][signoff["username"]] = signoff["role"]
+
+    # No point in retrieving this for completed scheduled changes...
+    if not row["complete"]:
+        affected_rows = []
+        # We don't need to consider the existing version of a row for
+        # inserts, because it doesn't exist yet!
+        if row["change_type"] != "insert":
+            original_row = table.select(where=base_pk)[0]
+            affected_rows.append(original_row)
+        # We don't need to consider the future version of the row when
+        # looking for required signoffs, because it won't exist when
+        # enacted.
+        if row["change_type"] != "delete":
+            affected_rows.append(base_row)
+        signoff_requirements = [obj for v in table.getPotentialRequiredSignoffs(affected_rows).values() for obj in v]
+        scheduled_change["required_signoffs"] = serialize_signoff_requirements(signoff_requirements)
+
+    return scheduled_change
+
+
 class ScheduledChangesView(AdminView):
     """/scheduled_changes/:namespace"""
 
@@ -29,41 +67,8 @@ class ScheduledChangesView(AdminView):
         rows = self.sc_table.select(where=where)
         ret = {"count": len(rows), "scheduled_changes": []}
         for row in rows:
-            scheduled_change = {"signoffs": {}, "required_signoffs": {}}
-            base_row = {}
-            base_pk = {}
+            ret["scheduled_changes"].append(add_signoff_information(row, self.table, self.sc_table))
 
-            for k, v in row.items():
-                if k == "data_version":
-                    scheduled_change["sc_data_version"] = v
-                else:
-                    if k.startswith("base_"):
-                        k = k.replace("base_", "")
-                        base_row[k] = v
-                        if getattr(self.table, k).primary_key:
-                            base_pk[k] = v
-                    scheduled_change[k] = v
-
-            for signoff in self.sc_table.signoffs.select({"sc_id": row["sc_id"]}):
-                scheduled_change["signoffs"][signoff["username"]] = signoff["role"]
-
-            # No point in retrieving this for completed scheduled changes...
-            if not row["complete"]:
-                affected_rows = []
-                # We don't need to consider the existing version of a row for
-                # inserts, because it doesn't exist yet!
-                if row["change_type"] != "insert":
-                    original_row = self.table.select(where=base_pk)[0]
-                    affected_rows.append(original_row)
-                # We don't need to consider the future version of the row when
-                # looking for required signoffs, because it won't exist when
-                # enacted.
-                if row["change_type"] != "delete":
-                    affected_rows.append(base_row)
-                signoff_requirements = [obj for v in self.table.getPotentialRequiredSignoffs(affected_rows).values() for obj in v]
-                scheduled_change["required_signoffs"] = serialize_signoff_requirements(signoff_requirements)
-
-            ret["scheduled_changes"].append(scheduled_change)
         return jsonify(ret)
 
     def _post(self, what, transaction, changed_by, change_type):
@@ -89,6 +94,15 @@ class ScheduledChangeView(AdminView):
         self.table = table
         self.sc_table = table.scheduled_changes
         super(ScheduledChangeView, self).__init__()
+
+    def get(self, sc_id):
+        sc = self.sc_table.select(where={"sc_id": sc_id})
+        if not sc:
+            return problem(404, "Bad Request", "Scheduled change does not exist")
+
+        scheduled_change = add_signoff_information(sc[0], self.table, self.sc_table)
+        return jsonify({"scheduled_change": scheduled_change})
+
 
     def _post(self, sc_id, what, transaction, changed_by, old_sc_data_version):
         if is_when_present_and_in_past_validator(what):
