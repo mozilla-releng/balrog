@@ -103,7 +103,6 @@ class ScheduledChangeView(AdminView):
         scheduled_change = add_signoff_information(sc[0], self.table, self.sc_table)
         return jsonify({"scheduled_change": scheduled_change})
 
-
     def _post(self, sc_id, what, transaction, changed_by, old_sc_data_version):
         if is_when_present_and_in_past_validator(what):
             return problem(400, "Bad Request", "Changes may not be scheduled in the past")
