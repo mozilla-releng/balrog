@@ -2039,7 +2039,7 @@ paths:
               - type: object
                 properties:
                   scheduled_change:
-                    description: A single element array containing the scheduled change
+                    description: An object containing the scheduled change with the id specified
                     type: object
                     allOf:
                       - $ref: '#/definitions/SCSignoffsModel'
@@ -2577,7 +2577,7 @@ paths:
               - type: object
                 properties:
                   scheduled_change:
-                    description: array where each element is a scheduled change for a Release.
+                    description: An object containing the scheduled change with the id specified
                     allOf:
                       - $ref: '#/definitions/SCChangeType'
                       - $ref: '#/definitions/SCTime'
