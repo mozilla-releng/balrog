@@ -1540,6 +1540,27 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         self.assertDictEqual(ret.get_json(), expected)
 
+    def testGetScheduledChangeByScId(self):
+        ret = self._get("/scheduled_changes/releases/2")
+        expected = {
+            "scheduled_change": {
+                "sc_id": 2,
+                "when": 6000000000,
+                "scheduled_by": "bill",
+                "change_type": "update",
+                "complete": False,
+                "sc_data_version": 1,
+                "name": "a",
+                "product": "a",
+                "data": {"name": "a", "hashFunction": "sha512", "schema_version": 1, "extv": "2.0"},
+                "read_only": False,
+                "data_version": 1,
+                "signoffs": {"bill": "releng"},
+                "required_signoffs": {"releng": 1},
+            }
+        }
+        self.assertDictEqual(ret.get_json(), expected)
+
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeExistingRelease(self):
         data = {

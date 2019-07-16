@@ -1792,6 +1792,48 @@ class TestRuleScheduledChanges(ViewTest):
         }
         self.assertEqual(ret.get_json(), expected)
 
+    def testGetScheduledChangeByScId(self):
+        ret = self._get("/scheduled_changes/rules/3")
+        expected = {
+            "scheduled_change": {
+                "sc_id": 3,
+                "when": 2900000,
+                "scheduled_by": "bill",
+                "complete": False,
+                "sc_data_version": 2,
+                "rule_id": None,
+                "priority": 150,
+                "backgroundRate": 100,
+                "channel": "a",
+                "mapping": "ghi",
+                "update_type": "minor",
+                "version": None,
+                "jaws": None,
+                "buildTarget": None,
+                "alias": None,
+                "product": None,
+                "buildID": None,
+                "locale": None,
+                "osVersion": None,
+                "memory": None,
+                "mig64": None,
+                "distribution": None,
+                "fallbackMapping": None,
+                "distVersion": None,
+                "headerArchitecture": None,
+                "comment": None,
+                "data_version": None,
+                "instructionSet": None,
+                "telemetry_product": None,
+                "telemetry_channel": None,
+                "telemetry_uptake": None,
+                "change_type": "insert",
+                "signoffs": {"bill": "releng", "mary": "relman"},
+                "required_signoffs": {"releng": 1},
+            }
+        }
+        self.assertEqual(ret.get_json(), expected)
+
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeExistingRule(self):
         data = {
