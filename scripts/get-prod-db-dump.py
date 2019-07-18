@@ -15,8 +15,8 @@ except ImportError:  # pragma: no cover
     from urllib.request import urlopen
 
 
-HOST = "https://balrog-public-dump-prod.s3.amazonaws.com"
-PATH = "/dump.sql.txt.xz"
+HOST = "https://storage.googleapis.com"
+PATH = "/balrog-prod-dbdump-v1/dump.sql.txt.xz"
 LOCAL_DB_PATH = os.getenv("LOCAL_DUMP", "/app/scripts/prod_db_dump.sql.xz")
 TIMEOUT = 10
 
