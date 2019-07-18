@@ -2013,6 +2013,37 @@ paths:
           $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/rules/{sc_id}:
+    get:
+      summary: Return the scheduled change requested
+      description: >
+        Endpoint to get a Scheduled Change for a Rule. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_get_by_id
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: Returns a scheduled change for a rule.
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+      responses:
+        '200':
+          description: Returns the scheduled change with the id specified
+          schema:
+            type: object
+            required:
+              - scheduled_change
+            allOf:
+              - type: object
+                properties:
+                  scheduled_change:
+                    description: An object containing the scheduled change with the id specified
+                    type: object
+                    allOf:
+                      - $ref: '#/definitions/SCSignoffsModel'
+                      - $ref: '#/definitions/SCRulesItemBase'
     post:
       summary: Modifies existing scheduled change for a Rule.
       description: >
@@ -2519,6 +2550,54 @@ paths:
           $ref: '#/responses/unauthorizedUser'
 
   /scheduled_changes/releases/{sc_id}:
+    get:
+      summary: Return the scheduled change requested
+      description: >
+        Endpoint to get a Scheduled Change for a Release. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_get_by_id
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: Returns a scheduled change for a release.
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+      responses:
+        '200':
+          description: Returns the scheduled change with the id specified
+          schema:
+            type: object
+            required:
+              - scheduled_change
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  scheduled_change:
+                    description: An object containing the scheduled change with the id specified
+                    allOf:
+                      - $ref: '#/definitions/SCChangeType'
+                      - $ref: '#/definitions/SCTime'
+                      - $ref: '#/definitions/SCIdModel'
+                      - $ref: '#/definitions/SCDataVersion'
+                      - $ref: '#/definitions/SCSignoffsModel'
+                      - $ref: '#/definitions/SCCommonFieldsModel'
+                      - $ref: '#/definitions/DataVersionNullable'
+                      - $ref: '#/definitions/ProductNullable'
+                      - $ref: '#/definitions/ReleaseReadOnly'
+                      - $ref: '#/definitions/ReleaseDataObject'
+                      - $ref: '#/definitions/ReleaseName'
+                    required:
+                      - change_type
+                      - data_version
+                      - when
+                      - product
+                      - name
+                      - data
+                      - read_only
     post:
       summary: Modifies existing scheduled change for a Release.
       description: >
