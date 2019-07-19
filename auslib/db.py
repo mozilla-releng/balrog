@@ -14,6 +14,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from sqlalchemy.interfaces import PoolListener
 from sqlalchemy.sql.expression import null
+from sqlalchemy.sql.functions import max as sql_max
 
 import migrate.versioning.api
 import migrate.versioning.schema
@@ -759,6 +760,31 @@ class HistoryTable(AUSTable):
                 newcol.unique = None
             self.table.append_column(newcol)
         AUSTable.__init__(self, db, dialect, historyClass=None, versioned=False)
+
+    def getPointInTime(self, timestamp, columns=None, transaction=None):
+        # TODO: add support for columns? or maybe we don't need it yet
+        q = select(self.table.get_children()).where(
+            self.change_id.in_(
+                select([sql_max(self.change_id)])
+                .where(self.timestamp < timestamp)
+                .group_by(*self.base_primary_key)
+            )
+        )
+        if transaction:
+            result = transaction.execute(q).fetchall()
+        else:
+            with AUSTransaction(self.getEngine()) as trans:
+                result = trans.execute(q).fetchall()
+
+        rows = []
+        # Filter out any rows who have no non-primary key data, because this
+        # means the row has been deleted.
+        non_primary_key_columns = [col.name for col in self.baseTable.t.get_children() if not col.primary_key]
+        for row in result:
+            if any([row[col] for col in non_primary_key_columns]):
+                rows.append(row)
+
+        return rows_to_dicts(rows)
 
     def forInsert(self, insertedKeys, columns, changed_by, trans):
         """Inserts cause two rows in the History table to be created. The first

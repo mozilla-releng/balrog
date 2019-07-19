@@ -15,12 +15,15 @@ log = logging.getLogger(__name__)
 def get_rules():
     # We can't use a form here because it will enforce "csrf_token" needing
     # to exist, which doesn't make sense for GET requests.
-    where = {}
-    for field in ("product",):
-        if request.args.get(field):
-            where[field] = request.args[field]
+    if request.args.get("timestamp"):
+        rules = dbo.rules.history.getPointInTime(request.args.get("timestamp"))
+    else:
+        where = {}
+        for field in ("product",):
+            if request.args.get(field):
+                where[field] = request.args[field]
 
-    rules = dbo.rules.getOrderedRules(where=where)
+        rules = dbo.rules.getOrderedRules(where=where)
     return jsonify(count=len(rules), rules=rules)
 
 
