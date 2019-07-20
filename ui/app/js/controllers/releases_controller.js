@@ -332,6 +332,9 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
   /* End openReadOnlyModal */
 
   $scope.isScheduledToBeModifiable = function(release) {
-    return release.read_only && !!release.sc && !release.sc.read_only;
-  }
+    return release.read_only &&
+      !!release.sc &&
+      !release.sc.complete &&
+      !release.sc.read_only;
+  };
 });

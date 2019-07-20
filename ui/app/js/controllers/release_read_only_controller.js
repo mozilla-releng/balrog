@@ -1,9 +1,5 @@
 angular.module('app').controller('ReleaseReadOnlyCtrl',
 function ($scope, $modalInstance, CSRF, Releases, release) {
-
-  $scope.release = release;
-  $scope.saving = false;
-
   $scope.saveChanges = function () {
     $scope.saving = true;
 
@@ -81,4 +77,20 @@ function ($scope, $modalInstance, CSRF, Releases, release) {
   $scope.cancel = function () {
       $modalInstance.dismiss('cancel');
   };
+
+  (function(){
+    if(!release.required_signoffs || release.required_signoffs.length == 0) {
+      Releases.getRequiredSignoffsForProduct(release.name).success(function(response) {
+        release.required_signoffs = {
+          length: Object.keys(response.required_signoffs).length,
+          roles: response.required_signoffs
+        };
+      })
+      .error($scope.responseError)
+      .finally($scope.operationComplete);
+    }
+
+    $scope.release = release;
+    $scope.saving = false;
+  })();
 });
