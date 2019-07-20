@@ -3711,7 +3711,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetPotentialRequiredSignoffsForProduct(self):
         release = {"name": "Z", "product": "Z"}
-        signoffs_required = self.releases.getPotentialRequiredSignoffsForProduct(release)
+        signoffs_required = self.releases.getPotentialRequiredSignoffsForProduct(release["product"])
         self.assertIn("rs", signoffs_required)
         self.assertEqual(len(signoffs_required["rs"]), 3)
         signoffs_by_role = {rs["role"]: rs["signoffs_required"] for signoffs in signoffs_required.values() for rs in signoffs}
@@ -3721,7 +3721,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGetPotentialRequiredSignoffsForProductNoSignoffsRequired(self):
         release = {"name": "ZA", "product": "ZA"}
-        signoffs_required = self.releases.getPotentialRequiredSignoffsForProduct(release)
+        signoffs_required = self.releases.getPotentialRequiredSignoffsForProduct(release["product"])
         self.assertIn("rs", signoffs_required)
         self.assertEqual(len(signoffs_required["rs"]), 0)
 
