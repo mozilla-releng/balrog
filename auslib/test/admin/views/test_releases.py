@@ -1949,6 +1949,21 @@ class TestReleasesScheduledChanges(ViewTest):
         release = dict(row)
         self.assertFalse(release["read_only"])
 
+    def testGetRequiredSignoffsForProduct_NotFoundRelease(self):
+        resp = self._get("/releases/404_RELEASE/read_only/product/required_signoffs")
+        self.assertStatusCode(resp, 404)
+
+    def testGetRequiredSignoffsForProduct(self):
+        resp = self._get("/releases/ZA/read_only/product/required_signoffs")
+        self.assertStatusCode(resp, 200)
+
+        rs = resp.json
+        self.assertIn("required_signoffs", rs)
+        self.assertIn("releng", rs["required_signoffs"])
+        self.assertIn("relman", rs["required_signoffs"])
+        self.assertEqual(rs["required_signoffs"]["releng"], 2)
+        self.assertEqual(rs["required_signoffs"]["relman"], 1)
+
     def testEnactScheduledChangesUpdateReadWrite_RequiredSignoffsForProduct(self):
         dbo.releases.scheduled_changes.t.insert().execute(
             sc_id=4200024, scheduled_by="bill", complete=False, change_type="update", base_read_only=False, base_data_version=1, base_name="ZA", data_version=1

@@ -326,6 +326,19 @@ class ReleaseReadOnlyView(AdminView):
         return Response(status=201, response=json.dumps(dict(new_data_version=data_version)))
 
 
+class ReleaseReadOnlyProductRequiredSignoffsView(AdminView):
+    """/releases/:release/read_only/product/required_signoffs"""
+
+    def get(self, release):
+        releases = dbo.releases.getReleases(name=release, limit=1)
+        if not releases:
+            return problem(404, "Not Found", f"Release: {release} not found")
+        release = releases[0]
+        potential_rs = dbo.releases.getPotentialRequiredSignoffsForProduct(release["product"])
+        rs = {"required_signoffs": serialize_signoff_requirements(potential_rs["rs"])}
+        return jsonify(rs)
+
+
 class ReleasesAPIView(AdminView):
     """/releases"""
 
