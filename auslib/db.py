@@ -1768,9 +1768,9 @@ class Releases(AUSTable):
             potential_required_signoffs["rs"] = []
         return potential_required_signoffs
 
-    def getPotentialRequiredSignoffsForProduct(self, release, transaction=None):
+    def getPotentialRequiredSignoffsForProduct(self, product, transaction=None):
         potential_required_signoffs = {"rs": []}
-        where = [self.db.productRequiredSignoffs.product == release["product"]]
+        where = [self.db.productRequiredSignoffs.product == product]
         product_rs = self.db.productRequiredSignoffs.select(where=where, transaction=transaction)
         if product_rs:
             role_map = defaultdict(list)
@@ -2115,7 +2115,7 @@ class Releases(AUSTable):
             potential_required_signoffs = _getPotentialRequiredSignoffs(self.getPotentialRequiredSignoffs([release], transaction=transaction).values())
             if not potential_required_signoffs:
                 potential_required_signoffs = _getPotentialRequiredSignoffs(
-                    self.getPotentialRequiredSignoffsForProduct(release, transaction=transaction).values()
+                    self.getPotentialRequiredSignoffsForProduct(release["product"], transaction=transaction).values()
                 )
             verify_signoffs(potential_required_signoffs, signoffs)
         super().update(where, {"read_only": is_readonly}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
