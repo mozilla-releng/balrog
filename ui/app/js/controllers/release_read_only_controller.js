@@ -79,7 +79,7 @@ function ($scope, $modalInstance, CSRF, Releases, release) {
   };
 
   (function(){
-    if(!release.required_signoffs || release.required_signoffs.length == 0) {
+    if(!release.required_signoffs || release.required_signoffs.length === 0) {
       Releases.getRequiredSignoffsForProduct(release.name).success(function(response) {
         release.required_signoffs = {
           length: Object.keys(response.required_signoffs).length,
