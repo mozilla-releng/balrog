@@ -61,9 +61,9 @@
             Revoke your Signoff
           </button>
         </span>
-        <button class="btn btn-default btn-xs" ng-click="openDataModal(sc)">View Data</button>
+        <button ng-show="!isScheduledToBeModifiable(sc)" class="btn btn-default btn-xs" ng-click="openDataModal(sc)">View Data</button>
         <span ng-show="auth0.isAuthenticated()">
-          <button ng-show="!scheduled_changes_count && !sc.complete" class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
+          <button ng-show="!scheduled_changes_count && !isScheduledToBeModifiable(sc) && !sc.complete" class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
           <button ng-show="!scheduled_changes_count && !sc.complete" class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
         </span>
         <a ng-show="!scheduled_changes_count" class="btn btn-default btn-xs" ng-href="/scheduled_changes/releases/{{ sc.sc_id }}">History</a>
@@ -106,7 +106,8 @@
       <h5 title="Data Version">
         Data version: <b>{{ sc.sc_data_version }}</b>
       </h5>
-      <button ng-if="sc.change_type==='update'" class="btn btn-default btn-xs" ng-click="openDiffModal(sc)">View Diff</button>
+      <button ng-if="!isScheduledToBeModifiable(sc) && sc.change_type==='update'" class="btn btn-default btn-xs" ng-click="openDiffModal(sc)">View Diff</button>
+      <strong style="color: red;" ng-show="isScheduledToBeModifiable(sc)">Updating release state to modifiable</strong>
     </div>
 
     <dl class="dl-horizontal" style="float:right">
