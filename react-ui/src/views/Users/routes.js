@@ -3,17 +3,19 @@ import lazy from '../../utils/lazy';
 const ListUsers = lazy(() =>
   import(/* webpackChunkName: 'Users.ListUsers' */ './ListUsers')
 );
-const User = lazy(() => import(/* webpackChunkName: 'Users.User' */ './User'));
+const ViewUser = lazy(() =>
+  import(/* webpackChunkName: 'Users.ViewUser' */ './ViewUser')
+);
 
 export default path => [
   {
-    component: User,
+    component: ViewUser,
     path: `${path}/create`,
     isNewUser: true,
   },
   {
-    component: User,
-    path: `${path}/:user`,
+    component: ViewUser,
+    path: `${path}/:username`,
   },
   {
     component: ListUsers,

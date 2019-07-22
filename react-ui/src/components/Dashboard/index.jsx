@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { string, node } from 'prop-types';
+import { string, node, bool } from 'prop-types';
 import { makeStyles } from '@material-ui/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -34,6 +34,11 @@ const useStyles = makeStyles(theme => ({
     textDecoration: 'none',
     color: 'inherit',
   },
+  disabledLink: {
+    textDecoration: 'none',
+    color: theme.palette.grey[500],
+    pointerEvents: 'none',
+  },
   buttonWithIcon: {
     paddingLeft: theme.spacing(2),
   },
@@ -41,7 +46,7 @@ const useStyles = makeStyles(theme => ({
 
 export default function Dashboard(props) {
   const classes = useStyles();
-  const { title, children } = props;
+  const { title, children, disabled } = props;
 
   return (
     <Fragment>
@@ -60,13 +65,13 @@ export default function Dashboard(props) {
             {menuItems.main.map(menuItem => (
               <Link
                 key={menuItem.value}
-                className={classes.link}
+                className={disabled ? classes.disabledLink : classes.link}
                 nav
                 to={menuItem.path}>
                 <Button color="inherit">{menuItem.value}</Button>
               </Link>
             ))}
-            <SettingsMenu />
+            <SettingsMenu disabled={disabled} />
             <UserMenu />
           </nav>
         </Toolbar>
@@ -80,4 +85,5 @@ Dashboard.prototype = {
   children: node.isRequired,
   // A title for the view.
   title: string.isRequired,
+  disabled: bool,
 };

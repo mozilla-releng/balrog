@@ -32,8 +32,9 @@ axios.interceptors.request.use(config => {
 axios.interceptors.response.use(
   response => response,
   error => {
-    const errorMsg =
-      error.response.data.exception || error.response.data.detail || null;
+    const errorMsg = error.response
+      ? error.response.data.exception || error.response.data.detail || null
+      : error.message;
 
     // If we found a more detailed error message
     // raise an Error with that instead.

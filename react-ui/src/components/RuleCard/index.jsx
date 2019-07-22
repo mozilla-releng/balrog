@@ -33,7 +33,7 @@ import getDiffedProperties from '../../utils/getDiffedProperties';
 
 const useStyles = makeStyles(theme => ({
   root: {
-    '& h2': {
+    '& h2, & h4': {
       '& .anchor-link-style': {
         textDecoration: 'none',
         opacity: 0,
@@ -213,7 +213,7 @@ function RuleCard({ rule, onRuleDelete, ...props }) {
                 ? `${rule.product} : ${rule.channel}`
                 : rule.product}{' '}
               <a
-                href={`#${rule.rule_id}`}
+                href={`#ruleId=${rule.rule_id}`}
                 aria-label="Anchor"
                 className="anchor-link-style">
                 #
@@ -662,8 +662,15 @@ function RuleCard({ rule, onRuleDelete, ...props }) {
             <div className={classes.scheduledChangesHeader}>
               <Typography
                 className={classes.scheduledChangesTitle}
+                component="h4"
                 variant="subtitle1">
-                Scheduled Changes
+                Scheduled Changes{' '}
+                <a
+                  href={`#scId=${rule.scheduledChange.sc_id}`}
+                  aria-label="Anchor"
+                  className="anchor-link-style">
+                  #
+                </a>
               </Typography>
               <Chip
                 className={classNames(classes.chip, {
@@ -711,7 +718,12 @@ function RuleCard({ rule, onRuleDelete, ...props }) {
           }}>
           <Button color="secondary">Duplicate</Button>
         </Link>
-        <Link to={`/rules/${rule.rule_id}`}>
+        <Link
+          to={
+            rule.rule_id
+              ? `/rules/${rule.rule_id}`
+              : `/rules/create/${rule.scheduledChange.sc_id}`
+          }>
           <Button color="secondary">Update</Button>
         </Link>
         <Button color="secondary" onClick={() => onRuleDelete(rule)}>

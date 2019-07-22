@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Switch } from 'react-router-dom';
 import { makeStyles } from '@material-ui/styles';
+import axios from 'axios';
+import Dashboard from './components/Dashboard';
+import ErrorPanel from './components/ErrorPanel';
 import RouteWithProps from './components/RouteWithProps';
 import routes from './routes';
 
@@ -17,8 +20,26 @@ const useStyles = makeStyles({
 
 function Main() {
   useStyles();
+  const [backendError, setBackendError] = useState('');
 
-  return (
+  useEffect(() => {
+    axios.get('/__heartbeat__').then(
+      () => setBackendError(''),
+      error => {
+        setBackendError(
+          `Error contacting Balrog backend: ${error}. Are you connected to the VPN?`
+        );
+      }
+    );
+  }, []);
+
+  return backendError ? (
+    <BrowserRouter>
+      <Dashboard title="Error" disabled>
+        <ErrorPanel fixed error={backendError} />
+      </Dashboard>
+    </BrowserRouter>
+  ) : (
     <BrowserRouter>
       <Switch>
         {routes.map(({ path, ...rest }) => (

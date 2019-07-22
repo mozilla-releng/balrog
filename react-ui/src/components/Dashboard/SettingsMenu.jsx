@@ -4,6 +4,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import IconButton from '@material-ui/core/IconButton';
 import SettingsOutlineIcon from 'mdi-react/SettingsOutlineIcon';
+import { upperCase } from 'change-case';
 import Link from '../../utils/Link';
 import { withUser } from '../../utils/AuthContext';
 import menuItems from './menuItems';
@@ -26,7 +27,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function SettingsMenu({ user }) {
+function SettingsMenu({ user, disabled }) {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const handleMenuOpen = e => setAnchorEl(e.currentTarget);
@@ -35,7 +36,7 @@ function SettingsMenu({ user }) {
   return (
     <Fragment>
       <IconButton
-        disabled={!user}
+        disabled={!user || disabled}
         className={classes.settings}
         aria-haspopup="true"
         aria-controls="user-menu"
@@ -43,7 +44,11 @@ function SettingsMenu({ user }) {
         onClick={handleMenuOpen}>
         <SettingsOutlineIcon
           size={24}
-          className={user ? classes.settingsIcon : classes.settingsIconDisabled}
+          className={
+            user && !disabled
+              ? classes.settingsIcon
+              : classes.settingsIconDisabled
+          }
         />
       </IconButton>
       <Menu
@@ -56,7 +61,7 @@ function SettingsMenu({ user }) {
         {menuItems.settings.map(navItem => (
           <MenuItem key={navItem.value} title={navItem.value}>
             <Link className={classes.link} to={navItem.path}>
-              {navItem.value}
+              {upperCase(navItem.value)}
             </Link>
           </MenuItem>
         ))}

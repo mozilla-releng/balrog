@@ -34,6 +34,7 @@ function AutoCompleteText({
   value,
   label,
   required,
+  disabled,
   getSuggestions,
   inputProps,
   selectedItems,
@@ -117,6 +118,7 @@ function AutoCompleteText({
           <TextField
             label={label}
             required={required}
+            disabled={disabled}
             fullWidth
             InputProps={{
               ...getInputProps({
@@ -175,6 +177,7 @@ AutoCompleteText.propTypes = {
   inputProps: object,
   label: string,
   required: bool,
+  disabled: bool,
   // Selected items for when `multi` is set to `true`.
   selectedItems: arrayOf(string),
   // Callback triggered when the list of chips change.
@@ -190,6 +193,7 @@ AutoCompleteText.defaultProps = {
   inputProps: {},
   label: '',
   required: false,
+  disabled: false,
   multi: false,
 };
 
