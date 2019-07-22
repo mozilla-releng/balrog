@@ -8,6 +8,11 @@ const Rule = lazy(() => import(/* webpackChunkName: 'Rules.Rule' */ './Rule'));
 export default path => [
   {
     component: Rule,
+    path: `${path}/create/:scId`,
+    isNewRule: true,
+  },
+  {
+    component: Rule,
     path: `${path}/create`,
     isNewRule: true,
   },

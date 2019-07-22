@@ -22,7 +22,7 @@ import {
   getChannels,
   getRules,
   getScheduledChanges,
-  getScheduledChange,
+  getScheduledChangeByRuleId,
   deleteRule,
 } from '../../../services/rules';
 import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
@@ -64,9 +64,11 @@ function ListRules(props) {
   const theme = useTheme();
   const { search, hash } = props.location;
   const query = parse(search.slice(1));
+  const hashQuery = parse(hash.replace('#', ''));
   const productChannelSeparator = ' : ';
   const [snackbarState, setSnackbarState] = useState(SNACKBAR_INITIAL_STATE);
   const [ruleIdHash, setRuleIdHash] = useState(null);
+  const [scheduledIdHash, setScheduledIdHash] = useState(null);
   const [rulesWithScheduledChanges, setRulesWithScheduledChanges] = useState(
     []
   );
@@ -337,7 +339,7 @@ function ListRules(props) {
     }
 
     if (Object.keys(dialogRule.requiredSignoffs).length > 0) {
-      return (await getScheduledChange(dialogRule.rule_id)).data
+      return (await getScheduledChangeByRuleId(dialogRule.rule_id)).data
         .scheduled_changes[0];
     }
 
@@ -444,19 +446,32 @@ function ListRules(props) {
   };
 
   useEffect(() => {
-    if (hash !== ruleIdHash && filteredRulesCount) {
-      const ruleId = Number(hash.replace('#', '')) || null;
+    if (filteredRulesCount) {
+      if (hashQuery.ruleId && hashQuery.ruleId !== ruleIdHash) {
+        const ruleId = Number(hashQuery.ruleId);
 
-      if (ruleId) {
-        const itemNumber = filteredRulesWithScheduledChanges
-          .map(rule => rule.rule_id)
-          .indexOf(ruleId);
+        if (ruleId) {
+          const itemNumber = filteredRulesWithScheduledChanges
+            .map(rule => rule.rule_id)
+            .indexOf(ruleId);
 
-        setScrollToRow(itemNumber);
-        setRuleIdHash(hash);
+          setScrollToRow(itemNumber);
+          setRuleIdHash(hashQuery.ruleId);
+        }
+      } else if (hashQuery.scId && hashQuery.scId !== scheduledIdHash) {
+        const scId = Number(hashQuery.scId);
+
+        if (scId) {
+          const itemNumber = filteredRulesWithScheduledChanges
+            .map(rule => rule.scheduledChange && rule.scheduledChange.sc_id)
+            .indexOf(scId);
+
+          setScrollToRow(itemNumber);
+          setScheduledIdHash(hashQuery.scId);
+        }
       }
     }
-  }, [hash, filteredRulesCount]);
+  }, [hashQuery, filteredRulesCount]);
 
   return (
     <Dashboard title="Rules">

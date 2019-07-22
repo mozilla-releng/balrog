@@ -90,11 +90,9 @@ const useStyles = makeStyles(theme => ({
 }));
 
 function ReleaseCard(props) {
-  const { release, onAccessChange, ...rest } = props;
+  const { release, onAccessChange, onReleaseDelete, ...rest } = props;
   const classes = useStyles();
   const hasRulesPointingAtRevision = release.rule_ids.length > 0;
-  // eslint-disable-next-line no-unused-vars
-  const onReleaseDelete = release => {};
   const handleAccessChange = ({ target: { checked } }) => {
     onAccessChange({ release, checked });
   };
