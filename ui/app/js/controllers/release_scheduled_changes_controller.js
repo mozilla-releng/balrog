@@ -39,7 +39,7 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
   }
 
   $scope.isScheduledToBeModifiable = function(sc) {
-    return sc.hasOwnProperty('read_only') && !sc.read_only;
+    return sc.change_type === 'update' && !sc.data && sc.hasOwnProperty('read_only') && !sc.read_only;
   };
 
   $scope.openDataModal = function(release) { 
