@@ -107,7 +107,7 @@
         Data version: <b>{{ sc.sc_data_version }}</b>
       </h5>
       <button ng-if="!isScheduledToBeModifiable(sc) && sc.change_type==='update'" class="btn btn-default btn-xs" ng-click="openDiffModal(sc)">View Diff</button>
-      <strong style="color: red;" ng-show="isScheduledToBeModifiable(sc)">Updating release state to modifiable</strong>
+      <strong style="color: red;" ng-show="isScheduledToBeModifiable(sc) && sc.change_type==='update'">Updating release state to modifiable</strong>
     </div>
 
     <dl class="dl-horizontal" style="float:right">
