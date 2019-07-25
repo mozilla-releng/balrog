@@ -452,7 +452,11 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
             if not what.get("data_version", None):
                 return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
-        return super(ReleaseScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
+        try:
+            return super(ReleaseScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
+        except ReadOnlyError as e:
+            msg = f"Failed to schedule change - {e}"
+            return problem(400, "Bad Request", msg, ext={"data": e.args})
 
 
 class ReleaseScheduledChangeView(ScheduledChangeView):
