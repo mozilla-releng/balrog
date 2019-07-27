@@ -2109,12 +2109,14 @@ class Releases(AUSTable):
 
         if not dryrun and not is_readonly:
 
-            def _getPotentialRequiredSignoffs(required_signoffs):
+            def _map_required_signoffs(required_signoffs):
                 return [obj for v in required_signoffs for obj in v]
 
-            potential_required_signoffs = _getPotentialRequiredSignoffs(self.getPotentialRequiredSignoffs([release], transaction=transaction).values())
+            # If release is associated with a rule, get the required signoffs for the rule's product/channel.
+            # If no required signoffs is found, get the required signoffs considering all products/channels for the given release product.
+            potential_required_signoffs = _map_required_signoffs(self.getPotentialRequiredSignoffs([release], transaction=transaction).values())
             if not potential_required_signoffs:
-                potential_required_signoffs = _getPotentialRequiredSignoffs(
+                potential_required_signoffs = _map_required_signoffs(
                     self.getPotentialRequiredSignoffsForProduct(release["product"], transaction=transaction).values()
                 )
             verify_signoffs(potential_required_signoffs, signoffs)
