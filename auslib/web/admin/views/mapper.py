@@ -14,6 +14,7 @@ from auslib.web.admin.views.permissions import (
 from auslib.web.admin.views.releases import (
     EnactReleaseScheduledChangeView,
     ReleaseReadOnlyView,
+    ReleaseReadOnlyProductRequiredSignoffsView,
     ReleasesAPIView,
     ReleaseScheduledChangeHistoryView,
     ReleaseScheduledChangeSignoffsView,
@@ -171,6 +172,11 @@ def release_read_only_get(release):
 def release_read_only_put(release):
     """PUT /releases/:release/read_only"""
     return ReleaseReadOnlyView().put(release)
+
+
+def release_read_only_product_required_signoffs_get(release):
+    """PUT /releases/:release/read_only/product/required_signoffs"""
+    return ReleaseReadOnlyProductRequiredSignoffsView().get(release)
 
 
 def release_single_column_get(column):
