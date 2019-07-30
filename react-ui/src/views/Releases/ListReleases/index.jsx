@@ -18,6 +18,7 @@ import {
   DIALOG_ACTION_INITIAL_STATE,
   SNACKBAR_INITIAL_STATE,
 } from '../../../utils/constants';
+import elementsHeight from '../../../utils/elementsHeight';
 
 const useStyles = makeStyles(theme => ({
   fab: {
@@ -31,6 +32,12 @@ const useStyles = makeStyles(theme => ({
 function ListReleases(props) {
   const classes = useStyles();
   const theme = useTheme();
+  const {
+    buttonHeight,
+    body1TextHeight,
+    body2TextHeight,
+    h6TextHeight,
+  } = elementsHeight(theme);
   const { hash } = props.location;
   const [releaseNameHash, setReleaseNameHash] = useState(null);
   const [scrollToRow, setScrollToRow] = useState(null);
@@ -159,6 +166,7 @@ function ListReleases(props) {
       body: `This would make ${release.name} ${
         checked ? 'read only' : 'writable'
       }.`,
+      destructive: false,
       item: release,
       handleSubmit: handleReadOnlySubmit,
       handleClose: handleReadOnlyClose,
@@ -174,6 +182,7 @@ function ListReleases(props) {
       confirmText: 'Delete',
       body: `This will delete ${release.name}`,
       item: release,
+      destructive: true,
       handleSubmit: handleDeleteSubmit,
       handleClose: handleDeleteClose,
       handleError: handleDeleteError,
@@ -197,18 +206,27 @@ function ListReleases(props) {
   };
 
   const getRowHeight = ({ index }) => {
+    const listItemTextMargin = 6;
     const release = filteredReleases[index];
     // An approximation
     const ruleIdsLineCount = Math.ceil(release.rule_ids.length / 10) || 1;
     // card header
-    let height = theme.spacing(9);
+    let height = h6TextHeight + body1TextHeight() + theme.spacing(2);
 
-    // first row
-    height += theme.spacing(7);
-    // rule ids row
-    height += theme.spacing(3) + ruleIdsLineCount * theme.spacing(3);
+    // list padding top and bottom
+    height += theme.spacing(2);
+
+    // first row (data version) + ListItemText margins
+    height += body1TextHeight() + body2TextHeight() + 2 * listItemTextMargin;
+
+    // rule ids row + ListItemText margins
+    height +=
+      body1TextHeight() +
+      ruleIdsLineCount * body2TextHeight() +
+      2 * listItemTextMargin;
+
     // actions row
-    height += 7 * theme.spacing(1);
+    height += buttonHeight + theme.spacing(2);
     // space below the card (margin)
     height += theme.spacing(6);
 

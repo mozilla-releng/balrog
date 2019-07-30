@@ -7,6 +7,7 @@ import { makeStyles } from '@material-ui/styles';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
+import ChevronDownIcon from 'mdi-react/ChevronDownIcon';
 import ChipList from './ChipList';
 
 const useStyles = makeStyles(theme => ({
@@ -22,6 +23,15 @@ const useStyles = makeStyles(theme => ({
   },
   selectedText: {
     fontWeight: theme.typography.fontWeightMedium,
+  },
+  dropdownOpen: {
+    transform: 'rotate(180deg)',
+  },
+  dropdownActive: {
+    color: theme.palette.action.active,
+  },
+  dropdownDisabled: {
+    color: theme.palette.action.disabled,
   },
 }));
 
@@ -66,8 +76,34 @@ function AutoCompleteText({
     onValueChange('');
   };
 
+  const handleStateReducer = (state, changes) => {
+    switch (changes.type) {
+      case Downshift.stateChangeTypes.keyDownEnter:
+      case Downshift.stateChangeTypes.clickItem: {
+        if (multi) {
+          return {
+            ...changes,
+            inputValue: '',
+          };
+        }
+
+        return changes;
+      }
+
+      default: {
+        return changes;
+      }
+    }
+  };
+
   const handleStateChange = changes => {
     if ('selectedItem' in changes) {
+      // Make sure the value is not empty
+      // e.g., when the user presses the ESC key.
+      if (!changes.selectedItem) {
+        return;
+      }
+
       onValueChange(changes.selectedItem);
 
       if (multi) {
@@ -104,11 +140,13 @@ function AutoCompleteText({
     <Downshift
       {...props}
       selectedItem={value || ''}
+      stateReducer={handleStateReducer}
       onStateChange={handleStateChange}>
       {({
         getInputProps,
         getItemProps,
         getMenuProps,
+        getToggleButtonProps,
         highlightedIndex,
         inputValue,
         isOpen,
@@ -143,6 +181,18 @@ function AutoCompleteText({
                 />
               ) : (
                 undefined
+              ),
+              endAdornment: (
+                <div>
+                  <ChevronDownIcon
+                    {...getToggleButtonProps()}
+                    className={classNames({
+                      [classes.dropdownOpen]: isOpen,
+                      [classes.dropdownDisabled]: disabled,
+                      [classes.dropdownActive]: !disabled,
+                    })}
+                  />
+                </div>
               ),
             }}
           />

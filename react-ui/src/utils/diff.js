@@ -1,4 +1,5 @@
 import { title } from 'change-case';
+import { NEW_LINES_REGEX } from './constants';
 
 export default (diffProperties, objectOne, objectTwo) => {
   const prevValues = [];
@@ -16,8 +17,12 @@ export default (diffProperties, objectOne, objectTwo) => {
       }
 
       return {
-        prev: `${title(prop)}: ${prev}`,
-        next: `${title(prop)}: ${next}`,
+        prev: `${title(prop)}: ${
+          typeof prev === 'string' ? prev.replace(NEW_LINES_REGEX, '') : prev
+        }`,
+        next: `${title(prop)}: ${
+          typeof next === 'string' ? next.replace(NEW_LINES_REGEX, '') : next
+        }`,
       };
     })
     .filter(Boolean)

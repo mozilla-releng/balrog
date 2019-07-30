@@ -10,8 +10,12 @@ const useStyles = makeStyles(theme => ({
     display: 'flex',
   },
   chip: {
-    marginRight: theme.spacing(1),
-    fontSize: theme.typography.caption.fontSize,
+    marginRight: theme.spacing(0.5),
+    fontSize: '0.60rem',
+  },
+  closeIcon: {
+    height: 12,
+    width: 24,
   },
 }));
 
@@ -26,7 +30,7 @@ function ChipList(props) {
           key={item}
           className={classes.chip}
           size="small"
-          deleteIcon={<CloseIcon />}
+          deleteIcon={<CloseIcon className={classes.closeIcon} />}
           label={item}
           onDelete={() => onItemDelete(item)}
           onClick={() => onItemDelete(item)}

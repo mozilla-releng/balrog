@@ -1,4 +1,5 @@
 import { createMuiTheme } from '@material-ui/core/styles';
+import { red } from '@material-ui/core/colors';
 
 const SPACING = {
   UNIT: 8,
@@ -8,6 +9,19 @@ const SPACING = {
 };
 
 export default createMuiTheme({
+  palette: {
+    primary: {
+      light: '#804cc5',
+      main: '#4e1f94',
+      dark: '#160065',
+    },
+    secondary: {
+      light: '#678dff',
+      main: '#0061f2',
+      dark: '#0038be',
+    },
+    error: red,
+  },
   typography: {
     useNextVariants: true,
   },
@@ -15,8 +29,6 @@ export default createMuiTheme({
     link: {
       textDecoration: 'none',
       color: 'unset',
-      height: '100%',
-      width: '100%',
     },
     fab: {
       position: 'fixed',
