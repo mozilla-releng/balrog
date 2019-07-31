@@ -62,16 +62,14 @@ if not os.environ.get("RELEASES_HISTORY_BUCKET") or not os.environ.get("NIGHTLY_
     log.critical("RELEASES_HISTORY_BUCKET and NIGHTLY_HISTORY_BUCKET must be provided")
     sys.exit(1)
 if not os.environ.get("LOCALDEV"):
-    if not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")):
-        log.critical("GOOGLE_APPLICATION_CREDENTIALS must be provided")
+    if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")):
+        log.critical("GOOGLE_APPLICATION_CREDENTIALS provided, but does not exist")
         sys.exit(1)
 
-if os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")):
-    storage_client = storage.Client()
-else:
-    # Will never be used for deployed environments, because we ensure GOOGLE_APPLICATION_CREDENTIALS
-    # is provided for them.
+if os.environ.get("LOCALDEV") and "GOOGLE_APPLICATION_CREDENTIALS" not in os.environ:
     storage_client = storage.Client.create_anonymous_client()
+else:
+    storage_client = storage.Client()
 
 # Check if we have write access, and set the bucket configuration appropriately
 # There's basically two cases here:
