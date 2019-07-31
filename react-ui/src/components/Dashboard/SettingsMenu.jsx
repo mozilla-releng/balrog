@@ -59,7 +59,7 @@ function SettingsMenu({ user, disabled }) {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         onClose={handleMenuClose}>
         {menuItems.settings.map(navItem => (
-          <MenuItem key={navItem.value} title={navItem.value}>
+          <MenuItem dense key={navItem.value} title={navItem.value}>
             <Link className={classes.link} to={navItem.path}>
               {upperCase(navItem.value)}
             </Link>

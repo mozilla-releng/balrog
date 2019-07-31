@@ -9,11 +9,11 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import TextField from '@material-ui/core/TextField';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
-import Button from '@material-ui/core/Button';
 import MenuItem from '@material-ui/core/MenuItem';
 import Grid from '@material-ui/core/Grid';
 import MagnifyIcon from 'mdi-react/MagnifyIcon';
 import DateTimePicker from '../DateTimePicker';
+import Button from '../Button';
 
 const useStyles = makeStyles(theme => ({
   actions: {

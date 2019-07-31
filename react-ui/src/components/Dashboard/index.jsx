@@ -3,11 +3,11 @@ import { string, node, bool } from 'prop-types';
 import { makeStyles } from '@material-ui/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
-import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import menuItems from './menuItems';
 import Link from '../../utils/Link';
 import UserMenu from './UserMenu';
+import Button from '../Button';
 import SettingsMenu from './SettingsMenu';
 import { CONTENT_MAX_WIDTH, APP_BAR_HEIGHT } from '../../utils/constants';
 

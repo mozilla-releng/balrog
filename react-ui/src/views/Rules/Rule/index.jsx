@@ -253,6 +253,14 @@ export default function Rule({ isNewRule, ...props }) {
   };
 
   useEffect(() => {
+    // Some fields (jaws and mig64 at the time of writing) are optional
+    // boolean fields. Because input fields can't handle null or boolean
+    // values, they get stored as EMPTY_MENU_ITEM_CHAR or a string
+    // true/false when they change in the UI. In order to keep things
+    // consistent, we do the same to the data fetched from the server.
+    const getOptionalBooleanValue = current =>
+      current === null ? EMPTY_MENU_ITEM_CHAR : String(current);
+
     if (!isNewRule) {
       Promise.all([
         fetchRule(ruleId),
@@ -266,15 +274,23 @@ export default function Rule({ isNewRule, ...props }) {
           if (fetchedSCResponse.data.data.count > 0) {
             const sc = fetchedSCResponse.data.data.scheduled_changes[0];
 
+            sc.jaws = getOptionalBooleanValue(sc.jaws);
+            sc.mig64 = getOptionalBooleanValue(sc.mig64);
+
             setRule({
               ...rule,
               ...sc,
             });
             setScheduleDate(new Date(sc.when));
           } else {
+            const r = fetchedRuleResponse.data.data;
+
+            r.jaws = getOptionalBooleanValue(r.jaws);
+            r.mig64 = getOptionalBooleanValue(r.mig64);
+
             setRule({
               ...rule,
-              ...fetchedRuleResponse.data.data,
+              ...r,
             });
           }
         }
@@ -287,7 +303,14 @@ export default function Rule({ isNewRule, ...props }) {
         fetchChannels(),
         fetchReleaseNames(),
       ]).then(([fetchResponse]) => {
-        const sc = fetchResponse.data.data.scheduled_change;
+        const sc = fetchResponse
+          ? fetchResponse.data.data.scheduled_change
+          : {};
+
+        if (Object.keys(sc).length > 0) {
+          sc.jaws = getOptionalBooleanValue(sc.jaws);
+          sc.mig64 = getOptionalBooleanValue(sc.mig64);
+        }
 
         setRule({
           ...rule,
