@@ -1,13 +1,13 @@
 import React, { useState, Fragment } from 'react';
 import { makeStyles } from '@material-ui/styles';
 import Avatar from '@material-ui/core/Avatar';
-import Button from '@material-ui/core/Button';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import IconButton from '@material-ui/core/IconButton';
 import LogoutVariantIcon from 'mdi-react/LogoutVariantIcon';
 import ContentCopyIcon from 'mdi-react/ContentCopyIcon';
 import copy from 'clipboard-copy';
+import Button from '../Button';
 import { USER_SESSION } from '../../utils/constants';
 import { withUser } from '../../utils/AuthContext';
 

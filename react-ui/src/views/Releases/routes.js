@@ -4,7 +4,7 @@ const ListReleases = lazy(() =>
   import(/* webpackChunkName: 'Releases.ListReleases' */ './ListReleases')
 );
 const Release = lazy(() =>
-  import(/* webpackChunkName: 'Releases.ListReleases' */ './Release')
+  import(/* webpackChunkName: 'Releases.Release' */ './Release')
 );
 
 export default path => [

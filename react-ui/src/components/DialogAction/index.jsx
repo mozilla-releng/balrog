@@ -7,7 +7,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import Button from '@material-ui/core/Button';
+import Button from '../Button';
 import ErrorPanel from '../ErrorPanel';
 import tryCatch from '../../utils/tryCatch';
 
@@ -21,6 +21,9 @@ const useStyles = makeStyles(theme => ({
     top: '50%',
     marginLeft: -theme.spacing(1) * 1.5,
     marginTop: -theme.spacing(1) * 1.5,
+  },
+  paper: {
+    minWidth: theme.spacing(50),
   },
 }));
 
@@ -37,6 +40,7 @@ function DialogAction(props) {
     onSubmit,
     onComplete,
     onError,
+    destructive,
     ...rest
   } = props;
   const handleSubmit = async () => {
@@ -62,7 +66,11 @@ function DialogAction(props) {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} {...rest}>
+    <Dialog
+      classes={{ paper: classes.paper }}
+      open={open}
+      onClose={onClose}
+      {...rest}>
       {title && <DialogTitle>{title}</DialogTitle>}
       <DialogContent>
         {error && (
@@ -73,14 +81,17 @@ function DialogAction(props) {
         {body && <DialogContentText component="div">{body}</DialogContentText>}
       </DialogContent>
       <DialogActions>
-        <Button disabled={actionExecuting} onClick={onClose}>
+        <Button
+          disabled={actionExecuting}
+          onClick={onClose}
+          action={actions => actions && actions.focusVisible()}>
           Cancel
         </Button>
         <div className={classes.executingActionWrapper}>
           <Button
             disabled={actionExecuting}
             onClick={handleSubmit}
-            color="secondary"
+            color={destructive ? 'danger' : 'primary'}
             variant="contained"
             autoFocus>
             {confirmText}
@@ -118,6 +129,11 @@ DialogAction.propTypes = {
   onClose: func.isRequired,
   /** Error to display. */
   error: oneOfType([string, object]),
+  /**
+   * If true, the action is considered destructive (e.g., delete)
+   * and will have the confirmation button filled with red
+   */
+  destructive: bool,
 };
 
 DialogAction.defaultProps = {
@@ -126,6 +142,7 @@ DialogAction.defaultProps = {
   onComplete: null,
   onError: null,
   error: null,
+  destructive: false,
 };
 
 export default DialogAction;

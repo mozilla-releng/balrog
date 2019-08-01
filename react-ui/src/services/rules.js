@@ -5,8 +5,7 @@ const getRules = () => axios.get('/rules');
 const getRule = id => axios.get(`/rules/${id}`);
 const getChannels = () => axios.get('/rules/columns/channel');
 const getProducts = () => axios.get('/rules/columns/product');
-const getHistory = (id, limit, page) =>
-  axios.get(`/${id}/revisions?${stringify({ limit, page })}`);
+const getRevisions = id => axios.get(`/rules/${id}/revisions?limit=10000`);
 // const getRule = () => axios.get();
 // const updateRule = () => axios.put();
 const deleteRule = ({ ruleId, dataVersion }) =>
@@ -21,8 +20,10 @@ const getScheduledChanges = all => {
   return axios.get('/scheduled_changes/rules');
 };
 
-const getScheduledChange = ruleId =>
+const getScheduledChangeByRuleId = ruleId =>
   axios.get(`/scheduled_changes/rules?rule_id=${ruleId}`);
+const getScheduledChangeByScId = scId =>
+  axios.get(`/scheduled_changes/rules/${scId}`);
 const addScheduledChange = data => axios.post(`/scheduled_changes/rules`, data);
 const updateScheduledChange = ({ scId, ...data }) =>
   axios.post(`/scheduled_changes/rules/${scId}`, data);
@@ -44,9 +45,10 @@ export {
   getRule,
   getChannels,
   getProducts,
-  getHistory,
+  getRevisions,
   getScheduledChanges,
-  getScheduledChange,
+  getScheduledChangeByRuleId,
+  getScheduledChangeByScId,
   addScheduledChange,
   updateScheduledChange,
   deleteScheduledChange,

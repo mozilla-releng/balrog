@@ -11,6 +11,8 @@ export const LABELS = {
 };
 export const RULE_DIFF_PROPERTIES = [
   'alias',
+  'fallbackMapping',
+  'mapping',
   'backgroundRate',
   'buildTarget',
   'buildID',
@@ -47,5 +49,69 @@ export const DIALOG_ACTION_INITIAL_STATE = {
   confirmText: '',
   item: null,
   open: false,
+  destructive: false,
+  handleSubmit: Function.prototype,
+  handleClose: Function.prototype,
+  handleError: Function.prototype,
+  handleComplete: Function.prototype,
 };
 export const EMPTY_MENU_ITEM_CHAR = '-';
+export const PERMISSION_RESTRICTION_MAPPINGS = {
+  admin: {
+    restrict_products: true,
+    restrict_actions: false,
+    supported_actions: [],
+  },
+  emergency_shutoff: {
+    restrict_products: true,
+    restrict_actions: true,
+    supported_actions: ['create', 'modify'],
+  },
+  rule: {
+    restrict_products: true,
+    restrict_actions: true,
+    supported_actions: ['create', 'modify', 'delete'],
+  },
+  release: {
+    restrict_products: true,
+    restrict_actions: true,
+    supported_actions: ['create', 'modify', 'delete'],
+  },
+  release_read_only: {
+    restrict_products: true,
+    restrict_actions: true,
+    supported_actions: ['set', 'unset'],
+  },
+  release_locale: {
+    restrict_products: true,
+    restrict_actions: true,
+    supported_actions: ['modify'],
+  },
+  required_signoff: {
+    restrict_products: true,
+    restrict_actions: true,
+    supported_actions: ['create', 'modify', 'delete'],
+  },
+  permission: {
+    restrict_products: true,
+    restrict_actions: true,
+    supported_actions: ['create', 'modify', 'delete'],
+  },
+  scheduled_change: {
+    restrict_products: true,
+    restrict_actions: true,
+    supported_actions: ['enact'],
+  },
+};
+export const ALL_PERMISSIONS = [
+  'admin',
+  'emergency_shutoff',
+  'rule',
+  'release',
+  'release_read_only',
+  'release_locale',
+  'required_signoff',
+  'permission',
+  'scheduled_change',
+];
+export const NEW_LINES_REGEX = /\r?\n|\r/g;

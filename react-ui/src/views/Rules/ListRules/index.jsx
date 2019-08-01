@@ -22,7 +22,7 @@ import {
   getChannels,
   getRules,
   getScheduledChanges,
-  getScheduledChange,
+  getScheduledChangeByRuleId,
   deleteRule,
 } from '../../../services/rules';
 import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
@@ -33,6 +33,8 @@ import {
   OBJECT_NAMES,
   SNACKBAR_INITIAL_STATE,
 } from '../../../utils/constants';
+import remToPx from '../../../utils/remToPx';
+import elementsHeight from '../../../utils/elementsHeight';
 import Snackbar from '../../../components/Snackbar';
 
 const ALL = 'all';
@@ -55,7 +57,7 @@ const useStyles = makeStyles(theme => ({
     flex: 'unset',
   },
   ruleCard: {
-    margin: theme.spacing.unit,
+    margin: theme.spacing(1),
   },
 }));
 
@@ -64,9 +66,17 @@ function ListRules(props) {
   const theme = useTheme();
   const { search, hash } = props.location;
   const query = parse(search.slice(1));
+  const hashQuery = parse(hash.replace('#', ''));
+  const {
+    body1TextHeight,
+    body2TextHeight,
+    subtitle1TextHeight,
+    buttonHeight,
+  } = elementsHeight(theme);
   const productChannelSeparator = ' : ';
   const [snackbarState, setSnackbarState] = useState(SNACKBAR_INITIAL_STATE);
   const [ruleIdHash, setRuleIdHash] = useState(null);
+  const [scheduledIdHash, setScheduledIdHash] = useState(null);
   const [rulesWithScheduledChanges, setRulesWithScheduledChanges] = useState(
     []
   );
@@ -284,6 +294,7 @@ function ListRules(props) {
       open: true,
       title: 'Delete Rule?',
       confirmText: 'Delete',
+      destructive: true,
       item: rule,
     });
   };
@@ -337,7 +348,7 @@ function ListRules(props) {
     }
 
     if (Object.keys(dialogRule.requiredSignoffs).length > 0) {
-      return (await getScheduledChange(dialogRule.rule_id)).data
+      return (await getScheduledChangeByRuleId(dialogRule.rule_id)).data
         .scheduled_changes[0];
     }
 
@@ -347,21 +358,19 @@ function ListRules(props) {
   const getRowHeight = ({ index }) => {
     const rule = filteredRulesWithScheduledChanges[index];
     const hasScheduledChanges = Boolean(rule.scheduledChange);
+    // Padding top and bottom included
+    const listPadding = theme.spacing(1);
+    const listItemTextMargin = 6;
+    const diffRowHeight = remToPx(theme.typography.body2.fontSize) * 1.5;
+    // <CardContent /> padding
+    let height = theme.spacing(2);
+
     // actions row
-    let height = 7 * theme.spacing(1);
+    height += buttonHeight + theme.spacing(2);
 
-    if (hasScheduledChanges && rule.scheduledChange.change_type === 'insert') {
-      const diffedProperties = getDiffedProperties(
-        RULE_DIFF_PROPERTIES,
-        rule,
-        rule.scheduledChange
-      );
-
-      // diff viewer
-      height += diffedProperties.length * 21 + theme.spacing(8);
-    } else {
-      // card title
-      height += theme.spacing(7);
+    if (!hasScheduledChanges || rule.scheduledChange.change_type !== 'insert') {
+      // avatar height (title) + padding
+      height += theme.spacing(4) + theme.spacing(3);
 
       // != checks for both null and undefined
       const keys = Object.keys(rule).filter(key => rule[key] != null);
@@ -388,30 +397,60 @@ function ListRules(props) {
         keys.filter(key => thirdColumn.includes(key)).length
       );
 
-      height += rows * theme.spacing(8);
+      height +=
+        rows *
+          (body1TextHeight() + body2TextHeight() + 2 * listItemTextMargin) +
+        2 * listPadding;
 
       // row with comment
-      // (max 2 lines of comments otherwise we display a scroller)
+      // (max 8*10px; ~3 lines of comments otherwise we display a scroller)
       if (rule.comment) {
-        height += theme.spacing(10);
+        height += theme.spacing(10) + 2 * listItemTextMargin + 2 * listPadding;
       }
+    }
 
-      if (hasScheduledChanges) {
-        // divider + row with the chip label
-        height += theme.spacing(6);
+    if (hasScheduledChanges) {
+      // row with the chip label
+      height += subtitle1TextHeight();
 
-        if (rule.scheduledChange.change_type === 'delete') {
-          // row with "all properties will be deleted"
-          height += theme.spacing(5);
-        } else if (rule.scheduledChange.change_type === 'update') {
-          const diffedProperties = getDiffedProperties(
-            RULE_DIFF_PROPERTIES,
-            rule,
-            rule.scheduledChange
-          );
+      if (rule.scheduledChange.change_type === 'delete') {
+        // row with "all properties will be deleted" + padding
+        height += body2TextHeight() + theme.spacing(2);
+      } else if (
+        rule.scheduledChange.change_type === 'update' ||
+        rule.scheduledChange.change_type === 'insert'
+      ) {
+        const diffedProperties = getDiffedProperties(
+          RULE_DIFF_PROPERTIES,
+          rule,
+          rule.scheduledChange
+        );
 
-          // diff viewer
-          height += diffedProperties.length * 21 + theme.spacing(5);
+        if (rule.scheduledChange.change_type === 'update') {
+          // divider
+          height += theme.spacing(2) + 1;
+        }
+
+        // diff viewer + marginTop
+        height += diffedProperties.length * diffRowHeight + theme.spacing(1);
+
+        if (Object.keys(rule.scheduledChange.required_signoffs).length > 0) {
+          const requiredRoles = Object.keys(
+            rule.scheduledChange.required_signoffs
+          ).length;
+          const nSignoffs = Object.keys(rule.scheduledChange.signoffs).length;
+          // Required Roles and Signoffs are beside one another, so we only
+          // need to account for the one with the most items.
+          const signoffRows = Math.max(requiredRoles, nSignoffs);
+
+          // Padding above the summary
+          height += theme.spacing(2);
+
+          // The "Requires Signoff From" title and the margin beneath it
+          height += body2TextHeight() + theme.spacing(0.5);
+
+          // Space for however many rows exist.
+          height += signoffRows * body2TextHeight();
         }
       }
     }
@@ -444,19 +483,32 @@ function ListRules(props) {
   };
 
   useEffect(() => {
-    if (hash !== ruleIdHash && filteredRulesCount) {
-      const ruleId = Number(hash.replace('#', '')) || null;
+    if (filteredRulesCount) {
+      if (hashQuery.ruleId && hashQuery.ruleId !== ruleIdHash) {
+        const ruleId = Number(hashQuery.ruleId);
 
-      if (ruleId) {
-        const itemNumber = filteredRulesWithScheduledChanges
-          .map(rule => rule.rule_id)
-          .indexOf(ruleId);
+        if (ruleId) {
+          const itemNumber = filteredRulesWithScheduledChanges
+            .map(rule => rule.rule_id)
+            .indexOf(ruleId);
 
-        setScrollToRow(itemNumber);
-        setRuleIdHash(hash);
+          setScrollToRow(itemNumber);
+          setRuleIdHash(hashQuery.ruleId);
+        }
+      } else if (hashQuery.scId && hashQuery.scId !== scheduledIdHash) {
+        const scId = Number(hashQuery.scId);
+
+        if (scId) {
+          const itemNumber = filteredRulesWithScheduledChanges
+            .map(rule => rule.scheduledChange && rule.scheduledChange.sc_id)
+            .indexOf(scId);
+
+          setScrollToRow(itemNumber);
+          setScheduledIdHash(hashQuery.scId);
+        }
       }
     }
-  }, [hash, filteredRulesCount]);
+  }, [hashQuery, filteredRulesCount]);
 
   return (
     <Dashboard title="Rules">
@@ -501,6 +553,7 @@ function ListRules(props) {
       <DialogAction
         open={dialogState.open}
         title={dialogState.title}
+        destructive={dialogState.destructive}
         body={dialogBody}
         confirmText={dialogState.confirmText}
         onSubmit={handleDialogSubmit}

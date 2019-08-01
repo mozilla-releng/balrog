@@ -4,7 +4,6 @@ import { bool } from 'prop-types';
 import { defaultTo, assocPath } from 'ramda';
 import NumberFormat from 'react-number-format';
 import { makeStyles } from '@material-ui/styles';
-import ErrorPanel from '@mozilla-frontend-infra/components/ErrorPanel';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import Grid from '@material-ui/core/Grid';
 import TextField from '@material-ui/core/TextField';
@@ -15,13 +14,15 @@ import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
 import DeleteIcon from 'mdi-react/DeleteIcon';
 import Dashboard from '../../../components/Dashboard';
+import ErrorPanel from '../../../components/ErrorPanel';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
 import DateTimePicker from '../../../components/DateTimePicker';
 import SpeedDial from '../../../components/SpeedDial';
 import useAction from '../../../hooks/useAction';
 import {
-  getScheduledChange,
+  getScheduledChangeByRuleId,
+  getScheduledChangeByScId,
   getRule,
   getProducts,
   getChannels,
@@ -87,8 +88,11 @@ export default function Rule({ isNewRule, ...props }) {
   const [scheduleDate, setScheduleDate] = useState(new Date());
   const [dateTimePickerError, setDateTimePickerError] = useState(null);
   const [fetchRuleAction, fetchRule] = useAction(getRule);
-  const [scheduledChangeAction, fetchScheduledChange] = useAction(
-    getScheduledChange
+  const [scheduledChangeActionRuleId, fetchScheduledChangeByRuleId] = useAction(
+    getScheduledChangeByRuleId
+  );
+  const [scheduledChangeActionScId, fetchScheduledChangeByScId] = useAction(
+    getScheduledChangeByScId
   );
   const [addSCAction, addSC] = useAction(addScheduledChange);
   const [updateSCAction, updateSC] = useAction(updateScheduledChange);
@@ -99,14 +103,16 @@ export default function Rule({ isNewRule, ...props }) {
     addSCAction.loading ||
     updateSCAction.loading ||
     deleteSCAction.loading ||
-    scheduledChangeAction.loading;
+    scheduledChangeActionRuleId.loading ||
+    scheduledChangeActionScId.loading;
   const error =
     fetchRuleAction.error ||
-    scheduledChangeAction.error ||
+    scheduledChangeActionRuleId.error ||
+    scheduledChangeActionScId.error ||
     addSCAction.error ||
     updateSCAction.error ||
     deleteSCAction.error;
-  const { ruleId } = props.match.params;
+  const { ruleId, scId } = props.match.params;
   const hasScheduledChange = !!rule.sc_id;
   const defaultToEmptyString = defaultTo('');
   const handleInputChange = ({ target: { name, value } }) => {
@@ -141,8 +147,11 @@ export default function Rule({ isNewRule, ...props }) {
     });
 
     if (!error) {
-      // todo: handle the case where it was a scheduled addition
-      props.history.push(`/rules#${rule.rule_id}`);
+      if (rule.sc_id) {
+        props.history.push(`/rules#scId=${rule.rule_id}`);
+      } else {
+        props.history.push(`/rules#ruleId=${rule.rule_id}`);
+      }
     }
   };
 
@@ -173,16 +182,14 @@ export default function Rule({ isNewRule, ...props }) {
       update_type: rule.update_type,
       version: rule.version,
     };
-    const { error } = await addSC({
+    const { data: response, error } = await addSC({
       change_type: 'insert',
       when,
       ...data,
     });
 
     if (!error) {
-      // todo: add scheduled change id to hash when those anchors
-      // are available on the rules page
-      props.history.push('/rules');
+      props.history.push(`/rules#scId=${response.data.sc_id}`);
     }
   };
 
@@ -224,10 +231,10 @@ export default function Rule({ isNewRule, ...props }) {
       });
 
       if (!error) {
-        props.history.push(`/rules#${rule.rule_id}`);
+        props.history.push(`/rules#scId=${rule.sc_id}`);
       }
     } else {
-      const { error } = await addSC({
+      const { data: response, error } = await addSC({
         rule_id: rule.rule_id,
         data_version: rule.data_version,
         change_type: 'update',
@@ -236,16 +243,28 @@ export default function Rule({ isNewRule, ...props }) {
       });
 
       if (!error) {
-        props.history.push('/rules');
+        if (response.data.sc_id) {
+          props.history.push(`/rules#scId=${response.data.sc_id}`);
+        } else {
+          props.history.push(`/rules#ruleId=${rule.rule_id}`);
+        }
       }
     }
   };
 
   useEffect(() => {
+    // Some fields (jaws and mig64 at the time of writing) are optional
+    // boolean fields. Because input fields can't handle null or boolean
+    // values, they get stored as EMPTY_MENU_ITEM_CHAR or a string
+    // true/false when they change in the UI. In order to keep things
+    // consistent, we do the same to the data fetched from the server.
+    const getOptionalBooleanValue = current =>
+      current === null ? EMPTY_MENU_ITEM_CHAR : String(current);
+
     if (!isNewRule) {
       Promise.all([
         fetchRule(ruleId),
-        fetchScheduledChange(ruleId),
+        fetchScheduledChangeByRuleId(ruleId),
         fetchProducts(),
         fetchChannels(),
         fetchReleaseNames(),
@@ -255,38 +274,76 @@ export default function Rule({ isNewRule, ...props }) {
           if (fetchedSCResponse.data.data.count > 0) {
             const sc = fetchedSCResponse.data.data.scheduled_changes[0];
 
+            sc.jaws = getOptionalBooleanValue(sc.jaws);
+            sc.mig64 = getOptionalBooleanValue(sc.mig64);
+
             setRule({
               ...rule,
               ...sc,
             });
             setScheduleDate(new Date(sc.when));
           } else {
+            const r = fetchedRuleResponse.data.data;
+
+            r.jaws = getOptionalBooleanValue(r.jaws);
+            r.mig64 = getOptionalBooleanValue(r.mig64);
+
             setRule({
               ...rule,
-              ...fetchedRuleResponse.data.data,
+              ...r,
             });
           }
         }
       );
     } else {
-      Promise.all([fetchProducts(), fetchChannels(), fetchReleaseNames()]);
+      Promise.all([
+        // Handles loading a scheduled change if an id was provided
+        scId ? fetchScheduledChangeByScId(scId) : null,
+        fetchProducts(),
+        fetchChannels(),
+        fetchReleaseNames(),
+      ]).then(([fetchResponse]) => {
+        const sc = fetchResponse
+          ? fetchResponse.data.data.scheduled_change
+          : {};
+
+        if (Object.keys(sc).length > 0) {
+          sc.jaws = getOptionalBooleanValue(sc.jaws);
+          sc.mig64 = getOptionalBooleanValue(sc.mig64);
+        }
+
+        setRule({
+          ...rule,
+          ...sc,
+        });
+      });
     }
-  }, [ruleId]);
+  }, [ruleId, scId]);
   const today = new Date();
 
   // This will make sure the helperText
   // will always be displayed for a "today" date
   today.setHours(0, 0, 0, 0);
 
+  // To avoid nested ternary
+  const getTitle = () => {
+    if (isNewRule) {
+      if (scId) {
+        return `Update Scheduled Rule ${scId}${
+          rule.alias ? ` (${rule.alias})` : ''
+        }`;
+      }
+
+      return 'Create Rule';
+    }
+
+    return `Update Rule ${ruleId}${rule.alias ? ` (${rule.alias})` : ''}`;
+  };
+
   return (
-    <Dashboard
-      title={
-        isNewRule
-          ? 'Create Rule'
-          : `Update Rule ${ruleId}${rule.alias ? ` (${rule.alias})` : ''}`
-      }>
+    <Dashboard title={getTitle()}>
       {isLoading && <Spinner loading />}
-      {error && <ErrorPanel error={error} />}
+      {error && <ErrorPanel fixed error={error} />}
       {!isLoading && (
         <Fragment>
           <div className={classes.scheduleDiv}>
@@ -546,10 +603,10 @@ export default function Rule({ isNewRule, ...props }) {
       )}
       {!isLoading && (
         <Fragment>
-          <Tooltip title={isNewRule ? 'Create Rule' : 'Update Rule'}>
+          <Tooltip title={isNewRule && !scId ? 'Create Rule' : 'Update Rule'}>
             <Fab
               disabled={actionLoading}
-              onClick={isNewRule ? handleCreateRule : handleUpdateRule}
+              onClick={isNewRule && !scId ? handleCreateRule : handleUpdateRule}
               color="primary"
               className={classNames({
                 [classes.secondFab]: hasScheduledChange,
