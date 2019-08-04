@@ -211,6 +211,27 @@ class Release(API):
         return self.request(method="POST", data=data)
 
 
+class ReleaseState(API):
+    """Update Release state to readonly or read/write.
+
+    Note: some releases requires signoffs to change its state to modifiable.
+    """
+
+    url_template = "/releases/%(name)s/read_only"
+    prerequest_url_template = "/releases/%(name)s"
+
+    def __init__(self, name, **kwargs):
+        super(ReleaseState, self).__init__(**kwargs)
+        self.name = name
+        self.url_template_vars = dict(name=name)
+
+    def set_readonly(self):
+        return self.request(method="PUT", data={"read_only": True})
+
+    def set_modifiable(self):
+        return self.request(method="PUT", data={"read_only": False})
+
+
 class SingleLocale(API):
     url_template = "/releases/%(name)s/builds/%(build_target)s/%(locale)s"
     prerequest_url_template = "/releases/%(name)s"
