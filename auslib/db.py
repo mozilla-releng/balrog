@@ -761,8 +761,15 @@ class HistoryTable(AUSTable):
             self.table.append_column(newcol)
         AUSTable.__init__(self, db, dialect, historyClass=None, versioned=False)
 
-    def getPointInTime(self, timestamp, columns=None, transaction=None):
-        # TODO: add support for columns? or maybe we don't need it yet
+    def getPointInTime(self, timestamp, transaction=None):
+        # The inner query here gets one change id for every unique object in
+        # the base table. Filtering by timestamp < provided timestamp means
+        # we won't get any results most recent than the requested timestamp.
+        # Grouping by the primary key and selecting the max change_id means
+        # we'll get the most recent change_id (after applying the timestamp
+        # filter) for every unique object.
+        # The outer query simply retrieves the actual row data for each
+        # change_id that the inner query found
         q = select(self.table.get_children()).where(
             self.change_id.in_(
                 select([sql_max(self.change_id)])
