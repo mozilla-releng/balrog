@@ -66,7 +66,7 @@ if not os.environ.get("LOCALDEV"):
         log.critical("GOOGLE_APPLICATION_CREDENTIALS provided, but does not exist")
         sys.exit(1)
 
-if os.environ.get("LOCALDEV") and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", ""))):
+if os.environ.get("LOCALDEV") and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")):
     storage_client = storage.Client.create_anonymous_client()
 else:
     storage_client = storage.Client()
