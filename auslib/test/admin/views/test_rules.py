@@ -16,6 +16,7 @@ class TestRulesAPI_JSON(ViewTest):
 
     def testGetRulesWithProductFilter(self):
         ret = self._get("/rules", qs={"product": "fake"})
+        self.assertEqual(ret.status_code, 200, ret.data)
         got = ret.get_json()
         expected = [
             {

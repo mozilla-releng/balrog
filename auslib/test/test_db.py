@@ -228,8 +228,8 @@ class TestTableMixin(object):
         self.test.history.t.insert().execute(change_id=18, timestamp=38, changed_by="admin", id=3, foo=11, data_version=6)
         self.test.history.t.insert().execute(change_id=19, timestamp=19, changed_by="admin", id=4)
         self.test.history.t.insert().execute(change_id=20, timestamp=20, changed_by="admin", id=4, foo=40, data_version=1)
-        self.test.history.t.insert().execute(change_id=21, timestamp=25, changed_by="admin", id=4, foo=40, data_version=2)
-        self.test.history.t.insert().execute(change_id=22, timestamp=30, changed_by="admin", id=4, foo=40, data_version=3)
+        self.test.history.t.insert().execute(change_id=21, timestamp=25, changed_by="admin", id=4, foo=41, data_version=2)
+        self.test.history.t.insert().execute(change_id=22, timestamp=30, changed_by="admin", id=4, foo=42, data_version=3)
         self.test.history.t.insert().execute(change_id=23, timestamp=35, changed_by="admin", id=4)
 
 
@@ -445,6 +445,8 @@ class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileD
 
 
 class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
+    maxDiff = 2000
+
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         TestTableMixin.setUp(self)
@@ -518,6 +520,49 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
     def testHistoryGetChangeWithDataVersionWithNonPrimaryKeyColumn(self):
         self.test.insert(changed_by="george", id=5, foo=0)
         self.assertRaises(ValueError, self.test.history.getChange, data_version=1, column_values={"foo": 5})
+
+    def testGetPointInTime(self):
+        times_and_results = (
+            (10, (dict(change_id=2, timestamp=10, changed_by="admin", id=1, foo=30, data_version=1),
+                  dict(change_id=7, timestamp=10, changed_by="admin", id=2, foo=18, data_version=1),
+                 ),
+            ),
+            (15, (dict(change_id=2, timestamp=10, changed_by="admin", id=1, foo=30, data_version=1),
+                  dict(change_id=8, timestamp=15, changed_by="admin", id=2, foo=19, data_version=2),
+                 ),
+            ),
+            (20, (dict(change_id=3, timestamp=20, changed_by="admin", id=1, foo=31, data_version=2),
+                  dict(change_id=9, timestamp=20, changed_by="admin", id=2, foo=20, data_version=3),
+                  dict(change_id=20, timestamp=20, changed_by="admin", id=4, foo=40, data_version=1),
+                 ),
+            ),
+            (25, (dict(change_id=3, timestamp=20, changed_by="admin", id=1, foo=31, data_version=2),
+                  dict(change_id=10, timestamp=25, changed_by="admin", id=2, foo=21, data_version=4),
+                  dict(change_id=13, timestamp=23, changed_by="admin", id=3, foo=6, data_version=1),
+                  dict(change_id=21, timestamp=25, changed_by="admin", id=4, foo=41, data_version=2),
+                 ),
+            ),
+            (30, (dict(change_id=4, timestamp=30, changed_by="admin", id=1, foo=32, data_version=3),
+                  dict(change_id=11, timestamp=30, changed_by="admin", id=2, foo=22, data_version=5),
+                  dict(change_id=15, timestamp=29, changed_by="admin", id=3, foo=8, data_version=3),
+                  dict(change_id=22, timestamp=30, changed_by="admin", id=4, foo=42, data_version=3),
+                 ),
+            ),
+            (35, (dict(change_id=4, timestamp=30, changed_by="admin", id=1, foo=32, data_version=3),
+                  dict(change_id=11, timestamp=30, changed_by="admin", id=2, foo=22, data_version=5),
+                  dict(change_id=17, timestamp=35, changed_by="admin", id=3, foo=10, data_version=5),
+                 ),
+            ),
+            (40, (dict(change_id=5, timestamp=40, changed_by="admin", id=1, foo=33, data_version=4),
+                  dict(change_id=11, timestamp=30, changed_by="admin", id=2, foo=22, data_version=5),
+                  dict(change_id=18, timestamp=38, changed_by="admin", id=3, foo=11, data_version=6),
+                 ),
+            ),
+        )
+
+        for timestamp, expected in times_and_results:
+            ret = self.test.history.getPointInTime(timestamp)
+            self.assertSequenceEqual(ret, expected)
 
 
 class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTableMixin, MemoryDatabaseMixin):

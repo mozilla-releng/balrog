@@ -773,7 +773,7 @@ class HistoryTable(AUSTable):
         q = select(self.table.get_children()).where(
             self.change_id.in_(
                 select([sql_max(self.change_id)])
-                .where(self.timestamp < timestamp)
+                .where(self.timestamp <= timestamp)
                 .group_by(*self.base_primary_key)
             )
         )
