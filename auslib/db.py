@@ -1081,7 +1081,7 @@ class ScheduledChangeTable(AUSTable):
         if not sc_id and sc_table_where:
             sc_table_where.append(self.complete == False)  # noqa because we need to use == for sqlalchemy operator overloading to work
             if len(self.select(columns=[self.sc_id], where=sc_table_where)) > 0:
-                raise ChangeScheduledError("Cannot scheduled a change for a row with one already scheduled")
+                raise ChangeScheduledError("Cannot schedule a change for a row with one already scheduled")
 
         self.conditions.validate(condition_columns)
         self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)
