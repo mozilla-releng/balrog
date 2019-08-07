@@ -1639,7 +1639,7 @@ paths:
         description: "Returns filtered list of Rules from Balrog's DB."
       parameters:
         - $ref: '#/parameters/productParam'
-          $ref: '#/parameters/timestampParam'
+        - $ref: '#/parameters/timestampParam'
 
       responses:
         '200':
