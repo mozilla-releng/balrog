@@ -4144,6 +4144,7 @@ definitions:
         maxLength: 50
         enum:
           - admin
+          - emergency_shutoff
           - rule
           - release
           - release_read_only
