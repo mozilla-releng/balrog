@@ -771,11 +771,7 @@ class HistoryTable(AUSTable):
         # The outer query simply retrieves the actual row data for each
         # change_id that the inner query found
         q = select(self.table.get_children()).where(
-            self.change_id.in_(
-                select([sql_max(self.change_id)])
-                .where(self.timestamp <= timestamp)
-                .group_by(*self.base_primary_key)
-            )
+            self.change_id.in_(select([sql_max(self.change_id)]).where(self.timestamp <= timestamp).group_by(*self.base_primary_key))
         )
         if transaction:
             result = transaction.execute(q).fetchall()
