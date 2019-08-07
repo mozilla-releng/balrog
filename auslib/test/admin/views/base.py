@@ -222,13 +222,13 @@ class ViewTest(unittest.TestCase):
         )
         dbo.rules.history.t.insert().execute(
             change_id=3,
-            timestamp=51,
+            timestamp=65,
             changed_by="bill",
             rule_id=1,
             priority=100,
             version="3.5",
             buildTarget="d",
-            backgroundRate=50,
+            backgroundRate=100,
             mapping="c",
             update_type="minor",
             product="a",
