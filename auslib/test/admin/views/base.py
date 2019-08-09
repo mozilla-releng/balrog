@@ -246,7 +246,7 @@ class ViewTest(unittest.TestCase):
         dbo.rules.history.t.insert().execute(change_id=4, timestamp=60, changed_by="bill", rule_id=2)
         dbo.rules.history.t.insert().execute(
             change_id=5,
-            timestamp=60,
+            timestamp=61,
             changed_by="bill",
             rule_id=2,
             alias="frodo",
