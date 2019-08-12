@@ -205,9 +205,32 @@ class TestTableMixin(object):
         self.test = TestTable("fake", self.metadata)
         self.testAutoincrement = TestAutoincrementTable("fake", self.metadata)
         self.metadata.create_all()
-        self.test.t.insert().execute(id=1, foo=33, data_version=1)
-        self.test.t.insert().execute(id=2, foo=22, data_version=1)
-        self.test.t.insert().execute(id=3, foo=11, data_version=2)
+        self.test.t.insert().execute(id=1, foo=33, data_version=4)
+        self.test.t.insert().execute(id=2, foo=22, data_version=5)
+        self.test.t.insert().execute(id=3, foo=11, data_version=6)
+        self.test.history.t.insert().execute(change_id=1, timestamp=9, changed_by="admin", id=1)
+        self.test.history.t.insert().execute(change_id=2, timestamp=10, changed_by="admin", id=1, foo=30, data_version=1)
+        self.test.history.t.insert().execute(change_id=3, timestamp=20, changed_by="admin", id=1, foo=31, data_version=2)
+        self.test.history.t.insert().execute(change_id=4, timestamp=30, changed_by="admin", id=1, foo=32, data_version=3)
+        self.test.history.t.insert().execute(change_id=5, timestamp=40, changed_by="admin", id=1, foo=33, data_version=4)
+        self.test.history.t.insert().execute(change_id=6, timestamp=9, changed_by="admin", id=2)
+        self.test.history.t.insert().execute(change_id=7, timestamp=10, changed_by="admin", id=2, foo=18, data_version=1)
+        self.test.history.t.insert().execute(change_id=8, timestamp=15, changed_by="admin", id=2, foo=19, data_version=2)
+        self.test.history.t.insert().execute(change_id=9, timestamp=20, changed_by="admin", id=2, foo=20, data_version=3)
+        self.test.history.t.insert().execute(change_id=10, timestamp=25, changed_by="admin", id=2, foo=21, data_version=4)
+        self.test.history.t.insert().execute(change_id=11, timestamp=30, changed_by="admin", id=2, foo=22, data_version=5)
+        self.test.history.t.insert().execute(change_id=12, timestamp=22, changed_by="admin", id=3)
+        self.test.history.t.insert().execute(change_id=13, timestamp=23, changed_by="admin", id=3, foo=6, data_version=1)
+        self.test.history.t.insert().execute(change_id=14, timestamp=26, changed_by="admin", id=3, foo=7, data_version=2)
+        self.test.history.t.insert().execute(change_id=15, timestamp=29, changed_by="admin", id=3, foo=8, data_version=3)
+        self.test.history.t.insert().execute(change_id=16, timestamp=32, changed_by="admin", id=3, foo=9, data_version=4)
+        self.test.history.t.insert().execute(change_id=17, timestamp=35, changed_by="admin", id=3, foo=10, data_version=5)
+        self.test.history.t.insert().execute(change_id=18, timestamp=38, changed_by="admin", id=3, foo=11, data_version=6)
+        self.test.history.t.insert().execute(change_id=19, timestamp=19, changed_by="admin", id=4)
+        self.test.history.t.insert().execute(change_id=20, timestamp=20, changed_by="admin", id=4, foo=40, data_version=1)
+        self.test.history.t.insert().execute(change_id=21, timestamp=25, changed_by="admin", id=4, foo=41, data_version=2)
+        self.test.history.t.insert().execute(change_id=22, timestamp=30, changed_by="admin", id=4, foo=42, data_version=3)
+        self.test.history.t.insert().execute(change_id=23, timestamp=35, changed_by="admin", id=4)
 
 
 class TestMultiplePrimaryTableMixin(object):
@@ -244,7 +267,7 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertTrue(self.test.foo in self.test.table.get_children())
 
     def testSelect(self):
-        expected = [dict(id=1, foo=33, data_version=1), dict(id=2, foo=22, data_version=1), dict(id=3, foo=11, data_version=2)]
+        expected = [dict(id=1, foo=33, data_version=4), dict(id=2, foo=22, data_version=5), dict(id=3, foo=11, data_version=6)]
         self.assertEqual(self.test.select(), expected)
 
     def testSelectWithColumns(self):
@@ -252,15 +275,15 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertEqual(self.test.select(columns=[self.test.id]), expected)
 
     def testSelectWithWhere(self):
-        expected = [dict(id=2, foo=22, data_version=1), dict(id=3, foo=11, data_version=2)]
+        expected = [dict(id=2, foo=22, data_version=5), dict(id=3, foo=11, data_version=6)]
         self.assertEqual(self.test.select(where=[self.test.id >= 2]), expected)
 
     def testSelectWithOrder(self):
-        expected = [dict(id=3, foo=11, data_version=2), dict(id=2, foo=22, data_version=1), dict(id=1, foo=33, data_version=1)]
+        expected = [dict(id=3, foo=11, data_version=6), dict(id=2, foo=22, data_version=5), dict(id=1, foo=33, data_version=4)]
         self.assertEqual(self.test.select(order_by=[self.test.foo]), expected)
 
     def testSelectWithLimit(self):
-        self.assertEqual(self.test.select(limit=1), [dict(id=1, foo=33, data_version=1)])
+        self.assertEqual(self.test.select(limit=1), [dict(id=1, foo=33, data_version=4)])
 
     def testSelectCanModifyResult(self):
         ret = self.test.select()[0]
@@ -268,10 +291,10 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         ret["foo"] = 3245
 
     def testInsert(self):
-        self.test.insert(changed_by="bob", id=4, foo=0)
+        self.test.insert(changed_by="bob", id=5, foo=0)
         ret = self.test.t.select().execute().fetchall()
         self.assertEqual(len(ret), 4)
-        self.assertEqual(ret[-1], (4, 0, 1))
+        self.assertEqual(ret[-1], (5, 0, 1))
 
     def testInsertClosesConnectionOnImplicitTransaction(self):
         with mock.patch("sqlalchemy.engine.base.Connection.close") as close:
@@ -289,7 +312,7 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
     def testInsertWithChangeCallback(self):
         shared = []
         self.test.onInsert = lambda *x, **y: shared.extend(x)
-        what = {"id": 4, "foo": 1}
+        what = {"id": 5, "foo": 1}
         self.test.insert(changed_by="bob", **what)
         # insert adds data_version to the query, so we need to add that before comparing
         what["data_version"] = 1
@@ -299,7 +322,7 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertEqual(shared[3].parameters, what)
 
     def testDelete(self):
-        ret = self.test.delete(changed_by="bill", where=[self.test.id == 1, self.test.foo == 33], old_data_version=1)
+        ret = self.test.delete(changed_by="bill", where=[self.test.id == 1, self.test.foo == 33], old_data_version=4)
         self.assertEqual(ret.rowcount, 1)
         self.assertEqual(len(self.test.t.select().execute().fetchall()), 2)
 
@@ -308,14 +331,14 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
 
     def testDeleteClosesConnectionOnImplicitTransaction(self):
         with mock.patch("sqlalchemy.engine.base.Connection.close") as close:
-            self.test.delete(changed_by="bill", where=[self.test.id == 1], old_data_version=1)
+            self.test.delete(changed_by="bill", where=[self.test.id == 1], old_data_version=4)
             self.assertTrue(close.called, "Connection.close() never called by delete()")
 
     def testDeleteWithChangeCallback(self):
         shared = []
         self.test.onDelete = lambda *x: shared.extend(x)
         where = [self.test.id == 1]
-        self.test.delete(changed_by="bob", where=where, old_data_version=1)
+        self.test.delete(changed_by="bob", where=where, old_data_version=4)
         # update adds data_version and id to the query, so we need to add that before comparing
         self.assertEqual(shared[0], self.test)
         self.assertEqual(shared[1], "DELETE")
@@ -325,16 +348,16 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertEqual(len(shared[3]._whereclause.get_children()), 2)
 
     def testUpdate(self):
-        ret = self.test.update(changed_by="bob", where=[self.test.id == 1], what=dict(foo=123), old_data_version=1)
+        ret = self.test.update(changed_by="bob", where=[self.test.id == 1], what=dict(foo=123), old_data_version=4)
         self.assertEqual(ret.rowcount, 1)
-        self.assertEqual(self.test.t.select(self.test.id == 1).execute().fetchone(), (1, 123, 2))
+        self.assertEqual(self.test.t.select(self.test.id == 1).execute().fetchone(), (1, 123, 5))
 
     def testUpdateFailsOnVersionMismatch(self):
         self.assertRaises(OutdatedDataError, self.test.update, changed_by="bill", where=[self.test.id == 3], what=dict(foo=99), old_data_version=1)
 
     def testUpdateClosesConnectionOnImplicitTransaction(self):
         with mock.patch("sqlalchemy.engine.base.Connection.close") as close:
-            self.test.update(changed_by="bob", where=[self.test.id == 1], what=dict(foo=432), old_data_version=1)
+            self.test.update(changed_by="bob", where=[self.test.id == 1], what=dict(foo=432), old_data_version=4)
             self.assertTrue(close.called, "Connection.close() never called by update()")
 
     def testUpdateWithChangeCallback(self):
@@ -349,9 +372,9 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         where = [self.test.id == 1]
         what = dict(foo=123)
         additional_columns = dict(bar=42)
-        self.test.update(changed_by="bob", where=where, what=dict(chain(what.items(), additional_columns.items())), old_data_version=1)
+        self.test.update(changed_by="bob", where=where, what=dict(chain(what.items(), additional_columns.items())), old_data_version=4)
         # update adds data_version and id to the query, so we need to add that before comparing
-        what["data_version"] = 2
+        what["data_version"] = 5
         what["id"] = 1
         self.assertEqual(shared[0], self.test)
         self.assertEqual(shared[1], "UPDATE")
@@ -381,7 +404,7 @@ class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileD
 
     def testDeleteWithTransaction(self):
         trans = AUSTransaction(self.metadata.bind.connect())
-        self.test.delete(changed_by="bill", transaction=trans, where=[self.test.id == 2], old_data_version=1)
+        self.test.delete(changed_by="bill", transaction=trans, where=[self.test.id == 2], old_data_version=5)
         ret = self.test.t.select().execute().fetchall()
         self.assertEqual(len(ret), 3)
         trans.commit()
@@ -399,12 +422,12 @@ class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileD
 
     def testUpdateWithTransaction(self):
         trans = AUSTransaction(self.metadata.bind.connect())
-        self.test.update(changed_by="bill", transaction=trans, where=[self.test.id == 1], what=dict(foo=222), old_data_version=1)
+        self.test.update(changed_by="bill", transaction=trans, where=[self.test.id == 1], what=dict(foo=222), old_data_version=4)
         ret = self.test.t.select(self.test.id == 1).execute().fetchone()
-        self.assertEqual(ret, (1, 33, 1))
+        self.assertEqual(ret, (1, 33, 4))
         trans.commit()
         ret = self.test.t.select(self.test.id == 1).execute().fetchone()
-        self.assertEqual(ret, (1, 222, 2))
+        self.assertEqual(ret, (1, 222, 5))
 
 
 # TODO: Find some way of testing this with SQLite, or testing it with some other backend.
@@ -422,6 +445,8 @@ class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileD
 
 
 class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
+    maxDiff = 2000
+
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         TestTableMixin.setUp(self)
@@ -440,57 +465,125 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponInsert(self):
-        self.test.insert(changed_by="george", id=4, foo=0)
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret, [(1, "george", 999, 4, None, None), (2, "george", 1000, 4, 0, 1)])
+        self.test.insert(changed_by="george", id=5, foo=0)
+        ret = self.test.history.t.select().where(self.test.history.id == 5).execute().fetchall()
+        self.assertEqual(ret, [(24, "george", 999, 5, None, None), (25, "george", 1000, 5, 0, 1)])
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponAutoincrementInsert(self):
         self.test.insert(changed_by="george", foo=0)
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret, [(1, "george", 999, 4, None, None), (2, "george", 1000, 4, 0, 1)])
+        # This actual generates history for a row we already have history for
+        # because sqlite just uses max(id)+1 as the next available primary key.
+        # Even if we insert and delete id 4 from the database, we still
+        # get id=4 for the next autoincrement insert.
+        ret = self.test.history.t.select().where(self.test.history.id == 4).execute().fetchall()[-2:]
+        self.assertEqual(ret, [(24, "george", 999, 4, None, None), (25, "george", 1000, 4, 0, 1)])
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponDelete(self):
-        self.test.delete(changed_by="bobby", where=[self.test.id == 1], old_data_version=1)
-        ret = self.test.history.t.select().execute().fetchone()
-        self.assertEqual(ret, (1, "bobby", 1000, 1, None, None))
+        self.test.delete(changed_by="bobby", where=[self.test.id == 1], old_data_version=4)
+        ret = self.test.history.t.select().where(self.test.history.id == 1).execute().fetchall()[-1]
+        self.assertEqual(ret, (24, "bobby", 1000, 1, None, None))
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponUpdate(self):
-        self.test.update(changed_by="heather", where=[self.test.id == 2], what=dict(foo=99), old_data_version=1)
-        ret = self.test.history.t.select().execute().fetchone()
-        self.assertEqual(ret, (1, "heather", 1000, 2, 99, 2))
+        self.test.update(changed_by="heather", where=[self.test.id == 2], what=dict(foo=99), old_data_version=5)
+        ret = self.test.history.t.select().where(self.test.history.id == 2).execute().fetchall()[-1]
+        self.assertEqual(ret, (24, "heather", 1000, 2, 99, 6))
 
     @mock.patch("time.time", mock.MagicMock(return_value=1234567890.123456))
     def testHistoryTimestampMaintainsPrecision(self):
-        self.test.insert(changed_by="bob", id=4)
-        ret = select([self.test.history.timestamp]).where(self.test.history.id == 4).execute().fetchone()[0]
+        self.test.insert(changed_by="bob", id=5)
+        ret = select([self.test.history.timestamp]).where(self.test.history.id == 5).execute().fetchone()[0]
         # Insert decrements the timestamp
         self.assertEqual(ret, 1234567890122)
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryGetChangeWithChangeID(self):
-        self.test.insert(changed_by="george", id=4, foo=0)
-        ret = self.test.history.getChange(change_id=1)
-        self.assertEqual(ret, {"data_version": None, "changed_by": "george", "foo": None, "timestamp": 999, "change_id": 1, "id": 4})
+        self.test.insert(changed_by="george", id=5, foo=0)
+        ret = self.test.history.getChange(change_id=24)
+        self.assertEqual(ret, {"data_version": None, "changed_by": "george", "foo": None, "timestamp": 999, "change_id": 24, "id": 5})
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryGetChangeWithDataVersion(self):
-        self.test.insert(changed_by="george", id=4, foo=0)
-        ret = self.test.history.getChange(data_version=1, column_values={"id": 4})
-        self.assertEqual(ret, {"data_version": 1, "changed_by": "george", "foo": 0, "timestamp": 1000, "change_id": 2, "id": 4})
+        self.test.insert(changed_by="george", id=5, foo=0)
+        ret = self.test.history.getChange(data_version=1, column_values={"id": 5})
+        self.assertEqual(ret, {"data_version": 1, "changed_by": "george", "foo": 0, "timestamp": 1000, "change_id": 25, "id": 5})
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryGetChangeWithDataVersionReturnNone(self):
-        self.test.insert(changed_by="george", id=4, foo=0)
-        ret = self.test.history.getChange(data_version=1, column_values={"id": 5})
+        self.test.insert(changed_by="george", id=5, foo=0)
+        ret = self.test.history.getChange(data_version=1, column_values={"id": 6})
         self.assertEqual(ret, None)
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryGetChangeWithDataVersionWithNonPrimaryKeyColumn(self):
-        self.test.insert(changed_by="george", id=4, foo=0)
-        self.assertRaises(ValueError, self.test.history.getChange, data_version=1, column_values={"foo": 4})
+        self.test.insert(changed_by="george", id=5, foo=0)
+        self.assertRaises(ValueError, self.test.history.getChange, data_version=1, column_values={"foo": 5})
+
+    def testGetPointInTime(self):
+        times_and_results = (
+            (
+                10,
+                (
+                    dict(change_id=2, timestamp=10, changed_by="admin", id=1, foo=30, data_version=1),
+                    dict(change_id=7, timestamp=10, changed_by="admin", id=2, foo=18, data_version=1),
+                ),
+            ),
+            (
+                15,
+                (
+                    dict(change_id=2, timestamp=10, changed_by="admin", id=1, foo=30, data_version=1),
+                    dict(change_id=8, timestamp=15, changed_by="admin", id=2, foo=19, data_version=2),
+                ),
+            ),
+            (
+                20,
+                (
+                    dict(change_id=3, timestamp=20, changed_by="admin", id=1, foo=31, data_version=2),
+                    dict(change_id=9, timestamp=20, changed_by="admin", id=2, foo=20, data_version=3),
+                    dict(change_id=20, timestamp=20, changed_by="admin", id=4, foo=40, data_version=1),
+                ),
+            ),
+            (
+                25,
+                (
+                    dict(change_id=3, timestamp=20, changed_by="admin", id=1, foo=31, data_version=2),
+                    dict(change_id=10, timestamp=25, changed_by="admin", id=2, foo=21, data_version=4),
+                    dict(change_id=13, timestamp=23, changed_by="admin", id=3, foo=6, data_version=1),
+                    dict(change_id=21, timestamp=25, changed_by="admin", id=4, foo=41, data_version=2),
+                ),
+            ),
+            (
+                30,
+                (
+                    dict(change_id=4, timestamp=30, changed_by="admin", id=1, foo=32, data_version=3),
+                    dict(change_id=11, timestamp=30, changed_by="admin", id=2, foo=22, data_version=5),
+                    dict(change_id=15, timestamp=29, changed_by="admin", id=3, foo=8, data_version=3),
+                    dict(change_id=22, timestamp=30, changed_by="admin", id=4, foo=42, data_version=3),
+                ),
+            ),
+            (
+                35,
+                (
+                    dict(change_id=4, timestamp=30, changed_by="admin", id=1, foo=32, data_version=3),
+                    dict(change_id=11, timestamp=30, changed_by="admin", id=2, foo=22, data_version=5),
+                    dict(change_id=17, timestamp=35, changed_by="admin", id=3, foo=10, data_version=5),
+                ),
+            ),
+            (
+                40,
+                (
+                    dict(change_id=5, timestamp=40, changed_by="admin", id=1, foo=33, data_version=4),
+                    dict(change_id=11, timestamp=30, changed_by="admin", id=2, foo=22, data_version=5),
+                    dict(change_id=18, timestamp=38, changed_by="admin", id=3, foo=11, data_version=6),
+                ),
+            ),
+        )
+
+        for timestamp, expected in times_and_results:
+            ret = self.test.history.getPointInTime(timestamp)
+            self.assertSequenceEqual(ret, expected)
 
 
 class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTableMixin, MemoryDatabaseMixin):

@@ -13,14 +13,19 @@ log = logging.getLogger(__name__)
 
 
 def get_rules():
-    # We can't use a form here because it will enforce "csrf_token" needing
-    # to exist, which doesn't make sense for GET requests.
-    where = {}
-    for field in ("product",):
-        if request.args.get(field):
-            where[field] = request.args[field]
+    # TODO: When we switch to Swagger 3, this can move to the Swagger spec
+    if request.args.get("timestamp") and request.args.get("product"):
+        return problem(status=400, title="Bad Request", detail="Cannot query with a timestamp and a product at the same time")
 
-    rules = dbo.rules.getOrderedRules(where=where)
+    if request.args.get("timestamp"):
+        rules = dbo.rules.history.getPointInTime(request.args.get("timestamp"))
+    else:
+        where = {}
+        for field in ("product",):
+            if request.args.get(field):
+                where[field] = request.args[field]
+
+        rules = dbo.rules.getOrderedRules(where=where)
     return jsonify(count=len(rules), rules=rules)
 
 

@@ -14,6 +14,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from sqlalchemy.interfaces import PoolListener
 from sqlalchemy.sql.expression import null
+from sqlalchemy.sql.functions import max as sql_max
 
 import migrate.versioning.api
 import migrate.versioning.schema
@@ -759,6 +760,42 @@ class HistoryTable(AUSTable):
                 newcol.unique = None
             self.table.append_column(newcol)
         AUSTable.__init__(self, db, dialect, historyClass=None, versioned=False)
+
+    def getPointInTime(self, timestamp, transaction=None):
+        # The inner query here gets one change id for every unique object in
+        # the base table. Filtering by timestamp < provided timestamp means
+        # we won't get any results most recent than the requested timestamp.
+        # Grouping by the primary key and selecting the max change_id means
+        # we'll get the most recent change_id (after applying the timestamp
+        # filter) for every unique object.
+        # The outer query simply retrieves the actual row data for each
+        # change_id that the inner query found
+        # Black wants to format this all on one line, which is more difficult
+        # to read.
+        # fmt: off
+        q = (select(self.table.get_children())
+             .where(self.change_id.in_(
+                 select([sql_max(self.change_id)])
+                 .where(self.timestamp <= timestamp)
+                 .group_by(*self.base_primary_key)
+             )
+        ))
+        # fmt: on
+        if transaction:
+            result = transaction.execute(q).fetchall()
+        else:
+            with AUSTransaction(self.getEngine()) as trans:
+                result = trans.execute(q).fetchall()
+
+        rows = []
+        # Filter out any rows who have no non-primary key data, because this
+        # means the row has been deleted.
+        non_primary_key_columns = [col.name for col in self.baseTable.t.get_children() if not col.primary_key]
+        for row in result:
+            if any([row[col] for col in non_primary_key_columns]):
+                rows.append(row)
+
+        return rows_to_dicts(rows)
 
     def forInsert(self, insertedKeys, columns, changed_by, trans):
         """Inserts cause two rows in the History table to be created. The first

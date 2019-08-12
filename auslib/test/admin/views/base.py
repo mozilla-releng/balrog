@@ -197,9 +197,57 @@ class ViewTest(unittest.TestCase):
             update_type="minor",
             product="a",
             channel="a",
+            data_version=2,
+        )
+        dbo.rules.history.t.insert().execute(change_id=1, timestamp=50, changed_by="bill", rule_id=1)
+        dbo.rules.history.t.insert().execute(
+            change_id=2,
+            timestamp=51,
+            changed_by="bill",
+            rule_id=1,
+            priority=100,
+            version="3.5",
+            buildTarget="d",
+            backgroundRate=50,
+            mapping="c",
+            update_type="minor",
+            product="a",
+            channel="a",
             data_version=1,
         )
+        dbo.rules.history.t.insert().execute(
+            change_id=3,
+            timestamp=65,
+            changed_by="bill",
+            rule_id=1,
+            priority=100,
+            version="3.5",
+            buildTarget="d",
+            backgroundRate=100,
+            mapping="c",
+            update_type="minor",
+            product="a",
+            channel="a",
+            data_version=2,
+        )
         dbo.rules.t.insert().execute(
+            rule_id=2,
+            alias="frodo",
+            priority=100,
+            version="3.3",
+            buildTarget="d",
+            backgroundRate=100,
+            mapping="b",
+            update_type="minor",
+            product="a",
+            channel="a",
+            data_version=1,
+        )
+        dbo.rules.history.t.insert().execute(change_id=4, timestamp=60, changed_by="bill", rule_id=2)
+        dbo.rules.history.t.insert().execute(
+            change_id=5,
+            timestamp=61,
+            changed_by="bill",
             rule_id=2,
             alias="frodo",
             priority=100,
@@ -222,21 +270,141 @@ class ViewTest(unittest.TestCase):
             mapping="a",
             update_type="minor",
             channel="a",
+            data_version=2,
+        )
+        dbo.rules.history.t.insert().execute(change_id=6, timestamp=72, changed_by="bill", rule_id=3)
+        dbo.rules.history.t.insert().execute(
+            change_id=7,
+            timestamp=73,
+            changed_by="bill",
+            rule_id=3,
+            product="a",
+            priority=50,
+            version="3.5",
+            buildTarget="a",
+            backgroundRate=100,
+            mapping="a",
+            update_type="minor",
+            channel="a",
             data_version=1,
+        )
+        dbo.rules.history.t.insert().execute(
+            change_id=8,
+            timestamp=105,
+            changed_by="bill",
+            rule_id=3,
+            product="a",
+            priority=100,
+            version="3.5",
+            buildTarget="a",
+            backgroundRate=100,
+            mapping="a",
+            update_type="minor",
+            channel="a",
+            data_version=2,
         )
         dbo.rules.t.insert().execute(
             rule_id=4, product="fake", priority=80, buildTarget="d", backgroundRate=100, mapping="a", update_type="minor", channel="a", data_version=1
         )
+        dbo.rules.history.t.insert().execute(change_id=9, timestamp=80, changed_by="bill", rule_id=4)
+        dbo.rules.history.t.insert().execute(
+            change_id=10,
+            timestamp=81,
+            changed_by="bill",
+            rule_id=4,
+            product="fake",
+            priority=80,
+            buildTarget="d",
+            backgroundRate=100,
+            mapping="a",
+            update_type="minor",
+            channel="a",
+            data_version=1,
+        )
         dbo.rules.t.insert().execute(
             rule_id=5, priority=80, buildTarget="d", version="3.3", backgroundRate=0, mapping="c", update_type="minor", product="a", channel="a", data_version=1
         )
+        dbo.rules.history.t.insert().execute(change_id=11, timestamp=90, changed_by="bill", rule_id=5)
+        dbo.rules.history.t.insert().execute(
+            change_id=12,
+            timestamp=91,
+            changed_by="bill",
+            rule_id=5,
+            priority=80,
+            buildTarget="d",
+            version="3.3",
+            backgroundRate=0,
+            mapping="c",
+            update_type="minor",
+            product="a",
+            channel="a",
+            data_version=1,
+        )
         dbo.rules.t.insert().execute(rule_id=6, product="fake", priority=40, backgroundRate=50, mapping="a", update_type="minor", channel="e", data_version=1)
+        dbo.rules.history.t.insert().execute(change_id=13, timestamp=110, changed_by="bill", rule_id=6)
+        dbo.rules.history.t.insert().execute(
+            change_id=14,
+            timestamp=111,
+            changed_by="bill",
+            rule_id=6,
+            product="fake",
+            priority=40,
+            backgroundRate=50,
+            mapping="a",
+            update_type="minor",
+            channel="e",
+            data_version=1,
+        )
         dbo.rules.t.insert().execute(rule_id=7, product="fake", priority=30, backgroundRate=85, mapping="a", update_type="minor", channel="c", data_version=1)
+        dbo.rules.history.t.insert().execute(change_id=15, timestamp=115, changed_by="bill", rule_id=7)
+        dbo.rules.history.t.insert().execute(
+            change_id=16,
+            timestamp=116,
+            changed_by="bill",
+            rule_id=7,
+            product="fake",
+            priority=30,
+            backgroundRate=85,
+            mapping="a",
+            update_type="minor",
+            channel="c",
+            data_version=1,
+        )
         dbo.rules.t.insert().execute(
             rule_id=8, product="fake2", priority=25, backgroundRate=100, mapping="a", update_type="minor", channel="c", mig64=True, data_version=1
         )
+        dbo.rules.history.t.insert().execute(change_id=17, timestamp=150, changed_by="bill", rule_id=8)
+        dbo.rules.history.t.insert().execute(
+            change_id=18,
+            timestamp=151,
+            changed_by="bill",
+            rule_id=8,
+            product="fake2",
+            priority=25,
+            backgroundRate=100,
+            mapping="a",
+            update_type="minor",
+            channel="c",
+            mig64=True,
+            data_version=1,
+        )
         dbo.rules.t.insert().execute(
             rule_id=9, product="fake3", priority=25, backgroundRate=100, mapping="a", update_type="minor", channel="c", jaws=True, data_version=1
+        )
+        dbo.rules.history.t.insert().execute(change_id=19, timestamp=160, changed_by="bill", rule_id=9)
+        dbo.rules.history.t.insert().execute(
+            change_id=20,
+            timestamp=161,
+            changed_by="bill",
+            rule_id=9,
+            product="fake3",
+            priority=25,
+            backgroundRate=100,
+            mapping="a",
+            update_type="minor",
+            channel="c",
+            jaws=True,
+            data_version=1,
         )
         self.client = app.test_client()
 
