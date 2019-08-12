@@ -250,6 +250,10 @@ class TestRulesAPI_JSON(ViewTest):
             important_values = [{k: r[k] for k in ("change_id", "timestamp", "rule_id")} for r in rules]
             self.assertSequenceEqual(important_values, expected)
 
+    def testGetRulesWithProductAndTimestampFilter(self):
+        ret = self._get("/rules", qs={"product": "a", "timestamp": 23456789})
+        self.assertEqual(ret.status_code, 400, ret.data)
+
     def testNewRulePost(self):
         ret = self._post("/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly"))
         rule_id = int(ret.get_data())
