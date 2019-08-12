@@ -9,19 +9,30 @@ export AWS_SECRET_ACCESS_KEY=$(curl ${AWS_CREDENTIALS_SECRET} | python3 -c 'impo
 # Grab app config and convert it to shell format
 curl "${APP_CONFIG_SECRET}" | python3 -c 'import json, sys; a = json.load(sys.stdin); [print("{}={}".format(k, v)) for k,v in a["secret"].items()]' > .env
 
+HEADERS=$(cat <<EOF
+{ \
+    "Content-Security-Policy": "Content-Security-Policy: default-src 'none'; script-src 'self'; img-src 'self' https://.gravatar.com https://.githubusercontent.com https://i1.wp.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://admin-stage.balrog.nonprod.cloudops.mozgcp.net/ https://auth.mozilla.auth0.com; frame-src https://auth.mozilla.auth0.com", \
+    "Strict-Transport-Security": "max-age=63072000", \
+    "X-Content-Type-Options": "nosniff", \
+    "X-Frame-Options": "SAMEORIGIN", \
+    "X-Content-Type-Options": "nosniff", \
+    "X-XSS-Protection": "1; mode=block", \
+    "Referrer-Policy": "origin", \
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; always;" \
+}
+EOF
+)
+
 yarn build
 
 cp scripts/404.html build/404.html
 
+SYNC_OPTIONS=(
+    --metadata "$HEADERS"
+    --metadata-directive "REPLACE"
+    --cache-control "max-age=300"
+    --delete
+)
 aws s3 sync \
-    --metadata "{
-    \"Strict-Transport-Security\": \"max-age=31536000\",
-    \"Access-Control-Allow-Origin\": \"*\",
-    \"x-content-type-options\": \"nosniff\",
-    \"x-frame-options\": \"SAMEORIGIN\",
-    \"x-xss-protection\": \"1; mode=block\"
-}" \
-    --metadata-directive "REPLACE" \
-    --cache-control "max-age=300" \
-    --delete \
+    "${SYNC_OPTIONS[@]}" \
     ./build/ "s3://${WEBSITE_BUCKET}/"
