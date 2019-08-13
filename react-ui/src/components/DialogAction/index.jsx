@@ -37,6 +37,7 @@ function DialogAction(props) {
     confirmText,
     error,
     onClose,
+    onExited,
     onSubmit,
     onComplete,
     onError,
@@ -69,6 +70,7 @@ function DialogAction(props) {
     <Dialog
       classes={{ paper: classes.paper }}
       open={open}
+      onExited={(...props) => onExited && onExited(...props)}
       onClose={onClose}
       {...rest}>
       {title && <DialogTitle>{title}</DialogTitle>}
@@ -127,6 +129,7 @@ DialogAction.propTypes = {
   onError: func,
   /** Callback fired when the component requests to be closed. */
   onClose: func.isRequired,
+  onExited: func,
   /** Error to display. */
   error: oneOfType([string, object]),
   /**

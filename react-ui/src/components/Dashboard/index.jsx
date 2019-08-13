@@ -1,5 +1,6 @@
 import React, { Fragment } from 'react';
 import { string, node, bool } from 'prop-types';
+import Helmet from 'react-helmet';
 import { makeStyles } from '@material-ui/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -50,6 +51,9 @@ export default function Dashboard(props) {
 
   return (
     <Fragment>
+      <Helmet>
+        <title>{title} - Balrog Admin</title>
+      </Helmet>
       <AppBar className={classes.appbar}>
         <Toolbar>
           <Typography

@@ -7,7 +7,9 @@ export const OBJECT_NAMES = {
 };
 export const LABELS = {
   PENDING: 'pending',
+  PENDING_INSERT: 'pendingInsert',
   PENDING_DELETE: 'pendingDelete',
+  PENDING_UPDATE: 'pendingUpdate',
 };
 export const RULE_DIFF_PROPERTIES = [
   'alias',
@@ -56,6 +58,8 @@ export const DIALOG_ACTION_INITIAL_STATE = {
   handleComplete: Function.prototype,
 };
 export const EMPTY_MENU_ITEM_CHAR = '-';
+// product/action restrictions need to match the backend definitions from
+// https://github.com/mozilla/balrog/blob/master/auslib/db.py#L2144
 export const PERMISSION_RESTRICTION_MAPPINGS = {
   admin: {
     restrict_products: true,
@@ -89,16 +93,16 @@ export const PERMISSION_RESTRICTION_MAPPINGS = {
   },
   required_signoff: {
     restrict_products: true,
-    restrict_actions: true,
+    restrict_actions: false,
     supported_actions: ['create', 'modify', 'delete'],
   },
   permission: {
-    restrict_products: true,
+    restrict_products: false,
     restrict_actions: true,
     supported_actions: ['create', 'modify', 'delete'],
   },
   scheduled_change: {
-    restrict_products: true,
+    restrict_products: false,
     restrict_actions: true,
     supported_actions: ['enact'],
   },
@@ -115,3 +119,25 @@ export const ALL_PERMISSIONS = [
   'scheduled_change',
 ];
 export const NEW_LINES_REGEX = /\r?\n|\r/g;
+export const RULES_COMMON_FILTERS = [
+  {
+    label: 'Firefox Release',
+    link: '/rules?product=Firefox&channel=release',
+  },
+  {
+    label: 'Firefox Beta',
+    link: '/rules?product=Firefox&channel=beta',
+  },
+  {
+    label: 'Firefox Aurora (DevEdition)',
+    link: '/rules?product=Firefox&channel=aurora',
+  },
+  {
+    label: 'Thunderbird Release',
+    link: '/rules?product=Thunderbird&channel=release',
+  },
+  {
+    label: 'Thunderbird Beta',
+    link: '/rules?product=Thunderbird&channel=beta',
+  },
+];

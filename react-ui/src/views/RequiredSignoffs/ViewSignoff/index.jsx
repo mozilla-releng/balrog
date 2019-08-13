@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { bool } from 'prop-types';
+import classNames from 'classnames';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import { makeStyles } from '@material-ui/styles';
 import TextField from '@material-ui/core/TextField';
@@ -52,6 +53,9 @@ const useStyles = makeStyles(theme => ({
   },
   addRoleGrid: {
     marginTop: theme.spacing(5),
+  },
+  gridSection: {
+    marginBottom: theme.spacing(10),
   },
   paper: {
     position: 'absolute',
@@ -225,7 +229,7 @@ function ViewSignoff({ isNewSignoff, ...props }) {
       {!isLoading && (
         <Fragment>
           <form autoComplete="off">
-            <Grid container spacing={2}>
+            <Grid className={classes.gridSection} container spacing={2}>
               <Grid item xs={12}>
                 <AutoCompleteText
                   onValueChange={handleProductChange}
@@ -284,17 +288,17 @@ function ViewSignoff({ isNewSignoff, ...props }) {
                 </Grid>
               )}
             </Grid>
-            <br />
-            <br />
-            <br />
             <Typography variant="h5">Roles</Typography>
             {roles.map(renderRole)}
             {additionalRoles.map(renderRole)}
-            <Grid className={classes.addRoleGrid} container>
+            <Grid
+              className={classNames(classes.addRoleGrid, classes.gridSection)}
+              container>
               <Grid item xs={11}>
                 <Button
                   onClick={handleRoleAdd}
                   className={classes.addRoleButton}
+                  color="primary"
                   variant="outlined">
                   <PlusIcon />
                 </Button>

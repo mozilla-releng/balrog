@@ -20,10 +20,7 @@ import DialogAction from '../../../components/DialogAction';
 import SignoffCard from '../../../components/SignoffCard';
 import ErrorPanel from '../../../components/ErrorPanel';
 import SignoffCardEntry from '../../../components/SignoffCardEntry';
-import {
-  signoffRequiredSignoff,
-  revokeRequiredSignoff,
-} from '../../../services/requiredSignoffs';
+import { makeSignoff, revokeSignoff } from '../../../services/signoffs';
 import { getUserInfo } from '../../../services/users';
 import Link from '../../../utils/Link';
 import getRequiredSignoffs from '../utils/getRequiredSignoffs';
@@ -72,8 +69,8 @@ function ListSignoffs({ user }) {
   const [signoffRole, setSignoffRole] = useState('');
   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
   const [getRSAction, getRS] = useAction(getRequiredSignoffs);
-  const [signoffAction, signoff] = useAction(signoffRequiredSignoff);
-  const [revokeAction, revoke] = useAction(revokeRequiredSignoff);
+  const [signoffAction, signoff] = useAction(makeSignoff);
+  const [revokeAction, revoke] = useAction(revokeSignoff);
   const [rolesAction, getRoles] = useAction(getUserInfo);
   const loading = getRSAction.loading || rolesAction.loading;
   const error =

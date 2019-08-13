@@ -6,7 +6,10 @@ import {
   updateScheduledPermissionChange,
   deleteScheduledPermissionChange,
 } from '../../../services/users';
-import { supportsActionRestriction } from '../../../utils/userUtils';
+import {
+  supportsActionRestriction,
+  supportsProductRestriction,
+} from '../../../utils/userUtils';
 
 export default params => {
   const {
@@ -64,11 +67,13 @@ export default params => {
           });
         }
 
-        const options = {
-          products: permission.sc
+        const options = {};
+
+        if (supportsProductRestriction(permission.name)) {
+          options.products = permission.sc
             ? permission.sc.options.products
-            : permission.options.products,
-        };
+            : permission.options.products;
+        }
 
         if (supportsActionRestriction(permission.name)) {
           options.actions = permission.sc
@@ -98,7 +103,11 @@ export default params => {
         });
       }),
       additionalPermissions.map(permission => {
-        const options = { products: permission.options.products };
+        const options = {};
+
+        if (supportsProductRestriction(permission.name)) {
+          options.products = permission.options.products;
+        }
 
         if (supportsActionRestriction(permission.name)) {
           options.actions = permission.options.actions;

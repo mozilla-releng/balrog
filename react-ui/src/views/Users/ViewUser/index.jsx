@@ -22,7 +22,11 @@ import SpeedDial from '../../../components/SpeedDial';
 import useAction from '../../../hooks/useAction';
 import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
 import { getProducts } from '../../../services/rules';
-import { getUserInfo, getScheduledChanges } from '../../../services/users';
+import {
+  userExists,
+  getUserInfo,
+  getScheduledChanges,
+} from '../../../services/users';
 import { ALL_PERMISSIONS, OBJECT_NAMES } from '../../../utils/constants';
 import {
   supportsProductRestriction,
@@ -41,6 +45,7 @@ const useStyles = makeStyles(theme => ({
   },
   addGrid: {
     marginTop: theme.spacing(5),
+    marginBottom: theme.spacing(10),
   },
   gridWithIcon: {
     marginTop: theme.spacing(3),
@@ -81,7 +86,7 @@ function ViewUser({ isNewUser, ...props }) {
     },
   } = props;
   const classes = useStyles();
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState(isNewUser ? '' : existingUsername);
   const [roles, setRoles] = useState([]);
   // eslint-disable-next-line no-unused-vars
   const [originalRoles, setOriginalRoles] = useState([]);
@@ -96,6 +101,7 @@ function ViewUser({ isNewUser, ...props }) {
   // TODO: show pending changes, signoffs, and allow them to be signed off
   // eslint-disable-next-line no-unused-vars
   const [requiredSignoffs, setRequiredSignoffs] = useState([]);
+  const [userError, setUserError] = useState(null);
   const [rsAction, fetchRS] = useAction(getRequiredSignoffs);
   const [productsAction, fetchProducts] = useAction(getProducts);
   const [userAction, fetchUser] = useAction(getUserInfo);
@@ -107,6 +113,7 @@ function ViewUser({ isNewUser, ...props }) {
     rsAction.loading ||
     SCAction.loading;
   const error =
+    userError ||
     userAction.error ||
     productsAction.error ||
     saveAction.error ||
@@ -115,79 +122,97 @@ function ViewUser({ isNewUser, ...props }) {
   const defaultToEmptyString = defaultTo('');
 
   useEffect(() => {
-    if (!isNewUser) {
-      Promise.all([
-        fetchUser(existingUsername),
-        fetchProducts(),
-        fetchRS(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
-        fetchSC(),
-      ]).then(([userdata, productdata, rs, scheduledChanges]) => {
-        const roles = Object.keys(userdata.data.data.roles).map(name => ({
-          name,
-          data_version: userdata.data.data.roles[name].data_version,
-          metadata: {
-            isAdditional: false,
-          },
-        }));
-        const permissions = Object.keys(userdata.data.data.permissions).map(
-          name => {
-            const details = userdata.data.data.permissions[name];
-            const sc = scheduledChanges.data.data.scheduled_changes.filter(
-              sc => sc.permission === name
-            );
-            const permission = {
+    Promise.all([
+      userExists(existingUsername).then(exists =>
+        exists ? fetchUser(existingUsername) : null
+      ),
+      fetchProducts(),
+      fetchRS(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
+      fetchSC(),
+    ]).then(([userdata, productdata, rs, scheduledChanges]) => {
+      const roles =
+        userdata === null
+          ? []
+          : Object.keys(userdata.data.data.roles).map(name => ({
               name,
-              options: details.options || { products: [], actions: [] },
-              data_version: details.data_version,
-              sc: null,
+              data_version: userdata.data.data.roles[name].data_version,
               metadata: {
                 isAdditional: false,
-                productText: '',
-                actionText: '',
               },
-            };
+            }));
+      const permissions =
+        userdata === null
+          ? []
+          : Object.keys(userdata.data.data.permissions).map(name => {
+              const details = userdata.data.data.permissions[name];
+              const sc = scheduledChanges.data.data.scheduled_changes.filter(
+                sc => sc.username === existingUsername && sc.permission === name
+              );
+              const permission = {
+                name,
+                options: details.options || { products: [], actions: [] },
+                data_version: details.data_version,
+                sc: null,
+                metadata: {
+                  isAdditional: false,
+                  productText: '',
+                  actionText: '',
+                },
+              };
 
-            // Copy any scheduled changes associated with an existing
-            // permission into the list of permissions.
-            if (sc.length > 0) {
-              // The backend refers to permission names as the 'permission'
-              // attribute of an object, but we prefer to call it 'name', so
-              // we have to adjust that.
-              sc[0].name = sc[0].permission;
-              delete sc[0].permission;
+              // Copy any scheduled changes associated with an existing
+              // permission into the list of permissions.
+              if (sc.length > 0) {
+                // The backend refers to permission names as the 'permission'
+                // attribute of an object, but we prefer to call it 'name', so
+                // we have to adjust that.
+                sc[0].name = sc[0].permission;
+                delete sc[0].permission;
 
-              // Array destructuring is not very readable here.
-              // eslint-disable-next-line prefer-destructuring
-              permission.sc = sc[0];
-            }
+                // Array destructuring is not very readable here.
+                // eslint-disable-next-line prefer-destructuring
+                permission.sc = sc[0];
 
-            return permission;
+                if (!permission.sc.options) {
+                  permission.sc.options = { products: [], actions: [] };
+                }
+              }
+
+              return permission;
+            });
+
+      // Scheduled inserts don't have an existing permission to associate
+      // with, so we need to create an empty one, and add to it.
+      scheduledChanges.data.data.scheduled_changes.forEach(sc => {
+        if (sc.change_type === 'insert' && sc.username === existingUsername) {
+          const p = getEmptyPermission();
+
+          p.name = sc.permission;
+          p.sc = clone(sc);
+          p.sc.name = sc.permission;
+          delete p.sc.permission;
+
+          if (!p.sc.options) {
+            p.sc.options = { products: [], actions: [] };
           }
-        );
 
-        // Scheduled inserts don't have an existing permission to associate
-        // with, so we need to create an empty one, and add to it.
-        scheduledChanges.data.data.scheduled_changes.forEach(sc => {
-          if (sc.change_type === 'insert') {
-            const p = getEmptyPermission();
-
-            p.name = sc.permission;
-            p.sc = clone(sc);
-            p.sc.name = sc.permission;
-            delete p.sc.permission;
-            permissions.push(p);
-          }
-        });
-
-        setUsername(userdata.data.data.username);
-        setRoles(roles);
-        setOriginalRoles(clone(roles));
-        setPermissions(permissions);
-        setOriginalPermissions(clone(permissions));
-        setProducts(productdata.data.data.product);
-        setRequiredSignoffs(rs.data.data.required_signoffs);
+          permissions.push(p);
+        }
       });
-    }
+
+      if (!isNewUser && permissions.length === 0) {
+        setUserError('User does not exist!');
+
+        return;
+      }
+
+      setRoles(roles);
+      setOriginalRoles(clone(roles));
+      setPermissions(permissions);
+      setOriginalPermissions(clone(permissions));
+      setProducts(productdata.data.data.product);
+      setRequiredSignoffs(rs.data.data.required_signoffs);
+    });
   }, []);
 
   const handleUsernameChange = ({ target: { value } }) => setUsername(value);
@@ -445,39 +470,46 @@ function ViewUser({ isNewUser, ...props }) {
             <br />
             <br />
             <br />
-            <Typography variant="h5">Roles</Typography>
-            {roles.map(renderRole)}
-            {additionalRoles.map(renderRole)}
-            <Grid item xs className={classes.addGrid}>
-              <Grid item xs={11}>
-                <Button
-                  onClick={handleRoleAdd}
-                  className={classes.fullWidth}
-                  variant="outlined">
-                  <PlusIcon />
-                </Button>
-              </Grid>
-            </Grid>
-            <br />
-            <br />
-            <br />
-            <Typography variant="h5">Permissions</Typography>
-            {permissions.map(renderPermission)}
-            {additionalPermissions.map(renderPermission)}
-            <Grid item xs className={classes.addGrid}>
-              <Grid item xs={11}>
-                <Button
-                  onClick={handlePermissionAdd}
-                  className={classes.fullWidth}
-                  variant="outlined">
-                  <PlusIcon />
-                </Button>
-              </Grid>
-            </Grid>
+            {!isNewUser && !userError && (
+              <Fragment>
+                <Typography variant="h5">Roles</Typography>
+                {roles.map(renderRole)}
+                {additionalRoles.map(renderRole)}
+                <Grid item xs className={classes.addGrid}>
+                  <Grid item xs={11}>
+                    <Button
+                      color="primary"
+                      onClick={handleRoleAdd}
+                      className={classes.fullWidth}
+                      variant="outlined">
+                      <PlusIcon />
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Fragment>
+            )}
+            {!userError && (
+              <Fragment>
+                <Typography variant="h5">Permissions</Typography>
+                {permissions.map(renderPermission)}
+                {additionalPermissions.map(renderPermission)}
+                <Grid item xs className={classes.addGrid}>
+                  <Grid item xs={11}>
+                    <Button
+                      color="primary"
+                      onClick={handlePermissionAdd}
+                      className={classes.fullWidth}
+                      variant="outlined">
+                      <PlusIcon />
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Fragment>
+            )}
           </form>
           <Tooltip title="Save User">
             <Fab
-              disabled={saveAction.loading}
+              disabled={saveAction.loading || userError}
               onClick={handleUserSave}
               color="primary"
               className={classes.fab}>
@@ -487,7 +519,7 @@ function ViewUser({ isNewUser, ...props }) {
           {!isNewUser && (
             <SpeedDial ariaLabel="Secondary Actions">
               <SpeedDialAction
-                disabled={saveAction.loading}
+                disabled={saveAction.loading || userError}
                 icon={<DeleteIcon />}
                 tooltipOpen
                 tooltipTitle="Delete User"

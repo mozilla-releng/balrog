@@ -16,6 +16,7 @@ import { withUser } from '../../utils/AuthContext';
 const useStyles = makeStyles(theme => ({
   diff: {
     display: 'flex',
+    alignItems: 'center',
   },
   cardActions: {
     justifyContent: 'flex-end',
@@ -67,14 +68,18 @@ function SignoffCardEntry(props) {
         <Grid container spacing={4}>
           <Grid item xs={12} sm={4} className={classes.firstColumn}>
             <div className={classes.diff}>
-              <Typography>
-                {signoffsRequiredCurrent} member
-                {signoffsRequiredCurrent > 1 ? 's' : ''} of {name}
+              <Typography variant="body2">
+                <em>
+                  {signoffsRequiredCurrent} member
+                  {signoffsRequiredCurrent > 1 ? 's' : ''} of {name}
+                </em>
               </Typography>
               {isScheduled && (
                 <Fragment>
                   <ArrowRightIcon className={classes.arrowIcon} />
-                  <Typography>{signoffsRequiredIntent}</Typography>
+                  <Typography variant="body2">
+                    <em>{signoffsRequiredIntent}</em>
+                  </Typography>
                 </Fragment>
               )}
             </div>

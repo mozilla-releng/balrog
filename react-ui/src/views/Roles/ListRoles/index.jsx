@@ -81,7 +81,7 @@ function ListRoles() {
     <Dashboard title="Roles">
       {isLoading && <Spinner loading />}
       {error && <ErrorPanel fixed error={error} />}
-      {filteredRoles.length && users.length && (
+      {Boolean(filteredRoles.length) && Boolean(users.length) && (
         <Fragment>
           <div className={classes.options}>
             <TextField

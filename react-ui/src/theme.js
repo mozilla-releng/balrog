@@ -40,6 +40,13 @@ export default createMuiTheme({
       overflow: 'hidden',
       textOverflow: 'ellipsis',
     },
+    redDot: {
+      width: SPACING.UNIT,
+      height: SPACING.UNIT,
+      borderRadius: '50%',
+      background: 'red',
+      marginLeft: SPACING.UNIT,
+    },
   },
   overrides: {
     MuiListItem: {
