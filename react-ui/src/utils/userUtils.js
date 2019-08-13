@@ -3,20 +3,29 @@ import { PERMISSION_RESTRICTION_MAPPINGS } from './constants';
 // TODO: use https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ListFormat
 // when it's available in Firefox
 const formatListToLanguage = array =>
-  array.concat(array.splice(-2, 2).join(' and ')).join(', ');
+  [].concat(array.slice(null, -2), array.slice(-2).join(' and ')).join(', ');
 const permissionStrings = (productStr, actionStr) => ({
-  admin: `is a full fledged administrator ${productStr}`,
-  emergency_shutoff: `is allowed to ${actionStr} on Emergency Shutoffs ${productStr}`,
-  release: `is allowed to ${actionStr} Releases ${productStr}`,
-  release_locale: `is allowed to ${actionStr} on locale sections of Releases ${productStr}`,
-  release_read_only: `is allowed to ${actionStr} the read only flag of Releases ${productStr}`,
-  rule: `is allowed to ${actionStr} on Rules ${productStr}`,
-  permission: `is allowed to ${actionStr} User Permissions`,
-  required_signoff: `is allowed to ${actionStr} on Required Signoff configuration ${productStr}`,
-  scheduled_change: `is allowed to ${actionStr} Scheduled Changes`,
+  admin: `a full fledged administrator ${productStr}`,
+  emergency_shutoff: `allowed to ${actionStr} Emergency Shutoffs ${productStr}`,
+  release: `allowed to ${actionStr} Releases ${productStr}`,
+  release_locale: `allowed to ${actionStr} locale sections of Releases ${productStr}`,
+  release_read_only: `allowed to ${actionStr} the read only flag of Releases ${productStr}`,
+  rule: `allowed to ${actionStr} Rules ${productStr}`,
+  permission: `allowed to ${actionStr} User Permissions`,
+  required_signoff: `allowed to ${actionStr} on Required Signoff configuration ${productStr}`,
+  scheduled_change: `allowed to ${actionStr} Scheduled Changes`,
 });
-const getPermissionString = (permission, actions, products) => {
-  let actionStr = 'perform any action';
+const getPermissionString = (
+  permission,
+  actions,
+  products,
+  scheduledChangeType = null
+) => {
+  const prefix =
+    (scheduledChangeType &&
+      (scheduledChangeType === 'delete' ? 'will no longer be' : 'will be')) ||
+    'is';
+  let actionStr = 'perform any action on';
   let productStr = 'for all products';
 
   if (actions.length > 0) {
@@ -29,7 +38,7 @@ const getPermissionString = (permission, actions, products) => {
     productStr = `for ${tmp}`;
   }
 
-  return permissionStrings(productStr, actionStr)[permission];
+  return `${prefix} ${permissionStrings(productStr, actionStr)[permission]}`;
 };
 
 const getRolesString = roles => {

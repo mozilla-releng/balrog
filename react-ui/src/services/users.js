@@ -1,5 +1,15 @@
 import axios from 'axios';
 
+const userExists = async username => {
+  try {
+    await axios.head(`/users/${username}`);
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const getUsers = () => axios.get('/users');
 const getUserInfo = username => axios.get(`/users/${username}`);
 const getScheduledChanges = () => axios.get('/scheduled_changes/permissions');
@@ -50,6 +60,7 @@ const deleteScheduledPermissionChange = ({ scId, scDataVersion }) =>
   });
 
 export {
+  userExists,
   getUsers,
   getUserInfo,
   getScheduledChanges,

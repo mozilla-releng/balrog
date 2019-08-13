@@ -23,17 +23,10 @@ const deleteRequiredSignoff = params => {
   });
 };
 
-const signoffRequiredSignoff = ({ type, scId, role }) =>
-  axios.post(`/scheduled_changes/${type}/${scId}/signoffs`, { role });
-const revokeRequiredSignoff = ({ type, scId }) =>
-  axios.delete(`/scheduled_changes/${type}/${scId}/signoffs`);
-
 // requiredSignoffs factory
 export {
   getRequiredSignoffs,
   getScheduledChanges,
   updateRequiredSignoff,
   deleteRequiredSignoff,
-  signoffRequiredSignoff,
-  revokeRequiredSignoff,
 };
