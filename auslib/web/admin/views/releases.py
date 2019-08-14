@@ -401,7 +401,14 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
         if name:
             where["base_name"] = name
 
-        return super(ReleaseScheduledChangesView, self).get(where)
+        ret = super(ReleaseScheduledChangesView, self).get(where)
+        scheduled_changes = []
+        for sc in ret.json["scheduled_changes"]:
+            if not sc["required_signoffs"] and sc["change_type"] == "update" and not sc["data"] and not sc["read_only"]:
+                potential_rs = dbo.releases.getPotentialRequiredSignoffsForProduct(sc["product"])
+                sc["required_signoffs"] = serialize_signoff_requirements(potential_rs["rs"])
+            scheduled_changes.append(sc)
+        return jsonify({"count": len(scheduled_changes), "scheduled_changes": scheduled_changes})
 
     @requirelogin
     def _post(self, transaction, changed_by):
