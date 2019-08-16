@@ -85,15 +85,11 @@
           <button ng-show="!release_name && !release.required_signoffs.length" class="btn btn-default btn-xs" ng-click="openDeleteModal(release)">Delete</button>
         </span>
         <a ng-show="!release_name" class="btn btn-default btn-xs" ng-href="/releases/{{ release.name }}">History</a>
-
-        <span ng-show="isScheduledToBeModifiable(release)">
-          <a class="btn btn-xs btn-warning" href="/releases/scheduled_changes">Modifiable Pending...</a>
-        </span>
-        <span ng-show="auth0.isAuthenticated() && !isScheduledToBeModifiable(release)">
+        <span ng-show="auth0.isAuthenticated()">
           <button ng-show="!release_name && !release.read_only" class="btn btn-xs btn-success" ng-click="openReadOnlyModal(release)">Modifiable</button>
           <button ng-show="!release_name && release.read_only" class="btn btn-xs btn-danger" ng-click="openReadOnlyModal(release)">Read Only</button>
         </span>
-        <span ng-show="!auth0.isAuthenticated() && !isScheduledToBeModifiable(release)">
+        <span ng-show="!auth0.isAuthenticated()">
           <button ng-show="!release_name && !release.read_only" class="btn btn-xs btn-success" disabled>Modifiable</button>
           <button ng-show="!release_name && release.read_only" class="btn btn-xs btn-danger" disabled>Read Only</button>
         </span>
