@@ -1935,6 +1935,9 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertDictEqual(base_row, base_expected)
 
     def testEnactScheduledChangeUpdateReadWrite(self):
+        row_before_enact_change = dbo.releases.t.select().where(dbo.releases.name == "z").execute().fetchall()[0]
+        release_before_enact_change = dict(row_before_enact_change)
+
         dbo.releases.scheduled_changes.t.insert().execute(
             sc_id=42, scheduled_by="bill", complete=False, change_type="update", base_read_only=False, base_data_version=1, base_name="z", data_version=1
         )
@@ -1947,6 +1950,11 @@ class TestReleasesScheduledChanges(ViewTest):
 
         row = dbo.releases.t.select().where(dbo.releases.name == "z").execute().fetchall()[0]
         release = dict(row)
+
+        self.assertIsNotNone(release["product"])
+        self.assertEqual(release["product"], release_before_enact_change["product"])
+        self.assertIsNotNone(release["data"])
+        self.assertEqual(release["data"], release_before_enact_change["data"])
         self.assertFalse(release["read_only"])
 
     def testGetRequiredSignoffsForProduct_NotFoundRelease(self):
