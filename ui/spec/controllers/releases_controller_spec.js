@@ -61,29 +61,6 @@ var sample_releases = {
   "count": 3
 };
 
-var sample_scheduled_changes = {
-  "count": 1,
-  "scheduled_changes": [
-      {
-          "change_type": "update",
-          "complete": false,
-          "data": null,
-          "data_version": 79,
-          "name": "Fennec-mozilla-aurora-nightly-20140410004003",
-          "product": "Fennec",
-          "read_only": false,
-          "required_signoffs": {
-              "relman": 2
-          },
-          "sc_data_version": 1,
-          "sc_id": 19,
-          "scheduled_by": "user@user.com",
-          "signoffs": {},
-          "when": 1563661722982
-      }
-  ]
-};
-
 var release = sample_releases.releases[0];
 
 describe("controller: ReleasesController", function() {
@@ -120,16 +97,11 @@ describe("controller: ReleasesController", function() {
     it("should return all releases", function() {
       this.$httpBackend.expectGET('/api/releases')
       .respond(200, JSON.stringify(sample_releases));
-      this.$httpBackend.expectGET('/api/scheduled_changes/releases?all=1')
-      .respond(200, JSON.stringify(sample_scheduled_changes));
       this.$httpBackend.flush();
       expect(this.scope.releases.length).toEqual(3);
       var transformedReleases = angular.copy(sample_releases.releases);
       transformedReleases.forEach(function(release) {
         release.required_signoffs = {length: 0, roles: {}};
-        if (release.name === "Fennec-mozilla-aurora-nightly-20140410004003") {
-          release.sc = sample_scheduled_changes['scheduled_changes'][0];
-        }
       });
       expect(this.scope.releases).toEqual(transformedReleases);
     });
@@ -195,8 +167,6 @@ describe("controller: ReleasesController", function() {
     it("should be possible to change ordering", function() {
       this.$httpBackend.expectGET('/api/releases')
       .respond(200, JSON.stringify(sample_releases));
-      this.$httpBackend.expectGET('/api/scheduled_changes/releases?all=1')
-      .respond(200, '{}');
       this.$httpBackend.flush();
 
       var $scope = this.scope;
@@ -215,8 +185,6 @@ describe("controller: ReleasesController", function() {
     it("should notice if filters are on", function() {
       this.$httpBackend.expectGET('/api/releases')
       .respond(200, JSON.stringify(sample_releases));
-      this.$httpBackend.expectGET('/api/scheduled_changes/releases?all=1')
-      .respond(200, '{}');
       this.$httpBackend.flush();
 
       var $scope = this.scope;
@@ -231,8 +199,6 @@ describe("controller: ReleasesController", function() {
     it("should be possible to open the add modal", function() {
       this.$httpBackend.expectGET('/api/releases')
       .respond(200, JSON.stringify(sample_releases));
-      this.$httpBackend.expectGET('/api/scheduled_changes/releases?all=1')
-      .respond(200, '{}');
       this.$httpBackend.flush();
       // this.$httpBackend.expectGET('/api/releases?names_only=1')
       // .respond(200, JSON.stringify({names: ['Name1', 'Name2']}));
@@ -247,8 +213,6 @@ describe("controller: ReleasesController", function() {
     it("should be possible to open the edit modal", function() {
       this.$httpBackend.expectGET('/api/releases')
       .respond(200, JSON.stringify(sample_releases));
-      this.$httpBackend.expectGET('/api/scheduled_changes/releases?all=1')
-      .respond(200, '{}');
       this.$httpBackend.flush();
       this.scope.openUpdateModal(sample_releases.releases[0]);
       this.$httpBackend.expectGET('/api/releases/columns/product')
@@ -258,8 +222,6 @@ describe("controller: ReleasesController", function() {
     it("should be possible to open the delete modal", function() {
       this.$httpBackend.expectGET('/api/releases')
       .respond(200, JSON.stringify(sample_releases));
-      this.$httpBackend.expectGET('/api/scheduled_changes/releases?all=1')
-      .respond(200, '{}');
       this.$httpBackend.flush();
       this.scope.openDeleteModal(sample_releases.releases[0]);
     });
@@ -267,8 +229,6 @@ describe("controller: ReleasesController", function() {
     it("should be possible to open the data modal", function() {
       this.$httpBackend.expectGET('/api/releases')
       .respond(200, JSON.stringify(sample_releases));
-      this.$httpBackend.expectGET('/api/scheduled_changes/releases?all=1')
-      .respond(200, '{}');
       this.$httpBackend.flush();
 
       this.$httpBackend.expectGET('/api/releases/' + release.name)
@@ -280,8 +240,6 @@ describe("controller: ReleasesController", function() {
     it("should be possible to open the diff modal", function() {
       this.$httpBackend.expectGET('/api/releases')
       .respond(200, JSON.stringify(sample_releases));
-      this.$httpBackend.expectGET('/api/scheduled_changes/releases?all=1')
-      .respond(200, '{}');
       this.$httpBackend.flush();
 
       this.$httpBackend.expectGET('/api/releases/' + release.name)

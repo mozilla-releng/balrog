@@ -314,29 +314,19 @@ class ReleaseReadOnlyView(AdminView):
 
         data_version = connexion.request.get_json().get("data_version")
         is_release_read_only = dbo.releases.isReadOnly(release)
-        where = {"name": release}
 
         if connexion.request.get_json().get("read_only"):
             if not is_release_read_only:
-                dbo.releases.change_readonly(where, True, changed_by, old_data_version=data_version, transaction=transaction)
+                dbo.releases.update(
+                    where={"name": release}, what={"read_only": True}, changed_by=changed_by, old_data_version=data_version, transaction=transaction
+                )
                 data_version += 1
         else:
-            dbo.releases.change_readonly(where, False, changed_by, old_data_version=data_version, transaction=transaction)
+            dbo.releases.update(
+                where={"name": release}, what={"read_only": False}, changed_by=changed_by, old_data_version=data_version, transaction=transaction
+            )
             data_version += 1
         return Response(status=201, response=json.dumps(dict(new_data_version=data_version)))
-
-
-class ReleaseReadOnlyProductRequiredSignoffsView(AdminView):
-    """/releases/:release/read_only/product/required_signoffs"""
-
-    def get(self, release):
-        releases = dbo.releases.getReleases(name=release, limit=1)
-        if not releases:
-            return problem(404, "Not Found", f"Release: {release} not found")
-        release = releases[0]
-        potential_rs = dbo.releases.getPotentialRequiredSignoffsForProduct(release["product"])
-        rs = {"required_signoffs": serialize_signoff_requirements(potential_rs["rs"])}
-        return jsonify(rs)
 
 
 class ReleasesAPIView(AdminView):
@@ -445,11 +435,7 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
             if not what.get("data_version", None):
                 return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
-        try:
-            return super(ReleaseScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
-        except ReadOnlyError as e:
-            msg = f"Failed to schedule change - {e}"
-            return problem(400, "Bad Request", msg, ext={"data": e.args})
+        return super(ReleaseScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
 
 
 class ReleaseScheduledChangeView(ScheduledChangeView):

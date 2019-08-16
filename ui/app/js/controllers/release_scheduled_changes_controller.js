@@ -38,10 +38,6 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
     });
   }
 
-  $scope.isScheduledToBeModifiable = function(sc) {
-    return sc.change_type === 'update' && !sc.data && sc.hasOwnProperty('read_only') && !sc.read_only;
-  };
-
   $scope.openDataModal = function(release) { 
     var modalInstance = $modal.open({
       templateUrl: 'release_scheduled_change_data_modal.html',
@@ -91,13 +87,6 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
       if (sc.when !== null) {
         sc.when = new Date(sc.when);
       }
-
-      if (!sc.complete && $scope.isScheduledToBeModifiable(sc)) {
-        Releases.getRequiredSignoffsForProduct(sc.name).success(function(response) {
-          sc.required_signoffs = response.required_signoffs;
-        });
-      }
-
       return sc;
     });
   })

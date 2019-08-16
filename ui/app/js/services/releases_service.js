@@ -83,9 +83,6 @@ angular.module("app").factory('Releases', function($http, $q, ScheduledChanges, 
     getReadOnly: function(name) {
       return $http.get('/api/releases/' + encodeURIComponent(name) + '/read_only');
     },
-    getRequiredSignoffsForProduct: function(name) {
-      return $http.get('/api/releases/' + encodeURIComponent(name) + '/read_only/product/required_signoffs');
-    },
     getData: function(link) {
       var deferred = $q.defer();
       $http.get(link)
