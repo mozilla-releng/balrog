@@ -54,6 +54,7 @@ def _get_release(release):
 
 def get_release(release, with_csrf_header=False):
     release = _get_release(release)
+    print(release)
     if not release:
         return problem(404, "Not Found", "Release name: %s not found" % release)
     headers = {"X-Data-Version": release["data_version"]}
