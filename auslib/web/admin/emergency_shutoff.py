@@ -23,7 +23,7 @@ def shutoff_exists(product, channel):
 @handleGeneralExceptions("POST")
 def post(emergency_shutoff, changed_by, transaction):
     if shutoff_exists(emergency_shutoff["product"], emergency_shutoff["channel"]):
-        return problem(400, "Bad Request", "Invalid Emergency shutoff data", ext={"data": "Emergency shutoff for product/channel already exists."})
+        return problem(400, "Bad Request", "Invalid Emergency shutoff data", ext={"exception": "Emergency shutoff for product/channel already exists."})
     inserted_shutoff = dbo.emergencyShutoffs.insert(
         changed_by=changed_by, transaction=transaction, product=emergency_shutoff["product"], channel=emergency_shutoff["channel"]
     )
