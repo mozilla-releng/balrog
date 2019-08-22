@@ -145,11 +145,11 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
             except BlobValidationError as e:
                 msg = "Couldn't create release: %s" % e
                 log.warning("Bad input: %s", rel)
-                return problem(400, "Bad Request", msg, ext={"data": e.errors})
+                return problem(400, "Bad Request", msg, ext={"exception": e.errors})
             except ValueError as e:
                 msg = "Couldn't create release: %s" % e
                 log.warning("Bad input: %s", rel)
-                return problem(400, "Bad Request", msg, ext={"data": e.args})
+                return problem(400, "Bad Request", msg, ext={"exception": e.args})
             old_data_version = 1
 
         extraArgs = {}
@@ -160,15 +160,15 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
         except BlobValidationError as e:
             msg = "Couldn't update release: %s" % e
             log.warning("Bad input: %s", rel)
-            return problem(400, "Bad Request", msg, ext={"data": e.errors})
+            return problem(400, "Bad Request", msg, ext={"exception": e.errors})
         except ReadOnlyError as e:
             msg = "Couldn't update release: %s" % e
             log.warning("Bad input: %s", rel)
-            return problem(403, "Forbidden", msg, ext={"data": e.args})
+            return problem(403, "Forbidden", msg, ext={"exception": e.args})
         except (ValueError, OutdatedDataError) as e:
             msg = "Couldn't update release: %s" % e
             log.warning("Bad input: %s", rel)
-            return problem(400, "Bad Request", msg, ext={"data": e.args})
+            return problem(400, "Bad Request", msg, ext={"exception": e.args})
 
     new_data_version = dbo.releases.getReleases(name=release, transaction=transaction)[0]["data_version"]
     if new:
@@ -230,15 +230,15 @@ class SingleReleaseView(AdminView):
             except BlobValidationError as e:
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
-                return problem(400, "Bad Request", "Couldn't update release", ext={"data": e.errors})
+                return problem(400, "Bad Request", "Couldn't update release", ext={"exception": e.errors})
             except ReadOnlyError as e:
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
-                return problem(403, "Forbidden", "Couldn't update release. Release is marked read only", ext={"data": e.args})
+                return problem(403, "Forbidden", "Couldn't update release. Release is marked read only", ext={"exception": e.args})
             except ValueError as e:
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
-                return problem(400, "Bad Request", "Couldn't update release", ext={"data": e.args})
+                return problem(400, "Bad Request", "Couldn't update release", ext={"exception": e.args})
             # the data_version might jump by more than 1 if outdated blobs are
             # merged
             data_version = dbo.releases.getReleases(name=release, transaction=transaction)[0]["data_version"]
@@ -252,11 +252,11 @@ class SingleReleaseView(AdminView):
             except BlobValidationError as e:
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
-                return problem(400, "Bad Request", "Couldn't update release", ext={"data": e.errors})
+                return problem(400, "Bad Request", "Couldn't update release", ext={"exception": e.errors})
             except ValueError as e:
                 msg = "Couldn't update release: %s" % e
                 self.log.warning("Bad input: %s", msg)
-                return problem(400, "Bad Request", "Couldn't update release", ext={"data": e.args})
+                return problem(400, "Bad Request", "Couldn't update release", ext={"exception": e.args})
             return Response(status=201)
 
     @requirelogin
@@ -290,7 +290,7 @@ class SingleReleaseView(AdminView):
         except ReadOnlyError as e:
             msg = "Couldn't delete release: %s" % e
             self.log.warning("Bad input: %s", msg)
-            return problem(403, "Forbidden", "Couldn't delete %s. Release is marked read only" % release["name"], ext={"data": e.args})
+            return problem(403, "Forbidden", "Couldn't delete %s. Release is marked read only" % release["name"], ext={"exception": e.args})
 
         return Response(status=200)
 
@@ -347,7 +347,7 @@ class ReleasesAPIView(AdminView):
                 400,
                 "Bad Request",
                 "Release: %s already exists" % connexion.request.get_json().get("name"),
-                ext={"data": "Database already contains the release"},
+                ext={"exception": "Database already contains the release"},
             )
         try:
             blob = createBlob(connexion.request.get_json().get("blob"))
@@ -361,11 +361,11 @@ class ReleasesAPIView(AdminView):
         except BlobValidationError as e:
             msg = "Couldn't create release: %s" % e
             self.log.warning("Bad input: %s", msg)
-            return problem(400, "Bad Request", "Couldn't create release", ext={"data": e.errors})
+            return problem(400, "Bad Request", "Couldn't create release", ext={"exception": e.errors})
         except ValueError as e:
             msg = "Couldn't create release: %s" % e
             self.log.warning("Bad input: %s", msg)
-            return problem(400, "Bad Request", "Couldn't create release", ext={"data": e.args})
+            return problem(400, "Bad Request", "Couldn't create release", ext={"exception": e.args})
 
         release = dbo.releases.getReleases(name=name, transaction=transaction, limit=1)[0]
         return Response(status=201, response=json.dumps(dict(new_data_version=release["data_version"])))
