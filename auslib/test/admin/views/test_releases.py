@@ -1939,7 +1939,16 @@ class TestReleasesScheduledChanges(ViewTest):
         release_before_enact_change = dict(row_before_enact_change)
 
         dbo.releases.scheduled_changes.t.insert().execute(
-            sc_id=42, scheduled_by="bill", complete=False, change_type="update", base_read_only=False, base_data_version=1, base_name="z", data_version=1
+            sc_id=42,
+            scheduled_by="bill",
+            complete=False,
+            change_type="update",
+            base_read_only=False,
+            base_data_version=1,
+            base_name="z",
+            base_product="z",
+            base_data=createBlob(dict(name="z", hashFunction="sha512", schema_version=1)),
+            data_version=1,
         )
         dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=42, when=230000000, data_version=1)
         dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=42, username="bill", role="releng")
@@ -1974,7 +1983,16 @@ class TestReleasesScheduledChanges(ViewTest):
 
     def testEnactScheduledChangesUpdateReadWrite_RequiredSignoffsForProduct(self):
         dbo.releases.scheduled_changes.t.insert().execute(
-            sc_id=4200024, scheduled_by="bill", complete=False, change_type="update", base_read_only=False, base_data_version=1, base_name="ZA", data_version=1
+            sc_id=4200024,
+            scheduled_by="bill",
+            complete=False,
+            change_type="update",
+            base_read_only=False,
+            base_data_version=1,
+            base_name="ZA",
+            base_product="ZA",
+            base_data=createBlob(dict(name="ZA", hashFunction="sha512", schema_version=1)),
+            data_version=1,
         )
         dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=4200024, when=230000000, data_version=1)
         dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4200024, username="bill", role="releng")
@@ -1989,7 +2007,15 @@ class TestReleasesScheduledChanges(ViewTest):
 
     def testEnactScheduledChangesUpdateReadWrite_RequiredSignoffsForProduct_NoSignoffsGiven(self):
         dbo.releases.scheduled_changes.t.insert().execute(
-            sc_id=4200024, scheduled_by="bill", complete=False, change_type="update", base_read_only=False, base_data_version=1, base_name="ZA", data_version=1
+            sc_id=4200024,
+            scheduled_by="bill",
+            complete=False,
+            change_type="update",
+            base_read_only=False,
+            base_data_version=1,
+            base_name="ZA",
+            base_data=createBlob(dict(name="ZA", hashFunction="sha512", schema_version=1)),
+            data_version=1,
         )
         dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=4200024, when=230000000, data_version=1)
 

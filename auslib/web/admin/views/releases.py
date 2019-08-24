@@ -422,22 +422,28 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        if connexion.request.get_json().get("when", None) is None:
+        sc = connexion.request.get_json()
+        if sc.get("when", None) is None:
             return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Release")
-        change_type = connexion.request.get_json().get("change_type")
+        change_type = sc.get("change_type")
 
         what = {}
-        for field in connexion.request.get_json():
+        for field in sc:
             if field == "csrf_token":
                 continue
-            what[field] = connexion.request.get_json()[field]
+            what[field] = sc[field]
 
         if change_type == "update":
             if not what.get("data_version", None):
                 return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
-            if what.get("data", None):
-                what["data"] = createBlob(what.get("data"))
+            data = what.get("data", None)
+
+            if data:
+                what["data"] = createBlob(data)
+
+            if "read_only" in what and not data:
+                what["data"] = self.table.getReleaseBlob(what["name"])
 
         elif change_type == "insert":
             if not what.get("product", None):

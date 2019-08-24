@@ -1955,12 +1955,9 @@ class Releases(AUSTable):
         current_releases = self.select(where=where, columns=[self.name, self.product, self.read_only], transaction=transaction)
         for current_release in current_releases:
             name = current_release["name"]
+            is_readonly_change = "read_only" in what and current_release["read_only"] != what["read_only"]
 
-            if "read_only" in what and current_release["read_only"] != what["read_only"]:
-                self.change_readonly(where, what["read_only"], changed_by, old_data_version, transaction=transaction, dryrun=dryrun, signoffs=signoffs)
-                continue
-
-            if "product" in what or "data" in what:
+            if not is_readonly_change and ("product" in what or "data" in what):
                 self._proceedIfNotReadOnly(current_release["name"], transaction=transaction)
 
             if blob:
@@ -1977,6 +1974,12 @@ class Releases(AUSTable):
                 # has permission to modify releases of that product, too.
                 if not self.db.hasPermission(changed_by, "release", "modify", what["product"], transaction):
                     raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, what["product"]))
+
+            if is_readonly_change:
+                self.validate_readonly_change(
+                    where, what["read_only"], changed_by, release=current_release, transaction=transaction, dryrun=dryrun, signoffs=signoffs
+                )
+                continue
 
             new_release = current_release.copy()
             new_release.update(what)
@@ -2131,18 +2134,20 @@ class Releases(AUSTable):
         if self.isReadOnly(name, limit, transaction):
             raise ReadOnlyError("Release '%s' is read only" % name)
 
-    def change_readonly(self, where, is_readonly, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
-        release = self.select(where=where, columns=[self.name, self.product], transaction=transaction)[0]
+    def validate_readonly_change(self, where, new_readonly_state, changed_by, release=None, transaction=None, dryrun=False, signoffs=None):
+        if not release:
+            release = self.select(where=where, columns=[self.name, self.product], transaction=transaction)[0]
+
         product = release["product"]
 
-        if is_readonly:
+        if new_readonly_state:
             if not self.db.hasPermission(changed_by, "release_read_only", "set", product, transaction):
                 raise PermissionDeniedError(f"{changed_by} is not allowed to mark {product} products read only")
         else:
             if not self.db.hasPermission(changed_by, "release_read_only", "unset", product, transaction):
                 raise PermissionDeniedError(f"{changed_by} is not allowed to mark {product} products read write")
 
-        if not dryrun and not is_readonly:
+        if not dryrun and not new_readonly_state:
 
             def _map_required_signoffs(required_signoffs):
                 return [obj for v in required_signoffs for obj in v]
@@ -2155,7 +2160,10 @@ class Releases(AUSTable):
                     self.getPotentialRequiredSignoffsForProduct(release["product"], transaction=transaction).values()
                 )
             verify_signoffs(potential_required_signoffs, signoffs)
-        super().update(where, {"read_only": is_readonly}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
+
+    def change_readonly(self, where, is_readonly, changed_by, old_data_version, transaction=None):
+        self.validate_readonly_change(where, is_readonly, changed_by, transaction=transaction)
+        super().update(where, {"read_only": is_readonly}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
 
 class UserRoles(AUSTable):
