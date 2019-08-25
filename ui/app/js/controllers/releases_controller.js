@@ -49,7 +49,7 @@ function($scope, $routeParams, $location, $timeout, Releases, Search, $modal, Pa
           if (sc_response.count > 0) {
             $scope.releases.forEach(function(release) {
               var scheduled_change = sc_response.scheduled_changes.find(function(sc) {
-                return sc.name === release.name;
+                return sc.name === release.name && !sc.complete;
               });
               if (scheduled_change) {
                 release.sc = scheduled_change;
