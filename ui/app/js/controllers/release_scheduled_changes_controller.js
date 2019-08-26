@@ -92,7 +92,7 @@ function($scope, $routeParams, $location, $timeout, Search, $modal, $route, Rele
         sc.when = new Date(sc.when);
       }
 
-      if (!sc.complete && $scope.isScheduledToBeModifiable(sc)) {
+      if (!sc.complete && $scope.isScheduledToBeModifiable(sc) && Object.keys(sc.required_signoffs).length === 0) {
         Releases.getRequiredSignoffsForProduct(sc.name).success(function(response) {
           sc.required_signoffs = response.required_signoffs;
         });
