@@ -153,12 +153,21 @@ definitions:
               type: integer
               minimum: 0
             example: [487, 589]
+          rule_info:
+            description: basic information about the rules that point to the requested release
+            type: object
+            properties:
+              product:
+                type: string
+              channel:
+                type: string
     required:
       - name
       - product
       - data_version
       - read_only
       - rule_ids
+      - rule_info
 
   UpdateType:
     title: Rule's update_type field

@@ -3591,19 +3591,19 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def testGetReleaseInfoAll(self):
         releases = self.releases.getReleaseInfo()
         expected = [
-            dict(name="a", product="a", data_version=1, read_only=False, rule_ids=[]),
-            dict(name="ab", product="a", data_version=1, read_only=False, rule_ids=[]),
-            dict(name="b", product="b", data_version=1, read_only=False, rule_ids=[]),
-            dict(name="c", product="c", data_version=1, read_only=False, rule_ids=[2]),
-            dict(name="h", product="b", data_version=1, read_only=False, rule_ids=[1, 2]),
+            dict(name="a", product="a", data_version=1, read_only=False, rule_ids=[], rule_info={}),
+            dict(name="ab", product="a", data_version=1, read_only=False, rule_ids=[], rule_info={}),
+            dict(name="b", product="b", data_version=1, read_only=False, rule_ids=[], rule_info={}),
+            dict(name="c", product="c", data_version=1, read_only=False, rule_ids=[2], rule_info={"2": {"product": "b", "channel": "h"}}),
+            dict(name="h", product="b", data_version=1, read_only=False, rule_ids=[1,2], rule_info={"1": {"product": "b", "channel": "h"}, "2": {"product": "b", "channel": "h"}}),
         ]
         self.assertEqual(releases, expected)
 
     def testGetReleaseInfoProduct(self):
         releases = self.releases.getReleaseInfo(product="a")
         expected = [
-            dict(name="a", product="a", data_version=1, read_only=False, rule_ids=[]),
-            dict(name="ab", product="a", data_version=1, read_only=False, rule_ids=[]),
+            dict(name="a", product="a", data_version=1, read_only=False, rule_ids=[], rule_info={}),
+            dict(name="ab", product="a", data_version=1, read_only=False, rule_ids=[], rule_info={}),
         ]
         self.assertEqual(releases, expected)
 
@@ -3611,7 +3611,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.releases.t.insert().execute(name="fallback", product="e", data=createBlob(dict(name="e", schema_version=1, hashFunction="sha512")), data_version=1)
         self.rules.t.insert().execute(rule_id=4, priority=100, fallbackMapping="fallback", version="3.5", update_type="z", data_version=1)
         releases = self.releases.getReleaseInfo(product="e")
-        expected = [dict(name="fallback", product="e", data_version=1, read_only=False, rule_ids=[4])]
+        expected = [dict(name="fallback", product="e", data_version=1, read_only=False, rule_ids=[4], rule_info={"4": {"product": None, "channel": None}})]
         self.assertEqual(releases, expected)
 
     def testGetReleaseInfoNoMatch(self):
@@ -3622,8 +3622,8 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def testGetReleaseInfoNamePrefix(self):
         releases = self.releases.getReleaseInfo(name_prefix="a")
         expected = [
-            dict(name="a", product="a", data_version=1, read_only=False, rule_ids=[]),
-            dict(name="ab", product="a", data_version=1, read_only=False, rule_ids=[]),
+            dict(name="a", product="a", data_version=1, read_only=False, rule_ids=[], rule_info={}),
+            dict(name="ab", product="a", data_version=1, read_only=False, rule_ids=[], rule_info={}),
         ]
         self.assertEqual(releases, expected)
 
@@ -3635,6 +3635,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
     def testPresentRuleIdField(self):
         releases = self.releases.getReleaseInfo()
         self.assertTrue("rule_ids" in releases[0])
+        self.assertTrue("rule_info" in releases[0])
 
     def testGetReleaseNames(self):
         releases = self.releases.getReleaseNames()

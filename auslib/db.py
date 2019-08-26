@@ -1784,11 +1784,8 @@ class Releases(AUSTable):
         # Required Signoffs.
         if info:
             # get all rules as one query
-            q_rules = [self.db.rules.rule_id.in_(tuple([rule_id for row in info for rule_id in row["rule_ids"]]))]
+            q_rules = [self.db.rules.rule_id.in_(tuple([rule_id for row in info for rule_id in row["rule_info"].keys()]))]
             all_rules = self.db.rules.select(where=q_rules, transaction=transaction)
-
-            # map rules according to rule_id
-            rules_map = {rule["rule_id"]: rule for rule in all_rules}
 
             # get all rs as one query
             all_rs = self.db.rules.getPotentialRequiredSignoffs(all_rules, transaction=transaction)
@@ -1796,8 +1793,7 @@ class Releases(AUSTable):
             for row in info:
                 rs = []
                 potential_required_signoffs[row["name"]] = []
-                for rule_id in row["rule_ids"]:
-                    rule = rules_map[rule_id]
+                for rule in row["rule_info"].values():
                     _rs = all_rs[(rule["product"], rule["channel"])]
                     rs.extend(_rs)
                 potential_required_signoffs[row["name"]] = rs
@@ -1847,17 +1843,19 @@ class Releases(AUSTable):
                 ((self.db.releases.name == self.db.rules.mapping) | (self.db.releases.name == self.db.rules.fallbackMapping)),
             )
             if transaction:
-                ref_list = transaction.execute(select([self.db.releases.name, self.db.rules.rule_id]).select_from(j)).fetchall()
+                ref_list = transaction.execute(select([self.db.releases.name, self.db.rules.rule_id, self.db.rules.product, self.db.rules.channel]).select_from(j)).fetchall()
             else:
-                ref_list = self.getEngine().execute(select([self.db.releases.name, self.db.rules.rule_id]).select_from(j)).fetchall()
+                ref_list = self.getEngine().execute(select([self.db.releases.name, self.db.rules.rule_id, self.db.rules.product, self.db.rules.channel]).select_from(j)).fetchall()
 
             for row in rows:
                 refs = [ref for ref in ref_list if ref[0] == row["name"]]
                 ref_list = [ref for ref in ref_list if ref[0] != row["name"]]
                 if len(refs) > 0:
                     row["rule_ids"] = [ref[1] for ref in refs]
+                    row["rule_info"] = {str(ref[1]): {"product": ref[2], "channel": ref[3]} for ref in refs}
                 else:
                     row["rule_ids"] = []
+                    row["rule_info"] = {}
 
         return rows
 
