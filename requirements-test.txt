@@ -63,9 +63,9 @@ mock==3.0.5 \
     --hash=sha256:d157e52d4e5b938c550f39eb2fd15610db062441a9c2747d3dbfa9298211d0f8
 ordereddict==1.1 \
     --hash=sha256:1c35b4ac206cef2d24816c89f89cf289dd3d38cf7c449bb3fab7bf6d43f01b1f
-paste==3.1.0 \
-    --hash=sha256:18323f22df5ab6998fdf4c5aa5a9f41d33ff949a87ad7b2ca48e72fbf50fa3e4 \
-    --hash=sha256:7add706caca21f315070ca0e714abf0fb014ac597cc5ac02e9ddd135241ac3ed
+paste==3.1.1 \
+    --hash=sha256:6e9d7f6bc041d114ec5dd5e5b3e696438c0f0c61f0fc5dae52357d7ed3282c5f \
+    --hash=sha256:baca402a089594db0cf1e9aae5c98bcf91588bbbaf848527257e246b960eb72f
 pyflakes==2.1.1 \
     --hash=sha256:17dbeb2e3f4d772725c777fabc446d5634d1038f234e77343108ce445ea69ce0 \
     --hash=sha256:d976835886f8c5b31d47970ed689944a0262b5f3afa00a5a7b4dc81e5449f8a2
