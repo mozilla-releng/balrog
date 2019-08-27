@@ -1783,12 +1783,13 @@ class Releases(AUSTable):
         # to them. We need to find these Rules, and then return _their_
         # Required Signoffs.
         if info:
-            # get all rules as one query
-            q_rules = [self.db.rules.rule_id.in_(tuple([rule_id for row in info for rule_id in row["rule_info"].keys()]))]
-            all_rules = self.db.rules.select(where=q_rules, transaction=transaction)
+            relevant_rules = []
+            for row in info:
+                for rule_info in row["rule_info"].values():
+                    relevant_rules.append(rule_info)
 
             # get all rs as one query
-            all_rs = self.db.rules.getPotentialRequiredSignoffs(all_rules, transaction=transaction)
+            all_rs = self.db.rules.getPotentialRequiredSignoffs(relevant_rules, transaction=transaction)
 
             for row in info:
                 rs = []
