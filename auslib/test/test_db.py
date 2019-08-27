@@ -3595,7 +3595,14 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
             dict(name="ab", product="a", data_version=1, read_only=False, rule_ids=[], rule_info={}),
             dict(name="b", product="b", data_version=1, read_only=False, rule_ids=[], rule_info={}),
             dict(name="c", product="c", data_version=1, read_only=False, rule_ids=[2], rule_info={"2": {"product": "b", "channel": "h"}}),
-            dict(name="h", product="b", data_version=1, read_only=False, rule_ids=[1,2], rule_info={"1": {"product": "b", "channel": "h"}, "2": {"product": "b", "channel": "h"}}),
+            dict(
+                name="h",
+                product="b",
+                data_version=1,
+                read_only=False,
+                rule_ids=[1, 2],
+                rule_info={"1": {"product": "b", "channel": "h"}, "2": {"product": "b", "channel": "h"}},
+            ),
         ]
         self.assertEqual(releases, expected)
 

@@ -1843,9 +1843,15 @@ class Releases(AUSTable):
                 ((self.db.releases.name == self.db.rules.mapping) | (self.db.releases.name == self.db.rules.fallbackMapping)),
             )
             if transaction:
-                ref_list = transaction.execute(select([self.db.releases.name, self.db.rules.rule_id, self.db.rules.product, self.db.rules.channel]).select_from(j)).fetchall()
+                ref_list = transaction.execute(
+                    select([self.db.releases.name, self.db.rules.rule_id, self.db.rules.product, self.db.rules.channel]).select_from(j)
+                ).fetchall()
             else:
-                ref_list = self.getEngine().execute(select([self.db.releases.name, self.db.rules.rule_id, self.db.rules.product, self.db.rules.channel]).select_from(j)).fetchall()
+                ref_list = (
+                    self.getEngine()
+                    .execute(select([self.db.releases.name, self.db.rules.rule_id, self.db.rules.product, self.db.rules.channel]).select_from(j))
+                    .fetchall()
+                )
 
             for row in rows:
                 refs = [ref for ref in ref_list if ref[0] == row["name"]]
