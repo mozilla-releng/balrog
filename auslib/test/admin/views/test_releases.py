@@ -1207,8 +1207,19 @@ cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda
                 """
 {
     "releases": [
-        {"data_version": 1, "name": "a", "product": "a", "read_only": false, "rule_ids": [3, 4, 6, 7, 8, 9], "required_signoffs": {"releng": 1}},
-        {"data_version": 1, "name": "ab", "product": "a", "read_only": false, "rule_ids": [], "required_signoffs": {}}
+        {"data_version": 1, "name": "a", "product": "a", "read_only": false,
+         "rule_ids": [3, 4, 6, 7, 8, 9],
+         "rule_info": {
+           "3": {"product": "a", "channel": "a"},
+           "4": {"product": "fake", "channel": "a"},
+           "6": {"product": "fake", "channel": "e"},
+           "7": {"product": "fake", "channel": "c"},
+           "8": {"product": "fake2", "channel": "c"},
+           "9": {"product": "fake3", "channel": "c"}
+         },
+         "required_signoffs": {"releng": 1}
+        },
+        {"data_version": 1, "name": "ab", "product": "a", "read_only": false, "rule_ids": [], "rule_info": {}, "required_signoffs": {}}
     ]
 }
 """
@@ -2122,6 +2133,7 @@ class TestRuleIdsReturned(ViewTest):
         releases = self._get("/releases")
         releases_data = json.loads(releases.data)
         self.assertTrue("rule_ids" in releases_data["releases"][0])
+        self.assertTrue("rule_info" in releases_data["releases"][0])
 
     def testMappingIncluded(self):
         rel_name = "ab"
@@ -2131,7 +2143,9 @@ class TestRuleIdsReturned(ViewTest):
         releases_data = json.loads(releases.data)
         not_mapped_rel = next(rel for rel in releases_data["releases"] if rel["name"] == rel_name)
         self.assertEqual(len(not_mapped_rel["rule_ids"]), 0)
+        self.assertEqual(len(not_mapped_rel["rule_info"]), 0)
         self.assertFalse(rule_id in not_mapped_rel["rule_ids"])
+        self.assertFalse(rule_id in not_mapped_rel["rule_info"].keys())
 
         dbo.rules.t.insert().execute(
             id=rule_id, priority=100, version="3.5", buildTarget="d", backgroundRate=100, mapping=rel_name, update_type="minor", data_version=1
@@ -2141,4 +2155,6 @@ class TestRuleIdsReturned(ViewTest):
         releases_data = json.loads(releases.data)
         mapped_rel = next(rel for rel in releases_data["releases"] if rel["name"] == rel_name)
         self.assertEqual(len(mapped_rel["rule_ids"]), 1)
+        self.assertEqual(len(mapped_rel["rule_info"]), 1)
         self.assertTrue(rule_id in mapped_rel["rule_ids"])
+        self.assertTrue(str(rule_id) in mapped_rel["rule_info"].keys())
