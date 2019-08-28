@@ -2153,7 +2153,6 @@ class TestRuleIdsReturned(ViewTest):
 
         releases = self._get("/releases")
         releases_data = json.loads(releases.data)
-        print(releases_data)
         mapped_rel = next(rel for rel in releases_data["releases"] if rel["name"] == rel_name)
         self.assertEqual(len(mapped_rel["rule_ids"]), 1)
         self.assertEqual(len(mapped_rel["rule_info"]), 1)

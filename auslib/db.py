@@ -1783,10 +1783,7 @@ class Releases(AUSTable):
         # to them. We need to find these Rules, and then return _their_
         # Required Signoffs.
         if info:
-            relevant_rules = []
-            for row in info:
-                for rule_info in row["rule_info"].values():
-                    relevant_rules.append(rule_info)
+            relevant_rules = [rule_info for row in info for rule_info in row["rule_info"].values()]
 
             # get all rs as one query
             all_rs = self.db.rules.getPotentialRequiredSignoffs(relevant_rules, transaction=transaction)
@@ -1857,12 +1854,8 @@ class Releases(AUSTable):
             for row in rows:
                 refs = [ref for ref in ref_list if ref[0] == row["name"]]
                 ref_list = [ref for ref in ref_list if ref[0] != row["name"]]
-                if len(refs) > 0:
-                    row["rule_ids"] = [ref[1] for ref in refs]
-                    row["rule_info"] = {str(ref[1]): {"product": ref[2], "channel": ref[3]} for ref in refs}
-                else:
-                    row["rule_ids"] = []
-                    row["rule_info"] = {}
+                row["rule_ids"] = [ref[1] for ref in refs]
+                row["rule_info"] = {str(ref[1]): {"product": ref[2], "channel": ref[3]} for ref in refs}
 
         return rows
 
