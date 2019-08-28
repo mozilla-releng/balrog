@@ -298,7 +298,36 @@ tasks:
         events:
           - release
     metadata:
-      name: Balrog React UI build & publish
-      description: Balrog React UI build & publish
+      name: Balrog React UI stage build & publish
+      description: Balrog React UI stage build & publish
+      owner: "{{ event.head.user.email }}"
+      source: "{{ event.head.repo.url }}"
+
+  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
+    workerType: "{{ taskcluster.docker.workerType }}"
+    scopes:
+      - secrets:get:repo:github.com/mozilla/balrog:s3-prod-aws-creds
+      - secrets:get:repo:github.com/mozilla/balrog:s3-prod-app-config
+    payload:
+      env:
+        AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-prod-aws-creds
+        APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-prod-app-config
+        WEBSITE_BUCKET: balrog-prod-balrog-static-admin-prod-static-website
+      maxRunTime: 1200
+      image: "node:current"
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd react-ui && yarn install && bash ./scripts/deploy"
+      features:
+        taskclusterProxy: true
+    extra:
+      github:
+        env: true
+        events:
+          - release
+    metadata:
+      name: Balrog React UI prod build & publish
+      description: Balrog React UI prod build & publish
       owner: "{{ event.head.user.email }}"
       source: "{{ event.head.repo.url }}"
