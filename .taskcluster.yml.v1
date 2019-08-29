@@ -207,3 +207,63 @@ tasks:
               description: Balrog backend docker build
               owner: ${owner_email}
               source: ${repo_url}
+
+      - $if: 'tasks_for == "github-release" && event["release"]["tag_name"][0] == "v"'
+        then:
+          - taskId: {$eval: as_slugid("stage-ui-deploy")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes:
+              - secrets:get:repo:github.com/mozilla/balrog:s3-stage-aws-creds
+              - secrets:get:repo:github.com/mozilla/balrog:s3-stage-app-config
+            routes: []
+            payload:
+              env:
+                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage-aws-creds
+                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage-app-config
+                WEBSITE_BUCKET: balrog-stage-balrog-static-admin-stage-static-website
+              maxRunTime: 3600
+              image: "node:current"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && bash ./scripts/deploy"
+            features:
+              taskclusterProxy: true
+            metadata:
+              name: Balrog stage ui deploy
+              description: Balrog stage ui deploy
+              owner: ${owner_email}
+              source: ${repo_url}
+
+      - $if: 'tasks_for == "github-release" && event["release"]["tag_name"] == "production-ui"'
+        then:
+          - taskId: {$eval: as_slugid("prod-ui-deploy")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes:
+              - secrets:get:repo:github.com/mozilla/balrog:s3-prod-aws-creds
+              - secrets:get:repo:github.com/mozilla/balrog:s3-prod-app-config
+            routes: []
+            payload:
+              env:
+                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-prod-aws-creds
+                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-prod-app-config
+                WEBSITE_BUCKET: balrog-prod-balrog-static-admin-prod-static-website
+              maxRunTime: 3600
+              image: "node:current"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && bash ./scripts/deploy"
+            features:
+              taskclusterProxy: true
+            metadata:
+              name: Balrog prod ui deploy
+              description: Balrog prod ui deploy
+              owner: ${owner_email}
+              source: ${repo_url}
