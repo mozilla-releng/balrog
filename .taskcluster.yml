@@ -207,7 +207,7 @@ tasks:
               owner: ${owner_email}
               source: ${repo_url}
 
-      - $if: 'tasks_for == "github-release" && release_tag[0] == "v"'
+      - $if: 'tasks_for == "github-release"'
         then:
           - taskId: {$eval: as_slugid("stage-ui-deploy")}
             created: {$fromNow: ''}
@@ -228,7 +228,7 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && bash ./scripts/deploy"
+                - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && bash ./scripts/deploy && echo ${release_tag} && echo ${release_tag[0]}"
               features:
                 taskclusterProxy: true
             metadata:
