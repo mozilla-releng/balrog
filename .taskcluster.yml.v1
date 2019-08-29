@@ -1,0 +1,204 @@
+version: 1
+policy:
+  pullRequests: public
+tasks:
+  $let:
+    # Github events have this stuff in different places...
+    repo_url: {
+      $if: 'tasks_for == "github-push"',
+      then: '${event.repository.clone_url}',
+      else: {
+        $if 'tasks_for == "github-pull-request"',
+        then: '${event.pull_request.head.repo.clone_url}',
+        else: '${event.repository.clone_url}',
+      }
+    }
+    head_sha: {
+      $if: 'tasks_for == "github-push"',
+      then: '${event.after}',
+      else: {
+        $if 'tasks_for == "github-pull-request"',
+        then: '${event.pull_request.head.sha}',
+        else: '${event.release.tag_name}',
+      }
+    }
+    owner_email: {
+      $if: 'tasks_for == "github-push"',
+      then: '${event.pusher.email}',
+      else: {
+        $if 'tasks_for == "github-pull-request"',
+        then: '${event.pull_request.user.login}@users.noreply.github.com',
+        else: '${event.sender.login}@users.noreply.github.com',
+      }
+    }
+  in:
+    $flattenDeep:
+      - $if: '(tasks_for == "github-pull-request" && event["action"] in ["opened", "reopened", "synchronize"]) || tasks_for == "github-push"'
+        then:
+          - taskId: {$eval: as_slugid("backend-tests")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes:
+              - secrets:get:repo:github.com/mozilla/balrog:coveralls
+            routes: []
+            payload:
+              maxRunTime: 1200
+              image: "mozillareleases/python-test-runner"
+              env:
+                NO_VOLUME_MOUNT: 1
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && bash run-tests.sh backend"
+            features:
+              dind: true
+              taskclusterProxy: true
+            metadata:
+              name: Balrog back-end tests
+              description: Balrog Python tests
+              owner: ${owner_email}
+              source: ${repo_url}
+  
+          - taskId: {$eval: as_slugid("agent-tests")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes: []
+            routes: []
+            payload:
+              maxRunTime: 1200
+              image: "mozillareleases/python-test-runner"
+              env:
+                NO_VOLUME_MOUNT: 1
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog/agent && git checkout ${head_sha} && bash run-tests.sh"
+            features:
+              dind: true
+            metadata:
+              name: Balrog agent tests
+              description: Balrog agent tests
+              owner: ${owner_email}
+              source: ${repo_url}
+  
+          - taskId: {$eval: as_slugid("old-ui-tests")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes: []
+            routes: []
+            payload:
+              maxRunTime: 1200
+              image: "node:0.10"
+              env:
+                NO_VOLUME_MOUNT: 1
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog/ui && git checkout ${head_sha} && npm install && npm test"
+            features:
+              dind: true
+            metadata:
+              name: Balrog frontend tests
+              description: Balrog frontend tests
+              owner: ${owner_email}
+              source: ${repo_url}
+  
+          - taskId: {$eval: as_slugid("ui-tests")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes: []
+            routes: []
+            payload:
+              maxRunTime: 1200
+              image: "node:current"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog/react-ui && git checkout ${head_sha} && yarn install && yarn lint && yarn test"
+            features:
+              dind: true
+            metadata:
+              name: Balrog react frontend tests
+              description: Balrog react frontend tests
+              owner: ${owner_email}
+              source: ${repo_url}
+  
+          - taskId: {$eval: as_slugid("ui-build")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes: []
+            routes: []
+            payload:
+              maxRunTime: 1200
+              image: "node:current"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog/react-ui && git checkout ${head_sha} && yarn install && yarn build"
+            features:
+              dind: true
+            metadata:
+              name: Balrog react frontend build
+              description: Balrog react frontend build
+              owner: ${owner_email}
+              source: ${repo_url}
+
+      - $if: 'tasks_for == "github-push" && event["ref"] == "refs/heads/master"'
+        then:
+          - taskId: {$eval: as_slugid("agent-docker-image")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes:
+              - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+            routes: []
+            payload:
+              maxRunTime: 3600
+              image: "taskcluster/image_builder:0.1.3"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog/agent && git checkout ${head_sha} && scripts/push-dockerimage.sh latest ${head_sha}"
+            features:
+              dind: true
+              taskclusterProxy: true
+            metadata:
+              name: Balrog agent docker build
+              description: Balrog agent docker build
+              owner: ${owner_email}
+              source: ${repo_url}
+
+          - taskId: {$eval: as_slugid("backend-docker-image")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes:
+              - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+            routes: []
+            payload:
+              maxRunTime: 3600
+              image: "taskcluster/image_builder:0.1.3"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && scripts/push-dockerimage.sh latest ${head_sha}"
+            features:
+              dind: true
+              taskclusterProxy: true
+            metadata:
+              name: Balrog backend docker build
+              description: Balrog backend docker build
+              owner: ${owner_email}
+              source: ${repo_url}
