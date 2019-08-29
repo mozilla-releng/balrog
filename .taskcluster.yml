@@ -10,6 +10,7 @@ tasks:
       else: {
         $if: 'tasks_for == "github-pull-request"',
         then: '${event.pull_request.head.repo.clone_url}',
+        # Assume release event
         else: '${event.repository.clone_url}',
       }
     }
@@ -19,6 +20,7 @@ tasks:
       else: {
         $if: 'tasks_for == "github-pull-request"',
         then: '${event.pull_request.head.sha}',
+        # Assume release event
         else: '${event.release.tag_name}',
       }
     }
@@ -28,14 +30,20 @@ tasks:
       else: {
         $if: 'tasks_for == "github-pull-request"',
         then: '${event.pull_request.user.login}@users.noreply.github.com',
+        # Assume release event
         else: '${event.sender.login}@users.noreply.github.com',
       }
     }
     docker_tags: {
       $if: 'tasks_for == "github-push"',
       then: 'latest ${event.after}',
+      # Assume release event
       else: '${event.release.tag_name}',
     }
+    # jsone doesn't support shortcircuiting evaluation, and we need to use
+    # ${event.release.tag_name} as part of a conditional for release event
+    # tasks, so we need to create this variable to make sure it always
+    # has a value instead of using ${event.release.tag_name} directly.
     release_tag: {
       $if: 'tasks_for == "github-release"',
       then: '${event.release.tag_name}',
@@ -207,6 +215,7 @@ tasks:
               owner: ${owner_email}
               source: ${repo_url}
 
+      # Deploy the UI to stage whenever we create a versioned release tag
       - $if: 'tasks_for == "github-release" && release_tag[0] == "v"'
         then:
           - taskId: {$eval: as_slugid("stage-ui-deploy")}
@@ -237,6 +246,7 @@ tasks:
               owner: ${owner_email}
               source: ${repo_url}
 
+      # Deploy to production only for a specific tag
       - $if: 'tasks_for == "github-release" && release_tag == "production-ui"'
         then:
           - taskId: {$eval: as_slugid("prod-ui-deploy")}
