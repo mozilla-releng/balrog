@@ -98,7 +98,7 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog/agent && git checkout ${head_sha} && bash run-tests.sh"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && bash run-tests.sh"
               features:
                 dind: true
             metadata:
@@ -122,7 +122,7 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog/ui && git checkout ${head_sha} && npm install && npm test"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd ui && npm install && npm test"
             metadata:
               name: Balrog frontend tests
               description: Balrog frontend tests
@@ -142,7 +142,7 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog/react-ui && git checkout ${head_sha} && yarn install && yarn lint && yarn test"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && yarn lint && yarn test"
             metadata:
               name: Balrog react frontend tests
               description: Balrog react frontend tests
@@ -162,7 +162,7 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog/react-ui && git checkout ${head_sha} && yarn install && yarn build"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && yarn build"
             metadata:
               name: Balrog react frontend build
               description: Balrog react frontend build
@@ -185,7 +185,7 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog/agent && git checkout ${head_sha} && scripts/push-dockerimage.sh ${docker_tags}"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && scripts/push-dockerimage.sh ${docker_tags}"
               features:
                 dind: true
                 taskclusterProxy: true
