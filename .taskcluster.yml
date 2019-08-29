@@ -36,6 +36,11 @@ tasks:
       then: 'latest ${event.after}',
       else: '${event.release.tag_name}',
     }
+    release_tag: {
+      $if: 'tasks_for == "github-release"',
+      then: '${event.release.tag_name}',
+      else: 'null',
+    }
   in:
     $flattenDeep:
       - $if: '(tasks_for == "github-pull-request" && event["action"] in ["opened", "reopened", "synchronize"]) || tasks_for == "github-push"'
@@ -57,9 +62,9 @@ tasks:
                 - "/bin/bash"
                 - "-c"
                 - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && bash run-tests.sh backend"
-            features:
-              dind: true
-              taskclusterProxy: true
+              features:
+                dind: true
+                taskclusterProxy: true
             metadata:
               name: Balrog back-end tests
               description: Balrog Python tests
@@ -82,8 +87,8 @@ tasks:
                 - "/bin/bash"
                 - "-c"
                 - "git clone ${repo_url} balrog && cd balrog/agent && git checkout ${head_sha} && bash run-tests.sh"
-            features:
-              dind: true
+              features:
+                dind: true
             metadata:
               name: Balrog agent tests
               description: Balrog agent tests
@@ -106,8 +111,6 @@ tasks:
                 - "/bin/bash"
                 - "-c"
                 - "git clone ${repo_url} balrog && cd balrog/ui && git checkout ${head_sha} && npm install && npm test"
-            features:
-              dind: true
             metadata:
               name: Balrog frontend tests
               description: Balrog frontend tests
@@ -128,8 +131,6 @@ tasks:
                 - "/bin/bash"
                 - "-c"
                 - "git clone ${repo_url} balrog && cd balrog/react-ui && git checkout ${head_sha} && yarn install && yarn lint && yarn test"
-            features:
-              dind: true
             metadata:
               name: Balrog react frontend tests
               description: Balrog react frontend tests
@@ -150,8 +151,6 @@ tasks:
                 - "/bin/bash"
                 - "-c"
                 - "git clone ${repo_url} balrog && cd balrog/react-ui && git checkout ${head_sha} && yarn install && yarn build"
-            features:
-              dind: true
             metadata:
               name: Balrog react frontend build
               description: Balrog react frontend build
@@ -175,9 +174,9 @@ tasks:
                 - "/bin/bash"
                 - "-c"
                 - "git clone ${repo_url} balrog && cd balrog/agent && git checkout ${head_sha} && scripts/push-dockerimage.sh ${docker_tags}"
-            features:
-              dind: true
-              taskclusterProxy: true
+              features:
+                dind: true
+                taskclusterProxy: true
             metadata:
               name: Balrog agent docker build
               description: Balrog agent docker build
@@ -199,16 +198,16 @@ tasks:
                 - "/bin/bash"
                 - "-c"
                 - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && scripts/push-dockerimage.sh ${docker_tags}"
-            features:
-              dind: true
-              taskclusterProxy: true
+              features:
+                dind: true
+                taskclusterProxy: true
             metadata:
               name: Balrog backend docker build
               description: Balrog backend docker build
               owner: ${owner_email}
               source: ${repo_url}
 
-      - $if: 'tasks_for == "github-release" && event["release"]["tag_name"][0] == "v"'
+      - $if: 'tasks_for == "github-release" && release_tag[0] == "v"'
         then:
           - taskId: {$eval: as_slugid("stage-ui-deploy")}
             created: {$fromNow: ''}
@@ -230,15 +229,15 @@ tasks:
                 - "/bin/bash"
                 - "-c"
                 - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && bash ./scripts/deploy"
-            features:
-              taskclusterProxy: true
+              features:
+                taskclusterProxy: true
             metadata:
               name: Balrog stage ui deploy
               description: Balrog stage ui deploy
               owner: ${owner_email}
               source: ${repo_url}
 
-      - $if: 'tasks_for == "github-release" && event["release"]["tag_name"] == "production-ui"'
+      - $if: 'tasks_for == "github-release" && release_tag == "production-ui"'
         then:
           - taskId: {$eval: as_slugid("prod-ui-deploy")}
             created: {$fromNow: ''}
@@ -260,8 +259,8 @@ tasks:
                 - "/bin/bash"
                 - "-c"
                 - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && bash ./scripts/deploy"
-            features:
-              taskclusterProxy: true
+              features:
+                taskclusterProxy: true
             metadata:
               name: Balrog prod ui deploy
               description: Balrog prod ui deploy
