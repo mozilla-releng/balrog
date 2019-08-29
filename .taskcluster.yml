@@ -157,7 +157,7 @@ tasks:
               owner: ${owner_email}
               source: ${repo_url}
 
-      - $if: '(tasks_for == "github-push" && event["ref"] == "refs/heads/master") || tasks_for == "github-release"'
+      - $if: 'tasks_for == "github-release"'
         then:
           - taskId: {$eval: as_slugid("agent-docker-image")}
             created: {$fromNow: ''}
