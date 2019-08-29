@@ -51,7 +51,7 @@ tasks:
             provisionerId: aws-provisioner-v1
             workerType: github-worker
             scopes:
-              - secrets:get:repo:github.com/mozilla/balrog:coveralls
+              - secrets:get:repo:github.com/testbhearsum/balrog:coveralls
             routes: []
             payload:
               maxRunTime: 1200
@@ -165,7 +165,7 @@ tasks:
             provisionerId: aws-provisioner-v1
             workerType: github-worker
             scopes:
-              - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+              - secrets:get:repo:github.com/testbhearsum/balrog:dockerhub
             routes: []
             payload:
               maxRunTime: 3600
@@ -189,7 +189,7 @@ tasks:
             provisionerId: aws-provisioner-v1
             workerType: github-worker
             scopes:
-              - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+              - secrets:get:repo:github.com/testbhearsum/balrog:dockerhub
             routes: []
             payload:
               maxRunTime: 3600
@@ -215,13 +215,13 @@ tasks:
             provisionerId: aws-provisioner-v1
             workerType: github-worker
             scopes:
-              - secrets:get:repo:github.com/mozilla/balrog:s3-stage-aws-creds
-              - secrets:get:repo:github.com/mozilla/balrog:s3-stage-app-config
+              - secrets:get:repo:github.com/testbhearsum/balrog:s3-stage-aws-creds
+              - secrets:get:repo:github.com/testbhearsum/balrog:s3-stage-app-config
             routes: []
             payload:
               env:
-                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage-aws-creds
-                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage-app-config
+                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/testbhearsum/balrog:s3-stage-aws-creds
+                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/testbhearsum/balrog:s3-stage-app-config
                 WEBSITE_BUCKET: balrog-stage-balrog-static-admin-stage-static-website
               maxRunTime: 3600
               image: "node:current"
@@ -245,13 +245,13 @@ tasks:
             provisionerId: aws-provisioner-v1
             workerType: github-worker
             scopes:
-              - secrets:get:repo:github.com/mozilla/balrog:s3-prod-aws-creds
-              - secrets:get:repo:github.com/mozilla/balrog:s3-prod-app-config
+              - secrets:get:repo:github.com/testbhearsum/balrog:s3-prod-aws-creds
+              - secrets:get:repo:github.com/testbhearsum/balrog:s3-prod-app-config
             routes: []
             payload:
               env:
-                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-prod-aws-creds
-                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-prod-app-config
+                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/testbhearsum/balrog:s3-prod-aws-creds
+                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/testbhearsum/balrog:s3-prod-app-config
                 WEBSITE_BUCKET: balrog-prod-balrog-static-admin-prod-static-website
               maxRunTime: 3600
               image: "node:current"
