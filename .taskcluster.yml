@@ -37,8 +37,12 @@ tasks:
     docker_tags: {
       $if: 'tasks_for == "github-push"',
       then: 'latest ${event.after}',
-      # Assume release event
-      else: '${event.release.tag_name}',
+      else: {
+        $if: 'tasks_for == "github-release"',
+        then: '${event.release.tag_name}',
+        # Unused
+        else: ''
+      }
     }
     # jsone doesn't support shortcircuiting evaluation, and we need to use
     # ${event.release.tag_name} as part of a conditional for release event
