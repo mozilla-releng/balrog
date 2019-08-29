@@ -8,7 +8,7 @@ tasks:
       $if: 'tasks_for == "github-push"',
       then: '${event.repository.clone_url}',
       else: {
-        $if 'tasks_for == "github-pull-request"',
+        $if: 'tasks_for == "github-pull-request"',
         then: '${event.pull_request.head.repo.clone_url}',
         else: '${event.repository.clone_url}',
       }
@@ -17,7 +17,7 @@ tasks:
       $if: 'tasks_for == "github-push"',
       then: '${event.after}',
       else: {
-        $if 'tasks_for == "github-pull-request"',
+        $if: 'tasks_for == "github-pull-request"',
         then: '${event.pull_request.head.sha}',
         else: '${event.release.tag_name}',
       }
@@ -26,10 +26,15 @@ tasks:
       $if: 'tasks_for == "github-push"',
       then: '${event.pusher.email}',
       else: {
-        $if 'tasks_for == "github-pull-request"',
+        $if: 'tasks_for == "github-pull-request"',
         then: '${event.pull_request.user.login}@users.noreply.github.com',
         else: '${event.sender.login}@users.noreply.github.com',
       }
+    }
+    docker_tags: {
+      $if: 'tasks_for == "github-push"',
+      then: 'latest ${event.after}',
+      else: '${event.release.tag_name}',
     }
   in:
     $flattenDeep:
@@ -153,7 +158,7 @@ tasks:
               owner: ${owner_email}
               source: ${repo_url}
 
-      - $if: 'tasks_for == "github-push" && event["ref"] == "refs/heads/master"'
+      - $if: '(tasks_for == "github-push" && event["ref"] == "refs/heads/master") || tasks_for == "github-release"'
         then:
           - taskId: {$eval: as_slugid("agent-docker-image")}
             created: {$fromNow: ''}
@@ -169,7 +174,7 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog/agent && git checkout ${head_sha} && scripts/push-dockerimage.sh latest ${head_sha}"
+                - "git clone ${repo_url} balrog && cd balrog/agent && git checkout ${head_sha} && scripts/push-dockerimage.sh ${docker_tags}"
             features:
               dind: true
               taskclusterProxy: true
@@ -193,7 +198,7 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && scripts/push-dockerimage.sh latest ${head_sha}"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && scripts/push-dockerimage.sh ${docker_tags}"
             features:
               dind: true
               taskclusterProxy: true
