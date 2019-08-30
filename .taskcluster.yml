@@ -55,7 +55,7 @@ tasks:
     }
   in:
     $flattenDeep:
-      - $if: '(tasks_for == "github-pull-request" && event["action"] in ["opened", "reopened", "synchronize"]) || tasks_for == "github-push"'
+      - $if: '(tasks_for == "github-pull-request" && event["action"] in ["edited", "opened", "reopened", "synchronize"]) || tasks_for == "github-push"'
         then:
           - taskId: {$eval: as_slugid("backend-tests")}
             created: {$fromNow: ''}
