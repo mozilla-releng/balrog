@@ -1,304 +1,282 @@
-# There's a lot going on in this file, and a lot of duplicated logic across multiple tasks.
-# Here's a summary of what we're doing for CI and Release:
-#  - We run backend, frontend, agent, and client tests on every push
-#    to the master branch, and every pull request.
-#
-#    - Ideally, we'd run tests for pushes to any branch, but every time
-#      a tag is created, it makes a push event that overrides the tests
-#      that already ran on that commit on the master branch. Limiting
-#      push events to the master branch avoids the messiness this
-#      generates.
-#
-#  - We build new docker images upon every push to the master branch.
-#    These show up on Dockerhub with tags that reference the commit.
-#
-#  - We build new docker images upon every Release (the official kind
-#    that are created through the Github UI -- not just tags). These
-#    show up on Dockerhub with tags that reference the Release version.
-#
-# Things we would like to do in the future:
-#  - Block all docker image creation tasks on tests passing. This is blocked
-#    on support for decision tasks (https://bugzilla.mozilla.org/show_bug.cgi?id=1252144).
-#
-#  - Build and publish the client library whenever a Release happens.
-#
-version: 0
-allowPullRequests: public
-metadata:
-  name: Balrog
-  description: Balrog CI Tasks
-  owner: "{{ event.head.user.email }}"
-  source: "{{ event.head.repo.url }}"
+version: 1
+policy:
+  pullRequests: public
 tasks:
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:coveralls
-    payload:
-      maxRunTime: 1200
-      image: "mozillareleases/python-test-runner"
-      env:
-        NO_VOLUME_MOUNT: 1
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && bash run-tests.sh backend"
-      features:
-        dind: true
-        taskclusterProxy: true
-    extra:
-      github:
-        env: true
-        events:
-          - pull_request.opened
-          - pull_request.synchronize
-          - pull_request.reopened
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog back-end tests
-      description: Balrog Python tests
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
+  $let:
+    # Github events have this stuff in different places...
+    repo_url: {
+      $if: 'tasks_for == "github-push"',
+      then: '${event.repository.clone_url}',
+      else: {
+        $if: 'tasks_for == "github-pull-request"',
+        then: '${event.pull_request.head.repo.clone_url}',
+        # Assume release event
+        else: '${event.repository.clone_url}',
+      }
+    }
+    head_sha: {
+      $if: 'tasks_for == "github-push"',
+      then: '${event.after}',
+      else: {
+        $if: 'tasks_for == "github-pull-request"',
+        then: '${event.pull_request.head.sha}',
+        # Assume release event
+        else: '${event.release.tag_name}',
+      }
+    }
+    owner_email: {
+      $if: 'tasks_for == "github-push"',
+      then: '${event.pusher.email}',
+      else: {
+        $if: 'tasks_for == "github-pull-request"',
+        then: '${event.pull_request.user.login}@users.noreply.github.com',
+        # Assume release event
+        else: '${event.sender.login}@users.noreply.github.com',
+      }
+    }
+    docker_tags: {
+      $if: 'tasks_for == "github-push"',
+      then: 'latest ${event.after}',
+      else: {
+        $if: 'tasks_for == "github-release"',
+        then: '${event.release.tag_name}',
+        # Unused
+        else: ''
+      }
+    }
+    # jsone doesn't support shortcircuiting evaluation, and we need to use
+    # ${event.release.tag_name} as part of a conditional for release event
+    # tasks, so we need to create this variable to make sure it always
+    # has a value instead of using ${event.release.tag_name} directly.
+    release_tag: {
+      $if: 'tasks_for == "github-release"',
+      then: '${event.release.tag_name}',
+      else: 'null',
+    }
+  in:
+    $flattenDeep:
+      - $if: '(tasks_for == "github-pull-request" && event["action"] in ["edited", "opened", "reopened", "synchronize"]) || tasks_for == "github-push"'
+        then:
+          - taskId: {$eval: as_slugid("backend-tests")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes:
+              - secrets:get:repo:github.com/mozilla/balrog:coveralls
+            routes: []
+            payload:
+              maxRunTime: 1200
+              image: "mozillareleases/python-test-runner"
+              env:
+                NO_VOLUME_MOUNT: 1
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && bash run-tests.sh backend"
+              features:
+                dind: true
+                taskclusterProxy: true
+            metadata:
+              name: Balrog back-end tests
+              description: Balrog Python tests
+              owner: ${owner_email}
+              source: ${repo_url}
 
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    payload:
-      maxRunTime: 1200
-      image: "node:0.10"
-      env:
-        NO_VOLUME_MOUNT: 1
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog/ui && git checkout $GITHUB_HEAD_BRANCH && npm install && npm test"
-      features:
-        dind: true
-    extra:
-      github:
-        env: true
-        events:
-          - pull_request.opened
-          - pull_request.synchronize
-          - pull_request.reopened
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog front-end tests
-      description: Balrog JavaScript tests
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
+          - taskId: {$eval: as_slugid("agent-tests")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes: []
+            routes: []
+            payload:
+              maxRunTime: 1200
+              image: "mozillareleases/python-test-runner"
+              env:
+                NO_VOLUME_MOUNT: 1
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && bash run-tests.sh"
+              features:
+                dind: true
+            metadata:
+              name: Balrog agent tests
+              description: Balrog agent tests
+              owner: ${owner_email}
+              source: ${repo_url}
 
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    payload:
-      maxRunTime: 1200
-      image: "mozillareleases/python-test-runner"
-      env:
-        NO_VOLUME_MOUNT: 1
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd agent && bash run-tests.sh"
-      features:
-        dind: true
-    extra:
-      github:
-        env: true
-        events:
-          - pull_request.opened
-          - pull_request.synchronize
-          - pull_request.reopened
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog Agent Tests
-      description: Balrog Agent Tests
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
+          - taskId: {$eval: as_slugid("old-ui-tests")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes: []
+            routes: []
+            payload:
+              maxRunTime: 1200
+              image: "node:0.10"
+              env:
+                NO_VOLUME_MOUNT: 1
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd ui && npm install && npm test"
+            metadata:
+              name: Balrog frontend tests
+              description: Balrog frontend tests
+              owner: ${owner_email}
+              source: ${repo_url}
 
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
-    payload:
-      maxRunTime: 3600
-      image: "taskcluster/image_builder:0.1.3"
-      features:
-        dind: true
-        taskclusterProxy: true
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog/agent && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh latest ${GITHUB_HEAD_BRANCH}-${GITHUB_HEAD_SHA}"
-    extra:
-      github:
-        env: true
-        events:
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog Agent Docker Image Creation
-      description: Balrog Agent Docker Image Creation
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
+          - taskId: {$eval: as_slugid("ui-tests")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes: []
+            routes: []
+            payload:
+              maxRunTime: 1200
+              image: "node:current"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && yarn lint && yarn test"
+            metadata:
+              name: Balrog react frontend tests
+              description: Balrog react frontend tests
+              owner: ${owner_email}
+              source: ${repo_url}
 
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
-    payload:
-      maxRunTime: 3600
-      image: "taskcluster/image_builder:0.1.3"
-      features:
-        dind: true
-        taskclusterProxy: true
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone -b {{ event.version }} {{ event.head.repo.url }} balrog && cd balrog/agent && scripts/push-dockerimage.sh {{ event.version }}"
-    extra:
-      github:
-        env: true
-        events:
-          - release
-    metadata:
-      name: Balrog Agent Docker Image Creation (release event)
-      description: Balrog Agent Docker Image Creation (release event)
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
+          - taskId: {$eval: as_slugid("ui-build")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes: []
+            routes: []
+            payload:
+              maxRunTime: 1200
+              image: "node:current"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && yarn build"
+            metadata:
+              name: Balrog react frontend build
+              description: Balrog react frontend build
+              owner: ${owner_email}
+              source: ${repo_url}
 
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
-    payload:
-      maxRunTime: 3600
-      image: "taskcluster/image_builder:0.1.3"
-      features:
-        dind: true
-        taskclusterProxy: true
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && scripts/push-dockerimage.sh Dockerfile latest ${GITHUB_HEAD_BRANCH}-${GITHUB_HEAD_SHA}"
-    extra:
-      github:
-        env: true
-        events:
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog Docker Image Creation
-      description: Balrog Docker Image Creation
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
+      - $if: 'tasks_for == "github-release"'
+        then:
+          - taskId: {$eval: as_slugid("agent-docker-image")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes:
+              - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+            routes: []
+            payload:
+              maxRunTime: 3600
+              image: "taskcluster/image_builder:0.1.3"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && scripts/push-dockerimage.sh ${docker_tags}"
+              features:
+                dind: true
+                taskclusterProxy: true
+            metadata:
+              name: Balrog agent docker build
+              description: Balrog agent docker build
+              owner: ${owner_email}
+              source: ${repo_url}
 
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:dockerhub
-    payload:
-      maxRunTime: 3600
-      image: "taskcluster/image_builder:0.1.3"
-      features:
-        dind: true
-        taskclusterProxy: true
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone -b {{ event.version }} {{ event.head.repo.url }} balrog && cd balrog && scripts/push-dockerimage.sh Dockerfile {{ event.version }}"
-    extra:
-      github:
-        env: true
-        events:
-          - release
-    metadata:
-      name: Balrog Docker Image Creation (release event)
-      description: Balrog Docker Image Creation (release event)
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
+          - taskId: {$eval: as_slugid("backend-docker-image")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes:
+              - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+            routes: []
+            payload:
+              maxRunTime: 3600
+              image: "taskcluster/image_builder:0.1.3"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && scripts/push-dockerimage.sh ${docker_tags}"
+              features:
+                dind: true
+                taskclusterProxy: true
+            metadata:
+              name: Balrog backend docker build
+              description: Balrog backend docker build
+              owner: ${owner_email}
+              source: ${repo_url}
 
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    payload:
-      maxRunTime: 1200
-      image: "node:current"
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd react-ui && yarn install && yarn lint && yarn test"
-    extra:
-      github:
-        env: true
-        events:
-          - pull_request.opened
-          - pull_request.synchronize
-          - pull_request.reopened
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog React UI tests
-      description: Balrog React UI tests
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
+      # Deploy the UI to stage whenever we create a versioned release tag
+      - $if: 'tasks_for == "github-release" && release_tag[0] == "v"'
+        then:
+          - taskId: {$eval: as_slugid("stage-ui-deploy")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes:
+              - secrets:get:repo:github.com/mozilla/balrog:s3-stage-aws-creds
+              - secrets:get:repo:github.com/mozilla/balrog:s3-stage-app-config
+            routes: []
+            payload:
+              env:
+                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage-aws-creds
+                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage-app-config
+                WEBSITE_BUCKET: balrog-stage-balrog-static-admin-stage-static-website
+              maxRunTime: 3600
+              image: "node:current"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && bash ./scripts/deploy"
+              features:
+                taskclusterProxy: true
+            metadata:
+              name: Balrog stage ui deploy
+              description: Balrog stage ui deploy
+              owner: ${owner_email}
+              source: ${repo_url}
 
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    payload:
-      maxRunTime: 1200
-      image: "node:current"
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd react-ui && yarn install && yarn build"
-    extra:
-      github:
-        env: true
-        events:
-          - pull_request.opened
-          - pull_request.synchronize
-          - pull_request.reopened
-          - push
-        branches:
-          - master
-    metadata:
-      name: Balrog React UI build
-      description: Balrog React UI build
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
-
-  - provisionerId: "{{ taskcluster.docker.provisionerId }}"
-    workerType: "{{ taskcluster.docker.workerType }}"
-    scopes:
-      - secrets:get:repo:github.com/mozilla/balrog:s3-stage-aws-creds
-      - secrets:get:repo:github.com/mozilla/balrog:s3-stage-app-config
-    payload:
-      env:
-        AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage-aws-creds
-        APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage-app-config
-        WEBSITE_BUCKET: balrog-stage-balrog-static-admin-stage-static-website
-      maxRunTime: 1200
-      image: "node:current"
-      command:
-        - "/bin/bash"
-        - "-c"
-        - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone $GITHUB_HEAD_REPO_URL balrog && cd balrog && git checkout $GITHUB_HEAD_BRANCH && cd react-ui && yarn install && bash ./scripts/deploy"
-      features:
-        taskclusterProxy: true
-    extra:
-      github:
-        env: true
-        events:
-          - release
-    metadata:
-      name: Balrog React UI build & publish
-      description: Balrog React UI build & publish
-      owner: "{{ event.head.user.email }}"
-      source: "{{ event.head.repo.url }}"
+      # Deploy to production only for a specific tag
+      - $if: 'tasks_for == "github-release" && release_tag == "production-ui"'
+        then:
+          - taskId: {$eval: as_slugid("prod-ui-deploy")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes:
+              - secrets:get:repo:github.com/mozilla/balrog:s3-prod-aws-creds
+              - secrets:get:repo:github.com/mozilla/balrog:s3-prod-app-config
+            routes: []
+            payload:
+              env:
+                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-prod-aws-creds
+                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-prod-app-config
+                WEBSITE_BUCKET: balrog-prod-balrog-static-admin-prod-static-website
+              maxRunTime: 3600
+              image: "node:current"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && bash ./scripts/deploy"
+              features:
+                taskclusterProxy: true
+            metadata:
+              name: Balrog prod ui deploy
+              description: Balrog prod ui deploy
+              owner: ${owner_email}
+              source: ${repo_url}
