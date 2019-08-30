@@ -13,7 +13,8 @@ import ChipList from './ChipList';
 const useStyles = makeStyles(theme => ({
   paper: {
     position: 'absolute',
-    zIndex: 1,
+    // High enough to have higher priority than things like code editors
+    zIndex: 10,
     marginTop: theme.spacing(1),
     left: 0,
     right: 0,

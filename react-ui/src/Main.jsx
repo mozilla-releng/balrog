@@ -15,6 +15,10 @@ const useStyles = makeStyles({
     '#root': {
       height: '100%',
     },
+    '.CodeMirror': {
+      fontSize: 13,
+      height: '100% !important',
+    },
   },
 });
 

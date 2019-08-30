@@ -5,9 +5,6 @@ import userRoutes from './views/Users/routes';
 import roleRoutes from './views/Roles/routes';
 import requiredSignoffsRoutes from './views/RequiredSignoffs/routes';
 
-const History = lazy(() =>
-  import(/* webpackChunkName: 'History' */ './views/History')
-);
 const Home = lazy(() => import(/* webpackChunkName: 'Home' */ './views/Home'));
 const Releases = lazy(() =>
   import(/* webpackChunkName: 'Releases' */ './views/Releases')
@@ -38,10 +35,6 @@ export default [
     component: Rules,
     path: '/rules',
     routes: ruleRoutes('/rules'),
-  },
-  {
-    component: History,
-    path: '/history/:object?',
   },
   {
     component: Users,

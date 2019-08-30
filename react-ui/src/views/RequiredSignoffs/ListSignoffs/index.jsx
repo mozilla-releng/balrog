@@ -10,16 +10,17 @@ import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
-import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import PlusIcon from 'mdi-react/PlusIcon';
 import Dashboard from '../../../components/Dashboard';
+import Radio from '../../../components/Radio';
 import DialogAction from '../../../components/DialogAction';
 import SignoffCard from '../../../components/SignoffCard';
 import ErrorPanel from '../../../components/ErrorPanel';
 import SignoffCardEntry from '../../../components/SignoffCardEntry';
+import { deleteScheduledChange } from '../../../services/requiredSignoffs';
 import { makeSignoff, revokeSignoff } from '../../../services/signoffs';
 import { getUserInfo } from '../../../services/users';
 import Link from '../../../utils/Link';
@@ -69,12 +70,14 @@ function ListSignoffs({ user }) {
   const [signoffRole, setSignoffRole] = useState('');
   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
   const [getRSAction, getRS] = useAction(getRequiredSignoffs);
+  const [deleteRSAction, delRS] = useAction(deleteScheduledChange);
   const [signoffAction, signoff] = useAction(makeSignoff);
   const [revokeAction, revoke] = useAction(revokeSignoff);
   const [rolesAction, getRoles] = useAction(getUserInfo);
   const loading = getRSAction.loading || rolesAction.loading;
   const error =
     getRSAction.error ||
+    deleteRSAction.error ||
     revokeAction.error ||
     rolesAction.error ||
     // If there's more than one role, this error is shown inside of the dialog
@@ -156,6 +159,32 @@ function ListSignoffs({ user }) {
       error,
       result: { signoffRole, type, roleName, product, channelName },
     };
+  };
+
+  const handleCancelDelete = async (
+    type,
+    entry,
+    roleName,
+    product,
+    channelName
+  ) => {
+    const { error } = await delRS({
+      type: channelName ? 'product' : 'permissions',
+      scId: entry.sc.sc_id,
+      data_version: entry.sc.sc_data_version,
+    });
+
+    if (!error) {
+      const result = clone(requiredSignoffs);
+
+      if (type === OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF) {
+        delete result[product].channels[channelName][roleName].sc;
+      } else {
+        delete result[product].permissions[roleName].sc;
+      }
+
+      setRequiredSignoffs(result);
+    }
   };
 
   const handleSignoff = async (...props) => {
@@ -264,6 +293,14 @@ function ListSignoffs({ user }) {
                         key={name}
                         name={name}
                         entry={role}
+                        onCancelDelete={() =>
+                          handleCancelDelete(
+                            OBJECT_NAMES.PERMISSIONS_REQUIRED_SIGNOFF,
+                            role,
+                            name,
+                            product
+                          )
+                        }
                         onSignoff={() =>
                           handleSignoff(
                             OBJECT_NAMES.PERMISSIONS_REQUIRED_SIGNOFF,
@@ -321,6 +358,15 @@ function ListSignoffs({ user }) {
                                 key={roleName}
                                 name={roleName}
                                 entry={role}
+                                onCancelDelete={() =>
+                                  handleCancelDelete(
+                                    OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF,
+                                    role,
+                                    roleName,
+                                    product,
+                                    channelName
+                                  )
+                                }
                                 onSignoff={() =>
                                   handleSignoff(
                                     OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF,
