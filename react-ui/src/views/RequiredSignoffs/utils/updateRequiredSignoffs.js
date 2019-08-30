@@ -1,5 +1,5 @@
 import {
-  deleteRequiredSignoff,
+  deleteScheduledChange,
   updateRequiredSignoff,
 } from '../../../services/requiredSignoffs';
 
@@ -56,7 +56,7 @@ export default params => {
         }
 
         if (role.sc && role.signoffs_required === role.sc.signoffs_required) {
-          return deleteRequiredSignoff({
+          return deleteScheduledChange({
             scId: role.sc.sc_id,
             type: channel ? 'product' : 'permissions',
             data_version: role.sc.data_version,
@@ -96,7 +96,7 @@ export default params => {
       removed.map(role => {
         // role doesn't exist yet, we should just delete that scheduled change
         if (role.sc && role.sc.change_type === 'insert') {
-          return deleteRequiredSignoff({
+          return deleteScheduledChange({
             scId: role.sc.sc_id,
             type: channel ? 'product' : 'permissions',
             data_version: role.sc.data_version,

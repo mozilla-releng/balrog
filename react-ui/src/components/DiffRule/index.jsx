@@ -3,9 +3,9 @@ import { makeStyles } from '@material-ui/styles';
 import { diffLines, formatLines } from 'unidiff';
 import { Diff, Hunk, parseDiff } from 'react-diff-view';
 import 'react-diff-view/style/index.css';
-import { rule } from '../../utils/prop-types';
 import getDiff from '../../utils/diff';
 import getDiffedProperties from '../../utils/getDiffedProperties';
+import { rule } from '../../utils/prop-types';
 import { RULE_DIFF_PROPERTIES } from '../../utils/constants';
 
 const useStyles = makeStyles(theme => ({
@@ -15,7 +15,7 @@ const useStyles = makeStyles(theme => ({
     display: 'block',
     overflowX: 'auto',
     '& .diff-code': {
-      whiteSpace: 'nowrap',
+      whiteSpace: 'pre',
     },
     '& colgroup': {
       width: '100%',

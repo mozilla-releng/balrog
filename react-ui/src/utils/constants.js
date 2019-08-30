@@ -52,6 +52,7 @@ export const DIALOG_ACTION_INITIAL_STATE = {
   item: null,
   open: false,
   destructive: false,
+  mode: null,
   handleSubmit: Function.prototype,
   handleClose: Function.prototype,
   handleError: Function.prototype,
@@ -141,3 +142,8 @@ export const RULES_COMMON_FILTERS = [
     link: '/rules?product=Thunderbird&channel=beta',
   },
 ];
+export const DIFF_COLORS = {
+  ADDED: '#eaffee',
+  REMOVED: '#fdeff0',
+};
+export const INITIAL_JS_DIFF_SUMMARY = { added: 0, removed: 0 };

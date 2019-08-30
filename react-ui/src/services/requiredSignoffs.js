@@ -14,7 +14,7 @@ const updateRequiredSignoff = params => {
   return axios.post(url, postData);
 };
 
-const deleteRequiredSignoff = params => {
+const deleteScheduledChange = params => {
   const { scId, type, ...data } = params;
   const url = `/scheduled_changes/required_signoffs/${type}/${scId}`;
 
@@ -28,5 +28,5 @@ export {
   getRequiredSignoffs,
   getScheduledChanges,
   updateRequiredSignoff,
-  deleteRequiredSignoff,
+  deleteScheduledChange,
 };

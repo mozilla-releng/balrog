@@ -8,10 +8,6 @@ export default {
       value: 'Releases',
       path: '/releases',
     },
-    {
-      value: 'History',
-      path: '/history',
-    },
   ],
   settings: [
     {

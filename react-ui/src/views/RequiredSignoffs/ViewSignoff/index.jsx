@@ -8,7 +8,6 @@ import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
-import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControl from '@material-ui/core/FormControl';
 import FormLabel from '@material-ui/core/FormLabel';
@@ -20,8 +19,10 @@ import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
 import PlusIcon from 'mdi-react/PlusIcon';
 import DeleteIcon from 'mdi-react/DeleteIcon';
 import Dashboard from '../../../components/Dashboard';
+import DialogAction from '../../../components/DialogAction';
 import Button from '../../../components/Button';
 import SpeedDial from '../../../components/SpeedDial';
+import Radio from '../../../components/Radio';
 import ErrorPanel from '../../../components/ErrorPanel';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
@@ -30,6 +31,7 @@ import getRequiredSignoffs from '../utils/getRequiredSignoffs';
 import updateRequiredSignoffs from '../utils/updateRequiredSignoffs';
 import getRolesFromRequiredSignoffs from '../utils/getRolesFromRequiredSignoffs';
 import useAction from '../../../hooks/useAction';
+import { DIALOG_ACTION_INITIAL_STATE } from '../../../utils/constants';
 
 let additionalRoleId = 0;
 const useStyles = makeStyles(theme => ({
@@ -87,13 +89,24 @@ function ViewSignoff({ isNewSignoff, ...props }) {
   const [additionalRoles, setAdditionalRoles] = useState(
     isNewSignoff ? [getEmptyRole()] : []
   );
+  const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
   const [requiredSignoffs, getRS] = useAction(getRequiredSignoffs);
   const [products, fetchProducts] = useAction(getProducts);
   const [channels, fetchChannels] = useAction(getChannels);
   const [saveAction, saveRS] = useAction(updateRequiredSignoffs);
   const isLoading =
     requiredSignoffs.loading || products.loading || channels.loading;
-  const error = requiredSignoffs.error || products.error || saveAction.error;
+  const error =
+    requiredSignoffs.error ||
+    products.error ||
+    // Don't show this in the main error bar if the confirmation dialog was
+    // used. This has the side effect of the error moving from the dialog
+    // to the main error bar if the dialog is closed, which is arguably
+    // desirable?
+    (!dialogState.open && saveAction.error);
+  const dialogBody = channelTextValue
+    ? `This will delete all Required Signoffs for the ${productTextValue} ${channelTextValue} channel`
+    : `This will delete all Required Signoffs for ${productTextValue} permissions`;
   const handleTypeChange = ({ target: { value } }) => setType(value);
   const handleChannelChange = value => setChannelTextValue(value);
   const handleProductChange = value => setProductTextValue(value);
@@ -165,8 +178,37 @@ function ViewSignoff({ isNewSignoff, ...props }) {
     }
   };
 
-  // TODO: Add delete logic
-  const handleSignoffDelete = () => {};
+  const handleSignoffDelete = () =>
+    setDialogState({
+      ...dialogState,
+      open: true,
+      title: 'Delete Required Signoffs?',
+      confirmText: 'Delete',
+    });
+  const handleDialogSubmit = async () => {
+    const { error } = await saveRS({
+      product: productTextValue,
+      channel: channelTextValue,
+      // pass nothing for current and additional roles
+      // to make sure all existing roles are scheduled
+      // for deletion.
+      roles: [],
+      originalRoles,
+      additionalRoles: [],
+      isNewSignoff,
+    });
+
+    if (error) {
+      throw error;
+    }
+  };
+
+  const handleDialogClose = () => setDialogState(DIALOG_ACTION_INITIAL_STATE);
+  const handleDialogActionComplete = () => {
+    props.history.push('/required-signoffs');
+  };
+
+  const handleDialogError = error => setDialogState({ ...dialogState, error });
 
   useEffect(() => {
     if (isNewSignoff) {
@@ -320,13 +362,25 @@ function ViewSignoff({ isNewSignoff, ...props }) {
                 disabled={saveAction.loading}
                 icon={<DeleteIcon />}
                 tooltipOpen
-                tooltipTitle="Delete Signoff"
+                tooltipTitle="Delete Required Signoffs"
                 onClick={handleSignoffDelete}
               />
             </SpeedDial>
           )}
         </Fragment>
       )}
+      <DialogAction
+        open={dialogState.open}
+        title={dialogState.title}
+        body={dialogBody}
+        confirmText={dialogState.confirmText}
+        destructive
+        onSubmit={handleDialogSubmit}
+        onError={handleDialogError}
+        error={dialogState.error}
+        onComplete={handleDialogActionComplete}
+        onClose={handleDialogClose}
+      />
     </Dashboard>
   );
 }

@@ -1,4 +1,5 @@
 import React, { Fragment, useEffect, useState, useMemo, useRef } from 'react';
+import classNames from 'classnames';
 import { stringify, parse } from 'qs';
 import { addSeconds } from 'date-fns';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
@@ -28,6 +29,7 @@ import {
   getScheduledChanges,
   getScheduledChangeByRuleId,
   addScheduledChange,
+  deleteScheduledChange,
   deleteRule,
 } from '../../../services/rules';
 import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
@@ -67,6 +69,9 @@ const useStyles = makeStyles(theme => ({
   ruleCard: {
     margin: theme.spacing(1),
   },
+  ruleCardSelected: {
+    border: `2px solid ${theme.palette.primary.light}`,
+  },
 }));
 
 function ListRules(props) {
@@ -81,6 +86,7 @@ function ListRules(props) {
     body2TextHeight,
     subtitle1TextHeight,
     buttonHeight,
+    signoffSummarylistSubheaderTextHeight,
   } = elementsHeight(theme);
   const productChannelSeparator = ' : ';
   const [snackbarState, setSnackbarState] = useState(SNACKBAR_INITIAL_STATE);
@@ -91,13 +97,8 @@ function ListRules(props) {
   );
   const [productChannelOptions, setProductChannelOptions] = useState([]);
   const searchQueries = query.product ? [query.product, query.channel] : null;
-  const [productChannelFilter, setProductChannelFilter] = useState(
-    searchQueries
-      ? searchQueries.filter(Boolean).join(productChannelSeparator)
-      : ALL
-  );
+  const [productChannelFilter, setProductChannelFilter] = useState(ALL);
   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
-  const [dialogMode, setDialogMode] = useState('delete');
   const [scheduleDeleteDate, setScheduleDeleteDate] = useState(
     addSeconds(new Date(), -30)
   );
@@ -115,6 +116,7 @@ function ListRules(props) {
   const fetchRequiredSignoffs = useAction(getRequiredSignoffs)[1];
   const delRule = useAction(deleteRule)[1];
   const scheduleDelRule = useAction(addScheduledChange)[1];
+  const delSC = useAction(deleteScheduledChange)[1];
   const [signoffAction, signoff] = useAction(props =>
     makeSignoff({ type: 'rules', ...props })
   );
@@ -157,6 +159,8 @@ function ListRules(props) {
     setSnackbarState(SNACKBAR_INITIAL_STATE);
   };
 
+  const isScheduledInsert = rule =>
+    rule.scheduledChange && rule.scheduledChange.change_type === 'insert';
   const pairExists = (product, channel) =>
     rules.data &&
     rules.data.data.rules.some(
@@ -275,9 +279,17 @@ function ListRules(props) {
     }
   }, [username]);
 
+  useEffect(() => {
+    setProductChannelFilter(
+      searchQueries
+        ? searchQueries.filter(Boolean).join(productChannelSeparator)
+        : ALL
+    );
+  }, [searchQueries]);
+
   const filteredRulesWithScheduledChanges = useMemo(
     () =>
-      productChannelFilter === ALL
+      productChannelFilter === ALL || !searchQueries
         ? rulesWithScheduledChanges
         : rulesWithScheduledChanges.filter(rule => {
             const [productFilter, channelFilter] = searchQueries;
@@ -301,7 +313,7 @@ function ListRules(props) {
 
             return true;
           }),
-    [productChannelFilter, rulesWithScheduledChanges]
+    [searchQueries, productChannelFilter, rulesWithScheduledChanges]
   );
   const handleDateTimePickerError = error => {
     setDateTimePickerError(error);
@@ -325,15 +337,7 @@ function ListRules(props) {
   };
 
   const handleDeleteDialogComplete = result => {
-    if (typeof result === 'number') {
-      // The rule was directly deleted, just remove it.
-      setRulesWithScheduledChanges(
-        rulesWithScheduledChanges.filter(i => i.rule_id !== result)
-      );
-      handleSnackbarOpen({
-        message: `Rule ${result} deleted`,
-      });
-    } else {
+    if (result.change_type === 'delete') {
       // A change was scheduled, we need to update the card
       // to reflect that.
       setRulesWithScheduledChanges(
@@ -353,41 +357,72 @@ function ListRules(props) {
       handleSnackbarOpen({
         message: `Rule ${result.rule_id} successfully scheduled`,
       });
+    } else if (result.rule_id) {
+      // The rule was directly deleted, just remove it.
+      setRulesWithScheduledChanges(
+        rulesWithScheduledChanges.filter(i => i.rule_id !== result.rule_id)
+      );
+      handleSnackbarOpen({
+        message: `Rule ${result.rule_id} deleted`,
+      });
+    } else {
+      setRulesWithScheduledChanges(
+        rulesWithScheduledChanges.filter(
+          i => !i.scheduledChange || i.scheduledChange.sc_id !== result.sc_id
+        )
+      );
+      handleSnackbarOpen({
+        message: `Scheduled Rule deleted`,
+      });
     }
 
     handleDialogClose();
   };
 
-  const handleDeleteDialogSubmit = async state => {
-    const dialogRule = state.item;
+  const handleDeleteDialogSubmit = async () => {
+    const dialogRule = dialogState.item;
     const now = new Date();
     const when =
       scheduleDeleteDate >= now
         ? scheduleDeleteDate.getTime()
         : now.getTime() + 5000;
-    const { error } =
-      Object.keys(dialogRule.required_signoffs).length === 0
-        ? await delRule({
-            ruleId: dialogRule.rule_id,
-            dataVersion: dialogRule.data_version,
-          })
-        : await scheduleDelRule({
-            change_type: 'delete',
-            when,
-            rule_id: dialogRule.rule_id,
-            data_version: dialogRule.data_version,
-          });
+    let error = null;
+    let ret = null;
+
+    // removing a scheduled insert
+    if (isScheduledInsert(dialogRule)) {
+      ({ error } = await delSC({
+        scId: dialogRule.scheduledChange.sc_id,
+        scDataVersion: dialogRule.scheduledChange.sc_data_version,
+      }));
+      ret = { sc_id: dialogRule.scheduledChange.sc_id };
+    }
+    // directly deleting a rule that doesn't require signoff
+    else if (Object.keys(dialogRule.required_signoffs).length === 0) {
+      ({ error } = await delRule({
+        ruleId: dialogRule.rule_id,
+        dataVersion: dialogRule.data_version,
+      }));
+      ret = { rule_id: dialogRule.rule_id };
+    }
+    // scheduling deletion of a rule that requires signoff
+    else {
+      ({ error } = await scheduleDelRule({
+        change_type: 'delete',
+        when,
+        rule_id: dialogRule.rule_id,
+        data_version: dialogRule.data_version,
+      }));
+      // eslint-disable-next-line prefer-destructuring
+      ret = (await getScheduledChangeByRuleId(dialogRule.rule_id)).data
+        .scheduled_changes[0];
+    }
 
     if (error) {
       throw error;
     }
 
-    if (Object.keys(dialogRule.required_signoffs).length > 0) {
-      return (await getScheduledChangeByRuleId(dialogRule.rule_id)).data
-        .scheduled_changes[0];
-    }
-
-    return dialogRule.rule_id;
+    return ret;
   };
 
   const signoffDialogBody = (
@@ -404,7 +439,7 @@ function ListRules(props) {
     </FormControl>
   );
   const filteredRulesCount = filteredRulesWithScheduledChanges.length;
-  const updateSignoffs = ({ signoffRole, rule }) => {
+  const updateSignoffs = ({ roleToSignoffWith, rule }) => {
     setRulesWithScheduledChanges(
       rulesWithScheduledChanges.map(r => {
         if (
@@ -416,24 +451,24 @@ function ListRules(props) {
 
         const newRule = { ...r };
 
-        newRule.scheduledChange.signoffs[username] = signoffRole;
+        newRule.scheduledChange.signoffs[username] = roleToSignoffWith;
 
         return newRule;
       })
     );
   };
 
-  const doSignoff = async (signoffRole, rule) => {
+  const doSignoff = async (roleToSignoffWith, rule) => {
     const { error } = await signoff({
       scId: rule.scheduledChange.sc_id,
-      role: signoffRole,
+      role: roleToSignoffWith,
     });
 
-    return { error, result: { signoffRole, rule } };
+    return { error, result: { roleToSignoffWith, rule } };
   };
 
-  const handleSignoffDialogSubmit = async state => {
-    const { error, result } = await doSignoff(signoffRole, state.item);
+  const handleSignoffDialogSubmit = async () => {
+    const { error, result } = await doSignoff(signoffRole, dialogState.item);
 
     if (error) {
       throw error;
@@ -455,13 +490,13 @@ function ListRules(props) {
         updateSignoffs(result);
       }
     } else {
-      setDialogMode('signoff');
       setDialogState({
         ...dialogState,
         open: true,
         title: 'Signoff as…',
         confirmText: 'Sign off',
         item: rule,
+        mode: 'signoff',
         handleComplete: handleSignoffDialogComplete,
         handleSubmit: handleSignoffDialogSubmit,
       });
@@ -471,7 +506,7 @@ function ListRules(props) {
   const handleRevoke = async rule => {
     const { error } = await revoke({
       scId: rule.scheduledChange.sc_id,
-      role: signoffRole,
+      role: rule.scheduledChange.signoffs[username],
     });
 
     if (!error) {
@@ -496,7 +531,8 @@ function ListRules(props) {
 
   const deleteDialogBody =
     dialogState.item &&
-    (Object.keys(dialogState.item.required_signoffs).length > 0 ? (
+    (!isScheduledInsert(dialogState.item) &&
+    Object.keys(dialogState.item.required_signoffs).length > 0 ? (
       <DateTimePicker
         disablePast
         inputVariant="outlined"
@@ -511,10 +547,13 @@ function ListRules(props) {
         value={scheduleDeleteDate}
       />
     ) : (
-      `This will delete rule ${dialogState.item.rule_id}.`
+      `This will delete ${
+        isScheduledInsert(dialogState.item)
+          ? 'the scheduled rule'
+          : `rule ${dialogState.item.rule_id}`
+      }.`
     ));
   const handleRuleDelete = rule => {
-    setDialogMode('delete');
     setDialogState({
       ...dialogState,
       open: true,
@@ -522,9 +561,18 @@ function ListRules(props) {
       confirmText: 'Delete',
       destructive: true,
       item: rule,
+      mode: 'delete',
       handleComplete: handleDeleteDialogComplete,
       handleSubmit: handleDeleteDialogSubmit,
     });
+  };
+
+  const getDialogSubmit = () => {
+    if (dialogState.mode === 'delete') {
+      return handleDeleteDialogSubmit;
+    }
+
+    return handleSignoffDialogSubmit;
   };
 
   const getRowHeight = ({ index }) => {
@@ -583,7 +631,7 @@ function ListRules(props) {
 
     if (hasScheduledChanges) {
       // row with the chip label
-      height += subtitle1TextHeight();
+      height += Math.max(subtitle1TextHeight(), theme.spacing(3));
 
       if (rule.scheduledChange.change_type === 'delete') {
         // row with "all properties will be deleted" + padding
@@ -623,7 +671,7 @@ function ListRules(props) {
         height += theme.spacing(2);
 
         // The "Requires Signoff From" title and the margin beneath it
-        height += body2TextHeight() + theme.spacing(0.5);
+        height += signoffSummarylistSubheaderTextHeight + theme.spacing(0.5);
 
         // Space for however many rows exist.
         height += signoffRows * body2TextHeight();
@@ -636,8 +684,26 @@ function ListRules(props) {
     return height;
   };
 
+  const isRuleSelected = rule => {
+    if (!hashQuery.ruleId && !hashQuery.scId) {
+      return false;
+    }
+
+    if (hashQuery.ruleId) {
+      return Boolean(rule.rule_id === Number(hashQuery.ruleId));
+    }
+
+    if (hashQuery.scId) {
+      return Boolean(
+        rule.scheduledChange &&
+          Number(rule.scheduledChange.sc_id === hashQuery.scId)
+      );
+    }
+  };
+
   const Row = ({ index, style }) => {
     const rule = filteredRulesWithScheduledChanges[index];
+    const isSelected = isRuleSelected(rule);
 
     return (
       <div
@@ -648,9 +714,12 @@ function ListRules(props) {
         }
         style={style}>
         <RuleCard
-          className={classes.ruleCard}
+          className={classNames(classes.ruleCard, {
+            [classes.ruleCardSelected]: isSelected,
+          })}
           key={rule.rule_id}
           rule={rule}
+          rulesFilter={searchQueries}
           onRuleDelete={handleRuleDelete}
           onSignoff={() => handleSignoff(rule)}
           onRevoke={() => handleRevoke(rule)}
@@ -719,7 +788,11 @@ function ListRules(props) {
               />
             </Fragment>
           )}
-          <Link to="/rules/create">
+          <Link
+            to={{
+              pathname: '/rules/create',
+              state: { rulesFilter: searchQueries },
+            }}>
             <Tooltip title="Add Rule">
               <Fab color="primary" className={classes.fab}>
                 <PlusIcon />
@@ -732,9 +805,11 @@ function ListRules(props) {
         open={dialogState.open}
         title={dialogState.title}
         destructive={dialogState.destructive}
-        body={dialogMode === 'delete' ? deleteDialogBody : signoffDialogBody}
+        body={
+          dialogState.mode === 'delete' ? deleteDialogBody : signoffDialogBody
+        }
         confirmText={dialogState.confirmText}
-        onSubmit={() => dialogState.handleSubmit(dialogState)}
+        onSubmit={getDialogSubmit()}
         onError={handleDialogError}
         error={dialogState.error}
         onComplete={dialogState.handleComplete}
