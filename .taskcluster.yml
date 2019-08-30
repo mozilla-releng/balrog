@@ -53,9 +53,14 @@ tasks:
       then: '${event.release.tag_name}',
       else: 'null',
     }
+    branch: {
+      $if: 'tasks_for == "github-push"',
+      then: '${event.ref}',
+      else: 'null',
+    }
   in:
     $flattenDeep:
-      - $if: '(tasks_for == "github-pull-request" && event["action"] in ["edited", "opened", "reopened", "synchronize"]) || tasks_for == "github-push"'
+      - $if: '(tasks_for == "github-pull-request" && event["action"] in ["edited", "opened", "reopened", "synchronize"]) || (tasks_for == "github-push" && branch == "refs/heads/master")'
         then:
           - taskId: {$eval: as_slugid("backend-tests")}
             created: {$fromNow: ''}
