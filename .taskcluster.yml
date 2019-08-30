@@ -190,7 +190,7 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && scripts/push-dockerimage.sh Dockerfile ${docker_tags}"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && scripts/push-dockerimage.sh ${docker_tags}"
               features:
                 dind: true
                 taskclusterProxy: true
@@ -214,7 +214,7 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && scripts/push-dockerimage.sh ${docker_tags}"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && scripts/push-dockerimage.sh Dockerfile ${docker_tags}"
               features:
                 dind: true
                 taskclusterProxy: true
