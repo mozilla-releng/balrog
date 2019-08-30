@@ -107,10 +107,14 @@ const useStyles = makeStyles(theme => ({
   },
   avatar: {
     height: theme.spacing(4),
-    width: theme.spacing(4),
+    padding: theme.spacing(1),
+    width: 'auto',
+    background: 'unset',
+    color: theme.palette.text.primary,
+    border: `1px solid ${theme.palette.primary.light}`,
   },
   avatarText: {
-    fontSize: 10,
+    fontSize: theme.typography.body2.fontSize,
   },
   comment: {
     maxHeight: theme.spacing(10),
@@ -134,13 +138,16 @@ const useStyles = makeStyles(theme => ({
 
 function RuleCard({
   rule,
+  rulesFilter,
   onRuleDelete,
   onSignoff,
   onRevoke,
   user,
   readOnly,
-  onAuthorize,
-  onUnauthorize,
+  // We don't actually use these, but we need to avoid passing them onto
+  // `Card` like the rest of the props.
+  onAuthorize: _,
+  onUnauthorize: __,
   ...props
 }) {
   const classes = useStyles();
@@ -219,7 +226,11 @@ function RuleCard({
           }
           action={
             !readOnly ? (
-              <Link to={`/rules/${rule.rule_id}/revisions`}>
+              <Link
+                to={{
+                  pathname: `/rules/${rule.rule_id}/revisions`,
+                  state: { rulesFilter },
+                }}>
                 <Tooltip title="Revisions">
                   <IconButton>
                     <HistoryIcon />
@@ -702,13 +713,11 @@ function RuleCard({
           </Fragment>
         )}
         {!readOnly && requiresSignoff && (
-          <Fragment>
-            <SignoffSummary
-              requiredSignoffs={rule.scheduledChange.required_signoffs}
-              signoffs={rule.scheduledChange.signoffs}
-              className={classes.space}
-            />
-          </Fragment>
+          <SignoffSummary
+            requiredSignoffs={rule.scheduledChange.required_signoffs}
+            signoffs={rule.scheduledChange.signoffs}
+            className={classes.space}
+          />
         )}
       </CardContent>
       {!readOnly && (
@@ -720,6 +729,7 @@ function RuleCard({
                 pathname: '/rules/create',
                 state: {
                   rule,
+                  rulesFilter,
                 },
               }}>
               <Button color="secondary">Duplicate</Button>
@@ -732,11 +742,14 @@ function RuleCard({
           {user ? (
             <Link
               className={classes.link}
-              to={
-                rule.rule_id
+              to={{
+                pathname: rule.rule_id
                   ? `/rules/${rule.rule_id}`
-                  : `/rules/create/${rule.scheduledChange.sc_id}`
-              }>
+                  : `/rules/create/${rule.scheduledChange.sc_id}`,
+                state: {
+                  rulesFilter,
+                },
+              }}>
               <Button color="secondary">Update</Button>
             </Link>
           ) : (

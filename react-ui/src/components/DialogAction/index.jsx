@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { oneOfType, object, node, string, func, bool } from 'prop-types';
 import { makeStyles } from '@material-ui/styles';
 import Dialog from '@material-ui/core/Dialog';
@@ -30,6 +30,7 @@ const useStyles = makeStyles(theme => ({
 function DialogAction(props) {
   const classes = useStyles();
   const [actionExecuting, setActionExecuting] = useState(false);
+  const cancelled = useRef(false);
   const {
     open,
     title,
@@ -44,8 +45,15 @@ function DialogAction(props) {
     destructive,
     ...rest
   } = props;
+
+  // Set this so we can avoid calling setActionExecuting if the caller
+  // decides to do something that unmounts us in onComplete or onError.
+  useEffect(() => () => (cancelled.current = true), []);
+
   const handleSubmit = async () => {
-    setActionExecuting(true);
+    if (cancelled.current === false) {
+      setActionExecuting(true);
+    }
 
     const [error, result] = await tryCatch(onSubmit());
 
@@ -54,7 +62,9 @@ function DialogAction(props) {
         onError(error);
       }
 
-      setActionExecuting(false);
+      if (cancelled.current === false) {
+        setActionExecuting(false);
+      }
 
       return;
     }
@@ -63,7 +73,9 @@ function DialogAction(props) {
       onComplete(result);
     }
 
-    setActionExecuting(false);
+    if (cancelled.current === false) {
+      setActionExecuting(false);
+    }
   };
 
   return (

@@ -17,12 +17,12 @@ export default action => {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const state = { loading, data, error };
-  const performAction = async body => {
+  const performAction = async (...body) => {
     try {
       setLoading(true);
       setData(null);
       setError(null);
-      const data = await action(body);
+      const data = await action(...body);
 
       setData(data);
 

@@ -6,12 +6,8 @@ const getRule = id => axios.get(`/rules/${id}`);
 const getChannels = () => axios.get('/rules/columns/channel');
 const getProducts = () => axios.get('/rules/columns/product');
 const getRevisions = id => axios.get(`/rules/${id}/revisions?limit=10000`);
-// const getRule = () => axios.get();
-// const updateRule = () => axios.put();
 const deleteRule = ({ ruleId, dataVersion }) =>
   axios.delete(`/rules/${ruleId}`, { params: { data_version: dataVersion } });
-// const addRule = () => axios.post();
-// const revertRule = () => axios.post();
 const getScheduledChanges = all => {
   if (all === true) {
     return axios.get(`/scheduled_changes/rules?${stringify({ all: 1 })}`);

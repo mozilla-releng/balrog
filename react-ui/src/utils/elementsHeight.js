@@ -20,4 +20,6 @@ export default theme => ({
       theme.typography.button.lineHeight +
     6 +
     6,
+  signoffSummarylistSubheaderTextHeight:
+    remToPx(theme.typography.subtitle1.fontSize) * 1.5,
 });
