@@ -106,9 +106,6 @@
       <h5 title="Data Version">
         Data version: <b>{{ sc.sc_data_version }}</b>
       </h5>
-      <h5>
-        <strong style="color: red;" ng-show="isScheduledToBeModifiable(sc) && sc.change_type==='update'">Updating release state to modifiable</strong>
-      </h5>
       <button ng-if="sc.change_type==='update'" class="btn btn-default btn-xs" ng-click="openDiffModal(sc)">View Diff</button>
     </div>
 
@@ -123,6 +120,8 @@
       <dd>{{ sc.product }}</dd>
       <dt ng-show="sc.change_type">Change Type:</dt>
       <dd>{{ sc.change_type }}</dd>
+      <dt>Readonly:</dt>
+      <dd>{{ sc.read_only }}</dd>
     </dl>
 
   </div>
