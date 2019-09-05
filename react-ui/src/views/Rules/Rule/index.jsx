@@ -276,33 +276,30 @@ export default function Rule({ isNewRule, ...props }) {
         fetchProducts(),
         fetchChannels(),
         fetchReleaseNames(),
-      ]).then(
-        // eslint-disable-next-line no-unused-vars
-        ([fetchedRuleResponse, fetchedSCResponse]) => {
-          if (fetchedSCResponse.data.data.count > 0) {
-            const sc = fetchedSCResponse.data.data.scheduled_changes[0];
+      ]).then(([fetchedRuleResponse, fetchedSCResponse]) => {
+        if (fetchedSCResponse.data.data.count > 0) {
+          const sc = fetchedSCResponse.data.data.scheduled_changes[0];
 
-            sc.jaws = getOptionalBooleanValue(sc.jaws);
-            sc.mig64 = getOptionalBooleanValue(sc.mig64);
+          sc.jaws = getOptionalBooleanValue(sc.jaws);
+          sc.mig64 = getOptionalBooleanValue(sc.mig64);
 
-            setRule({
-              ...rule,
-              ...sc,
-            });
-            setScheduleDate(new Date(sc.when));
-          } else {
-            const r = fetchedRuleResponse.data.data;
+          setRule({
+            ...rule,
+            ...sc,
+          });
+          setScheduleDate(new Date(sc.when));
+        } else {
+          const r = fetchedRuleResponse.data.data;
 
-            r.jaws = getOptionalBooleanValue(r.jaws);
-            r.mig64 = getOptionalBooleanValue(r.mig64);
+          r.jaws = getOptionalBooleanValue(r.jaws);
+          r.mig64 = getOptionalBooleanValue(r.mig64);
 
-            setRule({
-              ...rule,
-              ...r,
-            });
-          }
+          setRule({
+            ...rule,
+            ...r,
+          });
         }
-      );
+      });
     } else {
       Promise.all([
         // Handles loading a scheduled change if an id was provided

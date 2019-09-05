@@ -76,7 +76,6 @@ const getSupportedActions = permission => {
   return PERMISSION_RESTRICTION_MAPPINGS[permission].supported_actions;
 };
 
-// eslint-disable-next-line import/prefer-default-export
 export {
   getPermissionString,
   getRolesString,

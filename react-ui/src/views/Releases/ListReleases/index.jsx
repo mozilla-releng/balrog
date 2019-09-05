@@ -93,7 +93,6 @@ function ListReleases(props) {
   );
   const [rolesAction, fetchRoles] = useAction(getUserInfo);
   const isLoading = releasesAction.loading || scheduledChangesAction.loading;
-  // eslint-disable-next-line prefer-destructuring
   const error =
     releasesAction.error ||
     scheduledChangesAction.error ||
@@ -283,7 +282,7 @@ function ListReleases(props) {
           return r;
         }
 
-        const newRelease = { ...r };
+        const newRelease = clone(r);
 
         newRelease.scheduledChange.signoffs[username] = roleToSignoffWith;
 
@@ -402,7 +401,7 @@ function ListReleases(props) {
             return r;
           }
 
-          const newRelease = { ...r };
+          const newRelease = clone(r);
 
           delete newRelease.scheduledChange.signoffs[username];
 
@@ -547,7 +546,7 @@ function ListReleases(props) {
   return (
     <Dashboard title="Releases">
       <SearchBar
-        placeholder="Search a release..."
+        placeholder="Search a release…"
         onChange={handleSearchChange}
         value={searchValue}
       />

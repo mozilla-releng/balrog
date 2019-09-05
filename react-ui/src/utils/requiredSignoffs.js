@@ -1,9 +1,9 @@
 const ruleMatchesRequiredSignoff = (rule, rs) => {
-  if (rule.product !== rs.product) {
+  if (rule.product && rule.product !== rs.product) {
     return false;
   }
 
-  if (rule.channel !== rs.channel) {
+  if (rule.channel && rule.channel !== rs.channel) {
     if (rule.channel.endsWith('*')) {
       // If a globbing rule's base doesn't match the required signoff channel
       // it doesn't apply

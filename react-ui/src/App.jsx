@@ -114,6 +114,7 @@ const App = () => {
             responseType={process.env.AUTH0_RESPONSE_TYPE}
             scope={process.env.AUTH0_SCOPE}
             render={ready ? render : null}
+            leeway={30}
           />
         </ThemeProvider>
       </AuthContext.Provider>

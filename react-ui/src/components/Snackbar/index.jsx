@@ -19,6 +19,9 @@ const variantIcon = {
   info: InformationIcon,
 };
 const useStyles = makeStyles(theme => ({
+  iconButtonRoot: {
+    color: theme.palette.common.white,
+  },
   success: {
     backgroundColor: green[600],
   },
@@ -54,7 +57,10 @@ function Snackbar(props) {
       <SnackbarContent
         className={classes[variant]}
         action={
-          <IconButton aria-label="Close" onClick={onClose}>
+          <IconButton
+            classes={{ root: classes.iconButtonRoot }}
+            aria-label="Close"
+            onClick={onClose}>
             <CloseIcon />
           </IconButton>
         }

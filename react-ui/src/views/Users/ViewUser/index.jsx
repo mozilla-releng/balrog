@@ -88,19 +88,15 @@ function ViewUser({ isNewUser, ...props }) {
   const classes = useStyles();
   const [username, setUsername] = useState(isNewUser ? '' : existingUsername);
   const [roles, setRoles] = useState([]);
-  // eslint-disable-next-line no-unused-vars
   const [originalRoles, setOriginalRoles] = useState([]);
   const [additionalRoles, setAdditionalRoles] = useState([]);
   const [permissions, setPermissions] = useState([]);
-  // eslint-disable-next-line no-unused-vars
   const [originalPermissions, setOriginalPermissions] = useState([]);
   const [additionalPermissions, setAdditionalPermissions] = useState(
     isNewUser ? [getEmptyPermission(true)] : []
   );
   const [products, setProducts] = useState([]);
-  // TODO: show pending changes, signoffs, and allow them to be signed off
-  // eslint-disable-next-line no-unused-vars
-  const [requiredSignoffs, setRequiredSignoffs] = useState([]);
+  const setRequiredSignoffs = useState([])[1];
   const [userError, setUserError] = useState(null);
   const [rsAction, fetchRS] = useAction(getRequiredSignoffs);
   const [productsAction, fetchProducts] = useAction(getProducts);
