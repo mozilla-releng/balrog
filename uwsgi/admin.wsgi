@@ -198,6 +198,7 @@ with open(frontend_config, "w+") as f:
         """
 angular.module('config', [])
 
+.constant('NewBalrogURL', 'http://localhost:9000/')
 .constant('Auth0Config', {})
 .constant('GCSConfig', {{
     'nightly_history_bucket': 'https://www.googleapis.com/storage/v1/b/{}/o',

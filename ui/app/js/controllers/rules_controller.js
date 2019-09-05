@@ -1,5 +1,5 @@
 angular.module("app").controller('RulesController',
-function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers, EmergencyShutoffs, CSRF, Auth0) {
+function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $route, Releases, Page, Permissions, ProductRequiredSignoffs, Helpers, EmergencyShutoffs, CSRF, Auth0, NewBalrogURL) {
 
   Page.setTitle('Rules');
 
@@ -20,16 +20,20 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
   $scope.current_emergency_shutoff = null;
   $scope.current_user = localStorage.getItem("username");
   $scope.auth0 = Auth0;
+  $scope.new_ui_url = NewBalrogURL + "/rules";
 
   function changeLocationWithFilterParams(filterParamsString) {
     localStorage.setItem("pr_ch_filter", filterParamsString);
     var pr_ch_array = filterParamsString.split(',');
     if (pr_ch_array[0].toLowerCase() === "all rules" || $scope.rule_id) {
       $location.path('/rules').search({});
+      $scope.new_ui_url = NewBalrogURL + "/rules";
     } else if (pr_ch_array && pr_ch_array.length > 1) {
       $location.path('/rules').search({ product: pr_ch_array[0], channel: pr_ch_array[1] });
+      $scope.new_ui_url = NewBalrogURL + "/rules?product=" + pr_ch_array[0] + "&channel=" + pr_ch_array[1];
     } else {
       $location.path('/rules').search({ product: pr_ch_array[0] });
+      $scope.new_ui_url = NewBalrogURL + "/rules?product=" + pr_ch_array[0];
     }
   }
 
@@ -131,6 +135,9 @@ function($scope, $routeParams, $location, $timeout, Rules, Search, $modal, $rout
           $scope.pr_ch_filter = "All rules";
           if ($scope.pr_ch_options.includes(localStorage.getItem('pr_ch_filter'))){
             $scope.pr_ch_filter = localStorage.getItem('pr_ch_filter') || "All rules";
+            if ($scope.pr_ch_filter !== "All rules") {
+              changeLocationWithFilterParams($scope.pr_ch_filter);
+            }
           }
         });
       });
