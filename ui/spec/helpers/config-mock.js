@@ -1,4 +1,5 @@
 angular.module('config', [])
+.constant('NewBalrogURL', 'fake')
 .constant('Auth0Config', {
     'AUTH0_RESPONSE_TYPE': 'fake',
     'AUTH0_DOMAIN': 'fake',
