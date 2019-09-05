@@ -2,6 +2,7 @@ import React, { Fragment, useEffect, useState, useMemo, useRef } from 'react';
 import classNames from 'classnames';
 import { stringify, parse } from 'qs';
 import { addSeconds } from 'date-fns';
+import { clone } from 'ramda';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import { makeStyles, useTheme } from '@material-ui/styles';
 import Fab from '@material-ui/core/Fab';
@@ -12,13 +13,17 @@ import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import PlusIcon from 'mdi-react/PlusIcon';
+import PauseIcon from 'mdi-react/PauseIcon';
 import Dashboard from '../../../components/Dashboard';
 import ErrorPanel from '../../../components/ErrorPanel';
+import EmergencyShutoffCard from '../../../components/EmergencyShutoffCard';
 import RuleCard from '../../../components/RuleCard';
 import DialogAction from '../../../components/DialogAction';
 import DateTimePicker from '../../../components/DateTimePicker';
 import VariableSizeList from '../../../components/VariableSizeList';
+import SpeedDial from '../../../components/SpeedDial';
 import Link from '../../../utils/Link';
 import getDiffedProperties from '../../../utils/getDiffedProperties';
 import useAction from '../../../hooks/useAction';
@@ -34,6 +39,14 @@ import {
 } from '../../../services/rules';
 import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
 import { makeSignoff, revokeSignoff } from '../../../services/signoffs';
+import {
+  getEmergencyShutoffs,
+  createEmergencyShutoff,
+  deleteEmergencyShutoff,
+  getScheduledChanges as getScheduledEmergencyShutoffs,
+  scheduleDeleteEmergencyShutoff,
+  cancelDeleteEmergencyShutoff,
+} from '../../../services/emergency_shutoff';
 import { getUserInfo } from '../../../services/users';
 import { ruleMatchesRequiredSignoff } from '../../../utils/requiredSignoffs';
 import {
@@ -51,6 +64,7 @@ const ALL = 'all';
 const useStyles = makeStyles(theme => ({
   fab: {
     ...theme.mixins.fab,
+    right: theme.spacing(12),
   },
   options: {
     display: 'flex',
@@ -66,7 +80,7 @@ const useStyles = makeStyles(theme => ({
   tablePaginationSpacer: {
     flex: 'unset',
   },
-  ruleCard: {
+  card: {
     margin: theme.spacing(1),
   },
   ruleCardSelected: {
@@ -105,6 +119,7 @@ function ListRules(props) {
   const [dateTimePickerError, setDateTimePickerError] = useState(null);
   const [scrollToRow, setScrollToRow] = useState(null);
   const [roles, setRoles] = useState([]);
+  const [emergencyShutoffs, setEmergencyShutoffs] = useState([]);
   const [signoffRole, setSignoffRole] = useState('');
   const ruleListRef = useRef(null);
   const [products, fetchProducts] = useAction(getProducts);
@@ -113,7 +128,9 @@ function ListRules(props) {
   const [scheduledChanges, fetchScheduledChanges] = useAction(
     getScheduledChanges
   );
-  const fetchRequiredSignoffs = useAction(getRequiredSignoffs)[1];
+  const [requiredSignoffs, fetchRequiredSignoffs] = useAction(
+    getRequiredSignoffs
+  );
   const delRule = useAction(deleteRule)[1];
   const scheduleDelRule = useAction(addScheduledChange)[1];
   const delSC = useAction(deleteScheduledChange)[1];
@@ -124,15 +141,67 @@ function ListRules(props) {
     revokeSignoff({ type: 'rules', ...props })
   );
   const [rolesAction, fetchRoles] = useAction(getUserInfo);
-  const isLoading = products.loading || channels.loading || rules.loading;
+  const [emergencyShutoffsAction, fetchEmergencyShutoffs] = useAction(
+    getEmergencyShutoffs
+  );
+  const [
+    scheduledEmergencyShutoffsAction,
+    fetchScheduledEmergencyShutoffs,
+  ] = useAction(getScheduledEmergencyShutoffs);
+  const filteredProductChannelIsShutoff =
+    productChannelFilter !== ALL && searchQueries && searchQueries.length === 2
+      ? emergencyShutoffs.some(
+          es =>
+            es.product === searchQueries[0] &&
+            (!searchQueries[1] || es.channel === searchQueries[1])
+        )
+      : false;
+  const filteredProductChannelRequiresSignoff =
+    requiredSignoffs.data && searchQueries && searchQueries.length === 2
+      ? requiredSignoffs.data.data.required_signoffs.some(
+          rs =>
+            rs.product === searchQueries[0] && rs.channel === searchQueries[1]
+        )
+      : false;
+  const [disableUpdatesAction, disableUpdates] = useAction(
+    createEmergencyShutoff
+  );
+  const [enableUpdatesAction, enableUpdates] = useAction(
+    deleteEmergencyShutoff
+  );
+  const [scheduleEnableUpdatesAction, scheduleEnableUpdates] = useAction(
+    scheduleDeleteEmergencyShutoff
+  );
+  const [cancelEnableUpdatesAction, cancelEnableUpdates] = useAction(
+    cancelDeleteEmergencyShutoff
+  );
+  const [signoffEnableUpdatesAction, signoffEnableUpdates] = useAction(props =>
+    signoff({ type: 'emergency_shutoff', ...props })
+  );
+  const [revokeEnableUpdatesAction, revokeEnableUpdates] = useAction(props =>
+    revoke({ type: 'emergency_shutoff', ...props })
+  );
+  const isLoading =
+    products.loading ||
+    channels.loading ||
+    rules.loading ||
+    emergencyShutoffsAction.loading;
   const error =
     products.error ||
     channels.error ||
     rules.error ||
+    emergencyShutoffsAction.error ||
+    scheduledEmergencyShutoffsAction.error ||
+    disableUpdatesAction.error ||
+    enableUpdatesAction.error ||
+    scheduleEnableUpdatesAction.error ||
+    cancelEnableUpdatesAction.error ||
     rolesAction.error ||
     scheduledChanges.error ||
     revokeAction.error ||
-    (roles.length === 1 && signoffAction.error);
+    (roles.length === 1 && signoffAction.error) ||
+    revokeEnableUpdatesAction.error ||
+    (roles.length === 1 && signoffEnableUpdatesAction.error);
   const handleFilterChange = ({ target: { value } }) => {
     const [product, channel] = value.split(productChannelSeparator);
     const query =
@@ -194,9 +263,11 @@ function ListRules(props) {
       fetchScheduledChanges(),
       fetchRules(),
       fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
+      fetchEmergencyShutoffs(),
+      fetchScheduledEmergencyShutoffs(),
       fetchProducts(),
       fetchChannels(),
-    ]).then(([sc, r, rs]) => {
+    ]).then(([sc, r, rs, es, scheduledEs]) => {
       if (!sc.data || !r.data || !rs.data) {
         return;
       }
@@ -261,6 +332,24 @@ function ListRules(props) {
       });
 
       setRulesWithScheduledChanges(sortedRules);
+
+      if (es.data && scheduledEs.data) {
+        const shutoffs = es.data.data.shutoffs.map(shutoff => {
+          const returnedShutoff = clone(shutoff);
+          const sc = scheduledEs.data.data.scheduled_changes.find(
+            ses =>
+              ses.product === shutoff.product && ses.channel === shutoff.channel
+          );
+
+          if (sc) {
+            returnedShutoff.scheduledChange = sc;
+          }
+
+          return returnedShutoff;
+        });
+
+        setEmergencyShutoffs(shutoffs);
+      }
     });
   }, []);
 
@@ -304,11 +393,14 @@ function ListRules(props) {
               return false;
             }
 
-            if (
-              channelFilter &&
-              ruleChannel.replace('*', '') !== channelFilter
-            ) {
-              return false;
+            if (channelFilter) {
+              if (ruleChannel.indexOf('*') === -1) {
+                if (ruleChannel !== channelFilter) {
+                  return false;
+                }
+              } else if (!channelFilter.startsWith(ruleChannel.split('*')[0])) {
+                return false;
+              }
             }
 
             return true;
@@ -346,7 +438,7 @@ function ListRules(props) {
             return r;
           }
 
-          const newRule = { ...r };
+          const newRule = clone(r);
 
           newRule.scheduledChange = result;
 
@@ -449,7 +541,7 @@ function ListRules(props) {
           return r;
         }
 
-        const newRule = { ...r };
+        const newRule = clone(r);
 
         newRule.scheduledChange.signoffs[username] = roleToSignoffWith;
 
@@ -519,7 +611,7 @@ function ListRules(props) {
             return r;
           }
 
-          const newRule = { ...r };
+          const newRule = clone(r);
 
           delete newRule.scheduledChange.signoffs[username];
 
@@ -530,6 +622,7 @@ function ListRules(props) {
   };
 
   const deleteDialogBody =
+    dialogState.mode === 'delete' &&
     dialogState.item &&
     (!isScheduledInsert(dialogState.item) &&
     Object.keys(dialogState.item.required_signoffs).length > 0 ? (
@@ -567,12 +660,229 @@ function ListRules(props) {
     });
   };
 
+  const handleDisableUpdates = async () => {
+    const [product, channel] = searchQueries;
+    const { error, data } = await disableUpdates(product, channel);
+
+    if (!error) {
+      const result = clone(emergencyShutoffs);
+
+      result.push(data.data);
+      setEmergencyShutoffs(result);
+      handleSnackbarOpen({
+        message: `Updates for the ${product} ${channel} channel have been disabled`,
+      });
+    }
+  };
+
+  const handleEnableUpdates = async () => {
+    const [product, channel] = searchQueries;
+    const esDetails = emergencyShutoffs.find(
+      es => es.product === product && es.channel === channel
+    );
+
+    if (filteredProductChannelRequiresSignoff) {
+      const now = new Date();
+      const when = now.getTime() + 5000;
+      const { error } = await scheduleEnableUpdates(
+        product,
+        channel,
+        esDetails.data_version,
+        when
+      );
+
+      if (!error) {
+        const {
+          error: sesError,
+          data: sesData,
+        } = await fetchScheduledEmergencyShutoffs();
+
+        if (!sesError) {
+          setEmergencyShutoffs(
+            emergencyShutoffs.map(es => {
+              if (es.product !== product || es.channel !== channel) {
+                return es;
+              }
+
+              const shutoff = clone(es);
+              const sc = sesData.data.scheduled_changes.find(
+                ses => ses.product === es.product && ses.channel === es.channel
+              );
+
+              if (sc) {
+                shutoff.scheduledChange = sc;
+              }
+
+              return shutoff;
+            })
+          );
+        }
+      }
+    } else {
+      const { error } = await enableUpdates(
+        product,
+        channel,
+        esDetails.data_version
+      );
+
+      if (!error) {
+        setEmergencyShutoffs(
+          emergencyShutoffs.filter(
+            es => es.product !== product || es.channel !== channel
+          )
+        );
+      }
+    }
+  };
+
+  const handleCancelEnableUpdates = async () => {
+    const [product, channel] = searchQueries;
+    const esDetails = emergencyShutoffs.find(
+      es => es.product === product && es.channel === channel
+    );
+    const { error } = await cancelEnableUpdates(
+      esDetails.scheduledChange.sc_id,
+      esDetails.scheduledChange.sc_data_version
+    );
+
+    if (!error) {
+      setEmergencyShutoffs(
+        emergencyShutoffs.map(es => {
+          if (es.product !== product || es.channel !== channel) {
+            return es;
+          }
+
+          const shutoff = clone(es);
+
+          delete shutoff.scheduledChange;
+
+          return shutoff;
+        })
+      );
+    }
+  };
+
+  const updateSignoffsEnableUpdates = ({
+    roleToSignoffWith,
+    emergencyShutoff,
+  }) => {
+    setEmergencyShutoffs(
+      emergencyShutoffs.map(es => {
+        if (
+          !es.scheduledChange ||
+          es.scheduledChange.sc_id !== emergencyShutoff.scheduledChange.sc_id
+        ) {
+          return es;
+        }
+
+        const newEs = clone(es);
+
+        newEs.scheduledChange.signoffs[username] = roleToSignoffWith;
+
+        return newEs;
+      })
+    );
+  };
+
+  const doSignoffEnableUpdates = async (
+    roleToSignoffWith,
+    emergencyShutoff
+  ) => {
+    const { error } = await signoffEnableUpdates({
+      scId: emergencyShutoff.scheduledChange.sc_id,
+      role: roleToSignoffWith,
+    });
+
+    return { error, result: { roleToSignoffWith, emergencyShutoff } };
+  };
+
+  const handleSignoffEnableUpdatesDialogSubmit = async () => {
+    const { error, result } = await doSignoffEnableUpdates(
+      signoffRole,
+      dialogState.item
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    return result;
+  };
+
+  const handleSignoffEnableUpdatesDialogComplete = result => {
+    updateSignoffsEnableUpdates(result);
+    handleDialogClose();
+  };
+
+  const handleSignoffEnableUpdates = async () => {
+    const [product, channel] = searchQueries;
+    const esDetails = emergencyShutoffs.find(
+      es => es.product === product && es.channel === channel
+    );
+
+    if (roles.length === 1) {
+      const { error, result } = await doSignoffEnableUpdates(
+        roles[0],
+        esDetails
+      );
+
+      if (!error) {
+        updateSignoffsEnableUpdates(result);
+      }
+    } else {
+      setDialogState({
+        ...dialogState,
+        open: true,
+        title: 'Signoff as…',
+        confirmText: 'Sign off',
+        item: esDetails,
+        mode: 'signoffEnableUpdates',
+        handleComplete: handleSignoffEnableUpdatesDialogComplete,
+        handleSubmit: handleSignoffEnableUpdatesDialogSubmit,
+      });
+    }
+  };
+
+  const handleRevokeEnableUpdates = async () => {
+    const [product, channel] = searchQueries;
+    const esDetails = emergencyShutoffs.find(
+      es => es.product === product && es.channel === channel
+    );
+    const { error } = await revokeEnableUpdates({
+      scId: esDetails.scheduledChange.sc_id,
+      role: esDetails.scheduledChange.signoffs[username],
+    });
+
+    if (!error) {
+      setEmergencyShutoffs(
+        emergencyShutoffs.map(es => {
+          if (
+            !es.scheduledChange ||
+            es.scheduledChange.sc_id !== esDetails.scheduledChange.sc_id
+          ) {
+            return es;
+          }
+
+          const newEs = clone(es);
+
+          delete newEs.scheduledChange.signoffs[username];
+
+          return newEs;
+        })
+      );
+    }
+  };
+
   const getDialogSubmit = () => {
     if (dialogState.mode === 'delete') {
       return handleDeleteDialogSubmit;
     }
 
-    return handleSignoffDialogSubmit;
+    if (dialogState.mode === 'signoff') {
+      return handleSignoffDialogSubmit;
+    }
+
+    return handleSignoffEnableUpdatesDialogSubmit;
   };
 
   const getRowHeight = ({ index }) => {
@@ -714,7 +1024,7 @@ function ListRules(props) {
         }
         style={style}>
         <RuleCard
-          className={classNames(classes.ruleCard, {
+          className={classNames(classes.card, {
             [classes.ruleCardSelected]: isSelected,
           })}
           key={rule.rule_id}
@@ -777,6 +1087,27 @@ function ListRules(props) {
               ))}
             </TextField>
           </div>
+          {productChannelFilter !== ALL &&
+            searchQueries &&
+            searchQueries.length === 2 &&
+            emergencyShutoffs.find(
+              es =>
+                es.product === searchQueries[0] &&
+                es.channel === searchQueries[1]
+            ) && (
+              <EmergencyShutoffCard
+                className={classes.card}
+                emergencyShutoff={emergencyShutoffs.find(
+                  es =>
+                    es.product === searchQueries[0] &&
+                    es.channel === searchQueries[1]
+                )}
+                onEnableUpdates={handleEnableUpdates}
+                onCancelEnable={handleCancelEnableUpdates}
+                onSignoff={handleSignoffEnableUpdates}
+                onRevoke={handleRevokeEnableUpdates}
+              />
+            )}
           {filteredRulesWithScheduledChanges && (
             <Fragment>
               <VariableSizeList
@@ -788,17 +1119,6 @@ function ListRules(props) {
               />
             </Fragment>
           )}
-          <Link
-            to={{
-              pathname: '/rules/create',
-              state: { rulesFilter: searchQueries },
-            }}>
-            <Tooltip title="Add Rule">
-              <Fab color="primary" className={classes.fab}>
-                <PlusIcon />
-              </Fab>
-            </Tooltip>
-          </Link>
         </Fragment>
       )}
       <DialogAction
@@ -817,6 +1137,32 @@ function ListRules(props) {
         onExited={handleDialogExited}
       />
       <Snackbar onClose={handleSnackbarClose} {...snackbarState} />
+      <Link
+        to={{
+          pathname: '/rules/create',
+          state: { rulesFilter: searchQueries },
+        }}>
+        <Tooltip title="Add Rule">
+          <Fab color="primary" className={classes.fab}>
+            <PlusIcon />
+          </Fab>
+        </Tooltip>
+      </Link>
+      <SpeedDial ariaLabel="Secondary Actions">
+        <SpeedDialAction
+          disabled={
+            isLoading ||
+            !username ||
+            filteredProductChannelIsShutoff ||
+            !searchQueries ||
+            !searchQueries[1]
+          }
+          icon={<PauseIcon />}
+          tooltipOpen
+          tooltipTitle="Disable Updates"
+          onClick={handleDisableUpdates}
+        />
+      </SpeedDial>
     </Dashboard>
   );
 }

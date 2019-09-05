@@ -80,7 +80,6 @@ const deleteScheduledChange = ({ scId, scDataVersion }) =>
   });
 
 // Releases factory
-// eslint-disable-next-line import/prefer-default-export
 export {
   getReleases,
   getRelease,

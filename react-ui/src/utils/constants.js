@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/prefer-default-export
 export const USER_SESSION = 'react-auth0-session';
 export const BASE_URL = `${process.env.BALROG_ROOT_URL}/api`;
 export const OBJECT_NAMES = {

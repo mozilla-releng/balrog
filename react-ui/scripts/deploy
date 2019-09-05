@@ -13,7 +13,7 @@ source .env
 
 HEADERS=$(cat <<EOF
 { \
-    "Content-Security-Policy": "default-src 'none'; script-src 'self'; img-src 'self' https://*.gravatar.com https://*.githubusercontent.com https://i1.wp.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src $BALROG_ROOT_URL https://auth.mozilla.auth0.com; frame-src https://auth.mozilla.auth0.com; frame-ancestors 'none'; base-uri 'none'; form-action 'none'", \
+    "Content-Security-Policy": "default-src 'none'; script-src 'self'; img-src 'self' https://*.gravatar.com https://*.githubusercontent.com https://i1.wp.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src $BALROG_ROOT_URL https://auth.mozilla.auth0.com https://www.googleapis.com/; frame-src https://auth.mozilla.auth0.com; frame-ancestors 'none'; base-uri 'none'; form-action 'none'", \
     "Strict-Transport-Security": "max-age=63072000", \
     "X-Content-Type-Options": "nosniff", \
     "X-Frame-Options": "SAMEORIGIN", \
