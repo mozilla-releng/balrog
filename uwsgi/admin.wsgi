@@ -189,6 +189,7 @@ application.config["M2M_ACCOUNT_MAPPING"] = {
 # It feels a bit hacky to be writing out a frontend config on the fly, but none
 # of the alternatives seemed better (baking dev/stage/prod configs into one image,
 # building separate images for those environments, cloudops maintaining this config).
+new_ui_url = os.environ.get("NEW_UI_URL", "http://localhost:9000")
 frontend_config = os.environ.get("FRONTEND_CONFIG", "/app/ui/dist/js/config.js")
 config_dir = os.path.dirname(frontend_config)
 if not os.path.exists(config_dir):
@@ -198,12 +199,13 @@ with open(frontend_config, "w+") as f:
         """
 angular.module('config', [])
 
+.constant('NewBalrogURL', '{}')
 .constant('Auth0Config', {})
 .constant('GCSConfig', {{
     'nightly_history_bucket': 'https://www.googleapis.com/storage/v1/b/{}/o',
     'releases_history_bucket': 'https://www.googleapis.com/storage/v1/b/{}/o',
 }});
 """.format(
-            auth0_config, os.environ["NIGHTLY_HISTORY_BUCKET"], os.environ["RELEASES_HISTORY_BUCKET"]
+            new_ui_url, auth0_config, os.environ["NIGHTLY_HISTORY_BUCKET"], os.environ["RELEASES_HISTORY_BUCKET"]
         )
     )
