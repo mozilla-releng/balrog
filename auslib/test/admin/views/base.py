@@ -1,10 +1,10 @@
+import json
 import logging
 import os
 import unittest
 from tempfile import mkstemp
 
 import pytest
-import simplejson as json
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import cache, dbo

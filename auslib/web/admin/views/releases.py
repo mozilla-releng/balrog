@@ -1,7 +1,7 @@
 import difflib
+import json
 
 import connexion
-import simplejson as json
 from flask import Response, abort, jsonify
 
 from auslib.blobs.base import BlobValidationError, createBlob

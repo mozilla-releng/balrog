@@ -1,8 +1,8 @@
+import json
 import logging
 from os import path
 
 import jsonschema
-import simplejson as json
 
 # To enable shared jsonschema validators
 import auslib.util.jsonschema_validators  # noqa
