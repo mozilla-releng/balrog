@@ -1,10 +1,13 @@
-hypothesis
 -r base.in
 
 black
 check-manifest
 coverage
+flake8
+hypothesis
 isort
+mock
 pip-compile-multi
 pytest
 pytest-cov
+pytest-xdist

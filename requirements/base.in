@@ -3,6 +3,7 @@ auth0-python
 # Because of ???
 connexion==1.5.3
 flask
+flask_compress
 flask_wtf
 google-api-core
 google-auth
@@ -11,7 +12,7 @@ google-cloud-storage
 jsonschema==2.6.0
 mysqlclient
 python-jose
-raven
+raven[flask]
 requests
 repoze-lru
 spec-synthase
