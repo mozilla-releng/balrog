@@ -1,0 +1,10 @@
+hypothesis
+-r base.in
+
+black
+check-manifest
+coverage
+isort
+pip-compile-multi
+pytest
+pytest-cov

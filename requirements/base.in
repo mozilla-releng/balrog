@@ -1,0 +1,22 @@
+arrow
+auth0-python
+# Because of ???
+connexion==1.5.3
+flask
+flask_wtf
+google-api-core
+google-auth
+google-cloud-storage
+# Because of https://github.com/Yelp/swagger_spec_validator/pull/118
+jsonschema==2.6.0
+mysqlclient
+python-jose
+raven
+requests
+repoze-lru
+spec-synthase
+# Because of ???
+swagger-spec-validator==2.3.1
+setuptools
+sqlalchemy
+sqlalchemy-migrate
