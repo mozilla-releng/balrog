@@ -1,3 +1,4 @@
-requests
+-r base.in
+
 pytest<5
 pytest-cov
