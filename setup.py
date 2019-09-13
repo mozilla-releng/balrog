@@ -7,7 +7,7 @@ here = path.abspath(path.dirname(__file__))
 # of the packages in it. However, setuptools doesn't support parsing this type
 # of file, so we need to strip those out before passing the requirements along
 # to it.
-with open(path.join(here, "requirements.txt")) as f:
+with open(path.join(here, "requirements/base.txt")) as f:
     requirements = []
     for line in f:
         # Skip lines with hash values
