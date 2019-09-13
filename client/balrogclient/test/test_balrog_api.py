@@ -13,23 +13,14 @@ from requests_mock import Adapter
 
 from balrogclient.api import API
 
-AUTH0_SECRETS = {
-    "client_id": "some-client",
-    "client_secret": "super-secret",
-    "audience": "tests",
-    "domain": "auth0.test",
-}
+AUTH0_SECRETS = {"client_id": "some-client", "client_secret": "super-secret", "audience": "tests", "domain": "auth0.test"}
 
 
 def test_log_lines_truncated(caplog):
     session = Session()
     adapter = Adapter()
     session.mount("https://", adapter)
-    adapter.register_uri(
-        "POST",
-        "https://auth0.test/oauth/token",
-        json={"expires_in": 3600, "access_token": "the-token"},
-    )
+    adapter.register_uri("POST", "https://auth0.test/oauth/token", json={"expires_in": 3600, "access_token": "the-token"})
     adapter.register_uri("GET", "https://api/")
 
     caplog.set_level(logging.DEBUG)
@@ -37,6 +28,6 @@ def test_log_lines_truncated(caplog):
     api = API(AUTH0_SECRETS, session=session)
     api.do_request("https://api/", {"data": "a" * 100}, "GET")
 
-    logs = [message.split(': ', 1)[1] for message in caplog.messages if message.startswith("Data sent: ")]
-    assert logs == ['{"data": "' + 'a'*70 + "<...32 characters elided ...>"]
+    logs = [message.split(": ", 1)[1] for message in caplog.messages if message.startswith("Data sent: ")]
+    assert logs == ['{"data": "' + "a" * 70 + "<...32 characters elided ...>"]
     print(logs)
