@@ -1,4 +1,13 @@
 -r base.in
 
+# because pip-compile doesn't seem to get these properly frome importlib-metadata's requirements? dunno
+contextlib2
+pathlib2
+configparser
+funcsigs
+scandir
+
+more-itertools<6
+requests_mock
 pytest<5
 pytest-cov
