@@ -21,3 +21,4 @@ swagger-spec-validator==2.3.1
 setuptools
 sqlalchemy
 sqlalchemy-migrate
+uwsgi
