@@ -9,7 +9,7 @@ RUN pip install -r requirements/base.txt
 
 COPY balrogagent/ /app/balrogagent/
 COPY scripts/ /app/scripts/
-COPY run.sh MANIFEST.in setup.py version.json /app/
+COPY run.sh MANIFEST.in pyproject.toml setup.py version.json /app/
 # test-only stuff
 COPY .coveragerc run-tests.sh tox.ini version.txt /app/
 

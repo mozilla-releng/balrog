@@ -26,7 +26,7 @@ COPY auslib/ /app/auslib/
 COPY ui/ /app/ui/
 COPY scripts/ /app/scripts/
 COPY uwsgi/ /app/uwsgi/
-COPY .coveragerc MANIFEST.in setup.py tox.ini version.json version.txt /app/
+COPY .coveragerc MANIFEST.in setup.py pyproject.toml tox.ini version.json version.txt /app/
 # we need .git to gather information for coverage reports
 COPY .git/ /app/.git/
 

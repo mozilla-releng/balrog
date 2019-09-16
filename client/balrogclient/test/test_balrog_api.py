@@ -30,4 +30,3 @@ def test_log_lines_truncated(caplog):
 
     logs = [message.split(": ", 1)[1] for message in caplog.messages if message.startswith("Data sent: ")]
     assert logs == ['{"data": "' + "a" * 70 + "<...32 characters elided ...>"]
-    print(logs)
