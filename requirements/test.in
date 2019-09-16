@@ -4,6 +4,7 @@ black
 check-manifest
 coverage
 flake8
+flake8-black
 hypothesis
 isort
 mock
