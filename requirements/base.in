@@ -14,7 +14,7 @@ mysqlclient
 python-jose
 raven[flask]
 requests
-repoze-lru
+repoze.lru
 spec-synthase
 # Because of ???
 swagger-spec-validator==2.3.1

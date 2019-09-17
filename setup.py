@@ -10,13 +10,14 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "requirements", "base.txt")) as f:
     requirements = []
     for line in f:
-        # Skip empty lines
-        if not line.strip():
+        # Skip empty and comment lines
+        if not line.strip() or line.strip().startswith("#"):
             continue
         # Skip lines with hash values
         if not line.strip().startswith("--"):
             requirements.append(line.split(";")[0].split()[0])
-
+            requirement_without_python_filter = line.split(";")[0]
+            requirement_without_trailing_characters = requirement_without_python_filter.split()[0]
 
 with open(path.join(here, "version.txt")) as f:
     version = f.read()
