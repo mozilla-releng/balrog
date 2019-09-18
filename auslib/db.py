@@ -1,4 +1,5 @@
 import itertools
+import json
 import logging
 import pprint
 import re
@@ -7,7 +8,6 @@ from collections import defaultdict
 from copy import copy
 from os import path
 
-import simplejson as json
 import sqlalchemy.types
 from sqlalchemy import BigInteger, Boolean, Column, Integer, MetaData, String, Table, Text, create_engine, func, join, select
 from sqlalchemy.exc import SQLAlchemyError

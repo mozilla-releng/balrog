@@ -1,0 +1,13 @@
+-r base.in
+
+asynctest
+black
+check-manifest
+coverage
+flake8
+isort
+pip-compile-multi
+pytest
+pytest-cov
+pytest-xdist
+yarl

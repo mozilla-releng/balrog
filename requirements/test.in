@@ -1,0 +1,14 @@
+-r base.in
+
+black
+check-manifest
+coverage
+flake8
+flake8-black
+hypothesis
+isort
+mock
+pip-compile-multi
+pytest
+pytest-cov
+pytest-xdist

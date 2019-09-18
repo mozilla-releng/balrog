@@ -1,0 +1,24 @@
+arrow
+auth0-python
+# Because 2.0 switched away from swagger-spec-validator, which spec-synthase requires
+connexion==1.5.3
+flask
+flask_compress
+flask_wtf
+google-api-core
+google-auth
+google-cloud-storage
+# Because of https://github.com/Yelp/swagger_spec_validator/pull/118
+jsonschema==2.6.0
+mysqlclient
+python-jose
+raven[flask]
+requests
+repoze.lru
+spec-synthase
+# Because we use multiple types for the same object. See https://github.com/Yelp/swagger_spec_validator/pull/106
+swagger-spec-validator==2.3.1
+setuptools
+sqlalchemy
+sqlalchemy-migrate
+uwsgi

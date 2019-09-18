@@ -1,3 +1,5 @@
-requests
+-r base.in
+
+requests_mock
 pytest
 pytest-cov

@@ -1,4 +1,4 @@
-include requirements.txt
 include version.txt
 
+recursive-include requirements *.txt
 recursive-exclude * *.py[co]

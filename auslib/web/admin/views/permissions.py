@@ -1,5 +1,5 @@
 import connexion
-import simplejson as json
+import json
 from flask import Response, jsonify
 
 from auslib.global_state import dbo

@@ -112,6 +112,30 @@ tasks:
               owner: ${owner_email}
               source: ${repo_url}
 
+          - taskId: {$eval: as_slugid("client-tests")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes: []
+            routes: []
+            payload:
+              maxRunTime: 1200
+              image: "mozillareleases/python-test-runner"
+              env:
+                NO_VOLUME_MOUNT: 1
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd client && bash run-tests.sh"
+              features:
+                dind: true
+            metadata:
+              name: Balrog client tests
+              description: Balrog client tests
+              owner: ${owner_email}
+              source: ${repo_url}
+
           - taskId: {$eval: as_slugid("old-ui-tests")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}

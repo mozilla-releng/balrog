@@ -2,19 +2,13 @@
 
 import difflib
 import glob
+import json
 import logging
 import os
 import os.path
 import re
 import site
 import time
-
-try:
-    import json
-
-    assert json  # to shut pyflakes up
-except Exception:
-    import simplejson as json
 
 mydir = os.path.dirname(os.path.abspath(__file__))
 site.addsitedir(os.path.join(mydir, ".."))

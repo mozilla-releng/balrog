@@ -1,5 +1,5 @@
+import json
 import mock
-import simplejson as json
 from sqlalchemy import select
 
 from auslib.blobs.base import createBlob

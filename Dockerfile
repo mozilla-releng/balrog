@@ -15,9 +15,9 @@ WORKDIR /app
 # install the requirements into the container first
 # these rarely change and is more cache friendly
 # ... really speeds up building new containers
-COPY requirements.txt /app/
+COPY requirements/ /app/requirements/
 RUN apt-get install -q --yes gcc && \
-    pip install -r requirements.txt && \
+    pip install -r requirements/base.txt && \
     apt-get -q --yes remove gcc && \
     apt-get -q --yes autoremove && \
     apt-get clean && \
