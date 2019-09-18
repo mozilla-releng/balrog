@@ -465,13 +465,15 @@ function ListReleases(props) {
     // rule ids row + ListItemText margins
     height +=
       body1TextHeight() +
-      ruleIdsLineCount * body2TextHeight() +
+      // Height of <Chip size="small" ... /> is hard-coded to 24px
+      // https://github.com/mui-org/material-ui/blob/b968c9a375d2d71745fa0165ac0d8d77bef74bc6/packages/material-ui/src/Chip/Chip.js#L46
+      ruleIdsLineCount * (24 + theme.spacing(1)) +
       2 * listItemTextMargin;
 
     // actions row
     height += buttonHeight + theme.spacing(2);
     // space below the card (margin)
-    height += theme.spacing(6);
+    height += theme.spacing(4);
 
     if (release.scheduledChange && release.scheduledChange.sc_id) {
       // divider

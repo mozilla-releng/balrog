@@ -60,5 +60,11 @@ export default createMuiTheme({
         paddingBottom: SPACING.UNIT / 2,
       },
     },
+    MuiList: {
+      padding: {
+        paddingTop: 0,
+        paddingBottom: 0,
+      },
+    },
   },
 });

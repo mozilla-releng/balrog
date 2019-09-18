@@ -119,6 +119,7 @@ export const ALL_PERMISSIONS = [
   'scheduled_change',
 ];
 export const NEW_LINES_REGEX = /\r?\n|\r/g;
+export const SPLIT_WITH_NEWLINES_AND_COMMA_REGEX = /[,\r\n]+/;
 export const RULES_COMMON_FILTERS = [
   {
     label: 'Firefox Release',
