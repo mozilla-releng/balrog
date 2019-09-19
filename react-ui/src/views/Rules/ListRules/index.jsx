@@ -96,6 +96,7 @@ function ListRules(props) {
   const query = parse(search.slice(1));
   const hashQuery = parse(hash.replace('#', ''));
   const {
+    h6TextHeight,
     body1TextHeight,
     body2TextHeight,
     subtitle1TextHeight,
@@ -320,11 +321,11 @@ function ListRules(props) {
       // than future state.
       const sortedRules = rulesWithScheduledChanges.sort((ruleA, ruleB) => {
         const priorityA =
-          ruleA.priority === null || ruleA.priority === undefined
+          ruleA.scheduledChange && ruleA.scheduledChange.priority
             ? ruleA.scheduledChange.priority
             : ruleA.priority;
         const priorityB =
-          ruleB.priority === null || ruleB.priority === undefined
+          ruleB.scheduledChange && ruleB.scheduledChange.priority
             ? ruleB.scheduledChange.priority
             : ruleB.priority;
 
@@ -899,8 +900,15 @@ function ListRules(props) {
     height += buttonHeight + theme.spacing(2);
 
     if (!hasScheduledChanges || rule.scheduledChange.change_type !== 'insert') {
-      // avatar height (title) + padding
-      height += theme.spacing(4) + theme.spacing(3);
+      height +=
+        Math.max(
+          // avatar height
+          theme.spacing(4),
+          // product:channel header height
+          h6TextHeight,
+          // revisions icon
+          theme.spacing(3) + 24
+        ) + theme.spacing(1); // top padding
 
       // != checks for both null and undefined
       const keys = Object.keys(rule).filter(key => rule[key] != null);
@@ -933,9 +941,12 @@ function ListRules(props) {
         2 * listPadding;
 
       // row with comment
-      // (max 8*10px; ~3 lines of comments otherwise we display a scroller)
       if (rule.comment) {
-        height += theme.spacing(10) + 2 * listItemTextMargin + 2 * listPadding;
+        height +=
+          body1TextHeight() +
+          body2TextHeight() +
+          2 * listItemTextMargin +
+          2 * listPadding;
       }
     }
 
@@ -944,8 +955,8 @@ function ListRules(props) {
       height += Math.max(subtitle1TextHeight(), theme.spacing(3));
 
       if (rule.scheduledChange.change_type === 'delete') {
-        // row with "all properties will be deleted" + padding
-        height += body2TextHeight() + theme.spacing(2);
+        // row with "all properties will be deleted"
+        height += body2TextHeight();
       } else if (
         rule.scheduledChange.change_type === 'update' ||
         rule.scheduledChange.change_type === 'insert'
@@ -956,8 +967,13 @@ function ListRules(props) {
           rule.scheduledChange
         );
 
-        // diff viewer + marginTop
-        height += diffedProperties.length * diffRowHeight + theme.spacing(1);
+        // diff viewer + marginTop + height of the
+        // horizontal scroller (rough estimate;
+        // sometimes there are no scroller as well)
+        height +=
+          diffedProperties.length * diffRowHeight +
+          theme.spacing(1) +
+          theme.spacing(2);
       }
 
       if (
@@ -989,7 +1005,7 @@ function ListRules(props) {
     }
 
     // space below the card (margin)
-    height += theme.spacing(6);
+    height += theme.spacing(4);
 
     return height;
   };
@@ -1006,7 +1022,7 @@ function ListRules(props) {
     if (hashQuery.scId) {
       return Boolean(
         rule.scheduledChange &&
-          Number(rule.scheduledChange.sc_id === hashQuery.scId)
+          Number(rule.scheduledChange.sc_id === Number(hashQuery.scId))
       );
     }
   };

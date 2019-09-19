@@ -1,5 +1,5 @@
 import { hot } from 'react-hot-loader/root';
-import React, { Fragment, useState } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { Authorize } from 'react-auth0-components';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import { ThemeProvider } from '@material-ui/styles';
@@ -50,9 +50,8 @@ axios.interceptors.response.use(
 );
 
 const App = () => {
-  const [authorize, setAuthorize] = useState(
-    Boolean(localStorage.getItem(USER_SESSION))
-  );
+  const userSession = localStorage.getItem(USER_SESSION);
+  const [authorize, setAuthorize] = useState(Boolean(userSession));
   const [authContext, setAuthContext] = useState({
     authorize: () => setAuthorize(true),
     unauthorize: () => {
@@ -66,9 +65,16 @@ const App = () => {
   });
   // Wait until authorization is done before rendering
   // to make sure users who are logged in are able to access protected views
-  const [ready, setReady] = useState(
-    Boolean(!localStorage.getItem(USER_SESSION))
-  );
+  const [ready, setReady] = useState(false);
+
+  // When the user is not logged in, handleAuthorize and handleError will never
+  // be triggered since the `authorize` prop is set to `false`.
+  useEffect(() => {
+    if (!userSession) {
+      setReady(true);
+    }
+  }, [userSession]);
+
   const handleAuthorize = user => {
     setAuthContext({
       ...authContext,
@@ -78,24 +84,14 @@ const App = () => {
   };
 
   const handleError = () => {
+    setAuthContext({
+      ...authContext,
+      user: null,
+    });
     setReady(true);
   };
 
-  const render = () => {
-    const session = localStorage.getItem(USER_SESSION);
-
-    if (session) {
-      const user = JSON.parse(session);
-      const expires = new Date(user.expiration);
-      const now = new Date();
-
-      if (expires < now && user) {
-        authContext.unauthorize();
-      }
-    }
-
-    return <Main />;
-  };
+  const render = () => <Main />;
 
   return (
     <Fragment>

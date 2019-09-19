@@ -3,6 +3,7 @@ import { makeStyles } from '@material-ui/styles';
 import { diffLines, formatLines } from 'unidiff';
 import { Diff, Hunk, parseDiff } from 'react-diff-view';
 import 'react-diff-view/style/index.css';
+import tokenize from './tokenize';
 import getDiff from '../../utils/diff';
 import getDiffedProperties from '../../utils/getDiffedProperties';
 import { rule } from '../../utils/prop-types';
@@ -40,13 +41,15 @@ function DiffRule(props) {
 
     return diff;
   }, [firstRule, secondRule]);
+  const tokens = useMemo(() => tokenize(diff.hunks), [diff.hunks]);
 
   return diff && diff.type ? (
     <Diff
       className={classes.diff}
       viewType="split"
       diffType={diff.type}
-      hunks={diff.hunks || []}>
+      hunks={diff.hunks || []}
+      tokens={tokens}>
       {hunks => hunks.map(hunk => <Hunk key={hunk.content} hunk={hunk} />)}
     </Diff>
   ) : null;

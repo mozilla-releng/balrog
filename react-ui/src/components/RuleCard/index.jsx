@@ -54,15 +54,19 @@ const useStyles = makeStyles(theme => ({
   },
   cardHeader: {
     paddingBottom: 0,
+    paddingTop: theme.spacing(1),
   },
   cardHeaderAvatar: {
     display: 'flex',
+  },
+  cardHeaderAction: {
+    marginTop: 0,
   },
   cardContentRoot: {
     padding: theme.spacing(1),
   },
   deletedText: {
-    padding: theme.spacing(1),
+    padding: `0 ${theme.spacing(1)}px`,
   },
   listItem: {
     paddingTop: 0,
@@ -97,6 +101,7 @@ const useStyles = makeStyles(theme => ({
   },
   divider: {
     margin: `${theme.spacing(1)}px`,
+    backgroundColor: theme.palette.grey[200],
   },
   scheduledChangesHeader: {
     display: 'flex',
@@ -116,10 +121,6 @@ const useStyles = makeStyles(theme => ({
   avatarText: {
     fontSize: theme.typography.body2.fontSize,
   },
-  comment: {
-    maxHeight: theme.spacing(10),
-    overflowY: 'auto',
-  },
   propertyWithScheduledChange: {
     ...theme.mixins.redDot,
   },
@@ -133,6 +134,9 @@ const useStyles = makeStyles(theme => ({
   },
   link: {
     ...theme.mixins.link,
+  },
+  schedPriorityChange: {
+    backgroundColor: '#c0dc91',
   },
 }));
 
@@ -181,33 +185,44 @@ function RuleCard({
     rule && rule.scheduledChange
       ? getDiffedProperties(RULE_DIFF_PROPERTIES, rule, rule.scheduledChange)
       : [];
+  // If there's a scheduled change that may be updating the priority, we want
+  // to display it in the header rather than the current priority.
+  // For other types of scheduled changes (inserts and deletes) we either
+  // don't show it at all, or don't have a value in the scheduled change to
+  // show.
+  const isScheduledPriorityUpdate =
+    rule.scheduledChange &&
+    rule.scheduledChange.change_type === 'update' &&
+    rule.priority !== rule.scheduledChange.priority;
+  const headerPriority = isScheduledPriorityUpdate
+    ? rule.scheduledChange.priority
+    : rule.priority;
+  const priorityTitle = isScheduledPriorityUpdate
+    ? 'Scheduled Priority'
+    : 'Priority';
 
   return (
     <Card classes={{ root: classes.root }} spacing={4} {...props}>
       {rule.product && (
         <CardHeader
-          classes={{ avatar: classes.cardHeaderAvatar }}
+          classes={{
+            avatar: classes.cardHeaderAvatar,
+            action: classes.cardHeaderAction,
+          }}
           className={classes.cardHeader}
           avatar={
-            Number.isInteger(Number(rule.priority)) && (
+            Number.isInteger(Number(headerPriority)) && (
               <Fragment>
                 <Avatar
-                  title="Priority"
-                  aria-label="Priority"
-                  className={classes.avatar}>
+                  title={priorityTitle}
+                  aria-label={priorityTitle}
+                  className={classNames(classes.avatar, {
+                    [classes.schedPriorityChange]: isScheduledPriorityUpdate,
+                  })}>
                   <Typography className={classes.avatarText}>
-                    {rule.priority}
+                    {headerPriority}
                   </Typography>
                 </Avatar>
-                {diffedProperties.includes('priority') &&
-                  rule.scheduledChange.change_type === 'update' && (
-                    <div
-                      className={classNames(
-                        classes.propertyWithScheduledChange,
-                        classes.priorityScheduledChange
-                      )}
-                    />
-                  )}
               </Fragment>
             )
           }
@@ -357,10 +372,12 @@ function RuleCard({
                             component="span"
                             variant="body2"
                             className={classes.inline}
-                            color="textPrimary">
+                            color="textSecondary">
                             {rule.rule_id}
                           </Typography>
-                          {rule.alias && ` ${rule.alias} (alias)`}
+                          <strong>
+                            {rule.alias && ` ${rule.alias} (alias)`}
+                          </strong>
                         </Fragment>
                       }
                     />
@@ -505,7 +522,7 @@ function RuleCard({
                 {rule.osVersion && (
                   <ListItem className={classes.listItem}>
                     <ListItemText
-                      title={rule.osVersion}
+                      title={rule.osVersion.split(',').join('\n')}
                       primaryTypographyProps={{
                         component: 'div',
                         className: classes.primaryText,
@@ -645,10 +662,13 @@ function RuleCard({
                 <List>
                   <ListItem className={classes.listItem}>
                     <ListItemText
-                      className={classes.comment}
+                      title={rule.comment}
                       primaryTypographyProps={{
                         component: 'div',
                         className: classes.primaryText,
+                      }}
+                      secondaryTypographyProps={{
+                        className: classes.textEllipsis,
                       }}
                       primary={
                         <Fragment>
