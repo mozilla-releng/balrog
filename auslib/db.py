@@ -1957,37 +1957,36 @@ class Releases(AUSTable):
             name = current_release["name"]
             is_readonly_change = "read_only" in what and current_release["read_only"] != what["read_only"]
 
-            if not is_readonly_change and ("product" in what or "data" in what):
-                self._proceedIfNotReadOnly(current_release["name"], transaction=transaction)
+            if not is_readonly_change:
+                if "product" in what or "data" in what:
+                    self._proceedIfNotReadOnly(current_release["name"], transaction=transaction)
 
-            if blob:
-                blob.validate(what.get("product", current_release["product"]), self.domainWhitelist)
-                name = what.get("name", name)
-                if name != blob["name"]:
-                    raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
+                if blob:
+                    blob.validate(what.get("product", current_release["product"]), self.domainWhitelist)
+                    name = what.get("name", name)
+                    if name != blob["name"]:
+                        raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
 
-            if not self.db.hasPermission(changed_by, "release", "modify", current_release["product"], transaction):
-                raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, current_release["product"]))
+                if not self.db.hasPermission(changed_by, "release", "modify", current_release["product"], transaction):
+                    raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, current_release["product"]))
 
-            if "product" in what:
-                # If the product is being changed, we need to make sure the user
-                # has permission to modify releases of that product, too.
-                if not self.db.hasPermission(changed_by, "release", "modify", what["product"], transaction):
-                    raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, what["product"]))
+                if "product" in what:
+                    # If the product is being changed, we need to make sure the user
+                    # has permission to modify releases of that product, too.
+                    if not self.db.hasPermission(changed_by, "release", "modify", what["product"], transaction):
+                        raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, what["product"]))
 
-            if is_readonly_change:
+                new_release = current_release.copy()
+                new_release.update(what)
+                if not dryrun:
+                    potential_required_signoffs = [
+                        obj for v in self.getPotentialRequiredSignoffs([current_release, new_release], transaction=transaction).values() for obj in v
+                    ]
+                    verify_signoffs(potential_required_signoffs, signoffs)
+            else:
                 self.validate_readonly_change(
                     where, what["read_only"], changed_by, release=current_release, transaction=transaction, dryrun=dryrun, signoffs=signoffs
                 )
-                continue
-
-            new_release = current_release.copy()
-            new_release.update(what)
-            if not dryrun:
-                potential_required_signoffs = [
-                    obj for v in self.getPotentialRequiredSignoffs([current_release, new_release], transaction=transaction).values() for obj in v
-                ]
-                verify_signoffs(potential_required_signoffs, signoffs)
 
         for release in current_releases:
             name = current_release["name"]
