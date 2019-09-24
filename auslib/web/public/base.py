@@ -1,3 +1,4 @@
+from functools import wraps
 import logging
 import re
 from os import path
@@ -10,6 +11,7 @@ from raven.contrib.flask import Sentry
 import auslib.web
 from auslib.AUS import AUS
 from auslib.errors import BadDataError
+from auslib.global_state import dbo
 from auslib.web.admin.views.problem import problem
 from specsynthase.specbuilder import SpecBuilder
 
@@ -17,6 +19,15 @@ try:
     import html
 except ImportError:  # pragma: no cover
     import cgi as html
+
+
+def with_transaction(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        with dbo.begin() as transaction:
+            return f(*args, transaction=transaction, **kwargs)
+
+    return wrapper
 
 
 log = logging.getLogger(__name__)

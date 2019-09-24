@@ -190,6 +190,21 @@ paths:
         200:
           description: Update blob in text/xml format.
 
+  /json/1/{product}/{version}/{buildTarget}/{channel}/update.json:
+    get:
+      operationId: 'auslib.web.public.json.get_update'
+      description: Return an update - TODO update me
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/channel'
+      responses:
+        200:
+          description: Update response TODO update me
+
   /__heartbeat__:
     get:
       operationId: 'auslib.web.public.dockerflow.heartbeat'
