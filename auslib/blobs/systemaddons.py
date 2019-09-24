@@ -1,13 +1,13 @@
 from auslib.AUS import isForbiddenUrl
-from auslib.blobs.base import Blob
+from auslib.blobs.base import XMLBlob
 from auslib.errors import BadDataError
 
 
-class SystemAddonsBlob(Blob):
+class SystemAddonsBlob(XMLBlob):
     jsonschema = "systemaddons.yml"
 
     def __init__(self, **kwargs):
-        Blob.__init__(self, **kwargs)
+        XMLBlob.__init__(self, **kwargs)
         if "schema_version" not in self:
             self["schema_version"] = 5000
 
