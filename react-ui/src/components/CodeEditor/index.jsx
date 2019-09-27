@@ -16,7 +16,7 @@ function CodeEditor({ onChange, value, readOnly, ...rest }) {
         theme: 'material',
         indentWithTabs: false,
         lineNumbers: true,
-        readOnly: readOnly ? 'nocursor' : false,
+        readOnly,
       }}
       {...rest}
     />

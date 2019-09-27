@@ -71,10 +71,9 @@ function SignoffSummary(props) {
               Signed By
             </ListSubheader>
           }>
-          <ListItem className={classes.signoffsList}>
-            {listOfSignoffs.map(([username, signoffRole]) => (
+          {listOfSignoffs.map(([username, signoffRole]) => (
+            <ListItem key={username} className={classes.signoffsList}>
               <ListItemText
-                key={username}
                 disableTypography
                 primary={
                   <Typography
@@ -93,8 +92,8 @@ function SignoffSummary(props) {
                 }
                 className={classes.listItemText}
               />
-            ))}
-          </ListItem>
+            </ListItem>
+          ))}
         </List>
       )}
     </div>
