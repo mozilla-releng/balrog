@@ -13,7 +13,10 @@ import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormLabel from '@material-ui/core/FormLabel';
+import Switch from '@material-ui/core/Switch';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
+import Drawer from '@material-ui/core/Drawer';
 import PlusIcon from 'mdi-react/PlusIcon';
 import PauseIcon from 'mdi-react/PauseIcon';
 import Dashboard from '../../../components/Dashboard';
@@ -47,6 +50,10 @@ import {
   scheduleDeleteEmergencyShutoff,
   cancelDeleteEmergencyShutoff,
 } from '../../../services/emergency_shutoff';
+import {
+  getRelease,
+  getScheduledChangeByName,
+} from '../../../services/releases';
 import { getUserInfo } from '../../../services/users';
 import { ruleMatchesRequiredSignoff } from '../../../utils/requiredSignoffs';
 import {
@@ -54,6 +61,7 @@ import {
   DIALOG_ACTION_INITIAL_STATE,
   OBJECT_NAMES,
   SNACKBAR_INITIAL_STATE,
+  CONTENT_MAX_WIDTH,
 } from '../../../utils/constants';
 import { withUser } from '../../../utils/AuthContext';
 import remToPx from '../../../utils/remToPx';
@@ -86,6 +94,19 @@ const useStyles = makeStyles(theme => ({
   ruleCardSelected: {
     border: `2px solid ${theme.palette.primary.light}`,
   },
+  drawerPaper: {
+    maxWidth: CONTENT_MAX_WIDTH,
+    margin: '0 auto',
+    padding: theme.spacing(1),
+    maxHeight: '80vh',
+  },
+  pendingSignoffFormControl: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  pendingSignoffFormLabel: {
+    transform: 'scale(0.75)',
+  },
 }));
 
 function ListRules(props) {
@@ -111,8 +132,14 @@ function ListRules(props) {
     []
   );
   const [productChannelOptions, setProductChannelOptions] = useState([]);
-  const searchQueries = query.product ? [query.product, query.channel] : null;
-  const [productChannelFilter, setProductChannelFilter] = useState(ALL);
+  const productChannelQueries = query.product
+    ? [query.product, query.channel]
+    : null;
+  const [productChannelFilter, setProductChannelFilter] = useState(
+    productChannelQueries
+      ? productChannelQueries.filter(Boolean).join(productChannelSeparator)
+      : ALL
+  );
   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
   const [scheduleDeleteDate, setScheduleDeleteDate] = useState(
     addSeconds(new Date(), -30)
@@ -122,6 +149,8 @@ function ListRules(props) {
   const [roles, setRoles] = useState([]);
   const [emergencyShutoffs, setEmergencyShutoffs] = useState([]);
   const [signoffRole, setSignoffRole] = useState('');
+  const [drawerState, setDrawerState] = useState({ open: false, item: {} });
+  const [drawerReleaseName, setDrawerReleaseName] = useState(null);
   const ruleListRef = useRef(null);
   const [products, fetchProducts] = useAction(getProducts);
   const [channels, fetchChannels] = useAction(getChannels);
@@ -132,9 +161,15 @@ function ListRules(props) {
   const [requiredSignoffs, fetchRequiredSignoffs] = useAction(
     getRequiredSignoffs
   );
-  const delRule = useAction(deleteRule)[1];
-  const scheduleDelRule = useAction(addScheduledChange)[1];
-  const delSC = useAction(deleteScheduledChange)[1];
+  const [release, fetchRelease] = useAction(getRelease);
+  const [scheduledChangeNameAction, fetchScheduledChangeByName] = useAction(
+    getScheduledChangeByName
+  );
+  const [delRuleAction, delRule] = useAction(deleteRule);
+  const [scheduleDelRuleAction, scheduleDelRule] = useAction(
+    addScheduledChange
+  );
+  const [delScAction, delSC] = useAction(deleteScheduledChange);
   const [signoffAction, signoff] = useAction(props =>
     makeSignoff({ type: 'rules', ...props })
   );
@@ -150,18 +185,24 @@ function ListRules(props) {
     fetchScheduledEmergencyShutoffs,
   ] = useAction(getScheduledEmergencyShutoffs);
   const filteredProductChannelIsShutoff =
-    productChannelFilter !== ALL && searchQueries && searchQueries.length === 2
+    productChannelFilter !== ALL &&
+    productChannelQueries &&
+    productChannelQueries.length === 2
       ? emergencyShutoffs.some(
           es =>
-            es.product === searchQueries[0] &&
-            (!searchQueries[1] || es.channel === searchQueries[1])
+            es.product === productChannelQueries[0] &&
+            (!productChannelQueries[1] ||
+              es.channel === productChannelQueries[1])
         )
       : false;
   const filteredProductChannelRequiresSignoff =
-    requiredSignoffs.data && searchQueries && searchQueries.length === 2
+    requiredSignoffs.data &&
+    productChannelQueries &&
+    productChannelQueries.length === 2
       ? requiredSignoffs.data.data.required_signoffs.some(
           rs =>
-            rs.product === searchQueries[0] && rs.channel === searchQueries[1]
+            rs.product === productChannelQueries[0] &&
+            rs.channel === productChannelQueries[1]
         )
       : false;
   const [disableUpdatesAction, disableUpdates] = useAction(
@@ -187,6 +228,15 @@ function ListRules(props) {
     channels.loading ||
     rules.loading ||
     emergencyShutoffsAction.loading;
+  const isActionLoading =
+    // The first two are to check if "View Release" is currently fetching
+    release.loading ||
+    scheduledChangeNameAction.loading ||
+    delScAction.loading ||
+    delRuleAction.loading ||
+    signoffAction.loading ||
+    scheduleDelRuleAction.loading ||
+    signoffEnableUpdatesAction.loading;
   const error =
     products.error ||
     channels.error ||
@@ -204,15 +254,28 @@ function ListRules(props) {
     revokeEnableUpdatesAction.error ||
     (roles.length === 1 && signoffEnableUpdatesAction.error);
   const handleFilterChange = ({ target: { value } }) => {
-    const [product, channel] = value.split(productChannelSeparator);
-    const query =
-      value !== ALL
-        ? stringify({ product, channel }, { addQueryPrefix: true })
-        : '';
-
-    props.history.push(`/rules${query}`);
-
     setProductChannelFilter(value);
+
+    const [product, channel] =
+      value === ALL
+        ? [undefined, undefined]
+        : value.split(productChannelSeparator);
+    const qs = {
+      ...query,
+      product,
+      channel,
+    };
+
+    props.history.push(`/rules${stringify(qs, { addQueryPrefix: true })}`);
+  };
+
+  const handleShowOnlyScheduledChangesChange = ({ target: { checked } }) => {
+    const qs = {
+      ...query,
+      onlyScheduledChanges: checked ? 1 : undefined,
+    };
+
+    props.history.push(`/rules${stringify(qs, { addQueryPrefix: true })}`);
   };
 
   const handleSignoffRoleChange = ({ target: { value } }) =>
@@ -369,45 +432,49 @@ function ListRules(props) {
     }
   }, [username]);
 
-  useEffect(() => {
-    setProductChannelFilter(
-      searchQueries
-        ? searchQueries.filter(Boolean).join(productChannelSeparator)
-        : ALL
-    );
-  }, [searchQueries]);
+  const filteredRulesWithScheduledChanges = useMemo(() => {
+    let filteredRules = clone(rulesWithScheduledChanges);
 
-  const filteredRulesWithScheduledChanges = useMemo(
-    () =>
-      productChannelFilter === ALL || !searchQueries
-        ? rulesWithScheduledChanges
-        : rulesWithScheduledChanges.filter(rule => {
-            const [productFilter, channelFilter] = searchQueries;
-            const ruleProduct =
-              rule.product ||
-              (rule.scheduledChange && rule.scheduledChange.product);
-            const ruleChannel =
-              rule.channel ||
-              (rule.scheduledChange && rule.scheduledChange.channel);
+    // Pending signoff switch
+    if (filteredRules && Boolean(query.onlyScheduledChanges)) {
+      filteredRules = filteredRules.filter(rule => rule.scheduledChange);
+    }
 
-            if (ruleProduct !== productFilter) {
-              return false;
-            }
+    if (!productChannelQueries) {
+      return filteredRules;
+    }
 
-            if (channelFilter) {
-              if (ruleChannel.indexOf('*') === -1) {
-                if (ruleChannel !== channelFilter) {
-                  return false;
-                }
-              } else if (!channelFilter.startsWith(ruleChannel.split('*')[0])) {
-                return false;
-              }
-            }
+    // Product channel dropdown filter
+    filteredRules = filteredRules.filter(rule => {
+      const [productFilter, channelFilter] = productChannelQueries;
+      const ruleProduct =
+        rule.product || (rule.scheduledChange && rule.scheduledChange.product);
+      const ruleChannel =
+        rule.channel || (rule.scheduledChange && rule.scheduledChange.channel);
 
-            return true;
-          }),
-    [searchQueries, productChannelFilter, rulesWithScheduledChanges]
-  );
+      if (ruleProduct !== productFilter) {
+        return false;
+      }
+
+      if (channelFilter) {
+        if (ruleChannel.indexOf('*') === -1) {
+          if (ruleChannel !== channelFilter) {
+            return false;
+          }
+        } else if (!channelFilter.startsWith(ruleChannel.split('*')[0])) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    return filteredRules;
+  }, [
+    productChannelQueries,
+    rulesWithScheduledChanges,
+    query.onlyScheduledChanges,
+  ]);
   const handleDateTimePickerError = error => {
     setDateTimePickerError(error);
   };
@@ -662,7 +729,7 @@ function ListRules(props) {
   };
 
   const handleDisableUpdates = async () => {
-    const [product, channel] = searchQueries;
+    const [product, channel] = productChannelQueries;
     const { error, data } = await disableUpdates(product, channel);
 
     if (!error) {
@@ -677,7 +744,7 @@ function ListRules(props) {
   };
 
   const handleEnableUpdates = async () => {
-    const [product, channel] = searchQueries;
+    const [product, channel] = productChannelQueries;
     const esDetails = emergencyShutoffs.find(
       es => es.product === product && es.channel === channel
     );
@@ -737,7 +804,7 @@ function ListRules(props) {
   };
 
   const handleCancelEnableUpdates = async () => {
-    const [product, channel] = searchQueries;
+    const [product, channel] = productChannelQueries;
     const esDetails = emergencyShutoffs.find(
       es => es.product === product && es.channel === channel
     );
@@ -816,7 +883,7 @@ function ListRules(props) {
   };
 
   const handleSignoffEnableUpdates = async () => {
-    const [product, channel] = searchQueries;
+    const [product, channel] = productChannelQueries;
     const esDetails = emergencyShutoffs.find(
       es => es.product === product && es.channel === channel
     );
@@ -845,7 +912,7 @@ function ListRules(props) {
   };
 
   const handleRevokeEnableUpdates = async () => {
-    const [product, channel] = searchQueries;
+    const [product, channel] = productChannelQueries;
     const esDetails = emergencyShutoffs.find(
       es => es.product === product && es.channel === channel
     );
@@ -872,6 +939,54 @@ function ListRules(props) {
         })
       );
     }
+  };
+
+  const handleViewRelease = ({ currentTarget: { name } }) => {
+    // Sometimes the previous opened release drawer may be the same as
+    // the one being requested. In that case, we simply open the drawer
+    // without having the useEffect take care of
+    // fetching the release + opening the drawer
+    if (drawerReleaseName === name) {
+      setDrawerState({
+        ...drawerState,
+        open: true,
+      });
+    } else {
+      setDrawerReleaseName(name);
+    }
+  };
+
+  useEffect(() => {
+    if (drawerReleaseName) {
+      Promise.all([
+        fetchRelease(drawerReleaseName),
+        fetchScheduledChangeByName(drawerReleaseName),
+      ]).then(([fetchedRelease, fetchedSC]) => {
+        const item =
+          fetchedSC.data.data.count > 0
+            ? JSON.stringify(
+                fetchedSC.data.data.scheduled_changes[0].data,
+                null,
+                2
+              )
+            : JSON.stringify(fetchedRelease.data.data, null, 2);
+
+        setDrawerState({
+          ...drawerState,
+          open: true,
+          item,
+        });
+      });
+    }
+  }, [drawerReleaseName]);
+
+  const handleDrawerClose = () => {
+    // We do not set the drawer item key to the initial state to
+    // avoid re-fetching if the user decides to view the same mapping again
+    setDrawerState({
+      ...drawerState,
+      open: false,
+    });
   };
 
   const getDialogSubmit = () => {
@@ -1045,10 +1160,12 @@ function ListRules(props) {
           })}
           key={rule.rule_id}
           rule={rule}
-          rulesFilter={searchQueries}
+          rulesFilter={productChannelQueries}
           onRuleDelete={handleRuleDelete}
           onSignoff={() => handleSignoff(rule)}
           onRevoke={() => handleRevoke(rule)}
+          onViewReleaseClick={handleViewRelease}
+          actionLoading={isActionLoading}
         />
       </div>
     );
@@ -1089,6 +1206,15 @@ function ListRules(props) {
       {!isLoading && productChannelOptions && (
         <Fragment>
           <div className={classes.options}>
+            <FormControl className={classes.pendingSignoffFormControl}>
+              <FormLabel className={classes.pendingSignoffFormLabel}>
+                Filter by rules with scheduled changes
+              </FormLabel>
+              <Switch
+                checked={Boolean(query.onlyScheduledChanges)}
+                onChange={handleShowOnlyScheduledChangesChange}
+              />
+            </FormControl>
             <TextField
               className={classes.dropdown}
               select
@@ -1104,19 +1230,19 @@ function ListRules(props) {
             </TextField>
           </div>
           {productChannelFilter !== ALL &&
-            searchQueries &&
-            searchQueries.length === 2 &&
+            productChannelQueries &&
+            productChannelQueries.length === 2 &&
             emergencyShutoffs.find(
               es =>
-                es.product === searchQueries[0] &&
-                es.channel === searchQueries[1]
+                es.product === productChannelQueries[0] &&
+                es.channel === productChannelQueries[1]
             ) && (
               <EmergencyShutoffCard
                 className={classes.card}
                 emergencyShutoff={emergencyShutoffs.find(
                   es =>
-                    es.product === searchQueries[0] &&
-                    es.channel === searchQueries[1]
+                    es.product === productChannelQueries[0] &&
+                    es.channel === productChannelQueries[1]
                 )}
                 onEnableUpdates={handleEnableUpdates}
                 onCancelEnable={handleCancelEnableUpdates}
@@ -1152,11 +1278,20 @@ function ListRules(props) {
         onClose={handleDialogClose}
         onExited={handleDialogExited}
       />
+      <Drawer
+        classes={{ paper: classes.drawerPaper }}
+        anchor="bottom"
+        open={drawerState.open}
+        onClose={handleDrawerClose}>
+        <pre>
+          <code>{drawerState.item}</code>
+        </pre>
+      </Drawer>
       <Snackbar onClose={handleSnackbarClose} {...snackbarState} />
       <Link
         to={{
           pathname: '/rules/create',
-          state: { rulesFilter: searchQueries },
+          state: { rulesFilter: productChannelQueries },
         }}>
         <Tooltip title="Add Rule">
           <Fab color="primary" className={classes.fab}>
@@ -1170,8 +1305,8 @@ function ListRules(props) {
             isLoading ||
             !username ||
             filteredProductChannelIsShutoff ||
-            !searchQueries ||
-            !searchQueries[1]
+            !productChannelQueries ||
+            !productChannelQueries[1]
           }
           icon={<PauseIcon />}
           tooltipOpen

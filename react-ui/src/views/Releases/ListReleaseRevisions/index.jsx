@@ -3,7 +3,6 @@ import axios from 'axios';
 import { Column } from 'react-virtualized';
 import 'react-virtualized/styles.css';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
-import Code from '@mozilla-frontend-infra/components/Code';
 import { makeStyles } from '@material-ui/styles';
 import Drawer from '@material-ui/core/Drawer';
 import Typography from '@material-ui/core/Typography';
@@ -200,9 +199,9 @@ function ListReleaseRevisions(props) {
             anchor="bottom"
             open={drawerState.open}
             onClose={handleDrawerClose}>
-            <Code language="json">
-              {JSON.stringify(drawerState.item, null, 2)}
-            </Code>
+            <pre>
+              <code>{JSON.stringify(drawerState.item, null, 2)}</code>
+            </pre>
           </Drawer>
         </Fragment>
       )}

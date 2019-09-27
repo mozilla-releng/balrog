@@ -130,13 +130,21 @@ const useStyles = makeStyles(theme => ({
   },
   primaryText: {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'baseline',
+  },
+  primaryTextWithButton: {
+    whiteSpace: 'nowrap',
   },
   link: {
     ...theme.mixins.link,
   },
   schedPriorityChange: {
     backgroundColor: '#c0dc91',
+  },
+  viewReleaseBtn: {
+    paddingTop: 0,
+    paddingBottom: 0,
+    marginLeft: theme.spacing(1),
   },
 }));
 
@@ -146,8 +154,10 @@ function RuleCard({
   onRuleDelete,
   onSignoff,
   onRevoke,
+  onViewReleaseClick,
   user,
   readOnly,
+  actionLoading,
   // We don't actually use these, but we need to avoid passing them onto
   // `Card` like the rest of the props.
   onAuthorize: _,
@@ -268,7 +278,10 @@ function RuleCard({
                       title={rule.mapping}
                       primaryTypographyProps={{
                         component: 'div',
-                        className: classes.primaryText,
+                        className: classNames(
+                          classes.primaryText,
+                          classes.primaryTextWithButton
+                        ),
                       }}
                       secondaryTypographyProps={{
                         className: classes.textEllipsis,
@@ -282,6 +295,17 @@ function RuleCard({
                                 className={classes.propertyWithScheduledChange}
                               />
                             )}
+                          {!readOnly && (
+                            <Button
+                              size="small"
+                              disabled={actionLoading}
+                              name={rule.mapping}
+                              onClick={onViewReleaseClick}
+                              variant="outlined"
+                              className={classes.viewReleaseBtn}>
+                              View Release
+                            </Button>
+                          )}
                         </Fragment>
                       }
                       secondary={rule.mapping}
@@ -294,7 +318,10 @@ function RuleCard({
                       title={rule.fallbackMapping}
                       primaryTypographyProps={{
                         component: 'div',
-                        className: classes.primaryText,
+                        className: classNames(
+                          classes.primaryText,
+                          classes.primaryTextWithButton
+                        ),
                       }}
                       secondaryTypographyProps={{
                         className: classes.textEllipsis,
@@ -308,6 +335,17 @@ function RuleCard({
                                 className={classes.propertyWithScheduledChange}
                               />
                             )}
+                          {!readOnly && (
+                            <Button
+                              size="small"
+                              disabled={actionLoading}
+                              name={rule.fallbackMapping}
+                              onClick={onViewReleaseClick}
+                              variant="outlined"
+                              className={classes.viewReleaseBtn}>
+                              View Release
+                            </Button>
+                          )}
                         </Fragment>
                       }
                       secondary={rule.fallbackMapping}
@@ -779,17 +817,23 @@ function RuleCard({
           )}
           <Button
             color="secondary"
-            disabled={!user}
+            disabled={!user || actionLoading}
             onClick={() => onRuleDelete(rule)}>
             Delete
           </Button>
           {requiresSignoff &&
             (user && user.email in rule.scheduledChange.signoffs ? (
-              <Button color="secondary" disabled={!user} onClick={onRevoke}>
+              <Button
+                color="secondary"
+                disabled={!user || actionLoading}
+                onClick={onRevoke}>
                 Revoke Signoff
               </Button>
             ) : (
-              <Button color="secondary" disabled={!user} onClick={onSignoff}>
+              <Button
+                color="secondary"
+                disabled={!user || actionLoading}
+                onClick={onSignoff}>
                 Signoff
               </Button>
             ))}
@@ -807,11 +851,15 @@ RuleCard.propTypes = {
   // These are required if readOnly is false
   onSignoff: func,
   onRevoke: func,
+  // If true, card buttons that trigger a request
+  // navigating to a different view will be disabled
+  actionLoading: bool,
 };
 
 RuleCard.defaultProps = {
   onRuleDelete: Function.prototype,
   readOnly: false,
+  actionLoading: false,
 };
 
 export default withUser(RuleCard);
