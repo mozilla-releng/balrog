@@ -32,7 +32,10 @@ import {
   deleteScheduledChange,
 } from '../../../services/rules';
 import { getReleaseNames } from '../../../services/releases';
-import { EMPTY_MENU_ITEM_CHAR } from '../../../utils/constants';
+import {
+  EMPTY_MENU_ITEM_CHAR,
+  SPLIT_WITH_NEWLINES_AND_COMMA_REGEX,
+} from '../../../utils/constants';
 
 const initialRule = {
   alias: '',
@@ -120,8 +123,18 @@ export default function Rule({ isNewRule, ...props }) {
   const { ruleId, scId } = props.match.params;
   const hasScheduledChange = !!rule.sc_id;
   const defaultToEmptyString = defaultTo('');
+  const osVersionTextValue = defaultToEmptyString(rule.osVersion)
+    .split(SPLIT_WITH_NEWLINES_AND_COMMA_REGEX)
+    .join('\n');
+  const localeTextValue = defaultToEmptyString(rule.locale)
+    .split(SPLIT_WITH_NEWLINES_AND_COMMA_REGEX)
+    .join('\n');
   const handleInputChange = ({ target: { name, value } }) => {
     setRule(assocPath([name], value, rule));
+  };
+
+  const handleTextFieldWithNewLinesChange = ({ target: { name, value } }) => {
+    setRule(assocPath([name], value.split('\n').join(','), rule));
   };
 
   const handleProductChange = value =>
@@ -468,13 +481,28 @@ export default function Rule({ isNewRule, ...props }) {
                 onChange={handleInputChange}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} md={6}>
               <TextField
+                helperText="Enter each locale on its own line"
+                multiline
+                rows={4}
                 fullWidth
                 label="Locale"
-                value={defaultToEmptyString(rule.locale)}
+                value={localeTextValue}
                 name="locale"
-                onChange={handleInputChange}
+                onChange={handleTextFieldWithNewLinesChange}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                helperText="Enter each OS version on its own line"
+                multiline
+                rows={4}
+                fullWidth
+                label="OS Version"
+                value={osVersionTextValue}
+                name="osVersion"
+                onChange={handleTextFieldWithNewLinesChange}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -483,15 +511,6 @@ export default function Rule({ isNewRule, ...props }) {
                 label="Build Target"
                 value={defaultToEmptyString(rule.buildTarget)}
                 name="buildTarget"
-                onChange={handleInputChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="OS Version"
-                value={defaultToEmptyString(rule.osVersion)}
-                name="osVersion"
                 onChange={handleInputChange}
               />
             </Grid>

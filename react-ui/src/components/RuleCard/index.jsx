@@ -54,15 +54,19 @@ const useStyles = makeStyles(theme => ({
   },
   cardHeader: {
     paddingBottom: 0,
+    paddingTop: theme.spacing(1),
   },
   cardHeaderAvatar: {
     display: 'flex',
+  },
+  cardHeaderAction: {
+    marginTop: 0,
   },
   cardContentRoot: {
     padding: theme.spacing(1),
   },
   deletedText: {
-    padding: theme.spacing(1),
+    padding: `0 ${theme.spacing(1)}px`,
   },
   listItem: {
     paddingTop: 0,
@@ -97,6 +101,7 @@ const useStyles = makeStyles(theme => ({
   },
   divider: {
     margin: `${theme.spacing(1)}px`,
+    backgroundColor: theme.palette.grey[200],
   },
   scheduledChangesHeader: {
     display: 'flex',
@@ -116,10 +121,6 @@ const useStyles = makeStyles(theme => ({
   avatarText: {
     fontSize: theme.typography.body2.fontSize,
   },
-  comment: {
-    maxHeight: theme.spacing(10),
-    overflowY: 'auto',
-  },
   propertyWithScheduledChange: {
     ...theme.mixins.redDot,
   },
@@ -129,10 +130,21 @@ const useStyles = makeStyles(theme => ({
   },
   primaryText: {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'baseline',
+  },
+  primaryTextWithButton: {
+    whiteSpace: 'nowrap',
   },
   link: {
     ...theme.mixins.link,
+  },
+  schedPriorityChange: {
+    backgroundColor: '#c0dc91',
+  },
+  viewReleaseBtn: {
+    paddingTop: 0,
+    paddingBottom: 0,
+    marginLeft: theme.spacing(1),
   },
 }));
 
@@ -142,8 +154,10 @@ function RuleCard({
   onRuleDelete,
   onSignoff,
   onRevoke,
+  onViewReleaseClick,
   user,
   readOnly,
+  actionLoading,
   // We don't actually use these, but we need to avoid passing them onto
   // `Card` like the rest of the props.
   onAuthorize: _,
@@ -181,33 +195,44 @@ function RuleCard({
     rule && rule.scheduledChange
       ? getDiffedProperties(RULE_DIFF_PROPERTIES, rule, rule.scheduledChange)
       : [];
+  // If there's a scheduled change that may be updating the priority, we want
+  // to display it in the header rather than the current priority.
+  // For other types of scheduled changes (inserts and deletes) we either
+  // don't show it at all, or don't have a value in the scheduled change to
+  // show.
+  const isScheduledPriorityUpdate =
+    rule.scheduledChange &&
+    rule.scheduledChange.change_type === 'update' &&
+    rule.priority !== rule.scheduledChange.priority;
+  const headerPriority = isScheduledPriorityUpdate
+    ? rule.scheduledChange.priority
+    : rule.priority;
+  const priorityTitle = isScheduledPriorityUpdate
+    ? 'Scheduled Priority'
+    : 'Priority';
 
   return (
     <Card classes={{ root: classes.root }} spacing={4} {...props}>
       {rule.product && (
         <CardHeader
-          classes={{ avatar: classes.cardHeaderAvatar }}
+          classes={{
+            avatar: classes.cardHeaderAvatar,
+            action: classes.cardHeaderAction,
+          }}
           className={classes.cardHeader}
           avatar={
-            Number.isInteger(Number(rule.priority)) && (
+            Number.isInteger(Number(headerPriority)) && (
               <Fragment>
                 <Avatar
-                  title="Priority"
-                  aria-label="Priority"
-                  className={classes.avatar}>
+                  title={priorityTitle}
+                  aria-label={priorityTitle}
+                  className={classNames(classes.avatar, {
+                    [classes.schedPriorityChange]: isScheduledPriorityUpdate,
+                  })}>
                   <Typography className={classes.avatarText}>
-                    {rule.priority}
+                    {headerPriority}
                   </Typography>
                 </Avatar>
-                {diffedProperties.includes('priority') &&
-                  rule.scheduledChange.change_type === 'update' && (
-                    <div
-                      className={classNames(
-                        classes.propertyWithScheduledChange,
-                        classes.priorityScheduledChange
-                      )}
-                    />
-                  )}
               </Fragment>
             )
           }
@@ -253,7 +278,10 @@ function RuleCard({
                       title={rule.mapping}
                       primaryTypographyProps={{
                         component: 'div',
-                        className: classes.primaryText,
+                        className: classNames(
+                          classes.primaryText,
+                          classes.primaryTextWithButton
+                        ),
                       }}
                       secondaryTypographyProps={{
                         className: classes.textEllipsis,
@@ -267,6 +295,17 @@ function RuleCard({
                                 className={classes.propertyWithScheduledChange}
                               />
                             )}
+                          {!readOnly && (
+                            <Button
+                              size="small"
+                              disabled={actionLoading}
+                              name={rule.mapping}
+                              onClick={onViewReleaseClick}
+                              variant="outlined"
+                              className={classes.viewReleaseBtn}>
+                              View Release
+                            </Button>
+                          )}
                         </Fragment>
                       }
                       secondary={rule.mapping}
@@ -279,7 +318,10 @@ function RuleCard({
                       title={rule.fallbackMapping}
                       primaryTypographyProps={{
                         component: 'div',
-                        className: classes.primaryText,
+                        className: classNames(
+                          classes.primaryText,
+                          classes.primaryTextWithButton
+                        ),
                       }}
                       secondaryTypographyProps={{
                         className: classes.textEllipsis,
@@ -293,6 +335,17 @@ function RuleCard({
                                 className={classes.propertyWithScheduledChange}
                               />
                             )}
+                          {!readOnly && (
+                            <Button
+                              size="small"
+                              disabled={actionLoading}
+                              name={rule.fallbackMapping}
+                              onClick={onViewReleaseClick}
+                              variant="outlined"
+                              className={classes.viewReleaseBtn}>
+                              View Release
+                            </Button>
+                          )}
                         </Fragment>
                       }
                       secondary={rule.fallbackMapping}
@@ -357,10 +410,12 @@ function RuleCard({
                             component="span"
                             variant="body2"
                             className={classes.inline}
-                            color="textPrimary">
+                            color="textSecondary">
                             {rule.rule_id}
                           </Typography>
-                          {rule.alias && ` ${rule.alias} (alias)`}
+                          <strong>
+                            {rule.alias && ` ${rule.alias} (alias)`}
+                          </strong>
                         </Fragment>
                       }
                     />
@@ -505,7 +560,7 @@ function RuleCard({
                 {rule.osVersion && (
                   <ListItem className={classes.listItem}>
                     <ListItemText
-                      title={rule.osVersion}
+                      title={rule.osVersion.split(',').join('\n')}
                       primaryTypographyProps={{
                         component: 'div',
                         className: classes.primaryText,
@@ -645,10 +700,13 @@ function RuleCard({
                 <List>
                   <ListItem className={classes.listItem}>
                     <ListItemText
-                      className={classes.comment}
+                      title={rule.comment}
                       primaryTypographyProps={{
                         component: 'div',
                         className: classes.primaryText,
+                      }}
+                      secondaryTypographyProps={{
+                        className: classes.textEllipsis,
                       }}
                       primary={
                         <Fragment>
@@ -759,17 +817,23 @@ function RuleCard({
           )}
           <Button
             color="secondary"
-            disabled={!user}
+            disabled={!user || actionLoading}
             onClick={() => onRuleDelete(rule)}>
             Delete
           </Button>
           {requiresSignoff &&
             (user && user.email in rule.scheduledChange.signoffs ? (
-              <Button color="secondary" disabled={!user} onClick={onRevoke}>
+              <Button
+                color="secondary"
+                disabled={!user || actionLoading}
+                onClick={onRevoke}>
                 Revoke Signoff
               </Button>
             ) : (
-              <Button color="secondary" disabled={!user} onClick={onSignoff}>
+              <Button
+                color="secondary"
+                disabled={!user || actionLoading}
+                onClick={onSignoff}>
                 Signoff
               </Button>
             ))}
@@ -787,11 +851,15 @@ RuleCard.propTypes = {
   // These are required if readOnly is false
   onSignoff: func,
   onRevoke: func,
+  // If true, card buttons that trigger a request
+  // navigating to a different view will be disabled
+  actionLoading: bool,
 };
 
 RuleCard.defaultProps = {
   onRuleDelete: Function.prototype,
   readOnly: false,
+  actionLoading: false,
 };
 
 export default withUser(RuleCard);

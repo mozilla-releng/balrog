@@ -13,6 +13,8 @@ import ErrorPanel from '../../../components/ErrorPanel';
 import SpeedDial from '../../../components/SpeedDial';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import CodeEditor from '../../../components/CodeEditor';
+import Snackbar from '../../../components/Snackbar';
+import Button from '../../../components/Button';
 import useAction from '../../../hooks/useAction';
 import {
   getReleases,
@@ -25,6 +27,7 @@ import {
 } from '../../../services/releases';
 import { getProducts } from '../../../services/rules';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
+import { SNACKBAR_INITIAL_STATE } from '../../../utils/constants';
 
 const useStyles = makeStyles(theme => ({
   fab: {
@@ -38,6 +41,16 @@ const useStyles = makeStyles(theme => ({
   // Otherwise, the fab is not clickable.
   saveButton: {
     zIndex: 10,
+  },
+  inputOfTypeFile: {
+    display: 'none',
+  },
+  uploadReleaseDiv: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+  },
+  uploadReleaseButton: {
+    borderRadius: 0,
   },
 }));
 
@@ -56,6 +69,7 @@ export default function Release(props) {
   const [dataVersion, setDataVersion] = useState(null);
   const [scDataVersion, setScDataVersion] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [snackbarState, setSnackbarState] = useState(SNACKBAR_INITIAL_STATE);
   const [release, fetchRelease] = useAction(getRelease);
   const [createRelAction, createRel] = useAction(createRelease);
   const [addSCAction, addSC] = useAction(addScheduledChange);
@@ -189,6 +203,55 @@ export default function Release(props) {
     }
   };
 
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setSnackbarState({
+      ...SNACKBAR_INITIAL_STATE,
+      // Keep same variant otherwise there will be a split second where
+      // the color of the snackbar may change if the variant is not 'success'.
+      // This is due to the fact that closing the snackbar is not instant but
+      // rather an animation.
+      variant: snackbarState.variant,
+    });
+  };
+
+  const handleSnackbarOpen = ({ message, variant = 'success' }) => {
+    setSnackbarState({ message, variant, open: true });
+  };
+
+  const handleUploadRelease = ev => {
+    const file = ev.target.files[0];
+    const reader = new FileReader();
+
+    reader.addEventListener('load', e => {
+      try {
+        const content = JSON.parse(e.target.result);
+
+        setReleaseEditorValue(JSON.stringify(content, null, 2));
+        setProductTextValue(content.product);
+        setReleaseNameValue(content.name);
+      } catch (e) {
+        handleSnackbarOpen({
+          message: e.message,
+          variant: 'error',
+        });
+      }
+    });
+
+    reader.addEventListener('error', e => {
+      handleSnackbarOpen({
+        message: e.message,
+        variant: 'error',
+      });
+      reader.abort();
+    });
+
+    reader.readAsText(file);
+  };
+
   return (
     <Dashboard
       title={isNewRelease ? 'Create Release' : `Update Release ${releaseName}`}>
@@ -221,6 +284,26 @@ export default function Release(props) {
           />
           <br />
           <br />
+          <div className={classes.uploadReleaseDiv}>
+            <label htmlFor="upload-release-file">
+              <input
+                disabled={isReadOnly}
+                accept=".json"
+                className={classes.inputOfTypeFile}
+                id="upload-release-file"
+                type="file"
+                onChange={handleUploadRelease}
+              />
+              <Button
+                disabled={isReadOnly}
+                size="small"
+                variant="outlined"
+                component="span"
+                className={classes.uploadReleaseButton}>
+                Upload Release
+              </Button>
+            </label>
+          </div>
           <CodeEditor
             onChange={handleReleaseEditorChange}
             value={releaseEditorValue}
@@ -255,6 +338,7 @@ export default function Release(props) {
               </SpeedDial>
             )}
           </Fragment>
+          <Snackbar onClose={handleSnackbarClose} {...snackbarState} />
         </Fragment>
       )}
     </Dashboard>

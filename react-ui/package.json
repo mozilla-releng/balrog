@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "engines": {
+    "node": ">=10.0.0 <12.0.0"
+  },
   "scripts": {
     "build": "dotenv webpack -- --mode production",
     "start": "dotenv webpack-dev-server -- --mode development",
@@ -33,7 +36,7 @@
     "qs": "^6.7.0",
     "ramda": "^0.26.1",
     "react": "^16.8.6",
-    "react-auth0-components": "^1.0.0",
+    "react-auth0-components": "^1.0.2",
     "react-codemirror2": "^6.0.0",
     "react-diff-view": "^2.1.4",
     "react-dom": "^16.8.6",
