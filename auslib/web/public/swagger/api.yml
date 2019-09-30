@@ -190,6 +190,7 @@ paths:
         200:
           description: Update blob in text/xml format.
 
+  # TODO: need more backend support to support guardian version numbers (x.y.z.123)
   /json/1/{product}/{version}/{buildTarget}/{channel}/update.json:
     get:
       operationId: 'auslib.web.public.json.get_update'

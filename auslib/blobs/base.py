@@ -33,6 +33,7 @@ def createBlob(data):
         DesupportBlob,
     )
     from auslib.blobs.gmp import GMPBlobV1
+    from auslib.blobs.guardian import GuardianBlob
     from auslib.blobs.superblob import SuperBlob
     from auslib.blobs.systemaddons import SystemAddonsBlob
 
@@ -49,6 +50,7 @@ def createBlob(data):
         1000: GMPBlobV1,
         4000: SuperBlob,
         5000: SystemAddonsBlob,
+        10000: GuardianBlob,
     }
 
     if isinstance(data, str):

@@ -7,7 +7,7 @@ from flask import current_app as app
 from flask import make_response
 
 from auslib.AUS import AUS, FAIL, SUCCEED
-from auslib.web.public.base import with_transaction
+from auslib.web.public.base import AUS, with_transaction
 from auslib.global_state import dbo
 
 try:
@@ -16,7 +16,6 @@ except ImportError:  # pragma: no cover
     from urllib.parse import unquote
 
 
-AUS = AUS()
 LOG = logging.getLogger(__name__)
 
 
