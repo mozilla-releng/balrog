@@ -236,3 +236,8 @@ class XMLBlob(Blob):
         """
         footer = "</updates>"
         return footer
+
+
+class GenericBlob(Blob):
+    def getResponse(self):
+        raise NotImplementedError

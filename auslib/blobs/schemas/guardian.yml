@@ -1,0 +1,32 @@
+---
+  title: Guardian Blob
+  type: object
+  required:
+    - name
+    - product
+    - schema_version
+    - url
+    - version
+  additionalProperties: false
+  properties:
+    name:
+      type: string
+      description: Human readable identifier
+      minLength: 1
+      maxLength: 100
+    product:
+      type: string
+      description: The product that the blob is associated to
+      minLength: 1
+      maxLength: 100
+    schema_version:
+      type: number
+      description: Blob identifier number
+      enum:
+        - 10000
+    url:
+      type: string
+      description: URL to MSI
+    version:
+      type: string
+      description: version
