@@ -99,9 +99,9 @@ packaging==19.1 \
     --hash=sha256:a7ac867b97fdc07ee80a8058fe4435ccd274ecc3b0ed61d852d7d53055528cf9 \
     --hash=sha256:c491ca87294da7cc01902edbe30a5bc6c4c28172b5138ab4e4aa1b9d7bfaeafe \
     # via pytest
-pip-compile-multi==1.5.4 \
-    --hash=sha256:78513057035f2e60de601a8b1c0d7c992da20dc8b30c6603c7c8796df4991555 \
-    --hash=sha256:f2371707a96b36bc099bc7de34acfcdeec70a6e131eccf4c7cd90892571ae4dd
+pip-compile-multi==1.5.7 \
+    --hash=sha256:b5693c691d278ab4425b1202c8c566a5f3858cc1c19d6540abf0ae69f0786681 \
+    --hash=sha256:d823314b8c8cc8ace900d87d8953712f627253b0bf8f24c8474364ab92c402a4
 pip-tools==4.1.0 \
     --hash=sha256:156a950612e400bf951fc8139ed5420fbeb6a0d639fe8771344658b751a3f21e \
     --hash=sha256:69a1fd795bb95002b37217d62306026e67ef17012e9f6cfb1c3bfab5c3c4bb2c \
