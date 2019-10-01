@@ -1,3 +1,5 @@
+from distutils.version import LooseVersion
+
 from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import GenericBlob
 
@@ -6,16 +8,27 @@ class GuardianBlob(GenericBlob):
     jsonschema = "guardian.yml"
 
     def containsForbiddenDomain(self, product, whitelistedDomains):
-        return isForbiddenUrl(self["url"], product, whitelistedDomains)
+        urls = [p["fileUrl"] for p in self["platforms"].values()]
+        return any([isForbiddenUrl(url, product, whitelistedDomains) for url in urls])
 
     def shouldServeUpdate(self, updateQuery):
-        # TODO: implement me
+        if updateQuery["buildTarget"] not in self.get("platforms", {}):
+            return False
+        if LooseVersion(updateQuery["version"]) >= LooseVersion(self["version"]):
+            return False
+
         return True
 
     def getResponse(self, updateQuery, whilelistedDomains):
-        # TODO: check whitelisted domains
+        url = self.get("platforms", {}).get(updateQuery["buildTarget"])["fileUrl"]
+        if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
+            return {}
+
+        if not url:
+            return {}
+
         return {
             "version": self["version"],
-            "url": self["url"],
+            "url": url,
             "required": self["required"],
         }

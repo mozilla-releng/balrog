@@ -5,7 +5,7 @@
     - name
     - product
     - schema_version
-    - url
+    - platforms
     - version
   additionalProperties: false
   properties:
@@ -24,12 +24,22 @@
       description: Blob identifier number
       enum:
         - 10000
-    url:
-      type: string
-      description: URL to MSI
     version:
       type: string
       description: version
     required:
       type: boolean
       description: Whether or not the update being served is required
+    platforms:
+      type: object
+      additionalProperties: false
+      description: Key/value pairs whose keys are the names of platforms (aka Build Targets) and values are platform-specific update details.
+      patternProperties:
+        ^.+$:
+          type: object
+          additionalProperties: false
+          properties:
+            fileUrl:
+              type: string
+              description: The URL to the update for this platform
+              format: uri

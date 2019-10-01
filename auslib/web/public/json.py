@@ -12,6 +12,7 @@ def get_update(transaction, **parameters):
     parameters["osVersion"] = "TODO"
     parameters["locale"] = "TODO"
     release = AUS.evaluateRules(parameters, transaction=transaction)[0]
+    print(release)
     if not release:
         return Response(status=404)
 
