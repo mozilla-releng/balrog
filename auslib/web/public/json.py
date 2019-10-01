@@ -7,7 +7,7 @@ from auslib.web.public.base import AUS, with_transaction
 def get_update(transaction, **parameters):
     # TODO: should these be required, or make them optional at db layer?
     parameters["headerArchitecture"] = "TODO"
-    parameters["force"] = 1 # TODO
+    parameters["force"] = 1  # TODO
     parameters["buildID"] = 1
     parameters["osVersion"] = "TODO"
     parameters["locale"] = "TODO"
