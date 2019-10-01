@@ -19,12 +19,12 @@ class GuardianBlob(GenericBlob):
 
         return True
 
-    def getResponse(self, updateQuery, whilelistedDomains):
-        url = self.get("platforms", {}).get(updateQuery["buildTarget"])["fileUrl"]
-        if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
+    def getResponse(self, updateQuery, whitelistedDomains):
+        url = self.get("platforms", {}).get(updateQuery["buildTarget"], {}).get("fileUrl")
+        if not url:
             return {}
 
-        if not url:
+        if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
             return {}
 
         return {
