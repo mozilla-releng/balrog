@@ -16,5 +16,6 @@ def get_update(transaction, **parameters):
         return Response(status=404)
 
     response = release.getResponse(parameters, app.config["WHITELISTED_DOMAINS"])
+    # TODO: sign with autograph here; cache in new in-memory cache
     # TODO: should the blob return raw json instead of making us do this?
     return jsonify(response)
