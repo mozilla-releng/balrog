@@ -43,13 +43,13 @@ def int_compare(value, compstr):
     return opfunc(value, int(operand))
 
 
-def version_compare(value, compstr):
+def version_compare(value, compstr, versionClass=MozillaVersion):
     """Do a version comparison between a string (representing a version),
     with another which may carry a comparison operator. A true version
     comparison is done.
       eg version_compare('1.1', '>1.0') is True
     """
     opfunc, operand = get_op(compstr)
-    value = MozillaVersion(value)
-    operand = MozillaVersion(operand)
+    value = versionClass(value)
+    operand = versionClass(operand)
     return opfunc(value, operand)

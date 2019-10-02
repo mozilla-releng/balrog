@@ -1,3 +1,4 @@
+from distutils.version import LooseVersion
 import itertools
 import json
 import logging
@@ -33,6 +34,7 @@ from auslib.util.rulematching import (
     matchVersion,
 )
 from auslib.util.timestamp import getMillisecondTimestamp
+from auslib.util.versions import MozillaVersion
 
 
 def rows_to_dicts(rows):
@@ -1596,6 +1598,11 @@ class Rules(AUSTable):
            For cases where a particular updateQuery channel has no
            fallback, fallbackChannel should match the channel from the query."""
 
+        # TODO: is there a better place to put this?
+        versionClass = MozillaVersion
+        if updateQuery["product"] == "Guardian":
+            versionClass = LooseVersion
+
         def getRawMatches():
             where = [
                 ((self.product == updateQuery["product"]) | (self.product == null()))
@@ -1640,7 +1647,7 @@ class Rules(AUSTable):
             if not matchChannel(rule["channel"], updateQuery["channel"], fallbackChannel):
                 self.log.debug("%s doesn't match %s", rule["channel"], updateQuery["channel"])
                 continue
-            if not matchVersion(rule["version"], updateQuery["version"]):
+            if not matchVersion(rule["version"], updateQuery["version"], versionClass):
                 self.log.debug("%s doesn't match %s", rule["version"], updateQuery["version"])
                 continue
             if not matchBuildID(rule["buildID"], updateQuery.get("buildID", "")):
