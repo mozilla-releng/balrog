@@ -61,7 +61,7 @@ def client():
         ("1.0.0.0", "WINNT_x86_64", "release", 404, {}),
         ("0.2.0.0", "Linux_x86_64", "release", 404, {}),
         ("0.2.0.0", "WINNT_x86_64", "beta", 404, {}),
-    ]
+    ],
 )
 def testGuardianResponse(client, version, buildTarget, channel, code, response):
     ret = client.get(f"/json/1/Guardian/{version}/{buildTarget}/{channel}/update.json")
