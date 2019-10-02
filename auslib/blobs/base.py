@@ -192,8 +192,9 @@ class Blob(dict):
         return set()
 
 
-# TODO: getResponse* aren't technically XML-specific, but won't be used by other blobs
-# do they belong here, or on the base blob?
+# We should be able to kill this Blob and its subclasses at some point by using
+# GenericBlob, and fully encapsulating the response in getResponse
+# getResponseProducts/getResponseBlobs may have to move elsewhere, though.
 class XMLBlob(Blob):
     def getResponseProducts(self):
         """
