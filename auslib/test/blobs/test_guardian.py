@@ -28,13 +28,11 @@ def guardblob():
     return blob
 
 
-@pytest.mark.usefixtures("guardblob")
 @pytest.mark.parametrize("whitelistedDomains,expected", [({"a.com": ("Guardian",)}, False), ({}, True)])
 def testContainsForbiddenDomain(guardblob, whitelistedDomains, expected):
     assert guardblob.containsForbiddenDomain("Guardian", whitelistedDomains) is expected
 
 
-@pytest.mark.usefixtures("guardblob")
 @pytest.mark.parametrize(
     "version,expected", [("0.5.0.0", True), ("0.8.0.0", True), ("0.99.99.99", True), ("1.0.0.0", False), ("1.0.5.0", False), ("2.0.0.0", False)]
 )
@@ -43,13 +41,11 @@ def testShouldServeUpdateVariousVersions(guardblob, version, expected):
     assert guardblob.shouldServeUpdate(updateQuery) is expected
 
 
-@pytest.mark.usefixtures("guardblob")
 def testShouldServeUpdateMissingBuildTarget(guardblob):
     updateQuery = {"product": "Guardian", "version": "0.5.0.0", "buildTarget": "Linux_x86_64", "channel": "release"}
     assert not guardblob.shouldServeUpdate(updateQuery)
 
 
-@pytest.mark.usefixtures("guardblob")
 @pytest.mark.parametrize(
     "buildTarget,whitelistedDomains,expected",
     [
