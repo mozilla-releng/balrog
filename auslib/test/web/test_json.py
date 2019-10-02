@@ -53,10 +53,22 @@ def client():
 
 
 @pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler")
-def testGuardianResponse(client):
-    ret = client.get("/json/1/Guardian/0.2.0.0/WINNT_x86_64/release/update.json")
-    assert ret.status_code == 200
-    assert ret.mimetype == "application/json"
+@pytest.mark.parametrize(
+    "version,buildTarget,channel,code,response",
+    [
+        ("0.2.0.0", "WINNT_x86_64", "release", 200, {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0"}),
+        ("0.99.99.99", "WINNT_x86_64", "release", 200, {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0"}),
+        ("1.0.0.0", "WINNT_x86_64", "release", 404, {}),
+        ("0.2.0.0", "Linux_x86_64", "release", 404, {}),
+        ("0.2.0.0", "WINNT_x86_64", "beta", 404, {}),
+    ]
+)
+def testGuardianResponse(client, version, buildTarget, channel, code, response):
+    ret = client.get(f"/json/1/Guardian/{version}/{buildTarget}/{channel}/update.json")
+    assert ret.status_code == code
+    if code == 200:
+        assert ret.mimetype == "application/json"
+        assert ret.get_json() == response
 
 
 # test that ensures unused fields are ignored
