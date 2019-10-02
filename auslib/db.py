@@ -1600,8 +1600,12 @@ class Rules(AUSTable):
             where = [
                 ((self.product == updateQuery["product"]) | (self.product == null()))
                 & ((self.buildTarget == updateQuery["buildTarget"]) | (self.buildTarget == null()))
-                & ((self.headerArchitecture == updateQuery["headerArchitecture"]) | (self.headerArchitecture == null()))
             ]
+
+            if "headerArchitecture" in updateQuery:
+                where.extend([((self.headerArchitecture == updateQuery.get("headerArchitecture")) | (self.headerArchitecture == null()))])
+            else:
+                where.extend([(self.headerArchitecture == null())])
 
             if "distVersion" in updateQuery:
                 where.extend([((self.distVersion == updateQuery["distVersion"]) | (self.distVersion == null()))])
@@ -1619,9 +1623,9 @@ class Rules(AUSTable):
         cache_key = "%s:%s:%s:%s:%s" % (
             updateQuery["product"],
             updateQuery["buildTarget"],
-            updateQuery["headerArchitecture"],
+            updateQuery.get("headerArchitecture"),
             updateQuery.get("distVersion"),
-            updateQuery["force"],
+            updateQuery.get("force"),
         )
         rules = cache.get("rules", cache_key, getRawMatches)
 
@@ -1639,7 +1643,7 @@ class Rules(AUSTable):
             if not matchVersion(rule["version"], updateQuery["version"]):
                 self.log.debug("%s doesn't match %s", rule["version"], updateQuery["version"])
                 continue
-            if not matchBuildID(rule["buildID"], updateQuery["buildID"]):
+            if not matchBuildID(rule["buildID"], updateQuery.get("buildID", "")):
                 self.log.debug("%s doesn't match %s", rule["buildID"], updateQuery["buildID"])
                 continue
             if not matchMemory(rule["memory"], updateQuery.get("memory", "")):
@@ -1648,7 +1652,7 @@ class Rules(AUSTable):
             # To help keep the rules table compact, multiple OS versions may be
             # specified in a single rule. They are comma delimited, so we need to
             # break them out and create clauses for each one.
-            if not matchSimpleExpression(rule["osVersion"], updateQuery["osVersion"]):
+            if not matchSimpleExpression(rule["osVersion"], updateQuery.get("osVersion", "")):
                 self.log.debug("%s doesn't match %s", rule["osVersion"], updateQuery["osVersion"])
                 continue
             if not matchCsv(rule["instructionSet"], updateQuery.get("instructionSet", ""), substring=False):
@@ -1658,7 +1662,7 @@ class Rules(AUSTable):
                 self.log.debug("%s doesn't match %s", rule["distribution"], updateQuery.get("distribution"))
                 continue
             # Locales may be a comma delimited rule too, exact matches only
-            if not matchLocale(rule["locale"], updateQuery["locale"]):
+            if not matchLocale(rule["locale"], updateQuery.get("locale", "")):
                 self.log.debug("%s doesn't match %s", rule["locale"], updateQuery["locale"])
                 continue
             if not matchBoolean(rule["mig64"], updateQuery.get("mig64")):
