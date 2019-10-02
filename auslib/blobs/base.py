@@ -109,6 +109,9 @@ def merge_dicts(ancestor, left, right):
         else:
             if key in ancestor:
                 if key in left and key in right and ancestor[key] != left[key] and ancestor[key] != right[key]:
+                    log.warning("Ancestor is: %s", ancestor)
+                    log.warning("Left is: %s", left)
+                    log.warning("Right is: %s", right)
                     raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(encoded_str_key))
                 if key in left and ancestor[key] != left.get(key):
                     result[key] = left[key]
@@ -118,6 +121,9 @@ def merge_dicts(ancestor, left, right):
                     result[key] = ancestor[key]
             else:
                 if key in left and key in right and left[key] != right[key]:
+                    log.warning("Ancestor is: %s", ancestor)
+                    log.warning("Left is: %s", left)
+                    log.warning("Right is: %s", right)
                     raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(encoded_str_key))
                 if key in left:
                     result[key] = left[key]
