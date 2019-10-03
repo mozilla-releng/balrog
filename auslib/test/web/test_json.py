@@ -67,10 +67,36 @@ def guardian_db(db_schema):
         ),
     )
     dbo.rules.t.insert().execute(
-        priority=120, backgroundRate=100, mapping="Guardian-0.5.0.0", update_type="minor", product="Guardian", channel="release", version="<0.5.0.0", data_version=1
+        priority=120,
+        backgroundRate=100,
+        mapping="Guardian-0.5.0.0",
+        update_type="minor",
+        product="Guardian",
+        channel="release",
+        version="<0.5.0.0",
+        data_version=1,
     )
     dbo.rules.t.insert().execute(
         priority=100, backgroundRate=100, mapping="Guardian-1.0.0.0", update_type="minor", product="Guardian", channel="release", data_version=1
+    )
+    dbo.rules.t.insert().execute(
+        priority=100,
+        backgroundRate=100,
+        mapping="Guardian-1.0.0.0",
+        update_type="minor",
+        product="Guardian",
+        channel="alpha",
+        osVersion="igonred",
+        buildID="12345",
+        locale="ignored",
+        memory="123",
+        instructionSet="ignored",
+        jaws=True,
+        mig64=False,
+        distribution="ignored",
+        distVersion="ignored",
+        headerArchitecture="ignored",
+        data_version=1,
     )
 
 
@@ -89,6 +115,8 @@ def client():
         ("1.0.0.0", "WINNT_x86_64", "release", 404, {}),
         ("0.6.0.0", "Linux_x86_64", "release", 404, {}),
         ("0.6.0.0", "WINNT_x86_64", "beta", 404, {}),
+        # This shouldn't match because the rule on the alpha channel contains fields not used by this type of update query.
+        ("0.6.0.0", "WINNT_x86_64", "alpha", 404, {}),
     ],
 )
 def testGuardianResponse(client, version, buildTarget, channel, code, response):
@@ -97,6 +125,3 @@ def testGuardianResponse(client, version, buildTarget, channel, code, response):
     if code == 200:
         assert ret.mimetype == "application/json"
         assert ret.get_json() == response
-
-
-# test that ensures unused fields are ignored
