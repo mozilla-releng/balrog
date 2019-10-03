@@ -14,6 +14,7 @@ mysqlclient
 python-jose
 raven[flask]
 requests
+requests_hawk
 repoze.lru
 spec-synthase
 # Because we use multiple types for the same object. See https://github.com/Yelp/swagger_spec_validator/pull/106

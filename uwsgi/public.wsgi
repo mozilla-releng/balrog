@@ -33,6 +33,11 @@ configure_logging(**logging_kwargs)
 from auslib.global_state import cache, dbo  # noqa
 from auslib.web.public.base import app as application  # noqa
 
+application.config["AUTOGRAPH_URL"] = os.environ["AUTOGRAPH_URL"]
+application.config["AUTOGRAPH_KEYID"] = os.environ["AUTOGRAPH_KEYID"]
+application.config["AUTOGRAPH_USERNAME"] = os.environ["AUTOGRAPH_USERNAME"]
+application.config["AUTOGRAPH_PASSWORD"] = os.environ["AUTOGRAPH_PASSWORD"]
+
 cache.make_cache("blob", 500, 3600)
 # There's probably no no need to ever expire items in the blob schema cache
 # at all because they only change during deployments (and new instances of the

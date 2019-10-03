@@ -74,8 +74,14 @@ services:
       - "9010:9010"
     volumes:
       - .:/app
+    links:
+      - autograph
     environment:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
+      - AUTOGRAPH_URL=http://autograph:8000
+      - AUTOGRAPH_KEYID=normandy
+      - AUTOGRAPH_USERNAME=alice
+      - AUTOGRAPH_PASSWORD=fs5wgcer9qj819kfptdlp8gm227ewxnzvsuj9ztycsx08hfhzu
       - SECRET_KEY=blahblah
       - PORT=9010
       - LOG_FORMAT=plain
@@ -196,5 +202,22 @@ services:
         timeout: 30s
         retries: 10
 
+  # TODO: provide our own config so that we can guarantee the keyid
+  autograph:
+    image: mozilla/autograph:latest
+    expose:
+      - "8000"
+    # TODO: remove me when testing is done
+    ports:
+      - "8000:8000"
+    volumes:
+      - autographtmp:/tmp/
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/__heartbeat__"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
 volumes:
   node_modules:
+  autographtmp:
