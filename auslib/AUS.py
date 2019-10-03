@@ -99,7 +99,7 @@ class AUS:
         # serve every request an update
         # backgroundRate=100 means all requests are served
         # backgroundRate=25 means only one quarter of requests are served
-        if not updateQuery["force"] == SUCCEED and rule["backgroundRate"] < 100:
+        if "force" in updateQuery and not updateQuery["force"] == SUCCEED and rule["backgroundRate"] < 100:
             self.log.debug("backgroundRate < 100, rolling the dice")
             if updateQuery["force"] == FAIL or self.rand() >= rule["backgroundRate"]:
                 fallbackReleaseName = rule["fallbackMapping"]

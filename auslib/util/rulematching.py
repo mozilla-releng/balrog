@@ -2,6 +2,7 @@ import logging
 import re
 
 from auslib.util.comparison import int_compare, string_compare, version_compare
+from auslib.util.versions import MozillaVersion
 
 
 def matchRegex(foo, bar):
@@ -93,7 +94,7 @@ def matchChannel(ruleChannel, queryChannel, fallbackChannel):
         return True
 
 
-def matchVersion(ruleVersion, queryVersion):
+def matchVersion(ruleVersion, queryVersion, versionClass=MozillaVersion):
     """Decides whether a version from the rules matches an incoming version.
        If the ruleVersion is null, we match any queryVersion. If it's not
        null, we must either match exactly, or match a comparison operator."""
@@ -102,7 +103,7 @@ def matchVersion(ruleVersion, queryVersion):
         return True
     rulesVersionList = ruleVersion.split(",")
     for rule in rulesVersionList:
-        if version_compare(queryVersion, rule):
+        if version_compare(queryVersion, rule, versionClass):
             return True
     return False
 
