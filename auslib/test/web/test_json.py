@@ -3,6 +3,7 @@ import pytest
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
 from auslib.web.public.base import app
+import auslib.web.public.json
 
 
 @pytest.fixture(scope="function")
@@ -10,9 +11,21 @@ def disable_errorhandler(monkeypatch):
     monkeypatch.setattr(app, "error_handler_spec", {None: {}})
 
 
+@pytest.fixture(scope="function")
+def mock_autograph(monkeypatch):
+    def mockreturn(*args):
+        return ("abcdef", "https://this.is/a.x5u")
+
+    monkeypatch.setattr(auslib.web.public.json, "sign_hash", mockreturn)
+
+
 @pytest.fixture(scope="module")
 def appconfig():
     app.config["WHITELISTED_DOMAINS"] = {"good.com": ("Guardian",)}
+    app.config["AUTOGRAPH_URL"] = "fake"
+    app.config["AUTOGRAPH_KEYID"] = "fake"
+    app.config["AUTOGRAPH_USERNAME"] = "fake"
+    app.config["AUTOGRAPH_PASSWORD"] = "fake"
 
 
 @pytest.fixture(scope="module")
@@ -105,7 +118,7 @@ def client():
     return app.test_client()
 
 
-@pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler")
+@pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler", "mock_autograph")
 @pytest.mark.parametrize(
     "version,buildTarget,channel,code,response",
     [
@@ -125,3 +138,4 @@ def testGuardianResponse(client, version, buildTarget, channel, code, response):
     if code == 200:
         assert ret.mimetype == "application/json"
         assert ret.get_json() == response
+        assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
