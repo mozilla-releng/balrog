@@ -4,7 +4,7 @@ import unittest
 import mock
 import pytest
 
-from auslib.AUS import AUS, FAIL, SUCCEED
+from auslib.AUS import AUS, FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
 
@@ -92,13 +92,13 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
         self.assertEqual(tested, 100)
 
     def testThrottling25WithForcing(self):
-        (served, _, tested) = self.random_aus_test(background_rate=25, force=SUCCEED)
+        (served, _, tested) = self.random_aus_test(background_rate=25, force=FORCE_MAIN_MAPPING)
 
         self.assertEqual(served, 1)
         self.assertEqual(tested, 1)
 
     def testThrottling25WithForcingFailure(self):
-        (served, fallback, tested) = self.random_aus_test(background_rate=25, force=FAIL)
+        (served, fallback, tested) = self.random_aus_test(background_rate=25, force=FORCE_FALLBACK_MAPPING)
 
         self.assertEqual(served, 0)
         self.assertEqual(fallback, 0)
@@ -133,14 +133,14 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
         self.assertEqual(tested, 100)
 
     def testThrottling25WithForcingAndFallback(self):
-        (served_mapping, served_fallback, tested) = self.random_aus_test(background_rate=25, force=SUCCEED, fallback=True)
+        (served_mapping, served_fallback, tested) = self.random_aus_test(background_rate=25, force=FORCE_MAIN_MAPPING, fallback=True)
 
         self.assertEqual(served_mapping, 1)
         self.assertEqual(served_fallback, 0)
         self.assertEqual(tested, 1)
 
     def testThrottling25WithForcingFailureAndFallback(self):
-        (served, fallback, tested) = self.random_aus_test(background_rate=25, force=FAIL, fallback=True)
+        (served, fallback, tested) = self.random_aus_test(background_rate=25, force=FORCE_FALLBACK_MAPPING, fallback=True)
 
         self.assertEqual(served, 0)
         self.assertEqual(fallback, 1)

@@ -2,12 +2,15 @@ import json
 
 from flask import current_app as app, Response
 
+from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.util.autograph import make_hash, sign_hash
 from auslib.web.public.base import AUS, with_transaction
 
 
 @with_transaction
 def get_update(transaction, **parameters):
+    force = parameters.get("force")
+    parameters["force"] = {FORCE_MAIN_MAPPING.query_value: FORCE_MAIN_MAPPING, FORCE_FALLBACK_MAPPING.query_value: FORCE_FALLBACK_MAPPING}.get(force)
     release = AUS.evaluateRules(parameters, transaction=transaction)[0]
     if not release:
         return Response(status=404)
