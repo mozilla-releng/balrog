@@ -1,5 +1,5 @@
 import re
-from distutils.version import StrictVersion
+from distutils.version import StrictVersion, LooseVersion
 
 from auslib.errors import BadDataError
 
@@ -85,3 +85,10 @@ def decrement_version(version):
             parts[i] -= 1
             break
     return ".".join(map(str, parts))
+
+
+def get_version_class(product):
+    if product == "Guardian":
+        return LooseVersion
+
+    return MozillaVersion
