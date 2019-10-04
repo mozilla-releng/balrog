@@ -39,6 +39,12 @@ if os.environ.get("AUTOGRAPH_URL"):
     application.config["AUTOGRAPH_USERNAME"] = os.environ["AUTOGRAPH_USERNAME"]
     application.config["AUTOGRAPH_PASSWORD"] = os.environ["AUTOGRAPH_PASSWORD"]
 
+    # Autograph responses
+    # When we start signing things other than Guardian responses we'll need to increase the size of this cache.
+    # We cache for one day to make sure we resign once per day, because the signatures eventually expire.
+    cache.make_cache("content_signatures", 50, 86400)
+
+
 cache.make_cache("blob", 500, 3600)
 # There's probably no no need to ever expire items in the blob schema cache
 # at all because they only change during deployments (and new instances of the
@@ -54,11 +60,6 @@ cache.make_cache("rules", 500, 30)
 # Cache the emergency update state for a minute. We have less than 100
 # product/channel combinations we care about.
 cache.make_cache("updates_disabled", 100, 60)
-
-# Autograph responses
-# When we start signing things other than Guardian responses we'll need to increase the size of this cache.
-# We cache for one day to make sure we resign once per day, because the signatures eventually expire.
-cache.make_cache("content_signatures", 50, 86400)
 
 dbo.setDb(os.environ["DBURI"])
 dbo.setDomainWhitelist(DOMAIN_WHITELIST)
