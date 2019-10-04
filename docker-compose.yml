@@ -211,7 +211,6 @@ services:
     image: mozilla/autograph:latest
     expose:
       - "8000"
-    # TODO: remove me when testing is done
     ports:
       - "8000:8000"
     volumes:

@@ -8,14 +8,12 @@ from requests_hawk import HawkAuth
 SIGNATURE_PREFIX = "Content-Signature:\x00"
 
 
-# TODO: double check all the encode/decodes. it works, but are they in the right place?
 def make_hash(content):
     templated = f"{SIGNATURE_PREFIX}{content}".encode("ascii")
     return sha384(templated).digest()
 
 
 def sign_hash(autograph_uri, keyid, id_, key, hash_):
-    # TODO: should we store this and session globally?
     auth = HawkAuth(id=id_, key=key)
     with requests.Session() as session:
         body = [{"input": b64encode(hash_).decode("ascii"), "keyid": keyid}]
