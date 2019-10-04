@@ -76,9 +76,18 @@ def guardian_db(db_schema):
         version="<0.5.0.0",
         data_version=1,
     )
+    # fmt: off
+    # to force this on multiple lines
     dbo.rules.t.insert().execute(
-        priority=100, backgroundRate=100, mapping="Guardian-1.0.0.0", update_type="minor", product="Guardian", channel="release", data_version=1
+        priority=100,
+        backgroundRate=100,
+        mapping="Guardian-1.0.0.0",
+        update_type="minor",
+        product="Guardian",
+        channel="release",
+        data_version=1
     )
+    # fmt: on
     dbo.rules.t.insert().execute(
         priority=100,
         backgroundRate=100,
