@@ -14,6 +14,11 @@ def disable_errorhandler(monkeypatch):
 
 @pytest.fixture(scope="function")
 def mock_autograph(monkeypatch):
+    monkeypatch.setitem(app.config, "AUTOGRAPH_URL", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_KEYID", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_USERNAME", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_PASSWORD", "fake")
+
     def mockreturn(*args):
         return ("abcdef", "https://this.is/a.x5u")
 
@@ -23,10 +28,6 @@ def mock_autograph(monkeypatch):
 @pytest.fixture(scope="module")
 def appconfig():
     app.config["WHITELISTED_DOMAINS"] = {"good.com": ("Guardian",)}
-    app.config["AUTOGRAPH_URL"] = "fake"
-    app.config["AUTOGRAPH_KEYID"] = "fake"
-    app.config["AUTOGRAPH_USERNAME"] = "fake"
-    app.config["AUTOGRAPH_PASSWORD"] = "fake"
 
 
 @pytest.fixture(scope="module")
@@ -159,6 +160,24 @@ def testGuardianResponse(client, version, buildTarget, channel, code, response):
         assert ret.mimetype == "application/json"
         assert ret.get_json() == response
         assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
+
+
+@pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler")
+@pytest.mark.parametrize(
+    "version,buildTarget,channel,code,response",
+    [
+        ("0.4.0.0", "WINNT_x86_64", "release", 200, {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0"}),
+        ("0.6.0.0", "WINNT_x86_64", "release", 200, {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0"}),
+        ("0.99.99.99", "WINNT_x86_64", "release", 200, {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0"}),
+    ],
+)
+def testGuardianResponseWithoutSigning(client, version, buildTarget, channel, code, response):
+    ret = client.get(f"/json/1/Guardian/{version}/{buildTarget}/{channel}/update.json")
+    assert ret.status_code == code
+    if code == 200:
+        assert ret.mimetype == "application/json"
+        assert ret.get_json() == response
+        assert "Content-Signature" not in ret.headers
 
 
 @pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler", "mock_autograph")
