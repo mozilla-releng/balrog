@@ -1,5 +1,6 @@
 import pytest
 
+from auslib.AUS import FORCE_MAIN_MAPPING, FORCE_FALLBACK_MAPPING
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
 from auslib.web.public.base import app
@@ -87,6 +88,16 @@ def guardian_db(db_schema):
         channel="release",
         data_version=1
     )
+    dbo.rules.t.insert().execute(
+        priority=100,
+        backgroundRate=0,
+        mapping="Guardian-1.0.0.0",
+        fallbackMapping="Guardian-0.5.0.0",
+        update_type="minor",
+        product="Guardian",
+        channel="release-rollout",
+        data_version=1
+    )
     # fmt: on
     dbo.rules.t.insert().execute(
         priority=100,
@@ -134,3 +145,22 @@ def testGuardianResponse(client, version, buildTarget, channel, code, response):
     if code == 200:
         assert ret.mimetype == "application/json"
         assert ret.get_json() == response
+
+
+@pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler")
+@pytest.mark.parametrize(
+    "forceValue,response",
+    [
+        (FORCE_MAIN_MAPPING, {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0"}),
+        (FORCE_FALLBACK_MAPPING, {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0"}),
+        (None, {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0"}),
+    ],
+)
+def testGuardianResponseWithGradualRollout(client, forceValue, response):
+    qs = {}
+    if forceValue:
+        qs["force"] = forceValue.query_value
+    ret = client.get(f"/json/1/Guardian/0.4.0.0/WINNT_x86_64/release-rollout/update.json", query_string=qs)
+    assert ret.status_code == 200
+    assert ret.mimetype == "application/json"
+    assert ret.get_json() == response

@@ -201,6 +201,7 @@ paths:
         - $ref: '#/parameters/version'
         - $ref: '#/parameters/buildTarget'
         - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/force'
       responses:
         200:
           description: Update response in JSON format
