@@ -99,6 +99,8 @@ services:
       - ./agent:/app
     links:
       - nginx
+    logging:
+      driver: none
     environment:
       - BALROG_API_ROOT=http://nginx:8011/api
       - BALROG_USERNAME=balrogagent
@@ -196,6 +198,8 @@ services:
       - MYSQL_ROOT_PASSWORD=admin
     volumes:
       - .cache/mysql:/var/lib/mysql
+    logging:
+      driver: none
     healthcheck:
         test: nc -z -v balrogdb 3306
         interval: 30s
@@ -212,6 +216,8 @@ services:
       - "8000:8000"
     volumes:
       - autographtmp:/tmp/
+    logging:
+      driver: none
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/__heartbeat__"]
       interval: 60s

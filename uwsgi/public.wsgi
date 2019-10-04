@@ -54,6 +54,11 @@ cache.make_cache("rules", 500, 30)
 # product/channel combinations we care about.
 cache.make_cache("updates_disabled", 100, 60)
 
+# Autograph responses
+# When we start signing things other than Guardian responses we'll need to increase the size of this cache.
+# We cache for one day to make sure we resign once per day, because the signatures eventually expire.
+cache.make_cache("content_signatures", 50, 86400)
+
 dbo.setDb(os.environ["DBURI"])
 dbo.setDomainWhitelist(DOMAIN_WHITELIST)
 application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
