@@ -1,13 +1,13 @@
 import logging
 import re
 import sys
-from functools import wraps
 
 from connexion import request
 from flask import current_app as app
 from flask import make_response
 
-from auslib.AUS import AUS, FAIL, SUCCEED
+from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
+from auslib.web.public.base import AUS, with_transaction
 from auslib.global_state import dbo
 
 try:
@@ -16,7 +16,6 @@ except ImportError:  # pragma: no cover
     from urllib.parse import unquote
 
 
-AUS = AUS()
 LOG = logging.getLogger(__name__)
 
 
@@ -103,7 +102,7 @@ def getQueryFromURL(url):
     ua = request.headers.get("User-Agent")
     query["headerArchitecture"] = getHeaderArchitecture(query["buildTarget"], ua)
     force = query.get("force")
-    query["force"] = {SUCCEED.query_value: SUCCEED, FAIL.query_value: FAIL}.get(force)
+    query["force"] = {FORCE_MAIN_MAPPING.query_value: FORCE_MAIN_MAPPING, FORCE_FALLBACK_MAPPING.query_value: FORCE_FALLBACK_MAPPING}.get(force)
     if "mig64" in query:
         # "1" is the only value that official clients send. We ignore any other values
         # by setting mig64 to None.
@@ -123,15 +122,6 @@ def extract_query_version(request_url):
     if match:
         version = int(match.group(1))
     return version
-
-
-def with_transaction(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        with dbo.begin() as transaction:
-            return f(*args, transaction=transaction, **kwargs)
-
-    return wrapper
 
 
 @with_transaction

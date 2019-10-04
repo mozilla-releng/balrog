@@ -11,9 +11,9 @@ from auslib.log import configure_logging
 
 SYSTEM_ACCOUNTS = ["balrogagent", "balrog-ffxbld", "balrog-tbirdbld", "seabld"]
 DOMAIN_WHITELIST = {
-    "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-    "download.cdn.mozilla.net": ("Firefox", "Fennec", "SeaMonkey"),
+    "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
+    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
+    "download.cdn.mozilla.net": ("Firefox", "Fennec", "Guardian"),
     "mozilla-nightly-updates.s3.amazonaws.com": ("Firefox",),
     "ciscobinary.openh264.org": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),

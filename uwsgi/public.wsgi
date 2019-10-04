@@ -5,9 +5,9 @@ from auslib.log import configure_logging
 
 SPECIAL_FORCE_HOSTS = ["http://download.mozilla.org"]
 DOMAIN_WHITELIST = {
-    "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-    "download.cdn.mozilla.net": ("Firefox", "Fennec", "SeaMonkey"),
+    "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
+    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
+    "download.cdn.mozilla.net": ("Firefox", "Fennec", "Guardian"),
     "mozilla-nightly-updates.s3.amazonaws.com": ("Firefox",),
     "ciscobinary.openh264.org": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),

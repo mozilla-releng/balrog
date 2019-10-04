@@ -1,19 +1,19 @@
 from auslib.AUS import isForbiddenUrl
-from auslib.blobs.base import Blob
+from auslib.blobs.base import XMLBlob
 from auslib.errors import BadDataError
 from auslib.util.hashes import getHashLen
 
 
-class GMPBlobV1(Blob):
+class GMPBlobV1(XMLBlob):
     jsonschema = "gmp.yml"
 
     def __init__(self, **kwargs):
-        Blob.__init__(self, **kwargs)
+        XMLBlob.__init__(self, **kwargs)
         if "schema_version" not in self:
             self["schema_version"] = 1000
 
     def validate(self, product, whitelistedDomains):
-        Blob.validate(self, product, whitelistedDomains)
+        XMLBlob.validate(self, product, whitelistedDomains)
         for vendor in self["vendors"]:
             for platform in self["vendors"][vendor].get("platforms", {}).values():
                 if "hashValue" in platform:

@@ -7,7 +7,6 @@ import jsonschema
 # To enable shared jsonschema validators
 import auslib.util.jsonschema_validators  # noqa
 import yaml
-from auslib.AUS import isSpecialURL
 from auslib.global_state import cache
 
 
@@ -34,6 +33,7 @@ def createBlob(data):
         DesupportBlob,
     )
     from auslib.blobs.gmp import GMPBlobV1
+    from auslib.blobs.guardian import GuardianBlob
     from auslib.blobs.superblob import SuperBlob
     from auslib.blobs.systemaddons import SystemAddonsBlob
 
@@ -50,6 +50,7 @@ def createBlob(data):
         1000: GMPBlobV1,
         4000: SuperBlob,
         5000: SystemAddonsBlob,
+        10000: GuardianBlob,
     }
 
     if isinstance(data, str):
@@ -164,20 +165,6 @@ class Blob(dict):
         if self.containsForbiddenDomain(product, whitelistedDomains):
             raise ValueError("Blob contains forbidden domain(s)")
 
-    def getResponseProducts(self):
-        """
-        :return: Usually returns None. If the Blob is a SuperBlob, it returns the list
-                of return products.
-        """
-        return None
-
-    def getResponseBlobs(self):
-        """
-        :return: Usually returns None. It the Blob is a systemaddons superblob, it returns the
-                 list of return blobs
-        """
-        return None
-
     def getSchema(self):
         def loadSchema():
             return yaml.safe_load(open(path.join(path.dirname(path.abspath(__file__)), "schemas", self.jsonschema)))
@@ -200,13 +187,34 @@ class Blob(dict):
         failing open)."""
         return False
 
-    def processSpecialForceHosts(self, url, specialForceHosts, force_arg):
-        if isSpecialURL(url, specialForceHosts):
-            if "?" in url:
-                url += "&force=" + force_arg.query_value
-            else:
-                url += "?force=" + force_arg.query_value
-        return url
+    def containsForbiddenDomain(self, product, whitelistedDomains):
+        raise NotImplementedError()
+
+    def getReferencedReleases(self):
+        """
+        :return: Returns set of names of partially referenced releases that the current
+        release references
+        """
+        return set()
+
+
+# We should be able to kill this Blob and its subclasses at some point by using
+# GenericBlob, and fully encapsulating the response in getResponse
+# getResponseProducts/getResponseBlobs may have to move elsewhere, though.
+class XMLBlob(Blob):
+    def getResponseProducts(self):
+        """
+        :return: Usually returns None. If the Blob is a SuperBlob, it returns the list
+                of return products.
+        """
+        return None
+
+    def getResponseBlobs(self):
+        """
+        :return: Usually returns None. It the Blob is a systemaddons superblob, it returns the
+                 list of return blobs
+        """
+        return None
 
     def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         """
@@ -221,9 +229,6 @@ class Blob(dict):
         raise NotImplementedError()
 
     def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        raise NotImplementedError()
-
-    def containsForbiddenDomain(self, product, whitelistedDomains):
         raise NotImplementedError()
 
     def getHeaderXML(self):
@@ -241,9 +246,7 @@ class Blob(dict):
         footer = "</updates>"
         return footer
 
-    def getReferencedReleases(self):
-        """
-        :return: Returns set of names of partially referenced releases that the current
-        release references
-        """
-        return set()
+
+class GenericBlob(Blob):
+    def getResponse(self):
+        raise NotImplementedError
