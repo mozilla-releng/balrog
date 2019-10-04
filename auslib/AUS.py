@@ -19,8 +19,8 @@ class ForceResult(object):
 
 
 # Magic constants that callers can use to choose a specific "random" result.
-SUCCEED = ForceResult("succeed", "1")
-FAIL = ForceResult("fail", "-1")
+FORCE_MAIN_MAPPING = ForceResult("succeed", "1")
+FORCE_FALLBACK_MAPPING = ForceResult("fail", "-1")
 
 
 def isSpecialURL(url, specialForceHosts):
@@ -99,9 +99,9 @@ class AUS:
         # serve every request an update
         # backgroundRate=100 means all requests are served
         # backgroundRate=25 means only one quarter of requests are served
-        if "force" in updateQuery and not updateQuery["force"] == SUCCEED and rule["backgroundRate"] < 100:
+        if "force" in updateQuery and not updateQuery["force"] == FORCE_MAIN_MAPPING and rule["backgroundRate"] < 100:
             self.log.debug("backgroundRate < 100, rolling the dice")
-            if updateQuery["force"] == FAIL or self.rand() >= rule["backgroundRate"]:
+            if updateQuery["force"] == FORCE_FALLBACK_MAPPING or self.rand() >= rule["backgroundRate"]:
                 fallbackReleaseName = rule["fallbackMapping"]
                 if fallbackReleaseName:
                     release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1, transaction=transaction)[0]
