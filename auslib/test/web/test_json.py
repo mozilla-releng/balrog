@@ -4,11 +4,25 @@ from auslib.AUS import FORCE_MAIN_MAPPING, FORCE_FALLBACK_MAPPING
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
 from auslib.web.public.base import app
+import auslib.web.public.json
 
 
 @pytest.fixture(scope="function")
 def disable_errorhandler(monkeypatch):
     monkeypatch.setattr(app, "error_handler_spec", {None: {}})
+
+
+@pytest.fixture(scope="function")
+def mock_autograph(monkeypatch):
+    monkeypatch.setitem(app.config, "AUTOGRAPH_URL", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_KEYID", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_USERNAME", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_PASSWORD", "fake")
+
+    def mockreturn(*args):
+        return ("abcdef", "https://this.is/a.x5u")
+
+    monkeypatch.setattr(auslib.web.public.json, "sign_hash", mockreturn)
 
 
 @pytest.fixture(scope="module")
@@ -125,7 +139,7 @@ def client():
     return app.test_client()
 
 
-@pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler")
+@pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler", "mock_autograph")
 @pytest.mark.parametrize(
     "version,buildTarget,channel,code,response",
     [
@@ -145,9 +159,28 @@ def testGuardianResponse(client, version, buildTarget, channel, code, response):
     if code == 200:
         assert ret.mimetype == "application/json"
         assert ret.get_json() == response
+        assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
 
 
 @pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler")
+@pytest.mark.parametrize(
+    "version,buildTarget,channel,code,response",
+    [
+        ("0.4.0.0", "WINNT_x86_64", "release", 200, {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0"}),
+        ("0.6.0.0", "WINNT_x86_64", "release", 200, {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0"}),
+        ("0.99.99.99", "WINNT_x86_64", "release", 200, {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0"}),
+    ],
+)
+def testGuardianResponseWithoutSigning(client, version, buildTarget, channel, code, response):
+    ret = client.get(f"/json/1/Guardian/{version}/{buildTarget}/{channel}/update.json")
+    assert ret.status_code == code
+    if code == 200:
+        assert ret.mimetype == "application/json"
+        assert ret.get_json() == response
+        assert "Content-Signature" not in ret.headers
+
+
+@pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler", "mock_autograph")
 @pytest.mark.parametrize(
     "forceValue,response",
     [
@@ -164,3 +197,4 @@ def testGuardianResponseWithGradualRollout(client, forceValue, response):
     assert ret.status_code == 200
     assert ret.mimetype == "application/json"
     assert ret.get_json() == response
+    assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
