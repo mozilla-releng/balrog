@@ -27,6 +27,7 @@ import {
 } from '../../../services/releases';
 import { getProducts } from '../../../services/rules';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
+import { withUser } from '../../../utils/AuthContext';
 import { SNACKBAR_INITIAL_STATE } from '../../../utils/constants';
 
 const useStyles = makeStyles(theme => ({
@@ -52,11 +53,16 @@ const useStyles = makeStyles(theme => ({
   uploadReleaseButton: {
     borderRadius: 0,
   },
+  fabWithTooltip: {
+    height: theme.spacing(7),
+    width: theme.spacing(7),
+  },
 }));
 
-export default function Release(props) {
+function Release(props) {
   const classes = useStyles();
   const {
+    user,
     isNewRelease,
     match: {
       params: { releaseName },
@@ -313,23 +319,34 @@ export default function Release(props) {
           <br />
           <Fragment>
             <Tooltip title={isNewRelease ? 'Create Release' : 'Update Release'}>
-              <Fab
-                disabled={actionLoading || isReadOnly}
-                onClick={
-                  isNewRelease ? handleReleaseCreate : handleReleaseUpdate
-                }
-                color="primary"
-                className={classNames(classes.saveButton, {
-                  [classes.secondFab]: scId && !isReadOnly,
-                  [classes.fab]: !scId || isReadOnly,
-                })}>
-                <ContentSaveIcon />
-              </Fab>
+              {/* Add <div /> to avoid material-ui error "you are providing
+              a disabled `button` child to the Tooltip component." */}
+              <div
+                className={classNames(
+                  classes.fabWithTooltip,
+                  classes.saveButton,
+                  {
+                    [classes.secondFab]: scId && !isReadOnly,
+                    [classes.fab]: !scId || isReadOnly,
+                  }
+                )}>
+                <Fab
+                  disabled={!user || actionLoading || isReadOnly}
+                  onClick={
+                    isNewRelease ? handleReleaseCreate : handleReleaseUpdate
+                  }
+                  color="primary">
+                  <ContentSaveIcon />
+                </Fab>
+              </div>
             </Tooltip>
             {scId && !isReadOnly && (
-              <SpeedDial ariaLabel="Secondary Actions">
+              <SpeedDial
+                ButtonProps={{
+                  disabled: !user || actionLoading || isReadOnly || !scId,
+                }}
+                ariaLabel="Secondary Actions">
                 <SpeedDialAction
-                  disabled={actionLoading || isReadOnly || !scId}
                   icon={<DeleteIcon />}
                   tooltipOpen
                   tooltipTitle="Cancel Pending Change"
@@ -344,3 +361,5 @@ export default function Release(props) {
     </Dashboard>
   );
 }
+
+export default withUser(Release);
