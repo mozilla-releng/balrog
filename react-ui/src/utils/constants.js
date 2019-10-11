@@ -35,6 +35,22 @@ export const RULE_DIFF_PROPERTIES = [
   'update_type',
   'version',
 ];
+// Products that use only a subset of the available Rule fields
+// should define them here.
+export const RULE_PRODUCT_UNSUPPORTED_PROPERTIES = {
+  Guardian: [
+    'buildID',
+    'distVersion',
+    'distribution',
+    'headerArchitecture',
+    'instructionSet',
+    'jaws',
+    'locale',
+    'memory',
+    'mig64',
+    'osVersion',
+  ],
+};
 export const CONTENT_MAX_WIDTH = 980;
 export const APP_BAR_HEIGHT = 64;
 export const SNACKBAR_AUTO_HIDE_DURATION = 5000;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { arrayOf, node, oneOfType } from 'prop-types';
+import { object, arrayOf, node, oneOfType } from 'prop-types';
 import classNames from 'classnames';
 import { makeStyles } from '@material-ui/styles';
 import MuiSpeedDial from '@material-ui/lab/SpeedDial';
@@ -13,7 +13,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function SpeedDial({ children, className, ...props }) {
+function SpeedDial({ children, className, ButtonProps, ...props }) {
   const classes = useStyles();
   const [open, setOpen] = useState(false);
   const handleClick = () => setOpen(!open);
@@ -26,7 +26,7 @@ function SpeedDial({ children, className, ...props }) {
       icon={
         <SpeedDialIcon icon={<DotsVerticalIcon />} openIcon={<CloseIcon />} />
       }
-      ButtonProps={{ color: 'secondary' }}
+      ButtonProps={{ color: 'secondary', ...ButtonProps }}
       className={classNames(classes.speedDial, className)}
       onBlur={handleClose}
       onClick={handleClick}
@@ -47,6 +47,11 @@ SpeedDial.propTypes = {
    * with the base `SpeedDial` floating action button.
    */
   children: oneOfType([arrayOf(node), node]).isRequired,
+  ButtonProps: object,
+};
+
+SpeedDial.defaultProps = {
+  ButtonProps: {},
 };
 
 export default SpeedDial;
