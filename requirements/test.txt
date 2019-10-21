@@ -124,9 +124,9 @@ pyparsing==2.4.2 \
     --hash=sha256:6f98a7b9397e206d78cc01df10131398f1c8b8510a2f4d97d9abd82e1aacdd80 \
     --hash=sha256:d9338df12903bbf5d65a0e4e87c2161968b10d2e489652bb47001d82a9b028b4 \
     # via packaging
-pytest-cov==2.8.0 \
-    --hash=sha256:9b64b54d21bd0fd77f7eb6ccb38638b8daba8d98ab5a51d67c93a133ec8c5ba4 \
-    --hash=sha256:a42cb9af7a429b6cd7c97be307cbb4cefca1d50c5b3018711558341979946851
+pytest-cov==2.8.1 \
+    --hash=sha256:cc6742d8bac45070217169f5f72ceee1e0e55b0221f54bcf24845972d3a47f2b \
+    --hash=sha256:cdbdef4f870408ebdbfeb44e63e07eb18bb4619fae852f6e760645fa36172626
 pytest-forked==1.0.2 \
     --hash=sha256:5fe33fbd07d7b1302c95310803a5e5726a4ff7f19d5a542b7ce57c76fed8135f \
     --hash=sha256:d352aaced2ebd54d42a65825722cb433004b4446ab5d2044851d9cc7a00c9e38 \
