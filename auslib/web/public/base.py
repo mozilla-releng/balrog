@@ -47,7 +47,8 @@ spec = (
     .add_spec(path.join(web_dir, "common/swagger/parameters.yml"))
     .add_spec(path.join(web_dir, "common/swagger/responses.yml"))
 )
-connexion_app.add_api(spec, validate_responses=True, strict_validation=True)
+# Response validation should be enabled when it actually works
+connexion_app.add_api(spec, strict_validation=True)
 
 
 @app.after_request
