@@ -197,7 +197,7 @@ services:
       - MYSQL_PASSWORD=balrogadmin
       - MYSQL_ROOT_PASSWORD=admin
     volumes:
-      - .cache/mysql:/var/lib/mysql
+      - mysqldb:/var/lib/mysql
     logging:
       driver: none
     healthcheck:
@@ -226,3 +226,4 @@ services:
 volumes:
   node_modules:
   autographtmp:
+  mysqldb:

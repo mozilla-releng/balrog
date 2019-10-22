@@ -1,8 +1,10 @@
-set -xe
+set -x
 
 export LOCAL_DUMP="/app/scripts/prod_db_dump.sql"
 
-if [ ! -e /app/$CACHEDIR/mysql/db.done ]; then
+mysql -h $DB_HOST -u balrogadmin --password=balrogadmin -e 'show tables;' balrog | grep rules
+rc=$?
+if [ "$rc" -eq 1 ]; then
     echo "Initializing DB..."
     python scripts/get-prod-db-dump.py
 
@@ -13,9 +15,7 @@ if [ ! -e /app/$CACHEDIR/mysql/db.done ]; then
     mysql -h $DB_HOST -u balrogadmin --password=balrogadmin -e 'insert into user_roles (username, role, data_version) values ("bob@mozilla.com", "releng", 1);' balrog
     mysql -h $DB_HOST -u balrogadmin --password=balrogadmin -e 'insert into user_roles (username, role, data_version) values ("janet@mozilla.com", "releng", 1);' balrog
     mysql -h $DB_HOST -u balrogadmin --password=balrogadmin -e 'insert into product_req_signoffs (product, channel, role, signoffs_required, data_version) values ("Firefox", "release", "releng", 1, 1);' balrog
-    touch /app/$CACHEDIR/mysql/db.done
     echo "Done"
-
 fi
 
 # We need to try upgrading even if the database was freshly created, because it
