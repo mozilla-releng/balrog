@@ -21,10 +21,11 @@ class GuardianBlob(GenericBlob):
 
     def getResponse(self, updateQuery, whitelistedDomains):
         url = self.get("platforms", {}).get(updateQuery["buildTarget"], {}).get("fileUrl")
+        hashValue = self.get("platforms", {}).get(updateQuery["buildTarget"], {}).get("hashValue")
         if not url:
             return {}
 
         if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
             return {}
 
-        return {"version": self["version"], "url": url, "required": self["required"]}
+        return {"version": self["version"], "url": url, "required": self["required"], "hashFunction": self["hashFunction"], "hashValue": hashValue}
