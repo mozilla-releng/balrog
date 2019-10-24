@@ -3,6 +3,9 @@ import os
 
 from auslib.log import configure_logging
 
+STAGING = bool(int(os.environ.get("STAGING", 0)))
+LOCALDEV = bool(int(os.environ.get("LOCALDEV", 0)))
+
 SPECIAL_FORCE_HOSTS = ["http://download.mozilla.org"]
 DOMAIN_WHITELIST = {
     "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
@@ -16,7 +19,7 @@ DOMAIN_WHITELIST = {
     "ftp.mozilla.org": ("SystemAddons",),
     "fpn.firefox.com": ("Guardian",),
 }
-if os.environ.get("STAGING") or os.environ.get("LOCALDEV"):
+if STAGING or LOCALDEV:
     DOMAIN_WHITELIST.update(
         {
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
@@ -81,5 +84,5 @@ if os.environ.get("SENTRY_DSN"):
 if os.environ.get("CACHE_CONTROL"):
     application.config["CACHE_CONTROL"] = os.environ["CACHE_CONTROL"]
 
-if os.environ.get("STAGING"):
+if STAGING:
     application.config["SWAGGER_DEBUG"] = True
