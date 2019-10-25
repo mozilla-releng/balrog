@@ -52,4 +52,4 @@
               format: uri
             hashValue:
               type: string
-              description: The hash value of this partial update, calculated using the hashFunction specified at the top level.
+              description: The hash value of the file pointed at by fileUrl, calculated using the hashFunction specified at the top level.
