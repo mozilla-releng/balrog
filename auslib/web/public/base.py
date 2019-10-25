@@ -34,7 +34,7 @@ log = logging.getLogger(__name__)
 AUS = AUS()
 sentry = Sentry()
 
-connexion_app = connexion.App(__name__, specification_dir=".")
+connexion_app = connexion.App(__name__, specification_dir=".", options={"swagger_ui": False})
 app = connexion_app.app
 
 current_dir = path.dirname(__file__)
