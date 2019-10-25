@@ -40,14 +40,7 @@ def testContainsForbiddenDomain(guardianblob, whitelistedDomains, expected):
     "version,expected", [("0.5.0.0", True), ("0.8.0.0", True), ("0.99.99.99", True), ("1.0.0.0", False), ("1.0.5.0", False), ("2.0.0.0", False)]
 )
 def testShouldServeUpdateVariousVersions(guardianblob, version, expected):
-    updateQuery = {
-        "product": "Guardian",
-        "version": version,
-        "buildTarget": "WINNT_x86_64",
-        "channel": "release",
-        "hashFunction": "hash512",
-        "hashValue": "abcdef",
-    }
+    updateQuery = {"product": "Guardian", "version": version, "buildTarget": "WINNT_x86_64", "channel": "release"}
     assert guardianblob.shouldServeUpdate(updateQuery) is expected
 
 
