@@ -251,9 +251,9 @@ parameters:
     required: true
     schema:
       type: object
+      required:
+        - role
       allOf:
-        - required:
-          - role
         - $ref: '#/definitions/CSRFModel'
         - $ref: '#/definitions/RoleModel'
 
@@ -857,10 +857,10 @@ paths:
           description: Read Only Release modify Request paramaters
           required: true
           schema:
+            required:
+              - data_version
+              - read_only
             allOf:
-              - required:
-                - data_version
-                - read_only
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/DataVersionModel'
               - type: object
@@ -1039,12 +1039,12 @@ paths:
           description: product required signoff json body request data
           required: true
           schema:
+            required:
+              - product
+              - role
+              - channel
+              - signoffs_required
             allOf:
-              - required:
-                - product
-                - role
-                - channel
-                - signoffs_required
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/RoleModel'
@@ -1115,13 +1115,13 @@ paths:
                     minItems: 0
                     items:
                       type: object
+                      required:
+                        - product
+                        - role
+                        - channel
+                        - data_version
+                        - signoffs_required
                       allOf:
-                        - required:
-                          - product
-                          - role
-                          - channel
-                          - data_version
-                          - signoffs_required
                         - $ref: "#/definitions/HistoryModel"
                         - $ref: "#/definitions/ProductModel"
                         - $ref: "#/definitions/RoleModel"
@@ -1166,12 +1166,12 @@ paths:
                     minItems: 0
                     items:
                       type: object
+                      required:
+                        - product
+                        - role
+                        - data_version
+                        - signoffs_required
                       allOf:
-                        - required:
-                          - product
-                          - role
-                          - data_version
-                          - signoffs_required
                         - $ref: "#/definitions/ProductModel"
                         - $ref: "#/definitions/RoleModel"
                         - $ref: "#/definitions/SignoffsRequiredModel"
@@ -1198,11 +1198,11 @@ paths:
           description: permission required signoff json body request data
           required: true
           schema:
+            required:
+              - product
+              - role
+              - signoffs_required
             allOf:
-              - required:
-                - product
-                - role
-                - signoffs_required
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/RoleModel'
@@ -1271,12 +1271,12 @@ paths:
                     minItems: 0
                     items:
                       type: object
+                      required:
+                        - product
+                        - role
+                        - data_version
+                        - signoffs_required
                       allOf:
-                        - required:
-                          - product
-                          - role
-                          - data_version
-                          - signoffs_required
                         - $ref: "#/definitions/HistoryModel"
                         - $ref: "#/definitions/ProductModel"
                         - $ref: "#/definitions/RoleModel"
@@ -1634,12 +1634,12 @@ paths:
           description: New Rule object data
           required: true
           schema:
+            #If you change the required list order or add extra fields, make sure to modify this endpoint's test cases plus code for handling /scheduled_changes/rules/  POST operation endpoint.
+            required:
+              - update_type
+              - backgroundRate
+              - priority
             allOf:
-              #If you change the required list order or add extra fields, make sure to modify this endpoint's test cases plus code for handling /scheduled_changes/rules/  POST operation endpoint.
-              - required:
-                - update_type
-                - backgroundRate
-                - priority
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/UpdateType'
               - $ref: '#/definitions/RulesBase'
@@ -1710,9 +1710,9 @@ paths:
           description: Rule object data
           required: true
           schema:
+            required:
+              - data_version
             allOf:
-              - required:
-                - data_version
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/RulesBase'
               - $ref: '#/definitions/RulesNonNullable'
@@ -1750,9 +1750,9 @@ paths:
           description: Rule object data
           required: true
           schema:
+            required:
+              - data_version
             allOf:
-              - required:
-                - data_version
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/RulesBase'
               - $ref: '#/definitions/RulesNonNullable'
@@ -2134,9 +2134,9 @@ paths:
           description: Returns JSON object of list of revisions of sc rules along with their count
           schema:
             type: object
+            required:
+              - revisions
             allOf:
-              - required:
-                - revisions
               - $ref: '#/definitions/CountModel'
               - type: object
                 properties:
@@ -2220,13 +2220,13 @@ paths:
                     minItems: 0
                     items:
                       type: object
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - permission
+                        - username
                       allOf:
-                        - required:
-                          - change_type
-                          - data_version
-                          - when
-                          - permission
-                          - username
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
@@ -2259,12 +2259,12 @@ paths:
           required: true
           schema:
             type: object
+            required:
+              - change_type
+              - permission
+              - username
+              - when
             allOf:
-              - required:
-                - change_type
-                - permission
-                - username
-                - when
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
@@ -2391,13 +2391,13 @@ paths:
                     minItems: 0
                     items:
                       type: object
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - permission
+                        - username
                       allOf:
-                        - required:
-                          - change_type
-                          - data_version
-                          - when
-                          - permission
-                          - username
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCDataVersion'
@@ -2476,15 +2476,15 @@ paths:
                     minItems: 0
                     items:
                       type: object
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - product
+                        - name
+                        - data
+                        - read_only
                       allOf:
-                        - required:
-                          - change_type
-                          - data_version
-                          - when
-                          - product
-                          - name
-                          - data
-                          - read_only
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
@@ -2519,11 +2519,11 @@ paths:
           required: true
           schema:
             type: object
+            required:
+              - change_type
+              - name
+              - when
             allOf:
-              - required:
-                - change_type
-                - name
-                - when
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
@@ -2572,15 +2572,15 @@ paths:
                 properties:
                   scheduled_change:
                     description: An object containing the scheduled change with the id specified
+                    required:
+                      - change_type
+                      - data_version
+                      - when
+                      - product
+                      - name
+                      - data
+                      - read_only
                     allOf:
-                      - required:
-                        - change_type
-                        - data_version
-                        - when
-                        - product
-                        - name
-                        - data
-                        - read_only
                       - $ref: '#/definitions/SCChangeType'
                       - $ref: '#/definitions/SCTime'
                       - $ref: '#/definitions/SCIdModel'
@@ -2700,15 +2700,15 @@ paths:
                     minItems: 0
                     items:
                       type: object
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - product
+                        - name
+                        - data
+                        - read_only
                       allOf:
-                        - required:
-                          - change_type
-                          - data_version
-                          - when
-                          - product
-                          - name
-                          - data
-                          - read_only
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
@@ -2790,15 +2790,15 @@ paths:
                     minItems: 0
                     items:
                       type: object
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - product
+                        - channel
+                        - role
+                        - signoffs_required
                       allOf:
-                        - required:
-                          - change_type
-                          - data_version
-                          - when
-                          - product
-                          - channel
-                          - role
-                          - signoffs_required
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
@@ -2833,13 +2833,13 @@ paths:
           required: true
           schema:
             type: object
+            required:
+              - change_type
+              - product
+              - channel
+              - role
+              - when
             allOf:
-              - required:
-                - change_type
-                - product
-                - channel
-                - role
-                - when
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
@@ -2971,15 +2971,15 @@ paths:
                     minItems: 0
                     items:
                       type: object
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - product
+                        - channel
+                        - role
+                        - signoffs_required
                       allOf:
-                        - required:
-                          - change_type
-                          - data_version
-                          - when
-                          - product
-                          - channel
-                          - role
-                          - signoffs_required
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
@@ -3061,14 +3061,14 @@ paths:
                     minItems: 0
                     items:
                       type: object
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - product
+                        - role
+                        - signoffs_required
                       allOf:
-                        - required:
-                          - change_type
-                          - data_version
-                          - when
-                          - product
-                          - role
-                          - signoffs_required
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
@@ -3102,12 +3102,12 @@ paths:
           required: true
           schema:
             type: object
+            required:
+              - change_type
+              - product
+              - role
+              - when
             allOf:
-              - required:
-                - change_type
-                - product
-                - role
-                - when
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
@@ -3237,14 +3237,14 @@ paths:
                     minItems: 0
                     items:
                       type: object
+                      required:
+                        - change_type
+                        - data_version
+                        - when
+                        - product
+                        - role
+                        - signoffs_required
                       allOf:
-                        - required:
-                          - change_type
-                          - data_version
-                          - when
-                          - product
-                          - role
-                          - signoffs_required
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
@@ -4235,11 +4235,11 @@ definitions:
     title: Release form values plus blob
     description: "Release Base Model + release blob"
     type: object
+    required:
+      - name
+      - product
+      - blob
     allOf:
-      - required:
-        - name
-        - product
-        - blob
       - $ref: "#/definitions/CSRFModel"
       - $ref: '#/definitions/DataVersionModel'
       - $ref: '#/definitions/ProductModel'
@@ -4287,10 +4287,10 @@ definitions:
     title: Partial Release
     description: "Partial Release form values"
     type: object
+    required:
+      - product
+      - data
     allOf:
-      - required:
-        - product
-        - data
       # Note: 'name' is inherited with other required fields from Base model but never used when processing the input request
       - $ref: '#/definitions/CSRFModel'
       - $ref: '#/definitions/DataVersionModel'
@@ -4360,9 +4360,9 @@ definitions:
     title: User Permissions
     description: "Model of user's permissions with all details of avaliable options and actions for the rule,release,required signoff and permission of user is assigned"
     type: object
+    required:
+      - data_version
     allOf:
-      - required:
-        - data_version
       - $ref: "#/definitions/DataVersionModel"
       - $ref: "#/definitions/OptionsModel"
 
@@ -4374,9 +4374,9 @@ definitions:
       # Each key is a permission object
       admin:
         description: "An admin user with no options specified has completely unrestricted access to Balrog"
+        required:
+          - data_version
         allOf:
-          - required:
-            - data_version
           - $ref: "#/definitions/DataVersionModel"
           - type: object
             properties:
@@ -4414,9 +4414,9 @@ definitions:
 
       permission:
         description: "permission to perform modify actions only."
+        required:
+          - data_version
         allOf:
-          - required:
-            - data_version
           - $ref: "#/definitions/DataVersionModel"
           - type: object
             properties:
@@ -4433,9 +4433,9 @@ definitions:
 
       scheduled_change:
         description: "permission to schedule a change to rule, release or permission. Only the Balrog Agent should be granted this permission."
+        required:
+          - data_version
         allOf:
-          - required:
-            - data_version
           - $ref: "#/definitions/DataVersionModel"
           - type: object
             properties:
@@ -4454,35 +4454,35 @@ definitions:
     title: SC Rules Base Model
     description: defines base model for operations on SC Rules
     type: object
+    required:
+          - alias
+          - backgroundRate
+          - buildID
+          - buildTarget
+          - change_type
+          - channel
+          - comment
+          - data_version
+          - distVersion
+          - distribution
+          - fallbackMapping
+          - headerArchitecture
+          - instructionSet
+          - locale
+          - mapping
+          - memory
+          - mig64
+          - osVersion
+          - priority
+          - product
+          - rule_id
+          - telemetry_channel
+          - telemetry_product
+          - telemetry_uptake
+          - update_type
+          - version
+          - when
     allOf:
-      - required:
-        - alias
-        - backgroundRate
-        - buildID
-        - buildTarget
-        - change_type
-        - channel
-        - comment
-        - data_version
-        - distVersion
-        - distribution
-        - fallbackMapping
-        - headerArchitecture
-        - instructionSet
-        - locale
-        - mapping
-        - memory
-        - mig64
-        - osVersion
-        - priority
-        - product
-        - rule_id
-        - telemetry_channel
-        - telemetry_product
-        - telemetry_uptake
-        - update_type
-        - version
-        - when
       - $ref: '#/definitions/SCChangeType'
       - $ref: '#/definitions/SCTime'
       - $ref: '#/definitions/SCUptake'
