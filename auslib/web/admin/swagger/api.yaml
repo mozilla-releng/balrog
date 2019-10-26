@@ -16,12 +16,6 @@ info:
     (Application Update Service), which did not scale to our current needs nor allow
     us to adapt to more recent business requirements. Balrog helps us ship updates faster
     and with much more flexibility than we’ve had in the past.
-security:
-  - basic: []
-securityDefinitions:
-  basic:
-    type: basic
-    description: HTTP basic access authentication
 
 # host and scheme can be omitted for a more dynamic association.
 # In this case, the host and scheme used to serve the API documentation
@@ -258,10 +252,10 @@ parameters:
     schema:
       type: object
       allOf:
+        - required:
+          - role
         - $ref: '#/definitions/CSRFModel'
         - $ref: '#/definitions/RoleModel'
-      required:
-        - role
 
   userPermissionFormDataParam:
     name: user_permission_request_body
@@ -863,15 +857,14 @@ paths:
           description: Read Only Release modify Request paramaters
           required: true
           schema:
-            required:
-              - data_version
             allOf:
+              - required:
+                - data_version
+                - read_only
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/DataVersionModel'
               - type: object
                 description: read_only boolean flag
-                required:
-                  - read_only
                 properties:
                   read_only:
                     # read_only key is always present when submitted from the UI form.
@@ -1074,16 +1067,16 @@ paths:
           required: true
           schema:
             allOf:
+              - required:
+                - product
+                - role
+                - channel
+                - signoffs_required
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/RoleModel'
               - $ref: '#/definitions/ChannelModel'
               - $ref: '#/definitions/SignoffsRequiredModel'
-            required:
-              - product
-              - role
-              - channel
-              - signoffs_required
       responses:
         '201':
           $ref: '#/responses/newObjectDataVersion'
@@ -1150,18 +1143,18 @@ paths:
                     items:
                       type: object
                       allOf:
+                        - required:
+                          - product
+                          - role
+                          - channel
+                          - data_version
+                          - signoffs_required
                         - $ref: "#/definitions/HistoryModel"
                         - $ref: "#/definitions/ProductModel"
                         - $ref: "#/definitions/RoleModel"
                         - $ref: "#/definitions/ChannelModel"
                         - $ref: "#/definitions/SignoffsRequiredModel"
                         - $ref: "#/definitions/DataVersionModel"
-                      required:
-                        - product
-                        - role
-                        - channel
-                        - data_version
-                        - signoffs_required
         '400':
           $ref: '#/responses/invalidFormData'
         '404':
@@ -1201,15 +1194,15 @@ paths:
                     items:
                       type: object
                       allOf:
+                        - required:
+                          - product
+                          - role
+                          - data_version
+                          - signoffs_required
                         - $ref: "#/definitions/ProductModel"
                         - $ref: "#/definitions/RoleModel"
                         - $ref: "#/definitions/SignoffsRequiredModel"
                         - $ref: "#/definitions/DataVersionModel"
-                      required:
-                        - product
-                        - role
-                        - data_version
-                        - signoffs_required
 
     post:
       summary: Create a new Permission Required Signoff.
@@ -1233,14 +1226,14 @@ paths:
           required: true
           schema:
             allOf:
+              - required:
+                - product
+                - role
+                - signoffs_required
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/RoleModel'
               - $ref: '#/definitions/SignoffsRequiredModel'
-            required:
-              - product
-              - role
-              - signoffs_required
       responses:
         '201':
           $ref: '#/responses/newObjectDataVersion'
@@ -1306,16 +1299,16 @@ paths:
                     items:
                       type: object
                       allOf:
+                        - required:
+                          - product
+                          - role
+                          - data_version
+                          - signoffs_required
                         - $ref: "#/definitions/HistoryModel"
                         - $ref: "#/definitions/ProductModel"
                         - $ref: "#/definitions/RoleModel"
                         - $ref: "#/definitions/DataVersionModel"
                         - $ref: "#/definitions/SignoffsRequiredModel"
-                      required:
-                        - product
-                        - role
-                        - data_version
-                        - signoffs_required
         '400':
           $ref: '#/responses/invalidFormData'
         '404':
@@ -1669,14 +1662,14 @@ paths:
           required: true
           schema:
             allOf:
+              #If you change the required list order or add extra fields, make sure to modify this endpoint's test cases plus code for handling /scheduled_changes/rules/  POST operation endpoint.
+              - required:
+                - update_type
+                - backgroundRate
+                - priority
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/UpdateType'
               - $ref: '#/definitions/RulesBase'
-            #If you change the required list order or add extra fields, make sure to modify this endpoint's test cases plus code for handling /scheduled_changes/rules/  POST operation endpoint.
-            required:
-              - update_type
-              - backgroundRate
-              - priority
       responses:
         '200':
           description: Successfully created a new rule
@@ -1745,11 +1738,11 @@ paths:
           required: true
           schema:
             allOf:
+              - required:
+                - data_version
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/RulesBase'
               - $ref: '#/definitions/RulesNonNullable'
-            required:
-              - data_version
       responses:
         '200':
           $ref: '#/responses/updateExistingObject'
@@ -1785,11 +1778,11 @@ paths:
           required: true
           schema:
             allOf:
+              - required:
+                - data_version
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/RulesBase'
               - $ref: '#/definitions/RulesNonNullable'
-            required:
-              - data_version
       responses:
         '200':
           $ref: '#/responses/updateExistingObject'
@@ -2168,9 +2161,9 @@ paths:
           description: Returns JSON object of list of revisions of sc rules along with their count
           schema:
             type: object
-            required:
-              - revisions
             allOf:
+              - required:
+                - revisions
               - $ref: '#/definitions/CountModel'
               - type: object
                 properties:
@@ -2255,6 +2248,12 @@ paths:
                     items:
                       type: object
                       allOf:
+                        - required:
+                          - change_type
+                          - data_version
+                          - when
+                          - permission
+                          - username
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
@@ -2264,12 +2263,6 @@ paths:
                         - $ref: '#/definitions/DataVersionNullable'
                         - $ref: '#/definitions/OptionsModel'
                         - $ref: '#/definitions/PermissionsModel'
-                      required:
-                        - change_type
-                        - data_version
-                        - when
-                        - permission
-                        - username
 
     post:
       summary: create scheduled change for permissions.
@@ -2294,17 +2287,17 @@ paths:
           schema:
             type: object
             allOf:
+              - required:
+                - change_type
+                - permission
+                - username
+                - when
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/DataVersionNullable'
               - $ref: '#/definitions/PermissionsModel'
               - $ref: '#/definitions/OptionsJSON'
-            required:
-              - change_type
-              - permission
-              - username
-              - when
       responses:
         '200':
           description: Returns sc_id of change
@@ -2426,6 +2419,12 @@ paths:
                     items:
                       type: object
                       allOf:
+                        - required:
+                          - change_type
+                          - data_version
+                          - when
+                          - permission
+                          - username
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCDataVersion'
@@ -2435,12 +2434,6 @@ paths:
                         - $ref: '#/definitions/PermissionsModel'
                         - $ref: '#/definitions/SCCommonFieldsModel'
                         - $ref: '#/definitions/HistoryModel'
-                      required:
-                        - change_type
-                        - data_version
-                        - when
-                        - permission
-                        - username
         '404':
           $ref: '#/responses/resourceNotFound'
         '400':
@@ -2511,6 +2504,14 @@ paths:
                     items:
                       type: object
                       allOf:
+                        - required:
+                          - change_type
+                          - data_version
+                          - when
+                          - product
+                          - name
+                          - data
+                          - read_only
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
@@ -2522,14 +2523,6 @@ paths:
                         - $ref: '#/definitions/ReleaseReadOnly'
                         - $ref: '#/definitions/ReleaseDataObject'
                         - $ref: '#/definitions/ReleaseName'
-                      required:
-                        - change_type
-                        - data_version
-                        - when
-                        - product
-                        - name
-                        - data
-                        - read_only
 
     post:
       summary: create scheduled change for a release.
@@ -2554,6 +2547,10 @@ paths:
           schema:
             type: object
             allOf:
+              - required:
+                - change_type
+                - name
+                - when
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
@@ -2562,10 +2559,6 @@ paths:
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/ReleaseName'
               - $ref: '#/definitions/ReleaseReadOnly'
-            required:
-              - change_type
-              - name
-              - when
       responses:
         '200':
           description: Returns sc_id of change
@@ -2608,6 +2601,14 @@ paths:
                   scheduled_change:
                     description: An object containing the scheduled change with the id specified
                     allOf:
+                      - required:
+                        - change_type
+                        - data_version
+                        - when
+                        - product
+                        - name
+                        - data
+                        - read_only
                       - $ref: '#/definitions/SCChangeType'
                       - $ref: '#/definitions/SCTime'
                       - $ref: '#/definitions/SCIdModel'
@@ -2619,14 +2620,6 @@ paths:
                       - $ref: '#/definitions/ReleaseReadOnly'
                       - $ref: '#/definitions/ReleaseDataObject'
                       - $ref: '#/definitions/ReleaseName'
-                    required:
-                      - change_type
-                      - data_version
-                      - when
-                      - product
-                      - name
-                      - data
-                      - read_only
     post:
       summary: Modifies existing scheduled change for a Release.
       description: >
@@ -2736,6 +2729,14 @@ paths:
                     items:
                       type: object
                       allOf:
+                        - required:
+                          - change_type
+                          - data_version
+                          - when
+                          - product
+                          - name
+                          - data
+                          - read_only
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
@@ -2747,14 +2748,6 @@ paths:
                         - $ref: '#/definitions/ReleaseDataObject'
                         - $ref: '#/definitions/ReleaseName'
                         - $ref: '#/definitions/HistoryModel'
-                      required:
-                        - change_type
-                        - data_version
-                        - when
-                        - product
-                        - name
-                        - data
-                        - read_only
         '404':
           $ref: '#/responses/resourceNotFound'
         '400':
@@ -2826,6 +2819,14 @@ paths:
                     items:
                       type: object
                       allOf:
+                        - required:
+                          - change_type
+                          - data_version
+                          - when
+                          - product
+                          - channel
+                          - role
+                          - signoffs_required
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
@@ -2837,14 +2838,6 @@ paths:
                         - $ref: '#/definitions/ProductModel'
                         - $ref: '#/definitions/RoleModel'
                         - $ref: '#/definitions/ChannelModel'
-                      required:
-                        - change_type
-                        - data_version
-                        - when
-                        - product
-                        - channel
-                        - role
-                        - signoffs_required
 
     post:
       summary: create scheduled change for required signoffs of Product.
@@ -2869,6 +2862,12 @@ paths:
           schema:
             type: object
             allOf:
+              - required:
+                - change_type
+                - product
+                - channel
+                - role
+                - when
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
@@ -2878,12 +2877,6 @@ paths:
               - $ref: '#/definitions/RoleModel'
               - $ref: '#/definitions/ChannelModel'
               - $ref: '#/definitions/SignoffsRequiredModel'
-            required:
-              - change_type
-              - product
-              - channel
-              - role
-              - when
       responses:
         '200':
           description: Returns sc_id of change
@@ -3007,6 +3000,14 @@ paths:
                     items:
                       type: object
                       allOf:
+                        - required:
+                          - change_type
+                          - data_version
+                          - when
+                          - product
+                          - channel
+                          - role
+                          - signoffs_required
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
@@ -3018,14 +3019,6 @@ paths:
                         - $ref: '#/definitions/RoleModel'
                         - $ref: '#/definitions/ChannelModel'
                         - $ref: '#/definitions/HistoryModel'
-                      required:
-                        - change_type
-                        - data_version
-                        - when
-                        - product
-                        - channel
-                        - role
-                        - signoffs_required
         '404':
           $ref: '#/responses/resourceNotFound'
         '400':
@@ -3097,6 +3090,13 @@ paths:
                     items:
                       type: object
                       allOf:
+                        - required:
+                          - change_type
+                          - data_version
+                          - when
+                          - product
+                          - role
+                          - signoffs_required
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
@@ -3107,13 +3107,6 @@ paths:
                         - $ref: '#/definitions/SignoffsRequiredNullable'
                         - $ref: '#/definitions/ProductModel'
                         - $ref: '#/definitions/RoleModel'
-                      required:
-                        - change_type
-                        - data_version
-                        - when
-                        - product
-                        - role
-                        - signoffs_required
 
     post:
       summary: create scheduled change for required signoffs of Permission.
@@ -3138,6 +3131,11 @@ paths:
           schema:
             type: object
             allOf:
+              - required:
+                - change_type
+                - product
+                - role
+                - when
               - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
@@ -3146,11 +3144,6 @@ paths:
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/RoleModel'
               - $ref: '#/definitions/SignoffsRequiredModel'
-            required:
-              - change_type
-              - product
-              - role
-              - when
       responses:
         '200':
           description: Returns sc_id of change
@@ -3273,6 +3266,13 @@ paths:
                     items:
                       type: object
                       allOf:
+                        - required:
+                          - change_type
+                          - data_version
+                          - when
+                          - product
+                          - role
+                          - signoffs_required
                         - $ref: '#/definitions/SCChangeType'
                         - $ref: '#/definitions/SCTime'
                         - $ref: '#/definitions/SCIdModel'
@@ -3283,13 +3283,6 @@ paths:
                         - $ref: '#/definitions/ProductModel'
                         - $ref: '#/definitions/RoleModel'
                         - $ref: '#/definitions/HistoryModel'
-                      required:
-                        - change_type
-                        - data_version
-                        - when
-                        - product
-                        - role
-                        - signoffs_required
         '404':
           $ref: '#/responses/resourceNotFound'
         '400':
@@ -4271,6 +4264,10 @@ definitions:
     description: "Release Base Model + release blob"
     type: object
     allOf:
+      - required:
+        - name
+        - product
+        - blob
       - $ref: "#/definitions/CSRFModel"
       - $ref: '#/definitions/DataVersionModel'
       - $ref: '#/definitions/ProductModel'
@@ -4282,10 +4279,6 @@ definitions:
             example: '{"hashFunction": "sha512", "name": "CDM-979", "product": "Firefox", "schema_version": 1000, "vendors": { "gmp-eme-adobe": { "platforms": {"WINNT_x86_64-msvc-x64": {"alias": "WINNT_x86_64-msvc"}},"version": "15"}}}'
             format: JSONStringField
             description: json blob containing information about the release
-    required:
-      - name
-      - product
-      - blob
 
   ReleaseDataObject:
     title: Release Data object
@@ -4323,6 +4316,9 @@ definitions:
     description: "Partial Release form values"
     type: object
     allOf:
+      - required:
+        - product
+        - data
       # Note: 'name' is inherited with other required fields from Base model but never used when processing the input request
       - $ref: '#/definitions/CSRFModel'
       - $ref: '#/definitions/DataVersionModel'
@@ -4352,9 +4348,6 @@ definitions:
             type: string
             format: ascii
             format: JSONStringField
-    required:
-      - product
-      - data
 
   OptionsJSON:
     title: Option JSONStringfield
@@ -4396,10 +4389,10 @@ definitions:
     description: "Model of user's permissions with all details of avaliable options and actions for the rule,release,required signoff and permission of user is assigned"
     type: object
     allOf:
+      - required:
+        - data_version
       - $ref: "#/definitions/DataVersionModel"
       - $ref: "#/definitions/OptionsModel"
-    required:
-      - data_version
 
   UserPermissionsGET:
     title: GET User Permissions
@@ -4410,6 +4403,8 @@ definitions:
       admin:
         description: "An admin user with no options specified has completely unrestricted access to Balrog"
         allOf:
+          - required:
+            - data_version
           - $ref: "#/definitions/DataVersionModel"
           - type: object
             properties:
@@ -4425,8 +4420,6 @@ definitions:
                       type: string
                       format: ascii
 
-        required:
-          - data_version
       release:
         description: "Release permission to perform actions on releases. Example actions: add create, delete or modify release of products"
         $ref: "#/definitions/UserPermissionsModel"
@@ -4450,6 +4443,8 @@ definitions:
       permission:
         description: "permission to perform modify actions only."
         allOf:
+          - required:
+            - data_version
           - $ref: "#/definitions/DataVersionModel"
           - type: object
             properties:
@@ -4463,12 +4458,12 @@ definitions:
                     items:
                       type: string
                       format: ascii
-        required:
-          - data_version
 
       scheduled_change:
         description: "permission to schedule a change to rule, release or permission. Only the Balrog Agent should be granted this permission."
         allOf:
+          - required:
+            - data_version
           - $ref: "#/definitions/DataVersionModel"
           - type: object
             properties:
@@ -4482,14 +4477,40 @@ definitions:
                     items:
                       type: string
                       format: ascii
-        required:
-          - data_version
 
   SCRulesItemBase:
     title: SC Rules Base Model
     description: defines base model for operations on SC Rules
     type: object
     allOf:
+      - required:
+        - alias
+        - backgroundRate
+        - buildID
+        - buildTarget
+        - change_type
+        - channel
+        - comment
+        - data_version
+        - distVersion
+        - distribution
+        - fallbackMapping
+        - headerArchitecture
+        - instructionSet
+        - locale
+        - mapping
+        - memory
+        - mig64
+        - osVersion
+        - priority
+        - product
+        - rule_id
+        - telemetry_channel
+        - telemetry_product
+        - telemetry_uptake
+        - update_type
+        - version
+        - when
       - $ref: '#/definitions/SCChangeType'
       - $ref: '#/definitions/SCTime'
       - $ref: '#/definitions/SCUptake'
@@ -4498,34 +4519,6 @@ definitions:
       - $ref: '#/definitions/RulesSCNullable'
       - $ref: '#/definitions/SCDataVersion'
       - $ref: '#/definitions/SCCommonFieldsModel'
-    required:
-      - alias
-      - backgroundRate
-      - buildID
-      - buildTarget
-      - change_type
-      - channel
-      - comment
-      - data_version
-      - distVersion
-      - distribution
-      - fallbackMapping
-      - headerArchitecture
-      - instructionSet
-      - locale
-      - mapping
-      - memory
-      - mig64
-      - osVersion
-      - priority
-      - product
-      - rule_id
-      - telemetry_channel
-      - telemetry_product
-      - telemetry_uptake
-      - update_type
-      - version
-      - when
 
   RulesSCNullable:
     title: Rule nullable fields
@@ -4536,7 +4529,6 @@ definitions:
         description: "The id of the rule. This id (or the rule's alias, if set) is necessary to make changes to the rule through the REST API."
         type: ["integer", "string", "null"]
         format: rule_id
-        readOnly: true
         example: 10
 
       data_version:

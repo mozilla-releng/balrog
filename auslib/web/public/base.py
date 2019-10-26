@@ -1,3 +1,4 @@
+from functools import wraps
 import logging
 import re
 from os import path
@@ -10,6 +11,7 @@ from raven.contrib.flask import Sentry
 import auslib.web
 from auslib.AUS import AUS
 from auslib.errors import BadDataError
+from auslib.global_state import dbo
 from auslib.web.admin.views.problem import problem
 from specsynthase.specbuilder import SpecBuilder
 
@@ -19,11 +21,20 @@ except ImportError:  # pragma: no cover
     import cgi as html
 
 
+def with_transaction(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        with dbo.begin() as transaction:
+            return f(*args, transaction=transaction, **kwargs)
+
+    return wrapper
+
+
 log = logging.getLogger(__name__)
 AUS = AUS()
 sentry = Sentry()
 
-connexion_app = connexion.App(__name__, specification_dir=".")
+connexion_app = connexion.App(__name__, specification_dir=".", options={"swagger_ui": False})
 app = connexion_app.app
 
 current_dir = path.dirname(__file__)
@@ -36,7 +47,8 @@ spec = (
     .add_spec(path.join(web_dir, "common/swagger/parameters.yml"))
     .add_spec(path.join(web_dir, "common/swagger/responses.yml"))
 )
-connexion_app.add_api(spec, validate_responses=True, strict_validation=True)
+# Response validation should be enabled when it actually works
+connexion_app.add_api(spec, strict_validation=True)
 
 
 @app.after_request

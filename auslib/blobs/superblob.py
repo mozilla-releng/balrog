@@ -1,11 +1,11 @@
-from auslib.blobs.base import Blob
+from auslib.blobs.base import XMLBlob
 
 
-class SuperBlob(Blob):
+class SuperBlob(XMLBlob):
     jsonschema = "superblob.yml"
 
     def __init__(self, **kwargs):
-        Blob.__init__(self, **kwargs)
+        XMLBlob.__init__(self, **kwargs)
         if "schema_version" not in self:
             self["schema_version"] = 4000
 

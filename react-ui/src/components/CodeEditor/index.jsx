@@ -3,6 +3,7 @@ import { string, func, bool } from 'prop-types';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/theme/material.css';
+import 'codemirror/mode/javascript/javascript';
 
 function CodeEditor({ onChange, value, readOnly, ...rest }) {
   return (

@@ -10,7 +10,7 @@ import unittest
 import mock
 import pytest
 
-from auslib.AUS import FAIL, SUCCEED
+from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.apprelease import (
     DesupportBlob,
     ProofXMLMixin,
@@ -569,7 +569,7 @@ class TestSpecialQueryParams(unittest.TestCase):
             "osVersion": "a",
             "distribution": "a",
             "distVersion": "a",
-            "force": SUCCEED,
+            "force": FORCE_MAIN_MAPPING,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -600,7 +600,7 @@ class TestSpecialQueryParams(unittest.TestCase):
             "osVersion": "a",
             "distribution": "a",
             "distVersion": "a",
-            "force": FAIL,
+            "force": FORCE_FALLBACK_MAPPING,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
@@ -662,7 +662,7 @@ class TestSpecialQueryParams(unittest.TestCase):
             "osVersion": "a",
             "distribution": "a",
             "distVersion": "a",
-            "force": SUCCEED,
+            "force": FORCE_MAIN_MAPPING,
         }
         returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)

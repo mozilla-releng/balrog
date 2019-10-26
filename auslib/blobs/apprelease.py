@@ -1,7 +1,7 @@
 import itertools
 
-from auslib.AUS import getFallbackChannel, isForbiddenUrl
-from auslib.blobs.base import Blob, BlobValidationError
+from auslib.AUS import getFallbackChannel, isForbiddenUrl, isSpecialURL
+from auslib.blobs.base import XMLBlob, BlobValidationError
 from auslib.errors import BadDataError
 from auslib.global_state import dbo
 from auslib.util.comparison import has_operator, strip_operator
@@ -9,9 +9,17 @@ from auslib.util.rulematching import matchChannel, matchVersion, matchBuildID
 from auslib.util.versions import MozillaVersion, decrement_version, increment_version
 
 
-class ReleaseBlobBase(Blob):
+class ReleaseBlobBase(XMLBlob):
     def __init__(self, **kwargs):
-        Blob.__init__(self, **kwargs)
+        XMLBlob.__init__(self, **kwargs)
+
+    def processSpecialForceHosts(self, url, specialForceHosts, force_arg):
+        if isSpecialURL(url, specialForceHosts):
+            if "?" in url:
+                url += "&force=" + force_arg.query_value
+            else:
+                url += "?force=" + force_arg.query_value
+        return url
 
     def matchesUpdateQuery(self, updateQuery):
         self.log.debug("Trying to match update query to %s" % self["name"])
@@ -307,7 +315,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV1 directly
-        Blob.__init__(self, **kwargs)
+        XMLBlob.__init__(self, **kwargs)
         if "schema_version" not in self.keys():
             self["schema_version"] = 1
 
@@ -520,7 +528,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV2 directly
-        Blob.__init__(self, **kwargs)
+        XMLBlob.__init__(self, **kwargs)
         if "schema_version" not in self.keys():
             self["schema_version"] = 2
 
@@ -626,7 +634,7 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV3 directly
-        Blob.__init__(self, **kwargs)
+        XMLBlob.__init__(self, **kwargs)
         if "schema_version" not in self.keys():
             self["schema_version"] = 3
 
@@ -716,7 +724,7 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV4 directly
-        Blob.__init__(self, **kwargs)
+        XMLBlob.__init__(self, **kwargs)
         if "schema_version" not in self.keys():
             self["schema_version"] = 4
 
@@ -797,7 +805,7 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV5 directly
-        Blob.__init__(self, **kwargs)
+        XMLBlob.__init__(self, **kwargs)
         if "schema_version" not in self.keys():
             self["schema_version"] = 5
 
@@ -838,7 +846,7 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV6 directly
-        Blob.__init__(self, **kwargs)
+        XMLBlob.__init__(self, **kwargs)
         if "schema_version" not in self.keys():
             self["schema_version"] = 6
 
@@ -900,7 +908,7 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init ReleaseBlobV8 directly
-        Blob.__init__(self, **kwargs)
+        XMLBlob.__init__(self, **kwargs)
         if "schema_version" not in self.keys():
             self["schema_version"] = 8
 
@@ -938,7 +946,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
     interpolable_ = ("openURL", "notificationURL", "alertURL", "detailsURL")
 
     def __init__(self, **kwargs):
-        Blob.__init__(self, **kwargs)
+        XMLBlob.__init__(self, **kwargs)
         if "schema_version" not in self.keys():
             self["schema_version"] = 9
 
@@ -1138,7 +1146,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         return referencedReleases
 
 
-class DesupportBlob(Blob):
+class DesupportBlob(XMLBlob):
     """ This blob is used to inform users that their OS is no longer supported. This is available
     on the client side since Firefox 24 (bug 843497).
 
@@ -1154,7 +1162,7 @@ class DesupportBlob(Blob):
 
     def __init__(self, **kwargs):
         # ensure schema_version is set if we init DesupportBlob directly
-        Blob.__init__(self, **kwargs)
+        XMLBlob.__init__(self, **kwargs)
         if "schema_version" not in self.keys():
             self["schema_version"] = 50
 

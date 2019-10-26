@@ -9,24 +9,29 @@ from google.cloud import storage
 
 from auslib.log import configure_logging
 
+STAGING = bool(int(os.environ.get("STAGING", 0)))
+LOCALDEV = bool(int(os.environ.get("LOCALDEV", 0)))
+
 SYSTEM_ACCOUNTS = ["balrogagent", "balrog-ffxbld", "balrog-tbirdbld", "seabld"]
 DOMAIN_WHITELIST = {
-    "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-    "download.cdn.mozilla.net": ("Firefox", "Fennec", "SeaMonkey"),
+    "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
+    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
+    "download.cdn.mozilla.net": ("Firefox", "Fennec"),
     "mozilla-nightly-updates.s3.amazonaws.com": ("Firefox",),
     "ciscobinary.openh264.org": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),
     "clients2.googleusercontent.com": ("Widevine",),
     "redirector.gvt1.com": ("Widevine",),
     "ftp.mozilla.org": ("SystemAddons",),
+    "fpn.firefox.com": ("Guardian",),
 }
-if os.environ.get("STAGING") or os.environ.get("LOCALDEV"):
+if STAGING or LOCALDEV:
     SYSTEM_ACCOUNTS.extend(["balrog-stage-ffxbld", "balrog-stage-tbirdbld"])
     DOMAIN_WHITELIST.update(
         {
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
             "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
+            "stage.guardian.nonprod.cloudops.mozgcp.net": ("Guardian",),
         }
     )
 
@@ -61,12 +66,12 @@ cache.make_cache("users", 1, 300)
 if not os.environ.get("RELEASES_HISTORY_BUCKET") or not os.environ.get("NIGHTLY_HISTORY_BUCKET"):
     log.critical("RELEASES_HISTORY_BUCKET and NIGHTLY_HISTORY_BUCKET must be provided")
     sys.exit(1)
-if not os.environ.get("LOCALDEV"):
+if not LOCALDEV:
     if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")):
         log.critical("GOOGLE_APPLICATION_CREDENTIALS provided, but does not exist")
         sys.exit(1)
 
-if os.environ.get("LOCALDEV") and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")):
+if LOCALDEV and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")):
     storage_client = storage.Client.create_anonymous_client()
 else:
     storage_client = storage.Client()
@@ -91,7 +96,7 @@ try:
         blob = bucket.blob("startuptest")
         blob.upload_from_string("startuptest", content_type="text/plain")
 except (ValueError, Forbidden) as e:
-    if not os.environ.get("LOCALDEV"):
+    if not LOCALDEV:
         if isinstance(e, Forbidden) or (isinstance(e, ValueError) and"Anonymous credentials" not in e.args[0]):
             raise
     log.info("Disabling releases_history writes")

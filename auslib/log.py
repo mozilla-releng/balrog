@@ -118,7 +118,7 @@ class JsonLogFormatter(logging.Formatter):
         # and is not already a JSON blob.
         message = record.getMessage()
         if message:
-            if not message.startswith("{") and not message.endswith("}"):
+            if not message.startswith("{") or not message.endswith("}"):
                 fields["message"] = message
 
         # If there is an error, format it for nice output.

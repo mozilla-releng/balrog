@@ -422,20 +422,14 @@ class ViewTest(unittest.TestCase):
         return ret
 
     def _post(self, url, data={}, username="bill", **kwargs):
-        if type(data) == dict:
-            data["csrf_token"] = "lorem"
         self.mocked_user = username
         return self.client.post(url, data=json.dumps(data), content_type="application/json", **kwargs)
 
     def _put(self, url, data={}, username="bill"):
-        if type(data) == dict:
-            data["csrf_token"] = "lorem"
         self.mocked_user = username
         return self.client.put(url, data=json.dumps(data), content_type="application/json")
 
     def _delete(self, url, qs={}, username="bill"):
-        if type(qs) == dict:
-            qs["csrf_token"] = "lorem"
         self.mocked_user = username
         return self.client.delete(url, query_string=qs)
 
