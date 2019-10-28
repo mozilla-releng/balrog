@@ -14,12 +14,15 @@ def guardianblob():
     "schema_version": 10000,
     "version": "1.0.0.0",
     "required": true,
+    "hashFunction": "sha512",
     "platforms": {
         "WINNT_x86_64": {
-            "fileUrl": "https://a.com/this/is/1.0.0.0.msi"
+            "fileUrl": "https://a.com/this/is/1.0.0.0.msi",
+            "hashValue": "abcdef"
         },
         "Darwin_x86_64": {
-            "fileUrl": "https://a.com/this/is/1.0.0.0.dmg"
+            "fileUrl": "https://a.com/this/is/1.0.0.0.dmg",
+            "hashValue": "ghijkl"
         }
     }
 }
@@ -49,8 +52,16 @@ def testShouldServeUpdateMissingBuildTarget(guardianblob):
 @pytest.mark.parametrize(
     "buildTarget,whitelistedDomains,expected",
     [
-        ("WINNT_x86_64", {"a.com": ("Guardian",)}, {"required": True, "url": "https://a.com/this/is/1.0.0.0.msi", "version": "1.0.0.0"}),
-        ("Darwin_x86_64", {"a.com": ("Guardian",)}, {"required": True, "url": "https://a.com/this/is/1.0.0.0.dmg", "version": "1.0.0.0"}),
+        (
+            "WINNT_x86_64",
+            {"a.com": ("Guardian",)},
+            {"required": True, "url": "https://a.com/this/is/1.0.0.0.msi", "version": "1.0.0.0", "hashFunction": "sha512", "hashValue": "abcdef"},
+        ),
+        (
+            "Darwin_x86_64",
+            {"a.com": ("Guardian",)},
+            {"required": True, "url": "https://a.com/this/is/1.0.0.0.dmg", "version": "1.0.0.0", "hashFunction": "sha512", "hashValue": "ghijkl"},
+        ),
         ("Linux_x86_64", {"a.com": ("Guardian",)}, {}),
         ("WINNT_x86_64", {}, {}),
     ],

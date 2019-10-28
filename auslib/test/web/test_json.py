@@ -45,12 +45,15 @@ def guardian_db(db_schema):
     "schema_version": 10000,
     "version": "0.5.0.0",
     "required": true,
+    "hashFunction": "sha512",
     "platforms": {
         "WINNT_x86_64": {
-            "fileUrl": "https://good.com/0.5.0.0.msi"
+            "fileUrl": "https://good.com/0.5.0.0.msi",
+            "hashValue": "abcdef"
         },
         "Darwin_x86_64": {
-            "fileUrl": "https://good.com/0.5.0.0.dmg"
+            "fileUrl": "https://good.com/0.5.0.0.dmg",
+            "hashValue": "ghijkl"
         }
     }
 }
@@ -69,12 +72,15 @@ def guardian_db(db_schema):
     "schema_version": 10000,
     "version": "1.0.0.0",
     "required": true,
+    "hashFunction": "sha512",
     "platforms": {
         "WINNT_x86_64": {
-            "fileUrl": "https://good.com/1.0.0.0.msi"
+            "fileUrl": "https://good.com/1.0.0.0.msi",
+            "hashValue": "mnopqr"
         },
         "Darwin_x86_64": {
-            "fileUrl": "https://good.com/1.0.0.0.dmg"
+            "fileUrl": "https://good.com/1.0.0.0.dmg",
+            "hashValue": "stuvwx"
         }
     }
 }
@@ -143,9 +149,27 @@ def client():
 @pytest.mark.parametrize(
     "version,buildTarget,channel,code,response",
     [
-        ("0.4.0.0", "WINNT_x86_64", "release", 200, {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0"}),
-        ("0.6.0.0", "WINNT_x86_64", "release", 200, {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0"}),
-        ("0.99.99.99", "WINNT_x86_64", "release", 200, {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0"}),
+        (
+            "0.4.0.0",
+            "WINNT_x86_64",
+            "release",
+            200,
+            {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0", "hashFunction": "sha512", "hashValue": "abcdef"},
+        ),
+        (
+            "0.6.0.0",
+            "WINNT_x86_64",
+            "release",
+            200,
+            {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0", "hashFunction": "sha512", "hashValue": "mnopqr"},
+        ),
+        (
+            "0.99.99.99",
+            "WINNT_x86_64",
+            "release",
+            200,
+            {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0", "hashFunction": "sha512", "hashValue": "mnopqr"},
+        ),
         ("1.0.0.0", "WINNT_x86_64", "release", 404, {}),
         ("0.6.0.0", "Linux_x86_64", "release", 404, {}),
         ("0.6.0.0", "WINNT_x86_64", "beta", 404, {}),
@@ -166,9 +190,27 @@ def testGuardianResponse(client, version, buildTarget, channel, code, response):
 @pytest.mark.parametrize(
     "version,buildTarget,channel,code,response",
     [
-        ("0.4.0.0", "WINNT_x86_64", "release", 200, {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0"}),
-        ("0.6.0.0", "WINNT_x86_64", "release", 200, {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0"}),
-        ("0.99.99.99", "WINNT_x86_64", "release", 200, {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0"}),
+        (
+            "0.4.0.0",
+            "WINNT_x86_64",
+            "release",
+            200,
+            {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0", "hashFunction": "sha512", "hashValue": "abcdef"},
+        ),
+        (
+            "0.6.0.0",
+            "WINNT_x86_64",
+            "release",
+            200,
+            {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0", "hashFunction": "sha512", "hashValue": "mnopqr"},
+        ),
+        (
+            "0.99.99.99",
+            "WINNT_x86_64",
+            "release",
+            200,
+            {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0", "hashFunction": "sha512", "hashValue": "mnopqr"},
+        ),
     ],
 )
 def testGuardianResponseWithoutSigning(client, version, buildTarget, channel, code, response):
@@ -184,9 +226,12 @@ def testGuardianResponseWithoutSigning(client, version, buildTarget, channel, co
 @pytest.mark.parametrize(
     "forceValue,response",
     [
-        (FORCE_MAIN_MAPPING, {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0"}),
-        (FORCE_FALLBACK_MAPPING, {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0"}),
-        (None, {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0"}),
+        (FORCE_MAIN_MAPPING, {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0", "hashFunction": "sha512", "hashValue": "mnopqr"}),
+        (
+            FORCE_FALLBACK_MAPPING,
+            {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0", "hashFunction": "sha512", "hashValue": "abcdef"},
+        ),
+        (None, {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0", "hashFunction": "sha512", "hashValue": "abcdef"}),
     ],
 )
 def testGuardianResponseWithGradualRollout(client, forceValue, response):
