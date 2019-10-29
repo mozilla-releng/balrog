@@ -28,8 +28,9 @@ from auslib.blobs.apprelease import (
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.errors import BadDataError
 from auslib.global_state import dbo
-from auslib.test.fakes import FakeGCSHistory
 from auslib.web.public.base import app
+
+from ..fakes import FakeGCSHistory
 
 
 def setUpModule():

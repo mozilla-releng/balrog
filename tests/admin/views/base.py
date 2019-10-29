@@ -8,8 +8,9 @@ import pytest
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import cache, dbo
-from auslib.test.fakes import FakeGCSHistory, FakeBlob
 from auslib.web.admin.base import app
+
+from ...fakes import FakeGCSHistory, FakeBlob
 
 
 def setUpModule():

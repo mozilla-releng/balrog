@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=log_level, format="%(message)s")
 
-    testdir = os.path.join(mydir, "..", "aus-data-snapshots")
+    testdir = os.path.join(mydir, "..", "tests", "aus-data-snapshots")
     if not options.testDirs:
         for dirname in os.listdir(testdir):
             d = os.path.join(testdir, dirname)

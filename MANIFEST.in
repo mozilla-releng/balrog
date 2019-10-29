@@ -1,9 +1,9 @@
 include version.txt
 include LICENSE
 
-recursive-include auslib/migrate *
-recursive-include auslib/blobs/schemas *
-recursive-include auslib/web *.yml
+recursive-include src *.py *.yml
+recursive-include src/auslib/migrate *.cfg
+recursive-include src/auslib/web/public/static *.txt *.json
 recursive-include requirements *.txt
 recursive-include ui/dist *
 recursive-exclude * *.py[co]

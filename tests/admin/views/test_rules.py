@@ -2,8 +2,9 @@
 import mock
 
 from auslib.global_state import dbo
-from auslib.test.admin.views.base import ViewTest
 from auslib.util.comparison import operators
+
+from .base import ViewTest
 
 
 class TestRulesAPI_JSON(ViewTest):

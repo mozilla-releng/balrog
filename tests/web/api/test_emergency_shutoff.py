@@ -1,5 +1,6 @@
 from auslib.global_state import dbo
-from auslib.test.web.api.base import CommonTestBase
+
+from .base import CommonTestBase
 
 
 class TestEmergencyShutoff(CommonTestBase):

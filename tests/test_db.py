@@ -15,6 +15,7 @@ from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, 
 from sqlalchemy.engine.reflection import Inspector
 
 import migrate.versioning.api
+import auslib
 from auslib.blobs.apprelease import ReleaseBlobV1
 from auslib.blobs.base import BlobValidationError, createBlob
 from auslib.db import (
@@ -35,9 +36,9 @@ from auslib.db import (
     verify_signoffs,
 )
 from auslib.global_state import cache, dbo
-from auslib.test.fakes import FakeGCSHistory
 from migrate.versioning.api import version
 
+from .fakes import FakeGCSHistory
 
 def setUpModule():
     # This is meant to silence the debug information coming from SQLAlchemy-Migrate since
@@ -5935,7 +5936,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
         whereas the actual migration happens on a mySQL DB.
         """
         # TODO Remove these tests when we upgrade sqlalchemy so that these per-version tests are no longer required.
-        latest_version = version(path.abspath(path.join(path.dirname(__file__), "..", "migrate")))
+        latest_version = version(path.abspath(path.join(path.dirname(auslib.__file__), "migrate")))
         db = self._get_migrated_db()
 
         def _noop(*args, **kwargs):

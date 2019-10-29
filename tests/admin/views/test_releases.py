@@ -4,7 +4,8 @@ from sqlalchemy import select
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
-from auslib.test.admin.views.base import ViewTest
+
+from .base import ViewTest
 
 
 class TestReleasesAPI_JSON(ViewTest):

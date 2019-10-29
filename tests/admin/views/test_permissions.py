@@ -2,7 +2,8 @@ import json
 import mock
 
 from auslib.global_state import dbo
-from auslib.test.admin.views.base import ViewTest
+
+from .base import ViewTest
 
 
 class TestUsersAPI_JSON(ViewTest):

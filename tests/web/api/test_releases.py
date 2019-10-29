@@ -1,4 +1,4 @@
-from auslib.test.web.api.base import CommonTestBase
+from .base import CommonTestBase
 
 
 class TestPublicReleasesAPI(CommonTestBase):
