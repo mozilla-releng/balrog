@@ -23,7 +23,6 @@ services:
     environment:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
       - DB_HOST=balrogdb
-      - CACHEDIR=.cache
       - SECRET_KEY=blahblah
       - PORT=7070
       - LOG_FORMAT=plain
@@ -149,7 +148,6 @@ services:
         condition: service_healthy
     volumes:
       - ./ui:/app
-      - .cache:/cache
     environment:
       - WEB_PORT=6060
       - HOST_PROXY=balrogadmin

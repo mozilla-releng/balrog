@@ -1,4 +1,6 @@
-FROM python:3.7-slim-stretch
+ARG PYTHON_VERSION
+
+FROM python:${PYTHON_VERSION}-slim-stretch
 
 MAINTAINER bhearsum@mozilla.com
 
