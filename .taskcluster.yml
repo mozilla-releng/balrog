@@ -111,7 +111,7 @@ tasks:
               owner: ${owner_email}
               source: ${repo_url}
 
-          - taskId: {$eval: as_slugid("client-tests")}
+          - taskId: {$eval: as_slugid("client-tests-py27")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: aws-provisioner-v1
@@ -134,7 +134,7 @@ tasks:
               owner: ${owner_email}
               source: ${repo_url}
 
-          - taskId: {$eval: as_slugid("client-tests")}
+          - taskId: {$eval: as_slugid("client-tests-py37")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: aws-provisioner-v1
