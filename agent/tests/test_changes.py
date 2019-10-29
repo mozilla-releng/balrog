@@ -1,6 +1,6 @@
 import unittest
 
-from .. import changes
+from balrogagent import changes
 
 
 class TestIsReady(unittest.TestCase):

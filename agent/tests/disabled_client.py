@@ -4,7 +4,7 @@ import aiohttp
 import asynctest
 from yarl import URL
 
-from .. import client
+from balrogagent import client
 
 
 class fake_request:

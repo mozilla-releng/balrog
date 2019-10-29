@@ -2,7 +2,7 @@ import asyncio
 
 import asynctest
 
-from ..cmd import run_agent
+from balrogagent.cmd import run_agent
 
 
 @asynctest.patch("balrogagent.client.request")
