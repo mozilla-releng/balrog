@@ -10,12 +10,12 @@ import re
 import site
 import time
 
+from auslib.AUS import AUS as AUS_Class  # noqa: E402
+from auslib.global_state import dbo  # noqa: E402
+
 mydir = os.path.dirname(os.path.abspath(__file__))
 site.addsitedir(os.path.join(mydir, ".."))
 site.addsitedir(os.path.join(mydir, "..", "vendor/lib/python"))
-
-from auslib.AUS import AUS as AUS_Class  # noqa: E402
-from auslib.global_state import dbo  # noqa: E402
 
 
 log = logging.getLogger(__name__)

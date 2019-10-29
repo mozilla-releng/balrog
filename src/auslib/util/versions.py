@@ -1,5 +1,5 @@
 import re
-from distutils.version import StrictVersion, LooseVersion
+from distutils.version import LooseVersion, StrictVersion
 
 from auslib.errors import BadDataError
 

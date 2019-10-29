@@ -7,8 +7,8 @@ from flask import current_app as app
 from flask import make_response
 
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
-from auslib.web.public.base import AUS, with_transaction
 from auslib.global_state import dbo
+from auslib.web.public.base import AUS, with_transaction
 
 try:
     from urllib import unquote

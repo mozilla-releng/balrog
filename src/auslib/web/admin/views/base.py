@@ -9,7 +9,6 @@ from auslib.global_state import dbo
 from auslib.util.auth import AuthError, verified_userinfo
 from auslib.web.admin.views.problem import problem
 
-
 log = logging.getLogger(__name__)
 
 

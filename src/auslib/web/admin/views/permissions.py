@@ -1,5 +1,6 @@
-import connexion
 import json
+
+import connexion
 from flask import Response, jsonify
 
 from auslib.global_state import dbo

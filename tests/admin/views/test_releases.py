@@ -1,4 +1,5 @@
 import json
+
 import mock
 from sqlalchemy import select
 

@@ -1,10 +1,10 @@
 import pytest
 
-from auslib.AUS import FORCE_MAIN_MAPPING, FORCE_FALLBACK_MAPPING
+import auslib.web.public.json
+from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
 from auslib.web.public.base import app
-import auslib.web.public.json
 
 
 @pytest.fixture(scope="function")

@@ -8,16 +8,14 @@ from collections import defaultdict
 from copy import copy
 from os import path
 
+import migrate.versioning.api
+import migrate.versioning.schema
 import sqlalchemy.types
 from sqlalchemy import BigInteger, Boolean, Column, Integer, MetaData, String, Table, Text, create_engine, func, join, select
 from sqlalchemy.exc import SQLAlchemyError
-
 from sqlalchemy.interfaces import PoolListener
 from sqlalchemy.sql.expression import null
 from sqlalchemy.sql.functions import max as sql_max
-
-import migrate.versioning.api
-import migrate.versioning.schema
 
 from auslib.blobs.base import createBlob, merge_dicts
 from auslib.global_state import cache

@@ -10,7 +10,7 @@ from auslib.blobs.base import createBlob
 from auslib.global_state import cache, dbo
 from auslib.web.admin.base import app
 
-from ...fakes import FakeGCSHistory, FakeBlob
+from ...fakes import FakeBlob, FakeGCSHistory
 
 
 def setUpModule():

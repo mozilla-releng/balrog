@@ -6,12 +6,12 @@ import connexion
 from flask import request
 from flask_compress import Compress
 from raven.contrib.flask import Sentry
+from specsynthase.specbuilder import SpecBuilder
 
 import auslib
 from auslib.dockerflow import create_dockerflow_endpoints
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import BalrogRequestBodyValidator
-from specsynthase.specbuilder import SpecBuilder
 
 try:
     from urllib import unquote

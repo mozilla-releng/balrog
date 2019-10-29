@@ -1,4 +1,5 @@
 import json
+
 import mock
 
 from auslib.global_state import dbo

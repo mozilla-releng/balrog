@@ -9,12 +9,13 @@ from itertools import chain
 from os import path
 from tempfile import mkstemp
 
+import migrate.versioning.api
 import mock
 import pytest
+from migrate.versioning.api import version
 from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, select
 from sqlalchemy.engine.reflection import Inspector
 
-import migrate.versioning.api
 import auslib
 from auslib.blobs.apprelease import ReleaseBlobV1
 from auslib.blobs.base import BlobValidationError, createBlob
@@ -36,9 +37,9 @@ from auslib.db import (
     verify_signoffs,
 )
 from auslib.global_state import cache, dbo
-from migrate.versioning.api import version
 
 from .fakes import FakeGCSHistory
+
 
 def setUpModule():
     # This is meant to silence the debug information coming from SQLAlchemy-Migrate since

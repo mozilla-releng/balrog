@@ -4,7 +4,6 @@ from hashlib import sha384
 import requests
 from requests_hawk import HawkAuth
 
-
 SIGNATURE_PREFIX = "Content-Signature:\x00"
 
 

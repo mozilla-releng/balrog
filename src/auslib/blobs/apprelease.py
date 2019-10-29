@@ -1,11 +1,11 @@
 import itertools
 
 from auslib.AUS import getFallbackChannel, isForbiddenUrl, isSpecialURL
-from auslib.blobs.base import XMLBlob, BlobValidationError
+from auslib.blobs.base import BlobValidationError, XMLBlob
 from auslib.errors import BadDataError
 from auslib.global_state import dbo
 from auslib.util.comparison import has_operator, strip_operator
-from auslib.util.rulematching import matchChannel, matchVersion, matchBuildID
+from auslib.util.rulematching import matchBuildID, matchChannel, matchVersion
 from auslib.util.versions import MozillaVersion, decrement_version, increment_version
 
 

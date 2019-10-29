@@ -4,7 +4,6 @@ import os.path
 import sys
 
 from google.api_core.exceptions import Forbidden
-from google.auth.credentials import AnonymousCredentials
 from google.cloud import storage
 
 from auslib.log import configure_logging
@@ -90,14 +89,14 @@ try:
     buckets = {
         "nightly": storage_client.bucket(os.environ["NIGHTLY_HISTORY_BUCKET"]),
         "": storage_client.bucket(os.environ["RELEASES_HISTORY_BUCKET"]),
-    # fmt: on
     }
+    # fmt: on
     for bucket in buckets.values():
         blob = bucket.blob("startuptest")
         blob.upload_from_string("startuptest", content_type="text/plain")
 except (ValueError, Forbidden) as e:
     if not LOCALDEV:
-        if isinstance(e, Forbidden) or (isinstance(e, ValueError) and"Anonymous credentials" not in e.args[0]):
+        if isinstance(e, Forbidden) or (isinstance(e, ValueError) and "Anonymous credentials" not in e.args[0]):
             raise
     log.info("Disabling releases_history writes")
     buckets = None

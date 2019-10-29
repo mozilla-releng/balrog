@@ -8,10 +8,9 @@ from __future__ import absolute_import, print_function
 
 import logging
 
+from balrogclient.api import API
 from requests import Session
 from requests_mock import Adapter
-
-from balrogclient.api import API
 
 AUTH0_SECRETS = {"client_id": "some-client", "client_secret": "super-secret", "audience": "tests", "domain": "auth0.test"}
 

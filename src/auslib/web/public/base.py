@@ -1,19 +1,19 @@
-from functools import wraps
 import logging
 import re
+from functools import wraps
 from os import path
 
 import connexion
 from connexion import request
 from flask import Response, make_response, send_from_directory
 from raven.contrib.flask import Sentry
+from specsynthase.specbuilder import SpecBuilder
 
 import auslib.web
 from auslib.AUS import AUS
 from auslib.errors import BadDataError
 from auslib.global_state import dbo
 from auslib.web.admin.views.problem import problem
-from specsynthase.specbuilder import SpecBuilder
 
 try:
     import html

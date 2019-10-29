@@ -1,7 +1,5 @@
 import logging
-
-# to satisfy flake8 with the type hinting
-from typing import AnyStr, Union
+from typing import AnyStr, Union  # to satisfy flake8 with the type hinting
 
 import jsonschema
 from connexion import problem

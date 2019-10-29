@@ -1,6 +1,6 @@
-from io import StringIO
 import json
 import logging
+from io import StringIO
 
 from auslib.log import configure_logging
 

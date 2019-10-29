@@ -3,10 +3,10 @@ import logging
 from os import path
 
 import jsonschema
+import yaml
 
 # To enable shared jsonschema validators
 import auslib.util.jsonschema_validators  # noqa
-import yaml
 from auslib.global_state import cache
 
 

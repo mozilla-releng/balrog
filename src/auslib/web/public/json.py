@@ -1,6 +1,7 @@
 import json
 
-from flask import current_app as app, Response
+from flask import Response
+from flask import current_app as app
 
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.global_state import cache
