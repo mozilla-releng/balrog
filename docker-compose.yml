@@ -7,6 +7,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
+      args:
+        PYTHON_VERSION: 3.7
     depends_on:
       balrogdb:
         condition: service_healthy
@@ -65,6 +67,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
+      args:
+        PYTHON_VERSION: 3.7
     depends_on:
       balrogdb:
         condition: service_healthy
@@ -90,7 +94,10 @@ services:
 
 
   balrogagent:
-    build: ./agent
+    build:
+      context: ./agent
+      args:
+        PYTHON_VERSION: 3.7
     depends_on:
       nginx:
         condition: service_healthy
