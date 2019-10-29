@@ -1,4 +1,6 @@
+from glob import glob
 from os import path
+from os.path import basename, splitext
 
 from setuptools import find_packages, setup
 
@@ -28,8 +30,10 @@ setup(
     author_email="release+python@mozilla.com",
     url="https://github.com/mozilla/balrog",
     license="MPL-2.0",
-    packages=find_packages(),
-    install_requires=requirements,
-    test_suite="balrogclient.test",
+    packages=find_packages("src"),
+    package_dir={"": "src"},
+    py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
     include_package_data=True,
+    install_requires=requirements,
+    test_suite="tests",
 )
