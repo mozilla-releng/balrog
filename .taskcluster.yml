@@ -72,15 +72,15 @@ tasks:
             routes: []
             payload:
               maxRunTime: 1200
-              image: "mozillareleases/python-test-runner"
+              image: "python:3.7"
               env:
                 NO_VOLUME_MOUNT: 1
+                TOXENV: "check,py37"
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && bash run-tests.sh backend"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && pip install tox && tox"
               features:
-                dind: true
                 taskclusterProxy: true
             metadata:
               name: Balrog back-end tests
@@ -97,15 +97,14 @@ tasks:
             routes: []
             payload:
               maxRunTime: 1200
-              image: "mozillareleases/python-test-runner"
+              image: "python:3.7"
               env:
                 NO_VOLUME_MOUNT: 1
+                TOXENV: "check,py37"
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && bash run-tests.sh"
-              features:
-                dind: true
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && pip install tox && tox"
             metadata:
               name: Balrog agent tests
               description: Balrog agent tests
@@ -121,15 +120,37 @@ tasks:
             routes: []
             payload:
               maxRunTime: 1200
-              image: "mozillareleases/python-test-runner"
+              image: "python:2.7"
               env:
                 NO_VOLUME_MOUNT: 1
+                TOXENV: "py27"
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd client && bash run-tests.sh"
-              features:
-                dind: true
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd client && pip install tox && tox"
+            metadata:
+              name: Balrog client tests (2.7)
+              description: Balrog client tests (2.7)
+              owner: ${owner_email}
+              source: ${repo_url}
+
+          - taskId: {$eval: as_slugid("client-tests")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            scopes: []
+            routes: []
+            payload:
+              maxRunTime: 1200
+              image: "python:3.7"
+              env:
+                NO_VOLUME_MOUNT: 1
+                TOXENV: "check,py37"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd client && pip install tox && tox"
             metadata:
               name: Balrog client tests
               description: Balrog client tests
