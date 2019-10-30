@@ -58,6 +58,11 @@ tasks:
       then: '${event.ref}',
       else: 'null',
     }
+    pull_request_number: {
+      $if: 'tasks_for == "github-pull-request"',
+      then: '${event.number}',
+      else: '',
+    }
   in:
     $flattenDeep:
       - $if: '(tasks_for == "github-pull-request" && event["action"] in ["edited", "opened", "reopened", "synchronize"]) || (tasks_for == "github-push" && branch == "refs/heads/master")'
@@ -74,12 +79,21 @@ tasks:
               maxRunTime: 1200
               image: "python:3.7"
               env:
-                NO_VOLUME_MOUNT: 1
+                # For Coveralls to function properly CIRCLECI and CI_PULL_REQUEST need to be set
+                CIRCLECI: "1"
+                CI_PULL_REQUEST: "${pull_request_number}"
                 TOXENV: "check,py37"
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && pip install tox && tox"
+                - >-
+                  export COVERALLS_REPO_TOKEN=$(curl 'taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:coveralls' | python -c 'import json, sys; a = json.load(sys.stdin); print(a["secret"]["repo_token"])') &&
+                  git clone ${repo_url} balrog &&
+                  cd balrog &&
+                  git checkout ${head_sha} &&
+                  pip install coveralls tox &&
+                  tox &&
+                  coveralls
               features:
                 taskclusterProxy: true
             metadata:
@@ -99,7 +113,6 @@ tasks:
               maxRunTime: 1200
               image: "python:3.7"
               env:
-                NO_VOLUME_MOUNT: 1
                 TOXENV: "check,py37"
               command:
                 - "/bin/bash"
@@ -122,7 +135,6 @@ tasks:
               maxRunTime: 1200
               image: "python:2.7"
               env:
-                NO_VOLUME_MOUNT: 1
                 TOXENV: "py27"
               command:
                 - "/bin/bash"
@@ -145,7 +157,6 @@ tasks:
               maxRunTime: 1200
               image: "python:3.7"
               env:
-                NO_VOLUME_MOUNT: 1
                 TOXENV: "check,py37"
               command:
                 - "/bin/bash"
@@ -167,8 +178,6 @@ tasks:
             payload:
               maxRunTime: 1200
               image: "node:0.10"
-              env:
-                NO_VOLUME_MOUNT: 1
               command:
                 - "/bin/bash"
                 - "-c"
