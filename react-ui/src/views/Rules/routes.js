@@ -20,6 +20,16 @@ export default path => [
     isNewRule: true,
   },
   {
+    component: Rule,
+    path: `${path}/duplicate/scId/:scId`,
+    isNewRule: true,
+  },
+  {
+    component: Rule,
+    path: `${path}/duplicate/ruleId/:ruleId`,
+    isNewRule: true,
+  },
+  {
     component: ListRuleRevisions,
     path: `${path}/:ruleId/revisions`,
   },
