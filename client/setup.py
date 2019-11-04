@@ -24,7 +24,7 @@ with open(path.join(here, "requirements", "base.txt")) as f:
 
 setup(
     name="balrogclient",
-    version="0.6.0",
+    version="1.0.0",
     description="Balrog Admin API Client",
     author="Mozilla Release Engineers",
     author_email="release+python@mozilla.com",

@@ -124,28 +124,6 @@ tasks:
               owner: ${owner_email}
               source: ${repo_url}
 
-          - taskId: {$eval: as_slugid("client-tests-py27")}
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '2 hours'}
-            provisionerId: aws-provisioner-v1
-            workerType: github-worker
-            scopes: []
-            routes: []
-            payload:
-              maxRunTime: 1200
-              image: "python:2.7"
-              env:
-                TOXENV: "py27"
-              command:
-                - "/bin/bash"
-                - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd client && pip install tox && tox"
-            metadata:
-              name: Balrog client tests (2.7)
-              description: Balrog client tests (2.7)
-              owner: ${owner_email}
-              source: ${repo_url}
-
           - taskId: {$eval: as_slugid("client-tests-py37")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
