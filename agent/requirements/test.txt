@@ -21,9 +21,9 @@ atomicwrites==1.3.0 \
     --hash=sha256:03472c30eb2c5d1ba9227e4c2ca66ab8287fbfbbda3888aa93dc2e28fc6811b4 \
     --hash=sha256:75a9445bac02d8d058d5e1fe689654ba5a6556a1dfd8ce6ec55a0ed79866cfa6 \
     # via pytest
-black==19.3b0 \
-    --hash=sha256:09a9dcb7c46ed496a9850b76e4e825d6049ecd38b611f1224857a79bd985a8cf \
-    --hash=sha256:68950ffd4d9169716bcb8719a56c07a2f4485354fec061cdd5910aa07369731c
+black==19.10b0 \
+    --hash=sha256:1b30e59be925fafc1ee4565e5e08abef6b03fe455102883820fe5ee2e4734e0b \
+    --hash=sha256:c2edb73a08e9e0e6f65a0e6af18b059b8b1cdd5bef997d7a0b181df93dc81539
 check-manifest==0.39 \
     --hash=sha256:8754cc8efd7c062a3705b442d1c23ff702d4477b41a269c2e354b25e1f5535a4 \
     --hash=sha256:a4c555f658a7c135b8a22bd26c2e55cfaf5876e4d5962d8c25652f2addd556bc
