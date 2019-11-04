@@ -1,7 +1,0 @@
-[run]
-branch = True
-source = auslib/*
-omit = auslib/migrate/*
-
-[report]
-show_missing = True

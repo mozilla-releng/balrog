@@ -58,6 +58,11 @@ tasks:
       then: '${event.ref}',
       else: 'null',
     }
+    pull_request_number: {
+      $if: 'tasks_for == "github-pull-request"',
+      then: '${event.number}',
+      else: '',
+    }
   in:
     $flattenDeep:
       - $if: '(tasks_for == "github-pull-request" && event["action"] in ["edited", "opened", "reopened", "synchronize"]) || (tasks_for == "github-push" && branch == "refs/heads/master")'
@@ -72,15 +77,24 @@ tasks:
             routes: []
             payload:
               maxRunTime: 1200
-              image: "mozillareleases/python-test-runner"
+              image: "python:3.7"
               env:
-                NO_VOLUME_MOUNT: 1
+                # For Coveralls to function properly CIRCLECI and CI_PULL_REQUEST need to be set
+                CIRCLECI: "1"
+                CI_PULL_REQUEST: "${pull_request_number}"
+                TOXENV: "check,py37"
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && bash run-tests.sh backend"
+                - >-
+                  export COVERALLS_REPO_TOKEN=$(curl 'taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:coveralls' | python -c 'import json, sys; a = json.load(sys.stdin); print(a["secret"]["repo_token"])') &&
+                  git clone ${repo_url} balrog &&
+                  cd balrog &&
+                  git checkout ${head_sha} &&
+                  pip install coveralls tox &&
+                  tox &&
+                  coveralls
               features:
-                dind: true
                 taskclusterProxy: true
             metadata:
               name: Balrog back-end tests
@@ -97,22 +111,20 @@ tasks:
             routes: []
             payload:
               maxRunTime: 1200
-              image: "mozillareleases/python-test-runner"
+              image: "python:3.7"
               env:
-                NO_VOLUME_MOUNT: 1
+                TOXENV: "check,py37"
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && bash run-tests.sh"
-              features:
-                dind: true
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && pip install tox && tox"
             metadata:
               name: Balrog agent tests
               description: Balrog agent tests
               owner: ${owner_email}
               source: ${repo_url}
 
-          - taskId: {$eval: as_slugid("client-tests")}
+          - taskId: {$eval: as_slugid("client-tests-py37")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: aws-provisioner-v1
@@ -121,15 +133,13 @@ tasks:
             routes: []
             payload:
               maxRunTime: 1200
-              image: "mozillareleases/python-test-runner"
+              image: "python:3.7"
               env:
-                NO_VOLUME_MOUNT: 1
+                TOXENV: "check,py37"
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd client && bash run-tests.sh"
-              features:
-                dind: true
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd client && pip install tox && tox"
             metadata:
               name: Balrog client tests
               description: Balrog client tests
@@ -146,8 +156,6 @@ tasks:
             payload:
               maxRunTime: 1200
               image: "node:0.10"
-              env:
-                NO_VOLUME_MOUNT: 1
               command:
                 - "/bin/bash"
                 - "-c"

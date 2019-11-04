@@ -1,4 +1,6 @@
+from glob import glob
 from os import path
+from os.path import basename, splitext
 
 from setuptools import find_packages, setup
 
@@ -21,7 +23,7 @@ with open(path.join(here, "requirements", "base.txt")) as f:
 
 
 with open(path.join(here, "version.txt")) as f:
-    version = f.read()
+    version = f.read().strip()
 
 setup(
     name="balrogagent",
@@ -29,11 +31,14 @@ setup(
     version=version,
     url="https://github.com/mozilla/balrog",
     license="MPL",
-    author="Ben Hearsum",
-    author_email="bhearsum@mozilla.com",
-    tests_require=["pytest"],
-    install_requires=requirements,
-    packages=find_packages(),
+    author="Mozilla Release Engineering",
+    author_email="release@mozilla.com",
+    packages=find_packages("src"),
+    package_dir={"": "src"},
+    py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
     entry_points={"console_scripts": ["balrogagent = balrogagent.cmd:main"]},
     include_package_data=True,
+    test_suite="tests",
+    install_requires=requirements,
+    zip_safe=False,
 )

@@ -1,4 +1,6 @@
+from glob import glob
 from os import path
+from os.path import basename, splitext
 
 from setuptools import find_packages, setup
 
@@ -20,17 +22,21 @@ with open(path.join(here, "requirements", "base.txt")) as f:
             requirement_without_trailing_characters = requirement_without_python_filter.split()[0]
 
 with open(path.join(here, "version.txt")) as f:
-    version = f.read()
+    version = f.read().strip()
 
 setup(
     name="balrog",
     version=version,
     description="Mozilla's Update Server",
-    author="Ben Hearsum",
-    author_email="ben@hearsum.ca",
-    packages=find_packages(exclude=["vendor"]),
+    author="Mozilla Release Engineering",
+    author_email="release@mozilla.com",
+    packages=find_packages("src"),
+    package_dir={"": "src"},
+    py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
     include_package_data=True,
     install_requires=requirements,
+    test_suite="tests",
     url="https://github.com/mozilla/balrog",
     license="MPL-2.0",
+    zip_safe=False,
 )

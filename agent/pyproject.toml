@@ -1,7 +1,7 @@
 [tool.black]
 line-length = 160
 target-version = ["py37", "py38"]
-include = '\.pyi?$'
+include = '\.(wsgi|pyi?)$'
 exclude = '''
 /(
     \.eggs
@@ -10,9 +10,19 @@ exclude = '''
   | \.mypy_cache
   | \.tox
   | \.venv
+  | \.cache
+  | \.cache_py3
   | _build
   | buck-out
   | build
   | dist
+  | ui
 )/
 '''
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 160
