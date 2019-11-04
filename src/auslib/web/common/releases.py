@@ -66,7 +66,11 @@ def get_release(release, with_csrf_header=False):
         indent = None
         separators = None
     # separators set manually due to https://bugs.python.org/issue16333 affecting Python 2
-    return Response(response=json.dumps(release["data"], indent=indent, separators=separators, sort_keys=True), mimetype="application/json", headers=headers)
+    return Response(
+        response=json.dumps(release["data"], indent=indent, separators=separators, sort_keys=True),
+        mimetype="application/json",
+        headers=headers,
+    )
 
 
 def get_release_with_csrf_header(release):

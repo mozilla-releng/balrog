@@ -54,7 +54,12 @@ def _get_histories(table, obj, process_revisions_callback=None):
         return history_helper.get_history()
     except (ValueError, AssertionError) as msg:
         log.warning("Bad input: %s", msg)
-        return problem(400, "Bad Request", "Error occurred when trying to fetch histories", ext={"exception": str(msg)})
+        return problem(
+            400,
+            "Bad Request",
+            "Error occurred when trying to fetch histories",
+            ext={"exception": str(msg)},
+        )
 
 
 def rules_history():
@@ -62,7 +67,10 @@ def rules_history():
     history_table = dbo.rules.history
     rules = _get_histories(history_table, get_rules)
     history = {"rules": rules, "sc_rules": RuleScheduledChangeHistoryView().get_all()}
-    histories = {"Rules": json.loads(history["rules"].data), "Rules scheduled change": json.loads(history["sc_rules"].data)}
+    histories = {
+        "Rules": json.loads(history["rules"].data),
+        "Rules scheduled change": json.loads(history["sc_rules"].data),
+    }
     return histories
 
 
@@ -71,7 +79,10 @@ def permissions_history():
     history_table = dbo.permissions.history
     get_permissions = UsersView().get()
     permissions = _get_histories(history_table, get_permissions)
-    permissions_history = {"permissions": permissions, "sc_permissions": PermissionScheduledChangeHistoryView().get_all()}
+    permissions_history = {
+        "permissions": permissions,
+        "sc_permissions": PermissionScheduledChangeHistoryView().get_all(),
+    }
     histories = {
         "Permissions": json.loads(permissions_history["permissions"].data),
         "Permissions Scheduled Change": json.loads(permissions_history["sc_permissions"].data),
@@ -86,8 +97,12 @@ def product_required_signoffs_history():
         "sc_product_required_signoffs": ProductRequiredSignoffScheduledChangeHistoryView().get_all(),
     }
     histories = {
-        "Product Required Signoffs": json.loads(product_required_signoffs_history["product_required_signoffs"].data),
-        "Product Required Signoffs Scheduled Change": json.loads(product_required_signoffs_history["sc_product_required_signoffs"].data),
+        "Product Required Signoffs": json.loads(
+            product_required_signoffs_history["product_required_signoffs"].data
+        ),
+        "Product Required Signoffs Scheduled Change": json.loads(
+            product_required_signoffs_history["sc_product_required_signoffs"].data
+        ),
     }
     return histories
 
@@ -99,7 +114,11 @@ def permissions_required_signoffs_history():
         "sc_permissions_required_signoffs": PermissionsRequiredSignoffScheduledChangeHistoryView().get_all(),
     }
     histories = {
-        "Permissions Required Signoffs": json.loads(permissions_required_signoffs_history["permissions_required_signoffs"].data),
-        "Permissions Required Signoffs Scheduled Change": json.loads(permissions_required_signoffs_history["sc_permissions_required_signoffs"].data),
+        "Permissions Required Signoffs": json.loads(
+            permissions_required_signoffs_history["permissions_required_signoffs"].data
+        ),
+        "Permissions Required Signoffs Scheduled Change": json.loads(
+            permissions_required_signoffs_history["sc_permissions_required_signoffs"].data
+        ),
     }
     return histories

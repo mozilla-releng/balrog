@@ -41,7 +41,9 @@ def add_signoff_information(row, table, sc_table):
         # enacted.
         if row["change_type"] != "delete":
             affected_rows.append(base_row)
-        signoff_requirements = [obj for v in table.getPotentialRequiredSignoffs(affected_rows).values() for obj in v]
+        signoff_requirements = [
+            obj for v in table.getPotentialRequiredSignoffs(affected_rows).values() for obj in v
+        ]
         scheduled_change["required_signoffs"] = serialize_signoff_requirements(signoff_requirements)
 
     return scheduled_change
@@ -80,7 +82,9 @@ class ScheduledChangesView(AdminView):
 
         sc_id = self.sc_table.insert(changed_by, transaction, **what)
         signoffs = {}
-        for signoff in self.sc_table.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
+        for signoff in self.sc_table.signoffs.select(
+            where={"sc_id": sc_id}, transaction=transaction
+        ):
             signoffs[signoff["username"]] = signoff["role"]
         return jsonify(sc_id=sc_id, signoffs=signoffs)
 
@@ -114,7 +118,9 @@ class ScheduledChangeView(AdminView):
         self.sc_table.update(where, what, changed_by, int(old_sc_data_version), transaction)
         sc = self.sc_table.select(where=where, transaction=transaction, columns=["data_version"])[0]
         signoffs = {}
-        for signoff in self.sc_table.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
+        for signoff in self.sc_table.signoffs.select(
+            where={"sc_id": sc_id}, transaction=transaction
+        ):
             signoffs[signoff["username"]] = signoff["role"]
         return jsonify(new_data_version=sc["data_version"], signoffs=signoffs)
 
@@ -127,7 +133,9 @@ class ScheduledChangeView(AdminView):
         if not connexion.request.args.get("data_version", None):
             return problem(400, "Bad Request", "data_version is missing")
 
-        self.sc_table.delete(where, changed_by, int(connexion.request.args.get("data_version")), transaction)
+        self.sc_table.delete(
+            where, changed_by, int(connexion.request.args.get("data_version")), transaction
+        )
         return jsonify({})
 
 
@@ -193,7 +201,10 @@ class ScheduledChangeHistoryView(HistoryView):
         # table and the conditions table always keep their data version in sync.
         for r in revisions:
             cond = self.table.conditions.history.select(
-                where=[self.table.conditions.history.sc_id == r["sc_id"], self.table.conditions.history.data_version == r["data_version"]]
+                where=[
+                    self.table.conditions.history.sc_id == r["sc_id"],
+                    self.table.conditions.history.data_version == r["data_version"],
+                ]
             )
             r.update(cond[0])
 
@@ -234,7 +245,9 @@ class ScheduledChangeHistoryView(HistoryView):
         # There's a big 'ol assumption here that the primary Scheduled Changes
         # table and the conditions table always keep their data version in sync.
         cond_change = self.table.conditions.history.getChange(
-            data_version=change["data_version"], column_values={"sc_id": change["sc_id"]}, transaction=transaction
+            data_version=change["data_version"],
+            column_values={"sc_id": change["sc_id"]},
+            transaction=transaction,
         )
         what = dict(
             # One could argue that we should restore scheduled_by to its value from the change,
@@ -269,7 +282,9 @@ class ScheduledChangeHistoryView(HistoryView):
             )
         except (ValueError, AssertionError) as msg:
             self.log.warning("Bad input: %s", msg)
-            return problem(400, "Bad Request", "Error in fetching revisions", ext={"exception": msg})
+            return problem(
+                400, "Bad Request", "Error in fetching revisions", ext={"exception": msg}
+            )
 
     def get_all(self):
         try:
@@ -282,7 +297,9 @@ class ScheduledChangeHistoryView(HistoryView):
             )
         except (ValueError, AssertionError) as msg:
             self.log.warning("Bad input: %s", msg)
-            return problem(400, "Bad Request", "Error in fetching revisions", ext={"exception": msg})
+            return problem(
+                400, "Bad Request", "Error in fetching revisions", ext={"exception": msg}
+            )
 
     def _post(self, sc_id, transaction, changed_by):
         return self.revert_to_revision(

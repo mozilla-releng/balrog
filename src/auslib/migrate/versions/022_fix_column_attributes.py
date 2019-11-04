@@ -12,7 +12,10 @@ data_version_nullable_tbls = [
     "user_roles",
 ]
 
-when_nullable_tbls = ["permissions_scheduled_changes_conditions", "releases_scheduled_changes_conditions"]
+when_nullable_tbls = [
+    "permissions_scheduled_changes_conditions",
+    "releases_scheduled_changes_conditions",
+]
 
 
 def _change_nullable_attr(table_name, column, metadata, nullable):

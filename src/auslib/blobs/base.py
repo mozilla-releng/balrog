@@ -109,11 +109,20 @@ def merge_dicts(ancestor, left, right):
             result[key] = merge_lists(*[d.get(key, []) for d in dicts])
         else:
             if key in ancestor:
-                if key in left and key in right and ancestor[key] != left[key] and ancestor[key] != right[key]:
+                if (
+                    key in left
+                    and key in right
+                    and ancestor[key] != left[key]
+                    and ancestor[key] != right[key]
+                ):
                     log.warning("Ancestor is: %s", ancestor)
                     log.warning("Left is: %s", left)
                     log.warning("Right is: %s", right)
-                    raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(encoded_str_key))
+                    raise ValueError(
+                        "Cannot merge blobs: left and right are both changing '{}'".format(
+                            encoded_str_key
+                        )
+                    )
                 if key in left and ancestor[key] != left.get(key):
                     result[key] = left[key]
                 elif key in right and ancestor[key] != right.get(key):
@@ -125,7 +134,11 @@ def merge_dicts(ancestor, left, right):
                     log.warning("Ancestor is: %s", ancestor)
                     log.warning("Left is: %s", left)
                     log.warning("Right is: %s", right)
-                    raise ValueError("Cannot merge blobs: left and right are both changing '{}'".format(encoded_str_key))
+                    raise ValueError(
+                        "Cannot merge blobs: left and right are both changing '{}'".format(
+                            encoded_str_key
+                        )
+                    )
                 if key in left:
                     result[key] = left[key]
                 elif key in right:
@@ -152,7 +165,9 @@ class Blob(dict):
     def validate(self, product, whitelistedDomains):
         """Raises a BlobValidationError if the blob is invalid."""
         self.log.debug("Validating blob %s" % self)
-        validator = jsonschema.Draft4Validator(self.getSchema(), format_checker=jsonschema.draft4_format_checker)
+        validator = jsonschema.Draft4Validator(
+            self.getSchema(), format_checker=jsonschema.draft4_format_checker
+        )
         # Normal usage is to use .validate(), but errors raised by it return
         # a massive error message that includes the entire blob, which is way
         # too big to be useful in the UI. Instead, we iterate over the
@@ -167,7 +182,9 @@ class Blob(dict):
 
     def getSchema(self):
         def loadSchema():
-            return yaml.safe_load(open(path.join(path.dirname(path.abspath(__file__)), "schemas", self.jsonschema)))
+            return yaml.safe_load(
+                open(path.join(path.dirname(path.abspath(__file__)), "schemas", self.jsonschema))
+            )
 
         return cache.get("blob_schema", self.jsonschema, loadSchema)
 

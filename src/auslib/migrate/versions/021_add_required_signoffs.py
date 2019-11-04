@@ -62,7 +62,9 @@ def upgrade(migrate_engine):
         Column("base_signoffs_required", Integer),
         Column("base_data_version", Integer),
     )
-    product_required_signoffs_scheduled_changes_history.append_column(Column("timestamp", bigintType, nullable=False))
+    product_required_signoffs_scheduled_changes_history.append_column(
+        Column("timestamp", bigintType, nullable=False)
+    )
 
     product_required_signoffs_scheduled_changes_conditions = Table(
         "product_req_signoffs_scheduled_changes_conditions",
@@ -80,8 +82,12 @@ def upgrade(migrate_engine):
         Column("sc_id", Integer, nullable=False),
         Column("data_version", Integer),
     )
-    product_required_signoffs_scheduled_changes_conditions_history.append_column(Column("timestamp", bigintType, nullable=False))
-    product_required_signoffs_scheduled_changes_conditions_history.append_column(Column("when", bigintType))
+    product_required_signoffs_scheduled_changes_conditions_history.append_column(
+        Column("timestamp", bigintType, nullable=False)
+    )
+    product_required_signoffs_scheduled_changes_conditions_history.append_column(
+        Column("when", bigintType)
+    )
 
     product_required_signoffs_scheduled_changes_signoffs = Table(  # noqa
         "product_req_signoffs_scheduled_changes_signoffs",
@@ -100,7 +106,9 @@ def upgrade(migrate_engine):
         Column("username", String(100), nullable=False),
         Column("role", String(50)),
     )
-    product_required_signoffs_scheduled_changes_signoffs_history.append_column(Column("timestamp", bigintType, nullable=False))
+    product_required_signoffs_scheduled_changes_signoffs_history.append_column(
+        Column("timestamp", bigintType, nullable=False)
+    )
 
     permissions_signoffs = Table(  # noqa
         "permissions_req_signoffs",
@@ -152,7 +160,9 @@ def upgrade(migrate_engine):
         Column("base_signoffs_required", Integer),
         Column("base_data_version", Integer),
     )
-    permissions_signoffs_scheduled_changes_history.append_column(Column("timestamp", bigintType, nullable=False))
+    permissions_signoffs_scheduled_changes_history.append_column(
+        Column("timestamp", bigintType, nullable=False)
+    )
 
     permissions_signoffs_scheduled_changes_conditions = Table(
         "permissions_req_signoffs_scheduled_changes_conditions",
@@ -170,8 +180,12 @@ def upgrade(migrate_engine):
         Column("sc_id", Integer, nullable=False),
         Column("data_version", Integer),
     )
-    permissions_signoffs_scheduled_changes_conditions_history.append_column(Column("timestamp", bigintType, nullable=False))
-    permissions_signoffs_scheduled_changes_conditions_history.append_column(Column("when", bigintType))
+    permissions_signoffs_scheduled_changes_conditions_history.append_column(
+        Column("timestamp", bigintType, nullable=False)
+    )
+    permissions_signoffs_scheduled_changes_conditions_history.append_column(
+        Column("when", bigintType)
+    )
 
     permissions_signoffs_scheduled_changes_signoffs = Table(  # noqa
         "permissions_req_signoffs_scheduled_changes_signoffs",
@@ -190,7 +204,9 @@ def upgrade(migrate_engine):
         Column("username", String(100), nullable=False),
         Column("role", String(50)),
     )
-    permissions_signoffs_scheduled_changes_signoffs_history.append_column(Column("timestamp", bigintType, nullable=False))
+    permissions_signoffs_scheduled_changes_signoffs_history.append_column(
+        Column("timestamp", bigintType, nullable=False)
+    )
 
     metadata.create_all()
 
@@ -203,7 +219,9 @@ def downgrade(migrate_engine):
     Table("product_req_signoffs_scheduled_changes", metadata, autoload=True).drop()
     Table("product_req_signoffs_scheduled_changes_history", metadata, autoload=True).drop()
     Table("product_req_signoffs_scheduled_changes_conditions", metadata, autoload=True).drop()
-    Table("product_req_signoffs_scheduled_changes_conditions_history", metadata, autoload=True).drop()
+    Table(
+        "product_req_signoffs_scheduled_changes_conditions_history", metadata, autoload=True
+    ).drop()
     Table("product_req_signoffs_scheduled_changes_signoffs", metadata, autoload=True).drop()
     Table("product_req_signoffs_scheduled_changes_signoffs_history", metadata, autoload=True).drop()
     Table("permissions_req_signoffs", metadata, autoload=True).drop()
@@ -211,6 +229,10 @@ def downgrade(migrate_engine):
     Table("permissions_req_signoffs_scheduled_changes", metadata, autoload=True).drop()
     Table("permissions_req_signoffs_scheduled_changes_history", metadata, autoload=True).drop()
     Table("permissions_req_signoffs_scheduled_changes_conditions", metadata, autoload=True).drop()
-    Table("permissions_req_signoffs_scheduled_changes_conditions_history", metadata, autoload=True).drop()
+    Table(
+        "permissions_req_signoffs_scheduled_changes_conditions_history", metadata, autoload=True
+    ).drop()
     Table("permissions_req_signoffs_scheduled_changes_signoffs", metadata, autoload=True).drop()
-    Table("permissions_req_signoffs_scheduled_changes_signoffs_history", metadata, autoload=True).drop()
+    Table(
+        "permissions_req_signoffs_scheduled_changes_signoffs_history", metadata, autoload=True
+    ).drop()

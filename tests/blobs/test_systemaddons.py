@@ -106,9 +106,15 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        returned_header = self.blob1.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob1.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob1.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob1.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob1.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob1.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = "    <addons>"
         expected = [
@@ -138,9 +144,15 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        returned_header = self.empty_blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.empty_blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.empty_blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.empty_blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.empty_blob.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.empty_blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = ""
         expected = []
@@ -163,9 +175,15 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        returned_header = self.blob2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = "    <addons>"
         expected = []
@@ -189,9 +207,15 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        returned_header = self.blob3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob3.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob3.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob3.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob3.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = ""
         expected = []

@@ -62,7 +62,9 @@ class HistoryView(AdminView):
         filters = history_filters_callback(obj)
         total_count = self.history_table.count(where=filters)
 
-        revisions = self.history_table.select(where=filters, limit=limit, offset=offset, order_by=revisions_order_by)
+        revisions = self.history_table.select(
+            where=filters, limit=limit, offset=offset, order_by=revisions_order_by
+        )
 
         if process_revisions_callback:
             revisions = process_revisions_callback(revisions)
@@ -120,7 +122,11 @@ class HistoryView(AdminView):
 
         change = self.history_table.getChange(change_id=change_id)
         if change is None:
-            return problem(400, "Bad Request", "Invalid change_id : {0} passed in the request body".format(change_id))
+            return problem(
+                400,
+                "Bad Request",
+                "Invalid change_id : {0} passed in the request body".format(change_id),
+            )
 
         obj_id = obj[change_field]
 
@@ -133,5 +139,11 @@ class HistoryView(AdminView):
         what = get_what_callback(change)
         where = dict()
         where[change_field] = obj_id
-        self.table.update(changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction)
+        self.table.update(
+            changed_by=changed_by,
+            where=where,
+            what=what,
+            old_data_version=old_data_version,
+            transaction=transaction,
+        )
         return Response(response_message)

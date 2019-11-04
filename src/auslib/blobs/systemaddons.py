@@ -20,7 +20,13 @@ class SystemAddonsBlob(XMLBlob):
     def getResolvedPlatform(self, addon, platform):
         platforms = self.get("addons", {}).get(addon, {}).get("platforms", {})
         if platform in platforms:
-            return self.get("addons", {}).get(addon, {}).get("platforms", {}).get(platform, {}).get("alias", platform)
+            return (
+                self.get("addons", {})
+                .get(addon, {})
+                .get("platforms", {})
+                .get(platform, {})
+                .get("alias", platform)
+            )
         if "default" in platforms:
             return "default"
         raise BadDataError("No platform '%s' or default in addon '%s'", platform, addon)
@@ -69,7 +75,14 @@ class SystemAddonsBlob(XMLBlob):
                 continue
             addonXML.append(
                 '        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>'
-                % (addon, url, self["hashFunction"], platformData["hashValue"], platformData["filesize"], addonInfo["version"])
+                % (
+                    addon,
+                    url,
+                    self["hashFunction"],
+                    platformData["hashValue"],
+                    platformData["filesize"],
+                    addonInfo["version"],
+                )
             )
 
         return addonXML

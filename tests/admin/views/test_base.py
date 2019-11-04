@@ -27,10 +27,16 @@ class TestJsonLogFormatter(ViewTest):
 
     def testContentSecurityPolicyIsSet(self):
         ret = self.client.get("/rules")
-        self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
+        self.assertEqual(
+            ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'"
+        )
 
     def testCORSIsSet(self):
         ret = self.client.get("/rules")
-        self.assertEqual(ret.headers.get("Access-Control-Allow-Headers"), "Authorization, Content-Type")
+        self.assertEqual(
+            ret.headers.get("Access-Control-Allow-Headers"), "Authorization, Content-Type"
+        )
         self.assertEqual(ret.headers.get("Access-Control-Allow-Origin"), "*")
-        self.assertEqual(ret.headers.get("Access-Control-Allow-Methods"), "OPTIONS, GET, POST, PUT, DELETE")
+        self.assertEqual(
+            ret.headers.get("Access-Control-Allow-Methods"), "OPTIONS, GET, POST, PUT, DELETE"
+        )

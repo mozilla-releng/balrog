@@ -7,7 +7,12 @@ async def get_telemetry_uptake(*args):
 
 
 def telemetry_is_ready(change, current_uptake):
-    logging.debug("Comparing uptake for change %s (current: %s, required: %s)", change["sc_id"], current_uptake, change["telemetry_uptake"])
+    logging.debug(
+        "Comparing uptake for change %s (current: %s, required: %s)",
+        change["sc_id"],
+        current_uptake,
+        change["telemetry_uptake"],
+    )
     if current_uptake >= change["telemetry_uptake"]:
         return True
     else:
@@ -19,7 +24,12 @@ def time_is_ready(change, now):
     # It needs to be converted back to a float before it can be compared
     # against other timestamps.
     scheduled_time = change["when"] / 1000
-    logging.debug("Comparing time for change %s (now: %s, scheduled time: %s)", change["sc_id"], now, scheduled_time)
+    logging.debug(
+        "Comparing time for change %s (now: %s, scheduled time: %s)",
+        change["sc_id"],
+        now,
+        scheduled_time,
+    )
     if now >= scheduled_time:
         return True
     else:

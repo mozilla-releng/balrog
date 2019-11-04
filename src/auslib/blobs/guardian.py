@@ -28,4 +28,10 @@ class GuardianBlob(GenericBlob):
         if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
             return {}
 
-        return {"version": self["version"], "url": url, "required": self["required"], "hashFunction": self["hashFunction"], "hashValue": hashValue}
+        return {
+            "version": self["version"],
+            "url": url,
+            "required": self["required"],
+            "hashFunction": self["hashFunction"],
+            "hashValue": hashValue,
+        }

@@ -86,7 +86,11 @@ class TestSchema1Blob(unittest.TestCase):
 """
         )
         self.assertRaisesRegex(
-            ValueError, ("The hashValue length is different from the required length of 128 for sha512"), blob.validate, "gg", self.whitelistedDomains
+            ValueError,
+            ("The hashValue length is different from the required length of 128 for sha512"),
+            blob.validate,
+            "gg",
+            self.whitelistedDomains,
         )
 
     def testGetVendorsForPlatform(self):
@@ -137,9 +141,15 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = "<addons>"
         expected = [
@@ -169,9 +179,15 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = "<addons>"
         expected = [
@@ -201,9 +217,15 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = "<addons>"
         expected = [
@@ -230,9 +252,15 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = "<addons>"
         expected = [
@@ -262,9 +290,15 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = "<addons>"
         expected = []

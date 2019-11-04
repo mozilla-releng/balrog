@@ -36,7 +36,9 @@ class HistoryHelper:
         filters = self.fn_history_filters(obj, self.hist_table)
         total_count = self.hist_table.count(where=filters)
 
-        revisions = self.hist_table.select(where=filters, limit=limit, offset=offset, order_by=self.order_by)
+        revisions = self.hist_table.select(
+            where=filters, limit=limit, offset=offset, order_by=self.order_by
+        )
 
         if self.fn_process_revisions:
             revisions = self.fn_process_revisions(revisions)
@@ -48,7 +50,14 @@ class HistoryHelper:
 
 
 def get_input_dict():
-    reserved_filter_params = ["limit", "product", "channel", "page", "timestamp_from", "timestamp_to"]
+    reserved_filter_params = [
+        "limit",
+        "product",
+        "channel",
+        "page",
+        "timestamp_from",
+        "timestamp_to",
+    ]
     args = request.args
     query_keys = []
     query = {}

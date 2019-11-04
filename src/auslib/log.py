@@ -10,7 +10,9 @@ log_format = "%(asctime)s - %(levelname)s - PID: %(process)s - Request: %(reques
 
 
 class BalrogLogger(logging.Logger):
-    def makeRecord(self, name, level, fn, lno, msg, args, exc_info, func=None, extra=None, sinfo=None):
+    def makeRecord(
+        self, name, level, fn, lno, msg, args, exc_info, func=None, extra=None, sinfo=None
+    ):
         if extra is None:
             extra = {}
         if "requestid" not in extra:
@@ -33,7 +35,9 @@ class BalrogLogger(logging.Logger):
             except RuntimeError:
                 pass
             extra["requestid"] = requestid
-        return logging.Logger.makeRecord(self, name, level, fn, lno, msg, args, exc_info, func, extra, sinfo)  # pragma: no cover
+        return logging.Logger.makeRecord(
+            self, name, level, fn, lno, msg, args, exc_info, func, extra, sinfo
+        )  # pragma: no cover
 
 
 class JsonLogFormatter(logging.Formatter):
@@ -53,7 +57,13 @@ class JsonLogFormatter(logging.Formatter):
     LOGGING_FORMAT_VERSION = "2.0"
 
     # Map from Python logging to Syslog severity levels
-    SYSLOG_LEVEL_MAP = {logging.DEBUG: 2, logging.ERROR: 3, logging.WARNING: 4, logging.INFO: 6, logging.DEBUG: 7}
+    SYSLOG_LEVEL_MAP = {
+        logging.DEBUG: 2,
+        logging.ERROR: 3,
+        logging.WARNING: 4,
+        logging.INFO: 6,
+        logging.DEBUG: 7,
+    }
 
     # Syslog level to use when/if python level isn't found in map
     DEFAULT_SYSLOG_LEVEL = 7
@@ -146,7 +156,9 @@ def safer_format_traceback(exc_typ, exc_val, exc_tb):
     return "".join(lines)
 
 
-def configure_logging(stream=sys.stdout, formatter=JsonLogFormatter, format_=log_format, level=logging.DEBUG):
+def configure_logging(
+    stream=sys.stdout, formatter=JsonLogFormatter, format_=log_format, level=logging.DEBUG
+):
     logging.setLoggerClass(BalrogLogger)
     handler = logging.StreamHandler(stream)
     formatter = formatter(fmt=format_)

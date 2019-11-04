@@ -5,7 +5,12 @@ from flask import Response
 
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import handleGeneralExceptions, requirelogin, transactionHandler
-from auslib.web.admin.views.scheduled_changes import EnactScheduledChangeView, ScheduledChangesView, ScheduledChangeView, SignoffsView
+from auslib.web.admin.views.scheduled_changes import (
+    EnactScheduledChangeView,
+    ScheduledChangesView,
+    ScheduledChangeView,
+    SignoffsView,
+)
 
 
 def get_emergency_shutoff(product, channel):
@@ -23,11 +28,21 @@ def shutoff_exists(product, channel):
 @handleGeneralExceptions("POST")
 def post(emergency_shutoff, changed_by, transaction):
     if shutoff_exists(emergency_shutoff["product"], emergency_shutoff["channel"]):
-        return problem(400, "Bad Request", "Invalid Emergency shutoff data", ext={"exception": "Emergency shutoff for product/channel already exists."})
+        return problem(
+            400,
+            "Bad Request",
+            "Invalid Emergency shutoff data",
+            ext={"exception": "Emergency shutoff for product/channel already exists."},
+        )
     inserted_shutoff = dbo.emergencyShutoffs.insert(
-        changed_by=changed_by, transaction=transaction, product=emergency_shutoff["product"], channel=emergency_shutoff["channel"]
+        changed_by=changed_by,
+        transaction=transaction,
+        product=emergency_shutoff["product"],
+        channel=emergency_shutoff["channel"],
     )
-    return Response(status=201, content_type="application/json", response=json.dumps(inserted_shutoff))
+    return Response(
+        status=201, content_type="application/json", response=json.dumps(inserted_shutoff)
+    )
 
 
 @requirelogin
@@ -35,9 +50,16 @@ def post(emergency_shutoff, changed_by, transaction):
 @handleGeneralExceptions("DELETE")
 def delete(product, channel, data_version, changed_by, transaction, **kwargs):
     if not shutoff_exists(product, channel):
-        return problem(status=404, title="Not Found", detail="Shutoff wasn't found", ext={"exception": "Shutoff does not exist"})
+        return problem(
+            status=404,
+            title="Not Found",
+            detail="Shutoff wasn't found",
+            ext={"exception": "Shutoff does not exist"},
+        )
     where = dict(product=product, channel=channel)
-    dbo.emergencyShutoffs.delete(where=where, changed_by=changed_by, old_data_version=data_version, transaction=transaction)
+    dbo.emergencyShutoffs.delete(
+        where=where, changed_by=changed_by, old_data_version=data_version, transaction=transaction
+    )
     return Response(status=200)
 
 
@@ -65,7 +87,13 @@ def update_scheduled_deletion(sc_id, sc_emergency_shutoff, changed_by, transacti
     if "csrf_token" in sc_emergency_shutoff:
         del sc_emergency_shutoff["csrf_token"]
     view = ScheduledChangeView("emergency_shutoff", dbo.emergencyShutoffs)
-    return view._post(sc_id, sc_emergency_shutoff, transaction, changed_by, sc_emergency_shutoff["sc_data_version"])
+    return view._post(
+        sc_id,
+        sc_emergency_shutoff,
+        transaction,
+        changed_by,
+        sc_emergency_shutoff["sc_data_version"],
+    )
 
 
 @requirelogin

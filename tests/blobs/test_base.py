@@ -94,9 +94,17 @@ def unique_items_only(i):
 
 # Inspired by http://hypothesis.readthedocs.io/en/latest/data.html#recursive-data,
 # but only generates JSON data with a dict as the top level object.
-useful_dict = st.dictionaries(st.text(), useful_values | st.lists(useful_values, max_size=10, unique_by=unique_items_only), max_size=10)
+useful_dict = st.dictionaries(
+    st.text(),
+    useful_values | st.lists(useful_values, max_size=10, unique_by=unique_items_only),
+    max_size=10,
+)
 useful_list = st.lists(useful_values | useful_dict, max_size=10, unique_by=unique_items_only)
-json = st.dictionaries(st.text(), st.recursive(useful_values, lambda x: useful_list | useful_dict, max_leaves=20), max_size=10)
+json = st.dictionaries(
+    st.text(),
+    st.recursive(useful_values, lambda x: useful_list | useful_dict, max_leaves=20),
+    max_size=10,
+)
 
 
 def test_merge_dicts_simple_additions():

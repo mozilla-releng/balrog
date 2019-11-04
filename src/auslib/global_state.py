@@ -20,7 +20,11 @@ class DbWrapper(object):
         if not releases_history_class and releases_history_buckets is not None:
             releases_history_class = GCSHistory
 
-        self.db = AUSDatabase(dburi, releases_history_buckets=releases_history_buckets, releases_history_class=releases_history_class)
+        self.db = AUSDatabase(
+            dburi,
+            releases_history_buckets=releases_history_buckets,
+            releases_history_class=releases_history_class,
+        )
 
     def __getattr__(self, name):
         if not self.db:

@@ -27,7 +27,14 @@ class TestRunAgent(asynctest.TestCase):
 
         request.side_effect = side_effect
 
-        return await run_agent(self.loop, "http://balrog.fake", "telemetry", auth0_secrets={}, once=True, raise_exceptions=True)
+        return await run_agent(
+            self.loop,
+            "http://balrog.fake",
+            "telemetry",
+            auth0_secrets={},
+            once=True,
+            raise_exceptions=True,
+        )
 
     async def testNoChanges(self, time_is_ready, telemetry_is_ready, request):
         sc = {}
@@ -40,7 +47,18 @@ class TestRunAgent(asynctest.TestCase):
     async def testTimeBasedNotReadyRules(self, time, time_is_ready, telemetry_is_ready, request):
         time.return_value = 0
         time_is_ready.return_value = False
-        sc = {"rules": [{"priority": None, "sc_id": 4, "when": 23456789, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}]}
+        sc = {
+            "rules": [
+                {
+                    "priority": None,
+                    "sc_id": 4,
+                    "when": 23456789,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                }
+            ]
+        }
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 1)
@@ -50,29 +68,69 @@ class TestRunAgent(asynctest.TestCase):
     async def testTimeBasedNotReadyReleases(self, time, time_is_ready, telemetry_is_ready, request):
         time.return_value = 0
         time_is_ready.return_value = False
-        sc = {"releases": [{"sc_id": 4, "when": 23456789, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}]}
+        sc = {
+            "releases": [
+                {
+                    "sc_id": 4,
+                    "when": 23456789,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                }
+            ]
+        }
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 1)
         self.assertEqual(request.call_count, 6)
 
     @asynctest.patch("time.time")
-    async def testTimeBasedNotReadyPermissions(self, time, time_is_ready, telemetry_is_ready, request):
-        time.return_value = 0
-        time_is_ready.return_value = False
-        sc = {"permissions": [{"sc_id": 4, "when": 23456789, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}]}
-        await self._runAgent(sc, request)
-        self.assertEqual(telemetry_is_ready.call_count, 0)
-        self.assertEqual(time_is_ready.call_count, 1)
-        self.assertEqual(request.call_count, 6)
-
-    @asynctest.patch("time.time")
-    async def testTimeBasedIsNotReadyRequiredSignoffs(self, time, time_is_ready, telemetry_is_ready, request):
+    async def testTimeBasedNotReadyPermissions(
+        self, time, time_is_ready, telemetry_is_ready, request
+    ):
         time.return_value = 0
         time_is_ready.return_value = False
         sc = {
-            "required_signoffs/product": [{"sc_id": 4, "when": 23456789, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}],
-            "required_signoffs/permissions": [{"sc_id": 4, "when": 23456789, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}],
+            "permissions": [
+                {
+                    "sc_id": 4,
+                    "when": 23456789,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                }
+            ]
+        }
+        await self._runAgent(sc, request)
+        self.assertEqual(telemetry_is_ready.call_count, 0)
+        self.assertEqual(time_is_ready.call_count, 1)
+        self.assertEqual(request.call_count, 6)
+
+    @asynctest.patch("time.time")
+    async def testTimeBasedIsNotReadyRequiredSignoffs(
+        self, time, time_is_ready, telemetry_is_ready, request
+    ):
+        time.return_value = 0
+        time_is_ready.return_value = False
+        sc = {
+            "required_signoffs/product": [
+                {
+                    "sc_id": 4,
+                    "when": 23456789,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                }
+            ],
+            "required_signoffs/permissions": [
+                {
+                    "sc_id": 4,
+                    "when": 23456789,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                }
+            ],
         }
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
@@ -83,7 +141,18 @@ class TestRunAgent(asynctest.TestCase):
     async def testTimeBasedIsReadyRules(self, time, time_is_ready, telemetry_is_ready, request):
         time.return_value = 999999999
         time_is_ready.return_value = True
-        sc = {"rules": [{"priority": None, "sc_id": 4, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}]}
+        sc = {
+            "rules": [
+                {
+                    "priority": None,
+                    "sc_id": 4,
+                    "when": 234,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                }
+            ]
+        }
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 1)
@@ -93,29 +162,69 @@ class TestRunAgent(asynctest.TestCase):
     async def testTimeBasedIsReadyReleases(self, time, time_is_ready, telemetry_is_ready, request):
         time.return_value = 999999999
         time_is_ready.return_value = True
-        sc = {"releases": [{"sc_id": 4, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}]}
+        sc = {
+            "releases": [
+                {
+                    "sc_id": 4,
+                    "when": 234,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                }
+            ]
+        }
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 1)
         self.assertEqual(request.call_count, 7)
 
     @asynctest.patch("time.time")
-    async def testTimeBasedIsReadyPermissions(self, time, time_is_ready, telemetry_is_ready, request):
-        time.return_value = 999999999
-        time_is_ready.return_value = True
-        sc = {"permissions": [{"sc_id": 4, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}]}
-        await self._runAgent(sc, request)
-        self.assertEqual(telemetry_is_ready.call_count, 0)
-        self.assertEqual(time_is_ready.call_count, 1)
-        self.assertEqual(request.call_count, 7)
-
-    @asynctest.patch("time.time")
-    async def testTimeBasedIsReadyRequiredSignoffs(self, time, time_is_ready, telemetry_is_ready, request):
+    async def testTimeBasedIsReadyPermissions(
+        self, time, time_is_ready, telemetry_is_ready, request
+    ):
         time.return_value = 999999999
         time_is_ready.return_value = True
         sc = {
-            "required_signoffs/product": [{"sc_id": 4, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}],
-            "required_signoffs/permissions": [{"sc_id": 4, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}],
+            "permissions": [
+                {
+                    "sc_id": 4,
+                    "when": 234,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                }
+            ]
+        }
+        await self._runAgent(sc, request)
+        self.assertEqual(telemetry_is_ready.call_count, 0)
+        self.assertEqual(time_is_ready.call_count, 1)
+        self.assertEqual(request.call_count, 7)
+
+    @asynctest.patch("time.time")
+    async def testTimeBasedIsReadyRequiredSignoffs(
+        self, time, time_is_ready, telemetry_is_ready, request
+    ):
+        time.return_value = 999999999
+        time_is_ready.return_value = True
+        sc = {
+            "required_signoffs/product": [
+                {
+                    "sc_id": 4,
+                    "when": 234,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                }
+            ],
+            "required_signoffs/permissions": [
+                {
+                    "sc_id": 4,
+                    "when": 234,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                }
+            ],
         }
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
@@ -123,20 +232,46 @@ class TestRunAgent(asynctest.TestCase):
         self.assertEqual(request.call_count, 8)
 
     @asynctest.patch("balrogagent.cmd.get_telemetry_uptake")
-    async def testTelemetryBasedNotReady(self, get_telemetry_uptake, time_is_ready, telemetry_is_ready, request):
+    async def testTelemetryBasedNotReady(
+        self, get_telemetry_uptake, time_is_ready, telemetry_is_ready, request
+    ):
         telemetry_is_ready.return_value = False
         get_telemetry_uptake.return_value = 0
-        sc = {"rules": [{"priority": None, "sc_id": 4, "when": None, "telemetry_uptake": 1000, "telemetry_product": "foo", "telemetry_channel": "bar"}]}
+        sc = {
+            "rules": [
+                {
+                    "priority": None,
+                    "sc_id": 4,
+                    "when": None,
+                    "telemetry_uptake": 1000,
+                    "telemetry_product": "foo",
+                    "telemetry_channel": "bar",
+                }
+            ]
+        }
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 1)
         self.assertEqual(time_is_ready.call_count, 0)
         self.assertEqual(request.call_count, 6)
 
     @asynctest.patch("balrogagent.cmd.get_telemetry_uptake")
-    async def testTelemetryBasedIsReady(self, get_telemetry_uptake, time_is_ready, telemetry_is_ready, request):
+    async def testTelemetryBasedIsReady(
+        self, get_telemetry_uptake, time_is_ready, telemetry_is_ready, request
+    ):
         telemetry_is_ready.return_value = True
         get_telemetry_uptake.return_value = 20000
-        sc = {"rules": [{"priority": None, "sc_id": 4, "when": None, "telemetry_uptake": 1000, "telemetry_product": "foo", "telemetry_channel": "bar"}]}
+        sc = {
+            "rules": [
+                {
+                    "priority": None,
+                    "sc_id": 4,
+                    "when": None,
+                    "telemetry_uptake": 1000,
+                    "telemetry_product": "foo",
+                    "telemetry_channel": "bar",
+                }
+            ]
+        }
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 1)
         self.assertEqual(time_is_ready.call_count, 0)
@@ -147,9 +282,34 @@ class TestRunAgent(asynctest.TestCase):
         time.return_value = 999999999
         time_is_ready.return_value = True
         sc = {
-            "releases": [{"sc_id": 4, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}],
-            "rules": [{"priority": None, "sc_id": 5, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}],
-            "permissions": [{"sc_id": 6, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None}],
+            "releases": [
+                {
+                    "sc_id": 4,
+                    "when": 234,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                }
+            ],
+            "rules": [
+                {
+                    "priority": None,
+                    "sc_id": 5,
+                    "when": 234,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                }
+            ],
+            "permissions": [
+                {
+                    "sc_id": 6,
+                    "when": 234,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                }
+            ],
         }
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
@@ -157,14 +317,34 @@ class TestRunAgent(asynctest.TestCase):
         self.assertEqual(request.call_count, 9)
 
     @asynctest.patch("time.time")
-    async def testMultipleChangesOneEndpoint(self, time, time_is_ready, telemetry_is_ready, request):
+    async def testMultipleChangesOneEndpoint(
+        self, time, time_is_ready, telemetry_is_ready, request
+    ):
         time.return_value = 999999999
         time_is_ready.return_value = True
         sc = {
             "releases": [
-                {"sc_id": 4, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None},
-                {"sc_id": 5, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None},
-                {"sc_id": 6, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None},
+                {
+                    "sc_id": 4,
+                    "when": 234,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                },
+                {
+                    "sc_id": 5,
+                    "when": 234,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                },
+                {
+                    "sc_id": 6,
+                    "when": 234,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                },
             ]
         }
         await self._runAgent(sc, request)
@@ -225,26 +405,98 @@ class TestRunAgent(asynctest.TestCase):
         self.assertEqual(request.call_count, 6)
 
     @asynctest.patch("time.time")
-    async def testRightEnactOrderForMultipleEndpointsAtOnce(self, time, time_is_ready, telemetry_is_ready, request):
+    async def testRightEnactOrderForMultipleEndpointsAtOnce(
+        self, time, time_is_ready, telemetry_is_ready, request
+    ):
         time.return_value = 999999999
         time_is_ready.return_value = True
         sc = {
             "releases": [
-                {"sc_id": 4, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None},
-                {"sc_id": 5, "when": 234, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None},
-                {"sc_id": 6, "when": 378, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None},
-                {"sc_id": 7, "when": 187, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None},
+                {
+                    "sc_id": 4,
+                    "when": 234,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                },
+                {
+                    "sc_id": 5,
+                    "when": 234,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                },
+                {
+                    "sc_id": 6,
+                    "when": 378,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                },
+                {
+                    "sc_id": 7,
+                    "when": 187,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                },
             ],
             "rules": [
-                {"priority": 100, "sc_id": 1, "when": 23400, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None},
-                {"priority": None, "sc_id": 2, "when": 7000, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None},
-                {"priority": 70, "sc_id": 4, "when": 7000, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None},
-                {"priority": 50, "sc_id": 3, "when": 329, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None},
+                {
+                    "priority": 100,
+                    "sc_id": 1,
+                    "when": 23400,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                },
+                {
+                    "priority": None,
+                    "sc_id": 2,
+                    "when": 7000,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                },
+                {
+                    "priority": 70,
+                    "sc_id": 4,
+                    "when": 7000,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                },
+                {
+                    "priority": 50,
+                    "sc_id": 3,
+                    "when": 329,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                },
             ],
             "permissions": [
-                {"sc_id": 8, "when": 45400, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None},
-                {"sc_id": 9, "when": 98000, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None},
-                {"sc_id": 10, "when": 5000, "telemetry_uptake": None, "telemetry_product": None, "telemetry_channel": None},
+                {
+                    "sc_id": 8,
+                    "when": 45400,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                },
+                {
+                    "sc_id": 9,
+                    "when": 98000,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                },
+                {
+                    "sc_id": 10,
+                    "when": 5000,
+                    "telemetry_uptake": None,
+                    "telemetry_product": None,
+                    "telemetry_channel": None,
+                },
             ],
         }
         await self._runAgent(sc, request)
@@ -252,7 +504,19 @@ class TestRunAgent(asynctest.TestCase):
         self.assertEqual(time_is_ready.call_count, 11)
         self.assertEqual(request.call_count, 17)
         called_endpoints = [call[0][1] for call in request.call_args_list]
-        self.assertLess(called_endpoints.index("/scheduled_changes/rules"), called_endpoints.index("/scheduled_changes/releases"))
-        self.assertLess(called_endpoints.index("/scheduled_changes/rules/1/enact"), called_endpoints.index("/scheduled_changes/rules/4/enact"))
-        self.assertLess(called_endpoints.index("/scheduled_changes/rules/4/enact"), called_endpoints.index("/scheduled_changes/rules/2/enact"))
-        self.assertLess(called_endpoints.index("/scheduled_changes/rules/2/enact"), called_endpoints.index("/scheduled_changes/rules/3/enact"))
+        self.assertLess(
+            called_endpoints.index("/scheduled_changes/rules"),
+            called_endpoints.index("/scheduled_changes/releases"),
+        )
+        self.assertLess(
+            called_endpoints.index("/scheduled_changes/rules/1/enact"),
+            called_endpoints.index("/scheduled_changes/rules/4/enact"),
+        )
+        self.assertLess(
+            called_endpoints.index("/scheduled_changes/rules/4/enact"),
+            called_endpoints.index("/scheduled_changes/rules/2/enact"),
+        )
+        self.assertLess(
+            called_endpoints.index("/scheduled_changes/rules/2/enact"),
+            called_endpoints.index("/scheduled_changes/rules/3/enact"),
+        )

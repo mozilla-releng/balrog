@@ -29,7 +29,13 @@ if STAGING or LOCALDEV:
     DOMAIN_WHITELIST.update(
         {
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-            "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
+            "bouncer-bouncer-releng.stage.mozaws.net": (
+                "Firefox",
+                "Fennec",
+                "Devedition",
+                "SeaMonkey",
+                "Thunderbird",
+            ),
             "stage.guardian.nonprod.cloudops.mozgcp.net": ("Guardian",),
         }
     )
@@ -66,7 +72,9 @@ if not os.environ.get("RELEASES_HISTORY_BUCKET") or not os.environ.get("NIGHTLY_
     log.critical("RELEASES_HISTORY_BUCKET and NIGHTLY_HISTORY_BUCKET must be provided")
     sys.exit(1)
 if not LOCALDEV:
-    if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")):
+    if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ and not os.path.exists(
+        os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    ):
         log.critical("GOOGLE_APPLICATION_CREDENTIALS provided, but does not exist")
         sys.exit(1)
 
@@ -96,7 +104,9 @@ try:
         blob.upload_from_string("startuptest", content_type="text/plain")
 except (ValueError, Forbidden) as e:
     if not LOCALDEV:
-        if isinstance(e, Forbidden) or (isinstance(e, ValueError) and "Anonymous credentials" not in e.args[0]):
+        if isinstance(e, Forbidden) or (
+            isinstance(e, ValueError) and "Anonymous credentials" not in e.args[0]
+        ):
             raise
     log.info("Disabling releases_history writes")
     buckets = None
@@ -139,7 +149,9 @@ application.config["SESSION_COOKIE_HTTPONLY"] = True
 # elsewhere in which case we'll need CloudOps to set this for us.
 # In the meantime, this allows us to set it to "*" for local development
 # to enable the new UI to work there.
-application.config["CORS_ORIGINS"] = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",")]
+application.config["CORS_ORIGINS"] = [
+    o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",")
+]
 
 # Strict Samesite cookies means that the session cookie will never be sent
 # when loading any page or making any request where the referrer is some
@@ -210,6 +222,9 @@ angular.module('config', [])
     'releases_history_bucket': 'https://www.googleapis.com/storage/v1/b/{}/o',
 }});
 """.format(
-            new_ui_url, auth0_config, os.environ["NIGHTLY_HISTORY_BUCKET"], os.environ["RELEASES_HISTORY_BUCKET"]
+            new_ui_url,
+            auth0_config,
+            os.environ["NIGHTLY_HISTORY_BUCKET"],
+            os.environ["RELEASES_HISTORY_BUCKET"],
         )
     )

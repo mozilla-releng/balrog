@@ -11,7 +11,13 @@ class AUSConfig(object):
     # Originally, this was done with getattr(logging, level), but it seems bad
     # to look up, and possibly return, arbitrary keys from a config file so it
     # was replaced with this simple mapping.
-    loglevels = {"DEBUG": logging.DEBUG, "INFO": logging.INFO, "WARNING": logging.WARNING, "ERROR": logging.ERROR, "CRITICAL": logging.CRITICAL}
+    loglevels = {
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARNING": logging.WARNING,
+        "ERROR": logging.ERROR,
+        "CRITICAL": logging.CRITICAL,
+    }
 
     def __init__(self, filename):
         self.cfg = RawConfigParser()
@@ -66,14 +72,21 @@ class AUSConfig(object):
 
 
 class AdminConfig(AUSConfig):
-    required_options = {"logging": ["logfile"], "database": ["dburi"], "app": ["secret_key"], "site-specific": ["page_title"]}
+    required_options = {
+        "logging": ["logfile"],
+        "database": ["dburi"],
+        "app": ["secret_key"],
+        "site-specific": ["page_title"],
+    }
 
     def getSecretKey(self):
         return self.cfg.get("app", "secret_key")
 
     def getSystemAccounts(self):
         try:
-            return tuple(a.strip() for a in self.cfg.get("site-specific", "system_accounts").split(","))
+            return tuple(
+                a.strip() for a in self.cfg.get("site-specific", "system_accounts").split(",")
+            )
         except (NoSectionError, NoOptionError):
             return ()
 
@@ -84,6 +97,8 @@ class AdminConfig(AUSConfig):
 class ClientConfig(AUSConfig):
     def getSpecialForceHosts(self):
         try:
-            return tuple(a.strip() for a in self.cfg.get("site-specific", "specialforcehosts").split(","))
+            return tuple(
+                a.strip() for a in self.cfg.get("site-specific", "specialforcehosts").split(",")
+            )
         except (NoSectionError, NoOptionError):
             return None

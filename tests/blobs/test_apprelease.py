@@ -123,7 +123,11 @@ class TestReleaseBlobBase(unittest.TestCase):
 class TestReleaseBlobV1(unittest.TestCase):
     def setUp(self):
         self.whitelistedDomains = {"a.com": ("a",), "boring.com": ("b",)}
-        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        dbo.setDb(
+            "sqlite:///:memory:",
+            releases_history_buckets={"*": "fake"},
+            releases_history_class=FakeGCSHistory,
+        )
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         self.sampleReleaseBlob = ReleaseBlobV1()
@@ -214,7 +218,10 @@ class TestReleaseBlobV1(unittest.TestCase):
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlob.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
-        self.assertEqual(sorted(partial_releases), ["samplePartial1", "samplePartial2", "samplePartial3", "samplePartial4"])
+        self.assertEqual(
+            sorted(partial_releases),
+            ["samplePartial1", "samplePartial2", "samplePartial3", "samplePartial4"],
+        )
 
     def testGetPartialReleaseReferences_Empty_Locales_Case(self):
         sample_release_JSON = """
@@ -290,7 +297,9 @@ class TestReleaseBlobV1(unittest.TestCase):
         self.assertTrue(blob.containsForbiddenDomain("a", self.whitelistedDomains))
 
     def testForbiddenDomainInLocale(self):
-        blob = ReleaseBlobV1(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
+        blob = ReleaseBlobV1(
+            platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a")))))
+        )
         self.assertTrue(blob.containsForbiddenDomain("a", self.whitelistedDomains))
 
     def testForbiddenDomainAndAllowedDomain(self):
@@ -351,9 +360,13 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" version="2.0.0.20" buildID="1" detailsURL="http://example.org/details">
@@ -382,9 +395,13 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" version="3.0.9" buildID="1" detailsURL="http://example.org/details">
@@ -413,9 +430,13 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" version="12.0" buildID="1" detailsURL="http://example.org/details">
@@ -444,9 +465,13 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, None)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" version="12.0" extensionVersion="3.6" buildID="1" detailsURL="http://example.org/details">
@@ -541,9 +566,15 @@ class TestSpecialQueryParams(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
@@ -572,9 +603,15 @@ class TestSpecialQueryParams(unittest.TestCase):
             "distVersion": "a",
             "force": FORCE_MAIN_MAPPING,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
@@ -603,9 +640,15 @@ class TestSpecialQueryParams(unittest.TestCase):
             "distVersion": "a",
             "force": FORCE_FALLBACK_MAPPING,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
@@ -634,9 +677,15 @@ class TestSpecialQueryParams(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
@@ -665,9 +714,15 @@ class TestSpecialQueryParams(unittest.TestCase):
             "distVersion": "a",
             "force": FORCE_MAIN_MAPPING,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
@@ -696,9 +751,15 @@ class TestSpecialQueryParams(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
@@ -720,7 +781,11 @@ class TestSchema2Blob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {"a.com": ("j", "k")}
-        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        dbo.setDb(
+            "sqlite:///:memory:",
+            releases_history_buckets={"*": "fake"},
+            releases_history_class=FakeGCSHistory,
+        )
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(
@@ -927,7 +992,10 @@ class TestSchema2Blob(unittest.TestCase):
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlob.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
-        self.assertEqual(sorted(partial_releases), ["samplePartial1", "samplePartial2", "samplePartial3", "samplePartial4"])
+        self.assertEqual(
+            sorted(partial_releases),
+            ["samplePartial1", "samplePartial2", "samplePartial3", "samplePartial4"],
+        )
 
     def testIsValid(self):
         # Raises on error
@@ -947,9 +1015,15 @@ class TestSchema2Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobJ2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobJ2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobJ2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobJ2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobJ2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobJ2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="40.0" appVersion="40.0" platformVersion="40.0" buildID="30">
@@ -978,9 +1052,15 @@ class TestSchema2Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobJ2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobJ2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobJ2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobJ2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobJ2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobJ2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="40.0" appVersion="40.0" platformVersion="40.0" buildID="30">
@@ -1012,9 +1092,15 @@ class TestSchema2Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobK.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobK.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobK.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobK.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobK.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobK.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = (
             '<update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" '
@@ -1047,9 +1133,15 @@ class TestSchema2Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobK.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobK.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobK.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobK.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobK.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobK.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = (
             '<update type="minor" displayVersion="50.0" appVersion="50.0" platformVersion="50.0" '
@@ -1086,7 +1178,11 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {"a.com": ("j",)}
-        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        dbo.setDb(
+            "sqlite:///:memory:",
+            releases_history_buckets={"*": "fake"},
+            releases_history_class=FakeGCSHistory,
+        )
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(
@@ -1164,9 +1260,15 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobJ2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobJ2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobJ2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobJ2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobJ2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobJ2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="2" appVersion="2" platformVersion="2" buildID="3">
@@ -1195,9 +1297,15 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobJ2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobJ2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobJ2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobJ2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobJ2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobJ2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="2" appVersion="2" platformVersion="2" buildID="3">
@@ -1217,7 +1325,9 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
     def testForbiddenDomainInLocale(self):
-        blob = ReleaseBlobV2(platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a"))))))
+        blob = ReleaseBlobV2(
+            platforms=dict(f=dict(locales=dict(h=dict(partial=dict(fileUrl="http://evil.com/a")))))
+        )
         self.assertTrue(blob.containsForbiddenDomain("a", self.whitelistedDomains))
 
     def testForbiddenDomainAndAllowedDomain(self):
@@ -1233,7 +1343,11 @@ class TestSchema3Blob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {"a.com": ("f", "g")}
-        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        dbo.setDb(
+            "sqlite:///:memory:",
+            releases_history_buckets={"*": "fake"},
+            releases_history_class=FakeGCSHistory,
+        )
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(
@@ -1568,9 +1682,15 @@ class TestSchema3Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobF3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobF3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobF3.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobF3.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobF3.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobF3.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
@@ -1601,9 +1721,15 @@ class TestSchema3Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobF3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobF3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobF3.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobF3.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobF3.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobF3.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
@@ -1635,9 +1761,15 @@ class TestSchema3Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobF3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobF3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobF3.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobF3.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobF3.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobF3.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
@@ -1666,9 +1798,15 @@ class TestSchema3Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobF3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobF3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobF3.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobF3.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobF3.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobF3.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
@@ -1697,9 +1835,15 @@ class TestSchema3Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobG2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobG2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobG2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobG2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobG2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobG2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="26.0" appVersion="26.0" platformVersion="26.0" buildID="40">
@@ -1731,9 +1875,15 @@ class TestSchema3Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobG2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobG2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobG2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobG2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobG2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobG2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="26.0" appVersion="26.0" platformVersion="26.0" buildID="40">
@@ -1761,7 +1911,11 @@ class TestSchema3Blob(unittest.TestCase):
         self.assertTrue(blob.containsForbiddenDomain("f", self.whitelistedDomains))
 
     def testForbiddenDomainInLocale(self):
-        blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
+        blob = ReleaseBlobV3(
+            platforms=dict(
+                f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))
+            )
+        )
         self.assertTrue(blob.containsForbiddenDomain("f", self.whitelistedDomains))
 
     def testForbiddenDomainAndAllowedDomain(self):
@@ -1775,7 +1929,11 @@ class TestSchema4Blob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.whitelistedDomains = {"a.com": ("h", "g")}
-        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        dbo.setDb(
+            "sqlite:///:memory:",
+            releases_history_buckets={"*": "fake"},
+            releases_history_class=FakeGCSHistory,
+        )
         self.metadata.create_all(dbo.engine)
         dbo.setDomainWhitelist(self.whitelistedDomains)
         dbo.releases.t.insert().execute(
@@ -2162,9 +2320,15 @@ class TestSchema4Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobH2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobH2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobH2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
@@ -2195,9 +2359,15 @@ class TestSchema4Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobH2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobH2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobH2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
@@ -2228,9 +2398,15 @@ class TestSchema4Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobH2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobH2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobH2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
@@ -2262,9 +2438,15 @@ class TestSchema4Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobH2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobH2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobH2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
@@ -2292,9 +2474,15 @@ class TestSchema4Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobH2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobH2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobH2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
@@ -2322,9 +2510,15 @@ class TestSchema4Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobH2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobH2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobH2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
@@ -2353,9 +2547,15 @@ class TestSchema4Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobH3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobH3.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobH3.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobH3.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobH3.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = """
 <update type="minor" displayVersion="32.0" appVersion="32.0" platformVersion="32.0" buildID="500">
@@ -2412,8 +2612,14 @@ class TestSchema4Blob(unittest.TestCase):
             "schema_version": 4,
             "hashFunction": "sha512",
             "fileUrls": {
-                "c1": {"partials": {"g1": "http://a.com/g1-partial.mar"}, "completes": {"*": "http://a.com/complete.mar"}},
-                "c2": {"partials": {"g1": "http://a.com/g1-partial"}, "completes": {"*": "http://a.com/complete"}},
+                "c1": {
+                    "partials": {"g1": "http://a.com/g1-partial.mar"},
+                    "completes": {"*": "http://a.com/complete.mar"},
+                },
+                "c2": {
+                    "partials": {"g1": "http://a.com/g1-partial"},
+                    "completes": {"*": "http://a.com/complete"},
+                },
             },
         }
 
@@ -2480,7 +2686,11 @@ class TestSchema4Blob(unittest.TestCase):
         self.assertTrue(blob.containsForbiddenDomain("h", self.whitelistedDomains))
 
     def testForbiddenDomainInLocale(self):
-        blob = ReleaseBlobV4(platforms=dict(f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))))
+        blob = ReleaseBlobV4(
+            platforms=dict(
+                f=dict(locales=dict(h=dict(partials=[dict(fileUrl="http://evil.com/a")])))
+            )
+        )
         self.assertTrue(blob.containsForbiddenDomain("h", self.whitelistedDomains))
 
     def testForbiddenDomainAndAllowedDomain(self):
@@ -2497,7 +2707,11 @@ class TestSchema5Blob(unittest.TestCase):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
         app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
-        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        dbo.setDb(
+            "sqlite:///:memory:",
+            releases_history_buckets={"*": "fake"},
+            releases_history_class=FakeGCSHistory,
+        )
         self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(
             name="h1",
@@ -2767,9 +2981,15 @@ class TestSchema5Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobH2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobH2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobH2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = (
             '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" '
@@ -2801,7 +3021,11 @@ class TestSchema6Blob(unittest.TestCase):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
         app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
-        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        dbo.setDb(
+            "sqlite:///:memory:",
+            releases_history_buckets={"*": "fake"},
+            releases_history_class=FakeGCSHistory,
+        )
         self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(
             name="h1",
@@ -2992,9 +3216,15 @@ class TestSchema6Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobH2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobH2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobH2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = (
             '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="None" '
@@ -3094,7 +3324,11 @@ class TestSchema8Blob(unittest.TestCase):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
         app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
-        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        dbo.setDb(
+            "sqlite:///:memory:",
+            releases_history_buckets={"*": "fake"},
+            releases_history_class=FakeGCSHistory,
+        )
         self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(
             name="h1",
@@ -3210,9 +3444,15 @@ class TestSchema8Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobH2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blobH2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blobH2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = (
             '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="None" '
@@ -3248,7 +3488,11 @@ class TestSchema9Blob(unittest.TestCase):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
         app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
-        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        dbo.setDb(
+            "sqlite:///:memory:",
+            releases_history_buckets={"*": "fake"},
+            releases_history_class=FakeGCSHistory,
+        )
         self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(
             name="h1",
@@ -3396,11 +3640,18 @@ class TestSchema9Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/l"' ' displayVersion="31.0.2" type="minor">'
+        returned_header = self.blobH2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        expected_header = (
+            '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/l"'
+            ' displayVersion="31.0.2" type="minor">'
+        )
         self.assertEqual(returned_header.strip(), expected_header.strip())
 
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobH2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected = [
             '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>',
@@ -3409,7 +3660,9 @@ class TestSchema9Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         self.assertCountEqual(returned, expected)
 
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobH2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         expected_footer = "</update>"
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
@@ -3426,11 +3679,18 @@ class TestSchema9Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' ' displayVersion="31.0.2" type="minor">'
+        returned_header = self.blobH2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        expected_header = (
+            '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"'
+            ' displayVersion="31.0.2" type="minor">'
+        )
         self.assertEqual(returned_header.strip(), expected_header.strip())
 
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobH2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected = [
             '<patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>',
@@ -3439,7 +3699,9 @@ class TestSchema9Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         self.assertCountEqual(returned, expected)
 
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobH2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         expected_footer = "</update>"
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
@@ -3456,11 +3718,18 @@ class TestSchema9Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' ' displayVersion="31.0.2" type="minor">'
+        returned_header = self.blobH2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        expected_header = (
+            '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"'
+            ' displayVersion="31.0.2" type="minor">'
+        )
         self.assertEqual(returned_header.strip(), expected_header.strip())
 
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobH2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected = [
             '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>',
@@ -3469,7 +3738,9 @@ class TestSchema9Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         self.assertCountEqual(returned, expected)
 
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobH2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         expected_footer = "</update>"
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
@@ -3486,17 +3757,28 @@ class TestSchema9Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        expected_header = '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"' ' displayVersion="31.0.2" type="minor">'
+        returned_header = self.blobH2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        expected_header = (
+            '<update appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"'
+            ' displayVersion="31.0.2" type="minor">'
+        )
         self.assertEqual(returned_header.strip(), expected_header.strip())
 
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobH2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
-        expected = ['<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>']
+        expected = [
+            '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>'
+        ]
         expected = [x.strip() for x in expected]
         self.assertCountEqual(returned, expected)
 
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobH2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         expected_footer = "</update>"
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
@@ -3513,14 +3795,18 @@ class TestSchema9Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = self.blobH2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blobH2.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         expected_header = (
             '<update actions="showURL" appVersion="31.0.2" buildID="50" detailsURL="http://example.org/details/de"'
             ' displayVersion="31.0.2" openURL="http://example.org/url/de" type="minor">'
         )
         self.assertEqual(returned_header.strip(), expected_header.strip())
 
-        returned = self.blobH2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned = self.blobH2.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected = [
             '<patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>',
@@ -3529,7 +3815,9 @@ class TestSchema9Blob(unittest.TestCase):
         expected = [x.strip() for x in expected]
         self.assertCountEqual(returned, expected)
 
-        returned_footer = self.blobH2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_footer = self.blobH2.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         expected_footer = "</update>"
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
@@ -3604,10 +3892,10 @@ class TestSchema9Blob(unittest.TestCase):
             "distVersion": "a",
             "force": None,
         }
-        returned_header = blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        expected_header = (
-            '<update appVersion="68.0" buildID="50" detailsURL="http://example.org/bitsdetails/en-US" disableBITS="true" displayVersion="68.0" type="minor">'
+        returned_header = blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
         )
+        expected_header = '<update appVersion="68.0" buildID="50" detailsURL="http://example.org/bitsdetails/en-US" disableBITS="true" displayVersion="68.0" type="minor">'
         self.assertEqual(returned_header.strip(), expected_header.strip())
 
     def testDisableBITSFalseNotAllowed(self):
@@ -3679,9 +3967,18 @@ class TestSchema9Blob(unittest.TestCase):
         ({"versions": [">49.0"]}, {"versions": ["<=49.0"]}),
         ({"versions": ["<49.0"]}, {"versions": [">=49.0"]}),
         ({"locales": ["ja"]}, {"locales": ["ja-JP-mac"]}),
-        ({"locales": ["de"], "channels": ["beta*"], "versions": ["<50.0"]}, {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}),
-        ({"locales": ["de"], "channels": ["release"], "versions": ["<50.0"]}, {"locales": ["en-US", "fr"], "channels": ["release"], "versions": ["49.0"]}),
-        ({"locales": ["de"], "channels": ["release"], "versions": ["<48.0"]}, {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}),
+        (
+            {"locales": ["de"], "channels": ["beta*"], "versions": ["<50.0"]},
+            {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]},
+        ),
+        (
+            {"locales": ["de"], "channels": ["release"], "versions": ["<50.0"]},
+            {"locales": ["en-US", "fr"], "channels": ["release"], "versions": ["49.0"]},
+        ),
+        (
+            {"locales": ["de"], "channels": ["release"], "versions": ["<48.0"]},
+            {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]},
+        ),
         ({"buildIDs": ["<30"]}, {"buildIDs": [">=30"]}),
         ({"buildIDs": ["<=30"]}, {"buildIDs": [">30"]}),
     ],
@@ -3694,7 +3991,10 @@ def testSchema9CanCreateValidBlobs(for1, for2):
         "appVersion": "31.0.2",
         "displayVersion": "31.0.2",
         "updateLine": [
-            {"for": for1, "fields": {"detailsURL": "http://example.org/details/%LOCALE%", "type": "minor"}},
+            {
+                "for": for1,
+                "fields": {"detailsURL": "http://example.org/details/%LOCALE%", "type": "minor"},
+            },
             {"for": for2, "fields": {"detailsURL": "http://example.org/specialdetails/%LOCALE%"}},
         ],
     }
@@ -3724,7 +4024,10 @@ def testSchema9CanCreateValidBlobs(for1, for2):
         ({"versions": [">49.0"]}, {"versions": ["<=50.0"]}),
         ({"versions": [">=49.0"]}, {"versions": ["<=50.0"]}),
         ({"versions": ["<=49.0"]}, {"versions": ["<=50.0"]}),
-        ({"locales": ["de"], "channels": ["release*"], "versions": ["<50.0"]}, {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]}),
+        (
+            {"locales": ["de"], "channels": ["release*"], "versions": ["<50.0"]},
+            {"locales": ["de", "fr"], "channels": ["release"], "versions": ["49.0"]},
+        ),
         ({"buildIDs": ["<30"]}, {"buildIDs": [">=20"]}),
         ({"buildIDs": [">=20"]}, {"buildIDs": ["<30"]}),
         ({"buildIDs": ["<30"]}, {"buildIDs": ["<30"]}),
@@ -3738,7 +4041,10 @@ def testSchema9CannotCreateBlobWithConflictingFields(for1, for2):
         "appVersion": "31.0.2",
         "displayVersion": "31.0.2",
         "updateLine": [
-            {"for": for1, "fields": {"detailsURL": "http://example.org/details/%LOCALE%", "type": "minor"}},
+            {
+                "for": for1,
+                "fields": {"detailsURL": "http://example.org/details/%LOCALE%", "type": "minor"},
+            },
             {"for": for2, "fields": {"detailsURL": "http://example.org/specialdetails/%LOCALE%"}},
         ],
     }
@@ -3756,7 +4062,11 @@ class TestDesupportBlob(unittest.TestCase):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
         app.config["WHITELISTED_DOMAINS"] = self.whitelistedDomains
-        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        dbo.setDb(
+            "sqlite:///:memory:",
+            releases_history_buckets={"*": "fake"},
+            releases_history_class=FakeGCSHistory,
+        )
         self.metadata.create_all(dbo.engine)
         self.blob = DesupportBlob()
         self.blob.loadJSON(
@@ -3771,10 +4081,20 @@ class TestDesupportBlob(unittest.TestCase):
         )
 
     def testDesupport(self):
-        updateQuery = {"locale": "<locale>", "version": "<version>", "buildTarget": "Darwin_x86_64-gcc3-u-i386-x86_64"}
-        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        updateQuery = {
+            "locale": "<locale>",
+            "version": "<version>",
+            "buildTarget": "Darwin_x86_64-gcc3-u-i386-x86_64",
+        }
+        returned_header = self.blob.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned = self.blob.getInnerXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        returned_footer = self.blob.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         returned = [x.strip() for x in returned]
         expected_header = ""
         expected = [
@@ -3796,9 +4116,15 @@ class TestDesupportBlob(unittest.TestCase):
 class TestUnifiedFileUrlsMixin(unittest.TestCase):
     def setUp(self):
         fileUrls = {
-            "c1": {"partials": {"h1": "http://a.com/h1-partial.mar"}, "completes": {"*": "http://a.com/complete.mar"}},
+            "c1": {
+                "partials": {"h1": "http://a.com/h1-partial.mar"},
+                "completes": {"*": "http://a.com/complete.mar"},
+            },
             "*": {
-                "partials": {"h1": "http://a.com/h1-partial-catchall", "h2": "http://a.com/h2-partial-catchall"},
+                "partials": {
+                    "h1": "http://a.com/h1-partial-catchall",
+                    "h2": "http://a.com/h2-partial-catchall",
+                },
                 "completes": {"*": "http://a.com/complete-catchall"},
             },
         }
@@ -3862,7 +4188,8 @@ class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):
 
     def testGetAdditionalPatchAttributesComplete(self):
         patch = {
-            "hashValue": "d456a23ff5a6b35146d9edf05ccc983b0b7b6695fdc11e8d4f44a704c63ae69a585c3429bb90fece5a34a59b06f54" "b1c947178b9038ce6c83a1b6ac8a86f4274",
+            "hashValue": "d456a23ff5a6b35146d9edf05ccc983b0b7b6695fdc11e8d4f44a704c63ae69a585c3429bb90fece5a34a59b06f54"
+            "b1c947178b9038ce6c83a1b6ac8a86f4274",
             "from": "*",
             "filesize": 49376124,
             "binTransInclusionProof": "foobar",
@@ -3875,7 +4202,8 @@ class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):
 
     def testGetAdditionalPatchAttributesPartial(self):
         patch = {
-            "hashValue": "dffd728108a176b1aeca390a420200daa9272f246587f81fde41ad3f5c44bf6de17fb7899b4353e5cbaa8528ea389" "234890221188db5bb58588ad366c2be0676",
+            "hashValue": "dffd728108a176b1aeca390a420200daa9272f246587f81fde41ad3f5c44bf6de17fb7899b4353e5cbaa8528ea389"
+            "234890221188db5bb58588ad366c2be0676",
             "from": "Firefox-54.0b12-build1",
             "filesize": 28264739,
             "binTransInclusionProof": "barfoo",

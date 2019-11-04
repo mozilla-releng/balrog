@@ -43,7 +43,9 @@ def _get_auth0_token(secrets, session):
 
     See https://auth0.com/docs/api/authentication#regular-web-app-login-flow43 for the description
     """
-    cache_key = "{}-{}-{}".format(secrets["client_id"], secrets["client_secret"], secrets["audience"])
+    cache_key = "{}-{}-{}".format(
+        secrets["client_id"], secrets["client_secret"], secrets["audience"]
+    )
     if cache_key in _token_cache:
         entry = _token_cache[cache_key]
         expiration = entry["exp"]
@@ -53,7 +55,12 @@ def _get_auth0_token(secrets, session):
 
     logging.debug("Refreshing, getting new token")
     url = "https://{}/oauth/token".format(secrets["domain"])
-    payload = dict(client_id=secrets["client_id"], client_secret=secrets["client_secret"], audience=secrets["audience"], grant_type="client_credentials")
+    payload = dict(
+        client_id=secrets["client_id"],
+        client_secret=secrets["client_secret"],
+        audience=secrets["audience"],
+        grant_type="client_credentials",
+    )
     headers = {"Content-Type": "application/json"}
     request = session.post(url, data=json.dumps(payload), headers=headers)
     request.raise_for_status()
@@ -106,7 +113,15 @@ class API(object):
     prerequest_url_template = None
     url_template_vars = None
 
-    def __init__(self, auth0_secrets, api_root="https://aus4-admin-dev.allizom.org/api", ca_certs=True, timeout=60, raise_exceptions=True, session=None):
+    def __init__(
+        self,
+        auth0_secrets,
+        api_root="https://aus4-admin-dev.allizom.org/api",
+        ca_certs=True,
+        timeout=60,
+        raise_exceptions=True,
+        session=None,
+    ):
         """ Creates an API object which wraps REST API of Balrog server.
 
         api_root: API root URL of balrog server
@@ -167,7 +182,12 @@ class API(object):
             logging.debug("Data sent: %s", _json_log_data(sanitised_data))
         else:
             logging.debug("Data sent: %s", _json_log_data(data))
-        headers = {"Accept-Encoding": "application/json", "Accept": "application/json", "Content-Type": "application/json", "Referer": self.api_root}
+        headers = {
+            "Accept-Encoding": "application/json",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Referer": self.api_root,
+        }
         before = time.time()
         access_token = _get_auth0_token(self.auth0_secrets, session=self.session)
         auth = BearerAuth(access_token)
@@ -176,7 +196,15 @@ class API(object):
         # requests.
         if data:
             data = json.dumps(data)
-        req = self.session.request(method=method, url=url, data=data, timeout=self.timeout, verify=self.verify, auth=auth, headers=headers)
+        req = self.session.request(
+            method=method,
+            url=url,
+            data=data,
+            timeout=self.timeout,
+            verify=self.verify,
+            auth=auth,
+            headers=headers,
+        )
         try:
             if self.raise_exceptions:
                 req.raise_for_status()
@@ -185,7 +213,13 @@ class API(object):
             logging.error("Caught HTTPError: %s", excp.response.content)
             raise
         finally:
-            stats = {"timestamp": time.time(), "method": method, "url": url, "status_code": req.status_code, "elapsed_secs": time.time() - before}
+            stats = {
+                "timestamp": time.time(),
+                "method": method,
+                "url": url,
+                "status_code": req.status_code,
+                "elapsed_secs": time.time() - before,
+            }
             logging.debug("REQUEST STATS: %s", json.dumps(stats))
 
     def get_data(self):
@@ -202,7 +236,9 @@ class Release(API):
         self.name = name
         self.url_template_vars = dict(name=name)
 
-    def update_release(self, product, hashFunction, releaseData, data_version=None, schemaVersion=None):
+    def update_release(
+        self, product, hashFunction, releaseData, data_version=None, schemaVersion=None
+    ):
         data = dict(name=self.name, product=product, hashFunction=hashFunction, data=releaseData)
         if data_version:
             data["data_version"] = data_version
@@ -275,7 +311,9 @@ class SingleLocale(API):
             else:
                 raise
 
-    def update_build(self, product, hashFunction, buildData, alias=None, schemaVersion=None, data_version=None):
+    def update_build(
+        self, product, hashFunction, buildData, alias=None, schemaVersion=None, data_version=None
+    ):
         data = dict(product=product, data=buildData, hashFunction=hashFunction)
         if alias:
             data["alias"] = alias

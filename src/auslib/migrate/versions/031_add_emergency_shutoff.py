@@ -100,13 +100,21 @@ def upgrade(migrate_engine):
 
     emergency_shutoffs_history.append_column(Column("timestamp", bigintType, nullable=False))
 
-    emergency_shutoffs_scheduled_changes_history.append_column(Column("timestamp", bigintType, nullable=False))
+    emergency_shutoffs_scheduled_changes_history.append_column(
+        Column("timestamp", bigintType, nullable=False)
+    )
 
     emergency_shutoffs_scheduled_changes_conditions.append_column(Column("when", bigintType))
-    emergency_shutoffs_scheduled_changes_conditions_history.append_column(Column("when", bigintType))
-    emergency_shutoffs_scheduled_changes_conditions_history.append_column(Column("timestamp", bigintType, nullable=False))
+    emergency_shutoffs_scheduled_changes_conditions_history.append_column(
+        Column("when", bigintType)
+    )
+    emergency_shutoffs_scheduled_changes_conditions_history.append_column(
+        Column("timestamp", bigintType, nullable=False)
+    )
 
-    emergency_shutoffs_scheduled_changes_signoffs_history.append_column(Column("timestamp", bigintType, nullable=False))
+    emergency_shutoffs_scheduled_changes_signoffs_history.append_column(
+        Column("timestamp", bigintType, nullable=False)
+    )
 
     metadata.create_all()
 

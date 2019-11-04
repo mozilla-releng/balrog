@@ -97,7 +97,9 @@ class ReleaseBlobBase(XMLBlob):
     def _getAdditionalPatchAttributes(self, patch):
         return {}
 
-    def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts):
+    def _getSpecificPatchXML(
+        self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts
+    ):
         fromRelease = self._getFromRelease(patch)
         # don't return an update if we don't match the from restriction
         if fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
@@ -128,12 +130,9 @@ class ReleaseBlobBase(XMLBlob):
         if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
             return None
 
-        patchXML = '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"' % (
-            patchType,
-            url,
-            self["hashFunction"],
-            patch["hashValue"],
-            patch["filesize"],
+        patchXML = (
+            '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"'
+            % (patchType, url, self["hashFunction"], patch["hashValue"], patch["filesize"])
         )
         additionalPatchAttributes = self._getAdditionalPatchAttributes(patch)
         for attribute in additionalPatchAttributes:
@@ -185,7 +184,9 @@ class ReleaseBlobBase(XMLBlob):
         locale = updateQuery["locale"]
         localeData = self.getLocaleData(buildTarget, locale)
 
-        patches = self._getPatchesXML(localeData, updateQuery, whitelistedDomains, specialForceHosts)
+        patches = self._getPatchesXML(
+            localeData, updateQuery, whitelistedDomains, specialForceHosts
+        )
         return patches
 
     def shouldServeUpdate(self, updateQuery):
@@ -201,8 +202,12 @@ class ReleaseBlobBase(XMLBlob):
             self.log.debug("Matching rule has older version than request, will not serve update.")
             return False
         elif releaseVersion == queryVersion:
-            if updateQuery["buildID"] >= self.getBuildID(updateQuery["buildTarget"], updateQuery["locale"]):
-                self.log.debug("Matching rule has older buildid than request, will not serve update.")
+            if updateQuery["buildID"] >= self.getBuildID(
+                updateQuery["buildTarget"], updateQuery["locale"]
+            ):
+                self.log.debug(
+                    "Matching rule has older buildid than request, will not serve update."
+                )
                 return False
         if updateQuery["buildTarget"] not in self["platforms"].keys():
             return False
@@ -294,7 +299,9 @@ class SingleUpdateXMLMixin(object):
             if not patch:
                 continue
 
-            xml = self._getSpecificPatchXML(patchKey, patchKey, patch, updateQuery, whitelistedDomains, specialForceHosts)
+            xml = self._getSpecificPatchXML(
+                patchKey, patchKey, patch, updateQuery, whitelistedDomains, specialForceHosts
+            )
             if xml:
                 patches.append(xml)
 
@@ -339,7 +346,9 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         for platform in self.get("platforms", {}):
             for locale in self["platforms"][platform].get("locales", {}):
                 if self["platforms"][platform]["locales"][locale].get("partial"):
-                    referencedReleases.add(self["platforms"][platform]["locales"][locale]["partial"]["from"])
+                    referencedReleases.add(
+                        self["platforms"][platform]["locales"][locale]["partial"]["from"]
+                    )
         return referencedReleases
 
     # TODO: kill me when aus3.m.o is dead, and snippet tests have been
@@ -401,7 +410,12 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         extv = self.getExtv(buildTarget, locale)
         buildid = self.getBuildID(buildTarget, locale)
 
-        updateLine = '    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % (update_type, appv, extv, buildid)
+        updateLine = '    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % (
+            update_type,
+            appv,
+            extv,
+            buildid,
+        )
         if "detailsUrl" in self:
             details = self["detailsUrl"].replace("%LOCALE%", locale)
             details = details.replace("%locale%", locale)
@@ -423,7 +437,9 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         this method, but that doesn't have access to the updateQuery to lookup
         the version making the request.
         """
-        xml = super(ReleaseBlobV1, self).getInnerHeaderXML(updateQuery, update_type, whitelistedDomains, specialForceHosts)
+        xml = super(ReleaseBlobV1, self).getInnerHeaderXML(
+            updateQuery, update_type, whitelistedDomains, specialForceHosts
+        )
 
         if self.get("oldVersionSpecialCases"):
             query_ver = MozillaVersion(updateQuery["version"])
@@ -431,14 +447,19 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
             real_extv = self.getExtv(updateQuery["buildTarget"], updateQuery["locale"])
             if query_ver >= MozillaVersion("2.0") and query_ver < MozillaVersion("3.5"):
                 # 2.0 and 3.0 need a fake version, and extVersion omitted
-                xml = xml.replace('version="%s"' % real_appv, 'version="%s"' % updateQuery["version"])
+                xml = xml.replace(
+                    'version="%s"' % real_appv, 'version="%s"' % updateQuery["version"]
+                )
                 xml = xml.replace('extensionVersion="%s" ' % real_extv, "")
             elif query_ver >= MozillaVersion("3.5") and query_ver < MozillaVersion("3.6"):
                 # 3.5 needs extVersion omitted
                 xml = xml.replace('extensionVersion="%s" ' % real_extv, "")
             elif query_ver >= MozillaVersion("3.6") and query_ver < MozillaVersion("4.0"):
                 # 3.6 needs a fake extensionVersion
-                xml = xml.replace('extensionVersion="%s"' % real_extv, 'extensionVersion="%s"' % updateQuery["version"])
+                xml = xml.replace(
+                    'extensionVersion="%s"' % real_extv,
+                    'extensionVersion="%s"' % updateQuery["version"],
+                )
             # and we don't use ReleaseBlobV1 to serve anything to 4.0 or later
         return xml
 
@@ -468,12 +489,9 @@ class NewStyleVersionsMixin(object):
 
         localeData = self.getLocaleData(buildTarget, locale)
 
-        updateLine = '    <update type="%s" displayVersion="%s" appVersion="%s" platformVersion="%s" buildID="%s"' % (
-            update_type,
-            displayVersion,
-            appVersion,
-            platformVersion,
-            buildid,
+        updateLine = (
+            '    <update type="%s" displayVersion="%s" appVersion="%s" platformVersion="%s" buildID="%s"'
+            % (update_type, displayVersion, appVersion, platformVersion, buildid)
         )
         if "detailsUrl" in self:
             details = self["detailsUrl"].replace("%LOCALE%", locale)
@@ -503,7 +521,9 @@ class NewStyleVersionsMixin(object):
         return updateLine
 
 
-class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
+class ReleaseBlobV2(
+    ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin, SeparatedFileUrlsMixin
+):
     """ Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
 
         Client-side changes in
@@ -522,7 +542,15 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
     jsonschema = "apprelease-v2.yml"
 
     # for the benefit of get*XML and createSnippets
-    optional_ = ("billboardURL", "showPrompt", "showNeverForVersion", "actions", "openURL", "notificationURL", "alertURL")
+    optional_ = (
+        "billboardURL",
+        "showPrompt",
+        "showNeverForVersion",
+        "actions",
+        "openURL",
+        "notificationURL",
+        "alertURL",
+    )
     # params that can have %LOCALE% interpolated
     interpolable_ = ("billboardURL", "openURL", "notificationURL", "alertURL")
 
@@ -597,7 +625,9 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
         for platform in self.get("platforms", {}):
             for locale in self["platforms"][platform].get("locales", {}):
                 if self["platforms"][platform]["locales"][locale].get("partial"):
-                    referencedReleases.add(self["platforms"][platform]["locales"][locale]["partial"]["from"])
+                    referencedReleases.add(
+                        self["platforms"][platform]["locales"][locale]["partial"]["from"]
+                    )
         return referencedReleases
 
 
@@ -606,7 +636,9 @@ class MultipleUpdatesXMLMixin(object):
         patches = []
         for patchKey, patchType in (("completes", "complete"), ("partials", "partial")):
             for patch in localeData.get(patchKey, {}):
-                xml = self._getSpecificPatchXML(patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts)
+                xml = self._getSpecificPatchXML(
+                    patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts
+                )
                 if xml:
                     patches.append(xml)
                     break
@@ -614,7 +646,9 @@ class MultipleUpdatesXMLMixin(object):
         return patches
 
 
-class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, SeparatedFileUrlsMixin):
+class ReleaseBlobV3(
+    ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, SeparatedFileUrlsMixin
+):
     """ Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
 
         This is an internal change to add functionality to Balrog.
@@ -628,7 +662,15 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     jsonschema = "apprelease-v3.yml"
 
     # for the benefit of get*XML
-    optional_ = ("billboardURL", "showPrompt", "showNeverForVersion", "actions", "openURL", "notificationURL", "alertURL")
+    optional_ = (
+        "billboardURL",
+        "showPrompt",
+        "showNeverForVersion",
+        "actions",
+        "openURL",
+        "notificationURL",
+        "alertURL",
+    )
     # params that can have %LOCALE% interpolated
     interpolable_ = ("billboardURL", "openURL", "notificationURL", "alertURL")
 
@@ -704,7 +746,9 @@ class UnifiedFileUrlsMixin(object):
         return url
 
 
-class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+class ReleaseBlobV4(
+    ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin
+):
     """ Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
 
     This is an internal change to add functionality to Balrog.
@@ -718,7 +762,15 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     jsonschema = "apprelease-v4.yml"
 
     # for the benefit of get*XML
-    optional_ = ("billboardURL", "showPrompt", "showNeverForVersion", "actions", "openURL", "notificationURL", "alertURL")
+    optional_ = (
+        "billboardURL",
+        "showPrompt",
+        "showNeverForVersion",
+        "actions",
+        "openURL",
+        "notificationURL",
+        "alertURL",
+    )
     # params that can have %LOCALE% interpolated
     interpolable_ = ("billboardURL", "openURL", "notificationURL", "alertURL")
 
@@ -755,7 +807,10 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
             # Technically, they could have neither, but if we had blob validation,
             # that probably be considered an invalid state. Probably not worth
             # supporting here.
-            for matchstr, lookup in (("%PRODUCT%", "bouncerProducts"), ("%FILENAME%", "ftpFilenames")):
+            for matchstr, lookup in (
+                ("%PRODUCT%", "bouncerProducts"),
+                ("%FILENAME%", "ftpFilenames"),
+            ):
                 if matchstr in baseUrl:
                     # If we've found a match, we need to replicate the inner structure
                     # of the lookup dict, substitute the match in the url,
@@ -786,7 +841,9 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         return referencedReleases
 
 
-class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+class ReleaseBlobV5(
+    ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin
+):
     """ Compatible with Gecko 19.0 and above, ie Firefox/Thunderbird 19.0 and above.
 
     Driven by a client-side change made in
@@ -799,7 +856,16 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     jsonschema = "apprelease-v5.yml"
 
     # for the benefit of get*XML
-    optional_ = ("billboardURL", "showPrompt", "showNeverForVersion", "actions", "openURL", "notificationURL", "alertURL", "promptWaitTime")
+    optional_ = (
+        "billboardURL",
+        "showPrompt",
+        "showNeverForVersion",
+        "actions",
+        "openURL",
+        "notificationURL",
+        "alertURL",
+        "promptWaitTime",
+    )
     # params that can have %LOCALE% interpolated
     interpolable_ = ("billboardURL", "openURL", "notificationURL", "alertURL")
 
@@ -826,7 +892,9 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         return referencedReleases
 
 
-class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+class ReleaseBlobV6(
+    ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin
+):
     """  Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
 
     Changes from ReleaseBlobV5:
@@ -840,7 +908,15 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     jsonschema = "apprelease-v6.yml"
 
     # for the benefit of get*XML
-    optional_ = ("showPrompt", "showNeverForVersion", "actions", "openURL", "notificationURL", "alertURL", "promptWaitTime")
+    optional_ = (
+        "showPrompt",
+        "showNeverForVersion",
+        "actions",
+        "openURL",
+        "notificationURL",
+        "alertURL",
+        "promptWaitTime",
+    )
     # params that can have %LOCALE% interpolated
     interpolable_ = ("openURL", "notificationURL", "alertURL")
 
@@ -877,7 +953,13 @@ class ProofXMLMixin(object):
         return additionalPatchAttributes
 
 
-class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
+class ReleaseBlobV8(
+    ProofXMLMixin,
+    ReleaseBlobBase,
+    NewStyleVersionsMixin,
+    MultipleUpdatesXMLMixin,
+    UnifiedFileUrlsMixin,
+):
     """  Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
 
     Changes from ReleaseBlobV6:
@@ -952,8 +1034,12 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
 
     def _getUpdateLineXML(self, updateQuery, update_type):
         attrs = {
-            "appVersion": self.getLocaleOrTopLevelParam(updateQuery["buildTarget"], updateQuery["locale"], "appVersion"),
-            "displayVersion": self.getLocaleOrTopLevelParam(updateQuery["buildTarget"], updateQuery["locale"], "displayVersion"),
+            "appVersion": self.getLocaleOrTopLevelParam(
+                updateQuery["buildTarget"], updateQuery["locale"], "appVersion"
+            ),
+            "displayVersion": self.getLocaleOrTopLevelParam(
+                updateQuery["buildTarget"], updateQuery["locale"], "displayVersion"
+            ),
             "buildID": self.getBuildID(updateQuery["buildTarget"], updateQuery["locale"]),
             # This is set to the update_type specified in the Rule, but will be
             # overridden by one in an updateLine object, if it exists/applies.
@@ -966,7 +1052,16 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
             for condition, values in group["for"].items():
                 matches = False
                 if condition == "channels":
-                    if any(map(lambda c: matchChannel(c, updateQuery["channel"], getFallbackChannel(updateQuery["channel"])), values)):
+                    if any(
+                        map(
+                            lambda c: matchChannel(
+                                c,
+                                updateQuery["channel"],
+                                getFallbackChannel(updateQuery["channel"]),
+                            ),
+                            values,
+                        )
+                    ):
                         matches = True
                 elif condition == "locales":
                     if updateQuery["locale"] in values:
@@ -1014,7 +1109,9 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         conflicts = []
         conflicting_values = set()
 
-        for (group1, group2) in itertools.product(self.get("updateLine", []), self.get("updateLine", [])):
+        for (group1, group2) in itertools.product(
+            self.get("updateLine", []), self.get("updateLine", [])
+        ):
             # Skip over groups that are identical - they can't conflict
             if group1 == group2:
                 continue
@@ -1032,24 +1129,32 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                     continue
 
                 if cond == "channels":
-                    for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
+                    for (value1, value2) in itertools.product(
+                        group1["for"][cond], group2["for"][cond]
+                    ):
                         # Exact match of concrete channel or two globs
                         if value1 == value2:
                             matches = True
                             break
                         # Logical match in either direction, which takes into account
                         # globbing and fallback channels
-                        elif matchChannel(value1, value2.rstrip("*"), getFallbackChannel(value2.rstrip("*"))):
+                        elif matchChannel(
+                            value1, value2.rstrip("*"), getFallbackChannel(value2.rstrip("*"))
+                        ):
                             matches = True
                             break
-                        elif matchChannel(value2, value1.rstrip("*"), getFallbackChannel(value1.rstrip("*"))):
+                        elif matchChannel(
+                            value2, value1.rstrip("*"), getFallbackChannel(value1.rstrip("*"))
+                        ):
                             matches = True
                             break
                 elif cond == "locales":
                     if set(group1["for"][cond]).intersection(set(group2["for"][cond])):
                         matches = True
                 elif cond == "versions":
-                    for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
+                    for (value1, value2) in itertools.product(
+                        group1["for"][cond], group2["for"][cond]
+                    ):
                         # Any exact match between two concrete versions or two
                         # comparisons means we have version overlap.
                         if value1 == value2:
@@ -1082,14 +1187,22 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                                 elif v.startswith(">"):
                                     comparable_values.append(increment_version(strip_operator(v)))
                             if len(comparable_values) != 2:
-                                raise BlobValidationError("Couldn't find a comparable value for one of: %s, %s".format(value1, value2))
+                                raise BlobValidationError(
+                                    "Couldn't find a comparable value for one of: %s, %s".format(
+                                        value1, value2
+                                    )
+                                )
 
                             # Once we have comparable versions, we can check them!
-                            if matchVersion(value1, comparable_values[1]) or matchVersion(value2, comparable_values[0]):
+                            if matchVersion(value1, comparable_values[1]) or matchVersion(
+                                value2, comparable_values[0]
+                            ):
                                 matches = True
                                 break
                 elif cond == "buildIDs":
-                    for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
+                    for (value1, value2) in itertools.product(
+                        group1["for"][cond], group2["for"][cond]
+                    ):
                         # Any exact match between two concrete versions or two
                         # comparisons means we have version overlap.
                         if value1 == value2:
@@ -1112,10 +1225,16 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                                 elif v.startswith(">"):
                                     comparable_values.append(str(int(strip_operator(v)) + 1))
                             if len(comparable_values) != 2:
-                                raise BlobValidationError("Couldn't find a comparable value for one of: %s, %s".format(value1, value2))
+                                raise BlobValidationError(
+                                    "Couldn't find a comparable value for one of: %s, %s".format(
+                                        value1, value2
+                                    )
+                                )
 
                             # Once we have comparable versions, we can check them!
-                            if matchBuildID(value1, comparable_values[1]) or matchBuildID(value2, comparable_values[0]):
+                            if matchBuildID(value1, comparable_values[1]) or matchBuildID(
+                                value2, comparable_values[0]
+                            ):
                                 matches = True
                                 break
 
@@ -1127,7 +1246,10 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
 
         if conflicts:
             conflicting_values = ", ".join(conflicting_values)
-            raise BlobValidationError("Multiple values found for updateLine items: {}".format(conflicting_values), conflicts)
+            raise BlobValidationError(
+                "Multiple values found for updateLine items: {}".format(conflicting_values),
+                conflicts,
+            )
 
     def getReferencedReleases(self):
         """
@@ -1186,7 +1308,10 @@ class DesupportBlob(XMLBlob):
             .replace("%os%", updateQuery["buildTarget"].split("_")[0])
         )
         xml = []
-        xml.append('    <update type="%s" unsupported="true" detailsURL="%s" displayVersion="%s">' % (update_type, tmp_url, self["displayVersion"]))
+        xml.append(
+            '    <update type="%s" unsupported="true" detailsURL="%s" displayVersion="%s">'
+            % (update_type, tmp_url, self["displayVersion"])
+        )
         return xml
 
     def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):

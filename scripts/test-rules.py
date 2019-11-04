@@ -43,7 +43,10 @@ def populateDB(testdir):
     for f in glob.glob("%s/*.json" % testdir):
         data = json.load(open(f, "r"))
         product = data["name"].split("-")[0]
-        dbo.engine.execute("INSERT INTO releases (name, product, data, data_version) VALUES ('%s', '%s','%s', 1)" % (data["name"], product, json.dumps(data)))
+        dbo.engine.execute(
+            "INSERT INTO releases (name, product, data, data_version) VALUES ('%s', '%s','%s', 1)"
+            % (data["name"], product, json.dumps(data))
+        )
     # TODO - create a proper importer that walks the snippet store to find hashes ?
 
 
@@ -65,7 +68,10 @@ def getQueryFromPath(snippetPath):
                   'name': ''
                  }
     """
-    m = re.match("^(?P<product>.*?)/(?P<version>.*?)/(?P<buildTarget>.*?)/(?P<buildID>.*?)/(?P<locale>.*?)/(?P<channel>.*?)/", snippetPath)
+    m = re.match(
+        "^(?P<product>.*?)/(?P<version>.*?)/(?P<buildTarget>.*?)/(?P<buildID>.*?)/(?P<locale>.*?)/(?P<channel>.*?)/",
+        snippetPath,
+    )
     if m:
         update = m.groupdict()
         update["osVersion"] = "foo"
@@ -103,7 +109,9 @@ def walkSnippets(AUS, testPath):
         testQuery["queryVersion"] = 3
         release, update_type = AUS.evaluateRules(testQuery)
         if release:
-            balrog_snippets = release.createSnippets(testQuery, update_type, WHITELISTED_DOMAINS, SPECIAL_FORCE_HOSTS)
+            balrog_snippets = release.createSnippets(
+                testQuery, update_type, WHITELISTED_DOMAINS, SPECIAL_FORCE_HOSTS
+            )
         else:
             balrog_snippets = {"partial": "", "complete": ""}
 
@@ -111,7 +119,9 @@ def walkSnippets(AUS, testPath):
             balrog_snippet = balrog_snippets[snipType]
             AUS2snippet = open(f, "r").read()
             if AUS2snippet != balrog_snippet:
-                diff = difflib.unified_diff(AUS2snippet.splitlines(), balrog_snippet.splitlines(), lineterm="", n=20)
+                diff = difflib.unified_diff(
+                    AUS2snippet.splitlines(), balrog_snippet.splitlines(), lineterm="", n=20
+                )
                 log.info("FAIL: %s", f)
                 failCount += 1
                 for line in diff:
@@ -153,10 +163,30 @@ if __name__ == "__main__":
     parser = OptionParser()
     parser.set_defaults(testDirs=[])
     parser.add_option("-t", "--test-dir", dest="testDirs", action="append")
-    parser.add_option("", "--dump-rules", dest="dumprules", action="store_true", help="dump rules to stdout")
-    parser.add_option("", "--dump-releases", dest="dumpreleases", action="store_true", help="dump release data to stdout")
-    parser.add_option("-v", "--verbose", dest="verbose", action="store_true", help="verbose output for snippet checking")
-    parser.add_option("-k", "--keep-db", dest="keepDB", action="store_true", help="save a copy of the test db in thetest dir")
+    parser.add_option(
+        "", "--dump-rules", dest="dumprules", action="store_true", help="dump rules to stdout"
+    )
+    parser.add_option(
+        "",
+        "--dump-releases",
+        dest="dumpreleases",
+        action="store_true",
+        help="dump release data to stdout",
+    )
+    parser.add_option(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help="verbose output for snippet checking",
+    )
+    parser.add_option(
+        "-k",
+        "--keep-db",
+        dest="keepDB",
+        action="store_true",
+        help="save a copy of the test db in thetest dir",
+    )
 
     options, args = parser.parse_args()
 
@@ -200,7 +230,10 @@ if __name__ == "__main__":
         if options.dumpreleases:
             log.info("Releases are \n(name, product, data):")
             for release in dbo.releases.getReleases():
-                log.info("(%s, %s, %s, %s " % (release["name"], release["product"], json.dumps(release["data"], indent=2)))
+                log.info(
+                    "(%s, %s, %s, %s "
+                    % (release["name"], release["product"], json.dumps(release["data"], indent=2))
+                )
             log.info("-" * 50)
 
         result = walkSnippets(AUS, os.path.join(td, "snippets"))

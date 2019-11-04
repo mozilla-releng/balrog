@@ -44,7 +44,9 @@ def process_rule_form(form_data):
             rule_form_dict[i] = int(rule_form_dict[i])
 
     mapping_values = [y for x, y in mapping_choices if x == rule_form_dict.get("mapping")]
-    fallback_mapping_values = [y for x, y in mapping_choices if x == rule_form_dict.get("fallbackMapping")]
+    fallback_mapping_values = [
+        y for x, y in mapping_choices if x == rule_form_dict.get("fallbackMapping")
+    ]
 
     return rule_form_dict, mapping_values, fallback_mapping_values
 
@@ -56,7 +58,9 @@ class RulesAPIView(AdminView):
     @requirelogin
     def _post(self, transaction, changed_by):
         # a Post here creates a new rule
-        what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.get_json())
+        what, mapping_values, fallback_mapping_values = process_rule_form(
+            connexion.request.get_json()
+        )
 
         if what.get("mapping", None) is None:
             return problem(400, "Bad Request", "mapping value cannot be set to null/empty")
@@ -65,7 +69,9 @@ class RulesAPIView(AdminView):
             return problem(400, "Bad Request", "Invalid mapping value. No release name found in DB")
 
         if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
-            return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
+            return problem(
+                400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB"
+            )
 
         # Solves Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
         what.pop("csrf_token", None)
@@ -87,9 +93,16 @@ class SingleRuleView(AdminView):
         # Verify that the rule_id or alias exists.
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         if not rule:
-            return problem(status=404, title="Not Found", detail="Requested rule wasn't found", ext={"exception": "Requested rule does not exist"})
+            return problem(
+                status=404,
+                title="Not Found",
+                detail="Requested rule wasn't found",
+                ext={"exception": "Requested rule does not exist"},
+            )
 
-        what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.get_json())
+        what, mapping_values, fallback_mapping_values = process_rule_form(
+            connexion.request.get_json()
+        )
 
         # If 'mapping' key is present in request body but is either blank/null
         if "mapping" in what and what.get("mapping", None) is None:
@@ -99,13 +112,21 @@ class SingleRuleView(AdminView):
             return problem(400, "Bad Request", "Invalid mapping value. No release name found in DB")
 
         if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
-            return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
+            return problem(
+                400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB"
+            )
 
         # Solves https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
         what.pop("csrf_token", None)
         data_version = what.pop("data_version", None)
 
-        dbo.rules.update(changed_by=changed_by, where={"rule_id": id_or_alias}, what=what, old_data_version=data_version, transaction=transaction)
+        dbo.rules.update(
+            changed_by=changed_by,
+            where={"rule_id": id_or_alias},
+            what=what,
+            old_data_version=data_version,
+            transaction=transaction,
+        )
 
         # find out what the next data version is
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
@@ -118,7 +139,12 @@ class SingleRuleView(AdminView):
         # Verify that the rule_id or alias exists.
         rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
         if not rule:
-            return problem(status=404, title="Not Found", detail="Requested rule wasn't found", ext={"exception": "Requested rule does not exist"})
+            return problem(
+                status=404,
+                title="Not Found",
+                detail="Requested rule wasn't found",
+                ext={"exception": "Requested rule does not exist"},
+            )
 
         # Bodies are ignored for DELETE requests, so we need to look at the request arguments instead.
         # Even though we aren't going to use most of the form fields (just
@@ -126,7 +152,12 @@ class SingleRuleView(AdminView):
         # form to make sure that the CSRF token is checked.
 
         old_data_version = int(connexion.request.args.get("data_version"))
-        dbo.rules.delete(where={"rule_id": id_or_alias}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+        dbo.rules.delete(
+            where={"rule_id": id_or_alias},
+            changed_by=changed_by,
+            old_data_version=old_data_version,
+            transaction=transaction,
+        )
 
         return Response(status=200)
 
@@ -181,7 +212,12 @@ class SingleRuleColumnView(AdminView):
         rules = dbo.rules.getOrderedRules()
         column_values = []
         if column not in rules[0].keys():
-            return problem(status=404, title="Not Found", detail="Rule column was not found", ext={"exception": "Requested column does not exist"})
+            return problem(
+                status=404,
+                title="Not Found",
+                detail="Rule column was not found",
+                ext={"exception": "Requested column does not exist"},
+            )
 
         for rule in rules:
             for key, value in rule.items():
@@ -209,14 +245,26 @@ class RuleScheduledChangesView(ScheduledChangesView):
     @requirelogin
     def _post(self, transaction, changed_by):
         if connexion.request.get_json().get("when", None) is None:
-            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Rule")
+            return problem(
+                400,
+                "Bad Request",
+                "'when' cannot be set to null when scheduling a new change " "for a Rule",
+            )
         if connexion.request.get_json():
             change_type = connexion.request.get_json().get("change_type")
         else:
             change_type = connexion.request.values.get("change_type")
 
         what = {}
-        delete_change_type_allowed_fields = ["telemetry_product", "telemetry_channel", "telemetry_uptake", "when", "rule_id", "data_version", "change_type"]
+        delete_change_type_allowed_fields = [
+            "telemetry_product",
+            "telemetry_channel",
+            "telemetry_uptake",
+            "when",
+            "rule_id",
+            "data_version",
+            "change_type",
+        ]
         for field in connexion.request.get_json():
             # TODO: currently UI passes extra rule model fields in change_type == 'delete' request body. Fix it and
             # TODO: change the below operation from filter/pop to throw Error when extra fields are passed.
@@ -236,16 +284,28 @@ class RuleScheduledChangesView(ScheduledChangesView):
         if change_type in ["update", "delete"]:
             for field in ["rule_id", "data_version"]:
                 if not what.get(field, None):
-                    return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
+                    return problem(
+                        400,
+                        "Bad Request",
+                        "Missing field",
+                        ext={"exception": "%s is missing" % field},
+                    )
 
         elif change_type == "insert":
             for field in ["update_type", "backgroundRate", "priority"]:
-                if what.get(field, None) is None or isinstance(what.get(field), str_types) and what.get(field).strip() == "":
+                if (
+                    what.get(field, None) is None
+                    or isinstance(what.get(field), str_types)
+                    and what.get(field).strip() == ""
+                ):
                     return problem(
                         400,
                         "Bad Request",
                         "Null/Empty Value",
-                        ext={"exception": "%s cannot be set to null/empty " "when scheduling insertion of a new rule" % field},
+                        ext={
+                            "exception": "%s cannot be set to null/empty "
+                            "when scheduling insertion of a new rule" % field
+                        },
                     )
 
         if change_type in ["update", "insert"]:
@@ -264,12 +324,18 @@ class RuleScheduledChangesView(ScheduledChangesView):
 
             # If mapping is present in request body and is non-empty string which does not match any release name
             if what.get("mapping") is not None and len(mapping_values) != 1:
-                return problem(400, "Bad Request", "Invalid mapping value. No release name found in DB")
+                return problem(
+                    400, "Bad Request", "Invalid mapping value. No release name found in DB"
+                )
 
             if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
-                return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
+                return problem(
+                    400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB"
+                )
 
-        return super(RuleScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
+        return super(RuleScheduledChangesView, self)._post(
+            what, transaction, changed_by, change_type
+        )
 
 
 class RuleScheduledChangeView(ScheduledChangeView):
@@ -281,11 +347,18 @@ class RuleScheduledChangeView(ScheduledChangeView):
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         # TODO: modify UI and clients to stop sending 'change_type' in request body
-        sc_rule = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
+        sc_rule = self.sc_table.select(
+            where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"]
+        )
         if sc_rule:
             change_type = sc_rule[0]["change_type"]
         else:
-            return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for rule found for given sc_id"})
+            return problem(
+                404,
+                "Not Found",
+                "Unknown sc_id",
+                ext={"exception": "No scheduled change for rule found for given sc_id"},
+            )
 
         what = {}
         for field in connexion.request.get_json():
@@ -295,21 +368,44 @@ class RuleScheduledChangeView(ScheduledChangeView):
             if (
                 field in ["csrf_token", "rule_id", "sc_data_version"]
                 or (change_type == "insert" and field == "data_version")
-                or (change_type == "delete" and field not in ["sc_data_version", "when", "telemetry_product", "telemetry_channel", "telemetry_uptake"])
+                or (
+                    change_type == "delete"
+                    and field
+                    not in [
+                        "sc_data_version",
+                        "when",
+                        "telemetry_product",
+                        "telemetry_channel",
+                        "telemetry_uptake",
+                    ]
+                )
             ):
                 continue
 
             what[field] = connexion.request.get_json()[field]
 
         if change_type == "update" and not what.get("data_version", None):
-            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+            return problem(
+                400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"}
+            )
 
         elif change_type == "insert":
             # edit scheduled change for new rule
             for field in ["update_type", "backgroundRate", "priority"]:
-                if field in what and what.get(field) is None or isinstance(what.get(field), str_types) and what.get(field).strip() == "":
+                if (
+                    field in what
+                    and what.get(field) is None
+                    or isinstance(what.get(field), str_types)
+                    and what.get(field).strip() == ""
+                ):
                     return problem(
-                        400, "Bad Request", "Null/Empty Value", ext={"exception": "%s cannot be set to null " "when scheduling insertion of a new rule" % field}
+                        400,
+                        "Bad Request",
+                        "Null/Empty Value",
+                        ext={
+                            "exception": "%s cannot be set to null "
+                            "when scheduling insertion of a new rule" % field
+                        },
                     )
 
         if change_type in ["update", "insert"]:
@@ -322,12 +418,22 @@ class RuleScheduledChangeView(ScheduledChangeView):
 
             # If 'mapping' key is present in request body and is non-empty string which does not match any release name
             if what.get("mapping") is not None and len(mapping_values) != 1:
-                return problem(400, "Bad Request", "Invalid mapping value. No release name found in DB")
+                return problem(
+                    400, "Bad Request", "Invalid mapping value. No release name found in DB"
+                )
 
             if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
-                return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
+                return problem(
+                    400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB"
+                )
 
-        return super(RuleScheduledChangeView, self)._post(sc_id, what, transaction, changed_by, connexion.request.get_json().get("sc_data_version", None))
+        return super(RuleScheduledChangeView, self)._post(
+            sc_id,
+            what,
+            transaction,
+            changed_by,
+            connexion.request.get_json().get("sc_data_version", None),
+        )
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):

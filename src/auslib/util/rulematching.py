@@ -70,7 +70,9 @@ def matchSimpleExpression(ruleString, queryString, substring=True):
     if ruleString is None:
         return True
 
-    decomposedRules = [[rule.strip() for rule in subRule.split("&&")] for subRule in ruleString.split(",")]
+    decomposedRules = [
+        [rule.strip() for rule in subRule.split("&&")] for subRule in ruleString.split(",")
+    ]
 
     for subRule in decomposedRules:
         if matchSimpleExpressionSubRule(subRule, queryString, substring):

@@ -7,7 +7,9 @@ def upgrade(migrate_engine):
     Table("rules", metadata, autoload=True).c.systemCapabilities.drop()
     Table("rules_history", metadata, autoload=True).c.systemCapabilities.drop()
     Table("rules_scheduled_changes", metadata, autoload=True).c.base_systemCapabilities.drop()
-    Table("rules_scheduled_changes_history", metadata, autoload=True).c.base_systemCapabilities.drop()
+    Table(
+        "rules_scheduled_changes_history", metadata, autoload=True
+    ).c.base_systemCapabilities.drop()
 
 
 def downgrade(migrate_engine):
@@ -23,12 +25,16 @@ def downgrade(migrate_engine):
     base_systemCapabilities.create(Table("rules_scheduled_changes", metadata, autoload=True))
 
     base_systemCapabilities = Column("base_systemCapabilities", String(1000))
-    base_systemCapabilities.create(Table("rules_scheduled_changes_history", metadata, autoload=True))
+    base_systemCapabilities.create(
+        Table("rules_scheduled_changes_history", metadata, autoload=True)
+    )
 
     # make a best effort to restore the data
     conn = migrate_engine.connect()
     conn.execute("UPDATE rules SET systemCapabilities=instructionSet;")
     conn.execute("UPDATE rules_history SET systemCapabilities=instructionSet;")
     conn.execute("UPDATE rules_scheduled_changes SET base_systemCapabilities=base_instructionSet;")
-    conn.execute("UPDATE rules_scheduled_changes_history SET base_systemCapabilities=base_instructionSet;")
+    conn.execute(
+        "UPDATE rules_scheduled_changes_history SET base_systemCapabilities=base_instructionSet;"
+    )
     conn.close()

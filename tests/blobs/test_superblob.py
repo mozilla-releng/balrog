@@ -61,8 +61,12 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        headerXML_gmp = self.superblob_gmp.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        headerXML_addon = self.superblob_addon.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        headerXML_gmp = self.superblob_gmp.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        headerXML_addon = self.superblob_addon.getInnerHeaderXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
 
         expected_header_gmp = "    <addons>"
         expected_header_addon = "    <addons>"
@@ -83,8 +87,12 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        footerXML_gmp = self.superblob_gmp.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        footerXML_addon = self.superblob_addon.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        footerXML_gmp = self.superblob_gmp.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
+        footerXML_addon = self.superblob_addon.getInnerFooterXML(
+            updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts
+        )
         expected_footer_gmp = "    </addons>"
         expected_footer_addon = "    </addons>"
         self.assertEqual(footerXML_gmp, expected_footer_gmp)

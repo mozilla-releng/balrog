@@ -24,7 +24,9 @@ def operator_validator(field_value):
         logger.debug("Got (%s, %s) from get_op", op, operand)
     except TypeError:
         # get_op field returns None if no operator or no match, can't be unpacked
-        raise jsonschema.ValidationError("Invalid input for buildID : %s. No Operator or Match found." % field_value)
+        raise jsonschema.ValidationError(
+            "Invalid input for buildID : %s. No Operator or Match found." % field_value
+        )
     try:
         int(strip_operator(field_value))
     except ValueError:
@@ -47,22 +49,33 @@ def version_validator(field_value):
             op, operand = get_op(rule_version)
             if is_list_of_versions and op != operator.eq:
                 raise jsonschema.ValidationError(
-                    "Invalid input for %s .Relational Operators are not allowed" " when providing a list of versions." % field_value
+                    "Invalid input for %s .Relational Operators are not allowed"
+                    " when providing a list of versions." % field_value
                 )
             version = MozillaVersion(operand)
         except jsonschema.ValidationError:
             raise
         except ValueError:
-            raise jsonschema.ValidationError("ValueError. Couldn't parse version for %s. Invalid '%s' input value" % (field_value, field_value))
+            raise jsonschema.ValidationError(
+                "ValueError. Couldn't parse version for %s. Invalid '%s' input value"
+                % (field_value, field_value)
+            )
         except Exception:
-            raise jsonschema.ValidationError("Invalid input for %s . No Operator or Match found." % field_value)
+            raise jsonschema.ValidationError(
+                "Invalid input for %s . No Operator or Match found." % field_value
+            )
         # MozillaVersion doesn't error on empty strings
         if not hasattr(version, "version"):
-            raise jsonschema.ValidationError("Couldn't parse the version for %s. No attribute 'version' was detected." % field_value)
+            raise jsonschema.ValidationError(
+                "Couldn't parse the version for %s. No attribute 'version' was detected."
+                % field_value
+            )
     return True
 
 
-@jsonschema.draft4_format_checker.checks(format="JSONStringField", raises=jsonschema.ValidationError)
+@jsonschema.draft4_format_checker.checks(
+    format="JSONStringField", raises=jsonschema.ValidationError
+)
 def json_field_validator(field_value):
     logger.debug("starting in json_field_validator: input json is %s" % field_value)
     if not isinstance(field_value, str_types):
@@ -78,7 +91,11 @@ def json_field_validator(field_value):
 
 
 def integer_and_range_validator(field_name, field_value, min_val=None, max_val=None):
-    if not isinstance(field_value, str_types) and not isinstance(field_value, int) and field_value is not None:
+    if (
+        not isinstance(field_value, str_types)
+        and not isinstance(field_value, int)
+        and field_value is not None
+    ):
         return False
     # empty input is fine
     if field_value is None or field_value == "":
@@ -86,15 +103,23 @@ def integer_and_range_validator(field_name, field_value, min_val=None, max_val=N
     try:
         x = int(field_value)
     except Exception:
-        raise jsonschema.ValidationError(message="Invalid input for %s. Not an integer." % field_name)
+        raise jsonschema.ValidationError(
+            message="Invalid input for %s. Not an integer." % field_name
+        )
     if min_val is not None and x < min_val:
-        raise jsonschema.ValidationError(message="%s field value should be an integer >= %s" % (field_name, min_val))
+        raise jsonschema.ValidationError(
+            message="%s field value should be an integer >= %s" % (field_name, min_val)
+        )
     if max_val is not None and x > max_val:
-        raise jsonschema.ValidationError(message="%s field value should be an integer <= %s" % (field_name, max_val))
+        raise jsonschema.ValidationError(
+            message="%s field value should be an integer <= %s" % (field_name, max_val)
+        )
     return True
 
 
-@jsonschema.draft4_format_checker.checks(format="telemetry_uptake", raises=jsonschema.ValidationError)
+@jsonschema.draft4_format_checker.checks(
+    format="telemetry_uptake", raises=jsonschema.ValidationError
+)
 def telemetry_uptake_validator(field_value):
     if field_value is not None and field_value != "":
         logger.debug("starting in telemetry_uptake_validator: telemetry_uptake is %s" % field_value)
@@ -136,10 +161,14 @@ def rule_id_validator(field_value):
     return integer_and_range_validator("rule_id", field_value, 0)
 
 
-@jsonschema.draft4_format_checker.checks(format="signoffs_required", raises=jsonschema.ValidationError)
+@jsonschema.draft4_format_checker.checks(
+    format="signoffs_required", raises=jsonschema.ValidationError
+)
 def signoffs_required_validator(field_value):
     if field_value is not None and field_value != "":
-        logger.debug("starting in signoffs_required_validator: signoffs_required is %s" % field_value)
+        logger.debug(
+            "starting in signoffs_required_validator: signoffs_required is %s" % field_value
+        )
     return integer_and_range_validator("signoffs_required", field_value, 1)
 
 

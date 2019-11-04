@@ -25,25 +25,43 @@ def setUpModule():
 
 class TestGetSystemCapabilities(unittest.TestCase):
     def testUnprefixedInstructionSetOnly(self):
-        self.assertEqual(client_api.getSystemCapabilities("SSE3"), {"instructionSet": "SSE3", "memory": None, "jaws": None})
+        self.assertEqual(
+            client_api.getSystemCapabilities("SSE3"),
+            {"instructionSet": "SSE3", "memory": None, "jaws": None},
+        )
 
     def testUnprefixedInstructionSetAndMemory(self):
-        self.assertEqual(client_api.getSystemCapabilities("SSE3,8095"), {"instructionSet": "SSE3", "memory": 8095, "jaws": None})
+        self.assertEqual(
+            client_api.getSystemCapabilities("SSE3,8095"),
+            {"instructionSet": "SSE3", "memory": 8095, "jaws": None},
+        )
 
     def testPrefixedInstructionSetAndMemory(self):
-        self.assertEqual(client_api.getSystemCapabilities("ISET:SSE2,MEM:6321"), {"instructionSet": "SSE2", "memory": 6321, "jaws": None})
+        self.assertEqual(
+            client_api.getSystemCapabilities("ISET:SSE2,MEM:6321"),
+            {"instructionSet": "SSE2", "memory": 6321, "jaws": None},
+        )
 
     def testPrefixedInstructionSetMemoryAndJaws(self):
-        self.assertEqual(client_api.getSystemCapabilities("ISET:SSE2,MEM:6321,JAWS:1"), {"instructionSet": "SSE2", "memory": 6321, "jaws": True})
+        self.assertEqual(
+            client_api.getSystemCapabilities("ISET:SSE2,MEM:6321,JAWS:1"),
+            {"instructionSet": "SSE2", "memory": 6321, "jaws": True},
+        )
 
     def testNothingProvided(self):
-        self.assertEqual(client_api.getSystemCapabilities("NA"), {"instructionSet": "NA", "memory": None, "jaws": None})
+        self.assertEqual(
+            client_api.getSystemCapabilities("NA"),
+            {"instructionSet": "NA", "memory": None, "jaws": None},
+        )
 
     def testNonIntegerMemory(self):
         self.assertRaises(ValueError, client_api.getSystemCapabilities, ("ISET:SSE2,MEM:63T1A"))
 
     def testUnknownField(self):
-        self.assertEqual(client_api.getSystemCapabilities("ISET:SSE3,MEM:6721,PROC:Intel"), {"instructionSet": "SSE3", "memory": 6721, "jaws": None})
+        self.assertEqual(
+            client_api.getSystemCapabilities("ISET:SSE3,MEM:6721,PROC:Intel"),
+            {"instructionSet": "SSE3", "memory": 6721, "jaws": None},
+        )
 
 
 @pytest.mark.usefixtures("current_db_schema")
@@ -55,7 +73,12 @@ class ClientTestCommon(unittest.TestCase):
     def assertUpdatesAreEmpty(self, http_reponse):
         self.assertHttpResponse(http_reponse)
         # An empty update contains an <updates> tag with a newline, which is what we're expecting here
-        self.assertEqual(minidom.parseString(http_reponse.get_data()).getElementsByTagName("updates")[0].firstChild.nodeValue, "\n")
+        self.assertEqual(
+            minidom.parseString(http_reponse.get_data())
+            .getElementsByTagName("updates")[0]
+            .firstChild.nodeValue,
+            "\n",
+        )
 
     def assertUpdateEqual(self, http_reponse, expected_xml_string):
         self.assertHttpResponse(http_reponse)
@@ -88,7 +111,20 @@ class ClientTestBase(ClientTestCommon):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
         app.config["WHITELISTED_DOMAINS"] = {
-            "a.com": ("b", "c", "e", "f", "response-a", "response-b", "s", "responseblob-a", "responseblob-b", "q", "fallback", "distTest")
+            "a.com": (
+                "b",
+                "c",
+                "e",
+                "f",
+                "response-a",
+                "response-b",
+                "s",
+                "responseblob-a",
+                "responseblob-b",
+                "q",
+                "fallback",
+                "distTest",
+            )
         }
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
@@ -106,7 +142,15 @@ class ClientTestBase(ClientTestCommon):
         dbo.setDomainWhitelist({"a.com": ("b", "c", "e", "distTest")})
         self.client = app.test_client()
         dbo.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", data_version=1, alias="moz-releng")
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=100,
+            mapping="b",
+            update_type="minor",
+            product="b",
+            data_version=1,
+            alias="moz-releng",
+        )
         dbo.releases.t.insert().execute(
             name="b",
             product="b",
@@ -147,7 +191,15 @@ class ClientTestBase(ClientTestCommon):
             ),
         )
 
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="s", update_type="minor", product="s", instructionSet="SSE", data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=100,
+            mapping="s",
+            update_type="minor",
+            product="s",
+            instructionSet="SSE",
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="s",
             product="s",
@@ -179,7 +231,15 @@ class ClientTestBase(ClientTestCommon):
 """
             ),
         )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping="q", update_type="minor", product="q", fallbackMapping="fallback", data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=0,
+            mapping="q",
+            update_type="minor",
+            product="q",
+            fallbackMapping="fallback",
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="q",
             product="q",
@@ -242,7 +302,15 @@ class ClientTestBase(ClientTestCommon):
 """
             ),
         )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c", distribution="default", data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=100,
+            mapping="c",
+            update_type="minor",
+            product="c",
+            distribution="default",
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="c",
             product="c",
@@ -315,7 +383,14 @@ class ClientTestBase(ClientTestCommon):
             ),
         )
 
-        dbo.rules.t.insert().execute(priority=80, backgroundRate=100, mapping="c2", update_type="minor", product="c", data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=80,
+            backgroundRate=100,
+            mapping="c2",
+            update_type="minor",
+            product="c",
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="c2",
             product="c",
@@ -347,7 +422,14 @@ class ClientTestBase(ClientTestCommon):
 """
             ),
         )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="d", update_type="minor", product="d", data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=100,
+            mapping="d",
+            update_type="minor",
+            product="d",
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="d",
             product="d",
@@ -380,7 +462,14 @@ class ClientTestBase(ClientTestCommon):
             ),
         )
 
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping="e", update_type="minor", product="e", data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=0,
+            mapping="e",
+            update_type="minor",
+            product="e",
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="e",
             product="e",
@@ -412,11 +501,34 @@ class ClientTestBase(ClientTestCommon):
         )
 
         dbo.rules.t.insert().execute(
-            priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f", channel="a", memory="<=8000", data_version=1
+            priority=90,
+            backgroundRate=100,
+            mapping="f",
+            update_type="minor",
+            product="f",
+            channel="a",
+            memory="<=8000",
+            data_version=1,
         )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f", channel="b", memory="9000", data_version=1)
         dbo.rules.t.insert().execute(
-            priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f", channel="c", memory=">10000", data_version=1
+            priority=90,
+            backgroundRate=100,
+            mapping="f",
+            update_type="minor",
+            product="f",
+            channel="b",
+            memory="9000",
+            data_version=1,
+        )
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=100,
+            mapping="f",
+            update_type="minor",
+            product="f",
+            channel="c",
+            memory=">10000",
+            data_version=1,
         )
         dbo.releases.t.insert().execute(
             name="f",
@@ -450,7 +562,14 @@ class ClientTestBase(ClientTestCommon):
             ),
         )
 
-        dbo.rules.t.insert().execute(priority=200, backgroundRate=100, mapping="gmp", update_type="minor", product="gmp", data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=200,
+            backgroundRate=100,
+            mapping="gmp",
+            update_type="minor",
+            product="gmp",
+            data_version=1,
+        )
         dbo.rules.t.insert().execute(
             priority=200,
             backgroundRate=100,
@@ -459,8 +578,22 @@ class ClientTestBase(ClientTestCommon):
             product="gmp-with-one-response-product",
             data_version=1,
         )
-        dbo.rules.t.insert().execute(priority=190, backgroundRate=100, mapping="response-a", update_type="minor", product="response-a", data_version=1)
-        dbo.rules.t.insert().execute(priority=180, backgroundRate=100, mapping="response-b", update_type="minor", product="response-b", data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=190,
+            backgroundRate=100,
+            mapping="response-a",
+            update_type="minor",
+            product="response-a",
+            data_version=1,
+        )
+        dbo.rules.t.insert().execute(
+            priority=180,
+            backgroundRate=100,
+            mapping="response-b",
+            update_type="minor",
+            product="response-b",
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="gmp-with-one-response-product",
             product="gmp-with-one-response-product",
@@ -563,7 +696,12 @@ class ClientTestBase(ClientTestCommon):
             ),
         )
         dbo.rules.t.insert().execute(
-            priority=180, backgroundRate=100, mapping="systemaddons-uninstall", update_type="minor", product="systemaddons-uninstall", data_version=1
+            priority=180,
+            backgroundRate=100,
+            mapping="systemaddons-uninstall",
+            update_type="minor",
+            product="systemaddons-uninstall",
+            data_version=1,
         )
         dbo.releases.t.insert().execute(
             name="systemaddons-uninstall",
@@ -580,7 +718,14 @@ class ClientTestBase(ClientTestCommon):
 """
             ),
         )
-        dbo.rules.t.insert().execute(priority=180, backgroundRate=100, mapping="systemaddons", update_type="minor", product="systemaddons", data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=180,
+            backgroundRate=100,
+            mapping="systemaddons",
+            update_type="minor",
+            product="systemaddons",
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="systemaddons",
             product="systemaddons",
@@ -817,13 +962,20 @@ class ClientTestBase(ClientTestCommon):
 
 class ClientTest(ClientTestBase):
     def testGetHeaderArchitectureWindows(self):
-        self.assertEqual(client_api.getHeaderArchitecture("WINNT_x86-msvc", "Firefox Intel Windows"), "Intel")
+        self.assertEqual(
+            client_api.getHeaderArchitecture("WINNT_x86-msvc", "Firefox Intel Windows"), "Intel"
+        )
 
     def testGetHeaderArchitectureMacIntel(self):
-        self.assertEqual(client_api.getHeaderArchitecture("Darwin_x86-gcc3-u-ppc-i386", "Firefox Intel Mac"), "Intel")
+        self.assertEqual(
+            client_api.getHeaderArchitecture("Darwin_x86-gcc3-u-ppc-i386", "Firefox Intel Mac"),
+            "Intel",
+        )
 
     def testGetHeaderArchitectureMacPPC(self):
-        self.assertEqual(client_api.getHeaderArchitecture("Darwin_ppc-gcc3-u-ppc-i386", "Firefox PPC Mac"), "PPC")
+        self.assertEqual(
+            client_api.getHeaderArchitecture("Darwin_ppc-gcc3-u-ppc-i386", "Firefox PPC Mac"), "PPC"
+        )
 
     def testDontUpdateToYourself(self):
         ret = self.client.get("/update/3/b/1.0/2/p/l/a/a/a/a/update.xml")
@@ -1055,7 +1207,12 @@ class ClientTest(ClientTestBase):
     def testGetURLNotInWhitelist(self):
         ret = self.client.get("/update/3/d/20.0/1/p/l/a/a/a/a/update.xml")
         self.assertHttpResponse(ret)
-        self.assertEqual(minidom.parseString(ret.get_data()).getElementsByTagName("updates")[0].firstChild.nodeValue, "\n    ")
+        self.assertEqual(
+            minidom.parseString(ret.get_data())
+            .getElementsByTagName("updates")[0]
+            .firstChild.nodeValue,
+            "\n    ",
+        )
 
     def testEmptySnippetMissingExtv(self):
         ret = self.client.get("/update/3/e/20.0/1/p/l/a/a/a/a/update.xml")
@@ -1093,7 +1250,9 @@ class ClientTest(ClientTestBase):
 
     def testUnicodeAcceptedInQueryFields(self):
         for field in ("force", "mig64", "avast"):
-            ret = self.client.get("/update/6/3/e/2.0.0/1/p/l/a/a/a/a/update.xml?{}=ÃÃÃÃÃÃ".format(field))
+            ret = self.client.get(
+                "/update/6/3/e/2.0.0/1/p/l/a/a/a/a/update.xml?{}=ÃÃÃÃÃÃ".format(field)
+            )
             self.assertEqual(ret.status_code, 200)
 
     def testRobotsExists(self):
@@ -1218,7 +1377,9 @@ class ClientTest(ClientTestBase):
         )
 
     def testGetWithResponseProductsWithOneRule(self):
-        ret = self.client.get("/update/4/gmp-with-one-response-product/1.0/1/q/l/a/a/a/a/1/update.xml")
+        ret = self.client.get(
+            "/update/4/gmp-with-one-response-product/1.0/1/q/l/a/a/a/a/1/update.xml"
+        )
         self.assertUpdateEqual(
             ret,
             """<?xml version="1.0"?>
@@ -1255,7 +1416,9 @@ class ClientTest(ClientTestBase):
         )
 
     def testSuperBlobAddOnMultipleUpdates(self):
-        ret = self.client.get("/update/3/superblobaddon-with-multiple-response-blob/1.0/1/p/l/a/a/a/a/update.xml")
+        ret = self.client.get(
+            "/update/3/superblobaddon-with-multiple-response-blob/1.0/1/p/l/a/a/a/a/update.xml"
+        )
         # update / 3 / gg / 3 / 1 / p / l / a / a / a / a / update.xml?force = 0
         self.assertUpdateEqual(
             ret,
@@ -1271,7 +1434,9 @@ class ClientTest(ClientTestBase):
         )
 
     def testSuperBlobAddOnOneUpdates(self):
-        ret = self.client.get("/update/3/superblobaddon-with-one-response-blob/1.0/1/p/l/a/a/a/a/update.xml")
+        ret = self.client.get(
+            "/update/3/superblobaddon-with-one-response-blob/1.0/1/p/l/a/a/a/a/update.xml"
+        )
         # update / 3 / gg / 3 / 1 / p / l / a / a / a / a / update.xml?force = 0
         self.assertUpdateEqual(
             ret,
@@ -1286,7 +1451,9 @@ class ClientTest(ClientTestBase):
         )
 
     def testUpdateBackgroundRateSetTo0(self):
-        ret = self.client.get("/update/3/product_that_should_not_be_updated/1.0/1/p/l/a/a/a/a/update.xml")
+        ret = self.client.get(
+            "/update/3/product_that_should_not_be_updated/1.0/1/p/l/a/a/a/a/update.xml"
+        )
         self.assertUpdatesAreEmpty(ret)
 
     @given(just("x"))
@@ -1341,7 +1508,9 @@ class ClientTest(ClientTestBase):
     # @given(text(min_size=1, max_size=20), text(min_size=1, max_size=20))
     @given(just("mig64"), just(1))
     def testUnknownQueryStringParametersAreAllowedV6(self, param, val):
-        ret = self.client.get("/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml?{}={}".format(param, val))
+        ret = self.client.get(
+            "/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml?{}={}".format(param, val)
+        )
         self.assertEqual(ret.status_code, 200)
 
 
@@ -1369,7 +1538,14 @@ class ClientTestMig64(ClientTestCommon):
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
         dbo.setDomainWhitelist({"a.com": ("a", "b", "c")})
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a", data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=100,
+            mapping="a",
+            update_type="minor",
+            product="a",
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="a",
             product="a",
@@ -1401,7 +1577,15 @@ class ClientTestMig64(ClientTestCommon):
 """
             ),
         )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", mig64=True, data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=100,
+            mapping="b",
+            update_type="minor",
+            product="b",
+            mig64=True,
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="b",
             product="b",
@@ -1433,7 +1617,15 @@ class ClientTestMig64(ClientTestCommon):
 """
             ),
         )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c", mig64=False, data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=100,
+            mapping="c",
+            update_type="minor",
+            product="c",
+            mig64=False,
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="c",
             product="c",
@@ -1541,7 +1733,14 @@ class ClientTestJaws(ClientTestCommon):
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
         dbo.setDomainWhitelist({"a.com": ("a", "b", "c")})
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a", data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=100,
+            mapping="a",
+            update_type="minor",
+            product="a",
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="a",
             product="a",
@@ -1573,7 +1772,15 @@ class ClientTestJaws(ClientTestCommon):
 """
             ),
         )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", jaws=True, data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=100,
+            mapping="b",
+            update_type="minor",
+            product="b",
+            jaws=True,
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="b",
             product="b",
@@ -1605,7 +1812,15 @@ class ClientTestJaws(ClientTestCommon):
 """
             ),
         )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c", jaws=False, data_version=1)
+        dbo.rules.t.insert().execute(
+            priority=90,
+            backgroundRate=100,
+            mapping="c",
+            update_type="minor",
+            product="c",
+            jaws=False,
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="c",
             product="c",
@@ -1789,23 +2004,33 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
 
     def testContentSecurityPolicyIsSet(self):
         ret = self.client.get("/update/3/c/15.0/1/p/l/a/a/default/a/update.xml")
-        self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
+        self.assertEqual(
+            ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'"
+        )
 
     def testContentSecurityPolicyIsSetFor404(self):
         ret = self.client.get("/whizzybang")
-        self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
+        self.assertEqual(
+            ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'"
+        )
 
     def testContentSecurityPolicyIsSetFor400(self):
         with mock.patch("auslib.web.public.client.get_update_blob") as m:
             m.side_effect = BadDataError("I break!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
-            self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
+            self.assertEqual(
+                ret.headers.get("Content-Security-Policy"),
+                "default-src 'none'; frame-ancestors 'none'",
+            )
 
     def testContentSecurityPolicyIsSetFor500(self):
         with mock.patch("auslib.web.public.client.get_update_blob") as m:
             m.side_effect = Exception("I break!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
-            self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
+            self.assertEqual(
+                ret.headers.get("Content-Security-Policy"),
+                "default-src 'none'; frame-ancestors 'none'",
+            )
 
     def testStrictTransportSecurityIsSet(self):
         ret = self.client.get("/update/3/c/15.0/1/p/l/a/a/default/a/update.xml")
@@ -1896,19 +2121,29 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual("50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt;", ret.get_data(as_text=True))
+            self.assertEqual(
+                "50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt;",
+                ret.get_data(as_text=True),
+            )
 
     def testEscapedOutputOn400(self):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
-            m.side_effect = BadDataError("Version number 50.1.0zibj5<img src%3da onerror%3dalert(document.domain)> is invalid.")
+            m.side_effect = BadDataError(
+                "Version number 50.1.0zibj5<img src%3da onerror%3dalert(document.domain)> is invalid."
+            )
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             error_message = ret.get_data(as_text=True)
             self.assertEqual(ret.status_code, 400, error_message)
             self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual("Version number 50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt; is invalid.", error_message)
+            self.assertEqual(
+                "Version number 50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt; is invalid.",
+                error_message,
+            )
 
     def testSentryBadDataError(self):
-        with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch("auslib.web.public.base.sentry") as sentry:
+        with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch(
+            "auslib.web.public.base.sentry"
+        ) as sentry:
             m.side_effect = BadDataError("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertFalse(sentry.captureException.called)
@@ -1916,7 +2151,9 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual(ret.mimetype, "text/plain")
 
     def testSentryRealError(self):
-        with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch("auslib.web.public.base.sentry") as sentry:
+        with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch(
+            "auslib.web.public.base.sentry"
+        ) as sentry:
             m.side_effect = Exception("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 500)
@@ -1925,15 +2162,21 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual("exterminate!", ret.get_data(as_text=True))
 
     def testNonSubstitutedUrlVariablesReturnEmptyUpdate(self):
-        request1 = "/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml"
+        request1 = (
+            "/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml"
+        )
         request2 = "/update/2/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/update.xml"
-        request3 = "/update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/" "update.xml"
+        request3 = (
+            "/update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/"
+            "update.xml"
+        )
         request4 = (
             "/update/4/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/"
             "%MOZ_VERSION%/update.xml"
         )
         request5 = (
-            "/update/5/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/" "%IMEI%/update.xml"
+            "/update/5/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/"
+            "%IMEI%/update.xml"
         )
         request6 = (
             "/update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/"
@@ -1978,7 +2221,12 @@ class ClientTestCompactXML(ClientTestCommon):
         dbo.setDomainWhitelist({"a.com": ("b",)})
         self.client = app.test_client()
         dbo.rules.t.insert().execute(
-            priority=90, backgroundRate=100, mapping="Firefox-mozilla-central-nightly-latest", update_type="minor", product="b", data_version=1
+            priority=90,
+            backgroundRate=100,
+            mapping="Firefox-mozilla-central-nightly-latest",
+            update_type="minor",
+            product="b",
+            data_version=1,
         )
         dbo.releases.t.insert().execute(
             name="Firefox-mozilla-central-nightly-latest",

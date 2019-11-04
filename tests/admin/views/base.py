@@ -62,7 +62,11 @@ class ViewTest(unittest.TestCase):
 }
 """
             )
-        dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        dbo.setDb(
+            "sqlite:///:memory:",
+            releases_history_buckets={"*": "fake"},
+            releases_history_class=FakeGCSHistory,
+        )
 
         self.orig_releases_history = dbo.releases.history
         # TODO: need a better mock, or maybe a Fake that stores history in memory?
@@ -76,46 +80,150 @@ class ViewTest(unittest.TestCase):
         dbo.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         dbo.permissions.t.insert().execute(permission="permission", username="bob", data_version=1)
         dbo.permissions.t.insert().execute(
-            permission="release", username="bob", options=dict(products=["fake", "a", "b"], actions=["create", "modify"]), data_version=1
+            permission="release",
+            username="bob",
+            options=dict(products=["fake", "a", "b"], actions=["create", "modify"]),
+            data_version=1,
         )
-        dbo.permissions.t.insert().execute(permission="release", username="julie", options=dict(products=["a"], actions=["modify"]), data_version=1)
-        dbo.permissions.t.insert().execute(permission="rule", username="julie", options=dict(products=["fake"], actions=["create"]), data_version=1)
-        dbo.permissions.t.insert().execute(permission="release_read_only", username="bob", options=dict(actions=["set"], products=["a", "b"]), data_version=1)
-        dbo.permissions.t.insert().execute(permission="rule", username="bob", options=dict(actions=["modify"], products=["a", "b"]), data_version=1)
-        dbo.permissions.t.insert().execute(permission="release", username="ashanti", options=dict(actions=["modify"], products=["a"]), data_version=1)
-        dbo.permissions.t.insert().execute(permission="scheduled_change", username="mary", options=dict(actions=["enact"]), data_version=1)
-        dbo.permissions.t.insert().execute(permission="release_locale", username="ashanti", options=dict(actions=["modify"], products=["a"]), data_version=1)
-        dbo.permissions.t.insert().execute(permission="admin", username="billy", options=dict(products=["a"]), data_version=1)
-        dbo.permissions.user_roles.t.insert().execute(username="bill", role="releng", data_version=1)
+        dbo.permissions.t.insert().execute(
+            permission="release",
+            username="julie",
+            options=dict(products=["a"], actions=["modify"]),
+            data_version=1,
+        )
+        dbo.permissions.t.insert().execute(
+            permission="rule",
+            username="julie",
+            options=dict(products=["fake"], actions=["create"]),
+            data_version=1,
+        )
+        dbo.permissions.t.insert().execute(
+            permission="release_read_only",
+            username="bob",
+            options=dict(actions=["set"], products=["a", "b"]),
+            data_version=1,
+        )
+        dbo.permissions.t.insert().execute(
+            permission="rule",
+            username="bob",
+            options=dict(actions=["modify"], products=["a", "b"]),
+            data_version=1,
+        )
+        dbo.permissions.t.insert().execute(
+            permission="release",
+            username="ashanti",
+            options=dict(actions=["modify"], products=["a"]),
+            data_version=1,
+        )
+        dbo.permissions.t.insert().execute(
+            permission="scheduled_change",
+            username="mary",
+            options=dict(actions=["enact"]),
+            data_version=1,
+        )
+        dbo.permissions.t.insert().execute(
+            permission="release_locale",
+            username="ashanti",
+            options=dict(actions=["modify"], products=["a"]),
+            data_version=1,
+        )
+        dbo.permissions.t.insert().execute(
+            permission="admin", username="billy", options=dict(products=["a"]), data_version=1
+        )
+        dbo.permissions.user_roles.t.insert().execute(
+            username="bill", role="releng", data_version=1
+        )
         dbo.permissions.user_roles.t.insert().execute(username="bill", role="qa", data_version=1)
         dbo.permissions.user_roles.t.insert().execute(username="bob", role="relman", data_version=1)
-        dbo.permissions.user_roles.t.insert().execute(username="julie", role="releng", data_version=1)
-        dbo.permissions.user_roles.t.insert().execute(username="mary", role="relman", data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="a", role="releng", signoffs_required=1, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="e", role="releng", signoffs_required=1, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="j", role="releng", signoffs_required=1, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="fake", channel="k", role="relman", signoffs_required=1, data_version=2)
-        dbo.productRequiredSignoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=10, product="fake", channel="k", role="relman")
-        dbo.productRequiredSignoffs.history.t.insert().execute(
-            change_id=2, changed_by="bill", timestamp=11, product="fake", channel="k", role="relman", signoffs_required=2, data_version=1
+        dbo.permissions.user_roles.t.insert().execute(
+            username="julie", role="releng", data_version=1
+        )
+        dbo.permissions.user_roles.t.insert().execute(
+            username="mary", role="relman", data_version=1
+        )
+        dbo.productRequiredSignoffs.t.insert().execute(
+            product="fake", channel="a", role="releng", signoffs_required=1, data_version=1
+        )
+        dbo.productRequiredSignoffs.t.insert().execute(
+            product="fake", channel="e", role="releng", signoffs_required=1, data_version=1
+        )
+        dbo.productRequiredSignoffs.t.insert().execute(
+            product="fake", channel="j", role="releng", signoffs_required=1, data_version=1
+        )
+        dbo.productRequiredSignoffs.t.insert().execute(
+            product="fake", channel="k", role="relman", signoffs_required=1, data_version=2
         )
         dbo.productRequiredSignoffs.history.t.insert().execute(
-            change_id=3, changed_by="bill", timestamp=25, product="fake", channel="k", role="relman", signoffs_required=1, data_version=2
+            change_id=1, changed_by="bill", timestamp=10, product="fake", channel="k", role="relman"
         )
-        dbo.permissionsRequiredSignoffs.t.insert().execute(product="fake", role="releng", signoffs_required=1, data_version=1)
-        dbo.permissionsRequiredSignoffs.t.insert().execute(product="bar", role="releng", signoffs_required=1, data_version=1)
-        dbo.permissionsRequiredSignoffs.t.insert().execute(product="blah", role="releng", signoffs_required=1, data_version=1)
-        dbo.permissionsRequiredSignoffs.t.insert().execute(product="doop", role="releng", signoffs_required=1, data_version=2)
-        dbo.permissionsRequiredSignoffs.t.insert().execute(product="superfake", role="relman", signoffs_required=1, data_version=1)
-        dbo.permissionsRequiredSignoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=10, product="doop", role="releng")
+        dbo.productRequiredSignoffs.history.t.insert().execute(
+            change_id=2,
+            changed_by="bill",
+            timestamp=11,
+            product="fake",
+            channel="k",
+            role="relman",
+            signoffs_required=2,
+            data_version=1,
+        )
+        dbo.productRequiredSignoffs.history.t.insert().execute(
+            change_id=3,
+            changed_by="bill",
+            timestamp=25,
+            product="fake",
+            channel="k",
+            role="relman",
+            signoffs_required=1,
+            data_version=2,
+        )
+        dbo.permissionsRequiredSignoffs.t.insert().execute(
+            product="fake", role="releng", signoffs_required=1, data_version=1
+        )
+        dbo.permissionsRequiredSignoffs.t.insert().execute(
+            product="bar", role="releng", signoffs_required=1, data_version=1
+        )
+        dbo.permissionsRequiredSignoffs.t.insert().execute(
+            product="blah", role="releng", signoffs_required=1, data_version=1
+        )
+        dbo.permissionsRequiredSignoffs.t.insert().execute(
+            product="doop", role="releng", signoffs_required=1, data_version=2
+        )
+        dbo.permissionsRequiredSignoffs.t.insert().execute(
+            product="superfake", role="relman", signoffs_required=1, data_version=1
+        )
         dbo.permissionsRequiredSignoffs.history.t.insert().execute(
-            change_id=2, changed_by="bill", timestamp=11, product="doop", role="releng", signoffs_required=2, data_version=1
+            change_id=1, changed_by="bill", timestamp=10, product="doop", role="releng"
         )
         dbo.permissionsRequiredSignoffs.history.t.insert().execute(
-            change_id=3, changed_by="bill", timestamp=25, product="doop", role="releng", signoffs_required=1, data_version=2
+            change_id=2,
+            changed_by="bill",
+            timestamp=11,
+            product="doop",
+            role="releng",
+            signoffs_required=2,
+            data_version=1,
         )
-        dbo.releases.t.insert().execute(name="a", product="a", data=createBlob(dict(name="a", hashFunction="sha512", schema_version=1)), data_version=1)
-        dbo.releases.t.insert().execute(name="ab", product="a", data=createBlob(dict(name="ab", hashFunction="sha512", schema_version=1)), data_version=1)
+        dbo.permissionsRequiredSignoffs.history.t.insert().execute(
+            change_id=3,
+            changed_by="bill",
+            timestamp=25,
+            product="doop",
+            role="releng",
+            signoffs_required=1,
+            data_version=2,
+        )
+        dbo.releases.t.insert().execute(
+            name="a",
+            product="a",
+            data=createBlob(dict(name="a", hashFunction="sha512", schema_version=1)),
+            data_version=1,
+        )
+        dbo.releases.t.insert().execute(
+            name="ab",
+            product="a",
+            data=createBlob(dict(name="ab", hashFunction="sha512", schema_version=1)),
+            data_version=1,
+        )
         dbo.releases.history.bucket.blobs["ab/None-456-bob.json"] = FakeBlob("")
         dbo.releases.history.bucket.blobs["ab/1-456-bob.json"] = FakeBlob(
             """
@@ -126,7 +234,12 @@ class ViewTest(unittest.TestCase):
 }
 """
         )
-        dbo.releases.t.insert().execute(name="b", product="b", data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)), data_version=1)
+        dbo.releases.t.insert().execute(
+            name="b",
+            product="b",
+            data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)),
+            data_version=1,
+        )
         dbo.releases.history.bucket.blobs["b/None-567-bob.json"] = FakeBlob("")
         dbo.releases.history.bucket.blobs["b/1-567-bob.json"] = FakeBlob(
             """
@@ -137,7 +250,12 @@ class ViewTest(unittest.TestCase):
 }
 """
         )
-        dbo.releases.t.insert().execute(name="c", product="c", data=createBlob(dict(name="c", hashFunction="sha512", schema_version=1)), data_version=1)
+        dbo.releases.t.insert().execute(
+            name="c",
+            product="c",
+            data=createBlob(dict(name="c", hashFunction="sha512", schema_version=1)),
+            data_version=1,
+        )
         dbo.releases.t.insert().execute(
             name="d",
             product="d",
@@ -200,7 +318,9 @@ class ViewTest(unittest.TestCase):
             channel="a",
             data_version=2,
         )
-        dbo.rules.history.t.insert().execute(change_id=1, timestamp=50, changed_by="bill", rule_id=1)
+        dbo.rules.history.t.insert().execute(
+            change_id=1, timestamp=50, changed_by="bill", rule_id=1
+        )
         dbo.rules.history.t.insert().execute(
             change_id=2,
             timestamp=51,
@@ -244,7 +364,9 @@ class ViewTest(unittest.TestCase):
             channel="a",
             data_version=1,
         )
-        dbo.rules.history.t.insert().execute(change_id=4, timestamp=60, changed_by="bill", rule_id=2)
+        dbo.rules.history.t.insert().execute(
+            change_id=4, timestamp=60, changed_by="bill", rule_id=2
+        )
         dbo.rules.history.t.insert().execute(
             change_id=5,
             timestamp=61,
@@ -273,7 +395,9 @@ class ViewTest(unittest.TestCase):
             channel="a",
             data_version=2,
         )
-        dbo.rules.history.t.insert().execute(change_id=6, timestamp=72, changed_by="bill", rule_id=3)
+        dbo.rules.history.t.insert().execute(
+            change_id=6, timestamp=72, changed_by="bill", rule_id=3
+        )
         dbo.rules.history.t.insert().execute(
             change_id=7,
             timestamp=73,
@@ -305,9 +429,19 @@ class ViewTest(unittest.TestCase):
             data_version=2,
         )
         dbo.rules.t.insert().execute(
-            rule_id=4, product="fake", priority=80, buildTarget="d", backgroundRate=100, mapping="a", update_type="minor", channel="a", data_version=1
+            rule_id=4,
+            product="fake",
+            priority=80,
+            buildTarget="d",
+            backgroundRate=100,
+            mapping="a",
+            update_type="minor",
+            channel="a",
+            data_version=1,
         )
-        dbo.rules.history.t.insert().execute(change_id=9, timestamp=80, changed_by="bill", rule_id=4)
+        dbo.rules.history.t.insert().execute(
+            change_id=9, timestamp=80, changed_by="bill", rule_id=4
+        )
         dbo.rules.history.t.insert().execute(
             change_id=10,
             timestamp=81,
@@ -323,9 +457,20 @@ class ViewTest(unittest.TestCase):
             data_version=1,
         )
         dbo.rules.t.insert().execute(
-            rule_id=5, priority=80, buildTarget="d", version="3.3", backgroundRate=0, mapping="c", update_type="minor", product="a", channel="a", data_version=1
+            rule_id=5,
+            priority=80,
+            buildTarget="d",
+            version="3.3",
+            backgroundRate=0,
+            mapping="c",
+            update_type="minor",
+            product="a",
+            channel="a",
+            data_version=1,
         )
-        dbo.rules.history.t.insert().execute(change_id=11, timestamp=90, changed_by="bill", rule_id=5)
+        dbo.rules.history.t.insert().execute(
+            change_id=11, timestamp=90, changed_by="bill", rule_id=5
+        )
         dbo.rules.history.t.insert().execute(
             change_id=12,
             timestamp=91,
@@ -341,8 +486,19 @@ class ViewTest(unittest.TestCase):
             channel="a",
             data_version=1,
         )
-        dbo.rules.t.insert().execute(rule_id=6, product="fake", priority=40, backgroundRate=50, mapping="a", update_type="minor", channel="e", data_version=1)
-        dbo.rules.history.t.insert().execute(change_id=13, timestamp=110, changed_by="bill", rule_id=6)
+        dbo.rules.t.insert().execute(
+            rule_id=6,
+            product="fake",
+            priority=40,
+            backgroundRate=50,
+            mapping="a",
+            update_type="minor",
+            channel="e",
+            data_version=1,
+        )
+        dbo.rules.history.t.insert().execute(
+            change_id=13, timestamp=110, changed_by="bill", rule_id=6
+        )
         dbo.rules.history.t.insert().execute(
             change_id=14,
             timestamp=111,
@@ -356,8 +512,19 @@ class ViewTest(unittest.TestCase):
             channel="e",
             data_version=1,
         )
-        dbo.rules.t.insert().execute(rule_id=7, product="fake", priority=30, backgroundRate=85, mapping="a", update_type="minor", channel="c", data_version=1)
-        dbo.rules.history.t.insert().execute(change_id=15, timestamp=115, changed_by="bill", rule_id=7)
+        dbo.rules.t.insert().execute(
+            rule_id=7,
+            product="fake",
+            priority=30,
+            backgroundRate=85,
+            mapping="a",
+            update_type="minor",
+            channel="c",
+            data_version=1,
+        )
+        dbo.rules.history.t.insert().execute(
+            change_id=15, timestamp=115, changed_by="bill", rule_id=7
+        )
         dbo.rules.history.t.insert().execute(
             change_id=16,
             timestamp=116,
@@ -372,9 +539,19 @@ class ViewTest(unittest.TestCase):
             data_version=1,
         )
         dbo.rules.t.insert().execute(
-            rule_id=8, product="fake2", priority=25, backgroundRate=100, mapping="a", update_type="minor", channel="c", mig64=True, data_version=1
+            rule_id=8,
+            product="fake2",
+            priority=25,
+            backgroundRate=100,
+            mapping="a",
+            update_type="minor",
+            channel="c",
+            mig64=True,
+            data_version=1,
         )
-        dbo.rules.history.t.insert().execute(change_id=17, timestamp=150, changed_by="bill", rule_id=8)
+        dbo.rules.history.t.insert().execute(
+            change_id=17, timestamp=150, changed_by="bill", rule_id=8
+        )
         dbo.rules.history.t.insert().execute(
             change_id=18,
             timestamp=151,
@@ -390,9 +567,19 @@ class ViewTest(unittest.TestCase):
             data_version=1,
         )
         dbo.rules.t.insert().execute(
-            rule_id=9, product="fake3", priority=25, backgroundRate=100, mapping="a", update_type="minor", channel="c", jaws=True, data_version=1
+            rule_id=9,
+            product="fake3",
+            priority=25,
+            backgroundRate=100,
+            mapping="a",
+            update_type="minor",
+            channel="c",
+            jaws=True,
+            data_version=1,
         )
-        dbo.rules.history.t.insert().execute(change_id=19, timestamp=160, changed_by="bill", rule_id=9)
+        dbo.rules.history.t.insert().execute(
+            change_id=19, timestamp=160, changed_by="bill", rule_id=9
+        )
         dbo.rules.history.t.insert().execute(
             change_id=20,
             timestamp=161,
@@ -424,7 +611,9 @@ class ViewTest(unittest.TestCase):
 
     def _post(self, url, data={}, username="bill", **kwargs):
         self.mocked_user = username
-        return self.client.post(url, data=json.dumps(data), content_type="application/json", **kwargs)
+        return self.client.post(
+            url, data=json.dumps(data), content_type="application/json", **kwargs
+        )
 
     def _put(self, url, data={}, username="bill"):
         self.mocked_user = username
@@ -435,4 +624,6 @@ class ViewTest(unittest.TestCase):
         return self.client.delete(url, query_string=qs)
 
     def assertStatusCode(self, response, expected):
-        self.assertEqual(response.status_code, expected, "%d - %s" % (response.status_code, response.get_data()))
+        self.assertEqual(
+            response.status_code, expected, "%d - %s" % (response.status_code, response.get_data())
+        )

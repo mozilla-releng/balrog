@@ -33,7 +33,9 @@ def upgrade(migrate_engine):
         bigintType = Integer
     rules_scheduled_changes_conditions.append_column(Column("when", bigintType))
     rules_scheduled_changes_conditions_history.append_column(Column("when", bigintType))
-    rules_scheduled_changes_conditions_history.append_column(Column("timestamp", bigintType, nullable=False))
+    rules_scheduled_changes_conditions_history.append_column(
+        Column("timestamp", bigintType, nullable=False)
+    )
     metadata.create_all()
 
     # 2) Copy the conditions from the existing Scheduled Changes tables to them.
@@ -57,7 +59,9 @@ SELECT change_id, changed_by, timestamp, sc_id, telemetry_product, telemetry_cha
     rules_scheduled_changes.c.telemetry_product.drop()
     rules_scheduled_changes.c.telemetry_channel.drop()
     rules_scheduled_changes.c.telemetry_uptake.drop()
-    rules_scheduled_changes_history = Table("rules_scheduled_changes_history", metadata, autoload=True)
+    rules_scheduled_changes_history = Table(
+        "rules_scheduled_changes_history", metadata, autoload=True
+    )
     rules_scheduled_changes_history.c.when.drop()
     rules_scheduled_changes_history.c.telemetry_product.drop()
     rules_scheduled_changes_history.c.telemetry_channel.drop()

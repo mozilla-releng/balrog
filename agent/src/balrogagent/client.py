@@ -5,7 +5,11 @@ import time
 
 import aiohttp
 
-default_headers = {"Accept-Encoding": "application/json", "Accept": "application/json", "Content-Type": "application/json"}
+default_headers = {
+    "Accept-Encoding": "application/json",
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+}
 # Refresh the tokens 5 minutes before they expire
 REFRESH_THRESHOLD = 5 * 60
 _token_cache = {}
@@ -16,7 +20,9 @@ async def _get_auth0_token(secrets, loop=None):
 
     See https://auth0.com/docs/api/authentication#regular-web-app-login-flow43 for the description
     """
-    cache_key = "{}-{}-{}".format(secrets["client_id"], secrets["client_secret"], secrets["audience"])
+    cache_key = "{}-{}-{}".format(
+        secrets["client_id"], secrets["client_secret"], secrets["audience"]
+    )
     if cache_key in _token_cache:
         entry = _token_cache[cache_key]
         expiration = entry["exp"]
@@ -26,7 +32,12 @@ async def _get_auth0_token(secrets, loop=None):
 
     logging.debug("Refreshing, getting new token")
     url = "https://{}/oauth/token".format(secrets["domain"])
-    payload = dict(client_id=secrets["client_id"], client_secret=secrets["client_secret"], audience=secrets["audience"], grant_type="client_credentials")
+    payload = dict(
+        client_id=secrets["client_id"],
+        client_secret=secrets["client_secret"],
+        audience=secrets["audience"],
+        grant_type="client_credentials",
+    )
     async with aiohttp.ClientSession(loop=loop) as client:
         async with client.request("POST", url, json=payload) as resp:
             resp.raise_for_status()
@@ -43,7 +54,9 @@ def get_url(api_root, path):
     return api_root.rstrip("/") + path
 
 
-async def request(api_root, path, auth0_secrets, method="GET", data={}, headers=default_headers, loop=None):
+async def request(
+    api_root, path, auth0_secrets, method="GET", data={}, headers=default_headers, loop=None
+):
     headers = headers.copy()
     url = get_url(api_root, path)
     csrf_url = get_url(api_root, "/csrf_token")

@@ -28,7 +28,10 @@ class GMPBlobV1(XMLBlob):
 
     def getVendorsForPlatform(self, platform):
         for v in self["vendors"]:
-            if platform in self["vendors"][v]["platforms"] or "default" in self["vendors"][v]["platforms"]:
+            if (
+                platform in self["vendors"][v]["platforms"]
+                or "default" in self["vendors"][v]["platforms"]
+            ):
                 yield v
 
     def getResolvedPlatform(self, vendor, platform):
@@ -72,7 +75,14 @@ class GMPBlobV1(XMLBlob):
                 continue
             vendorXML.append(
                 '        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>'
-                % (vendor, url, self["hashFunction"], platformData["hashValue"], platformData["filesize"], vendorInfo["version"])
+                % (
+                    vendor,
+                    url,
+                    self["hashFunction"],
+                    platformData["hashValue"],
+                    platformData["filesize"],
+                    vendorInfo["version"],
+                )
             )
 
         return vendorXML

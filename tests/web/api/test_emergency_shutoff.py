@@ -6,8 +6,12 @@ from .base import CommonTestBase
 class TestEmergencyShutoff(CommonTestBase):
     def setUp(self):
         super(TestEmergencyShutoff, self).setUp()
-        dbo.emergencyShutoffs.t.insert().execute(product="Firefox", channel="nightly", data_version=1)
-        dbo.emergencyShutoffs.t.insert().execute(product="Fennec", channel="nightly", data_version=1)
+        dbo.emergencyShutoffs.t.insert().execute(
+            product="Firefox", channel="nightly", data_version=1
+        )
+        dbo.emergencyShutoffs.t.insert().execute(
+            product="Fennec", channel="nightly", data_version=1
+        )
         dbo.emergencyShutoffs.t.insert().execute(product="Firefox", channel="test", data_version=1)
 
     def test_get_emergency_shutoff_list(self):

@@ -102,7 +102,10 @@ def getQueryFromURL(url):
     ua = request.headers.get("User-Agent")
     query["headerArchitecture"] = getHeaderArchitecture(query["buildTarget"], ua)
     force = query.get("force")
-    query["force"] = {FORCE_MAIN_MAPPING.query_value: FORCE_MAIN_MAPPING, FORCE_FALLBACK_MAPPING.query_value: FORCE_FALLBACK_MAPPING}.get(force)
+    query["force"] = {
+        FORCE_MAIN_MAPPING.query_value: FORCE_MAIN_MAPPING,
+        FORCE_FALLBACK_MAPPING.query_value: FORCE_FALLBACK_MAPPING,
+    }.get(force)
     if "mig64" in query:
         # "1" is the only value that official clients send. We ignore any other values
         # by setting mig64 to None.
@@ -151,28 +154,55 @@ def get_update_blob(transaction, **url):
             for product in response_products:
                 product_query = query.copy()
                 product_query["product"] = product
-                response_release, response_update_type = AUS.evaluateRules(product_query, transaction=transaction)
+                response_release, response_update_type = AUS.evaluateRules(
+                    product_query, transaction=transaction
+                )
                 if not response_release:
                     continue
 
-                response_blobs.append({"product_query": product_query, "response_release": response_release, "response_update_type": response_update_type})
+                response_blobs.append(
+                    {
+                        "product_query": product_query,
+                        "response_release": response_release,
+                        "response_update_type": response_update_type,
+                    }
+                )
         elif response_blob_names:
             for blob_name in response_blob_names:
                 # if we have a SuperBlob of systemaddons, we process the response products and
                 # concatenate their inner XMLs
                 product_query = query.copy()
-                product = dbo.releases.getReleases(name=blob_name, limit=1, transaction=transaction)[0]["product"]
+                product = dbo.releases.getReleases(
+                    name=blob_name, limit=1, transaction=transaction
+                )[0]["product"]
                 product_query["product"] = product
-                response_release = dbo.releases.getReleaseBlob(name=blob_name, transaction=transaction)
+                response_release = dbo.releases.getReleaseBlob(
+                    name=blob_name, transaction=transaction
+                )
                 if not response_release:
                     LOG.warning("No release found with name: %s", blob_name)
                     continue
 
-                response_blobs.append({"product_query": product_query, "response_release": response_release, "response_update_type": update_type})
+                response_blobs.append(
+                    {
+                        "product_query": product_query,
+                        "response_release": response_release,
+                        "response_update_type": update_type,
+                    }
+                )
         else:
-            response_blobs.append({"product_query": query, "response_release": release, "response_update_type": update_type})
+            response_blobs.append(
+                {
+                    "product_query": query,
+                    "response_release": release,
+                    "response_update_type": update_type,
+                }
+            )
             # Bug 1517743 - we want a cheap test because this will be run on each request
-            if release["name"] == "Firefox-mozilla-central-nightly-latest" and query["buildID"] in ("20190103220533", "20190104093221"):
+            if release["name"] == "Firefox-mozilla-central-nightly-latest" and query["buildID"] in (
+                "20190103220533",
+                "20190104093221",
+            ):
                 squash_response = True
                 LOG.debug("Busted nightly detected, will squash xml response")
 
@@ -184,16 +214,33 @@ def get_update_blob(transaction, **url):
 
         # Appending Header
         # In case of superblob Extracting Header form parent release
-        xml.append(release.getInnerHeaderXML(query, update_type, app.config["WHITELISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"]))
+        xml.append(
+            release.getInnerHeaderXML(
+                query,
+                update_type,
+                app.config["WHITELISTED_DOMAINS"],
+                app.config["SPECIAL_FORCE_HOSTS"],
+            )
+        )
         for response_blob in response_blobs:
             xml.extend(
                 response_blob["response_release"].getInnerXML(
-                    response_blob["product_query"], response_blob["response_update_type"], app.config["WHITELISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"]
+                    response_blob["product_query"],
+                    response_blob["response_update_type"],
+                    app.config["WHITELISTED_DOMAINS"],
+                    app.config["SPECIAL_FORCE_HOSTS"],
                 )
             )
         # Appending Footer
         # In case of superblob Extracting Header form parent release
-        xml.append(release.getInnerFooterXML(query, update_type, app.config["WHITELISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"]))
+        xml.append(
+            release.getInnerFooterXML(
+                query,
+                update_type,
+                app.config["WHITELISTED_DOMAINS"],
+                app.config["SPECIAL_FORCE_HOSTS"],
+            )
+        )
         xml.append(release.getFooterXML())
         # ensure valid xml by using the right entity for ampersand
         xml = re.sub("&(?!amp;)", "&amp;", "\n".join(xml))

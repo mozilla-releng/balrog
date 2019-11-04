@@ -44,4 +44,10 @@ def problem(status, title, detail, type=None, instance=None, headers=None, ext=N
         problem_response.update(ext)
 
     mimetype = content_type = "application/json"
-    return Response(response=json.dumps(problem_response), status=status, mimetype=mimetype, content_type=content_type, headers=headers)
+    return Response(
+        response=json.dumps(problem_response),
+        status=status,
+        mimetype=mimetype,
+        content_type=content_type,
+        headers=headers,
+    )

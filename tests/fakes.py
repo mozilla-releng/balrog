@@ -37,4 +37,8 @@ class FakeGCSHistory(GCSHistory):
             if bname.startswith(prefix):
                 data = blob.data
                 break
-        return {"name": column_values["name"], "data_version": data_version, "data": json.loads(data)}
+        return {
+            "name": column_values["name"],
+            "data_version": data_version,
+            "data": json.loads(data),
+        }

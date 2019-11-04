@@ -25,7 +25,9 @@ def upgrade(migrate_engine):
         bigintType = BigInteger
     elif migrate_engine.name == "sqlite":
         bigintType = Integer
-    rules_scheduled_changes_signoffs_history.append_column(Column("timestamp", bigintType, nullable=False))
+    rules_scheduled_changes_signoffs_history.append_column(
+        Column("timestamp", bigintType, nullable=False)
+    )
     metadata.create_all()
 
 

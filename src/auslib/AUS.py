@@ -71,14 +71,22 @@ class AUS:
         self.log.debug("Looking for rules that apply to:")
         self.log.debug(updateQuery)
 
-        if self.updates_are_disabled(updateQuery["product"], updateQuery["channel"], transaction) or self.updates_are_disabled(
+        if self.updates_are_disabled(
+            updateQuery["product"], updateQuery["channel"], transaction
+        ) or self.updates_are_disabled(
             updateQuery["product"], getFallbackChannel(updateQuery["channel"]), transaction
         ):
-            log_message = "Updates are disabled for {}/{}.".format(updateQuery["product"], updateQuery["channel"])
+            log_message = "Updates are disabled for {}/{}.".format(
+                updateQuery["product"], updateQuery["channel"]
+            )
             self.log.debug(log_message)
             return None, None
 
-        rules = dbo.rules.getRulesMatchingQuery(updateQuery, fallbackChannel=getFallbackChannel(updateQuery["channel"]), transaction=transaction)
+        rules = dbo.rules.getRulesMatchingQuery(
+            updateQuery,
+            fallbackChannel=getFallbackChannel(updateQuery["channel"]),
+            transaction=transaction,
+        )
 
         # TODO: throw any N->N update rules and keep the highest priority remaining one?
         if len(rules) < 1:
@@ -101,10 +109,15 @@ class AUS:
         # backgroundRate=25 means only one quarter of requests are served
         if not updateQuery["force"] == FORCE_MAIN_MAPPING and rule["backgroundRate"] < 100:
             self.log.debug("backgroundRate < 100, rolling the dice")
-            if updateQuery["force"] == FORCE_FALLBACK_MAPPING or self.rand() >= rule["backgroundRate"]:
+            if (
+                updateQuery["force"] == FORCE_FALLBACK_MAPPING
+                or self.rand() >= rule["backgroundRate"]
+            ):
                 fallbackReleaseName = rule["fallbackMapping"]
                 if fallbackReleaseName:
-                    release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1, transaction=transaction)[0]
+                    release = dbo.releases.getReleases(
+                        name=fallbackReleaseName, limit=1, transaction=transaction
+                    )[0]
                     blob = release["data"]
                     if not blob.shouldServeUpdate(updateQuery):
                         return None, None
@@ -117,7 +130,9 @@ class AUS:
         # 3) Incoming release is older than the one in the mapping, defined as one of:
         #    * version decreases
         #    * version is the same and buildID doesn't increase
-        release = dbo.releases.getReleases(name=rule["mapping"], limit=1, transaction=transaction)[0]
+        release = dbo.releases.getReleases(name=rule["mapping"], limit=1, transaction=transaction)[
+            0
+        ]
         blob = release["data"]
         if not blob.shouldServeUpdate(updateQuery):
             return None, None

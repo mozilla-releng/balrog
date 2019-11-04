@@ -154,21 +154,39 @@ def client():
             "WINNT_x86_64",
             "release",
             200,
-            {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0", "hashFunction": "sha512", "hashValue": "abcdef"},
+            {
+                "required": True,
+                "url": "https://good.com/0.5.0.0.msi",
+                "version": "0.5.0.0",
+                "hashFunction": "sha512",
+                "hashValue": "abcdef",
+            },
         ),
         (
             "0.6.0.0",
             "WINNT_x86_64",
             "release",
             200,
-            {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0", "hashFunction": "sha512", "hashValue": "mnopqr"},
+            {
+                "required": True,
+                "url": "https://good.com/1.0.0.0.msi",
+                "version": "1.0.0.0",
+                "hashFunction": "sha512",
+                "hashValue": "mnopqr",
+            },
         ),
         (
             "0.99.99.99",
             "WINNT_x86_64",
             "release",
             200,
-            {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0", "hashFunction": "sha512", "hashValue": "mnopqr"},
+            {
+                "required": True,
+                "url": "https://good.com/1.0.0.0.msi",
+                "version": "1.0.0.0",
+                "hashFunction": "sha512",
+                "hashValue": "mnopqr",
+            },
         ),
         ("1.0.0.0", "WINNT_x86_64", "release", 404, {}),
         ("0.6.0.0", "Linux_x86_64", "release", 404, {}),
@@ -195,21 +213,39 @@ def testGuardianResponse(client, version, buildTarget, channel, code, response):
             "WINNT_x86_64",
             "release",
             200,
-            {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0", "hashFunction": "sha512", "hashValue": "abcdef"},
+            {
+                "required": True,
+                "url": "https://good.com/0.5.0.0.msi",
+                "version": "0.5.0.0",
+                "hashFunction": "sha512",
+                "hashValue": "abcdef",
+            },
         ),
         (
             "0.6.0.0",
             "WINNT_x86_64",
             "release",
             200,
-            {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0", "hashFunction": "sha512", "hashValue": "mnopqr"},
+            {
+                "required": True,
+                "url": "https://good.com/1.0.0.0.msi",
+                "version": "1.0.0.0",
+                "hashFunction": "sha512",
+                "hashValue": "mnopqr",
+            },
         ),
         (
             "0.99.99.99",
             "WINNT_x86_64",
             "release",
             200,
-            {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0", "hashFunction": "sha512", "hashValue": "mnopqr"},
+            {
+                "required": True,
+                "url": "https://good.com/1.0.0.0.msi",
+                "version": "1.0.0.0",
+                "hashFunction": "sha512",
+                "hashValue": "mnopqr",
+            },
         ),
     ],
 )
@@ -226,19 +262,45 @@ def testGuardianResponseWithoutSigning(client, version, buildTarget, channel, co
 @pytest.mark.parametrize(
     "forceValue,response",
     [
-        (FORCE_MAIN_MAPPING, {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0", "hashFunction": "sha512", "hashValue": "mnopqr"}),
+        (
+            FORCE_MAIN_MAPPING,
+            {
+                "required": True,
+                "url": "https://good.com/1.0.0.0.msi",
+                "version": "1.0.0.0",
+                "hashFunction": "sha512",
+                "hashValue": "mnopqr",
+            },
+        ),
         (
             FORCE_FALLBACK_MAPPING,
-            {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0", "hashFunction": "sha512", "hashValue": "abcdef"},
+            {
+                "required": True,
+                "url": "https://good.com/0.5.0.0.msi",
+                "version": "0.5.0.0",
+                "hashFunction": "sha512",
+                "hashValue": "abcdef",
+            },
         ),
-        (None, {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0", "hashFunction": "sha512", "hashValue": "abcdef"}),
+        (
+            None,
+            {
+                "required": True,
+                "url": "https://good.com/0.5.0.0.msi",
+                "version": "0.5.0.0",
+                "hashFunction": "sha512",
+                "hashValue": "abcdef",
+            },
+        ),
     ],
 )
 def testGuardianResponseWithGradualRollout(client, forceValue, response):
     qs = {}
     if forceValue:
         qs["force"] = forceValue.query_value
-    ret = client.get(f"/json/1/Guardian/0.4.0.0/WINNT_x86_64/release-rollout/update.json", query_string=qs)
+    ret = client.get(
+        f"/json/1/Guardian/0.4.0.0/WINNT_x86_64/release-rollout/update.json", query_string=qs
+    )
     assert ret.status_code == 200
     assert ret.mimetype == "application/json"
     assert ret.get_json() == response

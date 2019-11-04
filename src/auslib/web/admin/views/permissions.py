@@ -39,8 +39,15 @@ class SpecificUserView(AdminView):
         permissions = dbo.permissions.getUserPermissions(username, changed_by)
 
         if not permissions:
-            return problem(status=404, title="Not Found", detail="No permission found for username %s" % username)
-        roles = {r["role"]: {"data_version": r["data_version"]} for r in dbo.permissions.getUserRoles(username)}
+            return problem(
+                status=404,
+                title="Not Found",
+                detail="No permission found for username %s" % username,
+            )
+        roles = {
+            r["role"]: {"data_version": r["data_version"]}
+            for r in dbo.permissions.getUserRoles(username)
+        }
         return jsonify({"username": username, "permissions": permissions, "roles": roles})
 
 
@@ -63,16 +70,24 @@ class SpecificPermissionView(AdminView):
         try:
             perm = dbo.permissions.getUserPermissions(username, changed_by)[permission]
         except KeyError:
-            return problem(404, "Not Found", "Requested user permission" " %s not found for %s" % (permission, username))
+            return problem(
+                404,
+                "Not Found",
+                "Requested user permission" " %s not found for %s" % (permission, username),
+            )
         return jsonify(perm)
 
     @requirelogin
     def _put(self, username, permission, changed_by, transaction):
         try:
-            if dbo.permissions.getUserPermissions(username, changed_by, transaction).get(permission):
+            if dbo.permissions.getUserPermissions(username, changed_by, transaction).get(
+                permission
+            ):
                 # Existing Permission
                 if not connexion.request.get_json().get("data_version"):
-                    return problem(400, "Bad Request", "'data_version' is missing from request body")
+                    return problem(
+                        400, "Bad Request", "'data_version' is missing from request body"
+                    )
 
                 options_dict = None
                 if connexion.request.get_json().get("options"):
@@ -87,7 +102,9 @@ class SpecificPermissionView(AdminView):
                     old_data_version=connexion.request.get_json().get("data_version"),
                     transaction=transaction,
                 )
-                new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)["data_version"]
+                new_data_version = dbo.permissions.getPermission(
+                    username=username, permission=permission, transaction=transaction
+                )["data_version"]
                 return jsonify(new_data_version=new_data_version)
             else:
                 # New Permission
@@ -96,7 +113,13 @@ class SpecificPermissionView(AdminView):
                     options_dict = json.loads(connexion.request.get_json().get("options"))
                     if len(options_dict) == 0:
                         options_dict = None
-                dbo.permissions.insert(changed_by, transaction=transaction, username=username, permission=permission, options=options_dict)
+                dbo.permissions.insert(
+                    changed_by,
+                    transaction=transaction,
+                    username=username,
+                    permission=permission,
+                    options=options_dict,
+                )
                 return Response(status=201, response=json.dumps(dict(new_data_version=1)))
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
@@ -104,8 +127,14 @@ class SpecificPermissionView(AdminView):
 
     @requirelogin
     def _post(self, username, permission, changed_by, transaction):
-        if not dbo.permissions.getUserPermissions(username, changed_by, transaction=transaction).get(permission):
-            return problem(status=404, title="Not Found", detail="Requested user permission" " %s not found for %s" % (permission, username))
+        if not dbo.permissions.getUserPermissions(
+            username, changed_by, transaction=transaction
+        ).get(permission):
+            return problem(
+                status=404,
+                title="Not Found",
+                detail="Requested user permission" " %s not found for %s" % (permission, username),
+            )
         try:
             # Existing Permission
             if not connexion.request.get_json().get("data_version"):
@@ -123,7 +152,9 @@ class SpecificPermissionView(AdminView):
                 old_data_version=connexion.request.get_json().get("data_version"),
                 transaction=transaction,
             )
-            new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)["data_version"]
+            new_data_version = dbo.permissions.getPermission(
+                username=username, permission=permission, transaction=transaction
+            )["data_version"]
             return jsonify(new_data_version=new_data_version)
         except ValueError as e:
             self.log.warning("Bad input: %s", e.args)
@@ -131,8 +162,14 @@ class SpecificPermissionView(AdminView):
 
     @requirelogin
     def _delete(self, username, permission, changed_by, transaction):
-        if not dbo.permissions.getUserPermissions(username, changed_by, transaction=transaction).get(permission):
-            return problem(404, "Not Found", "Requested user permission" " %s not found for %s" % (permission, username))
+        if not dbo.permissions.getUserPermissions(
+            username, changed_by, transaction=transaction
+        ).get(permission):
+            return problem(
+                404,
+                "Not Found",
+                "Requested user permission" " %s not found for %s" % (permission, username),
+            )
         try:
             # For practical purposes, DELETE can't have a request body, which means the Form
             # won't find data where it's expecting it. Instead, we have to tell it to look at
@@ -140,7 +177,10 @@ class SpecificPermissionView(AdminView):
 
             old_data_version = int(connexion.request.args.get("data_version"))
             dbo.permissions.delete(
-                where={"username": username, "permission": permission}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction
+                where={"username": username, "permission": permission},
+                changed_by=changed_by,
+                old_data_version=old_data_version,
+                transaction=transaction,
             )
             return Response(status=200)
         except ValueError as e:
@@ -157,7 +197,11 @@ class PermissionScheduledChangesView(ScheduledChangesView):
     @requirelogin
     def _post(self, transaction, changed_by):
         if connexion.request.get_json().get("when", None) is None:
-            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permission")
+            return problem(
+                400,
+                "Bad Request",
+                "'when' cannot be set to null when scheduling a new change " "for a Permission",
+            )
         change_type = connexion.request.get_json().get("change_type")
 
         what = {}
@@ -174,11 +218,18 @@ class PermissionScheduledChangesView(ScheduledChangesView):
 
         if change_type in ["update", "delete"]:
             if not what.get("data_version", None):
-                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+                return problem(
+                    400,
+                    "Bad Request",
+                    "Missing field",
+                    ext={"exception": "data_version is missing"},
+                )
             else:
                 what["data_version"] = int(what["data_version"])
 
-        return super(PermissionScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
+        return super(PermissionScheduledChangesView, self)._post(
+            what, transaction, changed_by, change_type
+        )
 
 
 class PermissionScheduledChangeView(ScheduledChangeView):
@@ -190,11 +241,18 @@ class PermissionScheduledChangeView(ScheduledChangeView):
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
         # TODO: modify UI and clients to stop sending 'change_type' in request body
-        sc_permission = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
+        sc_permission = self.sc_table.select(
+            where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"]
+        )
         if sc_permission:
             change_type = sc_permission[0]["change_type"]
         else:
-            return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for permission found for given sc_id"})
+            return problem(
+                404,
+                "Not Found",
+                "Unknown sc_id",
+                ext={"exception": "No scheduled change for permission found for given sc_id"},
+            )
 
         # TODO: UI passes too many extra non-required fields apart from 'change_type' in request body
         # Only required fields must be passed to DB layer
@@ -209,21 +267,32 @@ class PermissionScheduledChangeView(ScheduledChangeView):
             if (
                 (change_type == "delete" and field not in ["when", "data_version"])
                 or (change_type == "update" and field not in ["when", "options", "data_version"])
-                or (change_type == "insert" and field not in ["when", "options", "permission", "username"])
+                or (
+                    change_type == "insert"
+                    and field not in ["when", "options", "permission", "username"]
+                )
             ):
                 continue
 
             what[field] = connexion.request.get_json()[field]
 
         if change_type in ["update", "delete"] and not what.get("data_version", None):
-            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+            return problem(
+                400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"}
+            )
 
         if what.get("options", None):
             what["options"] = json.loads(what["options"])
             if len(what["options"]) == 0:
                 what["options"] = None
 
-        return super(PermissionScheduledChangeView, self)._post(sc_id, what, transaction, changed_by, connexion.request.get_json().get("sc_data_version"))
+        return super(PermissionScheduledChangeView, self)._post(
+            sc_id,
+            what,
+            transaction,
+            changed_by,
+            connexion.request.get_json().get("sc_data_version"),
+        )
 
     @requirelogin
     def _delete(self, sc_id, transaction, changed_by):
@@ -256,7 +325,9 @@ class PermissionScheduledChangeHistoryView(ScheduledChangeHistoryView):
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
-        return super(PermissionScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
+        return super(PermissionScheduledChangeHistoryView, self)._post(
+            sc_id, transaction, changed_by
+        )
 
 
 class UserRoleView(AdminView):
@@ -267,9 +338,13 @@ class UserRoleView(AdminView):
         # These requests are idempotent - if the user already has the desired role,
         # no change needs to be made. Because of this there's also no reason to
         # return an error.
-        r = dbo.permissions.user_roles.select({"username": username, "role": role}, transaction=transaction)
+        r = dbo.permissions.user_roles.select(
+            {"username": username, "role": role}, transaction=transaction
+        )
         if r:
-            return Response(status=200, response=json.dumps({"new_data_version": r[0]["data_version"]}))
+            return Response(
+                status=200, response=json.dumps({"new_data_version": r[0]["data_version"]})
+            )
 
         dbo.permissions.grantRole(username, role, changed_by, transaction)
         return Response(status=201, response=json.dumps({"new_data_version": 1}))
@@ -278,9 +353,20 @@ class UserRoleView(AdminView):
     def _delete(self, username, role, changed_by, transaction):
         roles = [r["role"] for r in dbo.permissions.getUserRoles(username)]
         if role not in roles:
-            return problem(404, "Not Found", "Role not found", ext={"exception": "No role '%s' found for " "username '%s'" % (role, username)})
+            return problem(
+                404,
+                "Not Found",
+                "Role not found",
+                ext={"exception": "No role '%s' found for " "username '%s'" % (role, username)},
+            )
         # query argument i.e. data_version  is also required.
         # All input value validations already defined in swagger specification and carried out by connexion.
         old_data_version = int(connexion.request.args.get("data_version"))
-        dbo.permissions.revokeRole(username, role, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+        dbo.permissions.revokeRole(
+            username,
+            role,
+            changed_by=changed_by,
+            old_data_version=old_data_version,
+            transaction=transaction,
+        )
         return Response(status=200)

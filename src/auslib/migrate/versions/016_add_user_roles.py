@@ -3,7 +3,11 @@ from sqlalchemy import BigInteger, Column, Integer, MetaData, String, Table
 metadata = MetaData()
 
 user_roles = Table(
-    "user_roles", metadata, Column("username", String(100), primary_key=True), Column("role", String(50), primary_key=True), Column("data_version", Integer)
+    "user_roles",
+    metadata,
+    Column("username", String(100), primary_key=True),
+    Column("role", String(50), primary_key=True),
+    Column("data_version", Integer),
 )
 
 user_roles_history = Table(

@@ -88,7 +88,9 @@ if __name__ == "__main__":
             try:
                 rsp = urlopen(HOST + PATH, timeout=TIMEOUT)
             except (HTTPError, URLError) as e:
-                logging.debug("Downloading the latest database dump failed" "due to network error: %s", e)
+                logging.debug(
+                    "Downloading the latest database dump failed" "due to network error: %s", e
+                )
                 exit(1)
 
             with open(LOCAL_DB_PATH, "wb") as f:

@@ -15,7 +15,11 @@ log = logging.getLogger(__name__)
 def get_rules():
     # TODO: When we switch to Swagger 3, this can move to the Swagger spec
     if request.args.get("timestamp") and request.args.get("product"):
-        return problem(status=400, title="Bad Request", detail="Cannot query with a timestamp and a product at the same time")
+        return problem(
+            status=400,
+            title="Bad Request",
+            detail="Cannot query with a timestamp and a product at the same time",
+        )
 
     if request.args.get("timestamp"):
         rules = dbo.rules.history.getPointInTime(request.args.get("timestamp"))
@@ -32,7 +36,12 @@ def get_rules():
 def get_rule(id_or_alias, with_csrf_headers=False):
     rule = dbo.rules.getRule(id_or_alias)
     if not rule:
-        return problem(status=404, title="Not Found", detail="Requested rule wasn't found", ext={"exception": "Requested rule does not exist"})
+        return problem(
+            status=404,
+            title="Not Found",
+            detail="Requested rule wasn't found",
+            ext={"exception": "Requested rule does not exist"},
+        )
 
     headers = {"X-Data-Version": rule["data_version"]}
     if with_csrf_headers:
@@ -63,5 +72,9 @@ def get_rule_history(rule_id):
     except (ValueError, AssertionError) as msg:
         log.warning("Bad input: %s", msg)
         return problem(
-            400, "Bad Request", "Error occurred when trying to fetch" " Rule's revisions having rule_id {0}".format(rule_id), ext={"exception": str(msg)}
+            400,
+            "Bad Request",
+            "Error occurred when trying to fetch"
+            " Rule's revisions having rule_id {0}".format(rule_id),
+            ext={"exception": str(msg)},
         )

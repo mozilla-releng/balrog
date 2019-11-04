@@ -23,7 +23,13 @@ if STAGING or LOCALDEV:
     DOMAIN_WHITELIST.update(
         {
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-            "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
+            "bouncer-bouncer-releng.stage.mozaws.net": (
+                "Firefox",
+                "Fennec",
+                "Devedition",
+                "SeaMonkey",
+                "Thunderbird",
+            ),
             "stage.guardian.nonprod.cloudops.mozgcp.net": ("Guardian",),
         }
     )

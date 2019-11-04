@@ -17,7 +17,11 @@ def heartbeat_response(heartbeat_database_fn):
         database_entry_value = heartbeat_database_fn(dbo)
         return Response(str(database_entry_value), headers={"Cache-Control": "public, max-age=60"})
     except Exception:
-        return Response(status=502, response="Can't connect to the database.", headers={"Cache-Control": "public, max-age=60"})
+        return Response(
+            status=502,
+            response="Can't connect to the database.",
+            headers={"Cache-Control": "public, max-age=60"},
+        )
 
 
 def lbheartbeat_response():
@@ -31,9 +35,17 @@ def get_version(version_file):
     if version_file and path.exists(version_file):
         with open(version_file) as f:
             version_json = f.read()
-        return Response(version_json, mimetype="application/json", headers={"Cache-Control": "no-cache"})
+        return Response(
+            version_json, mimetype="application/json", headers={"Cache-Control": "no-cache"}
+        )
     else:
-        return jsonify({"source": "https://github.com/mozilla/balrog", "version": "unknown", "commit": "unknown"})
+        return jsonify(
+            {
+                "source": "https://github.com/mozilla/balrog",
+                "version": "unknown",
+                "commit": "unknown",
+            }
+        )
 
 
 # Keeping flask dockerflow endpoints here to maintain the admin api compatibility.

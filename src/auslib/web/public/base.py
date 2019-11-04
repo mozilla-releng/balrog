@@ -57,14 +57,18 @@ def apply_security_headers(response):
     # nor be embedded elsewhere, so we apply a strict Content Security Policy.
     # We also need to set X-Content-Type-Options to nosniff for Firefox to obey this.
     # See https://bugzilla.mozilla.org/show_bug.cgi?id=1332829#c4 for background.
-    response.headers["Strict-Transport-Security"] = app.config.get("STRICT_TRANSPORT_SECURITY", "max-age=31536000;")
+    response.headers["Strict-Transport-Security"] = app.config.get(
+        "STRICT_TRANSPORT_SECURITY", "max-age=31536000;"
+    )
     response.headers["X-Content-Type-Options"] = app.config.get("CONTENT_TYPE_OPTIONS", "nosniff")
     if re.match("^/ui/", request.path):
         # This enables swagger-ui to dynamically fetch and
         # load the swagger specification JSON file containing API definition and examples.
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
     else:
-        response.headers["Content-Security-Policy"] = app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
+        response.headers["Content-Security-Policy"] = app.config.get(
+            "CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'"
+        )
     return response
 
 
@@ -84,7 +88,9 @@ def fourohfour(error):
 # would do if it didn't hit this error).
 @app.errorhandler(UnicodeEncodeError)
 def unicode(error):
-    return problem(400, "Unicode Error", "Connexion was unable to parse some unicode data correctly.")
+    return problem(
+        400, "Unicode Error", "Connexion was unable to parse some unicode data correctly."
+    )
 
 
 @app.errorhandler(Exception)
@@ -109,7 +115,9 @@ def generic(error):
     else:
         message = repr(error)
     if isinstance(error, BadDataError):
-        return Response(status=400, mimetype="text/plain", response=html.escape(message, quote=False))
+        return Response(
+            status=400, mimetype="text/plain", response=html.escape(message, quote=False)
+        )
 
     if sentry.client:
         sentry.captureException()

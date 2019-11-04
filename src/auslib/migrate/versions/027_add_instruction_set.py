@@ -22,7 +22,9 @@ def upgrade(migrate_engine):
     conn.execute("UPDATE rules SET instructionSet=systemCapabilities;")
     conn.execute("UPDATE rules_history SET instructionSet=systemCapabilities;")
     conn.execute("UPDATE rules_scheduled_changes SET base_instructionSet=base_systemCapabilities;")
-    conn.execute("UPDATE rules_scheduled_changes_history SET base_instructionSet=base_systemCapabilities;")
+    conn.execute(
+        "UPDATE rules_scheduled_changes_history SET base_instructionSet=base_systemCapabilities;"
+    )
     conn.close()
 
 
