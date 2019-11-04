@@ -146,6 +146,48 @@ tasks:
               owner: ${owner_email}
               source: ${repo_url}
 
+          - taskId: {$eval: as_slugid("agent-docker-build")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            routes: []
+            payload:
+              maxRunTime: 3600
+              image: "taskcluster/image_builder:0.1.3"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && docker build ."
+              features:
+                dind: true
+            metadata:
+              name: Balrog agent docker build
+              description: Balrog agent docker build
+              owner: ${owner_email}
+              source: ${repo_url}
+
+          - taskId: {$eval: as_slugid("backend-docker-build")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '2 hours'}
+            provisionerId: aws-provisioner-v1
+            workerType: github-worker
+            routes: []
+            payload:
+              maxRunTime: 3600
+              image: "taskcluster/image_builder:0.1.3"
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && docker build ."
+              features:
+                dind: true
+            metadata:
+              name: Balrog backend docker build
+              description: Balrog backend docker build
+              owner: ${owner_email}
+              source: ${repo_url}
+
           - taskId: {$eval: as_slugid("old-ui-tests")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}

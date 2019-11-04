@@ -11,6 +11,7 @@ cef.log
 .swp
 *.egg-info
 .pytest_cache
+pip-wheel-metadata
 
 build
 generated
