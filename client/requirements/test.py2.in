@@ -1,5 +1,0 @@
--r base.in
-
-requests_mock
-pytest<5
-pytest-cov

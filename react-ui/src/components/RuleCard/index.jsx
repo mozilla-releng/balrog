@@ -784,9 +784,10 @@ function RuleCard({
             <Link
               className={classes.link}
               to={{
-                pathname: '/rules/create',
+                pathname: rule.rule_id
+                  ? `/rules/duplicate/ruleId/${rule.rule_id}`
+                  : `/rules/duplicate/scId/${rule.scheduledChange.sc_id}`,
                 state: {
-                  rule,
                   rulesFilter,
                 },
               }}>

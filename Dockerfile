@@ -25,11 +25,13 @@ RUN apt-get install -q --yes gcc && \
 
 # Copying Balrog to /app instead of installing it means that production can run
 # it, and we can bind mount to override it for local development.
-COPY auslib/ /app/auslib/
+COPY src/ /app/src/
 COPY ui/ /app/ui/
 COPY uwsgi/ /app/uwsgi/
 COPY scripts/manage-db.py scripts/run-batch-deletes.sh scripts/run.sh scripts/reset-stage-db.sh scripts/get-prod-db-dump.py /app/scripts/
 COPY version.json /app/
+
+RUN python setup.py install
 
 WORKDIR /app
 

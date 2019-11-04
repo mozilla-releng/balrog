@@ -1,9 +1,34 @@
-include version.txt
 include LICENSE
+include pyproject.toml
+include tox.ini
+include version.txt
 
-recursive-include auslib/migrate *
-recursive-include auslib/blobs/schemas *
-recursive-include auslib/web *.yml
+recursive-include src *
 recursive-include requirements *.txt
-recursive-include ui/dist *
+recursive-include uwsgi *
+
+exclude .editorconfig
+exclude .pyup.yml
+exclude .taskcluster.yml
+exclude CODE_OF_CONDUCT.md
+exclude Dockerfile*
+exclude agent
+exclude client
+exclude docs
+exclude docker-compose.yml
+exclude react-ui
+exclude requirements
+exclude scripts
+exclude tests
+exclude ui
+exclude version.json
+
+recursive-exclude agent *
+recursive-exclude client *
+recursive-exclude docs *
+recursive-exclude react-ui *
+recursive-exclude requirements *
+recursive-exclude scripts *
+recursive-exclude tests *
+recursive-exclude ui *
 recursive-exclude * *.py[co]
