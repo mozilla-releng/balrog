@@ -37,10 +37,9 @@ clickclick==1.2.2 \
 connexion==2.4.0 \
     --hash=sha256:6e0569b646f2e6229923dc4e4c6e0325e223978bd19105779fd81e16bcb22fdf \
     --hash=sha256:7b4268e9ea837241e530738b35040345b78c8748d05d2c22805350aca0cd5b1c
-decorator==4.4.0 \
-    --hash=sha256:86156361c50488b84a3f148056ea716ca587df2f0de1d34750d35c21312725de \
-    --hash=sha256:f069f3a01830ca754ba5258fde2278454a0b5b79e0d7f5c13b3b97e57d4acff6 \
-    # via sqlalchemy-migrate
+decorator==4.4.1 \
+    --hash=sha256:54c38050039232e1db4ad7375cfce6748d7b41c29e95a081c8a6d2c30364a2ce \
+    --hash=sha256:5d19b92a3c8f7f101c8dd86afd86b0f061a8ce4540ab8cd401fa2542756bce6d    # via sqlalchemy-migrate
 ecdsa==0.13.3 \
     --hash=sha256:163c80b064a763ea733870feb96f9dd9b92216cfcacd374837af18e4e8ec3d4d \
     --hash=sha256:9814e700890991abeceeb2242586024d4758c8fc18445b194a49bd62d85861db \
