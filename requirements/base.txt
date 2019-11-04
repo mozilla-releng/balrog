@@ -173,10 +173,9 @@ pyasn1==0.4.7 \
     --hash=sha256:62cdade8b5530f0b185e09855dd422bc05c0bbff6b72ff61381c09dac7befd8c \
     --hash=sha256:a9495356ca1d66ed197a0f72b41eb1823cf7ea8b5bd07191673e8147aecf8604 \
     # via pyasn1-modules, rsa
-python-dateutil==2.8.0 \
-    --hash=sha256:7e6584c74aeed623791615e26efd690f29817a27c73085b78e4bad02493df2fb \
-    --hash=sha256:c89805f6f4d64db21ed966fda138f8a5ed7a4fdbc1a8ee329ce1b74e3c74da9e \
-    # via arrow
+python-dateutil==2.8.1 \
+    --hash=sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c \
+    --hash=sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a    # via arrow
 python-jose==3.0.1 \
     --hash=sha256:29701d998fe560e52f17246c3213a882a4a39da7e42c7015bcc1f7823ceaff1c \
     --hash=sha256:ed7387f0f9af2ea0ddc441d83a6eb47a5909bd0c8a72ac3250e75afec2cc1371
