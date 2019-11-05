@@ -1,5 +1,6 @@
 include LICENSE
 include pyproject.toml
+include setup.py
 include tox.ini
 include version.txt
 
