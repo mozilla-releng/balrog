@@ -13,8 +13,8 @@ from auslib.web.admin.views.permissions import (
 )
 from auslib.web.admin.views.releases import (
     EnactReleaseScheduledChangeView,
-    ReleaseReadOnlyView,
     ReleaseReadOnlyProductRequiredSignoffsView,
+    ReleaseReadOnlyView,
     ReleasesAPIView,
     ReleaseScheduledChangeHistoryView,
     ReleaseScheduledChangeSignoffsView,

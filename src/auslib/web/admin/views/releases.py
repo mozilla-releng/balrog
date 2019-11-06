@@ -178,6 +178,12 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
     return Response(status=status, response=json.dumps(dict(new_data_version=new_data_version)))
 
 
+def set_required_signoffs_for_product(sc):
+    if not sc["required_signoffs"] and sc["change_type"] == "update" and not sc["read_only"]:
+        potential_rs = dbo.releases.getPotentialRequiredSignoffsForProduct(sc["product"])
+        sc["required_signoffs"] = serialize_signoff_requirements(potential_rs["rs"])
+
+
 class SingleLocaleView(AdminView):
     """/releases/[release]/builds/[platform]/[locale]"""
 
@@ -414,9 +420,7 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
         ret = super(ReleaseScheduledChangesView, self).get(where)
         scheduled_changes = []
         for sc in ret.json["scheduled_changes"]:
-            if not sc["required_signoffs"] and sc["change_type"] == "update" and not sc["read_only"]:
-                potential_rs = dbo.releases.getPotentialRequiredSignoffsForProduct(sc["product"])
-                sc["required_signoffs"] = serialize_signoff_requirements(potential_rs["rs"])
+            set_required_signoffs_for_product(sc)
             scheduled_changes.append(sc)
         return jsonify({"count": len(scheduled_changes), "scheduled_changes": scheduled_changes})
 
@@ -470,6 +474,12 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
 
     def __init__(self):
         super(ReleaseScheduledChangeView, self).__init__("releases", dbo.releases)
+
+    def get(self, sc_id):
+        ret = super(ReleaseScheduledChangeView, self).get(sc_id)
+        sc = ret.json["scheduled_change"]
+        set_required_signoffs_for_product(sc)
+        return jsonify({"scheduled_change": sc})
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):
