@@ -6,7 +6,7 @@ services:
   balrogadmin:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.test
       args:
         PYTHON_VERSION: 3.7
     depends_on:
@@ -66,7 +66,7 @@ services:
   balrogpub:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.test
       args:
         PYTHON_VERSION: 3.7
     depends_on:
