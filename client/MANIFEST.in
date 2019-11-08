@@ -1,6 +1,9 @@
 include LICENSE
 include Dockerfile.dev
+include setup.py
 include tox.ini
-include run-tests.sh
 
+recursive-include src *
 recursive-include requirements *.txt
+
+recursive-exclude tests *

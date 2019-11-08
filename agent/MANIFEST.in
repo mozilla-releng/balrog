@@ -1,4 +1,9 @@
+include MANIFEST.in
+include setup.py
 include version.txt
 
+recursive-include src *
 recursive-include requirements *.txt
+
+recursive-exclude tests *
 recursive-exclude * *.py[co]
