@@ -196,6 +196,8 @@ services:
       dockerfile: Dockerfile.database
     expose:
       - "3306"
+    ports:
+      - "3306:3306"
     environment:
       - MYSQL_DATABASE=balrog
       - MYSQL_USER=balrogadmin

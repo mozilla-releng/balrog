@@ -179,7 +179,13 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
 
 
 def set_required_signoffs_for_product(sc):
-    if not sc["required_signoffs"] and sc["change_type"] == "update" and not sc["read_only"]:
+    conditions = (
+        sc["change_type"] == "update",
+        not sc["required_signoffs"],
+        not sc["read_only"],
+        dbo.releases.isReadOnly(sc["name"]),
+    )
+    if all(conditions):
         potential_rs = dbo.releases.getPotentialRequiredSignoffsForProduct(sc["product"])
         sc["required_signoffs"] = serialize_signoff_requirements(potential_rs["rs"])
 

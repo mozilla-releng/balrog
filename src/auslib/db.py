@@ -2138,7 +2138,7 @@ class Releases(AUSTable):
 
     def validate_readonly_change(self, where, new_readonly_state, changed_by, release=None, transaction=None, dryrun=False, signoffs=None):
         if not release:
-            release = self.select(where=where, columns=[self.name, self.product], transaction=transaction)[0]
+            release = self.select(where=where, columns=[self.name, self.product, self.read_only], transaction=transaction)[0]
 
         product = release["product"]
 
@@ -2149,14 +2149,16 @@ class Releases(AUSTable):
             if not self.db.hasPermission(changed_by, "release_read_only", "unset", product, transaction):
                 raise PermissionDeniedError(f"{changed_by} is not allowed to mark {product} products read write")
 
-        if not dryrun and not new_readonly_state:
+        # if release is moving from ro->rw
+        if not dryrun and release["read_only"] and not new_readonly_state:
 
             def _map_required_signoffs(required_signoffs):
                 return [obj for v in required_signoffs for obj in v]
 
             # If release is associated with a rule, get the required signoffs for the rule's product/channel.
-            # If no required signoffs is found, get the required signoffs considering all products/channels for the given release product.
             potential_required_signoffs = _map_required_signoffs(self.getPotentialRequiredSignoffs([release], transaction=transaction).values())
+
+            # If no required signoffs is found, get the required signoffs considering all products/channels for the given release product.
             if not potential_required_signoffs:
                 potential_required_signoffs = _map_required_signoffs(
                     self.getPotentialRequiredSignoffsForProduct(release["product"], transaction=transaction).values()
