@@ -97,4 +97,4 @@ Balrog is released under `Mozilla Public License 2.0 <https://opensource.org/lic
 .. |CI| image:: https://github.taskcluster.net/v1/repository/mozilla/balrog/master/badge.svg
    :target: https://github.taskcluster.net/v1/repository/mozilla/balrog/master/latest
 .. |Coverage| image:: https://coveralls.io/repos/github/mozilla/balrog/badge.svg?branch=master
-   :target: https://coveralls.io/github/mozilla/balrog?branch=master?
+   :target: https://coveralls.io/github/mozilla/balrog?branch=master
