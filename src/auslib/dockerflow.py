@@ -33,7 +33,7 @@ def get_version(version_file):
             version_json = f.read()
         return Response(version_json, mimetype="application/json", headers={"Cache-Control": "no-cache"})
     else:
-        return jsonify({"source": "https://github.com/mozilla/balrog", "version": "unknown", "commit": "unknown"})
+        return jsonify({"source": "https://github.com/mozilla-releng/balrog", "version": "unknown", "commit": "unknown"})
 
 
 # Keeping flask dockerflow endpoints here to maintain the admin api compatibility.

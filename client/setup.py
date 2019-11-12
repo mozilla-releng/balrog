@@ -28,7 +28,7 @@ setup(
     description="Balrog Admin API Client",
     author="Mozilla Release Engineers",
     author_email="release+python@mozilla.com",
-    url="https://github.com/mozilla/balrog",
+    url="https://github.com/mozilla-releng/balrog",
     license="MPL-2.0",
     packages=find_packages("src"),
     package_dir={"": "src"},
