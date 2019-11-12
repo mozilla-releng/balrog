@@ -7,7 +7,7 @@ shift
 
 tags=( $@ )
 
-password_url="taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:dockerhub"
+password_url="taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:dockerhub"
 artifact_url="taskcluster/queue/v1/task/${TASK_ID}/runs/${RUN_ID}/artifacts/public/docker-image-shasum256.txt"
 artifact_expiry=$(date -d "+1 year" -u +%FT%TZ)
 dockerhub_email=release+balrog@mozilla.com
@@ -30,7 +30,7 @@ cat > version.json <<EOF
 {
     "commit": "${commit}",
     "version": "${version}",
-    "source": "https://github.com/mozilla/balrog",
+    "source": "https://github.com/mozilla-releng/balrog",
     "build": "https://tools.taskcluster.net/task-inspector/#${TASK_ID}"
 }
 EOF

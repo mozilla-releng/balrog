@@ -29,7 +29,7 @@ setup(
     name="balrogagent",
     description="Balrog Agent",
     version=version,
-    url="https://github.com/mozilla/balrog",
+    url="https://github.com/mozilla-releng/balrog",
     license="MPL",
     author="Mozilla Release Engineering",
     author_email="release@mozilla.com",

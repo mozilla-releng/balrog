@@ -879,7 +879,7 @@ class HistoryTable(AUSTable):
             # mysql will read many more rows than will be returned. This is
             # particularly bad on the releases_history table, where the "data"
             # column is often hundreds of kilobytes per row.
-            # Additional details in https://github.com/mozilla/balrog/pull/419#issuecomment-334851038
+            # Additional details in https://github.com/mozilla-releng/balrog/pull/419#issuecomment-334851038
             change_ids = self.select(columns=[self.change_id], where=where, transaction=transaction)
             if len(change_ids) != 1:
                 self.log.debug("Found %s changes when not querying by change_id, should have been 1", len(change_ids))

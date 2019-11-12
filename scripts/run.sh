@@ -91,7 +91,7 @@ elif [ $1 == "test" ]; then
         echo "FAIL FAIL FAIL FAIL FAIL FAIL FAIL FAIL. Some tests failed, see above for details."
     fi
     # Only send coverage data for the authoritative Balrog repo.
-    if [[ $GITHUB_BASE_REPO_URL == "https://github.com/mozilla/balrog.git" ]];
+    if [[ $GITHUB_BASE_REPO_URL == "https://github.com/mozilla-releng/balrog.git" ]];
     then
         # COVERALLS_REPO_TOKEN is already in the environment
         export CIRCLECI=1

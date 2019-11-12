@@ -56,7 +56,7 @@ class ViewTest(unittest.TestCase):
             f.write(
                 """
 {
-  "source":"https://github.com/mozilla/balrog",
+  "source":"https://github.com/mozilla-releng/balrog",
   "version":"1.0",
   "commit":"abcdef123456"
 }
