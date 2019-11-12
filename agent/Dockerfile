@@ -1,6 +1,4 @@
-ARG PYTHON_VERSION
-
-FROM python:${PYTHON_VERSION}-stretch
+FROM python:3.7-stretch
 
 MAINTAINER bhearsum@mozilla.com
 
