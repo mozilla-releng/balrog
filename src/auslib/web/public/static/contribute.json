@@ -2,7 +2,7 @@
     "name": "Balrog",
     "description": "Next generation update service for Mozilla products.",
     "repository": {
-        "url": "https://github.com/mozilla/balrog",
+        "url": "https://github.com/mozilla-releng/balrog",
         "license": "MPL-2.0"
     },
     "participate": {

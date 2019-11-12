@@ -7,7 +7,7 @@ info:
     url: https://www.mozilla.org/en-US/MPL/2.0/
   contact:
     name: Mozilla Release Engineering
-    url: https://github.com/mozilla/balrog
+    url: https://github.com/mozilla-releng/balrog
     email: release-engineering@lists.mozilla.org
   description: >
     **Balrog** is the software that runs the server side component of the update
