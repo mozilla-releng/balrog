@@ -36,7 +36,7 @@ setup(
     include_package_data=True,
     install_requires=requirements,
     test_suite="tests",
-    url="https://github.com/mozilla/balrog",
+    url="https://github.com/mozilla-releng/balrog",
     license="MPL-2.0",
     zip_safe=False,
 )

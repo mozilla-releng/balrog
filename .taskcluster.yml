@@ -70,10 +70,10 @@ tasks:
           - taskId: {$eval: as_slugid("backend-tests")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
-            provisionerId: aws-provisioner-v1
-            workerType: github-worker
+            provisionerId: releng-t
+            workerType: linux
             scopes:
-              - secrets:get:repo:github.com/mozilla/balrog:coveralls
+              - secrets:get:repo:github.com/mozilla-releng/balrog:coveralls
             routes: []
             payload:
               maxRunTime: 1200
@@ -87,7 +87,7 @@ tasks:
                 - "/bin/bash"
                 - "-c"
                 - >-
-                  export COVERALLS_REPO_TOKEN=$(curl 'taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:coveralls' | python -c 'import json, sys; a = json.load(sys.stdin); print(a["secret"]["repo_token"])') &&
+                  export COVERALLS_REPO_TOKEN=$(curl 'taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:coveralls' | python -c 'import json, sys; a = json.load(sys.stdin); print(a["secret"]["repo_token"])') &&
                   git clone ${repo_url} balrog &&
                   cd balrog &&
                   git checkout ${head_sha} &&
@@ -105,8 +105,8 @@ tasks:
           - taskId: {$eval: as_slugid("agent-tests")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
-            provisionerId: aws-provisioner-v1
-            workerType: github-worker
+            provisionerId: releng-t
+            workerType: linux
             scopes: []
             routes: []
             payload:
@@ -127,8 +127,8 @@ tasks:
           - taskId: {$eval: as_slugid("client-tests-py37")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
-            provisionerId: aws-provisioner-v1
-            workerType: github-worker
+            provisionerId: releng-t
+            workerType: linux
             scopes: []
             routes: []
             payload:
@@ -149,8 +149,8 @@ tasks:
           - taskId: {$eval: as_slugid("agent-docker-build")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
-            provisionerId: aws-provisioner-v1
-            workerType: github-worker
+            provisionerId: releng-t
+            workerType: linux
             routes: []
             payload:
               maxRunTime: 3600
@@ -170,8 +170,8 @@ tasks:
           - taskId: {$eval: as_slugid("backend-docker-build")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
-            provisionerId: aws-provisioner-v1
-            workerType: github-worker
+            provisionerId: releng-t
+            workerType: linux
             routes: []
             payload:
               maxRunTime: 3600
@@ -191,8 +191,8 @@ tasks:
           - taskId: {$eval: as_slugid("old-ui-tests")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
-            provisionerId: aws-provisioner-v1
-            workerType: github-worker
+            provisionerId: releng-t
+            workerType: linux
             scopes: []
             routes: []
             payload:
@@ -211,8 +211,8 @@ tasks:
           - taskId: {$eval: as_slugid("ui-tests")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
-            provisionerId: aws-provisioner-v1
-            workerType: github-worker
+            provisionerId: releng-t
+            workerType: linux
             scopes: []
             routes: []
             payload:
@@ -231,8 +231,8 @@ tasks:
           - taskId: {$eval: as_slugid("ui-build")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
-            provisionerId: aws-provisioner-v1
-            workerType: github-worker
+            provisionerId: releng-t
+            workerType: linux
             scopes: []
             routes: []
             payload:
@@ -253,10 +253,10 @@ tasks:
           - taskId: {$eval: as_slugid("agent-docker-image")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
-            provisionerId: aws-provisioner-v1
-            workerType: github-worker
+            provisionerId: releng-3
+            workerType: linux
             scopes:
-              - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+              - secrets:get:repo:github.com/mozilla-releng/balrog:dockerhub
             routes: []
             payload:
               maxRunTime: 3600
@@ -277,10 +277,10 @@ tasks:
           - taskId: {$eval: as_slugid("backend-docker-image")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
-            provisionerId: aws-provisioner-v1
-            workerType: github-worker
+            provisionerId: releng-3
+            workerType: linux
             scopes:
-              - secrets:get:repo:github.com/mozilla/balrog:dockerhub
+              - secrets:get:repo:github.com/mozilla-releng/balrog:dockerhub
             routes: []
             payload:
               maxRunTime: 3600
@@ -304,16 +304,16 @@ tasks:
           - taskId: {$eval: as_slugid("stage-ui-deploy")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
-            provisionerId: aws-provisioner-v1
-            workerType: github-worker
+            provisionerId: releng-3
+            workerType: linux
             scopes:
-              - secrets:get:repo:github.com/mozilla/balrog:s3-stage-aws-creds
-              - secrets:get:repo:github.com/mozilla/balrog:s3-stage-app-config
+              - secrets:get:repo:github.com/mozilla-releng/balrog:s3-stage-aws-creds
+              - secrets:get:repo:github.com/mozilla-releng/balrog:s3-stage-app-config
             routes: []
             payload:
               env:
-                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage-aws-creds
-                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-stage-app-config
+                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-stage-aws-creds
+                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-stage-app-config
                 WEBSITE_BUCKET: balrog-stage-balrog-static-admin-stage-static-website
               maxRunTime: 3600
               image: "node:10"
@@ -335,16 +335,16 @@ tasks:
           - taskId: {$eval: as_slugid("prod-ui-deploy")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
-            provisionerId: aws-provisioner-v1
-            workerType: github-worker
+            provisionerId: releng-3
+            workerType: linux
             scopes:
-              - secrets:get:repo:github.com/mozilla/balrog:s3-prod-aws-creds
-              - secrets:get:repo:github.com/mozilla/balrog:s3-prod-app-config
+              - secrets:get:repo:github.com/mozilla-releng/balrog:s3-prod-aws-creds
+              - secrets:get:repo:github.com/mozilla-releng/balrog:s3-prod-app-config
             routes: []
             payload:
               env:
-                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-prod-aws-creds
-                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:s3-prod-app-config
+                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-prod-aws-creds
+                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-prod-app-config
                 WEBSITE_BUCKET: balrog-prod-balrog-static-admin-prod-static-website
               maxRunTime: 3600
               image: "node:10"

@@ -19,7 +19,7 @@ These instructions assume you have the following installed (if not, you can foll
 Cloning the Repository
 ----------------------
 
--   Fork the `Balrog Repository <https://github.com/mozilla/balrog>`_ on GitHub.
+-   Fork the `Balrog Repository <https://github.com/mozilla-releng/balrog>`_ on GitHub.
 -   Clone the fork using
 
     ::
