@@ -1,9 +1,0 @@
--r base.in
-
-black
-flake8
-isort
-pip-compile-multi
-requests_mock
-pytest
-pytest-cov
