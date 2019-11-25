@@ -67,6 +67,8 @@ const getScheduledChanges = all => {
 
 const getScheduledChangeByName = name =>
   axios.get(`/scheduled_changes/releases?name=${name}`);
+const getScheduledChangeById = scId =>
+  axios.get(`/scheduled_changes/releases/${scId}`);
 const createRelease = (name, product, blob) =>
   axios.post(`/releases`, { name, product, blob });
 const addScheduledChange = data =>
@@ -78,6 +80,8 @@ const deleteScheduledChange = ({ scId, scDataVersion }) =>
   axios.delete(`/scheduled_changes/releases/${scId}`, {
     params: { data_version: scDataVersion },
   });
+const getRequiredSignoffsForProduct = name =>
+  axios.get(`/releases/${name}/read_only/product/required_signoffs`);
 
 // Releases factory
 export {
@@ -89,8 +93,10 @@ export {
   getRevisions,
   getScheduledChanges,
   getScheduledChangeByName,
+  getScheduledChangeById,
   createRelease,
   addScheduledChange,
   updateScheduledChange,
   deleteScheduledChange,
+  getRequiredSignoffsForProduct,
 };
