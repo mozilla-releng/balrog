@@ -147,6 +147,10 @@ function ReleaseCard(props) {
     onAccessChange({ release, checked });
   };
 
+  const updatingToModifiable = release =>
+    release.scheduledChange &&
+    !release.scheduledChange.read_only &&
+    release.read_only;
   const getRuleLink = (ruleId, product, channel) => {
     const args = { product };
 
@@ -267,11 +271,17 @@ function ReleaseCard(props) {
                   variant="subtitle1">
                   Scheduled Changes
                 </Typography>
-                <Button
-                  color="secondary"
-                  onClick={() => onViewScheduledChangeDiff(release)}>
-                  View Diff
-                </Button>
+                {updatingToModifiable(release) ? (
+                  <small>
+                    <i>Changing release state to modifiable</i>
+                  </small>
+                ) : (
+                  <Button
+                    color="secondary"
+                    onClick={() => onViewScheduledChangeDiff(release)}>
+                    View Diff
+                  </Button>
+                )}
               </div>
               <Chip
                 className={classes.changeTimeChip}

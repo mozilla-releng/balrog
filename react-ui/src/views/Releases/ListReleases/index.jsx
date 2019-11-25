@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef, Fragment } from 'react';
 import { clone } from 'ramda';
 import classNames from 'classnames';
 import PlusIcon from 'mdi-react/PlusIcon';
@@ -11,8 +11,10 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
+import { Typography } from '@material-ui/core';
 import Dashboard from '../../../components/Dashboard';
 import ErrorPanel from '../../../components/ErrorPanel';
+import MessagePanel from '../../../components/MessagePanel';
 import ReleaseCard from '../../../components/ReleaseCard';
 import useAction from '../../../hooks/useAction';
 import Link from '../../../utils/Link';
@@ -22,6 +24,9 @@ import {
   deleteRelease,
   setReadOnly,
   getScheduledChanges,
+  getScheduledChangeById,
+  addScheduledChange,
+  getRequiredSignoffsForProduct,
 } from '../../../services/releases';
 import { getUserInfo } from '../../../services/users';
 import { makeSignoff, revokeSignoff } from '../../../services/signoffs';
@@ -68,6 +73,7 @@ function ListReleases(props) {
     subtitle1TextHeight,
     signoffSummarylistSubheaderTextHeight,
   } = elementsHeight(theme);
+  const releaseListRef = useRef(null);
   const { hash } = props.location;
   const [releaseNameHash, setReleaseNameHash] = useState(null);
   const [scrollToRow, setScrollToRow] = useState(null);
@@ -78,6 +84,9 @@ function ListReleases(props) {
   const [roles, setRoles] = useState([]);
   const [signoffRole, setSignoffRole] = useState('');
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
+  const [requiredSignoffsForProduct, setRequiredSignoffsForProduct] = useState(
+    null
+  );
   const [releasesAction, fetchReleases] = useAction(getReleases);
   const [releaseAction, fetchRelease] = useAction(getRelease);
   const [scheduledChangesAction, fetchScheduledChanges] = useAction(
@@ -116,6 +125,24 @@ function ListReleases(props) {
   const filteredReleasesCount = filteredReleases.length;
   const handleSignoffRoleChange = ({ target: { value } }) =>
     setSignoffRole(value);
+  const requiresSignoffs = release =>
+    release.required_signoffs &&
+    Object.entries(release.required_signoffs).length > 0;
+  const requiresSignoffsChangeReadOnly = release =>
+    requiresSignoffs(release) ||
+    (requiredSignoffsForProduct[release.product] &&
+      Object.entries(requiredSignoffsForProduct[release.product]).length > 0);
+  const getRequiredSignoffsChangeReadOnly = release =>
+    requiresSignoffs(release)
+      ? release.required_signoffs
+      : requiredSignoffsForProduct[release.product];
+  const buildScheduledChange = sc => {
+    const scheduledChange = sc;
+
+    scheduledChange.when = new Date(sc.when);
+
+    return scheduledChange;
+  };
 
   useEffect(() => {
     Promise.all([fetchReleases(), fetchScheduledChanges()]).then(
@@ -128,14 +155,8 @@ function ListReleases(props) {
             const release = clone(r);
 
             if (sc) {
-              release.scheduledChange = sc;
-              release.scheduledChange.when = new Date(
-                release.scheduledChange.when
-              );
+              release.scheduledChange = buildScheduledChange(sc);
             }
-
-            // todo: set these
-            release.required_signoffs = {};
 
             return release;
           })
@@ -143,6 +164,51 @@ function ListReleases(props) {
       }
     );
   }, []);
+
+  useEffect(() => {
+    if (!requiredSignoffsForProduct && releases.length > 0) {
+      const productsReleases = releases.reduce((acc, release) => {
+        const pr = acc;
+
+        if (release.product in pr) return pr;
+
+        // Required signoffs for product will be fetched only when the current
+        // release does not have the required signoffs information.
+        if (!requiresSignoffs(release)) {
+          pr[release.product] = release.name;
+        }
+
+        return pr;
+      }, {});
+      // Releases that are not associated to rules, will not have required
+      // signoffs information, in this scenario, to turn release as modifiable,
+      // it is necessary get required signoff for the release product.
+      // How it is a very specific release logic, the endpoint gets
+      // the release name and infers the product to evaluate the signoffs.
+      // Once required signoffs for product was evaluated for a given product,
+      // it is not necessary evaluate again, so to get the signoffs,
+      // one release is enougth.
+      const signoffsForProductRequests = Object.entries(productsReleases).map(
+        async ([product, name]) =>
+          getRequiredSignoffsForProduct(name).then(response => [
+            product,
+            response.data.required_signoffs,
+          ])
+      );
+
+      Promise.all(signoffsForProductRequests).then(requests => {
+        setRequiredSignoffsForProduct(
+          requests.reduce((acc, [product, rs]) => {
+            const rsfp = acc;
+
+            rsfp[product] = rs;
+
+            return rsfp;
+          }, {})
+        );
+      });
+    }
+  }, [releases]);
 
   useEffect(() => {
     if (username) {
@@ -215,8 +281,29 @@ function ListReleases(props) {
     });
   };
 
-  const handleReadOnlySubmit = async () => {
-    const release = dialogState.item;
+  const scheduleReadWriteChange = async release => {
+    const sc = {
+      change_type: 'update',
+      when: new Date().getTime() + 5000,
+      name: release.name,
+      product: release.product,
+      read_only: false,
+      data_version: release.data_version,
+    };
+    const { data, error } = await addScheduledChange(sc);
+
+    if (error) throw error;
+
+    const { data: scData, error: scError } = await getScheduledChangeById(
+      data.sc_id
+    );
+
+    if (scError) throw scError;
+
+    return { name: release.name, sc: scData.scheduled_change };
+  };
+
+  const updateReadonlyFlag = async release => {
     const { error, data } = await setReadOnlyFlag({
       name: release.name,
       readOnly: !release.read_only,
@@ -230,6 +317,16 @@ function ListReleases(props) {
     return { name: release.name, new_data_version: data.data.new_data_version };
   };
 
+  const handleReadOnlySubmit = async () => {
+    const release = dialogState.item;
+
+    if (release.read_only && requiresSignoffsChangeReadOnly(release)) {
+      return scheduleReadWriteChange(release);
+    }
+
+    return updateReadonlyFlag(release);
+  };
+
   const handleReadOnlyComplete = result => {
     setReleases(
       releases.map(r => {
@@ -239,12 +336,20 @@ function ListReleases(props) {
 
         const ret = clone(r);
 
-        ret.read_only = !r.read_only;
-        ret.data_version = result.new_data_version;
+        if (result.sc) {
+          ret.scheduledChange = buildScheduledChange(result.sc);
+        } else {
+          ret.read_only = !r.read_only;
+          ret.data_version = result.new_data_version;
+        }
 
         return ret;
       })
     );
+
+    if (result.sc) {
+      releaseListRef.current.recomputeRowHeights();
+    }
 
     handleDialogClose();
   };
@@ -315,11 +420,26 @@ function ListReleases(props) {
     handleDialogClose();
   };
 
-  const accessChangeDialogBody =
-    dialogState.item &&
-    `This would make ${dialogState.item.name} ${
-      dialogState.item.read_only ? 'writable' : 'read only'
-    }.`;
+  const accessChangeDialogBody = dialogState.item && (
+    <Fragment>
+      <Typography component="p" gutterBottom paragraph>
+        This would make {dialogState.item.name}&nbsp;
+        {dialogState.item.read_only ? 'writable' : 'read only'}
+      </Typography>
+      {dialogState.item.read_only &&
+        requiresSignoffsChangeReadOnly(dialogState.item) && (
+          <MessagePanel
+            variant="warning"
+            alwaysOpen
+            message={`Changes will require signoffs: ${Object.entries(
+              getRequiredSignoffsChangeReadOnly(dialogState.item)
+            )
+              .map(([role, count]) => `${count} from ${role}`)
+              .join(', ')}.`}
+          />
+        )}
+    </Fragment>
+  );
   const handleAccessChange = ({ release, checked }) => {
     setDialogState({
       ...dialogState,
@@ -556,6 +676,7 @@ function ListReleases(props) {
       {error && <ErrorPanel fixed error={error} />}
       {!isLoading && filteredReleases && (
         <VariableSizeList
+          ref={releaseListRef}
           rowRenderer={Row}
           scrollToRow={scrollToRow}
           rowHeight={getRowHeight}

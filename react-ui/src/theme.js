@@ -1,5 +1,5 @@
 import { createMuiTheme } from '@material-ui/core/styles';
-import { amber, red } from '@material-ui/core/colors';
+import { amber, red, indigo } from '@material-ui/core/colors';
 
 const SPACING = {
   UNIT: 8,
@@ -25,6 +25,13 @@ export default createMuiTheme({
       light: amber[300],
       main: amber[500],
       dark: amber[700],
+      contrastText: 'rgba(0, 0, 0, 0.9)',
+    },
+    info: {
+      light: indigo[300],
+      main: indigo[500],
+      dark: indigo[700],
+      contrastText: 'rgba(255, 255, 255, 0.9)',
     },
   },
   typography: {
