@@ -1802,6 +1802,18 @@ class Releases(AUSTable):
             potential_required_signoffs["rs"] = []
         return potential_required_signoffs
 
+    def getPotentialRequiredSignoffsForProduct(self, product, transaction=None):
+        potential_required_signoffs = {"rs": []}
+        where = [self.db.productRequiredSignoffs.product == product]
+        product_rs = self.db.productRequiredSignoffs.select(where=where, transaction=transaction)
+        if product_rs:
+            role_map = defaultdict(list)
+            for rs in product_rs:
+                role_map[rs["role"]].append(rs)
+            signoffs_required = [max(signoffs, default=None, key=lambda k: k["signoffs_required"]) for signoffs in role_map.values()]
+            potential_required_signoffs["rs"] = signoffs_required
+        return potential_required_signoffs
+
     def setDomainWhitelist(self, domainWhitelist):
         self.domainWhitelist = domainWhitelist
 
@@ -1946,50 +1958,38 @@ class Releases(AUSTable):
         current_releases = self.select(where=where, columns=[self.name, self.product, self.read_only], transaction=transaction)
         for current_release in current_releases:
             name = current_release["name"]
-            if "product" in what or "data" in what:
-                self._proceedIfNotReadOnly(current_release["name"], transaction=transaction)
+            is_readonly_change = "read_only" in what and current_release["read_only"] != what["read_only"]
 
-            if blob:
-                blob.validate(what.get("product", current_release["product"]), self.domainWhitelist)
-                name = what.get("name", name)
-                if name != blob["name"]:
-                    raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
+            if not is_readonly_change:
+                if "product" in what or "data" in what:
+                    self._proceedIfNotReadOnly(current_release["name"], transaction=transaction)
 
-            if not self.db.hasPermission(changed_by, "release", "modify", current_release["product"], transaction):
-                raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, current_release["product"]))
+                if blob:
+                    blob.validate(what.get("product", current_release["product"]), self.domainWhitelist)
+                    name = what.get("name", name)
+                    if name != blob["name"]:
+                        raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
 
-            if "product" in what:
-                # If the product is being changed, we need to make sure the user
-                # has permission to modify releases of that product, too.
-                if not self.db.hasPermission(changed_by, "release", "modify", what["product"], transaction):
-                    raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, what["product"]))
+                if not self.db.hasPermission(changed_by, "release", "modify", current_release["product"], transaction):
+                    raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, current_release["product"]))
 
-            # The way things stand right now we cannot grant access to _only_ modify
-            # the read only flag. When the permissions were still enforced at the
-            # web level we had this because that flag had its own endpoint.
-            # If we want this again we'll need to adjust this code, and perhaps
-            # make a special method on this class that only modifies read_only
-            # (similar to addLocaleToRelease).
-            if "read_only" in what:
-                product = what.get("product", current_release["product"])
-                # In addition to being able to modify the release overall, users
-                # need to be granted explicit access to manipulate the read_only
-                # flag. This lets us give out very granular access, which can be
-                # very helpful particularly in automation.
-                if what["read_only"] is False:
-                    if not self.db.hasPermission(changed_by, "release_read_only", "unset", product, transaction):
-                        raise PermissionDeniedError("%s is not allowed to mark %s products read write" % (changed_by, what.get("product")))
-                elif what["read_only"] is True:
-                    if not self.db.hasPermission(changed_by, "release_read_only", "set", product, transaction):
-                        raise PermissionDeniedError("%s is not allowed to mark %s products read only" % (changed_by, what.get("product")))
+                if "product" in what:
+                    # If the product is being changed, we need to make sure the user
+                    # has permission to modify releases of that product, too.
+                    if not self.db.hasPermission(changed_by, "release", "modify", what["product"], transaction):
+                        raise PermissionDeniedError("%s is not allowed to modify releases for product %s" % (changed_by, what["product"]))
 
-            new_release = current_release.copy()
-            new_release.update(what)
-            if not dryrun:
-                potential_required_signoffs = [
-                    obj for v in self.getPotentialRequiredSignoffs([current_release, new_release], transaction=transaction).values() for obj in v
-                ]
-                verify_signoffs(potential_required_signoffs, signoffs)
+                new_release = current_release.copy()
+                new_release.update(what)
+                if not dryrun:
+                    potential_required_signoffs = [
+                        obj for v in self.getPotentialRequiredSignoffs([current_release, new_release], transaction=transaction).values() for obj in v
+                    ]
+                    verify_signoffs(potential_required_signoffs, signoffs)
+            else:
+                self.validate_readonly_change(
+                    where, what["read_only"], changed_by, release=current_release, transaction=transaction, dryrun=dryrun, signoffs=signoffs
+                )
 
         for release in current_releases:
             name = current_release["name"]
@@ -2135,6 +2135,39 @@ class Releases(AUSTable):
     def _proceedIfNotReadOnly(self, name, limit=None, transaction=None):
         if self.isReadOnly(name, limit, transaction):
             raise ReadOnlyError("Release '%s' is read only" % name)
+
+    def validate_readonly_change(self, where, new_readonly_state, changed_by, release=None, transaction=None, dryrun=False, signoffs=None):
+        if not release:
+            release = self.select(where=where, columns=[self.name, self.product, self.read_only], transaction=transaction)[0]
+
+        product = release["product"]
+
+        if new_readonly_state:
+            if not self.db.hasPermission(changed_by, "release_read_only", "set", product, transaction):
+                raise PermissionDeniedError(f"{changed_by} is not allowed to mark {product} products read only")
+        else:
+            if not self.db.hasPermission(changed_by, "release_read_only", "unset", product, transaction):
+                raise PermissionDeniedError(f"{changed_by} is not allowed to mark {product} products read write")
+
+        # if release is moving from ro->rw
+        if not dryrun and release["read_only"] and not new_readonly_state:
+
+            def _map_required_signoffs(required_signoffs):
+                return [obj for v in required_signoffs for obj in v]
+
+            # If release is associated with a rule, get the required signoffs for the rule's product/channel.
+            potential_required_signoffs = _map_required_signoffs(self.getPotentialRequiredSignoffs([release], transaction=transaction).values())
+
+            # If no required signoffs is found, get the required signoffs considering all products/channels for the given release product.
+            if not potential_required_signoffs:
+                potential_required_signoffs = _map_required_signoffs(
+                    self.getPotentialRequiredSignoffsForProduct(release["product"], transaction=transaction).values()
+                )
+            verify_signoffs(potential_required_signoffs, signoffs)
+
+    def change_readonly(self, where, is_readonly, changed_by, old_data_version, transaction=None):
+        self.validate_readonly_change(where, is_readonly, changed_by, transaction=transaction)
+        super().update(where, {"read_only": is_readonly}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
 
 class UserRoles(AUSTable):

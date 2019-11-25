@@ -178,6 +178,12 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
     return Response(status=status, response=json.dumps(dict(new_data_version=new_data_version)))
 
 
+def set_required_signoffs_for_product(sc):
+    if sc["change_type"] == "update" and not sc["required_signoffs"] and not sc["read_only"] and dbo.releases.isReadOnly(sc["name"]):
+        potential_rs = dbo.releases.getPotentialRequiredSignoffsForProduct(sc["product"])
+        sc["required_signoffs"] = serialize_signoff_requirements(potential_rs["rs"])
+
+
 class SingleLocaleView(AdminView):
     """/releases/[release]/builds/[platform]/[locale]"""
 
@@ -314,19 +320,29 @@ class ReleaseReadOnlyView(AdminView):
 
         data_version = connexion.request.get_json().get("data_version")
         is_release_read_only = dbo.releases.isReadOnly(release)
+        where = {"name": release}
 
         if connexion.request.get_json().get("read_only"):
             if not is_release_read_only:
-                dbo.releases.update(
-                    where={"name": release}, what={"read_only": True}, changed_by=changed_by, old_data_version=data_version, transaction=transaction
-                )
+                dbo.releases.change_readonly(where, True, changed_by, old_data_version=data_version, transaction=transaction)
                 data_version += 1
         else:
-            dbo.releases.update(
-                where={"name": release}, what={"read_only": False}, changed_by=changed_by, old_data_version=data_version, transaction=transaction
-            )
+            dbo.releases.change_readonly(where, False, changed_by, old_data_version=data_version, transaction=transaction)
             data_version += 1
         return Response(status=201, response=json.dumps(dict(new_data_version=data_version)))
+
+
+class ReleaseReadOnlyProductRequiredSignoffsView(AdminView):
+    """/releases/:release/read_only/product/required_signoffs"""
+
+    def get(self, release):
+        releases = dbo.releases.getReleases(name=release, limit=1)
+        if not releases:
+            return problem(404, "Not Found", f"Release: {release} not found")
+        release = releases[0]
+        potential_rs = dbo.releases.getPotentialRequiredSignoffsForProduct(release["product"])
+        rs = {"required_signoffs": serialize_signoff_requirements(potential_rs["rs"])}
+        return jsonify(rs)
 
 
 class ReleasesAPIView(AdminView):
@@ -401,26 +417,37 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
         if name:
             where["base_name"] = name
 
-        return super(ReleaseScheduledChangesView, self).get(where)
+        ret = super(ReleaseScheduledChangesView, self).get(where)
+        scheduled_changes = []
+        for sc in ret.json["scheduled_changes"]:
+            set_required_signoffs_for_product(sc)
+            scheduled_changes.append(sc)
+        return jsonify({"count": len(scheduled_changes), "scheduled_changes": scheduled_changes})
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        if connexion.request.get_json().get("when", None) is None:
+        sc = connexion.request.get_json()
+        if sc.get("when", None) is None:
             return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Release")
-        change_type = connexion.request.get_json().get("change_type")
+        change_type = sc.get("change_type")
 
         what = {}
-        for field in connexion.request.get_json():
+        for field in sc:
             if field == "csrf_token":
                 continue
-            what[field] = connexion.request.get_json()[field]
+            what[field] = sc[field]
 
         if change_type == "update":
             if not what.get("data_version", None):
                 return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
-            if what.get("data", None):
-                what["data"] = createBlob(what.get("data"))
+            data = what.get("data", None)
+
+            if data:
+                what["data"] = createBlob(data)
+
+            if "read_only" in what and not data:
+                what["data"] = self.table.getReleaseBlob(what["name"])
 
         elif change_type == "insert":
             if not what.get("product", None):
@@ -435,7 +462,11 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
             if not what.get("data_version", None):
                 return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
-        return super(ReleaseScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
+        try:
+            return super(ReleaseScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
+        except ReadOnlyError as e:
+            msg = f"Failed to schedule change - {e}"
+            return problem(400, "Bad Request", msg, ext={"data": e.args})
 
 
 class ReleaseScheduledChangeView(ScheduledChangeView):
@@ -443,6 +474,12 @@ class ReleaseScheduledChangeView(ScheduledChangeView):
 
     def __init__(self):
         super(ReleaseScheduledChangeView, self).__init__("releases", dbo.releases)
+
+    def get(self, sc_id):
+        ret = super(ReleaseScheduledChangeView, self).get(sc_id)
+        sc = ret.json["scheduled_change"]
+        set_required_signoffs_for_product(sc)
+        return jsonify({"scheduled_change": sc})
 
     @requirelogin
     def _post(self, sc_id, transaction, changed_by):

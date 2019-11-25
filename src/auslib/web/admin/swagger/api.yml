@@ -888,6 +888,33 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
+  /releases/{release}/read_only/product/required_signoffs:
+    get:
+      summary: Returns required signoffs for make a release r+w based on product
+      description: >
+        Returns required signoffs for make a release r+w based on product, regardless of channel.
+      tags:
+        - Releases
+        - Required Signoffs
+      operationId: auslib.web.admin.views.mapper.release_read_only_product_required_signoffs_get
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/releaseParam'
+      responses:
+        '200':
+          description: Returns metadata about Releases
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                required_signoffs:
+                  description: Object mapping roles to the number of signoffs required to change the release
+                  type: object
+        '404':
+          $ref: '#/responses/resourceNotFound'
+
   /releases/columns/{column}:
     get:
       summary: Returns a JSON Object containing the unique values for the given release column
@@ -2531,6 +2558,7 @@ paths:
               - $ref: '#/definitions/ReleaseDataField'
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/ReleaseName'
+              - $ref: '#/definitions/ReleaseReadOnly'
       responses:
         '200':
           description: Returns sc_id of change

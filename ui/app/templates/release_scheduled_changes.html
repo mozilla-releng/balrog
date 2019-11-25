@@ -63,7 +63,7 @@
         </span>
         <button class="btn btn-default btn-xs" ng-click="openDataModal(sc)">View Data</button>
         <span ng-show="auth0.isAuthenticated()">
-          <button ng-show="!scheduled_changes_count && !sc.complete" class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
+          <button ng-show="!scheduled_changes_count && !isScheduledToBeModifiable(sc) && !sc.complete" class="btn btn-default btn-xs" ng-click="openUpdateModal(sc)">Update</button>
           <button ng-show="!scheduled_changes_count && !sc.complete" class="btn btn-default btn-xs" ng-click="openDeleteModal(sc)">Delete</button>
         </span>
         <a ng-show="!scheduled_changes_count" class="btn btn-default btn-xs" ng-href="/scheduled_changes/releases/{{ sc.sc_id }}">History</a>
@@ -120,6 +120,8 @@
       <dd>{{ sc.product }}</dd>
       <dt ng-show="sc.change_type">Change Type:</dt>
       <dd>{{ sc.change_type }}</dd>
+      <dt>Readonly:</dt>
+      <dd>{{ sc.read_only }}</dd>
     </dl>
 
   </div>
