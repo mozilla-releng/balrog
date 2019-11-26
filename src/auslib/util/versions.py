@@ -88,7 +88,7 @@ def decrement_version(version):
 
 
 def get_version_class(product):
-    if product == "Guardian":
+    if product in ("FirefoxVPN", "Guardian"):
         return LooseVersion
 
     return MozillaVersion

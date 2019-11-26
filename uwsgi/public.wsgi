@@ -17,14 +17,14 @@ DOMAIN_WHITELIST = {
     "clients2.googleusercontent.com": ("Widevine",),
     "redirector.gvt1.com": ("Widevine",),
     "ftp.mozilla.org": ("SystemAddons",),
-    "fpn.firefox.com": ("Guardian",),
+    "fpn.firefox.com": ("FirefoxVPN", "Guardian"),
 }
 if STAGING or LOCALDEV:
     DOMAIN_WHITELIST.update(
         {
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
             "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-            "stage.guardian.nonprod.cloudops.mozgcp.net": ("Guardian",),
+            "stage.guardian.nonprod.cloudops.mozgcp.net": ("FirefoxVPN", "Guardian"),
         }
     )
 
