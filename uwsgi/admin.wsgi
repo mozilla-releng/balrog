@@ -22,7 +22,7 @@ DOMAIN_WHITELIST = {
     "clients2.googleusercontent.com": ("Widevine",),
     "redirector.gvt1.com": ("Widevine",),
     "ftp.mozilla.org": ("SystemAddons",),
-    "fpn.firefox.com": ("Guardian",),
+    "fpn.firefox.com": ("FirefoxVPN", "Guardian"),
 }
 if STAGING or LOCALDEV:
     SYSTEM_ACCOUNTS.extend(["balrog-stage-ffxbld", "balrog-stage-tbirdbld"])
@@ -30,7 +30,7 @@ if STAGING or LOCALDEV:
         {
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
             "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-            "stage.guardian.nonprod.cloudops.mozgcp.net": ("Guardian",),
+            "stage.guardian.nonprod.cloudops.mozgcp.net": ("FirefoxVPN", "Guardian"),
         }
     )
 

@@ -2,6 +2,13 @@
 History
 =======
 
+2.79
+----
+
+* Support ``FirefoxVPN`` as new name for ``Guardian``
+
+  * ``Guardian`` is now deprecated, and will be fully removed/renamed to ``FirefoxVPN`` in a future release
+
 2.78
 -----------------------
 

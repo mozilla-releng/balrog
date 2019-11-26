@@ -105,8 +105,6 @@ services:
       - ./agent:/app
     links:
       - nginx
-    logging:
-      driver: none
     environment:
       - BALROG_API_ROOT=http://nginx:8011/api
       - BALROG_USERNAME=balrogagent
