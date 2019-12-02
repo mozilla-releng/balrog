@@ -8,6 +8,7 @@ recursive-include src *
 recursive-include requirements *.txt
 recursive-include uwsgi *
 
+exclude .dirschema.yml
 exclude .editorconfig
 exclude .pyup.yml
 exclude .taskcluster.yml
