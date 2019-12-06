@@ -156,8 +156,8 @@ tasks:
               maxRunTime: 3600
               image: "docker:1.6.2"
               command:
-                - "/bin/bash"
-                - "-c"
+                - "/bin/sh"
+                - "-lxce"
                 - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && docker build ."
               features:
                 dind: true
@@ -177,8 +177,8 @@ tasks:
               maxRunTime: 3600
               image: "docker:1.6.2"
               command:
-                - "/bin/bash"
-                - "-c"
+                - "/bin/sh"
+                - "-lxce"
                 - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && docker build ."
               features:
                 dind: true
@@ -262,8 +262,8 @@ tasks:
               maxRunTime: 3600
               image: "docker:1.6.2"
               command:
-                - "/bin/bash"
-                - "-c"
+                - "/bin/sh"
+                - "-lxce"
                 - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && scripts/push-dockerimage.sh ${docker_tags}"
               features:
                 dind: true
@@ -286,8 +286,8 @@ tasks:
               maxRunTime: 3600
               image: "docker:1.6.2"
               command:
-                - "/bin/bash"
-                - "-c"
+                - "/bin/sh"
+                - "-lxce"
                 - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && scripts/push-dockerimage.sh Dockerfile ${docker_tags}"
               features:
                 dind: true
