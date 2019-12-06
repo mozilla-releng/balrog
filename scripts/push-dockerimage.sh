@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
@@ -19,7 +19,7 @@ fi
 commit=$(git rev-parse HEAD)
 version=$(cat version.txt)
 
-apk -U add jq
+apt-get update && apt-get -y install jq
 
 cat > version.json <<EOF
 {

@@ -154,10 +154,10 @@ tasks:
             routes: []
             payload:
               maxRunTime: 3600
-              image: "docker:1.6.2"
+              image: "taskcluster/image_builder:0.1.3"
               command:
-                - "/bin/sh"
-                - "-lxce"
+                - "/bin/bash"
+                - "-c"
                 - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && docker build ."
               features:
                 dind: true
@@ -175,10 +175,10 @@ tasks:
             routes: []
             payload:
               maxRunTime: 3600
-              image: "docker:1.6.2"
+              image: "taskcluster/image_builder:0.1.3"
               command:
-                - "/bin/sh"
-                - "-lxce"
+                - "/bin/bash"
+                - "-c"
                 - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && docker build ."
               features:
                 dind: true
@@ -260,10 +260,10 @@ tasks:
             routes: []
             payload:
               maxRunTime: 3600
-              image: "docker:1.6.2"
+              image: "taskcluster/image_builder:0.1.3"
               command:
-                - "/bin/sh"
-                - "-lxce"
+                - "/bin/bash"
+                - "-c"
                 - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && scripts/push-dockerimage.sh ${docker_tags}"
               features:
                 dind: true
@@ -284,10 +284,10 @@ tasks:
             routes: []
             payload:
               maxRunTime: 3600
-              image: "docker:1.6.2"
+              image: "taskcluster/image_builder:0.1.3"
               command:
-                - "/bin/sh"
-                - "-lxce"
+                - "/bin/bash"
+                - "-c"
                 - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && scripts/push-dockerimage.sh Dockerfile ${docker_tags}"
               features:
                 dind: true
