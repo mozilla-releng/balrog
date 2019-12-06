@@ -19,6 +19,8 @@ fi
 commit=$(git rev-parse HEAD)
 version=$(cat version.txt)
 
+apt-get update && apt-get -y install jq
+
 cat > version.json <<EOF
 {
     "commit": "${commit}",
