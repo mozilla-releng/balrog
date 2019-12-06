@@ -16,6 +16,8 @@ fi
 commit=$(git rev-parse HEAD)
 version=$(cat version.txt)
 
+apk -U add jq
+
 cat > version.json <<EOF
 {
     "commit": "${commit}",
