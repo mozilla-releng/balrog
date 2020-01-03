@@ -1645,7 +1645,7 @@ class Rules(AUSTable):
             if not matchBuildID(rule["buildID"], updateQuery.get("buildID", "")):
                 self.log.debug("%s doesn't match %s", rule["buildID"], updateQuery["buildID"])
                 continue
-            if not matchMemory(rule["memory"], updateQuery.get("memory", "")):
+            if not matchMemory(rule["memory"], updateQuery.get("memory")):
                 self.log.debug("%s doesn't match %s", rule["memory"], updateQuery.get("memory"))
                 continue
             # To help keep the rules table compact, multiple OS versions may be
