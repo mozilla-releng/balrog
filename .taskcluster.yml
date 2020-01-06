@@ -3,6 +3,10 @@ policy:
   pullRequests: public
 tasks:
   $let:
+    # Dependabot, and possibly other things creating pull requests
+    # can set `user` to something that can't be used in an e-mail
+    # address, so we simply make this static to workaround.
+    owner_email: 'release+balrog-ci@mozilla.com'
     # Github events have this stuff in different places...
     repo_url: {
       $if: 'tasks_for == "github-push"',
@@ -22,16 +26,6 @@ tasks:
         then: '${event.pull_request.head.sha}',
         # Assume release event
         else: '${event.release.tag_name}',
-      }
-    }
-    owner_email: {
-      $if: 'tasks_for == "github-push"',
-      then: '${event.pusher.email}',
-      else: {
-        $if: 'tasks_for == "github-pull-request"',
-        then: '${event.pull_request.user.login}@users.noreply.github.com',
-        # Assume release event
-        else: '${event.sender.login}@users.noreply.github.com',
       }
     }
     docker_tags: {
