@@ -127,9 +127,13 @@ def matchBuildID(ruleBuildID, queryBuildID):
 def matchMemory(ruleMemory, queryMemory):
     """Decides whether a memory value from the rules matches an incoming one.
        If the ruleMemory is null, we match any queryMemory. If it's not
-       null, we must either match exactly, or match with a camparison
+       null, we must either match exactly, or match with a comparison
        operator."""
-    if ruleMemory is None:
+    if ruleMemory is None or queryMemory is None:
+        return True
+    try:
+        queryMemory = int(queryMemory)
+    except (TypeError, ValueError):
         return True
     return int_compare(queryMemory, ruleMemory)
 

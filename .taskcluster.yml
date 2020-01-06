@@ -91,7 +91,7 @@ tasks:
                   git clone ${repo_url} balrog &&
                   cd balrog &&
                   git checkout ${head_sha} &&
-                  pip install coveralls tox &&
+                  pip install coveralls==1.9.2 tox &&
                   tox &&
                   coveralls
               features:
