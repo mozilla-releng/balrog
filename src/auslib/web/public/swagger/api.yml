@@ -286,13 +286,16 @@ parameters:
     required: true
     type: string
 
+  # This parameter used to have a default of "", but it started causing a lot
+  # of ExtraParameterProblems when we upgraded to Connexion 2.5.1. It wasn't
+  # clear why the default was needed, so it was removed. It's also not clear
+  # why having a default caused bustage, so there may be an underlying issue.
   osVersion:
     name: osVersion
     in: path
     description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
     required: true
     type: string
-    default: ""
 
   distribution:
     name: distribution
