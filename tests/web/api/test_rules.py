@@ -75,7 +75,3 @@ class TestPublicRulesAPI(CommonTestBase):
         rules = [(rule["mapping"], rule["product"], rule["data_version"]) for rule in got["rules"]]
         self.assertIn(("z", "z", 1), rules)
         self.assertIn(("y", "y", 2), rules)
-
-    def test_get_revisions_400(self):
-        ret = self.public_client.get("/api/v1/rules/1/revisions?page=0")
-        self.assertEqual(ret.status_code, 400)
