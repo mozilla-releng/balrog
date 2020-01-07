@@ -339,7 +339,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=3)), "Data: %s" % ret.get_data())
 
         # Outdated Data Error on same release
-        ret = self._post("/releases/ee", data=dict(hashFunction="sha512", read_only=True, name="ee", product="ee", data_version=1))
+        ret = self._post("/releases/ee", data=dict(data="", hashFunction="sha512", read_only=True, name="ee", product="ee", data_version=1))
         self.assertStatusCode(ret, 400)
 
         blob = json.loads(blob)

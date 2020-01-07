@@ -2,8 +2,8 @@ import logging
 from typing import AnyStr, Union  # to satisfy flake8 with the type hinting
 
 import jsonschema
-from connexion import problem
 from connexion.decorators.validation import RequestBodyValidator
+from connexion.exceptions import BadRequestProblem
 from connexion.lifecycle import ConnexionResponse
 from connexion.utils import is_null
 
@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 
 class BalrogRequestBodyValidator(RequestBodyValidator):
     def validate_schema(self, data, url):
+        """This function is largely based on https://github.com/zalando/connexion/blob/master/connexion/decorators/validation.py
+        and should largely be kept in line with it."""
         # type: (dict, AnyStr) -> Union[ConnexionResponse, None]
         if self.is_null_value_valid and is_null(data):
             return None
@@ -33,7 +35,7 @@ class BalrogRequestBodyValidator(RequestBodyValidator):
             # Some exceptions could contain unicode characters - if we don't replace them
             # we could end up with a UnicodeEncodeError.
             logger.error("{url} validation error: {error}".format(url=url, error=exception_message.encode("utf-8", "replace")))
-            return problem(400, "Bad Request", exception_message)
+            raise BadRequestProblem(detail=exception_message)
 
         return None
 
