@@ -1068,7 +1068,7 @@ class TestRuleHistoryView(ViewTest):
         self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
 
         table = dbo.rules
-        row, = table.select(where=[table.rule_id == 1])
+        (row,) = table.select(where=[table.rule_id == 1])
         self.assertEqual(row["backgroundRate"], 72)
         self.assertEqual(row["data_version"], 4)
 
@@ -1076,7 +1076,7 @@ class TestRuleHistoryView(ViewTest):
         self.assertEqual(count, 22)
 
         # Oh no! We prefer the product=Firefox, backgroundRate=71 one better
-        row, = table.history.select(where=[table.history.product == "Firefox", table.history.backgroundRate == 71], limit=1)
+        (row,) = table.history.select(where=[table.history.product == "Firefox", table.history.backgroundRate == 71], limit=1)
         change_id = row["change_id"]
         assert row["rule_id"] == 1  # one of the fixtures
 
@@ -1087,7 +1087,7 @@ class TestRuleHistoryView(ViewTest):
         count = table.history.count()
         self.assertEqual(count, 23)
 
-        row, = table.select(where=[table.rule_id == 1])
+        (row,) = table.select(where=[table.rule_id == 1])
         self.assertEqual(row["backgroundRate"], 71)
         self.assertEqual(row["product"], "Firefox")
         self.assertEqual(row["data_version"], 5)
@@ -1118,7 +1118,7 @@ class TestRuleHistoryView(ViewTest):
         ret = self._post(
             "/rules/1", data=dict(backgroundRate=72, mapping="d", priority=73, product="foo", data_version=2, update_type="minor", channel="nightly")
         )
-        row, = dbo.rules.history.select(where=[dbo.rules.history.backgroundRate == 72], limit=1)
+        (row,) = dbo.rules.history.select(where=[dbo.rules.history.backgroundRate == 72], limit=1)
         change_id = row["change_id"]
 
         url = "/rules/1/revisions"

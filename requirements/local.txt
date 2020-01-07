@@ -10,12 +10,12 @@ filelock==3.0.12 \
     --hash=sha256:18d82244ee114f543149c66a6e0c14e9c4f8a1044b5cdaadd0f82159d6a6ff59 \
     --hash=sha256:929b7d63ec5b7d6b71b0fa5ac14e030b3f70b75747cef1b10da9b879fef15836 \
     # via tox
-tox==3.14.0 \
-    --hash=sha256:0bc216b6a2e6afe764476b4a07edf2c1dab99ed82bb146a1130b2e828f5bff5e \
-    --hash=sha256:c4f6b319c20ba4913dbfe71ebfd14ff95d1853c4231493608182f66e566ecfe1
-virtualenv==16.7.5 \
-    --hash=sha256:680af46846662bb38c5504b78bad9ed9e4f3ba2d54f54ba42494fdf94337fe30 \
-    --hash=sha256:f78d81b62d3147396ac33fc9d77579ddc42cc2a98dd9ea38886f616b33bc7fb2 \
+tox==3.14.3 \
+    --hash=sha256:06ba73b149bf838d5cd25dc30c2dd2671ae5b2757cf98e5c41a35fe449f131b3 \
+    --hash=sha256:806d0a9217584558cc93747a945a9d9bff10b141a5287f0c8429a08828a22192
+virtualenv==16.7.9 \
+    --hash=sha256:0d62c70883c0342d59c11d0ddac0d954d0431321a41ab20851facf2b222598f3 \
+    --hash=sha256:55059a7a676e4e19498f1aad09b8313a38fcc0cdbe4fdddc0e9b06946d21b4bb \
     # via tox
 
 # The following packages are considered to be unsafe in a requirements file:

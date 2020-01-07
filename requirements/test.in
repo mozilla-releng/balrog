@@ -3,6 +3,7 @@
 black
 check-manifest
 coverage
+coveralls
 flake8
 flake8-black
 hypothesis

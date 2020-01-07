@@ -76,7 +76,7 @@ tasks:
                 # For Coveralls to function properly CIRCLECI and CI_PULL_REQUEST need to be set
                 CIRCLECI: "1"
                 CI_PULL_REQUEST: "${pull_request_number}"
-                TOXENV: "check,py37"
+                TOXENV: "check,py37,coveralls"
               command:
                 - "/bin/bash"
                 - "-c"
@@ -85,9 +85,8 @@ tasks:
                   git clone ${repo_url} balrog &&
                   cd balrog &&
                   git checkout ${head_sha} &&
-                  pip install coveralls==1.9.2 tox &&
-                  tox &&
-                  coveralls
+                  pip install tox &&
+                  tox
               features:
                 taskclusterProxy: true
             metadata:
