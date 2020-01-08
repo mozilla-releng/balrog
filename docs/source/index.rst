@@ -19,6 +19,7 @@ Contents:
    database
    admin_api
    blobs
+   blob_examples
    balrog_agent
    autodocs
 

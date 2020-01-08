@@ -79,8 +79,8 @@ it allows us to return (or not) What's New Pages based on incoming client inform
 
 Here is an example that shows a single :ref:`appreleasev9Example` that supports both WNP and no-WNP updates.
 
-Response Format
-***************
+Response Format (App Release)
+*****************************
 
 The response for App Releases is as follows (different versions of the App Release blob use different <update> line parameters, but the general structure is consistent):
 
@@ -103,8 +103,8 @@ GMP and System Addon updates are very similar in that they both provide a list o
 Although the payloads they point to are different, the data structure and response are exactly the same, so they share a Blob.
 Here is an example that shows a :ref:`gmpExample` that serves OpenH264 and CDM updates.
 
-Response Format
-***************
+Response Format (GMP/System Addons)
+***********************************
 
 The response format for GMP and System Addons is as follows:
 
