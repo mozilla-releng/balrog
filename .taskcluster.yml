@@ -181,26 +181,6 @@ tasks:
               owner: ${owner_email}
               source: ${repo_url}
 
-          - taskId: {$eval: as_slugid("old-ui-tests")}
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '2 hours'}
-            provisionerId: releng-t
-            workerType: linux
-            scopes: []
-            routes: []
-            payload:
-              maxRunTime: 1200
-              image: "node:0.10"
-              command:
-                - "/bin/bash"
-                - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd ui && npm install && npm test"
-            metadata:
-              name: Balrog frontend tests
-              description: Balrog frontend tests
-              owner: ${owner_email}
-              source: ${repo_url}
-
           - taskId: {$eval: as_slugid("ui-tests")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
@@ -214,10 +194,10 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && yarn lint && yarn test"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd ui && yarn install && yarn lint && yarn test"
             metadata:
-              name: Balrog react frontend tests
-              description: Balrog react frontend tests
+              name: Balrog frontend tests
+              description: Balrog frontend tests
               owner: ${owner_email}
               source: ${repo_url}
 
@@ -234,10 +214,10 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && yarn build"
+                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd ui && yarn install && yarn build"
             metadata:
-              name: Balrog react frontend build
-              description: Balrog react frontend build
+              name: Balrog frontend build
+              description: Balrog frontend build
               owner: ${owner_email}
               source: ${repo_url}
 
@@ -313,7 +293,7 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && bash ./scripts/deploy"
+                - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd ui && yarn install && bash ./scripts/deploy"
               features:
                 taskclusterProxy: true
             metadata:
@@ -344,7 +324,7 @@ tasks:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd react-ui && yarn install && bash ./scripts/deploy"
+                - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd ui && yarn install && bash ./scripts/deploy"
               features:
                 taskclusterProxy: true
             metadata:
