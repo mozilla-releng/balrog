@@ -309,9 +309,10 @@ class SingleUpdateXMLMixin(object):
 
 
 class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
-    """This is the legacy format for apps based on Gecko 1.8.0 to 1.9.2, which
+    """
+    This is the legacy format for apps based on Gecko 1.8.0 to 1.9.2, which
     translates to
-     
+
      - Firefox 1.5 to 3.6.x
      - Thunderbird 1.5 to 3.1.y
 
