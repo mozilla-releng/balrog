@@ -22,6 +22,7 @@ Contents:
    blob_examples
    balrog_agent
    client_domains
+   infrastructure
    autodocs
 
 Indices and tables
