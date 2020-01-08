@@ -7187,10 +7187,10 @@ rc@^1.2.7:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-react-auth0-components@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/react-auth0-components/-/react-auth0-components-1.0.2.tgz#f05eb4efbbbb7d644254c21220698d8eb59a91d9"
-  integrity sha512-ffy1cEvBCWmrAtzLT1v8WXuqV7eYQg85qo2PlEYB5yDTGoUJsWGNISTV+t8M7DTCMuI6zXOlbPuidC5Ogzhv0Q==
+react-auth0-components@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/react-auth0-components/-/react-auth0-components-1.0.3.tgz#77f5ab6d81a24c62daa796dc213e58ecdebf37b9"
+  integrity sha512-c7YL7ZN0o5Ql6JEfy/YdE+z+wvFNS8mVS38KSFODhoKvDcVFH+R7I/n89egPd82Qc8TtGIYZIQLAajySBnI6eQ==
   dependencies:
     auth0-js "^9.3.3"
 
