@@ -158,27 +158,34 @@ class ReleaseBlobBase(XMLBlob):
            be easily shared. Inner methods that only apply to a single blob
            version live on concrete blob classes (but should be moved if they
            need to be shared in the future).
-           * getInnerXML, getFooterXML and getHeaderXML called by web layer,
-             live on this base class. The V1 blob class override them to
-             support bug 1113475, but still calls the base class one to do most of the work.
-           ** _getUpdateLineXML() called to get information that is independent
-              of specific MARs. Most notably, version information changed
-              starting with V2 blobs.
-           ** _getPatchesXML() called to get the information that describes
-              specific MARs. Where in the blob this information comes from
-              changed significantly starting with V3 blobs.
-           *** _getSpecificPatchXML() called to translate MAR information into
-               XML. This transformation in blob version independent, so it
-               lives on the base class to avoid duplication.
-           **** _getUrl() called to figure out what the MAR URL is for a
-                specific patch. This changed starting with V4 blobs. V3 and
-                earlier use SeparatedFileUrlsMixin, V4 and later use
-                UnifiedFileUrlsMixin.
-           ***** _getFtpFilename/_getBouncerProduct called to substitute some
-                 paths with real information. This is another part of the blob
-                 format that changed starting with V3 blobs. It was later
-                 deprecated in V4 and thus not used for UnifiedFileUrlsMixin
-                 blobs.
+
+            - getInnerXML, getFooterXML and getHeaderXML called by web layer,
+              live on this base class. The V1 blob class override them to
+              support bug 1113475, but still calls the base class one to do most of the work.
+
+             - _getUpdateLineXML() called to get information that is independent
+               of specific MARs. Most notably, version information changed
+               starting with V2 blobs.
+
+             - _getPatchesXML() called to get the information that describes
+               specific MARs. Where in the blob this information comes from
+               changed significantly starting with V3 blobs.
+
+               - _getSpecificPatchXML() called to translate MAR information into
+                 XML. This transformation in blob version independent, so it
+                 lives on the base class to avoid duplication.
+
+                - _getUrl() called to figure out what the MAR URL is for a
+                  specific patch. This changed starting with V4 blobs. V3 and
+                  earlier use SeparatedFileUrlsMixin, V4 and later use
+                  UnifiedFileUrlsMixin.
+
+                 - _getFtpFilename/_getBouncerProduct called to substitute some
+                   paths with real information. This is another part of the blob
+                   format that changed starting with V3 blobs. It was later
+                   deprecated in V4 and thus not used for UnifiedFileUrlsMixin
+                   blobs.
+
         """
 
         buildTarget = updateQuery["buildTarget"]
@@ -302,10 +309,11 @@ class SingleUpdateXMLMixin(object):
 
 
 class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
-    """ This is the legacy format for apps based on Gecko 1.8.0 to 1.9.2, which
+    """This is the legacy format for apps based on Gecko 1.8.0 to 1.9.2, which
     translates to
-     * Firefox 1.5 to 3.6.x
-     * Thunderbird 1.5 to 3.1.y
+     
+     - Firefox 1.5 to 3.6.x
+     - Thunderbird 1.5 to 3.1.y
 
     It was deprecated by https://bugzilla.mozilla.org/show_bug.cgi?id=530872 during
     Gecko 2.0 development (aka 1.9.3).
@@ -333,7 +341,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
     def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
-        release references
+                 release references
         """
         referencedReleases = set()
         for platform in self.get("platforms", {}):
@@ -504,19 +512,20 @@ class NewStyleVersionsMixin(object):
 
 
 class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
-    """ Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
+    """Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
 
-        Client-side changes in
-          https://bugzilla.mozilla.org/show_bug.cgi?id=530872
+        Client-side changes in https://bugzilla.mozilla.org/show_bug.cgi?id=530872
         renamed or introduced several attributes in update.xml
 
         Changed parameters from ReleaseBlobV1:
-         * appv, extv become appVersion, platformVersion, displayVersion
+         - appv, extv become appVersion, platformVersion, displayVersion
+
         Added:
-         * actions, billboardURL, openURL, notificationURL,
+         - actions, billboardURL, openURL, notificationURL,
            alertURL, showPrompt, showNeverForVersion, isOSUpdate
+
         Removed:
-         * oldVersionSpecialCases
+         - oldVersionSpecialCases
     """
 
     jsonschema = "apprelease-v2.yml"
@@ -591,7 +600,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
     def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
-        release references
+                 release references
         """
         referencedReleases = set()
         for platform in self.get("platforms", {}):
@@ -620,9 +629,10 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
         This is an internal change to add functionality to Balrog.
 
         Changes from ReleaseBlobV2:
-             * support multiple partials
-               * remove "partial" and "complete" from locale level
-               * add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
+          - support multiple partials
+
+            - remove "partial" and "complete" from locale level
+            - add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
     """
 
     jsonschema = "apprelease-v3.yml"
@@ -651,7 +661,7 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
-        release references
+                 release references
         """
         referencedReleases = set()
         for platform in self.get("platforms", {}):
@@ -710,9 +720,10 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     This is an internal change to add functionality to Balrog.
 
     Changes from ReleaseBlobV3:
-        * Support pushing release builds to the beta channel with bouncer support (bug 1021026)
-        ** Combine fileUrls, bouncerProducts, and ftpFilenames into a larger data structure,
-           still called "fileUrls". (See below for a more detailed description.)
+        - Support pushing release builds to the beta channel with bouncer support (bug 1021026)
+
+          - Combine fileUrls, bouncerProducts, and ftpFilenames into a larger data structure,
+            still called "fileUrls". (See below for a more detailed description.)
     """
 
     jsonschema = "apprelease-v4.yml"
@@ -772,7 +783,7 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
-        release references
+                 release references
         """
         referencedReleases = set()
         for platform in self.get("platforms", {}):
@@ -812,7 +823,7 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
-        release references
+                 release references
         """
         referencedReleases = set()
         for platform in self.get("platforms", {}):
@@ -853,7 +864,7 @@ class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
-        release references
+                 release references
         """
         referencedReleases = set()
         for platform in self.get("platforms", {}):
@@ -915,7 +926,7 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
     def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
-        release references
+                 release references
         """
         referencedReleases = set()
         for platform in self.get("platforms", {}):
@@ -1132,7 +1143,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
     def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
-        release references
+                 release references
         """
         referencedReleases = set()
         for platform in self.get("platforms", {}):
@@ -1147,10 +1158,14 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
 
 
 class DesupportBlob(XMLBlob):
-    """ This blob is used to inform users that their OS is no longer supported. This is available
+    """
+    This blob is used to inform users that their OS is no longer supported. This is available
     on the client side since Firefox 24 (bug 843497).
 
     The XML should look like this (whitespace for clarity & consistency only):
+
+    .. code-block:: xml
+
         <?xml version="1.0"?>
         <updates>
             <update type="major" unsupported="true" detailsURL="http://moreinfo">

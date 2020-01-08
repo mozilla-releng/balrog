@@ -140,23 +140,27 @@ def matchMemory(ruleMemory, queryMemory):
 
 def matchBoolean(ruleValue, queryValue):
     """As with all other columns, if the value isn't present in the Rule, the Rule matches.
-    Unlike other columns, the non-existence of a boolean field in the updateQuery evaluates
-    to False, so we need to handle True, False, and None explicitly. Note that None in the
-    updateQuery is treated as "unknown", and will cause any Rule without an explicit value
-    for the field to match.
-    The full truth table is:
-    rule | query | matches?
-        F      0        Y
-        F      1        N
-        F     null      N
-        T      0        N
-        T      1        Y
-        T     null      N
-    null     0        Y
-    null     1        Y
-    null    null      Y
+       Unlike other columns, the non-existence of a boolean field in the updateQuery evaluates
+       to False, so we need to handle True, False, and None explicitly. Note that None in the
+       updateQuery is treated as "unknown", and will cause any Rule without an explicit value
+       for the field to match.
+       The full truth table is:
 
-    Additional context in https://bugzilla.mozilla.org/show_bug.cgi?id=1386756"""
+       .. code-block::
+
+           rule | query | matches?
+             F      0        Y
+             F      1        N
+             F     null      N
+             T      0        N
+             T      1        Y
+             T     null      N
+           null     0        Y
+           null     1        Y
+           null    null      Y
+   
+       Additional context in https://bugzilla.mozilla.org/show_bug.cgi?id=1386756
+    """
 
     if ruleValue is not None:
         if queryValue is None or ruleValue != queryValue:

@@ -185,8 +185,8 @@ def verify_signoffs(potential_required_signoffs, signoffs):
 class AUSTransaction(object):
     """Manages a single transaction. Requires a connection object.
 
-       @param conn: connection object to perform the transaction on
-       @type conn: sqlalchemy.engine.base.Connection
+       :param conn: connection object to perform the transaction on
+       :type conn: sqlalchemy.engine.base.Connection
     """
 
     def __init__(self, engine):
@@ -252,38 +252,42 @@ class AUSTable(object):
        table created for them, too, which mirrors their own structure and adds
        a record of who made a change, and when the change happened.
 
-       @param history: Whether or not to create a history table for this table.
+       :param history: Whether or not to create a history table for this table.
                        When True, a History object will be created for this
                        table, and all changes will be logged to it. Defaults
                        to True.
-       @type history: bool
-       @param versioned: Whether or not this table is versioned. When True,
+       :type history: bool
+       :param versioned: Whether or not this table is versioned. When True,
                          an additional 'data_version' column will be added
                          to the Table, and its version increased with every
                          update. This is useful for detecting colliding
                          updates.
-       @type versioned: bool
-       @param scheduled_changes: Whether or not this table should allow changes
+
+       :type versioned: bool
+       :param scheduled_changes: Whether or not this table should allow changes
                                  to be scheduled. When True, two additional tables
                                  will be created: a $name_scheduled_changes, which
                                  will contain data needed to schedule changes to
                                  $name, and $name_scheduled_changes_history, which
                                  tracks the history of a scheduled change.
-       @type scheduled_changes: bool
-       @param onInsert: A callback that will be called whenever an insert is
+
+       :type scheduled_changes: bool
+       :param onInsert: A callback that will be called whenever an insert is
                         made to the table. It must accept the following 4
                         parameters:
+
                          * The table object the query is being performed on
                          * The type of query being performed (eg: INSERT)
                          * The name of the user making the change
                          * The query object that will be execeuted
+
                         If the callback raises an exception the change will
                         be aborted.
-       @type onInsert: callable
-       @param onDelete: See onInsert
-       @type onDelete: callable
-       @param onUpdate: See onInsert
-       @type onUpdate: callable
+       :type onInsert: callable
+       :param onDelete: See onInsert
+       :type onDelete: callable
+       :param onUpdate: See onInsert
+       :type onUpdate: callable
     """
 
     def __init__(
@@ -344,16 +348,16 @@ class AUSTable(object):
     def _selectStatement(self, columns=None, where=None, order_by=None, limit=None, offset=None, distinct=False):
         """Create a SELECT statement on this table.
 
-           @param columns: Column objects to select. Defaults to None, meaning select all columns
-           @type columns: A sequence of sqlalchemy.schema.Column objects or column names as strings
-           @param order_by: Columns to sort the rows by. Defaults to None, meaning no ORDER BY clause
-           @type order_by: A sequence of sqlalchemy.schema.Column objects
-           @param limit: Limit results to this many. Defaults to None, meaning no limit
-           @type limit: int
-           @param distinct: Whether or not to return only distinct rows. Default: False.
-           @type distinct: bool
+           :param columns: Column objects to select. Defaults to None, meaning select all columns
+           :type columns: A sequence of sqlalchemy.schema.Column objects or column names as strings
+           :param order_by: Columns to sort the rows by. Defaults to None, meaning no ORDER BY clause
+           :type order_by: A sequence of sqlalchemy.schema.Column objects
+           :param limit: Limit results to this many. Defaults to None, meaning no limit
+           :type limit: int
+           :param distinct: Whether or not to return only distinct rows. Default: False.
+           :type distinct: bool
 
-           @rtype: sqlalchemy.sql.expression.Select
+           :rtype: sqlalchemy.sql.expression.Select
         """
         if columns:
             table_columns = [(self.t.c[col] if isinstance(col, str) else col) for col in columns]
@@ -369,14 +373,14 @@ class AUSTable(object):
         """Perform a SELECT statement on this table.
            See AUSTable._selectStatement for possible arguments.
 
-           @param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
-           @type where: list of clauses or key/value pairs.
+           :param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
+           :type where: list of clauses or key/value pairs.
 
-           @param transaction: A transaction object to add the update statement (and history changes) to.
+           :param transaction: A transaction object to add the update statement (and history changes) to.
                                If provided, you must commit the transaction yourself. If None, they will
                                be added to a locally-scoped transaction and committed.
 
-           @rtype: sqlalchemy.engine.base.ResultProxy
+           :rtype: sqlalchemy.engine.base.ResultProxy
         """
 
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
@@ -397,10 +401,10 @@ class AUSTable(object):
     def _insertStatement(self, **columns):
         """Create an INSERT statement for this table
 
-           @param columns: Data to insert
-           @type colmuns: dict
+           :param columns: Data to insert
+           :type colmuns: dict
 
-           @rtype: sqlalchemy.sql.express.Insert
+           :rtype: sqlalchemy.sql.express.Insert
         """
         table_columns = {k: columns[k] for k in columns.keys() if k in self.table.c}
         unconsumed_columns = {k: columns[k] for k in columns.keys() if k not in table_columns}
@@ -412,7 +416,7 @@ class AUSTable(object):
            will be created in that table: one representing the current state (NULL),
            and one representing the new state.
 
-           @rtype: sqlalchemy.engine.base.ResultProxy
+           :rtype: sqlalchemy.engine.base.ResultProxy
         """
         data = columns.copy()
         if self.versioned:
@@ -432,17 +436,17 @@ class AUSTable(object):
         """Perform an INSERT statement on this table. See AUSTable._insertStatement for
            a description of columns.
 
-           @param changed_by: The username of the person inserting the row. Required when
+           :param changed_by: The username of the person inserting the row. Required when
                               history is enabled. Unused otherwise. No authorization checks are done
                               at this level.
-           @type changed_by: str
-           @param transaction: A transaction object to add the insert statement (and history changes) to.
+           :type changed_by: str
+           :param transaction: A transaction object to add the insert statement (and history changes) to.
                                If provided, you must commit the transaction yourself. If None, they will
                                be added to a locally-scoped transaction and committed.
-           @param dryrun: If true, this insert statement will not actually be run.
-           @type dryrun: bool
+           :param dryrun: If true, this insert statement will not actually be run.
+           :type dryrun: bool
 
-           @rtype: sqlalchemy.engine.base.ResultProxy
+           :rtype: sqlalchemy.engine.base.ResultProxy
         """
         if self.history and not changed_by:
             raise ValueError("changed_by must be passed for Tables that have history")
@@ -460,10 +464,10 @@ class AUSTable(object):
     def _deleteStatement(self, where):
         """Create a DELETE statement for this table.
 
-           @param where: Conditions to apply on this select.
-           @type where: A sequence of sqlalchemy.sql.expression.ClauseElement objects
+           :param where: Conditions to apply on this select.
+           :type where: A sequence of sqlalchemy.sql.expression.ClauseElement objects
 
-           @rtype: sqlalchemy.sql.expression.Delete
+           :rtype: sqlalchemy.sql.expression.Delete
         """
         query = self.t.delete()
         if where:
@@ -478,7 +482,7 @@ class AUSTable(object):
            doesn't match the current version of the row to be deleted, an OutdatedDataError
            will be raised.
 
-           @rtype: sqlalchemy.engine.base.ResultProxy
+           :rtype: sqlalchemy.engine.base.ResultProxy
         """
         row = self._returnRowOrRaise(where=where, columns=self.primary_key, transaction=trans)
 
@@ -508,27 +512,27 @@ class AUSTable(object):
 
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         """Perform a DELETE statement on this table. See AUSTable._deleteStatement for
-           a description of `where'. To simplify versioning, this method can only
+           a description of `where`. To simplify versioning, this method can only
            delete a single row per invocation. If the where clause given would delete
            zero or multiple rows, a WrongNumberOfRowsError is raised.
 
-           @param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
-           @type where: list of clauses or key/value pairs.
-           @param changed_by: The username of the person deleting the row(s). Required when
+           :param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
+           :type where: list of clauses or key/value pairs.
+           :param changed_by: The username of the person deleting the row(s). Required when
                               history is enabled. Unused otherwise. No authorization checks are done
                               at this level.
-           @type changed_by: str
-           @param old_data_version: Previous version of the row to be deleted. If this version doesn't
+           :type changed_by: str
+           :param old_data_version: Previous version of the row to be deleted. If this version doesn't
                                     match the current version of the row, an OutdatedDataError will be
                                     raised and the delete will fail. Required when versioning is enabled.
-           @type old_data_version: int
-           @param transaction: A transaction object to add the delete statement (and history changes) to.
+           :type old_data_version: int
+           :param transaction: A transaction object to add the delete statement (and history changes) to.
                                If provided, you must commit the transaction yourself. If None, they will
                                be added to a locally-scoped transaction and committed.
-           @param dryrun: If true, this insert statement will not actually be run.
-           @type dryrun: bool
+           :param dryrun: If true, this insert statement will not actually be run.
+           :type dryrun: bool
 
-           @rtype: sqlalchemy.engine.base.ResultProxy
+           :rtype: sqlalchemy.engine.base.ResultProxy
         """
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
@@ -553,12 +557,12 @@ class AUSTable(object):
     def _updateStatement(self, where, what):
         """Create an UPDATE statement for this table
 
-           @param where: Conditions to apply to this UPDATE.
-           @type where: A sequence of sqlalchemy.sql.expression.ClauseElement objects.
-           @param what: Data to update
-           @type what: dict
+           :param where: Conditions to apply to this UPDATE.
+           :type where: A sequence of sqlalchemy.sql.expression.ClauseElement objects.
+           :param what: Data to update
+           :type what: dict
 
-           @rtype: sqlalchemy.sql.expression.Update
+           :rtype: sqlalchemy.sql.expression.Update
         """
         table_what = {k: what[k] for k in what.keys() if k in self.table.c}
         unconsumed_columns = {k: what[k] for k in what.keys() if k not in table_what}
@@ -573,7 +577,7 @@ class AUSTable(object):
            data_version will be increased by 1. If this table has history enabled, a
            row will be added to that table represent the new state of the data.
 
-           @rtype: sqlalchemy.engine.base.ResultProxy
+           :rtype: sqlalchemy.engine.base.ResultProxy
         """
         # To do merge detection for tables with scheduled changes we need a
         # copy of the original row, and what will be changed. To record
@@ -612,29 +616,29 @@ class AUSTable(object):
 
     def update(self, where, what, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
         """Perform an UPDATE statement on this table. See AUSTable._updateStatement for
-           a description of `where' and `what'. This method can only update a single row
+           a description of `where` and `what`. This method can only update a single row
            per invocation. If the where clause given would update zero or multiple rows, a
            WrongNumberOfRowsError is raised.
 
-           @param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
-           @type where: list of clauses or key/value pairs.
-           @param what: Key/value pairs containing new values for the given columns.
-           @type what: key/value pairs
-           @param changed_by: The username of the person inserting the row. Required when
+           :param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
+           :type where: list of clauses or key/value pairs.
+           :param what: Key/value pairs containing new values for the given columns.
+           :type what: key/value pairs
+           :param changed_by: The username of the person inserting the row. Required when
                               history is enabled. Unused otherwise. No authorization checks are done
                               at this level.
-           @type changed_by: str
-           @param old_data_version: Previous version of the row to be deleted. If this version doesn't
+           :type changed_by: str
+           :param old_data_version: Previous version of the row to be deleted. If this version doesn't
                                     match the current version of the row, an OutdatedDataError will be
                                     raised and the delete will fail. Required when versioning is enabled.
-           @type old_data_version: int
-           @param transaction: A transaction object to add the update statement (and history changes) to.
+           :type old_data_version: int
+           :param transaction: A transaction object to add the update statement (and history changes) to.
                                If provided, you must commit the transaction yourself. If None, they will
                                be added to a locally-scoped transaction and committed.
-           @param dryrun: If true, this insert statement will not actually be run.
-           @type dryrun: bool
+           :param dryrun: If true, this insert statement will not actually be run.
+           :type dryrun: bool
 
-           @rtype: sqlalchemy.engine.base.ResultProxy
+           :rtype: sqlalchemy.engine.base.ResultProxy
         """
         # If "where" is key/value pairs, we need to convert it to SQLAlchemy
         # clauses before proceeding.
@@ -718,7 +722,7 @@ class GCSHistory:
 
 class HistoryTable(AUSTable):
     """Represents a history table that may be attached to another AUSTable.
-       History tables mirror the structure of their `baseTable', with the exception
+       History tables mirror the structure of their `baseTable`, with the exception
        that nullable and primary_key attributes are always overwritten to be
        True and False respectively. Additionally, History tables have a unique
        change_id for each row, and record the username making a change, and the
