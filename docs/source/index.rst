@@ -15,13 +15,12 @@ Contents:
    :maxdepth: 2
 
    contribute
-   withoutdocker
    codeoverview
    database
    admin_api
    blobs
    balrog_agent
-   autodocs/auslib
+   autodocs
 
 Indices and tables
 ==================
