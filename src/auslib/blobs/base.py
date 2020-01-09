@@ -82,8 +82,9 @@ def merge_dicts(ancestor, left, right):
     """Perform a 3-way merge on dictonaries. We used to use an external library
     for this, but we replaced it with this because our merge can be a bit more
     liberal than the general case. Specifically:
-     * Lists are treated as sets (see above for details)
-     * A type mismatch of unicode vs string is OK as long as the text is the same
+
+     - Lists are treated as sets (see above for details)
+     - A type mismatch of unicode vs string is OK as long as the text is the same
        (Any other type mismatches result in a failure to merge.)
     """
     # We can't use "logging" directly, because it ignores our custom code in log.py
@@ -193,7 +194,7 @@ class Blob(dict):
     def getReferencedReleases(self):
         """
         :return: Returns set of names of partially referenced releases that the current
-        release references
+                 release references
         """
         return set()
 
