@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect, useState } from 'react';
-import { titleCase } from 'change-case';
+import { capitalCase } from 'change-case';
 import classNames from 'classnames';
 import { clone, view, lensPath } from 'ramda';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
@@ -281,7 +281,7 @@ function ListSignoffs({ user }) {
           {permissionChanges && (
             <SignoffCard
               className={classes.card}
-              title={titleCase(product)}
+              title={capitalCase(product)}
               to={`/required-signoffs/${product}`}>
               {Object.entries(permissionChanges).map(
                 ([name, role], index, arr) => {
@@ -346,7 +346,7 @@ function ListSignoffs({ user }) {
                     <SignoffCard
                       key={`${product}-${channelName}`}
                       className={classes.card}
-                      title={titleCase(`${product} ${channelName} Channel`)}
+                      title={capitalCase(`${product} ${channelName} Channel`)}
                       to={`/required-signoffs/${product}/${channelName}`}>
                       {Object.entries(roles).map(
                         ([roleName, role], index, arr) => {

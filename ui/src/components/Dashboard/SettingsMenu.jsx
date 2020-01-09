@@ -4,7 +4,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import IconButton from '@material-ui/core/IconButton';
 import SettingsOutlineIcon from 'mdi-react/SettingsOutlineIcon';
-import { upperCase } from 'change-case';
+import { upperCase } from 'upper-case';
 import Link from '../../utils/Link';
 import { withUser } from '../../utils/AuthContext';
 import menuItems from './menuItems';

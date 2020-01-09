@@ -45,7 +45,8 @@
     "react-number-format": "^4.3.1",
     "react-router-dom": "^5.1.2",
     "react-virtualized": "^9.21.2",
-    "unidiff": "^1.0.2"
+    "unidiff": "^1.0.2",
+    "upper-case": "^2.0.1"
   },
   "devDependencies": {
     "@mozilla-frontend-infra/react-lint": "^2.0.1",

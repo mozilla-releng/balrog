@@ -1,6 +1,7 @@
 import React from 'react';
 import { bool, string } from 'prop-types';
-import { upperCase, sentenceCase } from 'change-case';
+import { sentenceCase } from 'change-case';
+import { upperCase } from 'upper-case';
 import Label from '@mozilla-frontend-infra/components/Label';
 import labels from '../../utils/labels';
 
