@@ -11,7 +11,12 @@ module.exports = {
     root: __dirname,
   },
   use: [
-    react_lint(),
+    react_lint({
+      rules: {
+        'react/jsx-props-no-spreading': 'off',
+        'react-hooks/exhaustive-deps': 'off',
+      }
+    }),
     react({
       devServer: {
         host: process.env.HOST || DEFAULT_HOST,
