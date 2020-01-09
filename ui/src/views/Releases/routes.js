@@ -4,7 +4,9 @@ const ListReleases = lazy(() =>
   import(/* webpackChunkName: 'Releases.ListReleases' */ './ListReleases')
 );
 const ListReleaseRevisions = lazy(() =>
-  import(/* webpackChunkName: 'Releases.ListReleaseRevisions' */ './ListReleaseRevisions')
+  import(
+    /* webpackChunkName: 'Releases.ListReleaseRevisions' */ './ListReleaseRevisions'
+  )
 );
 const Release = lazy(() =>
   import(/* webpackChunkName: 'Releases.Release' */ './Release')

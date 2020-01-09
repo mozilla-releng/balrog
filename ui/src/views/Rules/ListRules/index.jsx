@@ -341,7 +341,7 @@ function ListRules(props) {
       const { rules } = r.data.data;
       const rulesWithScheduledChanges = rules.map(rule => {
         const sc = scheduledChanges.find(sc => rule.rule_id === sc.rule_id);
-        const returnedRule = Object.assign({}, rule);
+        const returnedRule = { ...rule };
 
         if (sc) {
           returnedRule.scheduledChange = sc;

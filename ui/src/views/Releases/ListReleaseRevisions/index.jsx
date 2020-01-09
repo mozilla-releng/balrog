@@ -184,12 +184,8 @@ function ListReleaseRevisions(props) {
           {leftRevisionData && rightRevisionData && (
             <DiffRelease
               className={classes.jsDiff}
-              firstFilename={`Revision Version ${
-                revisions[leftRadioCheckedIndex].data_version
-              }`}
-              secondFilename={`Revision Version ${
-                revisions[rightRadioCheckedIndex].data_version
-              }`}
+              firstFilename={`Revision Version ${revisions[leftRadioCheckedIndex].data_version}`}
+              secondFilename={`Revision Version ${revisions[rightRadioCheckedIndex].data_version}`}
               firstRelease={leftRevisionData || {}}
               secondRelease={rightRevisionData || {}}
             />
