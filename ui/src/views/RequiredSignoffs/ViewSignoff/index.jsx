@@ -277,7 +277,8 @@ function ViewSignoff({ isNewSignoff, ...props }) {
                   onValueChange={handleProductChange}
                   value={productTextValue}
                   getSuggestions={
-                    products.data && getSuggestions(products.data.data.product)
+                    products.data &&
+                    getSuggestions(products.data.data.product.sort())
                   }
                   label="Product"
                   required
@@ -318,7 +319,7 @@ function ViewSignoff({ isNewSignoff, ...props }) {
                     onValueChange={handleChannelChange}
                     getSuggestions={
                       channels.data &&
-                      getSuggestions(channels.data.data.channel)
+                      getSuggestions(channels.data.data.channel.sort())
                     }
                     label="Channel"
                     required
