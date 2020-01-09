@@ -342,7 +342,7 @@ function Release(props) {
             </Tooltip>
             {scId && !isReadOnly && (
               <SpeedDial
-                ButtonProps={{
+                FabProps={{
                   disabled: !user || actionLoading || isReadOnly || !scId,
                 }}
                 ariaLabel="Secondary Actions">
