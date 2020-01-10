@@ -4,6 +4,9 @@ import socket
 import sys
 import traceback
 
+import sentry_sdk
+from sentry_sdk.integrations.logging import LoggingIntegration
+
 log_format = "%(asctime)s - %(levelname)s - %(name)s.%(funcName)s#%(lineno)s: %(message)s"
 
 
@@ -117,9 +120,12 @@ def safer_format_traceback(exc_typ, exc_val, exc_tb):
     return "".join(lines)
 
 
-def configure_logging(stream=sys.stdout, formatter=JsonLogFormatter, format_=log_format, level=logging.DEBUG):
+def configure_logging(stream=sys.stdout, formatter=JsonLogFormatter, format_=log_format, level=logging.DEBUG, sentry_dsn=None):
     handler = logging.StreamHandler(stream)
     formatter = formatter(fmt=format_)
     handler.setFormatter(formatter)
     logging.root.addHandler(handler)
     logging.root.setLevel(level)
+    if sentry_dsn:
+        sentry_sdk.init(dsn=sentry_dsn, integrations=[LoggingIntegration()])
+
