@@ -20,7 +20,7 @@ Run the following command to create and run the necessary containers:
 
 Once it completes, you should be able to access
 
-- https://localhost:9010 - The public API
+- http://localhost:9010 - The public API
 - https://localhost:8010 - The admin API
 - https://localhost:9000 - The admin interface
 
