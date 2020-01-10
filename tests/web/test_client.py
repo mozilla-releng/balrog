@@ -1908,20 +1908,20 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual("Version number 50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt; is invalid.", error_message)
 
     def testSentryBadDataError(self):
-        with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch("auslib.web.public.base.sentry") as sentry:
+        with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch("auslib.web.public.base.capture_exception") as sentry:
             m.side_effect = BadDataError("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
-            self.assertFalse(sentry.captureException.called)
+            self.assertFalse(sentry.called)
             self.assertEqual(ret.status_code, 400, ret.get_data())
             self.assertEqual(ret.mimetype, "text/plain")
 
     def testSentryRealError(self):
-        with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch("auslib.web.public.base.sentry") as sentry:
+        with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch("auslib.web.public.base.capture_exception") as sentry:
             m.side_effect = Exception("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 500)
             self.assertEqual(ret.mimetype, "text/plain")
-            self.assertTrue(sentry.captureException.called)
+            self.assertTrue(sentry.called)
             self.assertEqual("exterminate!", ret.get_data(as_text=True))
 
     def testNonSubstitutedUrlVariablesReturnEmptyUpdate(self):

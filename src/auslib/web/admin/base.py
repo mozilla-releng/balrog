@@ -5,7 +5,6 @@ from os import path
 import connexion
 from flask import request
 from flask_compress import Compress
-from raven.contrib.flask import Sentry
 from specsynthase.specbuilder import SpecBuilder
 
 import auslib
@@ -37,8 +36,6 @@ validator_map = {"body": BalrogRequestBodyValidator}
 connexion_app = connexion.App(__name__, debug=False, options={"swagger_ui": False})
 connexion_app.add_api(spec, validator_map=validator_map, strict_validation=True)
 app = connexion_app.app
-sentry = Sentry()
-
 
 create_dockerflow_endpoints(app)
 
