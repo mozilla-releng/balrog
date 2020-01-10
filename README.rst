@@ -22,7 +22,7 @@ Once it completes, you should be able to access
 
 - https://localhost:9010 - The public API
 - https://localhost:8010 - The admin API
-- http://localhost:9000 - The admin interface
+- https://localhost:9000 - The admin interface
 
 You'll need to use the "Sign in..." button to do anything useful with the admin interface, which will ask you to sign in with a third party provider (eg: gmail, github). Once you've done that, run the following to create a local admin user to gain write access:
 ::
