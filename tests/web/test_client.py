@@ -40,10 +40,22 @@ class TestGetSystemCapabilities(unittest.TestCase):
         self.assertEqual(client_api.getSystemCapabilities("NA"), {"instructionSet": "NA", "memory": None, "jaws": None})
 
     def testNonIntegerMemory(self):
-        self.assertRaises(ValueError, client_api.getSystemCapabilities, ("ISET:SSE2,MEM:63T1A"))
+        # Real things we've seen for "memory"
+        self.assertEqual(
+            client_api.getSystemCapabilities("ISET:SSE2,MEM:16384');declare @q varchar(99);set @q='"), {"instructionSet": "SSE2", "memory": None, "jaws": None}
+        )
+        self.assertEqual(client_api.getSystemCapabilities("ISET:SSE2,MEM:-nan(ind)"), {"instructionSet": "SSE2", "memory": None, "jaws": None})
+        self.assertEqual(client_api.getSystemCapabilities("ISET:SSE2,MEM:8.1023"), {"instructionSet": "SSE2", "memory": None, "jaws": None})
+        self.assertEqual(client_api.getSystemCapabilities("ISET:SSE2,MEM:unknown"), {"instructionSet": "SSE2", "memory": None, "jaws": None})
 
     def testUnknownField(self):
         self.assertEqual(client_api.getSystemCapabilities("ISET:SSE3,MEM:6721,PROC:Intel"), {"instructionSet": "SSE3", "memory": 6721, "jaws": None})
+
+    def testBadFieldFormat(self):
+        self.assertEqual(
+            client_api.getSystemCapabilities("ISET:SSE4_2,MEM:32768,(select*from(select(sleep(20)))a)"),
+            {"instructionSet": "SSE4_2", "memory": 32768, "jaws": None},
+        )
 
 
 @pytest.mark.usefixtures("current_db_schema")
