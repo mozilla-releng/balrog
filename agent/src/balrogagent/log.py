@@ -128,4 +128,3 @@ def configure_logging(stream=sys.stdout, formatter=JsonLogFormatter, format_=log
     logging.root.setLevel(level)
     if sentry_dsn:
         sentry_sdk.init(dsn=sentry_dsn, integrations=[LoggingIntegration()])
-
