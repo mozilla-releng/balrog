@@ -80,7 +80,7 @@ application.config["SPECIAL_FORCE_HOSTS"] = SPECIAL_FORCE_HOSTS
 application.config["VERSION_FILE"] = "/app/version.json"
 
 if os.environ.get("SENTRY_DSN"):
-    sentry_sdk.init(os.environ["SENTRY_DSN"], integration=[FlaskIntegration(), LoggingIntegration()])
+    sentry_sdk.init(os.environ["SENTRY_DSN"], integrations=[FlaskIntegration(), LoggingIntegration()])
 
 if os.environ.get("CACHE_CONTROL"):
     application.config["CACHE_CONTROL"] = os.environ["CACHE_CONTROL"]
