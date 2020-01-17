@@ -427,7 +427,7 @@ function ViewUser({ isNewUser, ...props }) {
           onValueChange={handleRestrictionTextChange(permission, 'actionText')}
           value={permission.metadata.actionText}
           getSuggestions={getSuggestions(
-            getSupportedActions(permission.name.sort())
+            getSupportedActions(permission.name).sort()
           )}
           label="Action Restrictions"
         />
