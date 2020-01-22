@@ -1,7 +1,6 @@
 import React from 'react';
 import { bool, string } from 'prop-types';
 import { sentenceCase } from 'change-case';
-import { upperCase } from 'upper-case';
 import Label from '@mozilla-frontend-infra/components/Label';
 import labels from '../../utils/labels';
 
@@ -17,7 +16,7 @@ function StatusLabel(props) {
       status={labels[state] || 'default'}
       className={className}
       {...rest}>
-      {upperCase(sentenceCase(state)) || 'UNKNOWN'}
+      {sentenceCase(state).toUpperCase() || 'UNKNOWN'}
     </Label>
   );
 }
