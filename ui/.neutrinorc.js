@@ -1,4 +1,4 @@
-const react_lint = require('@mozilla-frontend-infra/react-lint')
+const reactLint = require('@mozilla-frontend-infra/react-lint')
 const react = require('@neutrinojs/react');
 const jest = require('@neutrinojs/jest');
 
@@ -11,7 +11,7 @@ module.exports = {
     root: __dirname,
   },
   use: [
-    react_lint({
+    reactLint({
       rules: {
         'react/jsx-props-no-spreading': 'off',
         'react-hooks/exhaustive-deps': 'off',
