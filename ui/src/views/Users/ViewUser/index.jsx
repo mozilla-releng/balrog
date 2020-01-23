@@ -379,7 +379,7 @@ function ViewUser({ isNewUser, ...props }) {
             permission.sc || permission,
             index
           )}
-          getSuggestions={getSuggestions(ALL_PERMISSIONS)}
+          getSuggestions={getSuggestions(ALL_PERMISSIONS.sort())}
           label="Name"
           required
           disabled={!permission.metadata.isAdditional}
@@ -405,7 +405,7 @@ function ViewUser({ isNewUser, ...props }) {
           )}
           onValueChange={handleRestrictionTextChange(permission, 'productText')}
           value={permission.metadata.productText}
-          getSuggestions={getSuggestions(products)}
+          getSuggestions={getSuggestions(products.sort())}
           label="Product Restrictions"
         />
       </Grid>
@@ -426,7 +426,9 @@ function ViewUser({ isNewUser, ...props }) {
           onSelectedItemsChange={handleRestrictionChange(permission, 'actions')}
           onValueChange={handleRestrictionTextChange(permission, 'actionText')}
           value={permission.metadata.actionText}
-          getSuggestions={getSuggestions(getSupportedActions(permission.name))}
+          getSuggestions={getSuggestions(
+            getSupportedActions(permission.name).sort()
+          )}
           label="Action Restrictions"
         />
       </Grid>

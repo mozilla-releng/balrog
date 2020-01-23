@@ -83,6 +83,8 @@ def main():
     logging_kwargs = {"level": os.environ.get("LOG_LEVEL", logging.INFO)}
     if os.environ.get("LOG_FORMAT") == "plain":
         logging_kwargs["formatter"] = logging.Formatter
+    if os.environ.get("SENTRY_DSN"):
+        logging_kwargs["sentry_dsn"] = os.environ["SENTRY_DSN"]
     configure_logging(**logging_kwargs)
     auth0_secrets = dict(
         domain=os.environ["AUTH0_DOMAIN"],

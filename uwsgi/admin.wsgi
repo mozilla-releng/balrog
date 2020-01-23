@@ -3,8 +3,11 @@ import os
 import os.path
 import sys
 
+import sentry_sdk
 from google.api_core.exceptions import Forbidden
 from google.cloud import storage
+from sentry_sdk.integrations.flask import FlaskIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 from auslib.log import configure_logging
 
@@ -151,10 +154,7 @@ application.config["CORS_ORIGINS"] = [o.strip() for o in os.environ.get("CORS_OR
 application.config["SESSION_COOKIE_SAMESITE"] = "Strict"
 
 if os.environ.get("SENTRY_DSN"):
-    application.config["SENTRY_DSN"] = os.environ.get("SENTRY_DSN")
-    from auslib.web.admin.base import sentry
-
-    sentry.init_app(application)
+    sentry_sdk.init(os.environ["SENTRY_DSN"], integrations=[FlaskIntegration(), LoggingIntegration()])
 
 # version.json is created when the Docker image is built, and contains details
 # about the current code (version number, commit hash), but doesn't exist in

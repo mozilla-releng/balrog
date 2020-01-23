@@ -404,7 +404,8 @@ function Rule({ isNewRule, user, ...props }) {
                 value={defaultToEmptyString(rule.product)}
                 onValueChange={handleProductChange}
                 getSuggestions={
-                  products.data && getSuggestions(products.data.data.product)
+                  products.data &&
+                  getSuggestions(products.data.data.product.sort())
                 }
                 label="Product"
                 required
@@ -420,7 +421,8 @@ function Rule({ isNewRule, user, ...props }) {
                   value={defaultToEmptyString(rule.channel)}
                   onValueChange={handleChannelChange}
                   getSuggestions={
-                    channels.data && getSuggestions(channels.data.data.channel)
+                    channels.data &&
+                    getSuggestions(channels.data.data.channel.sort())
                   }
                   label="Channel"
                   required
@@ -437,7 +439,7 @@ function Rule({ isNewRule, user, ...props }) {
                   onValueChange={handleMappingChange}
                   getSuggestions={
                     releaseNames.data &&
-                    getSuggestions(releaseNames.data.data.names)
+                    getSuggestions(releaseNames.data.data.names.sort())
                   }
                   label="Mapping"
                   required
@@ -454,7 +456,7 @@ function Rule({ isNewRule, user, ...props }) {
                   onValueChange={handleFallbackMappingChange}
                   getSuggestions={
                     releaseNames.data &&
-                    getSuggestions(releaseNames.data.data.names)
+                    getSuggestions(releaseNames.data.data.names.sort())
                   }
                   label="Fallback Mapping"
                   inputProps={{

@@ -278,7 +278,7 @@ function Release(props) {
             onValueChange={handleProductChange}
             value={productTextValue}
             getSuggestions={
-              products.data && getSuggestions(products.data.data.product)
+              products.data && getSuggestions(products.data.data.product.sort())
             }
             label="Product"
             required

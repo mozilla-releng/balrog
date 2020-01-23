@@ -6,7 +6,7 @@ from os import path
 import connexion
 from connexion import request
 from flask import Response, make_response, send_from_directory
-from raven.contrib.flask import Sentry
+from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
 
 import auslib.web
@@ -32,7 +32,6 @@ def with_transaction(f):
 
 log = logging.getLogger(__name__)
 AUS = AUS()
-sentry = Sentry()
 
 connexion_app = connexion.App(__name__, specification_dir=".", options={"swagger_ui": False})
 app = connexion_app.app
@@ -111,8 +110,9 @@ def generic(error):
     if isinstance(error, BadDataError):
         return Response(status=400, mimetype="text/plain", response=html.escape(message, quote=False))
 
-    if sentry.client:
-        sentry.captureException()
+    # Sentry doesn't handle exceptions for `@app.errorhandler(Exception)`
+    # implicitly. If Sentry is not configured, the following call returns None.
+    capture_exception(error)
 
     return Response(status=500, mimetype="text/plain", response=html.escape(message, quote=False))
 

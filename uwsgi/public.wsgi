@@ -1,6 +1,10 @@
 import logging
 import os
 
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+
 from auslib.log import configure_logging
 
 STAGING = bool(int(os.environ.get("STAGING", 0)))
@@ -76,10 +80,7 @@ application.config["SPECIAL_FORCE_HOSTS"] = SPECIAL_FORCE_HOSTS
 application.config["VERSION_FILE"] = "/app/version.json"
 
 if os.environ.get("SENTRY_DSN"):
-    application.config["SENTRY_DSN"] = os.environ.get("SENTRY_DSN")
-    from auslib.web.public.base import sentry
-
-    sentry.init_app(application, register_signal=False)
+    sentry_sdk.init(os.environ["SENTRY_DSN"], integrations=[FlaskIntegration(), LoggingIntegration()])
 
 if os.environ.get("CACHE_CONTROL"):
     application.config["CACHE_CONTROL"] = os.environ["CACHE_CONTROL"]

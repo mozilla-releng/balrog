@@ -36,11 +36,18 @@ def getSystemCapabilities(systemCapabilities):
     # New-style SYSTEM_CAPABILITIES, as implemented in https://bugzilla.mozilla.org/show_bug.cgi?id=1373367
     if systemCapabilities.startswith("ISET:"):
         for part in systemCapabilities.split(","):
+            # Skip fields with an unparseable format, which we see often. Eg:
+            # ISET:SSE4_2,MEM:32768,(select*from(select(sleep(20)))a)
+            if ":" not in part:
+                continue
             key, value = part.split(":", 1)
             if key == "ISET":
                 caps["instructionSet"] = value
             elif key == "MEM":
-                caps["memory"] = int(value)
+                try:
+                    caps["memory"] = int(value)
+                except ValueError:
+                    caps["memory"] = None
             elif key == "JAWS":
                 caps["jaws"] = bool(int(value))
     # Old-style, unprefixed SYSTEM_CAPABILITIES. Only supports instructionSet and memory.
@@ -53,7 +60,10 @@ def getSystemCapabilities(systemCapabilities):
             caps["instructionSet"] = parts[0]
         elif len(parts) == 2:
             caps["instructionSet"] = parts[0]
-            caps["memory"] = int(parts[1])
+            try:
+                caps["memory"] = int(parts[1])
+            except ValueError:
+                caps["memory"] = None
 
     return caps
 

@@ -10,7 +10,7 @@ google-cloud-storage
 jsonschema
 mysqlclient
 python-jose
-raven[flask]
+sentry-sdk[flask]
 requests
 requests-hawk
 repoze.lru
