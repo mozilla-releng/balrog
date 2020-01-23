@@ -13,7 +13,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function SpeedDial({ children, className, ButtonProps, ...props }) {
+function SpeedDial({ children, className, FabProps, ...props }) {
   const classes = useStyles();
   const [open, setOpen] = useState(false);
   const handleClick = () => setOpen(!open);
@@ -26,7 +26,7 @@ function SpeedDial({ children, className, ButtonProps, ...props }) {
       icon={
         <SpeedDialIcon icon={<DotsVerticalIcon />} openIcon={<CloseIcon />} />
       }
-      ButtonProps={{ color: 'secondary', ...ButtonProps }}
+      FabProps={{ color: 'secondary', ...FabProps }}
       className={classNames(classes.speedDial, className)}
       onBlur={handleClose}
       onClick={handleClick}
@@ -47,11 +47,11 @@ SpeedDial.propTypes = {
    * with the base `SpeedDial` floating action button.
    */
   children: oneOfType([arrayOf(node), node]).isRequired,
-  ButtonProps: object,
+  FabProps: object,
 };
 
 SpeedDial.defaultProps = {
-  ButtonProps: {},
+  FabProps: {},
 };
 
 export default SpeedDial;

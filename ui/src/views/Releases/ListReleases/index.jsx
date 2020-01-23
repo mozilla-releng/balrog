@@ -188,12 +188,13 @@ function ListReleases(props) {
       // Once required signoffs for product was evaluated for a given product,
       // it is not necessary evaluate again, so to get the signoffs,
       // one release is enougth.
-      const signoffsForProductRequests = Object.entries(productsReleases).map(
-        async ([product, name]) =>
-          getRequiredSignoffsForProduct(name).then(response => [
-            product,
-            response.data.required_signoffs,
-          ])
+      const signoffsForProductRequests = Object.entries(
+        productsReleases
+      ).map(async ([product, name]) =>
+        getRequiredSignoffsForProduct(name).then(response => [
+          product,
+          response.data.required_signoffs,
+        ])
       );
 
       Promise.all(signoffsForProductRequests).then(requests => {

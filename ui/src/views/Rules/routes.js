@@ -4,7 +4,9 @@ const ListRules = lazy(() =>
   import(/* webpackChunkName: 'Rules.ListRules' */ './ListRules')
 );
 const ListRuleRevisions = lazy(() =>
-  import(/* webpackChunkName: 'Rules.ListRuleRevisions' */ './ListRuleRevisions')
+  import(
+    /* webpackChunkName: 'Rules.ListRuleRevisions' */ './ListRuleRevisions'
+  )
 );
 const Rule = lazy(() => import(/* webpackChunkName: 'Rules.Rule' */ './Rule'));
 

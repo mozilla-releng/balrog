@@ -31,7 +31,6 @@ services:
       - LOG_LEVEL=WARNING
       - INSECURE_SESSION_COOKIE=1
       - LOCALDEV=1
-      - FRONTEND_CONFIG=/app/ui/generated/js/config.js
       - AUTH0_CLIENT_ID=GlZhJQfx52b7MLQ19AjuTJHieiB4oh1j
       - AUTH0_REDIRECT_URI=https://localhost:8010/login
       - AUTH0_DOMAIN=balrog-localdev.auth0.com

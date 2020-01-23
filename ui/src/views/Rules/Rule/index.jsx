@@ -705,7 +705,7 @@ function Rule({ isNewRule, user, ...props }) {
           </Tooltip>
           {hasScheduledChange && (
             <SpeedDial
-              ButtonProps={{ disabled: !user || actionLoading }}
+              FabProps={{ disabled: !user || actionLoading }}
               ariaLabel="Secondary Actions">
               <SpeedDialAction
                 disabled={actionLoading}
