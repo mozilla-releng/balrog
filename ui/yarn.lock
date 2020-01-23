@@ -1138,7 +1138,7 @@
     file-loader "^5.0.2"
     url-loader "^3.0.0"
 
-"@neutrinojs/jest@9.0.0":
+"@neutrinojs/jest@^9.0.0":
   version "9.0.0"
   resolved "https://registry.yarnpkg.com/@neutrinojs/jest/-/jest-9.0.0.tgz#be7ac3b30e6ca30a9ac35cb2af783279621704b3"
   integrity sha512-e78ULTUew78HfGskfUHONG4YIkx+NtBCF9V5bIr363ppwlCsZ/ONV4GBdqg0dDEH4LlM3MLYpAOyIDJwoA1z/w==
@@ -1150,7 +1150,7 @@
     eslint-plugin-jest "^23.1.1"
     lodash.omit "^4.5.0"
 
-"@neutrinojs/react@9.0.0":
+"@neutrinojs/react@^9.0.0":
   version "9.0.0"
   resolved "https://registry.yarnpkg.com/@neutrinojs/react/-/react-9.0.0.tgz#e0bffd1b300fc5e50d5c72c74df8f9844c0a6231"
   integrity sha512-/Phu7jFIy1SbxQqHasBwdMkLgKcBNIJg60eUpeDIBMjsNPIs/hZOLRZ+qCsav0S+6ucjd6F4TJEiEhC3GK3dXQ==
@@ -6198,7 +6198,7 @@ neo-async@^2.5.0, neo-async@^2.6.0, neo-async@^2.6.1:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.1.tgz#ac27ada66167fa8849a6addd837f6b189ad2081c"
   integrity sha512-iyam8fBuCUpWeKPGpaNMetEocMt364qkCsfL9JuhjXX6dRnguRVOfk2GZaDpPjcOKiiXCPINZC1GczQ7iTq3Zw==
 
-neutrino@9.0.0:
+neutrino@^9.0.0:
   version "9.0.0"
   resolved "https://registry.yarnpkg.com/neutrino/-/neutrino-9.0.0.tgz#d340d291bf3953fc4615c567abe79530b0fda1e7"
   integrity sha512-Y8rQ/9Inng1gXTsxoP5HW95sKKf4tVYqZ7C3g0pC28UVhHZkasZgEP6J3nWtpfG9ammOLRvBiru0oIeFBsxikg==
@@ -7244,10 +7244,10 @@ react-helmet@^5.2.1:
     react-fast-compare "^2.0.2"
     react-side-effect "^1.1.0"
 
-react-hot-loader@^4.12.18:
-  version "4.12.18"
-  resolved "https://registry.yarnpkg.com/react-hot-loader/-/react-hot-loader-4.12.18.tgz#a9029e34af2690d76208f9a35189d73c2dfea6a7"
-  integrity sha512-qYD0Qi9lIbg9jLyfmodfqvAQqCBsoPKxAhca8Nxvy2/2pO5Q9r2kM28jN0bbbSnhwK8dJ7FjsfVtXKOxMW+bqw==
+react-hot-loader@^4.12.19:
+  version "4.12.19"
+  resolved "https://registry.yarnpkg.com/react-hot-loader/-/react-hot-loader-4.12.19.tgz#99a1c763352828f404fa51cd887c5e16bb5b74d1"
+  integrity sha512-p8AnA4QE2GtrvkdmqnKrEiijtVlqdTIDCHZOwItkI9kW51bt5XnQ/4Anz8giiWf9kqBpEQwsmnChDCAFBRyR/Q==
   dependencies:
     fast-levenshtein "^2.0.6"
     global "^4.3.0"
