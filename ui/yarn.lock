@@ -751,17 +751,17 @@
     exec-sh "^0.3.2"
     minimist "^1.2.0"
 
-"@date-io/core@^1.3.13":
-  version "1.3.13"
-  resolved "https://registry.yarnpkg.com/@date-io/core/-/core-1.3.13.tgz#90c71da493f20204b7a972929cc5c482d078b3fa"
-  integrity sha512-AlEKV7TxjeK+jxWVKcCFrfYAk8spX9aCyiToFIiLPtfQbsjmRGLIhb5VZgptQcJdHtLXo7+m0DuurwFgUToQuA==
+"@date-io/core@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@date-io/core/-/core-2.0.0.tgz#3a8685b8f5ea25513327e1273a673b5477573ce9"
+  integrity sha512-Zam4FfQrRhGobLyjwM4qL9yoAZ66+jGHjXWf7ZrqRqeP/mrrVEAG2td/xHuUzCKz4xN3NzGcrd3r42p4n6UgXA==
 
-"@date-io/date-fns@^1.3.13":
-  version "1.3.13"
-  resolved "https://registry.yarnpkg.com/@date-io/date-fns/-/date-fns-1.3.13.tgz#7798844041640ab393f7e21a7769a65d672f4735"
-  integrity sha512-yXxGzcRUPcogiMj58wVgFjc9qUYrCnnU9eLcyNbsQCmae4jPuZCDoIBR21j8ZURsM7GRtU62VOw5yNd4dDHunA==
+"@date-io/date-fns@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@date-io/date-fns/-/date-fns-2.0.1.tgz#191614dc6241c88e4a782acbd259420f3798a979"
+  integrity sha512-wy3CWuV0dvrjm45ncO6duu4ZSOMxZpajFbEoj0X3DyNEYxjAdbv27waZYtJ2PwL85XZd9i/VaJQnh3GU7ZvP6g==
   dependencies:
-    "@date-io/core" "^1.3.13"
+    "@date-io/core" "^2.0.0"
 
 "@emotion/hash@^0.7.4":
   version "0.7.4"
@@ -1138,7 +1138,7 @@
     file-loader "^5.0.2"
     url-loader "^3.0.0"
 
-"@neutrinojs/jest@9.0.0":
+"@neutrinojs/jest@^9.0.0":
   version "9.0.0"
   resolved "https://registry.yarnpkg.com/@neutrinojs/jest/-/jest-9.0.0.tgz#be7ac3b30e6ca30a9ac35cb2af783279621704b3"
   integrity sha512-e78ULTUew78HfGskfUHONG4YIkx+NtBCF9V5bIr363ppwlCsZ/ONV4GBdqg0dDEH4LlM3MLYpAOyIDJwoA1z/w==
@@ -1150,7 +1150,7 @@
     eslint-plugin-jest "^23.1.1"
     lodash.omit "^4.5.0"
 
-"@neutrinojs/react@9.0.0":
+"@neutrinojs/react@^9.0.0":
   version "9.0.0"
   resolved "https://registry.yarnpkg.com/@neutrinojs/react/-/react-9.0.0.tgz#e0bffd1b300fc5e50d5c72c74df8f9844c0a6231"
   integrity sha512-/Phu7jFIy1SbxQqHasBwdMkLgKcBNIJg60eUpeDIBMjsNPIs/hZOLRZ+qCsav0S+6ucjd6F4TJEiEhC3GK3dXQ==
@@ -6198,7 +6198,7 @@ neo-async@^2.5.0, neo-async@^2.6.0, neo-async@^2.6.1:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.1.tgz#ac27ada66167fa8849a6addd837f6b189ad2081c"
   integrity sha512-iyam8fBuCUpWeKPGpaNMetEocMt364qkCsfL9JuhjXX6dRnguRVOfk2GZaDpPjcOKiiXCPINZC1GczQ7iTq3Zw==
 
-neutrino@9.0.0:
+neutrino@^9.0.0:
   version "9.0.0"
   resolved "https://registry.yarnpkg.com/neutrino/-/neutrino-9.0.0.tgz#d340d291bf3953fc4615c567abe79530b0fda1e7"
   integrity sha512-Y8rQ/9Inng1gXTsxoP5HW95sKKf4tVYqZ7C3g0pC28UVhHZkasZgEP6J3nWtpfG9ammOLRvBiru0oIeFBsxikg==
