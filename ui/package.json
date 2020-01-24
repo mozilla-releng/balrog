@@ -31,7 +31,7 @@
     "codemirror": "^5.50.2",
     "date-fns": "2.9.0",
     "deep-sort-object": "^1.0.2",
-    "diff": "^4.0.1",
+    "diff": "^4.0.2",
     "downshift": "^4.0.4",
     "is-absolute-url": "^3.0.3",
     "mdi-react": "^6.5.0",
