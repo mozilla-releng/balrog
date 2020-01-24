@@ -22,7 +22,7 @@
     "@material-ui/icons": "^4.5.1",
     "@material-ui/lab": "4.0.0-alpha.39",
     "@material-ui/pickers": "^3.2.9",
-    "@material-ui/styles": "^4.8.2",
+    "@material-ui/styles": "^4.9.0",
     "@mozilla-frontend-infra/components": "^3.0.4",
     "axios": "^0.19.2",
     "change-case": "^4.1.1",
