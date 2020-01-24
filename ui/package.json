@@ -24,7 +24,7 @@
     "@material-ui/pickers": "^3.2.8",
     "@material-ui/styles": "^4.8.2",
     "@mozilla-frontend-infra/components": "^3.0.4",
-    "axios": "^0.19.1",
+    "axios": "^0.19.2",
     "change-case": "^4.1.1",
     "classnames": "^2.2.6",
     "clipboard-copy": "^3.1.0",
