@@ -1138,7 +1138,7 @@
     file-loader "^5.0.2"
     url-loader "^3.0.0"
 
-"@neutrinojs/jest@9.0.0":
+"@neutrinojs/jest@^9.0.0":
   version "9.0.0"
   resolved "https://registry.yarnpkg.com/@neutrinojs/jest/-/jest-9.0.0.tgz#be7ac3b30e6ca30a9ac35cb2af783279621704b3"
   integrity sha512-e78ULTUew78HfGskfUHONG4YIkx+NtBCF9V5bIr363ppwlCsZ/ONV4GBdqg0dDEH4LlM3MLYpAOyIDJwoA1z/w==
@@ -1150,7 +1150,7 @@
     eslint-plugin-jest "^23.1.1"
     lodash.omit "^4.5.0"
 
-"@neutrinojs/react@9.0.0":
+"@neutrinojs/react@^9.0.0":
   version "9.0.0"
   resolved "https://registry.yarnpkg.com/@neutrinojs/react/-/react-9.0.0.tgz#e0bffd1b300fc5e50d5c72c74df8f9844c0a6231"
   integrity sha512-/Phu7jFIy1SbxQqHasBwdMkLgKcBNIJg60eUpeDIBMjsNPIs/hZOLRZ+qCsav0S+6ucjd6F4TJEiEhC3GK3dXQ==
@@ -3089,14 +3089,7 @@ dom-converter@^0.2:
   dependencies:
     utila "~0.4"
 
-"dom-helpers@^2.4.0 || ^3.0.0":
-  version "3.4.0"
-  resolved "https://registry.yarnpkg.com/dom-helpers/-/dom-helpers-3.4.0.tgz#e9b369700f959f62ecde5a6babde4bccd9169af8"
-  integrity sha512-LnuPJ+dwqKDIyotW1VzmOZ5TONUN7CwkCR5hrgawTUbkBGYdeoNLZo6nNfGkCrjtE1nXXaj7iMMpDa8/d9WoIA==
-  dependencies:
-    "@babel/runtime" "^7.1.2"
-
-dom-helpers@^5.0.1:
+dom-helpers@^5.0.0, dom-helpers@^5.0.1:
   version "5.1.3"
   resolved "https://registry.yarnpkg.com/dom-helpers/-/dom-helpers-5.1.3.tgz#7233248eb3a2d1f74aafca31e52c5299cc8ce821"
   integrity sha512-nZD1OtwfWGRBWlpANxacBEZrEuLa16o1nh7YopFWeoF68Zt8GGEmzHu6Xv4F3XaFIC+YXtTLrzgqKxFgLEe4jw==
@@ -5710,11 +5703,6 @@ levn@^0.3.0, levn@~0.3.0:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
 
-linear-layout-vector@0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/linear-layout-vector/-/linear-layout-vector-0.0.1.tgz#398114d7303b6ecc7fd6b273af7b8401d8ba9c70"
-  integrity sha1-OYEU1zA7bsx/1rJzr3uEAdi6nHA=
-
 linkify-it@^2.0.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/linkify-it/-/linkify-it-2.2.0.tgz#e3b54697e78bf915c70a38acd78fd09e0058b1cf"
@@ -6198,7 +6186,7 @@ neo-async@^2.5.0, neo-async@^2.6.0, neo-async@^2.6.1:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.1.tgz#ac27ada66167fa8849a6addd837f6b189ad2081c"
   integrity sha512-iyam8fBuCUpWeKPGpaNMetEocMt364qkCsfL9JuhjXX6dRnguRVOfk2GZaDpPjcOKiiXCPINZC1GczQ7iTq3Zw==
 
-neutrino@9.0.0:
+neutrino@^9.0.0:
   version "9.0.0"
   resolved "https://registry.yarnpkg.com/neutrino/-/neutrino-9.0.0.tgz#d340d291bf3953fc4615c567abe79530b0fda1e7"
   integrity sha512-Y8rQ/9Inng1gXTsxoP5HW95sKKf4tVYqZ7C3g0pC28UVhHZkasZgEP6J3nWtpfG9ammOLRvBiru0oIeFBsxikg==
@@ -7346,15 +7334,14 @@ react-transition-group@^4.0.0, react-transition-group@^4.3.0:
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
 
-react-virtualized@9.21.1:
-  version "9.21.1"
-  resolved "https://registry.yarnpkg.com/react-virtualized/-/react-virtualized-9.21.1.tgz#4dbbf8f0a1420e2de3abf28fbb77120815277b3a"
-  integrity sha512-E53vFjRRMCyUTEKuDLuGH1ld/9TFzjf/fFW816PE4HFXWZorESbSTYtiZz1oAjra0MminaUU1EnvUxoGuEFFPA==
+react-virtualized@9.21.2:
+  version "9.21.2"
+  resolved "https://registry.yarnpkg.com/react-virtualized/-/react-virtualized-9.21.2.tgz#02e6df65c1e020c8dbf574ec4ce971652afca84e"
+  integrity sha512-oX7I7KYiUM7lVXQzmhtF4Xg/4UA5duSA+/ZcAvdWlTLFCoFYq1SbauJT5gZK9cZS/wdYR6TPGpX/dqzvTqQeBA==
   dependencies:
     babel-runtime "^6.26.0"
     clsx "^1.0.1"
-    dom-helpers "^2.4.0 || ^3.0.0"
-    linear-layout-vector "0.0.1"
+    dom-helpers "^5.0.0"
     loose-envify "^1.3.0"
     prop-types "^15.6.0"
     react-lifecycles-compat "^3.0.4"
