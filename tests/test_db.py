@@ -5619,6 +5619,20 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
                 "releases_scheduled_changes_history",
                 "releases_scheduled_changes_signoffs",
                 "releases_scheduled_changes_signoffs_history",
+                "releases_json",
+                "releases_json_scheduled_changes",
+                "releases_json_scheduled_changes_conditions",
+                "releases_json_scheduled_changes_conditions_history",
+                "releases_json_scheduled_changes_history",
+                "releases_json_scheduled_changes_signoffs",
+                "releases_json_scheduled_changes_signoffs_history",
+                "release_assets",
+                "release_assets_scheduled_changes",
+                "release_assets_scheduled_changes_conditions",
+                "release_assets_scheduled_changes_conditions_history",
+                "release_assets_scheduled_changes_history",
+                "release_assets_scheduled_changes_signoffs",
+                "release_assets_scheduled_changes_signoffs_history",
                 "rules",
                 "rules_history",
                 "rules_scheduled_changes",
@@ -5899,6 +5913,31 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             for table in shutoff_tables:
                 self.assertNotIn(table, metadata.tables)
 
+    def _add_release_json_tables(self, db, upgrade=True):
+        metadata = self._get_reflected_metadata(db)
+        shutoff_tables = [
+            "releases_json",
+            "releases_json_scheduled_changes",
+            "releases_json_scheduled_changes_history",
+            "releases_json_scheduled_changes_conditions",
+            "releases_json_scheduled_changes_conditions_history",
+            "releases_json_scheduled_changes_signoffs",
+            "releases_json_scheduled_changes_signoffs_history",
+            "release_assets",
+            "release_assets_scheduled_changes",
+            "release_assets_scheduled_changes_history",
+            "release_assets_scheduled_changes_conditions",
+            "release_assets_scheduled_changes_conditions_history",
+            "release_assets_scheduled_changes_signoffs",
+            "release_assets_scheduled_changes_signoffs_history",
+        ]
+        if upgrade:
+            for table in shutoff_tables:
+                self.assertIn(table, metadata.tables)
+        else:
+            for table in shutoff_tables:
+                self.assertNotIn(table, metadata.tables)
+
     def _fix_column_attributes_migration_test(self, db, upgrade=True):
         """
         Tests the upgrades and downgrades for version 22 work properly.
@@ -5966,6 +6005,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
 
         versions_migrate_tests_dict = {
             # This version removes the releases_history table, which is verified by other tests
+            33: self._add_release_json_tables,
             32: _noop,
             31: self._test_rules_longer_distribution,
             30: self._add_emergency_shutoff_tables,

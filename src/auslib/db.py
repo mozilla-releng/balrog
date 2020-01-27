@@ -11,7 +11,7 @@ from os import path
 import migrate.versioning.api
 import migrate.versioning.schema
 import sqlalchemy.types
-from sqlalchemy import BigInteger, Boolean, Column, Integer, MetaData, String, Table, Text, create_engine, func, join, select
+from sqlalchemy import JSON, BigInteger, Boolean, Column, Integer, MetaData, String, Table, Text, create_engine, func, join, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.interfaces import PoolListener
 from sqlalchemy.sql.expression import null
@@ -2174,6 +2174,40 @@ class Releases(AUSTable):
         super().update(where, {"read_only": is_readonly}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
 
+class ReleasesJSON(AUSTable):
+    def __init__(self, db, metadata, dialect, history_buckets, historyClass):
+        self.domainWhitelist = []
+
+        self.table = Table(
+            "releases_json",
+            metadata,
+            Column("name", String(100), primary_key=True),
+            Column("product", String(15), nullable=False),
+            Column("read_only", Boolean, default=False),
+            Column("data", JSON),
+        )
+        historyKwargs = {}
+        if history_buckets:
+            historyKwargs["buckets"] = history_buckets
+            historyKwargs["identifier_column"] = "name"
+            historyKwargs["data_column"] = "data"
+        else:
+            # Can't have history without a bucket
+            historyClass = None
+        super(ReleasesJSON, self).__init__(
+            db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=historyClass, historyKwargs=historyKwargs,
+        )
+
+
+class ReleaseAssets(AUSTable):
+    def __init__(self, db, metadata, dialect):
+        self.table = Table(
+            "release_assets", metadata, Column("name", String(100), primary_key=True), Column("path", String(200), primary_key=True), Column("data", JSON),
+        )
+
+        super(ReleaseAssets, self).__init__(db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
+
+
 class UserRoles(AUSTable):
     def __init__(self, db, metadata, dialect):
         self.table = Table("user_roles", metadata, Column("username", String(100), primary_key=True), Column("role", String(50), primary_key=True))
@@ -2651,6 +2685,8 @@ class AUSDatabase(object):
         dialect = self.engine.name
         self.rulesTable = Rules(self, self.metadata, dialect)
         self.releasesTable = Releases(self, self.metadata, dialect, releases_history_buckets, releases_history_class)
+        self.releasesJSONTable = ReleasesJSON(self, self.metadata, dialect, releases_history_buckets, releases_history_class)
+        self.releaseAssetsTable = ReleaseAssets(self, self.metadata, dialect)
         self.permissionsTable = Permissions(self, self.metadata, dialect)
         self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
         self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)
@@ -2753,6 +2789,14 @@ class AUSDatabase(object):
     @property
     def releases(self):
         return self.releasesTable
+
+    @property
+    def releases_json(self):
+        return self.releasesJSONTable
+
+    @property
+    def release_assets(self):
+        return self.releaseAssetsTable
 
     @property
     def permissions(self):
