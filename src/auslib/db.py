@@ -2200,12 +2200,22 @@ class ReleasesJSON(AUSTable):
 
 
 class ReleaseAssets(AUSTable):
-    def __init__(self, db, metadata, dialect):
+    def __init__(self, db, metadata, dialect, history_buckets, historyClass):
         self.table = Table(
             "release_assets", metadata, Column("name", String(100), primary_key=True), Column("path", String(200), primary_key=True), Column("data", JSON),
         )
+        historyKwargs = {}
+        if history_buckets:
+            historyKwargs["buckets"] = history_buckets
+            historyKwargs["identifier_columns"] = ["name", "path"]
+            historyKwargs["data_column"] = "data"
+        else:
+            # Can't have history without a bucket
+            historyClass = None
 
-        super(ReleaseAssets, self).__init__(db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]})
+        super(ReleaseAssets, self).__init__(
+            db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=historyClass, historyKwargs=historyKwargs
+        )
 
 
 class UserRoles(AUSTable):
@@ -2686,7 +2696,7 @@ class AUSDatabase(object):
         self.rulesTable = Rules(self, self.metadata, dialect)
         self.releasesTable = Releases(self, self.metadata, dialect, releases_history_buckets, releases_history_class)
         self.releasesJSONTable = ReleasesJSON(self, self.metadata, dialect, releases_history_buckets, releases_history_class)
-        self.releaseAssetsTable = ReleaseAssets(self, self.metadata, dialect)
+        self.releaseAssetsTable = ReleaseAssets(self, self.metadata, dialect, releases_history_buckets, releases_history_class)
         self.permissionsTable = Permissions(self, self.metadata, dialect)
         self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
         self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)

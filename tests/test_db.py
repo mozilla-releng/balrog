@@ -3830,6 +3830,147 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
 
 @pytest.mark.usefixtures("current_db_schema")
+class TestReleasesJSON(unittest.TestCase, MemoryDatabaseMixin):
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        dbo.setDb(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        self.metadata.create_all(dbo.engine)
+        self.rules = dbo.rules
+        self.releases = dbo.releases_json
+        self.release_assets = dbo.release_assets
+        dbo.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
+        dbo.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="Firefox", channel="release", role="releng", signoffs_required=1, data_version=1)
+        self.rules.t.insert().execute(
+            rule_id=1, product="Firefox", channel="beta", mapping="Firefox-60.0-build1", backgroundRate=100, priority=100, update_type="minor", data_version=1,
+        )
+        self.releases.t.insert().execute(
+            name="Firefox-60.0-build1",
+            product="Firefox",
+            data_version=1,
+            data="""{
+    "name": "Firefox-60.0-build1",
+    "schema_version": 9,
+    "hashFunction": "sha512"
+}""",
+        )
+        self.release_assets.t.insert().execute(
+            name="Firefox-60.0-build1",
+            path=".platforms.Linux_x86_64-gcc3.locales.en-US",
+            data_version=1,
+            data="""{
+    "appVersion": "60.0",
+    "buildID": "20180827144429",
+    "completes": [
+        {
+            "filesize": 42510045,
+            "from": "*",
+            "hashValue": "73c05d2e15a3d33cbbee3b874dbd9a3e3560ddf74b343bad5ff2d55dccd3a7cf9a5a9da5e05eefea8cabdfd186d98ada94804e83c61011f385c4f335a9a50996"
+        }
+    ],
+    "displayVersion": "60.0",
+    "partials": [
+        {
+            "filesize": 18695829,
+            "from": "Firefox-59.0-build3",
+            "hashValue": "311324ceacfb8450a948da6b2176a1103d8a4eb716381951fb197b4414097efee9a91c9fd4fbcb797dd1e80fe69b8e2410a945602d5dfd0a5c485a004c52fbda"
+        }
+    ]
+}""",
+        )
+
+    def tearDown(self):
+        dbo.reset()
+
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
+    def testInsertCreatesCorrectHistory(self):
+        self.release_assets.insert(
+            changed_by="bob",
+            name="Firefox-60.0-build1",
+            path=".platforms.WINNT_x86_64-msvc.locales.en-US",
+            data="""{
+    "appVersion": "60.0",
+    "buildID": "20180827144429",
+    "completes": [
+        {
+            "filesize": 43038283,
+            "from": "*",
+            "hashValue": "264119c2e5ab41ba9dd7a527d741a132934765168aa7b5d37c2f136a6a6514af36ae3521ac792049edfe6c100c139c69d3bb907566e786f815a0d67664953151"
+        }
+    ],
+    "displayVersion": "60.0",
+    "partials": [
+        {
+            "filesize": 22394857,
+            "from": "Firefox-59.0-build3",
+            "hashValue": "92bc9de7e3db051a2bd0b789cf7bbb1790bf0c517d62131fce13b661243503f8c0dc1a92268a3e38bfb4e9a8622451f76996abb504662660852cccb0d71ef4b1"
+        }
+    ]
+}""",
+        )
+        history_entries = []
+        for k in self.release_assets.history.bucket.blobs:
+            if k.startswith("Firefox-60.0-build1"):
+                history_entries.append(k)
+        expected = [
+            "Firefox-60.0-build1-.platforms.WINNT_x86_64-msvc.locales.en-US/None-999-bob.json",
+            "Firefox-60.0-build1-.platforms.WINNT_x86_64-msvc.locales.en-US/1-1000-bob.json",
+        ]
+        assert history_entries == expected
+
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
+    def testUpdateCreatesCorrectHistory(self):
+        self.release_assets.update(
+            where={"name": "Firefox-60.0-build1", "path": ".platforms.Linux_x86_64-gcc3.locales.en-US"},
+            what={
+                "data": """{
+    "appVersion": "60.0",
+    "buildID": "20200827144429",
+    "completes": [
+        {
+            "filesize": 99999999,
+            "from": "*",
+            "hashValue": "73c05d2e15a3d33cbbee3b874dbd9a3e3560ddf74b343bad5ff2d55dccd3a7cf9a5a9da5e05eefea8cabdfd186d98ada94804e83c61011999999999999999999"
+        }
+    ],
+    "displayVersion": "60.0",
+    "partials": [
+        {
+            "filesize": 18695829,
+            "from": "Firefox-59.0-build3",
+            "hashValue": "311324ceacfb8450a948da6b2176a1103d8a4eb716381951fb197b4414097efee9a91c9fd4fbcb797dd1e80fe69b8e2410a945602d5dfd0a5c485a004c52fbda"
+        }
+    ]
+}"""
+            },
+            changed_by="bob",
+            old_data_version=1,
+        )
+        history_entries = []
+        for k in self.release_assets.history.bucket.blobs:
+            if k.startswith("Firefox-60.0-build1"):
+                history_entries.append(k)
+        expected = [
+            "Firefox-60.0-build1-.platforms.Linux_x86_64-gcc3.locales.en-US/2-1000-bob.json",
+        ]
+        assert history_entries == expected
+
+    @mock.patch("time.time", mock.MagicMock(return_value=1.0))
+    def testDeleteCreatesCorrectHistory(self):
+        self.release_assets.delete(
+            where={"name": "Firefox-60.0-build1", "path": ".platforms.Linux_x86_64-gcc3.locales.en-US"}, changed_by="bob", old_data_version=1,
+        )
+        history_entries = []
+        for k in self.release_assets.history.bucket.blobs:
+            if k.startswith("Firefox-60.0-build1"):
+                history_entries.append(k)
+        expected = [
+            "Firefox-60.0-build1-.platforms.Linux_x86_64-gcc3.locales.en-US/None-1000-bob.json",
+        ]
+        assert history_entries == expected
+
+
+@pytest.mark.usefixtures("current_db_schema")
 class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
