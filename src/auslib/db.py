@@ -677,9 +677,9 @@ class AUSTable(object):
 
 
 class GCSHistory:
-    def __init__(self, db, dialect, metadata, baseTable, buckets, identifier_column, data_column):
+    def __init__(self, db, dialect, metadata, baseTable, buckets, identifier_columns, data_column):
         self.buckets = buckets
-        self.identifier_column = identifier_column
+        self.identifier_columns = identifier_columns
         self.data_column = data_column
 
     def _getBucket(self, identifier):
@@ -691,28 +691,28 @@ class GCSHistory:
 
     def forInsert(self, insertedKeys, columns, changed_by, trans):
         timestamp = getMillisecondTimestamp()
-        identifier = columns.get(self.identifier_column)
+        identifier = "-".join([columns.get(i) for i in self.identifier_columns])
         for data_version, ts, data in ((None, timestamp - 1, ""), (columns.get("data_version"), timestamp, json.dumps(columns[self.data_column]))):
             bname = "{}/{}-{}-{}.json".format(identifier, data_version, ts, changed_by)
             blob = self._getBucket(identifier).blob(bname)
             blob.upload_from_string(data, content_type="application/json")
 
     def forDelete(self, rowData, changed_by, trans):
-        identifier = rowData.get(self.identifier_column)
+        identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
         blob = self._getBucket(identifier).blob(bname)
         blob.upload_from_string("", content_type="application/json")
 
     def forUpdate(self, rowData, changed_by, trans):
-        identifier = rowData.get(self.identifier_column)
+        identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
         blob = self._getBucket(identifier).blob(bname)
         blob.upload_from_string(json.dumps(rowData[self.data_column]), content_type="application/json")
 
     def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
-        if self.identifier_column not in column_values or not data_version:
-            raise ValueError("Cannot find GCS changes without {} and data_version".format(self.identifier_column))
-        identifier = column_values[self.identifier_column]
+        if not set(self.identifier_columns).issubset(column_values.keys()) or not data_version:
+            raise ValueError("Cannot find GCS changes without {} and data_version".format(self.identifier_columns))
+        identifier = "-".join([column_values[i] for i in self.identifier_columns])
         bucket = self._getBucket(identifier)
         blobs = [b for b in bucket.list_blobs(prefix="{}/{}".format(identifier, data_version))]
         if len(blobs) != 1:
@@ -1768,7 +1768,7 @@ class Releases(AUSTable):
         historyKwargs = {}
         if history_buckets:
             historyKwargs["buckets"] = history_buckets
-            historyKwargs["identifier_column"] = "name"
+            historyKwargs["identifier_columns"] = ["name"]
             historyKwargs["data_column"] = "data"
         else:
             # Can't have history without a bucket
@@ -2189,7 +2189,7 @@ class ReleasesJSON(AUSTable):
         historyKwargs = {}
         if history_buckets:
             historyKwargs["buckets"] = history_buckets
-            historyKwargs["identifier_column"] = "name"
+            historyKwargs["identifier_columns"] = ["name"]
             historyKwargs["data_column"] = "data"
         else:
             # Can't have history without a bucket
