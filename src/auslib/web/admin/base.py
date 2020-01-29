@@ -35,6 +35,7 @@ validator_map = {"body": BalrogRequestBodyValidator}
 
 connexion_app = connexion.App(__name__, debug=False, options={"swagger_ui": False})
 connexion_app.add_api(spec, validator_map=validator_map, strict_validation=True)
+connexion_app.add_api(path.join(current_dir, "swagger", "api_v2.yml"), base_path="/v2", strict_validation=True)
 app = connexion_app.app
 
 create_dockerflow_endpoints(app)
