@@ -54,6 +54,7 @@ paths:
               type: object
               required:
                 - blob
+                # Should be optional for blobs that don't yet exist
                 - old_data_versions
               properties:
                 blob:
