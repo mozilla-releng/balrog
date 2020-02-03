@@ -56,6 +56,23 @@ class UnquotingMiddleware(object):
 app.wsgi_app = UnquotingMiddleware(app.wsgi_app)
 
 
+@app.before_request
+def make_transaction():
+    from auslib.global_state import dbo
+
+    request.transaction = dbo.begin()
+
+
+@app.after_request
+def finalize_transaction(response):
+    if response.status_code >= 400:
+        request.transaction.rollback()
+    else:
+        request.transaction.commit()
+
+    return response
+
+
 @app.errorhandler(500)
 def ise(error):
     log.error("Caught ISE 500 error.")
