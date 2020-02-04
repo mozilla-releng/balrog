@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 import pytest
 from hypothesis import settings
 
@@ -33,3 +36,27 @@ def current_db_schema(request, db_schema):
             self.metadata.create_all(self.db.engine)
     """
     request.cls.metadata = db_schema
+
+
+@pytest.fixture(scope="session")
+def firefox_56_0_build1():
+    blob = json.load(open(Path(__file__).parent / "data/Firefox-56.0-build1.json"))
+    return blob
+
+
+@pytest.fixture(scope="session")
+def firefox_60_0b3_build1():
+    blob = json.load(open(Path(__file__).parent / "data/Firefox-60.0b3-build1.json"))
+    return blob
+
+
+@pytest.fixture(scope="session")
+def firefox_62_0_build1():
+    blob = json.load(open(Path(__file__).parent / "data/Firefox-62.0-build1.json"))
+    return blob
+
+
+@pytest.fixture(scope="session")
+def cdm_17():
+    blob = json.load(open(Path(__file__).parent / "data/CDM-17.json"))
+    return blob

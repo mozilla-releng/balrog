@@ -29,7 +29,6 @@ from auslib.db import (
     MismatchedDataVersionError,
     OutdatedDataError,
     PermissionDeniedError,
-    ReadOnlyError,
     SignoffRequiredError,
     SignoffsTable,
     TransactionError,

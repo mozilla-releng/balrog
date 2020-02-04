@@ -1,0 +1,82 @@
+openapi: 3.0.0
+info:
+  title: Balrog Admin API
+  description: Balrog Admin API
+  version: 2.0.0
+
+paths:
+  /releases/{name}:
+    post:
+      summary: Update part of a Release
+      operationId: auslib.web.admin.views.releases_v2.update_release
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Release name
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - blob
+                - old_data_versions
+              properties:
+                blob:
+                  type: object
+                old_data_versions:
+                  type: object
+
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Client error
+        '404':
+          description: Release does not exist
+    put:
+      summary: Overwrites an entire release
+      operationId: auslib.web.admin.views.releases_v2.overwrite_release
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Release name
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - blob
+              properties:
+                blob:
+                  type: object
+                # Optional in this endpoint, because the Release may not yet exist.
+                # The view is responsible for ensuring this exists if the Release does.
+                old_data_versions:
+                  type: object
+                # Required if the Release doesn't yet exist.
+                product:
+                  type: string
+
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Client error

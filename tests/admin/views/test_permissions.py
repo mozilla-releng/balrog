@@ -162,7 +162,7 @@ class TestPermissionsAPI_JSON(ViewTest):
     def testPermissionPutThatRequiresSignoff(self):
         ret = self._put("/users/nancy/permissions/admin")
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
+        self.assertIn("No Signoffs given", ret.get_data(as_text=True))
 
     def testPermissionModify(self):
         ret = self._put("/users/bob/permissions/rule", data=dict(options=json.dumps(dict(products=["a", "b"])), data_version=1))
@@ -217,7 +217,7 @@ class TestPermissionsAPI_JSON(ViewTest):
     def testPermissionDeleteRequiresSignoff(self):
         ret = self._delete("/users/bob/permissions/release", qs=dict(data_version=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
+        self.assertIn("No Signoffs given", ret.get_data(as_text=True))
 
 
 class TestPermissionsScheduledChanges(ViewTest):

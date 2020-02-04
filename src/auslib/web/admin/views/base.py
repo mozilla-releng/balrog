@@ -4,7 +4,7 @@ from flask import current_app as app
 from flask import request
 from flask.views import MethodView
 
-from auslib.db import ChangeScheduledError, OutdatedDataError, PermissionDeniedError, SignoffRequiredError, UpdateMergeError
+from auslib.db import ChangeScheduledError, OutdatedDataError, PermissionDeniedError, UpdateMergeError
 from auslib.global_state import dbo
 from auslib.util.auth import AuthError, verified_userinfo
 from auslib.web.admin.views.problem import problem
@@ -58,11 +58,6 @@ def handleGeneralExceptions(messages):
                 log.warning("Bad input: %s", msg)
                 log.warning(e)
                 return problem(400, "Bad Request", "ChangeScheduledError", ext={"exception": msg})
-            except SignoffRequiredError as e:
-                msg = "This change requires signoff, it cannot be done directly. {}".format(e)
-                log.warning(msg)
-                log.warning(e)
-                return problem(400, "Bad Request", "SignoffRequiredError", ext={"exception": msg})
             except (PermissionDeniedError, AuthError) as e:
                 msg = "Permission denied to perform the request. {}".format(e)
                 log.warning(msg)
