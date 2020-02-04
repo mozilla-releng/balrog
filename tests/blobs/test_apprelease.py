@@ -25,8 +25,8 @@ from auslib.blobs.apprelease import (
     ReleaseBlobV9,
     UnifiedFileUrlsMixin,
 )
-from auslib.blobs.base import BlobValidationError, createBlob
-from auslib.errors import BadDataError
+from auslib.blobs.base import createBlob
+from auslib.errors import BadDataError, BlobValidationError
 from auslib.global_state import dbo
 from auslib.web.public.base import app
 

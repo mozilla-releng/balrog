@@ -18,7 +18,7 @@ from sqlalchemy.engine.reflection import Inspector
 
 import auslib
 from auslib.blobs.apprelease import ReleaseBlobV1
-from auslib.blobs.base import BlobValidationError, createBlob
+from auslib.blobs.base import createBlob
 from auslib.db import (
     AlreadySetupError,
     AUSDatabase,
@@ -36,6 +36,7 @@ from auslib.db import (
     UpdateMergeError,
     verify_signoffs,
 )
+from auslib.errors import BlobValidationError, ReadOnlyError
 from auslib.global_state import cache, dbo
 
 from .fakes import FakeGCSHistory

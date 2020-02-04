@@ -18,6 +18,7 @@ from sqlalchemy.sql.expression import null
 from sqlalchemy.sql.functions import max as sql_max
 
 from auslib.blobs.base import createBlob, merge_dicts
+from auslib.errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
 from auslib.global_state import cache
 from auslib.util.rulematching import (
     matchBoolean,
@@ -50,15 +51,6 @@ class AlreadySetupError(Exception):
         return "Can't connect to new database, still connected to previous one"
 
 
-class PermissionDeniedError(Exception):
-    pass
-
-
-class SignoffRequiredError(Exception):
-    """Raised when someone attempts to directly modify an object that requires
-    signoff."""
-
-
 class TransactionError(SQLAlchemyError):
     """Raised when a transaction fails for any reason."""
 
@@ -78,10 +70,6 @@ class WrongNumberOfRowsError(SQLAlchemyError):
 
 class UpdateMergeError(SQLAlchemyError):
     pass
-
-
-class ReadOnlyError(SQLAlchemyError):
-    """Raised when a release marked as read-only is attempted to be changed."""
 
 
 class ChangeScheduledError(SQLAlchemyError):
