@@ -38,9 +38,9 @@ clickclick==1.2.2 \
     --hash=sha256:4a890aaa9c3990cfabd446294eb34e3dc89701101ac7b41c1bff85fc210f6d23 \
     --hash=sha256:ab8f229fb9906a86634bdfc6fabfc2b665f44804170720db4f6e1d98f8a58f3d \
     # via connexion
-connexion==2.5.1 \
-    --hash=sha256:3f6c2cb8a3f24af281ff561eebaaa926700b24f4c430f4d945c8ace0384c220c \
-    --hash=sha256:56854c65334281b303120a1097df09a79ffa44bdaecfc4400e7194821e17566d
+connexion==2.6.0 \
+    --hash=sha256:bf32bfae6af337cfa4a8489c21516adbe5c50e3f8dc0b7ed2394ce8dde218018 \
+    --hash=sha256:c568e579f84be808e387dcb8570bb00a536891be1318718a0dad3ba90f034191
 decorator==4.4.1 \
     --hash=sha256:54c38050039232e1db4ad7375cfce6748d7b41c29e95a081c8a6d2c30364a2ce \
     --hash=sha256:5d19b92a3c8f7f101c8dd86afd86b0f061a8ce4540ab8cd401fa2542756bce6d \
@@ -57,19 +57,18 @@ flask-wtf==0.14.2 \
 flask==1.1.1 \
     --hash=sha256:13f9f196f330c7c2c5d7a5cf91af894110ca0215ac051b5844701f2bfd934d52 \
     --hash=sha256:45eb5a6fd193d6cf7e0cf5d8a5b31f83d5faae0293695626f539a823e93b13f6
-google-api-core==1.15.0 \
-    --hash=sha256:2d661c8d650a1df5805d0e360121cb55c55d8bd29f858fa62cbe943e59ce89f7 \
-    --hash=sha256:9006e1641599345056cc690a934e1262107c78d969d72cf96412f6db5d32147f
-google-auth==1.10.0 \
-    --hash=sha256:7bb2034a3a290190cf4e3eb8ebf29e5025c90f0b06a00ba4d1fb94bf0c6448f7 \
-    --hash=sha256:c57074e594d2c6e3e316162734e8af3e15d40252022e69414cba67de66594417
-google-cloud-core==1.1.0 \
-    --hash=sha256:49036087c1170c3fad026e45189f17092b8c584a9accb2d73d1854f494e223ae \
-    --hash=sha256:63c93d989d92a782efe8d9606ea2ad37673361ab0c3e7f965a5640d30ff14f20 \
-    # via google-cloud-storage
-google-cloud-storage==1.24.1 \
-    --hash=sha256:51c1bb892407c2d0ded2e8968c41ea13dbd6ff15b2b18e4a23e4ae0eba68a49e \
-    --hash=sha256:bafe77ba8099b987bfde61347d3b774451877dc31837e296519a0a0d337015f1
+google-api-core==1.16.0 \
+    --hash=sha256:859f7392676761f2b160c6ee030c3422135ada4458f0948c5690a6a7c8d86294 \
+    --hash=sha256:92e962a087f1c4b8d1c5c88ade1c1dfd550047dcffb320c57ef6a534a20403e2
+google-auth==1.11.0 \
+    --hash=sha256:44549e69ac39acf41fdf47f3f39a06e4e68378476806760d94a2c6a361b2bb06 \
+    --hash=sha256:b2d83edc02a9deeed9b1b839046671fd9eda223d21bd2dd50051559787032fd8
+google-cloud-core==1.3.0 \
+    --hash=sha256:6ae5c62931e8345692241ac1939b85a10d6c38dc9e2854bdbacb7e5ac3033229 \
+    --hash=sha256:878f9ad080a40cdcec85b92242c4b5819eeb8f120ebc5c9f640935e24fc129d8    # via google-cloud-storage
+google-cloud-storage==1.25.0 \
+    --hash=sha256:39897db862aebbc72f7261da240ccc96890d711b93a5c2f96d08a6875fe9c54c \
+    --hash=sha256:8e9505ad7ba356c0953acefc0cdfd41de0dd5f1df520d1cd5bb31bd34ee45373
 google-resumable-media==0.5.0 \
     --hash=sha256:2a8fd188afe1cbfd5998bf20602f76b0336aa892de88fe842a806b9a3ed78d2a \
     --hash=sha256:b86140d5a0b6d290084b11bde90ee9aecad357ba0e0d67388d016b8340320927 \
@@ -81,10 +80,9 @@ idna==2.8 \
     --hash=sha256:c357b3f628cf53ae2c4c05627ecc484553142ca23264e593d327bcde5e9c3407 \
     --hash=sha256:ea8b7f6188e6fa117537c3df7da9fc686d485087abf6ac197f9c46432f7e4a3c \
     # via requests
-importlib-metadata==1.3.0 \
-    --hash=sha256:073a852570f92da5f744a3472af1b61e28e9f78ccf0c9117658dc32b15de7b45 \
-    --hash=sha256:d95141fbfa7ef2ec65cfd945e2af7e5a6ddbd7c8d9a25e66ff3be8e3daf9f60f \
-    # via jsonschema
+importlib-metadata==1.5.0 \
+    --hash=sha256:06f5b3a99029c7134207dd882428a66992a9de2bef7c2b699b5641f9886c3302 \
+    --hash=sha256:b97607a1a18a5100839aec1dc26a1ea17ee0d93b20b0f008d80a5a050afb200b    # via jsonschema
 inflection==0.3.1 \
     --hash=sha256:18ea7fb7a7d152853386523def08736aa8c32636b047ade55f7578c4edeb16ca \
     # via connexion
@@ -92,10 +90,9 @@ itsdangerous==1.1.0 \
     --hash=sha256:321b033d07f2a4136d3ec762eac9f16a10ccd60f53c0c91af90217ace7ba1f19 \
     --hash=sha256:b12271b2047cb23eeb98c8b5622e2e5c5e9abd9784a153e9d8ef9cb4dd09d749 \
     # via flask
-jinja2==2.10.3 \
-    --hash=sha256:74320bb91f31270f9551d46522e33af46a80c3d619f4a4bf42b3164d30b5911f \
-    --hash=sha256:9fe95f19286cfefaa917656583d020be14e7859c6b0252588391e47db34527de \
-    # via flask
+jinja2==2.11.1 \
+    --hash=sha256:93187ffbc7808079673ef52771baa950426fd664d3aad1d0fa3e95644360e250 \
+    --hash=sha256:b0eaf100007721b5c16c1fc1eecb87409464edc10469ddc9a22a27a99123be49    # via flask
 jsonschema==3.2.0 \
     --hash=sha256:4e5b3cf8216f577bee9ce139cbe72eca3ea4f292ec60928ff24758ce626cd163 \
     --hash=sha256:c8a85b28d377cc7737e46e2d9f2b4f44ee3c0e1deac6bf46ddefc7187d30797a
@@ -133,10 +130,9 @@ mohawk==1.1.0 \
     --hash=sha256:3ed296a30453d0b724679e0fd41e4e940497f8e461a9a9c3b7f36e43bab0fa09 \
     --hash=sha256:d2a0e3ab10a209cc79e95e28f2dd54bd4a73fd1998ffe27b7ba0f962b6be9723 \
     # via requests-hawk
-more-itertools==8.0.2 \
-    --hash=sha256:b84b238cce0d9adad5ed87e745778d20a3f8487d0f0cb8b8a586816c7496458d \
-    --hash=sha256:c833ef592a0324bcc6a60e48440da07645063c453880c9477ceb22490aec1564 \
-    # via zipp
+more-itertools==8.2.0 \
+    --hash=sha256:5dd8bcf33e5f9513ffa06d5ad33d78f31e1931ac9a18f33d37e77a180d393a7c \
+    --hash=sha256:b1ddb932186d8a6ac451e1d95844b382f55e12686d51ca0c68b6f61f2ab7a507    # via zipp
 mysqlclient==1.4.6 \
     --hash=sha256:4c82187dd6ab3607150fbb1fa5ef4643118f3da122b8ba31c3149ddd9cf0cb39 \
     --hash=sha256:9e6080a7aee4cc6a06b58b59239f20f1d259c1d2fddf68ddeed242d2311c7087 \
@@ -219,21 +215,20 @@ rsa==4.0 \
     --hash=sha256:14ba45700ff1ec9eeb206a2ce76b32814958a98e372006c8fb76ba820211be66 \
     --hash=sha256:1a836406405730121ae9823e19c6e806c62bbad73f890574fff50efa4122c487 \
     # via google-auth, python-jose
-sentry-sdk[flask]==0.14.0 \
-    --hash=sha256:8e2d38dc58dc992280487e553ec3d97a424e4d179f4fad802ef3b08f64ccf4d8 \
-    --hash=sha256:9b59e155229ea7d46a52b5c025d8c3c6d591e9dd9bb5f5f47310b2bb430038a8
-six==1.13.0 \
-    --hash=sha256:1f1b7d42e254082a9db6279deae68afb421ceba6158efa6131de7b3003ee93fd \
-    --hash=sha256:30f610279e8b2578cab6db20741130331735c781b56053c59c4076da27f06b66 \
-    # via ecdsa, google-api-core, google-auth, google-resumable-media, jsonschema, mohawk, openapi-spec-validator, protobuf, pyrsistent, python-dateutil, python-jose, sqlalchemy-migrate, swagger-spec-validator
+sentry-sdk[flask]==0.14.1 \
+    --hash=sha256:b06dd27391fd11fb32f84fe054e6a64736c469514a718a99fb5ce1dff95d6b28 \
+    --hash=sha256:e023da07cfbead3868e1e2ba994160517885a32dfd994fc455b118e37989479b
+six==1.14.0 \
+    --hash=sha256:236bdbdce46e6e6a3d61a337c0f8b763ca1e8717c03b369e87a7ec7ce1319c0a \
+    --hash=sha256:8f3cd2e254d8f793e7f3d6d9df77b92252b52637291d0f0da013c76ea2724b6c    # via ecdsa, google-api-core, google-auth, google-resumable-media, jsonschema, mohawk, openapi-spec-validator, protobuf, pyrsistent, python-dateutil, python-jose, sqlalchemy-migrate, swagger-spec-validator
 spec-synthase==0.1.11 \
     --hash=sha256:62396a95541cec2f792fe4f1f10e610e3dbdcdee843ee8f65dc243e8bb387c86 \
     --hash=sha256:9507c2f83a1c0a6fb7e18c0fa4eb9cc7a3d874e964b7c55dd2b531e5c70598bf
 sqlalchemy-migrate==0.13.0 \
     --hash=sha256:0bc02e292a040ade5e35a01d3ea744119e1309cdddb704fdb99bac13236614f8 \
     --hash=sha256:e5d2348db19a5062132d93e3b4d9e7644af552fffbec4c78cc5358f848d2f6c1
-sqlalchemy==1.3.12 \
-    --hash=sha256:bfb8f464a5000b567ac1d350b9090cf081180ec1ab4aa87e7bca12dab25320ec
+sqlalchemy==1.3.13 \
+    --hash=sha256:64a7b71846db6423807e96820993fa12a03b89127d278290ca25c0b11ed7b4fb
 sqlparse==0.3.0 \
     --hash=sha256:40afe6b8d4b1117e7dff5504d7a8ce07d9a1b15aeeade8a2d10f130a834f8177 \
     --hash=sha256:7c3dca29c022744e95b547e867cee89f4fce4373f3549ccd8797d8eb52cdb873 \
@@ -244,24 +239,21 @@ swagger-spec-validator==2.4.3 \
 tempita==0.5.2 \
     --hash=sha256:cacecf0baa674d356641f1d406b8bff1d756d739c46b869a54de515d08e6fc9c \
     # via sqlalchemy-migrate
-urllib3==1.25.7 \
-    --hash=sha256:a8a318824cc77d1fd4b2bec2ded92646630d7fe8619497b142c84a9e6f5a7293 \
-    --hash=sha256:f3c5fd51747d450d4dcf6f923c81f78f811aab8205fda64b0aba34a4e48b0745 \
-    # via requests, sentry-sdk
+urllib3==1.25.8 \
+    --hash=sha256:2f3db8b19923a873b3e5256dc9c2dedfa883e33d87c690d9c7913e1f40673cdc \
+    --hash=sha256:87716c2d2a7121198ebcb7ce7cccf6ce5e9ba539041cfbaeecfb641dc0bf6acc    # via requests, sentry-sdk
 uwsgi==2.0.18 \
     --hash=sha256:4972ac538800fb2d421027f49b4a1869b66048839507ccf0aa2fda792d99f583
-werkzeug==0.16.0 \
-    --hash=sha256:7280924747b5733b246fe23972186c6b348f9ae29724135a6dfc1e53cea433e7 \
-    --hash=sha256:e5f4a1f98b52b18a93da705a7458e55afb26f32bff83ff5d19189f92462d65c4 \
-    # via flask
+werkzeug==0.16.1 \
+    --hash=sha256:1e0dedc2acb1f46827daa2e399c1485c8fa17c0d8e70b6b875b4e7f54bf408d2 \
+    --hash=sha256:b353856d37dec59d6511359f97f6a4b2468442e454bd1c98298ddce53cac1f04    # via flask
 wtforms==2.2.1 \
     --hash=sha256:0cdbac3e7f6878086c334aa25dc5a33869a3954e9d1e015130d65a69309b3b61 \
     --hash=sha256:e3ee092c827582c50877cdbd49e9ce6d2c5c1f6561f849b3b068c1b8029626f1 \
     # via flask-wtf
-zipp==0.6.0 \
-    --hash=sha256:3718b1cbcd963c7d4c5511a8240812904164b7f381b647143a89d3b98f9bcd8e \
-    --hash=sha256:f06903e9f1f43b12d371004b4ac7b06ab39a44adc747266928ae6debfa7b3335 \
-    # via importlib-metadata
+zipp==2.1.0 \
+    --hash=sha256:ccc94ed0909b58ffe34430ea5451f07bc0c76467d7081619a454bf5c98b89e28 \
+    --hash=sha256:feae2f18633c32fc71f2de629bfb3bd3c9325cd4419642b1f1da42ee488d9b98    # via importlib-metadata
 
 # WARNING: The following packages were not pinned, but pip requires them to be
 # pinned when the requirements file includes hashes. Consider using the --allow-unsafe flag.
