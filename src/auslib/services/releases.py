@@ -3,6 +3,7 @@ from copy import deepcopy
 
 from deepmerge import Merger
 from flask import current_app as app
+from sqlalchemy import join, select
 
 from ..blobs.base import createBlob
 from ..errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
@@ -135,6 +136,19 @@ def get_assets(name, trans):
         assets[asset["path"]] = asset
 
     return assets
+
+
+def get_releases(trans):
+    releases = dbo.releases_json.select(
+        columns=[dbo.releases_json.name, dbo.releases_json.product, dbo.releases_json.data_version, dbo.releases_json.read_only], transaction=trans
+    )
+    j = join(dbo.releases_json.t, dbo.rules.t, ((dbo.releases_json.name == dbo.rules.mapping) | (dbo.releases_json.name == dbo.rules.fallbackMapping)))
+    rule_mappings = trans.execute(select([dbo.releases_json.name, dbo.rules.rule_id, dbo.rules.product, dbo.rules.channel]).select_from(j)).fetchall()
+    for row in releases:
+        refs = [ref for ref in rule_mappings if ref[0] == row["name"]]
+        row["rule_info"] = {str(ref[1]): {"product": ref[2], "channel": ref[3]} for ref in refs}
+
+    return {"releases": releases}
 
 
 def update_release(name, blob, old_data_versions, when, changed_by, trans):

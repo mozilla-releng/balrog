@@ -5,6 +5,54 @@ info:
   version: 2.0.0
 
 paths:
+  /releases:
+    get:
+      summary: Get a list of basic information about Releases in Balrog's database
+      operationId: auslib.web.admin.views.releases_v2.get_releases
+      responses:
+        '200':
+          description: List of Releases
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - releases
+                properties:
+                  releases:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - name
+                        - product
+                        - data_version
+                        - read_only
+                        - rule_info
+                      properties:
+                        name:
+                          type: string
+                        product:
+                          type: string
+                        data_version:
+                          type: number
+                        read_only:
+                          type: boolean
+                        rule_info:
+                          type: object
+                          properties:
+                            ^.*$:
+                              type: object
+                              required:
+                                - product
+                                - channel
+                              properties:
+                                product:
+                                  type: string
+                                  nullable: true
+                                channel:
+                                  type: string
+                                  nullable: true
   /releases/{name}:
     post:
       summary: Update part of a Release

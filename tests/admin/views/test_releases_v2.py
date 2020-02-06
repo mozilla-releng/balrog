@@ -58,9 +58,36 @@ def releases_db(db_schema, firefox_56_0_build1, firefox_60_0b3_build1, cdm_17):
     dbo.rules.t.insert().execute(
         rule_id=2, priority=100, product="Firefox", channel="beta", mapping="Firefox-60.0b3-build1", update_type="minor", data_version=1
     )
+    dbo.rules.t.insert().execute(rule_id=3, priority=100, channel="beta", mapping="CDM-17", update_type="minor", data_version=1)
     insert_release(firefox_56_0_build1, "Firefox")
     insert_release(firefox_60_0b3_build1, "Firefox")
     insert_release(cdm_17, "CDM")
+
+
+@pytest.mark.usefixtures("releases_db")
+def test_get_releases(api):
+    ret = api.get("/v2/releases")
+    assert ret.status_code == 200, ret.data
+    expected = {
+        "releases": [
+            {
+                "name": "Firefox-56.0-build1",
+                "product": "Firefox",
+                "data_version": 1,
+                "read_only": False,
+                "rule_info": {"1": {"product": "Firefox", "channel": "release"}},
+            },
+            {
+                "name": "Firefox-60.0b3-build1",
+                "product": "Firefox",
+                "data_version": 1,
+                "read_only": False,
+                "rule_info": {"2": {"product": "Firefox", "channel": "beta"}},
+            },
+            {"name": "CDM-17", "product": "CDM", "data_version": 1, "read_only": False, "rule_info": {"3": {"product": None, "channel": "beta"}}},
+        ]
+    }
+    assert ret.json == expected
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
