@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from copy import deepcopy
-from itertools import chain
 
 from aiohttp import ClientError
 from deepmerge import Merger
@@ -215,6 +214,18 @@ def exists(name, trans):
     return False
 
 
+def sc_exists(name, trans):
+    if any(
+        [
+            dbo.releases_json.scheduled_changes.select(where={"base_name": name}, columns=[dbo.releases_json.scheduled_changes.base_name], transaction=trans),
+            dbo.release_assets.scheduled_changes.select(where={"base_name": name}, columns=[dbo.release_assets.scheduled_changes.base_name], transaction=trans),
+        ]
+    ):
+        return True
+
+    return False
+
+
 def is_read_only(name, trans):
     return dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.read_only], transaction=trans)[0].get("read_only")
 
@@ -238,37 +249,80 @@ def get_releases(trans):
         row["rule_info"] = {str(ref[1]): {"product": ref[2], "channel": ref[3]} for ref in refs}
         row["scheduled_changes"] = []
 
-    for sc in chain(dbo.releases_json.scheduled_changes.select(), dbo.release_assets.scheduled_changes.select()):
-        release = [r for r in releases if r["name"] == sc["base_name"]]
-        if release:
-            release = release[0]
-            if "scheduled_changes" not in release:
-                release["scheduled_changes"] = []
-        else:
-            release = {
-                "name": sc["base_name"],
-                "product": None,
-                "data_version": None,
-                "read_only": None,
-                "rule_info": {},
-                "scheduled_changes": [],
-            }
-
-        munged_sc = {}
-        for k in sc:
-            if k == "base_data":
-                continue
-            elif k == "data_version":
-                munged_sc["sc_data_version"] = sc[k]
+    for table in (dbo.releases_json.scheduled_changes, dbo.release_assets.scheduled_changes):
+        for sc in table.select(where={"complete": False}):
+            release = [r for r in releases if r["name"] == sc["base_name"]]
+            if release:
+                release = release[0]
+                if "scheduled_changes" not in release:
+                    release["scheduled_changes"] = []
             else:
-                munged_sc[k.replace("base_", "")] = sc[k]
+                release = {
+                    "name": sc["base_name"],
+                    "product": None,
+                    "data_version": None,
+                    "read_only": None,
+                    "rule_info": {},
+                    "scheduled_changes": [],
+                }
 
-        release["scheduled_changes"].append(munged_sc)
+            munged_sc = {"signoffs": {}}
+            for k in sc:
+                if k == "base_data":
+                    continue
+                elif k == "data_version":
+                    munged_sc["sc_data_version"] = sc[k]
+                else:
+                    munged_sc[k.replace("base_", "")] = sc[k]
 
-        if release not in releases:
-            releases.append(release)
+            for signoff in table.signoffs.select(where={"sc_id": sc["sc_id"]}):
+                munged_sc["signoffs"][signoff["username"]] = signoff["role"]
+
+            release["scheduled_changes"].append(munged_sc)
+
+            if release not in releases:
+                releases.append(release)
 
     return {"releases": sorted(releases, key=lambda r: r["name"])}
+
+
+def get_release(name, trans):
+    data_versions = infinite_defaultdict()
+    sc_data_versions = infinite_defaultdict()
+    base_blob = {}
+    scheduled_blob = {}
+    base_row = dbo.releases_json.select(where={"name": name}, transaction=trans)
+    if base_row:
+        base_blob = base_row[0]["data"]
+        data_versions["."] = base_row[0]["data_version"]
+
+    scheduled_row = dbo.releases_json.scheduled_changes.select(where={"base_name": name}, transaction=trans)
+    if scheduled_row:
+        sc_data_versions["."] = scheduled_row[0]["data_version"]
+        if scheduled_row[0]["change_type"] != "delete":
+            scheduled_blob = deepcopy(base_blob)
+            scheduled_blob.update(scheduled_row[0]["base_data"])
+
+    for asset in dbo.release_assets.select(where={"name": name}, transaction=trans):
+        path = asset["path"].split(".")[1:]
+        ensure_path_exists(base_blob, path)
+        set_by_path(base_blob, path, asset["data"])
+        set_by_path(data_versions, path, asset["data_version"])
+        if scheduled_blob:
+            ensure_path_exists(scheduled_blob, path)
+            set_by_path(scheduled_blob, path, asset["data"])
+
+    for scheduled_asset in dbo.release_assets.scheduled_changes.select(where={"base_name": name}, transaction=trans):
+        path = scheduled_asset["base_path"].split(".")[1:]
+        set_by_path(sc_data_versions, path, scheduled_asset["data_version"])
+        if scheduled_asset["change_type"] != "delete":
+            ensure_path_exists(scheduled_blob, path)
+            set_by_path(scheduled_blob, path, scheduled_asset["base_data"])
+
+    if base_blob or scheduled_blob:
+        return {"blob": base_blob, "data_versions": data_versions, "scheduled_blob": scheduled_blob, "sc_data_versions": sc_data_versions}
+    else:
+        return None
 
 
 def update_release(name, blob, old_data_versions, when, changed_by, trans):
@@ -485,3 +539,48 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
     await_coroutines(coros)
 
     return new_data_versions
+
+
+def delete_release(name, changed_by, trans):
+    if exists(name, trans):
+        row = dbo.releases_json.select(where={"name": name}, columns={dbo.releases_json.product, dbo.releases_json.data_version})[0]
+        product = row["product"]
+        old_data_version = row["data_version"]
+
+        stmt = select([dbo.rules.rule_id, dbo.rules.product, dbo.rules.channel]).where(
+            ((dbo.releases_json.name == dbo.rules.mapping) | (dbo.releases_json.name == dbo.rules.fallbackMapping)) & (dbo.releases_json.name == name)
+        )
+        if trans.execute(stmt).fetchall():
+            raise ValueError("Cannot deleted release that is mapped to")
+
+        if not dbo.hasPermission(changed_by, "release", "delete", product, trans):
+            raise PermissionDeniedError(f"{changed_by} is not allowed to delete {product} releases")
+
+        if is_read_only(name, trans):
+            raise ReadOnlyError("Cannot delete a Release that is marked as read-only")
+
+        dbo.releases_json.delete(where={"name": name}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans)
+
+        for asset in dbo.release_assets.select(where={"name": name}, columns=[dbo.release_assets.path, dbo.release_assets.data_version], transaction=trans):
+            dbo.release_assets.delete(
+                where={"name": name, "path": asset["path"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans
+            )
+
+    if sc_exists(name, trans):
+        row = dbo.releases_json.scheduled_changes.select(
+            where={"base_name": name}, columns=[dbo.releases_json.scheduled_changes.base_product, dbo.releases_json.scheduled_changes.data_version]
+        )[0]
+        product = row["base_product"]
+        old_data_version = row["data_version"]
+
+        if not dbo.hasPermission(changed_by, "release", "delete", product, trans):
+            raise PermissionDeniedError(f"{changed_by} is not allowed to delete {product} releases")
+
+        dbo.releases_json.scheduled_changes.delete(where={"base_name": name}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans)
+
+        for asset in dbo.release_assets.scheduled_changes.select(
+            where={"base_name": name}, columns=[dbo.release_assets.scheduled_changes.base_path, dbo.release_assets.scheduled_changes.data_version]
+        ):
+            dbo.release_assets.scheduled_changes.delete(
+                where={"base_name": name, "base_path": asset["base_path"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans
+            )

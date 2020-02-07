@@ -117,6 +117,11 @@ def permission_denied_error(error):
     return problem(403, "Forbidden", "Permission Denied", ext={"exception": f"{error}"})
 
 
+@app.errorhandler(ValueError)
+def value_error(error):
+    return problem(400, "Bad Request", "Unknown error", ext={"exception": f"{error}"})
+
+
 # Connexion's error handling sometimes breaks when parameters contain
 # unicode characters (https://github.com/zalando/connexion/issues/604).
 # To work around, we catch them and return a 400 (which is what Connexion
