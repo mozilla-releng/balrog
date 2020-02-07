@@ -1,19 +1,19 @@
 ARG PYTHON_VERSION
 
-FROM python:${PYTHON_VERSION}-slim-stretch
+FROM python:${PYTHON_VERSION}-slim
 
 MAINTAINER bhearsum@mozilla.com
 
 # netcat is needed for health checks
-# Some versions of the python:3.7 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
+# Some versions of the python:3.8 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
 # default-libmysqlclient-dev is required to use SQLAlchemy with MySQL
-# mysql-client is needed to import sample data
+# mariadb-client is needed to import sample data
 # curl is needed to pull sample data
 # gcc is needed to compile some python packages
 # xz-utils is needed to unpack sampled ata
 # git is needed to send coverage reports
 RUN apt-get -q update \
-    && apt-get -q --yes install netcat libpcre3 libpcre3-dev default-libmysqlclient-dev mysql-client curl gcc xz-utils git \
+    && apt-get -q --yes install netcat libpcre3 libpcre3-dev default-libmysqlclient-dev mariadb-client curl gcc xz-utils git \
     && apt-get clean
 
 WORKDIR /app
