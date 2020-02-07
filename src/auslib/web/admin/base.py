@@ -116,6 +116,11 @@ def permission_denied_error(error):
     return problem(403, "Forbidden", "Permission Denied", ext={"exception": f"{error}"})
 
 
+@app.errorhandler(ValueError)
+def value_error(error):
+    return problem(400, "Bad Request", "Unknown error", ext={"exception": f"{error}"})
+
+
 @app.errorhandler(500)
 def ise(error):
     log.error("Caught ISE 500 error.")

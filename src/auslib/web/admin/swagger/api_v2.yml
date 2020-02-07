@@ -97,6 +97,34 @@ paths:
                                 type: boolean
 
   /releases/{name}:
+    get:
+      summary: Get a Release blob and data versions
+      operationId: auslib.web.admin.views.releases_v2.get_release
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Release name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Release blob and data versions
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - blob
+                  - data_versions
+                properties:
+                  blob:
+                    type: object
+                  data_versions:
+                    type: object
+        '404':
+          description: Release not found
+
     post:
       summary: Update part of a Release
       operationId: auslib.web.admin.views.releases_v2.update_release
@@ -176,3 +204,23 @@ paths:
                 type: object
         '400':
           description: Client error
+
+    delete:
+      summary: Delete an entire Release
+      operationId: auslib.web.admin.views.releases_v2.delete_release
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Release name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Client error
+        '403':
+          description: Permission denied
+        '404':
+          description: Release does not exist

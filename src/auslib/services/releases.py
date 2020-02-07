@@ -247,6 +247,45 @@ def get_releases(trans):
     return {"releases": sorted(releases, key=lambda r: r["name"])}
 
 
+def get_release(name, trans):
+    data_versions = infinite_defaultdict()
+    sc_data_versions = infinite_defaultdict()
+    base_blob = {}
+    scheduled_blob = {}
+    base_row = dbo.releases_json.select(where={"name": name}, transaction=trans)
+    if base_row:
+        base_blob = base_row[0]["data"]
+        data_versions["."] = base_row[0]["data_version"]
+
+    scheduled_row = dbo.releases_json.scheduled_changes.select(where={"base_name": name}, transaction=trans)
+    if scheduled_row:
+        sc_data_versions["."] = scheduled_row[0]["data_version"]
+        if scheduled_row[0]["change_type"] != "delete":
+            scheduled_blob = deepcopy(base_blob)
+            scheduled_blob.update(scheduled_row[0]["base_data"])
+
+    for asset in dbo.release_assets.select(where={"name": name}, transaction=trans):
+        path = asset["path"].split(".")[1:]
+        ensure_path_exists(base_blob, path)
+        set_by_path(base_blob, path, asset["data"])
+        set_by_path(data_versions, path, asset["data_version"])
+        if scheduled_blob:
+            ensure_path_exists(scheduled_blob, path)
+            set_by_path(scheduled_blob, path, asset["data"])
+
+    for scheduled_asset in dbo.release_assets.scheduled_changes.select(where={"base_name": name}, transaction=trans):
+        path = scheduled_asset["base_path"].split(".")[1:]
+        set_by_path(sc_data_versions, path, scheduled_asset["data_version"])
+        if scheduled_asset["change_type"] != "delete":
+            ensure_path_exists(scheduled_blob, path)
+            set_by_path(scheduled_blob, path, scheduled_asset["base_data"])
+
+    if base_blob or scheduled_blob:
+        return {"blob": base_blob, "data_versions": data_versions, "scheduled_blob": scheduled_blob, "sc_data_versions": sc_data_versions}
+    else:
+        return None
+
+
 def update_release(name, blob, old_data_versions, when, changed_by, trans):
     live_on_product_channels = dbo.releases_json.getPotentialRequiredSignoffs([{"name": name}], trans)
     new_data_versions = deepcopy(old_data_versions)
@@ -441,3 +480,26 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
             new_data_versions["."] = 1
 
     return new_data_versions
+
+
+def delete_release(name, changed_by, trans):
+    row = dbo.releases_json.select(where={"name": name}, columns={dbo.releases_json.product, dbo.releases_json.data_version})[0]
+    product = row["product"]
+    old_data_version = row["data_version"]
+
+    stmt = select([dbo.rules.rule_id, dbo.rules.product, dbo.rules.channel]).where(
+        ((dbo.releases_json.name == dbo.rules.mapping) | (dbo.releases_json.name == dbo.rules.fallbackMapping)) & (dbo.releases_json.name == name)
+    )
+    if trans.execute(stmt).fetchall():
+        raise ValueError("Cannot deleted release that is mapped to")
+
+    if not dbo.hasPermission(changed_by, "release", "delete", product, trans):
+        raise PermissionDeniedError(f"{changed_by} is not allowed to delete {product} releases")
+
+    if is_read_only(name, trans):
+        raise ReadOnlyError("Cannot delete a Release that is marked as read-only")
+
+    dbo.releases_json.delete(where={"name": name}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans)
+
+    for asset in dbo.release_assets.select(where={"name": name}, transaction=trans):
+        dbo.release_assets.delete(where={"name": name, "path": asset["path"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans)

@@ -1,3 +1,4 @@
+from connexion import NoContent
 from flask import request
 
 from ....services import releases
@@ -6,6 +7,14 @@ from .problem import problem
 
 def get_releases():
     return releases.get_releases(request.transaction), 200
+
+
+def get_release(name):
+    ret = releases.get_release(name, request.transaction)
+    if ret:
+        return ret, 200
+    else:
+        return problem(404, "Not Found", "Release does not exist")
 
 
 def update_release(name, body):
@@ -20,3 +29,11 @@ def set_release(name, body):
         name, body["blob"], body.get("product"), body.get("old_data_versions"), body.get("when"), request.username, request.transaction
     )
     return new_data_versions, 200
+
+
+def delete_release(name):
+    if releases.exists(name, request.transaction):
+        releases.delete_release(name, request.username, request.transaction)
+        return NoContent, 200
+    else:
+        return problem(404, "Not Found", "Release does not exist")
