@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 from copy import deepcopy
 
 from aiohttp import ClientError
@@ -584,3 +585,54 @@ def delete_release(name, changed_by, trans):
             dbo.release_assets.scheduled_changes.delete(
                 where={"base_name": name, "base_path": asset["base_path"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans
             )
+
+
+def set_read_only(name, read_only, old_data_version, changed_by, trans):
+    product = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.product], transaction=trans)[0]["product"]
+
+    # If the Release is being changed to read-write, it may require signoff
+    use_sc = False
+    if read_only is False:
+        live_on_product_channels = []
+        stmt = select([dbo.rules.rule_id, dbo.rules.product, dbo.rules.channel]).where(
+            ((dbo.releases_json.name == dbo.rules.mapping) | (dbo.releases_json.name == dbo.rules.fallbackMapping)) & (dbo.releases_json.name == name)
+        )
+        for row in trans.execute(stmt).fetchall():
+            live_on_product_channels.append(dict(row))
+
+        if live_on_product_channels:
+            log.debug(f"{name} is live on {live_on_product_channels}")
+            prs = dbo.rules.getPotentialRequiredSignoffs(live_on_product_channels, transaction=trans)
+            # If the Release is mapped to by a Rule that requires signoff, we cannot proceed
+            if any([v for v in prs.values()]):
+                use_sc = True
+
+            # If it wasn't mapped to by a Rule that requires signoff, check for _any_ required signoffs
+            # for its product. This is a bit aggressive, but it protects against Releases for important
+            # products (eg: Firefox) from being modified before they go live on a protected channel.
+            if dbo.productRequiredSignoffs.select(where={"product": product}, transaction=trans):
+                use_sc = True
+
+    permission = "unset" if read_only else "set"
+    if not dbo.hasPermission(changed_by, "release_read_only", permission, product, trans):
+        raise PermissionDeniedError(f"{changed_by} is not allow to {permission} read_only for {product} releeases")
+
+    if use_sc:
+        data = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data], transaction=trans)[0]["data"]
+        sc_id = dbo.releases_json.scheduled_changes.insert(
+            name=name,
+            product=product,
+            data=data,
+            data_version=old_data_version,
+            # 30 seconds in the future
+            when=time.time() * 1000 + 30000,
+            change_type="update",
+            changed_by=changed_by,
+            transaction=trans,
+        )
+        return {"sc_id": sc_id, "change_type": "update", "data_version": 1}
+    else:
+        dbo.releases_json.update(
+            where={"name": name}, what={"read_only": read_only}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans
+        )
+        return {"new_data_version": old_data_version + 1}
