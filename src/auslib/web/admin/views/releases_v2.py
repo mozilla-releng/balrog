@@ -37,3 +37,10 @@ def delete_release(name):
         return NoContent, 200
     else:
         return problem(404, "Not Found", "Release does not exist")
+
+
+def set_read_only(name, body):
+    if not releases.exists(name, request.transaction):
+        return problem(404, "Missing", "Release does not exist")
+    ret = releases.set_read_only(name, body["read_only"], body["old_data_version"], request.username, request.transaction)
+    return ret, 200

@@ -224,3 +224,36 @@ paths:
           description: Permission denied
         '404':
           description: Release does not exist
+
+  /releases/{name}/read_only:
+    put:
+      summary: Set a Release as read-only or read-write
+      operationId: auslib.web.admin.views.releases_v2.set_read_only
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Release name
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - read_only
+                - old_data_version
+              properties:
+                read_only:
+                  type: boolean
+                old_data_version:
+                  type: integer
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Client error
+        '403':
+          description: Permission denied
