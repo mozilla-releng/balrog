@@ -51,9 +51,9 @@ ecdsa==0.15 \
     # via python-jose
 flask-compress==1.4.0 \
     --hash=sha256:468693f4ddd11ac6a41bca4eb5f94b071b763256d54136f77957cfee635badb3
-flask-wtf==0.14.2 \
-    --hash=sha256:5d14d55cfd35f613d99ee7cba0fc3fbbe63ba02f544d349158c14ca15561cc36 \
-    --hash=sha256:d9a9e366b32dcbb98ef17228e76be15702cd2600675668bca23f63a7947fd5ac
+flask-wtf==0.14.3 \
+    --hash=sha256:57b3faf6fe5d6168bda0c36b0df1d05770f8e205e18332d0376ddb954d17aef2 \
+    --hash=sha256:d417e3a0008b5ba583da1763e4db0f55a1269d9dd91dcc3eb3c026d3c5dbd720
 flask==1.1.1 \
     --hash=sha256:13f9f196f330c7c2c5d7a5cf91af894110ca0215ac051b5844701f2bfd934d52 \
     --hash=sha256:45eb5a6fd193d6cf7e0cf5d8a5b31f83d5faae0293695626f539a823e93b13f6
