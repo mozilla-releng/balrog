@@ -15,7 +15,6 @@ DOMAIN_WHITELIST = {
     "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
     "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
     "download.cdn.mozilla.net": ("Firefox", "Fennec"),
-    "mozilla-nightly-updates.s3.amazonaws.com": ("Firefox",),
     "ciscobinary.openh264.org": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),
     "clients2.googleusercontent.com": ("Widevine",),
