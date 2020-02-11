@@ -25,6 +25,14 @@ def get_data_versions(name):
         return problem(404, "Not Found", "Release does not exist")
 
 
+def get_data_version(name, path):
+    ret = releases.get_data_version(name, path, request.transaction)
+    if ret:
+        return ret, 200
+    else:
+        return problem(404, "Not Found", "Release does not exist")
+
+
 def update_release(name, body):
     if not releases.exists(name, request.transaction):
         return problem(404, "Missing", "Release does not exist")

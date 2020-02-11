@@ -340,6 +340,14 @@ def get_data_versions(name, trans):
     return {"data_versions": data_versions}
 
 
+def get_data_version(name, path, trans):
+    row = dbo.release_assets.select(where={"name": name, "path": path}, columns=[dbo.release_assets.data_version], transaction=trans)
+    if not row:
+        return None
+
+    return {"data_version": row[0]["data_version"]}
+
+
 def update_release(name, blob, old_data_versions, when, changed_by, trans):
     live_on_product_channels = dbo.releases_json.getPotentialRequiredSignoffs([{"name": name}], trans)
     new_data_versions = deepcopy(old_data_versions)

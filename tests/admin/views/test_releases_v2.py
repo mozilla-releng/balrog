@@ -567,6 +567,26 @@ def test_get_data_versions(api, firefox_56_0_build1):
     assert ret.json == expected, ret.json
 
 
+@pytest.mark.usefixtures("releases_db")
+def test_get_data_version_404_on_release(api):
+    ret = api.get("/v2/releases/Firefox-33.0-build1/.platforms.Linux_x86_64-gcc3.locales.en-US/data_version")
+    assert ret.status_code == 404, ret.data
+
+
+@pytest.mark.usefixtures("releases_db")
+def test_get_data_version_404_on_path(api):
+    ret = api.get("/v2/releases/Firefox-56.0-build1/.platforms.Linux_x86_64-gcc3.locales.fake/data_version")
+    assert ret.status_code == 404, ret.data
+
+
+@pytest.mark.usefixtures("releases_db")
+def test_get_data_version(api):
+    ret = api.get("/v2/releases/Firefox-56.0-build1/.platforms.Linux_x86_64-gcc3.locales.en-US/data_version")
+    assert ret.status_code == 200, ret.data
+
+    assert ret.json == {"data_version": 1}, ret.json
+
+
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_put_fails_when_signoff_required(api, firefox_56_0_build1):
     firefox_56_0_build1 = deepcopy(firefox_56_0_build1)
