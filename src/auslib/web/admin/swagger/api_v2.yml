@@ -225,6 +225,32 @@ paths:
         '404':
           description: Release does not exist
 
+  /releases/{name}/data_versions:
+    get:
+      summary: Get the data versions for a Release
+      operationId: auslib.web.admin.views.releases_v2.get_data_versions
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Release name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Data versions
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data_versions
+                properties:
+                  data_versions:
+                    type: object
+        '404':
+          description: Release not found
+
   /releases/{name}/read_only:
     put:
       summary: Set a Release as read-only or read-write
