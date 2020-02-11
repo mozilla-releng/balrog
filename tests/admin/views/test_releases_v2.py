@@ -549,6 +549,24 @@ def test_get_release_scheduled_delete(api, firefox_67_0_build1):
     assert ret.json == expected, ret.json
 
 
+@pytest.mark.usefixtures("releases_db")
+def test_get_data_versions_404(api):
+    ret = api.get("/v2/releases/Firefox-33.0-build1/data_versions")
+    assert ret.status_code == 404, ret.data
+
+
+@pytest.mark.usefixtures("releases_db")
+def test_get_data_versions(api, firefox_56_0_build1):
+    ret = api.get("/v2/releases/Firefox-56.0-build1/data_versions")
+    assert ret.status_code == 200, ret.data
+
+    data_versions = populate_versions_dict(firefox_56_0_build1)
+    data_versions["."] = 1
+    expected = {"data_versions": data_versions}
+
+    assert ret.json == expected, ret.json
+
+
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_put_fails_when_signoff_required(api, firefox_56_0_build1):
     firefox_56_0_build1 = deepcopy(firefox_56_0_build1)

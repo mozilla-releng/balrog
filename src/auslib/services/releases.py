@@ -326,6 +326,20 @@ def get_release(name, trans):
         return None
 
 
+def get_data_versions(name, trans):
+    data_versions = infinite_defaultdict()
+    base_row = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data_version])
+    if not base_row:
+        return None
+
+    data_versions["."] = base_row[0]["data_version"]
+    for asset in dbo.release_assets.select(where={"name": name}, columns=[dbo.release_assets.path, dbo.release_assets.data_version], transaction=trans):
+        path = asset["path"].split(".")[1:]
+        set_by_path(data_versions, path, asset["data_version"])
+
+    return {"data_versions": data_versions}
+
+
 def update_release(name, blob, old_data_versions, when, changed_by, trans):
     live_on_product_channels = dbo.releases_json.getPotentialRequiredSignoffs([{"name": name}], trans)
     new_data_versions = deepcopy(old_data_versions)
