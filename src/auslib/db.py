@@ -2186,6 +2186,28 @@ class ReleasesJSON(AUSTable):
             db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=historyClass, historyKwargs=historyKwargs,
         )
 
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+        potential_required_signoffs = defaultdict(list)
+
+        for release in affected_rows:
+            stmt = select([self.db.rules.rule_id, self.db.rules.product, self.db.rules.channel]).where(
+                ((self.db.releases_json.name == self.db.rules.mapping) | (self.db.releases_json.name == self.db.rules.fallbackMapping))
+                & (self.db.releases_json.name == release["name"])
+            )
+
+            if transaction:
+                rule_info = transaction.execute(stmt).fetchall()
+            else:
+                rule_info = self.getEngine().execute(stmt).fetchall()
+
+            rule_required_signoffs = self.db.rules.getPotentialRequiredSignoffs([dict(r) for r in rule_info], transaction)
+
+            for rule in rule_info:
+                rs = rule_required_signoffs[(rule["product"], rule["channel"])]
+                potential_required_signoffs[release["name"]].extend(rs)
+
+        return potential_required_signoffs
+
 
 class ReleaseAssets(AUSTable):
     def __init__(self, db, metadata, dialect, history_buckets, historyClass):
@@ -2204,6 +2226,29 @@ class ReleaseAssets(AUSTable):
         super(ReleaseAssets, self).__init__(
             db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=historyClass, historyKwargs=historyKwargs
         )
+
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+        potential_required_signoffs = defaultdict(list)
+
+        for release in affected_rows:
+            stmt = select([self.db.rules.rule_id, self.db.rules.product, self.db.rules.channel]).where(
+                ((self.db.release_assets.name == self.db.rules.mapping) | (self.db.release_assets.name == self.db.rules.fallbackMapping))
+                & (self.db.release_assets.name == release["name"])
+                & (self.db.release_assets.path == release["path"])
+            )
+
+            if transaction:
+                rule_info = transaction.execute(stmt).fetchall()
+            else:
+                rule_info = self.getEngine().execute(stmt).fetchall()
+
+            rule_required_signoffs = self.db.rules.getPotentialRequiredSignoffs([dict(r) for r in rule_info], transaction)
+
+            for rule in rule_info:
+                rs = rule_required_signoffs[(rule["product"], rule["channel"])]
+                potential_required_signoffs[(release["name"], release["path"])].extend(rs)
+
+        return potential_required_signoffs
 
 
 class UserRoles(AUSTable):

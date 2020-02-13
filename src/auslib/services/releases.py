@@ -3,7 +3,6 @@ from copy import deepcopy
 
 from deepmerge import Merger
 from flask import current_app as app
-from sqlalchemy import select
 
 from ..blobs.base import createBlob
 from ..errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
@@ -138,21 +137,12 @@ def get_assets(name, trans):
     return assets
 
 
-def update_release(name, blob, old_data_versions, changed_by, trans):
-    live_on_product_channels = []
+def update_release(name, blob, old_data_versions, when, changed_by, trans):
+    live_on_product_channels = dbo.releases_json.getPotentialRequiredSignoffs([{"name": name}], trans)
     new_data_versions = deepcopy(old_data_versions)
 
-    stmt = select([dbo.rules.rule_id, dbo.rules.product, dbo.rules.channel]).where(
-        ((dbo.releases_json.name == dbo.rules.mapping) | (dbo.releases_json.name == dbo.rules.fallbackMapping)) & (dbo.releases_json.name == name)
-    )
-    for row in trans.execute(stmt).fetchall():
-        live_on_product_channels.append(dict(row))
-
-    if live_on_product_channels:
-        log.debug(f"{name} is live on {live_on_product_channels}")
-        prs = dbo.rules.getPotentialRequiredSignoffs(live_on_product_channels, transaction=trans)
-        if any([v for v in prs.values()]):
-            raise SignoffRequiredError("Signoff is required, cannot update Release directly")
+    if not when and any([v for v in live_on_product_channels.values()]):
+        raise SignoffRequiredError("Signoff is required, cannot update Release directly")
 
     current_product = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.product], transaction=trans)[0]["product"]
     if not dbo.hasPermission(changed_by, "release", "modify", current_product, trans):
@@ -161,36 +151,74 @@ def update_release(name, blob, old_data_versions, changed_by, trans):
     if is_read_only(name, trans):
         raise ReadOnlyError("Cannot update a Release that is marked as read-only")
 
+    current_blob = dbo.releases_json.select(where={"name": name}, transaction=trans)[0]["data"]
     base_blob, assets = split_release(blob, get_schema_version(name, trans))
 
     # new_blob is first used to update the releases_json table
     # later, it has all asset information added to it so we can
     # do a full blob validation before committing the transaction
     new_blob = infinite_defaultdict()
-    new_blob.update(dbo.releases_json.select(where={"name": name}, transaction=trans)[0]["data"])
-    if base_blob:
+    new_blob.update(current_blob)
+    if base_blob and current_blob != base_blob:
         release_merger.merge(new_blob, base_blob)
-        dbo.releases_json.update(
-            where={"name": name}, what={"data": new_blob}, old_data_version=old_data_versions["."], changed_by=changed_by, transaction=trans
-        )
-        new_data_versions["."] += 1
+        if when:
+            sc_id = dbo.releases_json.scheduled_changes.insert(
+                name=name,
+                product=current_product,
+                data=new_blob,
+                data_version=old_data_versions["."],
+                when=when,
+                change_type="update",
+                changed_by=changed_by,
+                transaction=trans,
+            )
+            new_data_versions["."] = {"sc_id": sc_id, "change_type": "update", "data_version": 1}
+        else:
+            dbo.releases_json.update(
+                where={"name": name}, what={"data": new_blob}, old_data_version=old_data_versions["."], changed_by=changed_by, transaction=trans
+            )
+            new_data_versions["."] += 1
 
     for path, item in assets:
         str_path = "." + ".".join(path)
         current_assets = dbo.release_assets.select(where={"name": name, "path": str_path}, transaction=trans)
         if current_assets:
-            new_assets = current_assets[0]["data"]
-            release_merger.merge(new_assets, item)
             old_data_version = get_by_path(old_data_versions, path)
-            set_by_path(new_data_versions, path, old_data_version + 1)
-            ensure_path_exists(new_blob, path)
-            set_by_path(new_blob, path, new_assets)
-            dbo.release_assets.update(
-                where={"name": name, "path": str_path}, what={"data": new_assets}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans
-            )
+            new_assets = current_assets[0]["data"]
+            if item != new_assets:
+                release_merger.merge(new_assets, item)
+                ensure_path_exists(new_blob, path)
+                set_by_path(new_blob, path, new_assets)
+                if when:
+                    sc_id = dbo.release_assets.scheduled_changes.insert(
+                        name=name,
+                        path=str_path,
+                        data=new_assets,
+                        data_version=old_data_version,
+                        when=when,
+                        change_type="update",
+                        changed_by=changed_by,
+                        transaction=trans,
+                    )
+                    set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "update", "data_version": 1})
+                else:
+                    dbo.release_assets.update(
+                        where={"name": name, "path": str_path},
+                        what={"data": new_assets},
+                        old_data_version=old_data_version,
+                        changed_by=changed_by,
+                        transaction=trans,
+                    )
+                    set_by_path(new_data_versions, path, old_data_version + 1)
         else:
-            set_by_path(new_data_versions, path, 1)
-            dbo.release_assets.insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
+            if when:
+                sc_id = dbo.release_assets.scheduled_changes.insert(
+                    name=name, path=str_path, data=item, when=when, change_type="insert", changed_by=changed_by, transaction=trans,
+                )
+                set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "insert", "data_version": 1})
+            else:
+                set_by_path(new_data_versions, path, 1)
+                dbo.release_assets.insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
 
     # Raises if there are errors
     createBlob(new_blob).validate(current_product, app.config["WHITELISTED_DOMAINS"])
@@ -198,28 +226,22 @@ def update_release(name, blob, old_data_versions, changed_by, trans):
     return new_data_versions
 
 
-def overwrite_release(name, blob, product, old_data_versions, changed_by, trans):
-    live_on_product_channels = []
+def overwrite_release(name, blob, product, old_data_versions, when, changed_by, trans):
+    live_on_product_channels = dbo.releases_json.getPotentialRequiredSignoffs([{"name": name}], trans)
     if not old_data_versions:
         old_data_versions = {}
     new_data_versions = infinite_defaultdict()
 
-    stmt = select([dbo.rules.rule_id, dbo.rules.product, dbo.rules.channel]).where(
-        ((dbo.releases_json.name == dbo.rules.mapping) | (dbo.releases_json.name == dbo.rules.fallbackMapping)) & (dbo.releases_json.name == name)
-    )
-    for row in trans.execute(stmt).fetchall():
-        live_on_product_channels.append(dict(row))
+    if not when and any([v for v in live_on_product_channels.values()]):
+        raise SignoffRequiredError("Signoff is required, cannot update Release directly")
 
-    if live_on_product_channels:
-        log.debug(f"{name} is live on {live_on_product_channels}")
-        prs = dbo.rules.getPotentialRequiredSignoffs(live_on_product_channels, transaction=trans)
-        if any([v for v in prs.values()]):
-            raise SignoffRequiredError("Signoff is required, cannot update Release directly")
-
-    current_release = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.product], transaction=trans)
+    current_release = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data, dbo.releases_json.product], transaction=trans)
+    current_blob = {}
     current_product = None
     if current_release:
+        current_blob = current_release[0]["data"]
         current_product = current_release[0]["product"]
+    if current_product:
         if not dbo.hasPermission(changed_by, "release", "modify", current_product, trans):
             raise PermissionDeniedError(f"{changed_by} is not allowed to modify {current_product} releases")
         if product and not dbo.hasPermission(changed_by, "release", "modify", product, trans):
@@ -245,29 +267,67 @@ def overwrite_release(name, blob, product, old_data_versions, changed_by, trans)
 
         old_data_version = get_by_path(old_data_versions, path)
         if old_data_version:
-            set_by_path(new_data_versions, path, old_data_version + 1)
-            dbo.release_assets.update(
-                where={"name": name, "path": str_path}, what={"data": item}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans
-            )
+            if when:
+                sc_id = dbo.release_assets.scheduled_changes.insert(
+                    name=name,
+                    path=str_path,
+                    data=item,
+                    data_version=old_data_version,
+                    when=when,
+                    change_type="update",
+                    changed_by=changed_by,
+                    transaction=trans,
+                )
+                set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "update", "data_version": 1})
+            else:
+                set_by_path(new_data_versions, path, old_data_version + 1)
+                dbo.release_assets.update(
+                    where={"name": name, "path": str_path}, what={"data": item}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans
+                )
         else:
-            set_by_path(new_data_versions, path, 1)
-            dbo.release_assets.insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
+            if when:
+                sc_id = dbo.release_assets.scheduled_changes.insert(
+                    name=name, path=str_path, data=item, when=when, change_type="insert", changed_by=changed_by, transaction=trans
+                )
+                set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "insert", "data_version": 1})
+            else:
+                set_by_path(new_data_versions, path, 1)
+                dbo.release_assets.insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
 
     removed_assets = {a for a in current_assets} - seen_assets
     for path in removed_assets:
         abc = path.split(".")[1:]
-        dbo.release_assets.delete(
-            where={"name": name, "path": path}, old_data_version=get_by_path(old_data_versions, abc), changed_by=changed_by, transaction=trans
-        )
+        if when:
+            sc_id = dbo.release_assets.scheduled_changes.insert(
+                name=name,
+                path=str_path,
+                data_version=get_by_path(old_data_versions, abc),
+                when=when,
+                change_type="delete",
+                changed_by=changed_by,
+                transaction=trans,
+            )
+            set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "update", "data_version": 1})
+        else:
+            dbo.release_assets.delete(
+                where={"name": name, "path": path}, old_data_version=get_by_path(old_data_versions, abc), changed_by=changed_by, transaction=trans
+            )
 
-    if old_data_versions.get("."):
-        what = {"data": base_blob}
-        if product:
-            what["product"] = product
-        dbo.releases_json.update(where={"name": name}, what=what, old_data_version=old_data_versions["."], changed_by=changed_by, transaction=trans)
-        new_data_versions["."] = old_data_versions["."] + 1
-    else:
-        dbo.releases_json.insert(name=name, product=product, data=base_blob, changed_by=changed_by, transaction=trans)
-        new_data_versions["."] = 1
+    if current_blob != base_blob:
+        if old_data_versions.get("."):
+            what = {"data": base_blob}
+            if product:
+                what["product"] = product
+            if when:
+                sc_id = dbo.releases_json.scheduled_changes.insert(
+                    name=name, data_version=old_data_versions["."], when=when, change_type="update", changed_by=changed_by, transaction=trans, **what
+                )
+                new_data_versions["."] = {"sc_id": sc_id, "change_type": "update", "data_version": 1}
+            else:
+                dbo.releases_json.update(where={"name": name}, what=what, old_data_version=old_data_versions["."], changed_by=changed_by, transaction=trans)
+                new_data_versions["."] = old_data_versions["."] + 1
+        else:
+            dbo.releases_json.insert(name=name, product=product, data=base_blob, changed_by=changed_by, transaction=trans)
+            new_data_versions["."] = 1
 
     return new_data_versions

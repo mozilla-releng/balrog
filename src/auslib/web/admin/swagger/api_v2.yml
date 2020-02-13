@@ -30,6 +30,9 @@ paths:
                   type: object
                 old_data_versions:
                   type: object
+                # Creates a scheduled change if passed
+                when:
+                  type: integer
 
       responses:
         '200':
@@ -70,6 +73,9 @@ paths:
                 # Required if the Release doesn't yet exist.
                 product:
                   type: string
+                # Creates a scheduled change if passed
+                when:
+                  type: integer
 
       responses:
         '200':
