@@ -58,7 +58,7 @@
     "dotenv-cli": "^3.1.0",
     "eslint": "^6.8.0",
     "jest": "^24.9.0",
-    "neutrino": "^9.0.0",
+    "neutrino": "^9.1.0",
     "webpack": "^4.41.6",
     "webpack-cli": "^3.3.10",
     "webpack-dev-server": "^3.10.3",
