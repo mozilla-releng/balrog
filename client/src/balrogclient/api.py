@@ -16,8 +16,8 @@ _token_cache = {}
 
 def _json_log_data(data):
     log = json.dumps(data)
-    if len(log) > 100:
-        log = log[:80] + "<...{} characters elided ...>".format(len(log) - 80)
+    if len(log) > 10000:
+        log = log[:9980] + "<...{} characters elided ...>".format(len(log) - 9980)
     return log
 
 

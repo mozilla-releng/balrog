@@ -26,7 +26,7 @@ def test_log_lines_truncated(caplog):
     caplog.set_level(logging.DEBUG)
 
     api = API(AUTH0_SECRETS, session=session)
-    api.do_request("https://api/", {"data": "a" * 100}, "GET")
+    api.do_request("https://api/", {"data": "a" * 11000}, "GET")
 
     logs = [message.split(": ", 1)[1] for message in caplog.messages if message.startswith("Data sent: ")]
-    assert logs == ['{"data": "' + "a" * 70 + "<...32 characters elided ...>"]
+    assert logs == ['{"data": "' + "a" * 9970 + "<...1032 characters elided ...>"]
