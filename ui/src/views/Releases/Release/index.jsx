@@ -171,7 +171,7 @@ function Release(props) {
     // which means that changes that don't require signoff will happen
     // almost immediately, and changes that do require signoff will wait
     // until those are completed.
-    const when = new Date().getTime() + 5000;
+    const when = new Date().getTime() + 30000;
     let error = null;
 
     if (scId) {

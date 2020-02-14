@@ -545,7 +545,7 @@ function ListRules(props) {
     const when =
       scheduleDeleteDate >= now
         ? scheduleDeleteDate.getTime()
-        : now.getTime() + 5000;
+        : now.getTime() + 30000;
     let error = null;
     let ret = null;
 
@@ -751,7 +751,7 @@ function ListRules(props) {
 
     if (filteredProductChannelRequiresSignoff) {
       const now = new Date();
-      const when = now.getTime() + 5000;
+      const when = now.getTime() + 30000;
       const { error } = await scheduleEnableUpdates(
         product,
         channel,
