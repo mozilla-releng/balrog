@@ -111,7 +111,7 @@ function ListRuleRevisions(props) {
     delete ruleData.data_version;
     const { error, data } = await addSC({
       change_type: 'update',
-      when: new Date().getTime() + 5000,
+      when: new Date().getTime() + 30000,
       data_version: revisions[0].data_version,
       ...ruleData,
     });

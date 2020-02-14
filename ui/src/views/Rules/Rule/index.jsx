@@ -188,7 +188,7 @@ function Rule({ isNewRule, user, ...props }) {
   const handleCreateRule = async () => {
     const now = new Date();
     const when =
-      scheduleDate >= now ? scheduleDate.getTime() : now.getTime() + 5000;
+      scheduleDate >= now ? scheduleDate.getTime() : now.getTime() + 30000;
     const data = {
       alias: rule.alias,
       backgroundRate: rule.backgroundRate,
@@ -226,7 +226,7 @@ function Rule({ isNewRule, user, ...props }) {
   const handleUpdateRule = async () => {
     const now = new Date();
     const when =
-      scheduleDate >= now ? scheduleDate.getTime() : now.getTime() + 5000;
+      scheduleDate >= now ? scheduleDate.getTime() : now.getTime() + 30000;
     const data = {
       alias: rule.alias,
       backgroundRate: rule.backgroundRate,

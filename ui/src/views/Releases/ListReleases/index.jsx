@@ -285,7 +285,7 @@ function ListReleases(props) {
   const scheduleReadWriteChange = async release => {
     const sc = {
       change_type: 'update',
-      when: new Date().getTime() + 5000,
+      when: new Date().getTime() + 30000,
       name: release.name,
       product: release.product,
       read_only: false,
