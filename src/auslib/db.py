@@ -2505,7 +2505,7 @@ class UTF8PrettyPrinter(pprint.PrettyPrinter):
 
     def format(self, object, context, maxlevels, level):
         if isinstance(object, str):
-            return pprint._safe_repr(object.encode("utf8"), context, maxlevels, level)
+            return pprint._safe_repr(object.encode("utf8"), context, maxlevels, level, True)
         return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
 
 
