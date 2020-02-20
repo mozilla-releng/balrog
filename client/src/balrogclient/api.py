@@ -9,6 +9,7 @@ import time
 import requests
 import requests.auth
 
+MAX_LOG_LINE_LENGTH = 10000
 # Refresh the tokens 5 minutes before they expire
 REFRESH_THRESHOLD = 5 * 60
 _token_cache = {}
@@ -16,8 +17,9 @@ _token_cache = {}
 
 def _json_log_data(data):
     log = json.dumps(data)
-    if len(log) > 10000:
-        log = log[:9980] + "<...{} characters elided ...>".format(len(log) - 9980)
+    if len(log) > MAX_LOG_LINE_LENGTH:
+        slice_length = MAX_LOG_LINE_LENGTH - 20
+        log = log[:slice_length] + "<...{} characters elided ...>".format(len(log) - slice_length)
     return log
 
 
