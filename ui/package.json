@@ -45,7 +45,7 @@
     "react-dom": "^16.12.0",
     "react-helmet": "^5.2.1",
     "react-hot-loader": "^4.12.19",
-    "react-number-format": "^4.3.1",
+    "react-number-format": "^4.4.0",
     "react-router-dom": "^5.1.2",
     "react-virtualized": "9.21.1",
     "unidiff": "^1.0.2"
