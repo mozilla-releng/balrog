@@ -25,19 +25,19 @@ paths:
                       type: object
                       required:
                         - name
-                        - product
-                        - data_version
-                        - read_only
                         - rule_info
                       properties:
                         name:
                           type: string
                         product:
                           type: string
+                          nullable: true
                         data_version:
                           type: number
+                          nullable: true
                         read_only:
                           type: boolean
+                          nullable: true
                         rule_info:
                           type: object
                           properties:
@@ -53,6 +53,48 @@ paths:
                                 channel:
                                   type: string
                                   nullable: true
+                        scheduled_changes:
+                          type: array
+                          items:
+                            type: object
+                            required:
+                              - name
+                              - data_version
+                              - sc_id
+                              - when
+                              - change_type
+                              - scheduled_by
+                              - sc_data_version
+                              - complete
+                            properties:
+                              name:
+                                type: string
+                              path:
+                                type: string
+                              product:
+                                type: string
+                              data_version:
+                                type: number
+                              read_only:
+                                type: boolean
+                              rule_info:
+                                type: object
+                              sc_id:
+                                type: number
+                              when:
+                                type: number
+                              change_type:
+                                type: string
+                                enum:
+                                  - insert
+                                  - update
+                                  - delete
+                              scheduled_by:
+                                type: string
+                              sc_data_version:
+                                type: number
+                              complete:
+                                type: boolean
   /releases/{name}:
     post:
       summary: Update part of a Release

@@ -1,5 +1,6 @@
 import logging
 from copy import deepcopy
+from itertools import chain
 
 from deepmerge import Merger
 from flask import current_app as app
@@ -147,6 +148,37 @@ def get_releases(trans):
     for row in releases:
         refs = [ref for ref in rule_mappings if ref[0] == row["name"]]
         row["rule_info"] = {str(ref[1]): {"product": ref[2], "channel": ref[3]} for ref in refs}
+        row["scheduled_changes"] = []
+
+    for sc in chain(dbo.releases_json.scheduled_changes.select(), dbo.release_assets.scheduled_changes.select()):
+        release = [r for r in releases if r["name"] == sc["base_name"]]
+        if release:
+            release = release[0]
+            if "scheduled_changes" not in release:
+                release["scheduled_changes"] = []
+        else:
+            release = {
+                "name": sc["base_name"],
+                "product": None,
+                "data_version": None,
+                "read_only": None,
+                "rule_info": {},
+                "scheduled_changes": [],
+            }
+
+        munged_sc = {}
+        for k in sc:
+            if k == "base_data":
+                continue
+            elif k == "data_version":
+                munged_sc["sc_data_version"] = sc[k]
+            else:
+                munged_sc[k.replace("base_", "")] = sc[k]
+
+        release["scheduled_changes"].append(munged_sc)
+
+        if release not in releases:
+            releases.append(release)
 
     return {"releases": releases}
 
