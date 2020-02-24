@@ -13,6 +13,6 @@ filelock==3.0.12 \
 tox==3.14.5 \
     --hash=sha256:0cbe98369081fa16bd6f1163d3d0b2a62afa29d402ccfad2bd09fb2668be0956 \
     --hash=sha256:676f1e3e7de245ad870f956436b84ea226210587d1f72c8dfb8cd5ac7b6f0e70
-virtualenv==20.0.1 \
-    --hash=sha256:09740201a02918564a84eea071708c46ac26f3bd9b688b48fc6a86f331c536b7 \
-    --hash=sha256:ef3fd938ef165956e51bba0d0623508de920ca9f3ccd30c6e9f74381677e0cbb    # via tox
+virtualenv==20.0.5 \
+    --hash=sha256:531b142e300d405bb9faedad4adbeb82b4098b918e35209af2adef3129274aae \
+    --hash=sha256:5dd42a9f56307542bddc446cfd10ef6576f11910366a07609fe8d0d88fa8fb7e    # via tox
