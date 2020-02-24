@@ -27,7 +27,6 @@ def insert_release(release_data, product):
                     dbo.release_assets.history.bucket.blobs[f"{release_data['name']}-{path}/None-1-bob.json"] = ""
                     dbo.release_assets.history.bucket.blobs[f"{release_data['name']}-{path}/1-2-bob.json"] = ldata
 
-
     dbo.releases_json.t.insert().execute(
         name=release_data["name"], product=product, data=base, data_version=1,
     )
@@ -57,21 +56,19 @@ def insert_release_sc(release_data, product, change_type="update"):
                     if change_type != "delete":
                         data["base_data"] = deepcopy(ldata)
                         data["base_data"]["buildID"] = "123456789"
-                    ret = dbo.release_assets.scheduled_changes.t.insert().execute(base_name=release_data["name"], base_path=path, base_data_version=1, data_version=1, scheduled_by="bob", change_type=change_type, **data)
+                    ret = dbo.release_assets.scheduled_changes.t.insert().execute(
+                        base_name=release_data["name"], base_path=path, base_data_version=1, data_version=1, scheduled_by="bob", change_type=change_type, **data
+                    )
                     dbo.release_assets.scheduled_changes.conditions.t.insert().execute(sc_id=ret.inserted_primary_key[0], when=2222222222000, data_version=1)
-
 
     data = {}
     if change_type != "delete":
         data["base_data"] = deepcopy(base)
         data["base_data"]["hashFunction"] = "sha1024"
     ret = dbo.releases_json.scheduled_changes.t.insert().execute(
-        base_name=release_data["name"], base_product=product, base_data_version=1,
-        data_version=1, scheduled_by="bob", change_type=change_type, **data
+        base_name=release_data["name"], base_product=product, base_data_version=1, data_version=1, scheduled_by="bob", change_type=change_type, **data
     )
-    dbo.releases_json.scheduled_changes.conditions.t.insert().execute(
-        sc_id=ret.inserted_primary_key[0], when=2222222222000, data_version=1
-    )
+    dbo.releases_json.scheduled_changes.conditions.t.insert().execute(sc_id=ret.inserted_primary_key[0], when=2222222222000, data_version=1)
 
 
 def get_release_history(name):
@@ -216,7 +213,7 @@ def test_get_releases(api):
                         "sc_data_version": 1,
                         "complete": False,
                     },
-                ]
+                ],
             },
             {
                 "name": "Firefox-67.0-build1",
@@ -303,9 +300,16 @@ def test_get_releases(api):
                         "sc_data_version": 1,
                         "complete": False,
                     },
-                ]
+                ],
             },
-            {"name": "CDM-17", "product": "CDM", "data_version": 1, "read_only": False, "rule_info": {"3": {"product": None, "channel": "beta"}}, "scheduled_changes": []},
+            {
+                "name": "CDM-17",
+                "product": "CDM",
+                "data_version": 1,
+                "read_only": False,
+                "rule_info": {"3": {"product": None, "channel": "beta"}},
+                "scheduled_changes": [],
+            },
             {
                 "name": "Firefox-64.0-build1",
                 "product": None,
@@ -380,7 +384,7 @@ def test_get_releases(api):
                         "sc_data_version": 1,
                         "complete": False,
                     },
-                ]
+                ],
             },
         ]
     }
