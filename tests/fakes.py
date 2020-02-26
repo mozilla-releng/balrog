@@ -21,9 +21,9 @@ class FakeBucket:
 
 
 class FakeGCSHistory(GCSHistory):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, identifier_columns=["name"], **kwargs):
         self.bucket = FakeBucket()
-        self.identifier_column = "name"
+        self.identifier_columns = identifier_columns
         self.data_column = "data"
 
     def _getBucket(self, identifier):
