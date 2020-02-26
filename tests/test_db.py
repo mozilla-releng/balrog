@@ -6056,7 +6056,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
 
     def _add_release_json_tables(self, db, upgrade=True):
         metadata = self._get_reflected_metadata(db)
-        shutoff_tables = [
+        releases_tables = [
             "releases_json",
             "releases_json_scheduled_changes",
             "releases_json_scheduled_changes_history",
@@ -6073,10 +6073,10 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             "release_assets_scheduled_changes_signoffs_history",
         ]
         if upgrade:
-            for table in shutoff_tables:
+            for table in releases_tables:
                 self.assertIn(table, metadata.tables)
         else:
-            for table in shutoff_tables:
+            for table in releases_tables:
                 self.assertNotIn(table, metadata.tables)
 
     def _fix_column_attributes_migration_test(self, db, upgrade=True):
@@ -6145,8 +6145,8 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             pass
 
         versions_migrate_tests_dict = {
-            # This version removes the releases_history table, which is verified by other tests
             33: self._add_release_json_tables,
+            # This version removes the releases_history table, which is verified by other tests
             32: _noop,
             31: self._test_rules_longer_distribution,
             30: self._add_emergency_shutoff_tables,
