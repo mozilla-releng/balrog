@@ -95,12 +95,15 @@ class ClientTestBase(ClientTestCommon):
     def tearDownClass(cls):
         app.error_handler_spec = cls.error_spec
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, insert_release, firefox_56_0_build1):
         self.version_fd, self.version_file = mkstemp()
         app.config["DEBUG"] = True
-        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
+        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com", "http://download.mozilla.org")
         app.config["WHITELISTED_DOMAINS"] = {
-            "a.com": ("b", "c", "e", "f", "response-a", "response-b", "s", "responseblob-a", "responseblob-b", "q", "fallback", "distTest")
+            "a.com": ("b", "c", "e", "f", "response-a", "response-b", "s", "responseblob-a", "responseblob-b", "q", "fallback", "distTest"),
+            "download.mozilla.org": ("Firefox",),
+            "archive.mozilla.org": ("Firefox",),
         }
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
@@ -115,7 +118,7 @@ class ClientTestBase(ClientTestCommon):
             )
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        dbo.setDomainWhitelist({"a.com": ("b", "c", "e", "distTest")})
+        dbo.setDomainWhitelist(app.config["WHITELISTED_DOMAINS"])
         self.client = app.test_client()
         dbo.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", data_version=1, alias="moz-releng")
@@ -821,8 +824,13 @@ class ClientTestBase(ClientTestCommon):
 """
             ),
         )
+        dbo.rules.t.insert().execute(
+            priority=100, product="Firefox", channel="release", mapping="Firefox-56.0-build1", backgroundRate=100, update_type="minor", data_version=1
+        )
+        insert_release(firefox_56_0_build1, "Firefox", history=False)
 
-    def tearDown(self):
+        yield
+
         os.close(self.version_fd)
         os.remove(self.version_file)
 
@@ -1355,6 +1363,24 @@ class ClientTest(ClientTestBase):
     def testUnknownQueryStringParametersAreAllowedV6(self, param, val):
         ret = self.client.get("/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml?{}={}".format(param, val))
         self.assertEqual(ret.status_code, 200)
+
+    def test_get_with_release_in_new_tables(self):
+        ret = self.client.get(
+            "/update/6/Firefox/50.0/20150101010101/WINNT_x86_64-msvc-x64/en-US/release"
+            "/Windows_NT 6.1.0.0 (x86)/ISET:SSE3,MEM:4096,JAWS:0/default/default/update.xml"
+        )
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" displayVersion="56.0" appVersion="56.0" platformVersion="56.0" buildID="20170918210324"
+            detailsURL="https://www.mozilla.org/en-US/firefox/56.0/releasenotes/">
+        <patch type="complete" URL="http://download.mozilla.org/?product=firefox-56.0-complete&amp;os=win64&amp;lang=en-US" hashFunction="sha512"
+            hashValue="d355668278173e0e55f26dc8d6951965317db5779659e0267907ea458d26ca8327a200631a48defca4f2d97066ee8545717a54a2f75569114bd03a0fa30ea37e"
+            size="41323124"/>
+    </update>
+</updates>""",
+        )
 
 
 class ClientTestMig64(ClientTestCommon):

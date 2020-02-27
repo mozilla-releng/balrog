@@ -42,7 +42,7 @@ def current_db_schema(request, db_schema):
 
 @pytest.fixture(scope="session")
 def insert_release():
-    def do_insert_release(release_data, product):
+    def do_insert_release(release_data, product, history=True):
         name = release_data["name"]
         base = deep_dict(4, {})
         for key in release_data:
@@ -58,15 +58,17 @@ def insert_release():
 
                     for lname, ldata in pdata[pkey].items():
                         path = f".platforms.{pname}.locales.{lname}"
-                        dbo.release_assets.t.insert().execute(name=name, path=path, data=ldata, data_version=1)
-                        dbo.release_assets.history.bucket.blobs[f"{name}-{path}/None-1-bob.json"] = ""
-                        dbo.release_assets.history.bucket.blobs[f"{name}-{path}/1-2-bob.json"] = ldata
+                        dbo.release_assets.t.insert().execute(name=release_data["name"], path=path, data=ldata, data_version=1)
+                        if history:
+                            dbo.release_assets.history.bucket.blobs[f"{release_data['name']}-{path}/None-1-bob.json"] = ""
+                            dbo.release_assets.history.bucket.blobs[f"{release_data['name']}-{path}/1-2-bob.json"] = ldata
 
         dbo.releases_json.t.insert().execute(
             name=name, product=product, data=base, data_version=1,
         )
-        dbo.releases_json.history.bucket.blobs[f"{name}/None-1-bob.json"] = ""
-        dbo.releases_json.history.bucket.blobs[f"{name}/1-2-bob.json"] = release_data
+        if history:
+            dbo.releases_json.history.bucket.blobs[f"{release_data['name']}/None-1-bob.json"] = ""
+            dbo.releases_json.history.bucket.blobs[f"{release_data['name']}/1-2-bob.json"] = release_data
 
     return do_insert_release
 

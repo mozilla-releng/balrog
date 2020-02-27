@@ -2,7 +2,9 @@ import functools
 import logging
 from random import randint
 
+from auslib.blobs.base import createBlob
 from auslib.global_state import cache, dbo
+from auslib.services import releases
 
 try:
     from urlparse import urlparse
@@ -104,11 +106,17 @@ class AUS:
             if updateQuery["force"] == FORCE_FALLBACK_MAPPING or self.rand() >= rule["backgroundRate"]:
                 fallbackReleaseName = rule["fallbackMapping"]
                 if fallbackReleaseName:
-                    release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1, transaction=transaction)[0]
-                    blob = release["data"]
-                    if not blob.shouldServeUpdate(updateQuery):
+                    release = releases.get_release(fallbackReleaseName, transaction)
+                    blob = None
+                    if release:
+                        blob = createBlob(release["blob"])
+                    # TODO: remove me when old releases table dies
+                    else:
+                        release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1, transaction=transaction)[0]
+                        blob = release["data"]
+                    if not blob or not blob.shouldServeUpdate(updateQuery):
                         return None, None
-                    self.log.debug("Returning fallback release %s", release["name"])
+                    self.log.debug("Returning fallback release %s", fallbackReleaseName)
                     return blob, rule["update_type"]
 
                 self.log.debug("No fallback releases. Request was dropped")
@@ -117,10 +125,16 @@ class AUS:
         # 3) Incoming release is older than the one in the mapping, defined as one of:
         #    * version decreases
         #    * version is the same and buildID doesn't increase
-        release = dbo.releases.getReleases(name=rule["mapping"], limit=1, transaction=transaction)[0]
-        blob = release["data"]
-        if not blob.shouldServeUpdate(updateQuery):
+        release = releases.get_release(rule["mapping"], transaction)
+        blob = None
+        if release:
+            blob = createBlob(release["blob"])
+        # TODO: remove me when old releases table dies
+        else:
+            release = dbo.releases.getReleases(name=rule["mapping"], limit=1, transaction=transaction)[0]
+            blob = release["data"]
+        if not blob or not blob.shouldServeUpdate(updateQuery):
             return None, None
 
-        self.log.debug("Returning release %s", release["name"])
+        self.log.debug("Returning release %s", rule["mapping"])
         return blob, rule["update_type"]
