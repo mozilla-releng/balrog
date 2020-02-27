@@ -6,7 +6,7 @@ from flask import current_app as app
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.global_state import cache
 from auslib.util.autograph import make_hash, sign_hash
-from auslib.web.public.base import AUS, with_transaction
+from auslib.web.public.helpers import AUS, with_transaction
 
 
 @with_transaction
