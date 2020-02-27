@@ -1,19 +1,11 @@
-from collections import defaultdict
 from copy import deepcopy
 
 import pytest
 
 from auslib.global_state import dbo
-from auslib.util.data_structures import infinite_defaultdict
+from auslib.util.data_structures import deep_dict, infinite_defaultdict
 
 from ...fakes import FakeGCSHistory
-
-
-def deep_dict(depth, default):
-    if depth > 1:
-        return defaultdict(lambda: deep_dict(depth - 1, default))
-
-    return defaultdict(lambda: default)
 
 
 def versions_dict(depth=4, default=1):
@@ -30,70 +22,6 @@ def populate_versions_dict(release, default=1):
     return d
 
 
-def insert_release(release_data, product):
-    name = release_data["name"]
-    base = deep_dict(4, {})
-    for key in release_data:
-        if key != "platforms":
-            base[key] = release_data[key]
-            continue
-
-        for pname, pdata in release_data[key].items():
-            for pkey in pdata:
-                if pkey != "locales":
-                    base[key][pname][pkey] = pdata[pkey]
-                    continue
-
-                for lname, ldata in pdata[pkey].items():
-                    path = f".platforms.{pname}.locales.{lname}"
-                    dbo.release_assets.t.insert().execute(name=name, path=path, data=ldata, data_version=1)
-                    dbo.release_assets.history.bucket.blobs[f"{name}-{path}/None-1-bob.json"] = ""
-                    dbo.release_assets.history.bucket.blobs[f"{name}-{path}/1-2-bob.json"] = ldata
-
-    dbo.releases_json.t.insert().execute(
-        name=name, product=product, data=base, data_version=1,
-    )
-    dbo.releases_json.history.bucket.blobs[f"{name}/None-1-bob.json"] = ""
-    dbo.releases_json.history.bucket.blobs[f"{name}/1-2-bob.json"] = release_data
-
-
-def insert_release_sc(release_data, product, change_type="update"):
-    base = infinite_defaultdict()
-    for key in release_data:
-        if key != "platforms":
-            base[key] = release_data[key]
-            continue
-
-        for pname, pdata in release_data[key].items():
-            for pkey in pdata:
-                if pkey != "locales":
-                    base[key][pname][pkey] = pdata[pkey]
-                    continue
-
-                for lname, ldata in pdata[pkey].items():
-                    if lname != "en-US":
-                        continue
-
-                    path = f".platforms.{pname}.locales.{lname}"
-                    data = {}
-                    if change_type != "delete":
-                        data["base_data"] = deepcopy(ldata)
-                        data["base_data"]["buildID"] = "123456789"
-                    ret = dbo.release_assets.scheduled_changes.t.insert().execute(
-                        base_name=release_data["name"], base_path=path, base_data_version=1, data_version=1, scheduled_by="bob", change_type=change_type, **data
-                    )
-                    dbo.release_assets.scheduled_changes.conditions.t.insert().execute(sc_id=ret.inserted_primary_key[0], when=2222222222000, data_version=1)
-
-    data = {}
-    if change_type != "delete":
-        data["base_data"] = deepcopy(base)
-        data["base_data"]["hashFunction"] = "sha1024"
-    ret = dbo.releases_json.scheduled_changes.t.insert().execute(
-        base_name=release_data["name"], base_product=product, base_data_version=1, data_version=1, scheduled_by="bob", change_type=change_type, **data
-    )
-    dbo.releases_json.scheduled_changes.conditions.t.insert().execute(sc_id=ret.inserted_primary_key[0], when=2222222222000, data_version=1)
-
-
 def get_release_history(name):
     return [(k, v) for k, v in dbo.releases_json.history.bucket.blobs.items() if k.startswith(f"{name}/")]
 
@@ -107,7 +35,17 @@ def get_release_assets_history(name, path):
 # more or less from scratch)
 @pytest.fixture(scope="function")
 def releases_db(
-    db_schema, firefox_56_0_build1, firefox_60_0b3_build1, firefox_64_0_build1, firefox_65_0_build1, firefox_66_0_build1, firefox_67_0_build1, cdm_16, cdm_17
+    db_schema,
+    insert_release,
+    insert_release_sc,
+    firefox_56_0_build1,
+    firefox_60_0b3_build1,
+    firefox_64_0_build1,
+    firefox_65_0_build1,
+    firefox_66_0_build1,
+    firefox_67_0_build1,
+    cdm_16,
+    cdm_17,
 ):
     dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
     db_schema.create_all(dbo.engine)

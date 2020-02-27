@@ -1,10 +1,12 @@
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
 from hypothesis import settings
 
 from auslib.global_state import dbo
+from auslib.util.data_structures import deep_dict, infinite_defaultdict
 
 # Disable hypothesis testing deadlines
 settings.register_profile("ci", deadline=None)
@@ -36,6 +38,86 @@ def current_db_schema(request, db_schema):
             self.metadata.create_all(self.db.engine)
     """
     request.cls.metadata = db_schema
+
+
+@pytest.fixture(scope="session")
+def insert_release():
+    def do_insert_release(release_data, product):
+        name = release_data["name"]
+        base = deep_dict(4, {})
+        for key in release_data:
+            if key != "platforms":
+                base[key] = release_data[key]
+                continue
+
+            for pname, pdata in release_data[key].items():
+                for pkey in pdata:
+                    if pkey != "locales":
+                        base[key][pname][pkey] = pdata[pkey]
+                        continue
+
+                    for lname, ldata in pdata[pkey].items():
+                        path = f".platforms.{pname}.locales.{lname}"
+                        dbo.release_assets.t.insert().execute(name=name, path=path, data=ldata, data_version=1)
+                        dbo.release_assets.history.bucket.blobs[f"{name}-{path}/None-1-bob.json"] = ""
+                        dbo.release_assets.history.bucket.blobs[f"{name}-{path}/1-2-bob.json"] = ldata
+
+        dbo.releases_json.t.insert().execute(
+            name=name, product=product, data=base, data_version=1,
+        )
+        dbo.releases_json.history.bucket.blobs[f"{name}/None-1-bob.json"] = ""
+        dbo.releases_json.history.bucket.blobs[f"{name}/1-2-bob.json"] = release_data
+
+    return do_insert_release
+
+
+@pytest.fixture(scope="session")
+def insert_release_sc():
+    def do_insert_release_sc(release_data, product, change_type="update"):
+        base = infinite_defaultdict()
+        for key in release_data:
+            if key != "platforms":
+                base[key] = release_data[key]
+                continue
+
+            for pname, pdata in release_data[key].items():
+                for pkey in pdata:
+                    if pkey != "locales":
+                        base[key][pname][pkey] = pdata[pkey]
+                        continue
+
+                    for lname, ldata in pdata[pkey].items():
+                        if lname != "en-US":
+                            continue
+
+                        path = f".platforms.{pname}.locales.{lname}"
+                        data = {}
+                        if change_type != "delete":
+                            data["base_data"] = deepcopy(ldata)
+                            data["base_data"]["buildID"] = "123456789"
+                        ret = dbo.release_assets.scheduled_changes.t.insert().execute(
+                            base_name=release_data["name"],
+                            base_path=path,
+                            base_data_version=1,
+                            data_version=1,
+                            scheduled_by="bob",
+                            change_type=change_type,
+                            **data,
+                        )
+                        dbo.release_assets.scheduled_changes.conditions.t.insert().execute(
+                            sc_id=ret.inserted_primary_key[0], when=2222222222000, data_version=1
+                        )
+
+        data = {}
+        if change_type != "delete":
+            data["base_data"] = deepcopy(base)
+            data["base_data"]["hashFunction"] = "sha1024"
+        ret = dbo.releases_json.scheduled_changes.t.insert().execute(
+            base_name=release_data["name"], base_product=product, base_data_version=1, data_version=1, scheduled_by="bob", change_type=change_type, **data
+        )
+        dbo.releases_json.scheduled_changes.conditions.t.insert().execute(sc_id=ret.inserted_primary_key[0], when=2222222222000, data_version=1)
+
+    return do_insert_release_sc
 
 
 @pytest.fixture(scope="session")
