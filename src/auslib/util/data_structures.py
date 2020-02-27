@@ -7,6 +7,13 @@ def infinite_defaultdict():
     return defaultdict(infinite_defaultdict)
 
 
+def deep_dict(depth, default):
+    if depth > 1:
+        return defaultdict(lambda: deep_dict(depth - 1, default))
+
+    return defaultdict(lambda: default)
+
+
 def get_by_path(root, items):
     """Access a nested object in root by item sequence."""
     try:
