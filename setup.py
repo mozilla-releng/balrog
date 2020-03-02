@@ -39,4 +39,5 @@ setup(
     url="https://github.com/mozilla-releng/balrog",
     license="MPL-2.0",
     zip_safe=False,
+    entry_points={"console_scripts": ["migrate_releases_table_data = auslib.cli.migrate_releases_table_data:cmd",],},
 )
