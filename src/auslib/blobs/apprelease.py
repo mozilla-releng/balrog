@@ -1,9 +1,10 @@
 import itertools
 
 from auslib.AUS import getFallbackChannel, isForbiddenUrl, isSpecialURL
-from auslib.blobs.base import XMLBlob
+from auslib.blobs.base import XMLBlob, createBlob
 from auslib.errors import BadDataError, BlobValidationError
 from auslib.global_state import dbo
+from auslib.services import releases
 from auslib.util.comparison import has_operator, strip_operator
 from auslib.util.rulematching import matchBuildID, matchChannel, matchVersion
 from auslib.util.versions import MozillaVersion, decrement_version, increment_version
@@ -87,7 +88,11 @@ class ReleaseBlobBase(XMLBlob):
         # even attempt to look it up.
         if patch["from"] != "*":
             try:
-                return dbo.releases.getReleaseBlob(name=patch["from"])
+                release = releases.get_release(patch["from"], None)
+                if release:
+                    return createBlob(release["blob"])
+                else:
+                    return dbo.releases.getReleaseBlob(name=patch["from"])
             except KeyError:
                 # Release doesn't exist
                 return None

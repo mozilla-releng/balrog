@@ -23,6 +23,20 @@ def setUpModule():
     logging.getLogger("migrate").setLevel(logging.CRITICAL)
 
 
+def validate_cache_stats(lookups, hits, misses, data_version_lookups, data_version_hits, data_version_misses):
+    for cache_name in ("releases", "release_assets"):
+        c = cache.caches[cache_name]
+        assert c.lookups == lookups, cache_name
+        assert c.hits == hits, cache_name
+        assert c.misses == misses, cache_name
+
+    for cache_name in ("releases_data_version", "release_assets_data_versions"):
+        c = cache.caches[cache_name]
+        assert c.lookups == data_version_lookups, cache_name
+        assert c.hits == data_version_hits, cache_name
+        assert c.misses == data_version_misses, cache_name
+
+
 class TestGetSystemCapabilities(unittest.TestCase):
     def testUnprefixedInstructionSetOnly(self):
         self.assertEqual(client_api.getSystemCapabilities("SSE3"), {"instructionSet": "SSE3", "memory": None, "jaws": None})
@@ -97,6 +111,11 @@ class ClientTestBase(ClientTestCommon):
 
     @pytest.fixture(autouse=True)
     def setup(self, insert_release, firefox_56_0_build1):
+        cache.reset()
+        cache.make_cache("releases", 50, 10)
+        cache.make_cache("releases_data_version", 50, 5)
+        cache.make_cache("release_assets", 50, 10)
+        cache.make_cache("release_assets_data_versions", 50, 5)
         self.version_fd, self.version_file = mkstemp()
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com", "http://download.mozilla.org")
@@ -1365,13 +1384,59 @@ class ClientTest(ClientTestBase):
         self.assertEqual(ret.status_code, 200)
 
     def test_get_with_release_in_new_tables(self):
-        ret = self.client.get(
-            "/update/6/Firefox/50.0/20150101010101/WINNT_x86_64-msvc-x64/en-US/release"
-            "/Windows_NT 6.1.0.0 (x86)/ISET:SSE3,MEM:4096,JAWS:0/default/default/update.xml"
-        )
-        self.assertUpdateEqual(
-            ret,
-            """<?xml version="1.0"?>
+        args = [
+            {
+                # The first query should be all misses
+                "time": 10,
+                "lookups": 4,
+                "hits": 0,
+                "misses": 4,
+                "data_version_lookups": 4,
+                "data_version_hits": 0,
+                "data_version_misses": 4,
+            },
+            {
+                # Make sure a look up soon after will be fully cached (including data version)
+                "time": 13,
+                "lookups": 8,
+                "hits": 4,
+                "misses": 4,
+                "data_version_lookups": 8,
+                "data_version_hits": 4,
+                "data_version_misses": 4,
+            },
+            {
+                # And a look up after the data version cache expires should only invalidate data version caches
+                "time": 15,
+                "lookups": 12,
+                "hits": 8,
+                "misses": 4,
+                "data_version_lookups": 12,
+                "data_version_hits": 4,
+                "data_version_misses": 8,
+            },
+            {
+                # And make sure the main caches invalidate at the right time
+                "time": 20,
+                "lookups": 16,
+                "hits": 8,
+                "misses": 8,
+                "data_version_lookups": 16,
+                "data_version_hits": 4,
+                "data_version_misses": 12,
+            },
+        ]
+        with mock.patch("time.time") as t:
+            for arg in args:
+                t.return_value = arg["time"]
+
+                ret = self.client.get(
+                    "/update/6/Firefox/54.0.1/20170628075643/WINNT_x86_64-msvc-x64/en-US/release"
+                    "/Windows_NT 6.1.0.0 (x86)/ISET:SSE3,MEM:4096,JAWS:0/default/default/update.xml"
+                )
+                self.assertUpdateEqual(
+                    ret,
+                    """<?xml version="1.0"?>
 <updates>
     <update type="minor" displayVersion="56.0" appVersion="56.0" platformVersion="56.0" buildID="20170918210324"
             detailsURL="https://www.mozilla.org/en-US/firefox/56.0/releasenotes/">
@@ -1380,7 +1445,10 @@ class ClientTest(ClientTestBase):
             size="41323124"/>
     </update>
 </updates>""",
-        )
+                )
+                validate_cache_stats(
+                    arg["lookups"], arg["hits"], arg["misses"], arg["data_version_lookups"], arg["data_version_hits"], arg["data_version_misses"]
+                )
 
 
 class ClientTestMig64(ClientTestCommon):

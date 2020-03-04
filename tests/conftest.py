@@ -129,6 +129,12 @@ def insert_release_sc():
 
 
 @pytest.fixture(scope="session")
+def firefox_54_0_1_build1():
+    blob = json.load(open(Path(__file__).parent / "data/Firefox-54.0.1-build1.json"))
+    return blob
+
+
+@pytest.fixture(scope="session")
 def firefox_56_0_build1():
     blob = json.load(open(Path(__file__).parent / "data/Firefox-56.0-build1.json"))
     return blob

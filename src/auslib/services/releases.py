@@ -10,7 +10,7 @@ from sqlalchemy import join, select
 
 from ..blobs.base import createBlob
 from ..errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
-from ..global_state import dbo
+from ..global_state import cache, dbo
 from ..util.data_structures import ensure_path_exists, get_by_path, infinite_defaultdict, set_by_path
 from ..util.signoffs import serialize_signoff_requirements
 from ..util.timestamp import getMillisecondTimestamp
@@ -300,16 +300,45 @@ def get_releases(trans):
 
 
 def get_release(name, trans):
+    def get_base_row():
+        row = dbo.releases_json.select(where={"name": name}, transaction=trans)
+        if row:
+            return row[0]
+
+        return None
+
+    def get_base_data_version():
+        row = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data_version], transaction=trans)
+        if row:
+            return row[0]["data_version"]
+
+        return None
+
+    def get_asset_rows():
+        return dbo.release_assets.select(where={"name": name}, transaction=trans) or []
+
+    def get_asset_data_versions():
+        return dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data_version], transaction=trans) or []
+
+    base_row = cache.get("releases", name, get_base_row)
+    base_data_version = cache.get("releases_data_version", name, get_base_data_version)
+    asset_rows = cache.get("release_assets", name, get_asset_rows)
+    asset_data_versions = cache.get("release_assets_data_versions", name, get_asset_data_versions)
+
     data_versions = infinite_defaultdict()
     sc_data_versions = infinite_defaultdict()
     base_blob = {}
     sc_blob = {}
-    base_row = dbo.releases_json.select(where={"name": name}, transaction=trans)
     if base_row:
-        base_blob = base_row[0]["data"]
-        data_versions["."] = base_row[0]["data_version"]
+        if base_row["data_version"] < base_data_version:
+            base_row = get_base_row()
+        base_blob = base_row["data"]
+        data_versions["."] = base_row["data_version"]
 
-    for asset in dbo.release_assets.select(where={"name": name}, transaction=trans):
+    if [r["data_version"] for r in asset_rows] != asset_data_versions:
+        asset_rows = get_asset_rows()
+
+    for asset in asset_rows:
         path = asset["path"].split(".")[1:]
         ensure_path_exists(base_blob, path)
         set_by_path(base_blob, path, asset["data"])

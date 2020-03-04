@@ -7,7 +7,7 @@ from mock import MagicMock
 import auslib.services.releases
 import auslib.util.timestamp
 from auslib.global_state import dbo
-from auslib.util.data_structures import deep_dict, infinite_defaultdict
+from auslib.util.data_structures import deep_dict
 
 from ...fakes import FakeBlobFactory, FakeGCSHistoryAsync
 
