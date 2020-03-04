@@ -54,6 +54,9 @@ if os.environ.get("AUTOGRAPH_URL"):
 
 
 cache.make_cache("blob", 500, 3600)
+# TODO: add tests to make sure that the cache invalidates correctly when data version changes
+cache.make_cache("releases", 500, 3600)
+cache.make_cache("release_assets", 500, 3600)
 # There's probably no no need to ever expire items in the blob schema cache
 # at all because they only change during deployments (and new instances of the
 # apps will be created at that time, with an empty cache).

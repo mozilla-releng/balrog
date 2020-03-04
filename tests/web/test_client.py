@@ -97,6 +97,9 @@ class ClientTestBase(ClientTestCommon):
 
     @pytest.fixture(autouse=True)
     def setup(self, insert_release, firefox_56_0_build1):
+        cache.reset()
+        cache.make_cache("releases", 50, 10)
+        cache.make_cache("release_assets", 50, 10)
         self.version_fd, self.version_file = mkstemp()
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com", "http://download.mozilla.org")
@@ -1365,13 +1368,19 @@ class ClientTest(ClientTestBase):
         self.assertEqual(ret.status_code, 200)
 
     def test_get_with_release_in_new_tables(self):
-        ret = self.client.get(
-            "/update/6/Firefox/50.0/20150101010101/WINNT_x86_64-msvc-x64/en-US/release"
-            "/Windows_NT 6.1.0.0 (x86)/ISET:SSE3,MEM:4096,JAWS:0/default/default/update.xml"
-        )
-        self.assertUpdateEqual(
-            ret,
-            """<?xml version="1.0"?>
+        with mock.patch("time.time") as t:
+            t.return_value = 10
+            # Make sure the cache is empty at the start
+            assert cache.caches["releases"].data.get("Firefox-56.0-build1") is None
+            assert cache.caches["release_assets"].data.get("Firefox-56.0-build1") is None
+
+            ret = self.client.get(
+                "/update/6/Firefox/50.0/20150101010101/WINNT_x86_64-msvc-x64/en-US/release"
+                "/Windows_NT 6.1.0.0 (x86)/ISET:SSE3,MEM:4096,JAWS:0/default/default/update.xml"
+            )
+            self.assertUpdateEqual(
+                ret,
+                """<?xml version="1.0"?>
 <updates>
     <update type="minor" displayVersion="56.0" appVersion="56.0" platformVersion="56.0" buildID="20170918210324"
             detailsURL="https://www.mozilla.org/en-US/firefox/56.0/releasenotes/">
@@ -1380,7 +1389,39 @@ class ClientTest(ClientTestBase):
             size="41323124"/>
     </update>
 </updates>""",
-        )
+            )
+            assert cache.caches["releases"].lookups == 1
+            assert cache.caches["releases"].hits == 0
+            assert cache.caches["releases"].misses == 1
+            assert cache.caches["release_assets"].lookups == 1
+            assert cache.caches["release_assets"].hits == 0
+            assert cache.caches["release_assets"].misses == 1
+
+            # Make sure we can get a cached copy, too.
+            t.return_value = 15
+            ret = self.client.get(
+                "/update/6/Firefox/50.0/20150101010101/WINNT_x86_64-msvc-x64/en-US/release"
+                "/Windows_NT 6.1.0.0 (x86)/ISET:SSE3,MEM:4096,JAWS:0/default/default/update.xml"
+            )
+            assert cache.caches["releases"].lookups == 2
+            assert cache.caches["releases"].hits == 1
+            assert cache.caches["releases"].misses == 1
+            assert cache.caches["release_assets"].lookups == 2
+            assert cache.caches["release_assets"].hits == 1
+            assert cache.caches["release_assets"].misses == 1
+
+            # And make sure the cache invalidates at the right time
+            t.return_value = 20
+            ret = self.client.get(
+                "/update/6/Firefox/50.0/20150101010101/WINNT_x86_64-msvc-x64/en-US/release"
+                "/Windows_NT 6.1.0.0 (x86)/ISET:SSE3,MEM:4096,JAWS:0/default/default/update.xml"
+            )
+            assert cache.caches["releases"].lookups == 3
+            assert cache.caches["releases"].hits == 1
+            assert cache.caches["releases"].misses == 2
+            assert cache.caches["release_assets"].lookups == 3
+            assert cache.caches["release_assets"].hits == 1
+            assert cache.caches["release_assets"].misses == 2
 
 
 class ClientTestMig64(ClientTestCommon):

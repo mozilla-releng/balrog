@@ -9,7 +9,7 @@ from sqlalchemy import join, select
 
 from ..blobs.base import createBlob
 from ..errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
-from ..global_state import dbo
+from ..global_state import cache, dbo
 from ..util.data_structures import ensure_path_exists, get_by_path, infinite_defaultdict, set_by_path
 
 log = logging.getLogger(__file__)
@@ -249,14 +249,26 @@ def get_releases(trans):
 
 
 def get_release(name, trans):
+    # TODO: make sure we can't get into cases where the blob is out of date with the database because
+    # another process or thread updated it
+    def get_base_row():
+        row = dbo.releases_json.select(where={"name": name}, transaction=trans)
+        if row:
+            return row[0]
+
+        return None
+
+    def get_assets():
+        return dbo.release_assets.select(where={"name": name}, transaction=trans) or []
+
     data_versions = infinite_defaultdict()
     sc_data_versions = infinite_defaultdict()
     base_blob = {}
     scheduled_blob = {}
-    base_row = dbo.releases_json.select(where={"name": name}, transaction=trans)
+    base_row = cache.get("releases", name, get_base_row)
     if base_row:
-        base_blob = base_row[0]["data"]
-        data_versions["."] = base_row[0]["data_version"]
+        base_blob = base_row["data"]
+        data_versions["."] = base_row["data_version"]
 
     scheduled_row = dbo.releases_json.scheduled_changes.select(where={"base_name": name}, transaction=trans)
     if scheduled_row:
@@ -265,7 +277,7 @@ def get_release(name, trans):
             scheduled_blob = deepcopy(base_blob)
             scheduled_blob.update(scheduled_row[0]["base_data"])
 
-    for asset in dbo.release_assets.select(where={"name": name}, transaction=trans):
+    for asset in cache.get("release_assets", name, get_assets):
         path = asset["path"].split(".")[1:]
         ensure_path_exists(base_blob, path)
         set_by_path(base_blob, path, asset["data"])
