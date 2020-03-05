@@ -197,15 +197,15 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
     if is_read_only(name, trans):
         raise ReadOnlyError("Cannot update a Release that is marked as read-only")
 
-    current_blob = dbo.releases_json.select(where={"name": name}, transaction=trans)[0]["data"]
+    current_base_blob = dbo.releases_json.select(where={"name": name}, transaction=trans)[0]["data"]
     base_blob, assets = split_release(blob, get_schema_version(name, trans))
 
     # new_blob is first used to update the releases_json table
     # later, it has all asset information added to it so we can
     # do a full blob validation before committing the transaction
     new_blob = infinite_defaultdict()
-    new_blob.update(current_blob)
-    if base_blob and current_blob != base_blob:
+    new_blob.update(current_base_blob)
+    if base_blob and current_base_blob != base_blob:
         release_merger.merge(new_blob, base_blob)
         if when:
             sc_id = dbo.releases_json.scheduled_changes.insert(
@@ -282,10 +282,10 @@ def overwrite_release(name, blob, product, old_data_versions, when, changed_by, 
         raise SignoffRequiredError("Signoff is required, cannot update Release directly")
 
     current_release = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data, dbo.releases_json.product], transaction=trans)
-    current_blob = {}
+    current_base_blob = {}
     current_product = None
     if current_release:
-        current_blob = current_release[0]["data"]
+        current_base_blob = current_release[0]["data"]
         current_product = current_release[0]["product"]
     if current_product:
         if not dbo.hasPermission(changed_by, "release", "modify", current_product, trans):
@@ -359,7 +359,7 @@ def overwrite_release(name, blob, product, old_data_versions, when, changed_by, 
                 where={"name": name, "path": path}, old_data_version=get_by_path(old_data_versions, abc), changed_by=changed_by, transaction=trans
             )
 
-    if current_blob != base_blob:
+    if current_base_blob != base_blob:
         if old_data_versions.get("."):
             what = {"data": base_blob}
             if product:
