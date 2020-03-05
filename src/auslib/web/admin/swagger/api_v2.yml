@@ -95,6 +95,7 @@ paths:
                                 type: number
                               complete:
                                 type: boolean
+
   /releases/{name}:
     post:
       summary: Update part of a Release
@@ -123,7 +124,6 @@ paths:
                 # Creates a scheduled change if passed
                 when:
                   type: integer
-
       responses:
         '200':
           description: OK
@@ -135,6 +135,7 @@ paths:
           description: Client error
         '404':
           description: Release does not exist
+
     put:
       summary: Overwrites an entire release
       operationId: auslib.web.admin.views.releases_v2.overwrite_release
@@ -166,7 +167,6 @@ paths:
                 # Creates a scheduled change if passed
                 when:
                   type: integer
-
       responses:
         '200':
           description: OK
