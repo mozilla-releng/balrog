@@ -180,7 +180,7 @@ def get_releases(trans):
         if release not in releases:
             releases.append(release)
 
-    return {"releases": releases}
+    return {"releases": sorted(releases, key=lambda r: r["name"])}
 
 
 def update_release(name, blob, old_data_versions, when, changed_by, trans):

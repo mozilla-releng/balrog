@@ -96,6 +96,7 @@ def releases_db(db_schema, firefox_56_0_build1, firefox_60_0b3_build1, firefox_6
         rule_id=2, priority=100, product="Firefox", channel="beta", mapping="Firefox-60.0b3-build1", update_type="minor", data_version=1
     )
     dbo.rules.t.insert().execute(rule_id=3, priority=100, channel="beta", mapping="CDM-17", update_type="minor", data_version=1)
+    insert_release(cdm_17, "CDM")
     insert_release(firefox_56_0_build1, "Firefox")
     insert_release(firefox_60_0b3_build1, "Firefox")
     insert_release_sc(firefox_64_0_build1, "Firefox", "insert")
@@ -103,7 +104,6 @@ def releases_db(db_schema, firefox_56_0_build1, firefox_60_0b3_build1, firefox_6
     insert_release_sc(firefox_66_0_build1, "Firefox")
     insert_release(firefox_67_0_build1, "Firefox")
     insert_release_sc(firefox_67_0_build1, "Firefox", "delete")
-    insert_release(cdm_17, "CDM")
 
 
 @pytest.mark.usefixtures("releases_db")
@@ -112,6 +112,14 @@ def test_get_releases(api):
     assert ret.status_code == 200, ret.data
     expected = {
         "releases": [
+            {
+                "name": "CDM-17",
+                "product": "CDM",
+                "data_version": 1,
+                "read_only": False,
+                "rule_info": {"3": {"product": None, "channel": "beta"}},
+                "scheduled_changes": [],
+            },
             {
                 "name": "Firefox-56.0-build1",
                 "product": "Firefox",
@@ -127,6 +135,82 @@ def test_get_releases(api):
                 "read_only": False,
                 "rule_info": {"2": {"product": "Firefox", "channel": "beta"}},
                 "scheduled_changes": [],
+            },
+            {
+                "name": "Firefox-64.0-build1",
+                "product": None,
+                "data_version": None,
+                "read_only": None,
+                "rule_info": {},
+                "scheduled_changes": [
+                    {
+                        "name": "Firefox-64.0-build1",
+                        "product": "Firefox",
+                        "data_version": 1,
+                        "read_only": False,
+                        "sc_id": 1,
+                        "scheduled_by": "bob",
+                        "when": 2222222222000,
+                        "change_type": "insert",
+                        "sc_data_version": 1,
+                        "complete": False,
+                    },
+                    {
+                        "name": "Firefox-64.0-build1",
+                        "path": ".platforms.Darwin_x86_64-gcc3-u-i386-x86_64.locales.en-US",
+                        "data_version": 1,
+                        "sc_id": 1,
+                        "scheduled_by": "bob",
+                        "when": 2222222222000,
+                        "change_type": "insert",
+                        "sc_data_version": 1,
+                        "complete": False,
+                    },
+                    {
+                        "name": "Firefox-64.0-build1",
+                        "path": ".platforms.Linux_x86-gcc3.locales.en-US",
+                        "data_version": 1,
+                        "sc_id": 2,
+                        "scheduled_by": "bob",
+                        "when": 2222222222000,
+                        "change_type": "insert",
+                        "sc_data_version": 1,
+                        "complete": False,
+                    },
+                    {
+                        "name": "Firefox-64.0-build1",
+                        "path": ".platforms.Linux_x86_64-gcc3.locales.en-US",
+                        "data_version": 1,
+                        "sc_id": 3,
+                        "scheduled_by": "bob",
+                        "when": 2222222222000,
+                        "change_type": "insert",
+                        "sc_data_version": 1,
+                        "complete": False,
+                    },
+                    {
+                        "name": "Firefox-64.0-build1",
+                        "path": ".platforms.WINNT_x86-msvc.locales.en-US",
+                        "data_version": 1,
+                        "sc_id": 4,
+                        "scheduled_by": "bob",
+                        "when": 2222222222000,
+                        "change_type": "insert",
+                        "sc_data_version": 1,
+                        "complete": False,
+                    },
+                    {
+                        "name": "Firefox-64.0-build1",
+                        "path": ".platforms.WINNT_x86_64-msvc.locales.en-US",
+                        "data_version": 1,
+                        "sc_id": 5,
+                        "scheduled_by": "bob",
+                        "when": 2222222222000,
+                        "change_type": "insert",
+                        "sc_data_version": 1,
+                        "complete": False,
+                    },
+                ],
             },
             {
                 "name": "Firefox-66.0-build1",
@@ -297,90 +381,6 @@ def test_get_releases(api):
                         "scheduled_by": "bob",
                         "when": 2222222222000,
                         "change_type": "delete",
-                        "sc_data_version": 1,
-                        "complete": False,
-                    },
-                ],
-            },
-            {
-                "name": "CDM-17",
-                "product": "CDM",
-                "data_version": 1,
-                "read_only": False,
-                "rule_info": {"3": {"product": None, "channel": "beta"}},
-                "scheduled_changes": [],
-            },
-            {
-                "name": "Firefox-64.0-build1",
-                "product": None,
-                "data_version": None,
-                "read_only": None,
-                "rule_info": {},
-                "scheduled_changes": [
-                    {
-                        "name": "Firefox-64.0-build1",
-                        "product": "Firefox",
-                        "data_version": 1,
-                        "read_only": False,
-                        "sc_id": 1,
-                        "scheduled_by": "bob",
-                        "when": 2222222222000,
-                        "change_type": "insert",
-                        "sc_data_version": 1,
-                        "complete": False,
-                    },
-                    {
-                        "name": "Firefox-64.0-build1",
-                        "path": ".platforms.Darwin_x86_64-gcc3-u-i386-x86_64.locales.en-US",
-                        "data_version": 1,
-                        "sc_id": 1,
-                        "scheduled_by": "bob",
-                        "when": 2222222222000,
-                        "change_type": "insert",
-                        "sc_data_version": 1,
-                        "complete": False,
-                    },
-                    {
-                        "name": "Firefox-64.0-build1",
-                        "path": ".platforms.Linux_x86-gcc3.locales.en-US",
-                        "data_version": 1,
-                        "sc_id": 2,
-                        "scheduled_by": "bob",
-                        "when": 2222222222000,
-                        "change_type": "insert",
-                        "sc_data_version": 1,
-                        "complete": False,
-                    },
-                    {
-                        "name": "Firefox-64.0-build1",
-                        "path": ".platforms.Linux_x86_64-gcc3.locales.en-US",
-                        "data_version": 1,
-                        "sc_id": 3,
-                        "scheduled_by": "bob",
-                        "when": 2222222222000,
-                        "change_type": "insert",
-                        "sc_data_version": 1,
-                        "complete": False,
-                    },
-                    {
-                        "name": "Firefox-64.0-build1",
-                        "path": ".platforms.WINNT_x86-msvc.locales.en-US",
-                        "data_version": 1,
-                        "sc_id": 4,
-                        "scheduled_by": "bob",
-                        "when": 2222222222000,
-                        "change_type": "insert",
-                        "sc_data_version": 1,
-                        "complete": False,
-                    },
-                    {
-                        "name": "Firefox-64.0-build1",
-                        "path": ".platforms.WINNT_x86_64-msvc.locales.en-US",
-                        "data_version": 1,
-                        "sc_id": 5,
-                        "scheduled_by": "bob",
-                        "when": 2222222222000,
-                        "change_type": "insert",
                         "sc_data_version": 1,
                         "complete": False,
                     },
