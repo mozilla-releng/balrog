@@ -417,7 +417,7 @@ def test_get_releases(api):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_overwrite_fails_when_signoff_required(api, firefox_56_0_build1):
+def test_put_fails_when_signoff_required(api, firefox_56_0_build1):
     firefox_56_0_build1 = deepcopy(firefox_56_0_build1)
     firefox_56_0_build1["detailsUrl"] = "https://newurl"
     firefox_56_0_build1["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]["buildID"] = "9999999999999"
@@ -428,7 +428,7 @@ def test_overwrite_fails_when_signoff_required(api, firefox_56_0_build1):
 
 
 @pytest.mark.usefixtures("releases_db")
-def test_overwrite_fails_without_permission(api, firefox_60_0b3_build1, mock_verified_userinfo):
+def test_put_fails_without_permission(api, firefox_60_0b3_build1, mock_verified_userinfo):
     mock_verified_userinfo("notbob")
     firefox_60_0b3_build1 = deepcopy(firefox_60_0b3_build1)
     firefox_60_0b3_build1["detailsUrl"] = "https://newurl"
@@ -440,7 +440,7 @@ def test_overwrite_fails_without_permission(api, firefox_60_0b3_build1, mock_ver
 
 
 @pytest.mark.usefixtures("releases_db")
-def test_overwrite_fails_without_permission_new_release(api, firefox_62_0_build1, mock_verified_userinfo):
+def test_put_fails_without_permission_new_release(api, firefox_62_0_build1, mock_verified_userinfo):
     mock_verified_userinfo("notbob")
 
     ret = api.put("/v2/releases/Firefox-62.0-build1", json={"blob": firefox_62_0_build1, "product": "Firefox"})
@@ -448,7 +448,7 @@ def test_overwrite_fails_without_permission_new_release(api, firefox_62_0_build1
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_overwrite_fails_for_invalid_release(api):
+def test_put_fails_for_invalid_release(api):
     # Only submit a portion of what's needed to have a valid blob
     data = {"platforms": {"Linux_x86_64-gcc3": {"platforms": {"de": {"appVersion": "65.0", "buildID": "9090909090990", "displayVersion": "65.0"}}}}}
 
@@ -457,7 +457,7 @@ def test_overwrite_fails_for_invalid_release(api):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_overwrite_fails_for_readonly_release(api, firefox_60_0b3_build1):
+def test_put_fails_for_readonly_release(api, firefox_60_0b3_build1):
     dbo.releases_json.t.update(values={"read_only": True}).where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute()
 
     firefox_60_0b3_build1 = deepcopy(firefox_60_0b3_build1)
@@ -471,7 +471,7 @@ def test_overwrite_fails_for_readonly_release(api, firefox_60_0b3_build1):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_overwrite_succeeds(api, firefox_60_0b3_build1):
+def test_put_succeeds(api, firefox_60_0b3_build1):
     firefox_60_0b3_build1 = deepcopy(firefox_60_0b3_build1)
     firefox_60_0b3_build1["detailsUrl"] = "https://newurl"
     firefox_60_0b3_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]["buildID"] = "9999999999999"
@@ -517,7 +517,7 @@ def test_overwrite_succeeds(api, firefox_60_0b3_build1):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_overwrite_succeeds_for_new_release(api, firefox_62_0_build1):
+def test_put_succeeds_for_new_release(api, firefox_62_0_build1):
     new_data_versions = populate_versions_dict(firefox_62_0_build1)
 
     ret = api.put("/v2/releases/Firefox-62.0-build1", json={"blob": firefox_62_0_build1, "product": "Firefox"})
@@ -561,7 +561,7 @@ def test_overwrite_succeeds_for_new_release(api, firefox_62_0_build1):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_overwrite_removes_locales(api, firefox_60_0b3_build1):
+def test_put_removes_locales(api, firefox_60_0b3_build1):
     firefox_60_0b3_build1 = deepcopy(firefox_60_0b3_build1)
     del firefox_60_0b3_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["de"]
     del firefox_60_0b3_build1["platforms"]["Linux_x86-gcc3"]["locales"]["af"]
@@ -602,7 +602,7 @@ def test_overwrite_removes_locales(api, firefox_60_0b3_build1):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_overwrite_remove_add_and_update_locales(api, firefox_60_0b3_build1):
+def test_put_remove_add_and_update_locales(api, firefox_60_0b3_build1):
     firefox_60_0b3_build1 = deepcopy(firefox_60_0b3_build1)
     newde = firefox_60_0b3_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["de"]
     del firefox_60_0b3_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["de"]
@@ -663,7 +663,7 @@ def test_overwrite_remove_add_and_update_locales(api, firefox_60_0b3_build1):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_overwrite_succeeds_for_nonsplit_release(api, cdm_17):
+def test_put_succeeds_for_nonsplit_release(api, cdm_17):
     cdm_17 = deepcopy(cdm_17)
     cdm_17["vendors"]["gmp-eme-adobe"]["platforms"]["WINNT_x86-msvc"]["filesize"] = 5555555555
 
@@ -680,7 +680,7 @@ def test_overwrite_succeeds_for_nonsplit_release(api, cdm_17):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_update_fails_when_release_doesnt_exist(api):
+def test_post_fails_when_release_doesnt_exist(api):
     blob = {"detailsUrl": "https://newurl", "platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "999999999999999"}}}}}
     old_data_versions = versions_dict()
     assert old_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
@@ -690,7 +690,7 @@ def test_update_fails_when_release_doesnt_exist(api):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_update_fails_when_signoff_required(api):
+def test_post_fails_when_signoff_required(api):
     blob = {"detailsUrl": "https://newurl", "platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "999999999999999"}}}}}
     old_data_versions = versions_dict()
     assert old_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
@@ -700,7 +700,7 @@ def test_update_fails_when_signoff_required(api):
 
 
 @pytest.mark.usefixtures("releases_db")
-def test_update_fails_without_permission(api, mock_verified_userinfo):
+def test_post_fails_without_permission(api, mock_verified_userinfo):
     mock_verified_userinfo("notbob")
     blob = {"detailsUrl": "https://newurl", "platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "999999999999999"}}}}}
     old_data_versions = versions_dict()
@@ -711,7 +711,7 @@ def test_update_fails_without_permission(api, mock_verified_userinfo):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_update_fails_for_invalid_release_base(api):
+def test_post_fails_for_invalid_release_base(api):
     # Add an invalid parameter to the blob
     data = {"foo": "foo"}
     old_data_versions = versions_dict()
@@ -722,7 +722,7 @@ def test_update_fails_for_invalid_release_base(api):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_update_fails_for_invalid_release_locale(api):
+def test_post_fails_for_invalid_release_locale(api):
     # add an invalid key to a locale section
     data = {"platforms": {"Linux_x86_64-gcc3": {"locales": {"de": {"foo": "foo"}}}}}
     old_data_versions = versions_dict()
@@ -734,7 +734,7 @@ def test_update_fails_for_invalid_release_locale(api):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_update_fails_for_readonly_release(api, firefox_60_0b3_build1):
+def test_post_fails_for_readonly_release(api, firefox_60_0b3_build1):
     dbo.releases_json.t.update(values={"read_only": True}).where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute()
 
     data = {"platforms": {"Linux_x86_64-gcc3": {"locales": {"de": {"buildID": "333333333333"}}}}}
@@ -747,7 +747,7 @@ def test_update_fails_for_readonly_release(api, firefox_60_0b3_build1):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_update_succeeds(api):
+def test_post_succeeds(api):
     blob = {"detailsUrl": "https://newurl", "platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "22222222222"}}}}}
 
     old_data_versions = versions_dict()
@@ -796,7 +796,7 @@ def test_update_succeeds(api):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_update_add_and_update_locales(api, firefox_60_0b3_build1):
+def test_post_add_and_update_locales(api, firefox_60_0b3_build1):
     blob = {
         "platforms": {
             "Linux_x86_64-gcc3": {
@@ -845,7 +845,7 @@ def test_update_add_and_update_locales(api, firefox_60_0b3_build1):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_update_succeeds_for_nonsplit_release(api, cdm_17):
+def test_post_succeeds_for_nonsplit_release(api, cdm_17):
     cdm_17 = deepcopy(cdm_17)
     blob = {"vendors": {"gmp-eme-adobe": {"platforms": {"WINNT_x86-msvc": {"filesize": 5555555555}}}}}
     cdm_17["vendors"]["gmp-eme-adobe"]["platforms"]["WINNT_x86-msvc"]["filesize"] = 5555555555
@@ -863,7 +863,7 @@ def test_update_succeeds_for_nonsplit_release(api, cdm_17):
 
 
 @pytest.mark.usefixtures("releases_db")
-def test_overwrite_add_scheduled_change_fails_without_permission(api, firefox_56_0_build1, mock_verified_userinfo):
+def test_put_add_scheduled_change_fails_without_permission(api, firefox_56_0_build1, mock_verified_userinfo):
     mock_verified_userinfo("notbob")
     firefox_56_0_build1 = deepcopy(firefox_56_0_build1)
     firefox_56_0_build1["displayVersion"] = "sixty five dot oh"
@@ -878,7 +878,7 @@ def test_overwrite_add_scheduled_change_fails_without_permission(api, firefox_56
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_overwrite_add_scheduled_change_base_only(api, firefox_56_0_build1):
+def test_put_add_scheduled_change_base_only(api, firefox_56_0_build1):
     firefox_56_0_build1 = deepcopy(firefox_56_0_build1)
     firefox_56_0_build1["displayVersion"] = "sixty five dot oh"
 
@@ -927,7 +927,7 @@ def test_overwrite_add_scheduled_change_base_only(api, firefox_56_0_build1):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_overwrite_add_scheduled_change_locale_only(api, firefox_56_0_build1):
+def test_put_add_scheduled_change_locale_only(api, firefox_56_0_build1):
     firefox_56_0_build1 = deepcopy(firefox_56_0_build1)
     firefox_56_0_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]["buildID"] = "9999999999999"
 
@@ -976,7 +976,7 @@ def test_overwrite_add_scheduled_change_locale_only(api, firefox_56_0_build1):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_overwrite_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
+def test_put_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     firefox_56_0_build1 = deepcopy(firefox_56_0_build1)
     firefox_56_0_build1["displayVersion"] = "fifty six dot oh"
     firefox_56_0_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]["buildID"] = "9999999999999"
@@ -1048,7 +1048,7 @@ def test_overwrite_add_scheduled_change_base_and_locale(api, firefox_56_0_build1
 
 
 @pytest.mark.usefixtures("releases_db")
-def test_update_add_scheduled_change_fails_without_permission(api, firefox_56_0_build1, mock_verified_userinfo):
+def test_post_add_scheduled_change_fails_without_permission(api, firefox_56_0_build1, mock_verified_userinfo):
     mock_verified_userinfo("notbob")
     firefox_56_0_build1 = deepcopy(firefox_56_0_build1)
     firefox_56_0_build1["displayVersion"] = "fifty six dot oh"
@@ -1063,7 +1063,7 @@ def test_update_add_scheduled_change_fails_without_permission(api, firefox_56_0_
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_update_add_scheduled_change_base_only(api, firefox_56_0_build1):
+def test_post_add_scheduled_change_base_only(api, firefox_56_0_build1):
     firefox_56_0_build1 = deepcopy(firefox_56_0_build1)
     firefox_56_0_build1["displayVersion"] = "fifty six dot oh"
 
@@ -1112,7 +1112,7 @@ def test_update_add_scheduled_change_base_only(api, firefox_56_0_build1):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_update_add_scheduled_change_locale_only(api, firefox_56_0_build1):
+def test_post_add_scheduled_change_locale_only(api, firefox_56_0_build1):
     firefox_56_0_build1 = deepcopy(firefox_56_0_build1)
     firefox_56_0_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]["buildID"] = "9999999999999"
     blob = {"platforms": {"Linux_x86_64-gcc3": {"locales": {"en-US": {"buildID": "9999999999999"}}}}}
@@ -1161,7 +1161,7 @@ def test_update_add_scheduled_change_locale_only(api, firefox_56_0_build1):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_update_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
+def test_post_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     firefox_56_0_build1 = deepcopy(firefox_56_0_build1)
     firefox_56_0_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]["buildID"] = "9999999999999"
     blob = {"displayVersion": "fifty six dot oh", "platforms": {"Linux_x86_64-gcc3": {"locales": {"en-US": {"buildID": "9999999999999"}}}}}

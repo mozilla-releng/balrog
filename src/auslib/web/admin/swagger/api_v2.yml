@@ -138,7 +138,7 @@ paths:
 
     put:
       summary: Overwrites an entire release
-      operationId: auslib.web.admin.views.releases_v2.overwrite_release
+      operationId: auslib.web.admin.views.releases_v2.set_release
       parameters:
         - name: name
           in: path

@@ -272,7 +272,7 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
     return new_data_versions
 
 
-def overwrite_release(name, blob, product, old_data_versions, when, changed_by, trans):
+def set_release(name, blob, product, old_data_versions, when, changed_by, trans):
     live_on_product_channels = dbo.releases_json.getPotentialRequiredSignoffs([{"name": name}], trans)
     if not old_data_versions:
         old_data_versions = {}
