@@ -845,6 +845,62 @@ def test_post_add_and_update_locales(api, firefox_60_0b3_build1):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_update_succeeds_overwrite_updates(api):
+    blob = {
+        "platforms": {
+            "WINNT_x86_64-msvc": {
+                "locales": {
+                    "af": {
+                        "completes": [
+                            {
+                                "filesize": 99999999,
+                                "from": "*",
+                                "hashValue": "1111111111111111111111111111111111111111111111111111111111111111"
+                                "1111111111111111111111111111111111111111111111111111111111111111",
+                            }
+                        ],
+                        "partials": [
+                            {
+                                "filesize": 11111,
+                                "from": "Firefox-59.0b12-build1",
+                                "hashValue": "2222222222222222222222222222222222222222222222222222222222222222"
+                                "2222222222222222222222222222222222222222222222222222222222222222",
+                            }
+                        ],
+                    }
+                }
+            }
+        }
+    }
+
+    old_data_versions = versions_dict(include_base=False)
+    assert old_data_versions["platforms"]["WINNT_x86_64-msvc"]["locales"]["af"]
+    new_data_versions = versions_dict(default=2, include_base=False)
+    assert new_data_versions["platforms"]["WINNT_x86_64-msvc"]["locales"]["af"]
+
+    ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": blob, "old_data_versions": old_data_versions})
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions
+
+    locale_blob = (
+        dbo.release_assets.t.select()
+        .where(dbo.release_assets.name == "Firefox-60.0b3-build1")
+        .where(dbo.release_assets.path == ".platforms.WINNT_x86_64-msvc.locales.af")
+        .execute()
+        .fetchone()
+        .data
+    )
+    assert locale_blob["completes"] == blob["platforms"]["WINNT_x86_64-msvc"]["locales"]["af"]["completes"]
+    assert locale_blob["partials"] == blob["platforms"]["WINNT_x86_64-msvc"]["locales"]["af"]["partials"]
+    # Make sure something we didn't touch on the blobs are unchanged
+    assert locale_blob["appVersion"] == "60.0"
+    # Make sure that no locale information made it into the base blob
+    locale_history = get_release_assets_history("Firefox-60.0b3-build1", ".platforms.WINNT_x86_64-msvc.locales.af")
+    assert len(locale_history) == 3
+    assert "-bob.json" in locale_history[2][0]
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_post_succeeds_for_nonsplit_release(api, cdm_17):
     cdm_17 = deepcopy(cdm_17)
     blob = {"vendors": {"gmp-eme-adobe": {"platforms": {"WINNT_x86-msvc": {"filesize": 5555555555}}}}}
