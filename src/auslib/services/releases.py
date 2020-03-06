@@ -51,18 +51,20 @@ release_merger = Merger(
 )
 
 
-def do_split_release(blob, assets_keys):
-    """Split a full Release into two separate dictionaries containing the base in one,
+def separate_base_blob(blob, assets_keys):
+    """Split a full or partial Release into two separate dictionaries containing the base in one,
     and the assets in the other.
 
-        :param blob: The full Release to split
+        :param blob: The Release to split
         :type blob: dict
 
         :param assets_keys: The keys that should end up in the `assets`.
         :type assets_keys: dict
+
+        :return: tuple of base (dict) and assets (dict)
+        :rtype: tuple
     """
     base = {}
-    assets = {}
 
     for k, v in blob.items():
         # If none of this key's value belongs in assets, put everything in the base and move on
@@ -71,45 +73,107 @@ def do_split_release(blob, assets_keys):
             continue
 
         assets_value = assets_keys.get(k) or assets_keys["*"]
-        # If this key's entire value belongs in assets, put everything in assets and move on
+        # If this key's entire value belongs in assets, nothing to do!
         if assets_value == store:
-            assets[k] = v
             continue
 
         # Otherwise, split the value and store both results
-        base_data, assets_data = do_split_release(v, assets_value)
+        # TODO: walrus me when pycodestyle supports it
+        # if base_data := separate_base_blob(v, assets_value):
+        base_data = separate_base_blob(v, assets_value)
         if base_data:
             base[k] = base_data
-        if assets_data:
-            assets[k] = assets_data
 
-    return base, assets
+    return base
 
 
-def separate_assets(assets, assets_keys, path=()):
-    """Split the assets of a Release into individual parts"""
+def separate_assets(blob, assets_keys, path=()):
+    """Separate the assets of a Release into individual parts according to the structure provided in "asset_keys".
+        :Example:
+
+        Given the following arguments:
+        assets: {
+            "platforms": {
+                "WINNT_x86_64-msvc": {
+                    "locales": {
+                        "af": {
+                            "buildID": "123456789",
+                            "completes": [...],
+                            "partials": [...],
+                        }
+                        "de": {
+                            "buildID": "123456789",
+                            "completes": [...],
+                            "partials": [...],
+                        }
+                    }
+                }
+            }
+        }
+        asset_keys: {
+            "platforms": {
+                "*": {
+                    "locales": {
+                        "*": store
+                    }
+                }
+            }
+        }
+
+        This function will yield these items:
+        (("platforms", "WINNT_x86_64-msvc", "locales", "af"), {"buildID": "123456789", "completes": [...], "partials": [...]})
+        (("platforms", "WINNT_x86_64-msvc", "locales", "de"), {"buildID": "123456789", "completes": [...], "partials": [...]})
+
+        :param assets: Release data that contains one or more parts not considered part of the "base" Release.
+        :type assets: dict
+
+        :param asset_keys: A deeply nested dictionary containing information about how assets are split. Dictionary values may be
+                           either another dictionary, or a "store" object, which is a sentinel value that indicates that the current
+                           nesting level represents one asset, and any values beneath it stored as is as part of that asset.
+        :type asset_keys: dict or "store" sentinel value
+
+        :param path:
+        :type path: tuple
+
+        :return: yields tuples of (path, assets), where path is the path in the dict that the assets are associated with,
+                 and assets are a dict of details
+        :rtype: tuple of (tuple, dict)
+    """
     if assets_keys == store:
-        yield (path, assets)
+        yield (path, blob)
         # Short circuit, because we don't need to iterate over something
         # we're going to store in its own row.
         return
 
-    for k, v in assets.items():
+    for k, v in blob.items():
         if k in assets_keys or "*" in assets_keys:
             newpath = (*path, k)
             yield from separate_assets(v, assets_keys.get(k) or assets_keys["*"], newpath)
 
 
 def split_release(blob, schema_version):
-    """Split an entire Release into its base object and list of assets objects"""
-    detail_parts = []
+    """Split a full or partial Release into its base object and list of assets objects.
+
+        :param blob: The Release to split
+        :type blob: auslib.blobs.base.Blob
+
+        :param schema_version: The schema version of the blob. Because this function can handle
+                               splitting partial Releases (eg: just "platforms"), this must be passed
+                               because it may not exist in the blob.
+        :type schema_version: int
+
+        :return: A tuple whose first item is the parts of the blob that are part of the "base", and whose second item
+                 is a list of non-base assets. This list contains tuples whose first item is the path to the asset, relative
+                 to the root of the base (eg: ("platforms", "WINNT_x86_64-msvc", "locales", "en-US")), and whose second
+                 item is a dict of the contents of that asset.
+        :rtype: tuple of (dict, list of tuples)
+    """
     assets_keys = RELEASE_BLOB_ASSETS.get(schema_version, {})
 
-    base, assets = do_split_release(blob, assets_keys)
-    if assets:
-        detail_parts = [p for p in separate_assets(assets, assets_keys)]
+    base = separate_base_blob(blob, assets_keys)
+    assets = [p for p in separate_assets(blob, assets_keys)]
 
-    return base, detail_parts
+    return base, assets
 
 
 def get_schema_version(name, trans):
