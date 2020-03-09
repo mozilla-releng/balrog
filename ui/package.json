@@ -34,7 +34,7 @@
     "diff": "^4.0.2",
     "downshift": "^5.0.4",
     "is-absolute-url": "^3.0.3",
-    "mdi-react": "^6.7.0",
+    "mdi-react": "^7.0.0",
     "prop-types": "^15",
     "qs": "^6.9.1",
     "ramda": "^0.27.0",
