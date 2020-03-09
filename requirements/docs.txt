@@ -22,14 +22,12 @@ imagesize==1.2.0 \
     --hash=sha256:6965f19a6a2039c7d48bca7dba2473069ff854c36ae6f19d2cde309d998228a1 \
     --hash=sha256:b1f6b5a4eab1f73479a50fb79fcf729514a900c341d8503d62a62dbc4127a2b1 \
     # via sphinx
-packaging==20.1 \
-    --hash=sha256:170748228214b70b672c581a3dd610ee51f733018650740e98c7df862a583f73 \
-    --hash=sha256:e665345f9eef0c621aa0bf2f8d78cf6d21904eef16a93f020240b704a57f1334 \
-    # via sphinx
-pygments==2.5.2 \
-    --hash=sha256:2a3fe295e54a20164a9df49c75fa58526d3be48e14aceba6d6b1e8ac0bfd6f1b \
-    --hash=sha256:98c8aa5a9f778fcd1026a17361ddaf7330d1b7c62ae97c3bb0ae73e0b9b6b0fe \
-    # via sphinx
+packaging==20.3 \
+    --hash=sha256:3c292b474fda1671ec57d46d739d072bfd495a4f51ad01a055121d81e952b7a3 \
+    --hash=sha256:82f77b9bee21c1bafbf35a84905d604d5d1223801d639cf3ed140bd651c08752    # via sphinx
+pygments==2.6.1 \
+    --hash=sha256:647344a061c249a3b74e230c739f434d7ea4d8b1d5f3721bc0f3558049b38f44 \
+    --hash=sha256:ff7a40b4860b727ab48fad6360eb351cc1b33cbf9b15a0f689ca5353e9463324    # via sphinx
 pyparsing==2.4.6 \
     --hash=sha256:4c830582a84fb022400b85429791bc551f1f4871c33f23e44f353119e92f969f \
     --hash=sha256:c342dccb5250c08d45fd6f8b4a559613ca603b57498511740e65cd11a2e7dcec \
@@ -41,9 +39,9 @@ snowballstemmer==2.0.0 \
 sphinx-rtd-theme==0.4.3 \
     --hash=sha256:00cf895504a7895ee433807c62094cf1e95f065843bf3acd17037c3e9a2becd4 \
     --hash=sha256:728607e34d60456d736cc7991fd236afb828b21b82f956c5ea75f94c8414040a
-sphinx==2.4.3 \
-    --hash=sha256:776ff8333181138fae52df65be733127539623bb46cc692e7fa0fcfc80d7aa88 \
-    --hash=sha256:ca762da97c3b5107cbf0ab9e11d3ec7ab8d3c31377266fd613b962ed971df709
+sphinx==2.4.4 \
+    --hash=sha256:b4c750d546ab6d7e05bdff6ac24db8ae3e8b8253a3569b754e445110a0a12b66 \
+    --hash=sha256:fc312670b56cb54920d6cc2ced455a22a547910de10b3142276495ced49231cb
 sphinxcontrib-applehelp==1.0.2 \
     --hash=sha256:806111e5e962be97c29ec4c1e7fe277bfd19e9652fb1a4392105b43e01af885a \
     --hash=sha256:a072735ec80e7675e3f432fcae8610ecf509c5f1869d17e2eecff44389cdbc58 \

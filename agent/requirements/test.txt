@@ -23,10 +23,9 @@ black==19.10b0 \
 check-manifest==0.41 \
     --hash=sha256:4046b1260e63c139be6441fe8db8d9221f495ff39b81add2a55e5ca35dde7a6a \
     --hash=sha256:88afe85b751717688f8bc3b63d9543d0d962da98f1f420c554eaeb8d76c571a8
-click==7.0 \
-    --hash=sha256:2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13 \
-    --hash=sha256:5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7 \
-    # via black, pip-compile-multi, pip-tools
+click==7.1 \
+    --hash=sha256:482f552f2d5452b9eeffc44165e8b790dd53f75bcce099a812b65e0357e860e2 \
+    --hash=sha256:91eb2c43db0254aaf3b14a3c4e0db914a900aa09bbc33c6e87ede4a8f7c969dc    # via black, pip-compile-multi, pip-tools
 coverage==5.0.3 \
     --hash=sha256:15cf13a6896048d6d947bf7d222f36e4809ab926894beb748fc9caa14605d9c3 \
     --hash=sha256:1daa3eceed220f9fdb80d5ff950dd95112cd27f70d004c7918ca6dfc6c47054c \
@@ -85,10 +84,9 @@ more-itertools==8.2.0 \
     --hash=sha256:5dd8bcf33e5f9513ffa06d5ad33d78f31e1931ac9a18f33d37e77a180d393a7c \
     --hash=sha256:b1ddb932186d8a6ac451e1d95844b382f55e12686d51ca0c68b6f61f2ab7a507 \
     # via pytest
-packaging==20.1 \
-    --hash=sha256:170748228214b70b672c581a3dd610ee51f733018650740e98c7df862a583f73 \
-    --hash=sha256:e665345f9eef0c621aa0bf2f8d78cf6d21904eef16a93f020240b704a57f1334 \
-    # via pytest
+packaging==20.3 \
+    --hash=sha256:3c292b474fda1671ec57d46d739d072bfd495a4f51ad01a055121d81e952b7a3 \
+    --hash=sha256:82f77b9bee21c1bafbf35a84905d604d5d1223801d639cf3ed140bd651c08752    # via pytest
 pathspec==0.7.0 \
     --hash=sha256:163b0632d4e31cef212976cf57b43d9fd6b0bac6e67c26015d611a647d5e7424 \
     --hash=sha256:562aa70af2e0d434367d9790ad37aed893de47f1693e4201fd1d3dca15d19b96 \
