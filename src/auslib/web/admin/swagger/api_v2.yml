@@ -4,6 +4,46 @@ info:
   description: Balrog Admin API
   version: 2.0.0
 
+components:
+  schemas:
+    Release:
+      type: object
+      properties:
+        name:
+          type: string
+        product:
+          type: string
+          nullable: true
+        read_only:
+          type: boolean
+          nullable: true
+        data_version:
+          type: number
+          nullable: true
+
+    ReleaseModifyBody:
+      type: object
+      required:
+        - blob
+      properties:
+        blob:
+          type: object
+        old_data_versions:
+          type: object
+        # Creates a scheduled change if passed
+        when:
+          type: integer
+          nullable: true
+
+  parameters:
+    ReleaseName:
+      name: name
+      in: path
+      required: true
+      description: Release name
+      schema:
+        type: string
+
 paths:
   /releases:
     get:
@@ -22,91 +62,74 @@ paths:
                   releases:
                     type: array
                     items:
-                      type: object
-                      required:
-                        - name
-                        - rule_info
-                      properties:
-                        name:
-                          type: string
-                        product:
-                          type: string
-                          nullable: true
-                        data_version:
-                          type: number
-                          nullable: true
-                        read_only:
-                          type: boolean
-                          nullable: true
-                        rule_info:
-                          type: object
+                      allOf:
+                        - $ref: '#/components/schemas/Release'
+                        - type: object
+                          required:
+                            - name
+                            - rule_info
                           properties:
-                            ^.*$:
+                            read_only:
+                              nullable: false
+                            rule_info:
                               type: object
-                              required:
-                                - product
-                                - channel
                               properties:
-                                product:
-                                  type: string
-                                  nullable: true
-                                channel:
-                                  type: string
-                                  nullable: true
-                        scheduled_changes:
-                          type: array
-                          items:
-                            type: object
-                            required:
-                              - name
-                              - data_version
-                              - sc_id
-                              - when
-                              - change_type
-                              - scheduled_by
-                              - sc_data_version
-                              - complete
-                            properties:
-                              name:
-                                type: string
-                              path:
-                                type: string
-                              product:
-                                type: string
-                              data_version:
-                                type: number
-                              read_only:
-                                type: boolean
-                              rule_info:
-                                type: object
-                              sc_id:
-                                type: number
-                              when:
-                                type: number
-                              change_type:
-                                type: string
-                                enum:
-                                  - insert
-                                  - update
-                                  - delete
-                              scheduled_by:
-                                type: string
-                              sc_data_version:
-                                type: number
-                              complete:
-                                type: boolean
+                                ^.*$:
+                                  type: object
+                                  required:
+                                    - product
+                                    - channel
+                                  properties:
+                                    product:
+                                      type: string
+                                      nullable: true
+                                    channel:
+                                      type: string
+                                      nullable: true
+                            scheduled_changes:
+                              type: array
+                              items:
+                                allOf:
+                                  - $ref: '#/components/schemas/Release'
+                                  - type: object
+                                    required:
+                                      - name
+                                      - data_version
+                                      - sc_id
+                                      - when
+                                      - change_type
+                                      - scheduled_by
+                                      - sc_data_version
+                                      - complete
+                                    properties:
+                                      path:
+                                        type: string
+                                      rule_info:
+                                        type: object
+                                      sc_id:
+                                        type: number
+                                      when:
+                                        type: number
+                                      change_type:
+                                        type: string
+                                        enum:
+                                          - insert
+                                          - update
+                                          - delete
+                                      scheduled_by:
+                                        type: string
+                                      sc_data_version:
+                                        type: number
+                                      complete:
+                                        type: boolean
 
   /releases/{name}:
+    parameters:
+      - $ref: '#/components/parameters/ReleaseName'
+
     get:
       summary: Get a Release blob and data versions
       operationId: auslib.web.admin.views.releases_v2.get_release
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Release name
-          schema:
-            type: string
       responses:
         '200':
           description: Release blob and data versions
@@ -128,30 +151,16 @@ paths:
     post:
       summary: Update part of a Release
       operationId: auslib.web.admin.views.releases_v2.update_release
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Release name
-          schema:
-            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - blob
-                - old_data_versions
-              properties:
-                blob:
-                  type: object
-                old_data_versions:
-                  type: object
-                # Creates a scheduled change if passed
-                when:
-                  type: integer
+              allOf:
+                - $ref: '#/components/schemas/ReleaseModifyBody'
+                - type: object
+                  required:
+                    - old_data_versions
       responses:
         '200':
           description: OK
@@ -167,34 +176,18 @@ paths:
     put:
       summary: Overwrites an entire release
       operationId: auslib.web.admin.views.releases_v2.set_release
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Release name
-          schema:
-            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - blob
-              properties:
-                blob:
-                  type: object
-                # Optional in this endpoint, because the Release may not yet exist.
-                # The view is responsible for ensuring this exists if the Release does.
-                old_data_versions:
-                  type: object
-                # Required if the Release doesn't yet exist.
-                product:
-                  type: string
-                # Creates a scheduled change if passed
-                when:
-                  type: integer
+              allOf:
+                - $ref: '#/components/schemas/ReleaseModifyBody'
+                - type: object
+                  properties:
+                    # Required if the Release doesn't yet exist, but it's not possible to encode this into the schema
+                    product:
+                      type: string
       responses:
         '200':
           description: OK
@@ -208,13 +201,6 @@ paths:
     delete:
       summary: Delete an entire Release
       operationId: auslib.web.admin.views.releases_v2.delete_release
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Release name
-          schema:
-            type: string
       responses:
         '200':
           description: OK
@@ -226,16 +212,12 @@ paths:
           description: Release does not exist
 
   /releases/{name}/data_versions:
+    parameters:
+      - $ref: '#/components/parameters/ReleaseName'
+
     get:
       summary: Get the data versions for a Release
       operationId: auslib.web.admin.views.releases_v2.get_data_versions
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Release name
-          schema:
-            type: string
       responses:
         '200':
           description: Data versions
@@ -252,16 +234,13 @@ paths:
           description: Release not found
 
   /releases/{name}/{path}/data_version:
+    parameters:
+      - $ref: '#/components/parameters/ReleaseName'
+
     get:
       summary: Get the data version for a part of a Release
       operationId: auslib.web.admin.views.releases_v2.get_data_version
       parameters:
-        - name: name
-          in: path
-          required: true
-          description: Release name
-          schema:
-            type: string
         - name: path
           in: path
           required: true
@@ -278,22 +257,18 @@ paths:
                 required:
                   - data_version
                 properties:
-                  data_versions:
+                  data_version:
                     type: integer
         '404':
           description: Release part not found
 
   /releases/{name}/read_only:
+    parameters:
+      - $ref: '#/components/parameters/ReleaseName'
+
     put:
       summary: Set a Release as read-only or read-write
       operationId: auslib.web.admin.views.releases_v2.set_read_only
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Release name
-          schema:
-            type: string
       requestBody:
         required: true
         content:
