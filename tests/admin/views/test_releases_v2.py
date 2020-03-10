@@ -16,10 +16,8 @@ def deep_dict(depth, default):
     return defaultdict(lambda: default)
 
 
-def versions_dict(depth=4, default=1, include_base=True):
+def versions_dict(depth=4, default=1):
     d = deep_dict(depth, default)
-    if include_base:
-        d["."] = default
     return d
 
 
@@ -422,6 +420,7 @@ def test_put_fails_when_signoff_required(api, firefox_56_0_build1):
     firefox_56_0_build1["detailsUrl"] = "https://newurl"
     firefox_56_0_build1["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]["buildID"] = "9999999999999"
     old_data_versions = populate_versions_dict(firefox_56_0_build1)
+    old_data_versions["."] = 1
 
     ret = api.put("/v2/releases/Firefox-56.0-build1", json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions})
     assert ret.status_code == 400
@@ -434,6 +433,7 @@ def test_put_fails_without_permission(api, firefox_60_0b3_build1, mock_verified_
     firefox_60_0b3_build1["detailsUrl"] = "https://newurl"
     firefox_60_0b3_build1["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]["buildID"] = "9999999999999"
     old_data_versions = populate_versions_dict(firefox_60_0b3_build1)
+    old_data_versions["."] = 1
 
     ret = api.put("/v2/releases/Firefox-60.0b3-build1", json={"blob": firefox_60_0b3_build1, "product": "Firefox", "old_data_versions": old_data_versions})
     assert ret.status_code == 403, ret.data
@@ -464,6 +464,7 @@ def test_put_fails_for_readonly_release(api, firefox_60_0b3_build1):
     firefox_60_0b3_build1["detailsUrl"] = "https://newurl"
     firefox_60_0b3_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]["buildID"] = "9999999999999"
     old_data_versions = populate_versions_dict(firefox_60_0b3_build1)
+    old_data_versions["."] = 1
 
     ret = api.put("/v2/releases/Firefox-60.0b3-build1", json={"blob": firefox_60_0b3_build1, "product": "Firefox", "old_data_versions": old_data_versions})
     assert ret.status_code == 400, ret.data
@@ -477,7 +478,9 @@ def test_put_succeeds(api, firefox_60_0b3_build1):
     firefox_60_0b3_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]["buildID"] = "9999999999999"
 
     old_data_versions = populate_versions_dict(firefox_60_0b3_build1)
+    old_data_versions["."] = 1
     new_data_versions = versions_dict(default=2)
+    new_data_versions["."] = 2
     assert new_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
 
     ret = api.put("/v2/releases/Firefox-60.0b3-build1", json={"blob": firefox_60_0b3_build1, "product": "Firefox", "old_data_versions": old_data_versions})
@@ -519,6 +522,7 @@ def test_put_succeeds(api, firefox_60_0b3_build1):
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_put_succeeds_for_new_release(api, firefox_62_0_build1):
     new_data_versions = populate_versions_dict(firefox_62_0_build1)
+    new_data_versions["."] = 1
 
     ret = api.put("/v2/releases/Firefox-62.0-build1", json={"blob": firefox_62_0_build1, "product": "Firefox"})
     assert ret.status_code == 200, ret.data
@@ -567,6 +571,7 @@ def test_put_removes_locales(api, firefox_60_0b3_build1):
     del firefox_60_0b3_build1["platforms"]["Linux_x86-gcc3"]["locales"]["af"]
 
     old_data_versions = versions_dict()
+    old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["de"]
     assert old_data_versions["platforms"]["Linux_x86-gcc3"]["locales"]["af"]
 
@@ -610,7 +615,8 @@ def test_put_remove_add_and_update_locales(api, firefox_60_0b3_build1):
     firefox_60_0b3_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["newde"] = newde
 
     old_data_versions = versions_dict()
-    new_data_versions = versions_dict(include_base=False)
+    old_data_versions["."] = 1
+    new_data_versions = versions_dict()
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["af"]
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["de"]
     new_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["af"] = 2
@@ -666,8 +672,10 @@ def test_put_remove_add_and_update_locales(api, firefox_60_0b3_build1):
 def test_put_succeeds_for_nonsplit_release(api, cdm_17):
     cdm_17 = deepcopy(cdm_17)
     cdm_17["vendors"]["gmp-eme-adobe"]["platforms"]["WINNT_x86-msvc"]["filesize"] = 5555555555
+    old_data_versions = versions_dict()
+    old_data_versions["."] = 1
 
-    ret = api.put("/v2/releases/CDM-17", json={"blob": cdm_17, "product": "CDM", "old_data_versions": versions_dict()})
+    ret = api.put("/v2/releases/CDM-17", json={"blob": cdm_17, "product": "CDM", "old_data_versions": old_data_versions})
     assert ret.status_code == 200, ret.data
     assert ret.json == {".": 2}
 
@@ -682,8 +690,8 @@ def test_put_succeeds_for_nonsplit_release(api, cdm_17):
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_post_fails_when_release_doesnt_exist(api):
     blob = {"detailsUrl": "https://newurl", "platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "999999999999999"}}}}}
-    old_data_versions = versions_dict()
-    assert old_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
+    old_data_versions = populate_versions_dict(blob)
+    old_data_versions["."] = 1
 
     ret = api.post("/v2/releases/Firefox-58.0-build1", json={"blob": blob, "old_data_versions": old_data_versions})
     assert ret.status_code == 404
@@ -693,6 +701,7 @@ def test_post_fails_when_release_doesnt_exist(api):
 def test_post_fails_when_signoff_required(api):
     blob = {"detailsUrl": "https://newurl", "platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "999999999999999"}}}}}
     old_data_versions = versions_dict()
+    old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
 
     ret = api.post("/v2/releases/Firefox-56.0-build1", json={"blob": blob, "old_data_versions": old_data_versions})
@@ -704,6 +713,7 @@ def test_post_fails_without_permission(api, mock_verified_userinfo):
     mock_verified_userinfo("notbob")
     blob = {"detailsUrl": "https://newurl", "platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "999999999999999"}}}}}
     old_data_versions = versions_dict()
+    old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": blob, "old_data_versions": old_data_versions})
@@ -715,6 +725,7 @@ def test_post_fails_for_invalid_release_base(api):
     # Add an invalid parameter to the blob
     data = {"foo": "foo"}
     old_data_versions = versions_dict()
+    old_data_versions["."] = 1
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": data, "old_data_versions": old_data_versions})
     assert ret.status_code == 400, ret.data
@@ -726,6 +737,7 @@ def test_post_fails_for_invalid_release_locale(api):
     # add an invalid key to a locale section
     data = {"platforms": {"Linux_x86_64-gcc3": {"locales": {"de": {"foo": "foo"}}}}}
     old_data_versions = versions_dict()
+    old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["de"]
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": data, "old_data_versions": old_data_versions})
@@ -739,6 +751,7 @@ def test_post_fails_for_readonly_release(api, firefox_60_0b3_build1):
 
     data = {"platforms": {"Linux_x86_64-gcc3": {"locales": {"de": {"buildID": "333333333333"}}}}}
     old_data_versions = versions_dict()
+    old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["de"]
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": data, "product": "Firefox", "old_data_versions": old_data_versions})
@@ -751,8 +764,10 @@ def test_post_succeeds(api):
     blob = {"detailsUrl": "https://newurl", "platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "22222222222"}}}}}
 
     old_data_versions = versions_dict()
+    old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
     new_data_versions = versions_dict(default=2)
+    new_data_versions["."] = 2
     assert new_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": blob, "old_data_versions": old_data_versions})
@@ -806,8 +821,10 @@ def test_post_add_and_update_locales(api, firefox_60_0b3_build1):
     }
 
     old_data_versions = versions_dict()
+    old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["af"]
     new_data_versions = versions_dict(default=1)
+    new_data_versions["."] = 1
     new_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["af"] = 2
     assert new_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["newde"]
 
@@ -873,9 +890,9 @@ def test_update_succeeds_overwrite_updates(api):
         }
     }
 
-    old_data_versions = versions_dict(include_base=False)
+    old_data_versions = versions_dict()
     assert old_data_versions["platforms"]["WINNT_x86_64-msvc"]["locales"]["af"]
-    new_data_versions = versions_dict(default=2, include_base=False)
+    new_data_versions = versions_dict(default=2)
     assert new_data_versions["platforms"]["WINNT_x86_64-msvc"]["locales"]["af"]
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": blob, "old_data_versions": old_data_versions})
@@ -905,8 +922,10 @@ def test_post_succeeds_for_nonsplit_release(api, cdm_17):
     cdm_17 = deepcopy(cdm_17)
     blob = {"vendors": {"gmp-eme-adobe": {"platforms": {"WINNT_x86-msvc": {"filesize": 5555555555}}}}}
     cdm_17["vendors"]["gmp-eme-adobe"]["platforms"]["WINNT_x86-msvc"]["filesize"] = 5555555555
+    old_data_versions = versions_dict()
+    old_data_versions["."] = 1
 
-    ret = api.post("/v2/releases/CDM-17", json={"blob": blob, "old_data_versions": versions_dict()})
+    ret = api.post("/v2/releases/CDM-17", json={"blob": blob, "old_data_versions": old_data_versions})
     assert ret.status_code == 200, ret.data
     assert ret.json == {".": 2}
 
@@ -925,6 +944,7 @@ def test_put_add_scheduled_change_fails_without_permission(api, firefox_56_0_bui
     firefox_56_0_build1["displayVersion"] = "sixty five dot oh"
 
     old_data_versions = versions_dict()
+    old_data_versions["."] = 1
 
     ret = api.put(
         "/v2/releases/Firefox-56.0-build1",
@@ -939,6 +959,7 @@ def test_put_add_scheduled_change_base_only(api, firefox_56_0_build1):
     firefox_56_0_build1["displayVersion"] = "sixty five dot oh"
 
     old_data_versions = versions_dict()
+    old_data_versions["."] = 1
     new_data_versions = {".": {"sc_id": 4, "data_version": 1, "change_type": "update"}}
 
     ret = api.put(
@@ -987,7 +1008,7 @@ def test_put_add_scheduled_change_locale_only(api, firefox_56_0_build1):
     firefox_56_0_build1 = deepcopy(firefox_56_0_build1)
     firefox_56_0_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]["buildID"] = "9999999999999"
 
-    old_data_versions = versions_dict(include_base=False)
+    old_data_versions = versions_dict()
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
     new_data_versions = {"platforms": {"Linux_x86_64-gcc3": {"locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update"}}}}}
 
@@ -1038,6 +1059,7 @@ def test_put_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     firefox_56_0_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]["buildID"] = "9999999999999"
 
     old_data_versions = versions_dict()
+    old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
     new_data_versions = {
         ".": {"sc_id": 4, "data_version": 1, "change_type": "update"},
@@ -1110,6 +1132,7 @@ def test_post_add_scheduled_change_fails_without_permission(api, firefox_56_0_bu
     firefox_56_0_build1["displayVersion"] = "fifty six dot oh"
 
     old_data_versions = versions_dict()
+    old_data_versions["."] = 1
 
     ret = api.post(
         "/v2/releases/Firefox-56.0-build1",
@@ -1124,6 +1147,7 @@ def test_post_add_scheduled_change_base_only(api, firefox_56_0_build1):
     firefox_56_0_build1["displayVersion"] = "fifty six dot oh"
 
     old_data_versions = versions_dict()
+    old_data_versions["."] = 1
     new_data_versions = {".": {"sc_id": 4, "data_version": 1, "change_type": "update"}}
 
     ret = api.post(
@@ -1173,7 +1197,7 @@ def test_post_add_scheduled_change_locale_only(api, firefox_56_0_build1):
     firefox_56_0_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]["buildID"] = "9999999999999"
     blob = {"platforms": {"Linux_x86_64-gcc3": {"locales": {"en-US": {"buildID": "9999999999999"}}}}}
 
-    old_data_versions = versions_dict(include_base=False)
+    old_data_versions = versions_dict()
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
     new_data_versions = {"platforms": {"Linux_x86_64-gcc3": {"locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update"}}}}}
 
@@ -1223,6 +1247,7 @@ def test_post_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     blob = {"displayVersion": "fifty six dot oh", "platforms": {"Linux_x86_64-gcc3": {"locales": {"en-US": {"buildID": "9999999999999"}}}}}
 
     old_data_versions = versions_dict()
+    old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
     new_data_versions = {
         ".": {"sc_id": 4, "data_version": 1, "change_type": "update"},
