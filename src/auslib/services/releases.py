@@ -658,3 +658,29 @@ def set_read_only(name, read_only, old_data_version, changed_by, trans):
             where={"name": name}, what={"read_only": read_only}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans
         )
         return {"new_data_version": old_data_version + 1}
+
+
+def signoff(name, role, username, trans):
+    base_sc = dbo.releases_json.scheduled_changes.select(
+        where={"base_name": name, "complete": False}, columns=[dbo.releases_json.scheduled_changes.sc_id], transaction=trans
+    )
+    if base_sc:
+        dbo.releases_json.scheduled_changes.signoffs.insert(username, sc_id=base_sc[0]["sc_id"], role=role, transaction=trans)
+
+    for sc in dbo.release_assets.scheduled_changes.select(
+        where={"base_name": name, "complete": False}, columns=[dbo.release_assets.scheduled_changes.sc_id], transaction=trans
+    ):
+        dbo.release_assets.scheduled_changes.signoffs.insert(username, sc_id=sc["sc_id"], role=role, transaction=trans)
+
+
+def revoke_signoff(name, username, trans):
+    base_sc = dbo.releases_json.scheduled_changes.select(
+        where={"base_name": name, "complete": False}, columns=[dbo.releases_json.scheduled_changes.sc_id], transaction=trans
+    )
+    if base_sc:
+        dbo.releases_json.scheduled_changes.signoffs.delete({"sc_id": base_sc[0]["sc_id"], "username": username}, changed_by=username, transaction=trans)
+
+    for sc in dbo.release_assets.scheduled_changes.select(
+        where={"base_name": name, "complete": False}, columns=[dbo.release_assets.scheduled_changes.sc_id], transaction=trans
+    ):
+        dbo.release_assets.scheduled_changes.signoffs.delete({"sc_id": sc["sc_id"], "username": username}, changed_by=username, transaction=trans)

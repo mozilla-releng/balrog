@@ -60,3 +60,17 @@ def set_read_only(name, body):
         return problem(404, "Missing", "Release does not exist")
     ret = releases.set_read_only(name, body["read_only"], body["old_data_version"], request.username, request.transaction)
     return ret, 200
+
+
+def signoff(name, body):
+    if not releases.sc_exists(name, request.transaction):
+        return problem(404, "Missing", "Release has no scheduled changes")
+    ret = releases.signoff(name, body["role"], request.username, request.transaction)
+    return ret, 200
+
+
+def revoke_signoff(name):
+    if not releases.sc_exists(name, request.transaction):
+        return problem(404, "Missing", "Release has no scheduled changes")
+    ret = releases.revoke_signoff(name, request.username, request.transaction)
+    return ret, 200

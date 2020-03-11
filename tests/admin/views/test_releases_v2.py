@@ -1783,3 +1783,93 @@ def test_set_readwrite_scheduled_change_because_of_product(api):
         .fetchone()["base_read_only"]
     )
     assert sc_read_only is False
+
+
+@pytest.mark.usefixtures("releases_db")
+def test_signoff_as_system_account(api, mock_verified_userinfo):
+    mock_verified_userinfo("ffxbld")
+    ret = api.put("/v2/releases/Firefox-64.0-build1/signoff", json={"role": "releng"})
+    assert ret.status_code == 403, ret.data
+    assert "ffxbld cannot signoff" in ret.json["exception"]
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_signoff_without_role(api):
+    ret = api.put("/v2/releases/Firefox-64.0-build1/signoff", json={"role": "relman"})
+    assert ret.status_code == 403, ret.data
+    assert "bob cannot signoff with role 'relman'" in ret.json["exception"]
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_signoff_with_second_role(api):
+    ret = api.put("/v2/releases/Firefox-67.0-build1/signoff", json={"role": "tb-releng"})
+    assert ret.status_code == 403, ret.data
+    assert "Cannot signoff with a second role" in ret.json["exception"]
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_signoff(api):
+    ret = api.put("/v2/releases/Firefox-64.0-build1/signoff", json={"role": "releng"})
+    assert ret.status_code == 200, ret.data
+
+    sc_id = (
+        dbo.releases_json.scheduled_changes.t.select(dbo.releases_json.scheduled_changes.sc_id)
+        .where(dbo.releases_json.scheduled_changes.base_name == "Firefox-64.0-build1")
+        .execute()
+        .fetchone()["sc_id"]
+    )
+    base_signoffs = (
+        dbo.releases_json.scheduled_changes.signoffs.t.select().where(dbo.releases_json.scheduled_changes.signoffs.sc_id == sc_id).execute().fetchall()
+    )
+    assert len(base_signoffs) == 1
+    assert base_signoffs[0]["username"] == "bob"
+    assert base_signoffs[0]["role"] == "releng"
+
+    asset_scs = (
+        dbo.release_assets.scheduled_changes.t.select(dbo.release_assets.scheduled_changes.sc_id)
+        .where(dbo.release_assets.scheduled_changes.base_name == "Firefox-64.0-build1")
+        .execute()
+        .fetchall()
+    )
+    for sc in asset_scs:
+        signoffs = (
+            dbo.release_assets.scheduled_changes.signoffs.t.select()
+            .where(dbo.release_assets.scheduled_changes.signoffs.sc_id == sc["sc_id"])
+            .execute()
+            .fetchall()
+        )
+        assert len(signoffs) == 1
+        assert signoffs[0]["username"] == "bob"
+        assert signoffs[0]["role"] == "releng"
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_revoke_signoff(api):
+    ret = api.delete("/v2/releases/Firefox-67.0-build1/signoff")
+    assert ret.status_code == 200, ret.data
+
+    sc_id = (
+        dbo.releases_json.scheduled_changes.t.select(dbo.releases_json.scheduled_changes.sc_id)
+        .where(dbo.releases_json.scheduled_changes.base_name == "Firefox-67.0-build1")
+        .execute()
+        .fetchone()["sc_id"]
+    )
+    base_signoffs = (
+        dbo.releases_json.scheduled_changes.signoffs.t.select().where(dbo.releases_json.scheduled_changes.signoffs.sc_id == sc_id).execute().fetchall()
+    )
+    assert len(base_signoffs) == 0
+
+    asset_scs = (
+        dbo.release_assets.scheduled_changes.t.select(dbo.release_assets.scheduled_changes.sc_id)
+        .where(dbo.release_assets.scheduled_changes.base_name == "Firefox-67.0-build1")
+        .execute()
+        .fetchall()
+    )
+    for sc in asset_scs:
+        signoffs = (
+            dbo.release_assets.scheduled_changes.signoffs.t.select()
+            .where(dbo.release_assets.scheduled_changes.signoffs.sc_id == sc["sc_id"])
+            .execute()
+            .fetchall()
+        )
+        assert len(signoffs) == 0

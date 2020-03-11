@@ -225,6 +225,58 @@ paths:
         '404':
           description: Release does not exist
 
+  /releases/{name}/signoff:
+    put:
+      summary: Signoff on the current scheduled changes for the named Release
+      operationId: auslib.web.admin.views.releases_v2.signoff
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Release name
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+              properties:
+                role:
+                  type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Client error
+        '403':
+          description: Permission denied
+        '404':
+          description: Release has no scheduled changes
+
+    delete:
+      summary: Revoke signoffs on the current scheduled changes for the named Release
+      operationId: auslib.web.admin.views.releases_v2.revoke_signoff
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Release name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Client error
+        '403':
+          description: Permission denied
+        '404':
+          description: Release has no scheduled changes
+
   /releases/{name}/data_versions:
     get:
       summary: Get the data versions for a Release
