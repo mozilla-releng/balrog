@@ -30,6 +30,19 @@ def populate_versions_dict(release, default=1):
     return d
 
 
+def test_versions_dict_still_works_as_expected():
+    # Tests to make sure our assupmtions about how versions_dict/defaultdict hasn't changed
+    # in a way that breaks other tests. If this test fails, we likely need to rework how
+    # we're populating old_data_versions/new_data_versions in other tests.
+    vd = versions_dict()
+    assert vd["a"]["b"]["c"]["d"]
+    # This verifies that the above assert populated `vd` correctly.
+    assert vd == {"a": {"b": {"c": {"d": 1}}}}
+    # This verifies that `vd` doesn't automatically add other entries when comparing it to
+    # a dictionary with additional contents.
+    assert vd != {"a": {"b": {"c": {"d": 1, "e": 1}}}}
+
+
 def insert_release(release_data, product):
     name = release_data["name"]
     base = deep_dict(4, {})
