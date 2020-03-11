@@ -1,8 +1,8 @@
 import itertools
 
 from auslib.AUS import getFallbackChannel, isForbiddenUrl, isSpecialURL
-from auslib.blobs.base import BlobValidationError, XMLBlob
-from auslib.errors import BadDataError
+from auslib.blobs.base import XMLBlob
+from auslib.errors import BadDataError, BlobValidationError
 from auslib.global_state import dbo
 from auslib.util.comparison import has_operator, strip_operator
 from auslib.util.rulematching import matchBuildID, matchChannel, matchVersion

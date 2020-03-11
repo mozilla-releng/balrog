@@ -4,8 +4,9 @@ import json
 import connexion
 from flask import Response, abort, jsonify
 
-from auslib.blobs.base import BlobValidationError, createBlob
-from auslib.db import OutdatedDataError, ReadOnlyError
+from auslib.blobs.base import createBlob
+from auslib.db import OutdatedDataError
+from auslib.errors import BlobValidationError, ReadOnlyError
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import AdminView, requirelogin, serialize_signoff_requirements
 from auslib.web.admin.views.problem import problem

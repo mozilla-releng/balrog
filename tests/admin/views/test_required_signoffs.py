@@ -48,7 +48,7 @@ class TestProductRequiredSignoffs(ViewTest):
     def testAddRequiredSignoffThatRequiresSignoff(self):
         ret = self._post("/required_signoffs/product", data=dict(product="fake", channel="a", role="relman", signoffs_required=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
+        self.assertIn("No Signoffs given", ret.get_data(as_text=True))
 
     def testAddRequiredSignoffWithoutPermission(self):
         ret = self._post("/required_signoffs/product", data=dict(product="fake", channel="b", role="releng", signoffs_required=1), username="janet")
@@ -57,12 +57,12 @@ class TestProductRequiredSignoffs(ViewTest):
     def testModifyRequiredSignoff(self):
         ret = self._post("/required_signoffs/product", data=dict(product="fake", channel="a", role="relman", signoffs_required=1, data_version=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
+        self.assertIn("No Signoffs given", ret.get_data(as_text=True))
 
     def testDeleteRequiredSignoff(self):
         ret = self._delete("/required_signoffs/product", qs=dict(product="fake", channel="a", role="relman", data_version=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
+        self.assertIn("Required Signoffs cannot be", ret.get_data(as_text=True))
 
 
 class TestProductRequiredSignoffsHistoryView(ViewTest):
@@ -869,7 +869,7 @@ class TestPermissionsRequiredSignoffs(ViewTest):
     def testAddRequiredSignoffThatRequiresSignoff(self):
         ret = self._post("/required_signoffs/permissions", data=dict(product="fake", role="relman", signoffs_required=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
+        self.assertIn("No Signoffs given", ret.get_data(as_text=True))
 
     def testAddRequiredSignoffWithoutPermission(self):
         ret = self._post("/required_signoffs/permissions", data=dict(product="super", role="releng", signoffs_required=1), username="janet")
@@ -878,12 +878,12 @@ class TestPermissionsRequiredSignoffs(ViewTest):
     def testModifyRequiredSignoff(self):
         ret = self._post("/required_signoffs/permissions", data=dict(product="fake", role="releng", signoffs_required=2, data_version=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
+        self.assertIn("Required Signoffs cannot be", ret.get_data(as_text=True))
 
     def testDeleteRequiredSignoff(self):
         ret = self._delete("/required_signoffs/permissions", qs=dict(product="fake", role="releng", data_version=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
+        self.assertIn("Required Signoffs cannot be", ret.get_data(as_text=True))
 
 
 class TestPermissionsRequiredSignoffsHistoryView(ViewTest):

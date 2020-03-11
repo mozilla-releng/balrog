@@ -896,7 +896,7 @@ class TestSingleRuleView_JSON(ViewTest):
     def testPostWithRequiredSignoff(self):
         ret = self._post("/rules/4", data=dict(product="c", channel="c", data_version=1))
         self.assertEqual(ret.status_code, 400)
-        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
+        self.assertIn("No Signoffs given", ret.get_data(as_text=True))
 
     # Regression test for https://bugzilla.mozilla.org/show_bug.cgi?id=1375670
     def testPostWithRequiredSignoffForProductOnly(self):

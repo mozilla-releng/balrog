@@ -375,7 +375,7 @@ class TestReleasesAPI_JSON(ViewTest):
         data = json.dumps(dict(bouncerProducts=dict(partial="foo"), name="a", hashFunction="sha512"))
         ret = self._post("/releases/a", data=dict(data=data, product="a", data_version=1, schema_version=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("This change requires signoff", ret.get_data(as_text=True))
+        self.assertIn("No Signoffs given", ret.get_data(as_text=True))
 
     def testReleasePostCreatesNewReleasev1(self):
         data = json.dumps(dict(bouncerProducts=dict(partial="foo"), name="e", hashFunction="sha512"))

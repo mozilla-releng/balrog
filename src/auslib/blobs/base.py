@@ -7,13 +7,8 @@ import yaml
 
 # To enable shared jsonschema validators
 import auslib.util.jsonschema_validators  # noqa
+from auslib.errors import BlobValidationError
 from auslib.global_state import cache
-
-
-class BlobValidationError(ValueError):
-    def __init__(self, message, errors, *args, **kwargs):
-        self.errors = errors
-        super(BlobValidationError, self).__init__(message, *args, **kwargs)
 
 
 def createBlob(data):
@@ -58,9 +53,9 @@ def createBlob(data):
     schema_version = data.get("schema_version")
 
     if not schema_version:
-        raise ValueError("schema_version is not set")
+        raise BlobValidationError("Invalid Blob", errors=["schema_version is not set"])
     if schema_version not in blob_map:
-        raise ValueError("schema_version is unknown")
+        raise BlobValidationError("Invalid Blob", errors=["schema_version is unknown"])
 
     return blob_map[schema_version](**data)
 

@@ -9,6 +9,8 @@ from specsynthase.specbuilder import SpecBuilder
 
 import auslib
 from auslib.dockerflow import create_dockerflow_endpoints
+from auslib.errors import BlobValidationError, PermissionDeniedError, ReadOnlyError, SignoffRequiredError
+from auslib.util.auth import verified_userinfo
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import BalrogRequestBodyValidator
 
@@ -35,6 +37,7 @@ validator_map = {"body": BalrogRequestBodyValidator}
 
 connexion_app = connexion.App(__name__, debug=False, options={"swagger_ui": False})
 connexion_app.add_api(spec, validator_map=validator_map, strict_validation=True)
+connexion_app.add_api(path.join(current_dir, "swagger", "api_v2.yml"), base_path="/v2", strict_validation=True, validate_responses=True)
 app = connexion_app.app
 
 create_dockerflow_endpoints(app)
@@ -53,6 +56,64 @@ class UnquotingMiddleware(object):
 
 
 app.wsgi_app = UnquotingMiddleware(app.wsgi_app)
+
+
+@app.before_request
+def setup_request():
+    if request.full_path.startswith("/v2"):
+        from auslib.global_state import dbo
+
+        request.transaction = dbo.begin()
+
+        if request.method in ("POST", "PUT", "DELETE"):
+            username = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])["email"]
+            if not username:
+                log.warning("Login Required")
+                return problem(401, "Unauthenticated", "Login Required")
+            # Machine to machine accounts are identified by uninformative clientIds
+            # In order to keep Balrog permissions more readable, we map them to
+            # more useful usernames, which are stored in the app config.
+            if "@" not in username:
+                username = app.config["M2M_ACCOUNT_MAPPING"].get(username, username)
+            # Even if the user has provided a valid access token, we don't want to assume
+            # that person should be able to access Balrog (in case auth0 is not configured
+            # to be restrictive enough.
+            elif not dbo.isKnownUser(username):
+                log.warning("Authorization Required")
+                return problem(403, "Forbidden", "Authorization Required")
+
+            request.username = username
+
+
+@app.after_request
+def complete_request(response):
+    if request.full_path.startswith("/v2"):
+        if response.status_code >= 400:
+            request.transaction.rollback()
+        else:
+            request.transaction.commit()
+
+    return response
+
+
+@app.errorhandler(BlobValidationError)
+def blob_validation_error(error):
+    return problem(400, "Bad Request", "Invalid Blob", ext={"exception": error.errors})
+
+
+@app.errorhandler(SignoffRequiredError)
+def signoff_required_error(error):
+    return problem(400, "Bad Request", "Signoff Required", ext={"exception": f"{error}"})
+
+
+@app.errorhandler(ReadOnlyError)
+def read_only_error(error):
+    return problem(400, "Bad Request", "Read only", ext={"exception": f"{error}"})
+
+
+@app.errorhandler(PermissionDeniedError)
+def permission_denied_error(error):
+    return problem(403, "Forbidden", "Permission Denied", ext={"exception": f"{error}"})
 
 
 @app.errorhandler(500)

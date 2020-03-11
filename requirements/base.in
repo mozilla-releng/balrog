@@ -1,6 +1,7 @@
 arrow
 auth0-python
 connexion
+deepmerge
 flask
 flask_compress
 flask_wtf
