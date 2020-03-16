@@ -23,9 +23,9 @@ black==19.10b0 \
 check-manifest==0.41 \
     --hash=sha256:4046b1260e63c139be6441fe8db8d9221f495ff39b81add2a55e5ca35dde7a6a \
     --hash=sha256:88afe85b751717688f8bc3b63d9543d0d962da98f1f420c554eaeb8d76c571a8
-click==7.1 \
-    --hash=sha256:482f552f2d5452b9eeffc44165e8b790dd53f75bcce099a812b65e0357e860e2 \
-    --hash=sha256:91eb2c43db0254aaf3b14a3c4e0db914a900aa09bbc33c6e87ede4a8f7c969dc    # via black, pip-compile-multi, pip-tools
+click==7.1.1 \
+    --hash=sha256:8a18b4ea89d8820c5d0c7da8a64b2c324b4dabb695804dbfea19b9be9d88c0cc \
+    --hash=sha256:e345d143d80bf5ee7534056164e5e112ea5e22716bbb1ce727941f4c8b471b9a    # via black, pip-compile-multi, pip-tools
 coverage==5.0.3 \
     --hash=sha256:15cf13a6896048d6d947bf7d222f36e4809ab926894beb748fc9caa14605d9c3 \
     --hash=sha256:1daa3eceed220f9fdb80d5ff950dd95112cd27f70d004c7918ca6dfc6c47054c \
