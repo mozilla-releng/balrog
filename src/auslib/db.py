@@ -705,7 +705,7 @@ class GCSHistory:
         blobs = [b for b in bucket.list_blobs(prefix="{}/{}".format(identifier, data_version))]
         if len(blobs) != 1:
             raise ValueError("Found {} blobs instead of 1".format(len(blobs)))
-        return {self.identifier_column: identifier, "data_version": data_version, self.data_column: json.loads(blobs[0].download_as_string())}
+        return {tuple(self.identifier_columns): identifier, "data_version": data_version, self.data_column: json.loads(blobs[0].download_as_string())}
 
 
 class HistoryTable(AUSTable):
