@@ -7582,10 +7582,10 @@ react-codemirror2@^5.1.0:
   resolved "https://registry.yarnpkg.com/react-codemirror2/-/react-codemirror2-5.1.0.tgz#62de4460178adea40eb52eabf7491669bf3794b8"
   integrity sha512-Cksbgbviuf2mJfMyrKmcu7ycK6zX/ukuQO8dvRZdFWqATf5joalhjFc6etnBdGCcPA2LbhIwz+OPnQxLN/j1Fw==
 
-react-codemirror2@^6.0.0:
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/react-codemirror2/-/react-codemirror2-6.0.0.tgz#180065df57a64026026cde569a9708fdf7656525"
-  integrity sha512-D7y9qZ05FbUh9blqECaJMdDwKluQiO3A9xB+fssd5jKM7YAXucRuEOlX32mJQumUvHUkHRHqXIPBjm6g0FW0Ag==
+react-codemirror2@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/react-codemirror2/-/react-codemirror2-7.0.0.tgz#d74570398439184d26bcf04e434aac2087aa32f5"
+  integrity sha512-q/cHi3IH961LDfR+EsPljziTCMuEQjwGaRusFTkBoNAq/wCoij//9Q9122XagJt8HqScZgw39BmokwmUDHf/Ug==
 
 react-diff-view@^2.4.1:
   version "2.4.1"

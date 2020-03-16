@@ -40,7 +40,7 @@
     "ramda": "^0.27.0",
     "react": "^16.13.0",
     "react-auth0-components": "^1.0.3",
-    "react-codemirror2": "^6.0.0",
+    "react-codemirror2": "^7.0.0",
     "react-diff-view": "^2.4.1",
     "react-dom": "^16.13.0",
     "react-helmet": "^5.2.1",
