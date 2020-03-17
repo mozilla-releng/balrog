@@ -44,7 +44,7 @@
     "react-diff-view": "^2.4.1",
     "react-dom": "^16.13.0",
     "react-helmet": "^5.2.1",
-    "react-hot-loader": "^4.12.19",
+    "react-hot-loader": "^4.12.20",
     "react-number-format": "^4.4.1",
     "react-router-dom": "^5.1.2",
     "react-virtualized": "9.21.1",
