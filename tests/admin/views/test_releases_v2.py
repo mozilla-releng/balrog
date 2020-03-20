@@ -6,7 +6,7 @@ import pytest
 from auslib.global_state import dbo
 from auslib.util.data_structures import infinite_defaultdict
 
-from ...fakes import FakeGCSHistory
+from ...fakes import FakeGCSHistoryAsync
 
 
 def deep_dict(depth, default):
@@ -120,7 +120,7 @@ def get_release_assets_history(name, path):
 # more or less from scratch)
 @pytest.fixture(scope="function")
 def releases_db(db_schema, firefox_56_0_build1, firefox_60_0b3_build1, firefox_64_0_build1, firefox_66_0_build1, firefox_67_0_build1, cdm_17):
-    dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+    dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, async_releases_history_class=FakeGCSHistoryAsync)
     db_schema.create_all(dbo.engine)
     dbo.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
     dbo.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)

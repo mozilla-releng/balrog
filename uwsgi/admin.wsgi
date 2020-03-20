@@ -75,7 +75,9 @@ if not LOCALDEV:
 if LOCALDEV and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")):
     storage_client = storage.Client.create_anonymous_client()
 else:
-    storage_client = storage.Client()
+    from gcloud.aio.storage import Storage
+
+    storage_client = Storage()
 
 # Check if we have write access, and set the bucket configuration appropriately
 # There's basically two cases here:
@@ -89,13 +91,16 @@ try:
     # Turn off formatting because it is clearer to have these listed one after another
     # fmt: off
     buckets = {
-        "nightly": storage_client.bucket(os.environ["NIGHTLY_HISTORY_BUCKET"]),
-        "": storage_client.bucket(os.environ["RELEASES_HISTORY_BUCKET"]),
+        "nightly": storage_client.get_bucket(os.environ["NIGHTLY_HISTORY_BUCKET"]),
+        "": storage_client.get_bucket(os.environ["RELEASES_HISTORY_BUCKET"]),
     }
     # fmt: on
     for bucket in buckets.values():
-        blob = bucket.blob("startuptest")
-        blob.upload_from_string("startuptest", content_type="text/plain")
+        blob = bucket.new_blob("startuptest")
+        import asyncio
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(blob.upload("startuptest"))
 except (ValueError, Forbidden) as e:
     if not LOCALDEV:
         if isinstance(e, Forbidden) or (isinstance(e, ValueError) and "Anonymous credentials" not in e.args[0]):
