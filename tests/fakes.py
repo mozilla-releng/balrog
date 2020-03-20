@@ -1,13 +1,13 @@
 import json
 
-from auslib.db import GCSHistory
+from auslib.db import GCSHistory, GCSHistoryAsync
 
 
 class FakeBlob:
     def __init__(self, data=None):
         self.data = data
 
-    def upload_from_string(self, body, *args, **kwargs):
+    async def upload(self, body, *args, **kwargs):
         self.data = body
 
 
@@ -15,7 +15,7 @@ class FakeBucket:
     def __init__(self):
         self.blobs = {}
 
-    def blob(self, blob_name, *args, **kwargs):
+    def new_blob(self, blob_name, *args, **kwargs):
         self.blobs[blob_name] = FakeBlob()
         return self.blobs[blob_name]
 
@@ -38,3 +38,13 @@ class FakeGCSHistory(GCSHistory):
                 data = blob.data
                 break
         return {"name": column_values["name"], "data_version": data_version, "data": json.loads(data)}
+
+
+class FakeGCSHistoryAsync(GCSHistoryAsync):
+    def __init__(self, *args, identifier_columns=["name"], **kwargs):
+        self.bucket = FakeBucket()
+        self.identifier_columns = identifier_columns
+        self.data_column = "data"
+
+    def _getBucket(self, identifier):
+        return self.bucket

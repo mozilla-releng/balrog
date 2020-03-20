@@ -1,3 +1,4 @@
+import asyncio
 import itertools
 import json
 import logging
@@ -11,6 +12,7 @@ from os import path
 import migrate.versioning.api
 import migrate.versioning.schema
 import sqlalchemy.types
+from aiohttp import ClientSession
 from sqlalchemy import JSON, BigInteger, Boolean, Column, Integer, MetaData, String, Table, Text, create_engine, func, join, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.interfaces import PoolListener
@@ -33,6 +35,8 @@ from auslib.util.rulematching import (
 )
 from auslib.util.timestamp import getMillisecondTimestamp
 from auslib.util.versions import get_version_class
+
+loop = asyncio.get_event_loop()
 
 
 def rows_to_dicts(rows):
@@ -398,7 +402,7 @@ class AUSTable(object):
         unconsumed_columns = {k: columns[k] for k in columns.keys() if k not in table_columns}
         return self.t.insert(values=table_columns), unconsumed_columns
 
-    def _prepareInsert(self, trans, changed_by, **columns):
+    def _sharedPrepareInsert(self, trans, changed_by, **columns):
         """Prepare an INSERT statement for commit. If this table has versioning enabled,
            data_version will be set to 1. If this table has history enabled, two rows
            will be created in that table: one representing the current state (NULL),
@@ -411,13 +415,23 @@ class AUSTable(object):
             data["data_version"] = 1
         query, unconsumed_columns = self._insertStatement(**data)
         ret = trans.execute(query)
-        if self.history:
-            self.history.forInsert(ret.inserted_primary_key, data, changed_by, trans)
         if self.onInsert:
             pk_columns = self.t.primary_key.columns.keys()
             pk_values = ret.inserted_primary_key
             pk_args = dict(zip(pk_columns, pk_values))
             self.onInsert(self, "INSERT", changed_by, query, trans, additional_columns=unconsumed_columns, pk_args=pk_args)
+        return data, ret
+
+    def _prepareInsert(self, trans, changed_by, **columns):
+        data, ret = self._sharedPrepareInsert(trans, changed_by, **columns)
+        if self.history:
+            self.history.forInsert(ret.inserted_primary_key, data, changed_by, trans)
+        return ret
+
+    async def _asyncPrepareInsert(self, trans, changed_by, **columns):
+        data, ret = self._sharedPrepareInsert(trans, changed_by, **columns)
+        if self.history:
+            await self.history.forInsert(ret.inserted_primary_key, data, changed_by, trans)
         return ret
 
     def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
@@ -449,6 +463,35 @@ class AUSTable(object):
             with AUSTransaction(self.getEngine()) as trans:
                 return self._prepareInsert(trans, changed_by, **columns)
 
+    async def async_insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
+        """Perform an INSERT statement on this table. See AUSTable._insertStatement for
+           a description of columns.
+
+           :param changed_by: The username of the person inserting the row. Required when
+                              history is enabled. Unused otherwise. No authorization checks are done
+                              at this level.
+           :type changed_by: str
+           :param transaction: A transaction object to add the insert statement (and history changes) to.
+                               If provided, you must commit the transaction yourself. If None, they will
+                               be added to a locally-scoped transaction and committed.
+           :param dryrun: If true, this insert statement will not actually be run.
+           :type dryrun: bool
+
+           :rtype: sqlalchemy.engine.base.ResultProxy
+        """
+        if self.history and not changed_by:
+            raise ValueError("changed_by must be passed for Tables that have history")
+
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
+
+        if transaction:
+            return await self._asyncPrepareInsert(transaction, changed_by, **columns)
+        else:
+            with AUSTransaction(self.getEngine()) as trans:
+                return await self._asyncPrepareInsert(trans, changed_by, **columns)
+
     def _deleteStatement(self, where):
         """Create a DELETE statement for this table.
 
@@ -463,7 +506,7 @@ class AUSTable(object):
                 query = query.where(cond)
         return query
 
-    def _prepareDelete(self, trans, where, changed_by, old_data_version):
+    def _sharedPrepareDelete(self, trans, where, changed_by, old_data_version):
         """Prepare a DELETE statement for commit. If this table has history enabled,
            a row will be created in that table representing the new state of the
            row being deleted (NULL). If versioning is enabled and old_data_version
@@ -486,8 +529,6 @@ class AUSTable(object):
         ret = trans.execute(query)
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to delete row, old_data_version doesn't match current data_version")
-        if self.history:
-            self.history.forDelete(row, changed_by, trans)
         if self.scheduled_changes:
             # If this table has active scheduled changes we cannot allow it to be deleted
             sc_where = [self.scheduled_changes.complete == False]  # noqa
@@ -495,6 +536,20 @@ class AUSTable(object):
                 sc_where.append(getattr(self.scheduled_changes, "base_%s" % pk.name) == row[pk.name])
             if self.scheduled_changes.select(where=sc_where, transaction=trans):
                 raise ChangeScheduledError("Cannot delete rows that have changes scheduled.")
+
+        return row, ret
+
+    def _prepareDelete(self, trans, where, changed_by, old_data_version):
+        row, ret = self._sharedPrepareDelete(trans, where, changed_by, old_data_version)
+        if self.history:
+            self.history.forDelete(row, changed_by, trans)
+
+        return ret
+
+    async def _asyncPrepareDelete(self, trans, where, changed_by, old_data_version):
+        row, ret = self._sharedPrepareDelete(trans, where, changed_by, old_data_version)
+        if self.history:
+            await self.history.forDelete(row, changed_by, trans)
 
         return ret
 
@@ -542,6 +597,50 @@ class AUSTable(object):
             with AUSTransaction(self.getEngine()) as trans:
                 return self._prepareDelete(trans, where, changed_by, old_data_version)
 
+    async def async_delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
+        """Perform a DELETE statement on this table. See AUSTable._deleteStatement for
+           a description of `where`. To simplify versioning, this method can only
+           delete a single row per invocation. If the where clause given would delete
+           zero or multiple rows, a WrongNumberOfRowsError is raised.
+
+           :param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
+           :type where: list of clauses or key/value pairs.
+           :param changed_by: The username of the person deleting the row(s). Required when
+                              history is enabled. Unused otherwise. No authorization checks are done
+                              at this level.
+           :type changed_by: str
+           :param old_data_version: Previous version of the row to be deleted. If this version doesn't
+                                    match the current version of the row, an OutdatedDataError will be
+                                    raised and the delete will fail. Required when versioning is enabled.
+           :type old_data_version: int
+           :param transaction: A transaction object to add the delete statement (and history changes) to.
+                               If provided, you must commit the transaction yourself. If None, they will
+                               be added to a locally-scoped transaction and committed.
+           :param dryrun: If true, this insert statement will not actually be run.
+           :type dryrun: bool
+
+           :rtype: sqlalchemy.engine.base.ResultProxy
+        """
+        # If "where" is key/value pairs, we need to convert it to SQLAlchemy
+        # clauses before proceeding.
+        if hasattr(where, "keys"):
+            where = [getattr(self, k) == v for k, v in where.items()]
+
+        if self.history and not changed_by:
+            raise ValueError("changed_by must be passed for Tables that have history")
+        if self.versioned and not old_data_version:
+            raise ValueError("old_data_version must be passed for Tables that are versioned")
+
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
+
+        if transaction:
+            return await self._asyncPrepareDelete(transaction, where, changed_by, old_data_version)
+        else:
+            with AUSTransaction(self.getEngine()) as trans:
+                return await self._asyncPrepareDelete(trans, where, changed_by, old_data_version)
+
     def _updateStatement(self, where, what):
         """Create an UPDATE statement for this table
 
@@ -560,7 +659,7 @@ class AUSTable(object):
                 query = query.where(cond)
         return query, unconsumed_columns
 
-    def _prepareUpdate(self, trans, where, what, changed_by, old_data_version):
+    def _sharedPrepareUpdate(self, trans, where, what, changed_by, old_data_version):
         """Prepare an UPDATE statement for commit. If this table has versioning enabled,
            data_version will be increased by 1. If this table has history enabled, a
            row will be added to that table represent the new state of the data.
@@ -596,10 +695,21 @@ class AUSTable(object):
         # AUSTable.update() after handling the OutdatedDataError.
         if ret.rowcount != 1:
             raise OutdatedDataError("Failed to update row, old_data_version doesn't match current data_version")
-        if self.history:
-            self.history.forUpdate(new_row, changed_by, trans)
         if self.scheduled_changes:
             self.scheduled_changes.mergeUpdate(orig_row, what, changed_by, trans)
+        return new_row, ret
+
+    def _prepareUpdate(self, trans, where, what, changed_by, old_data_version):
+        new_row, ret = self._sharedPrepareUpdate(trans, where, what, changed_by, old_data_version)
+        if self.history:
+            self.history.forUpdate(new_row, changed_by, trans)
+        return ret
+
+    async def _asyncPrepareUpdate(self, trans, where, what, changed_by, old_data_version):
+        new_row, ret = self._sharedPrepareUpdate(trans, where, what, changed_by, old_data_version)
+        if self.history:
+            await self.history.forUpdate(new_row, changed_by, trans)
+
         return ret
 
     def update(self, where, what, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
@@ -648,6 +758,52 @@ class AUSTable(object):
             with AUSTransaction(self.getEngine()) as trans:
                 return self._prepareUpdate(trans, where, what, changed_by, old_data_version)
 
+    async def async_update(self, where, what, changed_by=None, old_data_version=None, transaction=None, dryrun=False):
+        """Perform an UPDATE statement on this table. See AUSTable._updateStatement for
+           a description of `where` and `what`. This method can only update a single row
+           per invocation. If the where clause given would update zero or multiple rows, a
+           WrongNumberOfRowsError is raised.
+
+           :param where: A list of SQLAlchemy clauses, or a key/value pair of columns and values.
+           :type where: list of clauses or key/value pairs.
+           :param what: Key/value pairs containing new values for the given columns.
+           :type what: key/value pairs
+           :param changed_by: The username of the person inserting the row. Required when
+                              history is enabled. Unused otherwise. No authorization checks are done
+                              at this level.
+           :type changed_by: str
+           :param old_data_version: Previous version of the row to be deleted. If this version doesn't
+                                    match the current version of the row, an OutdatedDataError will be
+                                    raised and the delete will fail. Required when versioning is enabled.
+           :type old_data_version: int
+           :param transaction: A transaction object to add the update statement (and history changes) to.
+                               If provided, you must commit the transaction yourself. If None, they will
+                               be added to a locally-scoped transaction and committed.
+           :param dryrun: If true, this insert statement will not actually be run.
+           :type dryrun: bool
+
+           :rtype: sqlalchemy.engine.base.ResultProxy
+        """
+        # If "where" is key/value pairs, we need to convert it to SQLAlchemy
+        # clauses before proceeding.
+        if hasattr(where, "keys"):
+            where = [getattr(self, k) == v for k, v in where.items()]
+
+        if self.history and not changed_by:
+            raise ValueError("changed_by must be passed for Tables that have history")
+        if self.versioned and not old_data_version:
+            raise ValueError("update: old_data_version must be passed for Tables that are versioned")
+
+        if dryrun:
+            self.log.debug("In dryrun mode, not doing anything...")
+            return
+
+        if transaction:
+            return await self._asyncPrepareUpdate(transaction, where, what, changed_by, old_data_version)
+        else:
+            with AUSTransaction(self.getEngine()) as trans:
+                return await self._asyncPrepareUpdate(trans, where, what, changed_by, old_data_version)
+
     def count(self, column="*", where=None, transaction=None):
         count_statement = select(columns=[func.count(column)], from_obj=self.t)
         if where:
@@ -682,30 +838,73 @@ class GCSHistory:
         identifier = "-".join([columns.get(i) for i in self.identifier_columns])
         for data_version, ts, data in ((None, timestamp - 1, ""), (columns.get("data_version"), timestamp, json.dumps(columns[self.data_column]))):
             bname = "{}/{}-{}-{}.json".format(identifier, data_version, ts, changed_by)
-            blob = self._getBucket(identifier).blob(bname)
-            blob.upload_from_string(data, content_type="application/json")
+            blob = self._getBucket(identifier).new_blob(bname)
+            loop.run_until_complete(blob.upload(data))
 
     def forDelete(self, rowData, changed_by, trans):
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
-        blob = self._getBucket(identifier).blob(bname)
-        blob.upload_from_string("", content_type="application/json")
+        blob = self._getBucket(identifier).new_blob(bname)
+        loop.run_until_complete(blob.upload(""))
 
     def forUpdate(self, rowData, changed_by, trans):
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
-        blob = self._getBucket(identifier).blob(bname)
-        blob.upload_from_string(json.dumps(rowData[self.data_column]), content_type="application/json")
+        blob = self._getBucket(identifier).new_blob(bname)
+        loop.run_until_complete(blob.upload(json.dumps(rowData[self.data_column])))
 
     def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
         if not set(self.identifier_columns).issubset(column_values.keys()) or not data_version:
             raise ValueError("Cannot find GCS changes without {} and data_version".format(self.identifier_columns))
         identifier = "-".join([column_values[i] for i in self.identifier_columns])
         bucket = self._getBucket(identifier)
-        blobs = [b for b in bucket.list_blobs(prefix="{}/{}".format(identifier, data_version))]
+        blobs = [b for b in loop.run_until_complete(bucket.list_blobs(prefix="{}/{}".format(identifier, data_version)))]
         if len(blobs) != 1:
             raise ValueError("Found {} blobs instead of 1".format(len(blobs)))
-        return {tuple(self.identifier_columns): identifier, "data_version": data_version, self.data_column: json.loads(blobs[0].download_as_string())}
+        data = loop.run_until_complete(blobs[0].download())
+        return {tuple(self.identifier_columns): identifier, "data_version": data_version, self.data_column: json.loads(data)}
+
+
+class GCSHistoryAsync:
+    def __init__(self, db, dialect, metadata, baseTable, buckets, identifier_columns, data_column):
+        self.db = db
+        self.buckets = buckets
+        self.identifier_columns = identifier_columns
+        self.data_column = data_column
+
+    def _getBucket(self, identifier):
+        for substring, bucket in self.buckets.items():
+            if substring in identifier:
+                return bucket
+        else:
+            raise KeyError("Couldn't find bucket to place {} history in.".format(identifier))
+
+    async def forInsert(self, insertedKeys, columns, changed_by, trans):
+        timestamp = getMillisecondTimestamp()
+        identifier = "-".join([columns.get(i) for i in self.identifier_columns])
+        for data_version, ts, data in ((None, timestamp - 1, ""), (columns.get("data_version"), timestamp, json.dumps(columns[self.data_column]))):
+            bname = "{}/{}-{}-{}.json".format(identifier, data_version, ts, changed_by)
+            blob = self._getBucket(identifier).new_blob(bname)
+            # Using a separate session for each request is not ideal, but it's
+            # the only thing that seems to work. Ideally, we'd share one session
+            # for the entire application, but when bhearsum tried this it resulted
+            # in hangs that he suspected were caused by connection re-use.
+            async with ClientSession() as session:
+                await blob.upload(data, session=session)
+
+    async def forDelete(self, rowData, changed_by, trans):
+        identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
+        bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
+        blob = self._getBucket(identifier).new_blob(bname)
+        async with ClientSession() as session:
+            await blob.upload("", session=session)
+
+    async def forUpdate(self, rowData, changed_by, trans):
+        identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
+        bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
+        blob = self._getBucket(identifier).new_blob(bname)
+        async with ClientSession() as session:
+            await blob.upload(json.dumps(rowData[self.data_column]), session=session)
 
 
 class HistoryTable(AUSTable):
@@ -2706,15 +2905,29 @@ class AUSDatabase(object):
     engine = None
     migrate_repo = path.join(path.dirname(__file__), "migrate")
 
-    def __init__(self, dburi=None, mysql_traditional_mode=False, releases_history_buckets=None, releases_history_class=GCSHistory):
+    def __init__(
+        self,
+        dburi=None,
+        mysql_traditional_mode=False,
+        releases_history_buckets=None,
+        releases_history_class=GCSHistory,
+        async_releases_history_class=GCSHistoryAsync,
+    ):
         """Create a new AUSDatabase. Before this object is useful, dburi must be
            set, either through the constructor or setDburi()"""
         if dburi:
-            self.setDburi(dburi, mysql_traditional_mode, releases_history_buckets, releases_history_class)
+            self.setDburi(dburi, mysql_traditional_mode, releases_history_buckets, releases_history_class, async_releases_history_class)
         self.log = logging.getLogger(self.__class__.__name__)
         self.systemAccounts = []
 
-    def setDburi(self, dburi, mysql_traditional_mode=False, releases_history_buckets=None, releases_history_class=GCSHistory):
+    def setDburi(
+        self,
+        dburi,
+        mysql_traditional_mode=False,
+        releases_history_buckets=None,
+        releases_history_class=GCSHistory,
+        async_releases_history_class=GCSHistoryAsync,
+    ):
         """Setup the database connection. Note that SQLAlchemy only opens a connection
            to the database when it needs to, however."""
         if self.engine:
@@ -2728,8 +2941,8 @@ class AUSDatabase(object):
         dialect = self.engine.name
         self.rulesTable = Rules(self, self.metadata, dialect)
         self.releasesTable = Releases(self, self.metadata, dialect, releases_history_buckets, releases_history_class)
-        self.releasesJSONTable = ReleasesJSON(self, self.metadata, dialect, releases_history_buckets, releases_history_class)
-        self.releaseAssetsTable = ReleaseAssets(self, self.metadata, dialect, releases_history_buckets, releases_history_class)
+        self.releasesJSONTable = ReleasesJSON(self, self.metadata, dialect, releases_history_buckets, async_releases_history_class)
+        self.releaseAssetsTable = ReleaseAssets(self, self.metadata, dialect, releases_history_buckets, async_releases_history_class)
         self.permissionsTable = Permissions(self, self.metadata, dialect)
         self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
         self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)
