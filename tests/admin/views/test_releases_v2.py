@@ -2,11 +2,14 @@ from collections import defaultdict
 from copy import deepcopy
 
 import pytest
+from aiohttp import ClientError
+from mock import MagicMock
 
+import auslib.services.releases
 from auslib.global_state import dbo
 from auslib.util.data_structures import infinite_defaultdict
 
-from ...fakes import FakeGCSHistoryAsync
+from ...fakes import FakeBlobFactory, FakeGCSHistoryAsync
 
 
 def deep_dict(depth, default):
@@ -485,6 +488,22 @@ def test_put_fails_for_readonly_release(api, firefox_60_0b3_build1):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_put_fails_for_non_aiohttp_exception_in_future(api, firefox_60_0b3_build1, monkeypatch):
+    monkeypatch.setattr(dbo.releases_json.history.bucket, "new_blob", FakeBlobFactory(exc=ValueError))
+    monkeypatch.setattr(dbo.release_assets.history.bucket, "new_blob", FakeBlobFactory(exc=ValueError))
+
+    firefox_60_0b3_build1 = deepcopy(firefox_60_0b3_build1)
+    firefox_60_0b3_build1["detailsUrl"] = "https://newurl"
+    firefox_60_0b3_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]["buildID"] = "9999999999999"
+
+    old_data_versions = populate_versions_dict(firefox_60_0b3_build1)
+    old_data_versions["."] = 1
+
+    ret = api.put("/v2/releases/Firefox-60.0b3-build1", json={"blob": firefox_60_0b3_build1, "product": "Firefox", "old_data_versions": old_data_versions})
+    assert ret.status_code == 500, ret.data
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_put_succeeds(api, firefox_60_0b3_build1):
     firefox_60_0b3_build1 = deepcopy(firefox_60_0b3_build1)
     firefox_60_0b3_build1["detailsUrl"] = "https://newurl"
@@ -519,6 +538,60 @@ def test_put_succeeds(api, firefox_60_0b3_build1):
     locale_history = get_release_assets_history("Firefox-60.0b3-build1", ".platforms.Linux_x86_64-gcc3.locales.en-US")
     assert len(locale_history) == 3
     assert "-bob.json" in locale_history[2][0]
+
+    unchanged_locale = (
+        dbo.release_assets.t.select()
+        .where(dbo.release_assets.name == "Firefox-60.0b3-build1")
+        .where(dbo.release_assets.path == ".platforms.Linux_x86_64-gcc3.locales.af")
+        .execute()
+        .fetchone()
+    )
+    assert unchanged_locale["data_version"] == 1
+    unchanged_locale_history = get_release_assets_history("Firefox-60.0b3-build1", ".platforms.Linux_x86_64-gcc3.locales.af")
+    assert len(unchanged_locale_history) == 2
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_put_succeeds_when_history_writes_fail(api, firefox_60_0b3_build1, monkeypatch):
+    mocked_sentry = MagicMock()
+    monkeypatch.setattr(dbo.releases_json.history.bucket, "new_blob", FakeBlobFactory(exc=ClientError))
+    monkeypatch.setattr(dbo.release_assets.history.bucket, "new_blob", FakeBlobFactory(exc=ClientError))
+    monkeypatch.setattr(auslib.services.releases, "capture_exception", mocked_sentry)
+
+    firefox_60_0b3_build1 = deepcopy(firefox_60_0b3_build1)
+    firefox_60_0b3_build1["detailsUrl"] = "https://newurl"
+    firefox_60_0b3_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]["buildID"] = "9999999999999"
+
+    old_data_versions = populate_versions_dict(firefox_60_0b3_build1)
+    old_data_versions["."] = 1
+    new_data_versions = versions_dict(default=2)
+    new_data_versions["."] = 2
+    assert new_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
+
+    ret = api.put("/v2/releases/Firefox-60.0b3-build1", json={"blob": firefox_60_0b3_build1, "product": "Firefox", "old_data_versions": old_data_versions})
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions
+
+    assert mocked_sentry.call_count == 2
+
+    base_blob = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute().fetchone().data
+    locale_blob = (
+        dbo.release_assets.t.select()
+        .where(dbo.release_assets.name == "Firefox-60.0b3-build1")
+        .where(dbo.release_assets.path == ".platforms.Linux_x86_64-gcc3.locales.en-US")
+        .execute()
+        .fetchone()
+        .data
+    )
+    assert base_blob["detailsUrl"] == "https://newurl"
+    assert locale_blob["buildID"] == "9999999999999"
+    assert "locales" not in base_blob["platforms"]["Linux_x86_64-gcc3"]
+
+    # These should only contain the pre-existing history entries
+    base_history = get_release_history("Firefox-60.0b3-build1")
+    assert len(base_history) == 2
+    locale_history = get_release_assets_history("Firefox-60.0b3-build1", ".platforms.Linux_x86_64-gcc3.locales.en-US")
+    assert len(locale_history) == 2
 
     unchanged_locale = (
         dbo.release_assets.t.select()
@@ -773,6 +846,21 @@ def test_post_fails_for_readonly_release(api, firefox_60_0b3_build1):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_post_fails_for_non_aiohttp_exception_in_future(api, monkeypatch):
+    monkeypatch.setattr(dbo.releases_json.history.bucket, "new_blob", FakeBlobFactory(exc=ValueError))
+    monkeypatch.setattr(dbo.release_assets.history.bucket, "new_blob", FakeBlobFactory(exc=ValueError))
+
+    blob = {"detailsUrl": "https://newurl", "platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "22222222222"}}}}}
+
+    old_data_versions = versions_dict()
+    old_data_versions["."] = 1
+    assert old_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
+
+    ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": blob, "old_data_versions": old_data_versions})
+    assert ret.status_code == 500, ret.data
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_post_succeeds(api):
     blob = {"detailsUrl": "https://newurl", "platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "22222222222"}}}}}
 
@@ -810,6 +898,63 @@ def test_post_succeeds(api):
     locale_history = get_release_assets_history("Firefox-60.0b3-build1", ".platforms.Darwin_x86_64-gcc3-u-i386-x86_64.locales.de")
     assert len(locale_history) == 3
     assert "-bob.json" in locale_history[2][0]
+
+    unchanged_locale = (
+        dbo.release_assets.t.select()
+        .where(dbo.release_assets.name == "Firefox-60.0b3-build1")
+        .where(dbo.release_assets.path == ".platforms.Linux_x86_64-gcc3.locales.zh-TW")
+        .execute()
+        .fetchone()
+    )
+    assert unchanged_locale["data_version"] == 1
+    unchanged_locale_history = get_release_assets_history("Firefox-60.0b3-build1", ".platforms.Linux_x86_64-gcc3.locales.zh-TW")
+    assert len(unchanged_locale_history) == 2
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_post_succeeds_when_history_writes_fails(api, monkeypatch):
+    mocked_sentry = MagicMock()
+    monkeypatch.setattr(dbo.releases_json.history.bucket, "new_blob", FakeBlobFactory(exc=ClientError))
+    monkeypatch.setattr(dbo.release_assets.history.bucket, "new_blob", FakeBlobFactory(exc=ClientError))
+    monkeypatch.setattr(auslib.services.releases, "capture_exception", mocked_sentry)
+
+    blob = {"detailsUrl": "https://newurl", "platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "22222222222"}}}}}
+
+    old_data_versions = versions_dict()
+    old_data_versions["."] = 1
+    assert old_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
+    new_data_versions = versions_dict(default=2)
+    new_data_versions["."] = 2
+    assert new_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
+
+    ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": blob, "old_data_versions": old_data_versions})
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions
+
+    assert mocked_sentry.call_count == 2
+
+    base_blob = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute().fetchone().data
+    locale_blob = (
+        dbo.release_assets.t.select()
+        .where(dbo.release_assets.name == "Firefox-60.0b3-build1")
+        .where(dbo.release_assets.path == ".platforms.Darwin_x86_64-gcc3-u-i386-x86_64.locales.de")
+        .execute()
+        .fetchone()
+        .data
+    )
+    assert base_blob["detailsUrl"] == "https://newurl"
+    assert locale_blob["buildID"] == "22222222222"
+    # Make sure something we didn't touch on the blobs are unchanged
+    assert base_blob["appVersion"] == "60.0"
+    assert locale_blob["appVersion"] == "60.0"
+    # Make sure that no locale information made it into the base blob
+    assert "locales" not in base_blob["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]
+
+    # This should only contain pre-existing history entries
+    base_history = get_release_history("Firefox-60.0b3-build1")
+    assert len(base_history) == 2
+    locale_history = get_release_assets_history("Firefox-60.0b3-build1", ".platforms.Darwin_x86_64-gcc3-u-i386-x86_64.locales.de")
+    assert len(locale_history) == 2
 
     unchanged_locale = (
         dbo.release_assets.t.select()

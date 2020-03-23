@@ -3,8 +3,10 @@ import logging
 from copy import deepcopy
 from itertools import chain
 
+from aiohttp import ClientError
 from deepmerge import Merger
 from flask import current_app as app
+from sentry_sdk import capture_exception
 from sqlalchemy import join, select
 
 from ..blobs.base import createBlob
@@ -344,7 +346,15 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
     # Raises if there are errors
     createBlob(full_blob).validate(current_product, app.config["WHITELISTED_DOMAINS"])
 
-    loop.run_until_complete(asyncio.gather(*futures))
+    results = loop.run_until_complete(asyncio.gather(*futures, return_exceptions=True))
+    for r in results:
+        if isinstance(r, Exception):
+            # aiohttp exceptions indicate a failure uploading to GCS, which don't warrant
+            # sending an error back to the client.
+            if isinstance(r, ClientError):
+                capture_exception(r)
+            else:
+                raise r
 
     return new_data_versions
 
@@ -462,6 +472,15 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
             new_data_versions["."] = 1
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.gather(*futures))
+    results = loop.run_until_complete(asyncio.gather(*futures, return_exceptions=True))
+
+    for r in results:
+        if isinstance(r, Exception):
+            # aiohttp exceptions indicate a failure uploading to GCS, which don't warrant
+            # sending an error back to the client.
+            if isinstance(r, ClientError):
+                capture_exception(r)
+            else:
+                raise r
 
     return new_data_versions

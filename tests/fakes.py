@@ -3,12 +3,21 @@ import json
 from auslib.db import GCSHistory, GCSHistoryAsync
 
 
-class FakeBlob:
-    def __init__(self, data=None):
-        self.data = data
+def FakeBlobFactory(exc=None):
+    class fb:
+        def __init__(self, data=None):
+            self.data = data
 
-    async def upload(self, body, *args, **kwargs):
-        self.data = body
+        async def upload(self, body, *args, **kwargs):
+            if exc:
+                raise exc("I failed to upload")
+            else:
+                self.data = body
+
+    return fb
+
+
+FakeBlob = FakeBlobFactory()
 
 
 class FakeBucket:
