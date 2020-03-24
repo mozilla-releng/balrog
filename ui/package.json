@@ -59,7 +59,7 @@
     "eslint": "^6.8.0",
     "jest": "^25.1.0",
     "neutrino": "^9.1.0",
-    "webpack": "^4.42.0",
+    "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.10.3",
     "worker-loader": "^2.0.0"
