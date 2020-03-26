@@ -931,6 +931,19 @@ def test_put_succeeds_for_nonsplit_release(api, cdm_17):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_put_cancels_scheduled_updates(api, firefox_66_0_build1):
+    old_data_versions = populate_versions_dict(firefox_66_0_build1)
+
+    ret = api.put("/v2/releases/Firefox-66.0-build1", json={"blob": firefox_66_0_build1, "product": "Firefox", "old_data_versions": old_data_versions})
+    assert ret.status_code == 200, ret.data
+
+    base_sc = dbo.releases_json.scheduled_changes.t.select().where(dbo.releases_json.scheduled_changes.base_name == "Firefox-66.0-build1").where(dbo.releases_json.scheduled_changes.complete == False).execute().fetchall()
+    assert len(base_sc) == 0
+    locale_sc = dbo.release_assets.scheduled_changes.t.select().where(dbo.release_assets.scheduled_changes.base_name == "Firefox-66.0-build1").where(dbo.release_assets.scheduled_changes.complete == False).execute().fetchall()
+    assert len(locale_sc) == 0
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_post_fails_when_release_doesnt_exist(api):
     blob = {"detailsUrl": "https://newurl", "platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "999999999999999"}}}}}
     old_data_versions = populate_versions_dict(blob)

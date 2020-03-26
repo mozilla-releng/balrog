@@ -2412,6 +2412,18 @@ class ReleasesJSON(AUSTable):
 
         return potential_required_signoffs
 
+    def getPotentialRequiredSignoffsForProduct(self, product, transaction=None):
+        potential_required_signoffs = {"rs": []}
+        where = [self.db.productRequiredSignoffs.product == product]
+        product_rs = self.db.productRequiredSignoffs.select(where=where, transaction=transaction)
+        if product_rs:
+            role_map = defaultdict(list)
+            for rs in product_rs:
+                role_map[rs["role"]].append(rs)
+            signoffs_required = [max(signoffs, default=None, key=lambda k: k["signoffs_required"]) for signoffs in role_map.values()]
+            potential_required_signoffs["rs"] = signoffs_required
+        return potential_required_signoffs
+
 
 class ReleaseAssets(AUSTable):
     def __init__(self, db, metadata, dialect, history_buckets, historyClass):

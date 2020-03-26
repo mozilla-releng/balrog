@@ -13,6 +13,8 @@ from ..blobs.base import createBlob
 from ..errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
 from ..global_state import dbo
 from ..util.data_structures import ensure_path_exists, get_by_path, infinite_defaultdict, set_by_path
+from ..util.timestamp import getMillisecondTimestamp
+from ..web.admin.views.base import serialize_signoff_requirements # todo: moveme
 
 log = logging.getLogger(__file__)
 
@@ -245,10 +247,19 @@ def get_releases(trans):
     )
     j = join(dbo.releases_json.t, dbo.rules.t, ((dbo.releases_json.name == dbo.rules.mapping) | (dbo.releases_json.name == dbo.rules.fallbackMapping)))
     rule_mappings = trans.execute(select([dbo.releases_json.name, dbo.rules.rule_id, dbo.rules.product, dbo.rules.channel]).select_from(j)).fetchall()
+    product_required_signoffs = {}
     for row in releases:
         refs = [ref for ref in rule_mappings if ref[0] == row["name"]]
         row["rule_info"] = {str(ref[1]): {"product": ref[2], "channel": ref[3]} for ref in refs}
         row["scheduled_changes"] = []
+        row["required_signoffs"] = serialize_signoff_requirements(
+            [obj for v in dbo.releases_json.getPotentialRequiredSignoffs([row]).values() for obj in v]
+        )
+        if row["product"] not in product_required_signoffs:
+            product_required_signoffs[row["product"]] = serialize_signoff_requirements(
+                dbo.releases_json.getPotentialRequiredSignoffsForProduct(row["product"])["rs"]
+            )
+        row["product_required_signoffs"] = product_required_signoffs[row["product"]]
 
     for table in (dbo.releases_json.scheduled_changes, dbo.release_assets.scheduled_changes):
         for sc in table.select(where={"complete": False}):
@@ -485,6 +496,12 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
         str_path = "." + ".".join(path)
         seen_assets.add(str_path)
         if item == current_assets.get(str_path, {}).get("data"):
+            # If the desired state in the same as the current state, we should cancel any
+            # pending scheduled changes, if they exist.
+            # TODO: carry this to base table too
+            sc = dbo.release_assets.scheduled_changes.select(where={"base_name": name, "base_path": str_path, "complete": False}, columns=[dbo.release_assets.scheduled_changes.sc_id, dbo.release_assets.scheduled_changes.data_version], transaction=trans)
+            if sc:
+                dbo.release_assets.scheduled_changes.delete(where={"sc_id": sc[0]["sc_id"]}, old_data_version=sc[0]["data_version"], changed_by=changed_by, transaction=trans)
             continue
 
         old_data_version = get_by_path(old_data_versions, path)
@@ -538,7 +555,11 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
             )
             coros.append(coro)
 
-    if current_base_blob != base_blob:
+    if current_base_blob == base_blob:
+        sc = dbo.releases_json.scheduled_changes.select(where={"base_name": name, "complete": False}, columns=[dbo.releases_json.scheduled_changes.sc_id, dbo.releases_json.scheduled_changes.data_version], transaction=trans)
+        if sc:
+            dbo.releases_json.scheduled_changes.delete(where={"base_name": name, "complete": False}, old_data_version=sc[0]["data_version"], changed_by=changed_by, transaction=trans)
+    else:
         if old_data_versions.get("."):
             what = {"data": base_blob}
             if product:
@@ -566,6 +587,29 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
 
 def delete_release(name, changed_by, trans):
     coros = []
+
+    # Delete scheduled changes first because the database layer doesn't allow
+    # objects with scheduled changes to be deleted.
+    if sc_exists(name, trans):
+        # No permissions checks need to be done here because releases that are only
+        # scheduled changes (aka scheduled inserts do not require permission to delete)
+        # Releases that truly exist will have their permissions checked further down
+        row = dbo.releases_json.scheduled_changes.select(
+            where={"base_name": name}, columns=[dbo.releases_json.scheduled_changes.base_product, dbo.releases_json.scheduled_changes.data_version]
+        )
+        if row:
+            row = row[0]
+            product = row["base_product"]
+            old_data_version = row["data_version"]
+
+            dbo.releases_json.scheduled_changes.delete(where={"base_name": name}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans)
+
+        for asset in dbo.release_assets.scheduled_changes.select(
+            where={"base_name": name}, columns=[dbo.release_assets.scheduled_changes.base_path, dbo.release_assets.scheduled_changes.data_version]
+        ):
+            dbo.release_assets.scheduled_changes.delete(
+                where={"base_name": name, "base_path": asset["base_path"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans
+            )
 
     if exists(name, trans):
         row = dbo.releases_json.select(where={"name": name}, columns={dbo.releases_json.product, dbo.releases_json.data_version})[0]
@@ -595,25 +639,6 @@ def delete_release(name, changed_by, trans):
 
     await_coroutines(coros)
 
-    if sc_exists(name, trans):
-        row = dbo.releases_json.scheduled_changes.select(
-            where={"base_name": name}, columns=[dbo.releases_json.scheduled_changes.base_product, dbo.releases_json.scheduled_changes.data_version]
-        )[0]
-        product = row["base_product"]
-        old_data_version = row["data_version"]
-
-        if not dbo.hasPermission(changed_by, "release", "delete", product, trans):
-            raise PermissionDeniedError(f"{changed_by} is not allowed to delete {product} releases")
-
-        dbo.releases_json.scheduled_changes.delete(where={"base_name": name}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans)
-
-        for asset in dbo.release_assets.scheduled_changes.select(
-            where={"base_name": name}, columns=[dbo.release_assets.scheduled_changes.base_path, dbo.release_assets.scheduled_changes.data_version]
-        ):
-            dbo.release_assets.scheduled_changes.delete(
-                where={"base_name": name, "base_path": asset["base_path"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans
-            )
-
 
 def set_read_only(name, read_only, old_data_version, changed_by, trans):
     product = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.product], transaction=trans)[0]["product"]
@@ -635,11 +660,11 @@ def set_read_only(name, read_only, old_data_version, changed_by, trans):
             if any([v for v in prs.values()]):
                 use_sc = True
 
-            # If it wasn't mapped to by a Rule that requires signoff, check for _any_ required signoffs
-            # for its product. This is a bit aggressive, but it protects against Releases for important
-            # products (eg: Firefox) from being modified before they go live on a protected channel.
-            if dbo.productRequiredSignoffs.select(where={"product": product}, transaction=trans):
-                use_sc = True
+        # If it wasn't mapped to by a Rule that requires signoff, check for _any_ required signoffs
+        # for its product. This is a bit aggressive, but it protects against Releases for important
+        # products (eg: Firefox) from being modified before they go live on a protected channel.
+        if dbo.productRequiredSignoffs.select(where={"product": product}, transaction=trans):
+            use_sc = True
 
     permission = "unset" if read_only else "set"
     if not dbo.hasPermission(changed_by, "release_read_only", permission, product, trans):
@@ -647,19 +672,23 @@ def set_read_only(name, read_only, old_data_version, changed_by, trans):
 
     if use_sc:
         data = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data], transaction=trans)[0]["data"]
+        # 30 seconds in the future
+        when = getMillisecondTimestamp() + 30000
         sc_id = dbo.releases_json.scheduled_changes.insert(
             name=name,
             product=product,
             data=data,
             read_only=read_only,
             data_version=old_data_version,
-            # 30 seconds in the future
-            when=time.time() * 1000 + 30000,
+            when=when,
             change_type="update",
             changed_by=changed_by,
             transaction=trans,
         )
-        return {".": {"sc_id": sc_id, "change_type": "update", "data_version": 1}}
+        signoffs = {}
+        for signoff in dbo.releases_json.scheduled_changes.signoffs.select(where={"sc_id": sc_id}, transaction=trans):
+            signoffs[signoff["username"]] = signoff["role"]
+        return {".": {"sc_id": sc_id, "change_type": "update", "data_version": 1, "signoffs": signoffs, "when": when}}
     else:
         coro = dbo.releases_json.async_update(
             where={"name": name}, what={"read_only": read_only}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans
