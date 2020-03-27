@@ -319,6 +319,23 @@ paths:
         '404':
           description: Release not found
 
+  /releases/{name}/enact:
+    parameters:
+      - $ref: '#/components/parameters/ReleaseName'
+
+    post:
+      summary: Enact the current scheduled changes for the named Release
+      operationId: auslib.web.admin.views.releases_v2.enact_scheduled_changes
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Client error
+        '403':
+          description: Permission denied
+        '404':
+          description: Release has no scheduled changes
+        
   /releases/{name}/{path}/data_version:
     parameters:
       - $ref: '#/components/parameters/ReleaseName'

@@ -143,7 +143,10 @@ def releases_db(
     dbo.rules.t.insert().execute(
         rule_id=2, priority=100, product="Firefox", channel="beta", mapping="Firefox-60.0b3-build1", update_type="minor", data_version=1
     )
-    dbo.rules.t.insert().execute(rule_id=3, priority=100, channel="beta", mapping="CDM-17", update_type="minor", data_version=1)
+    dbo.rules.t.insert().execute(
+        rule_id=3, priority=50, product="Firefox", channel="release", mapping="Firefox-66.0-build1", update_type="minor", data_version=1
+    )
+    dbo.rules.t.insert().execute(rule_id=4, priority=100, channel="beta", mapping="CDM-17", update_type="minor", data_version=1)
     insert_release(cdm_16, "CDM")
     insert_release(cdm_17, "CDM")
     insert_release(firefox_56_0_build1, "Firefox")
@@ -151,7 +154,7 @@ def releases_db(
     insert_release_sc(firefox_64_0_build1, "Firefox", change_type="insert")
     insert_release(firefox_65_0_build1, "Firefox")
     insert_release(firefox_66_0_build1, "Firefox")
-    insert_release_sc(firefox_66_0_build1, "Firefox")
+    insert_release_sc(firefox_66_0_build1, "Firefox", signoff_user="bob", signoff_role="releng")
     insert_release(firefox_67_0_build1, "Firefox")
     insert_release_sc(firefox_67_0_build1, "Firefox", change_type="delete", signoff_user="bob", signoff_role="releng")
 
@@ -1886,3 +1889,103 @@ def test_revoke_signoff(api):
             .fetchall()
         )
         assert len(signoffs) == 0
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_enact_changes_missing_signoff(api):
+    sc_id = dbo.releases_json.scheduled_changes.t.select().where(dbo.releases_json.scheduled_changes.base_name == "Firefox-66.0-build1").execute().fetchone().sc_id
+    dbo.releases_json.scheduled_changes.signoffs.t.delete().where(dbo.releases_json.scheduled_changes.signoffs.sc_id == sc_id).execute()
+    for sc in dbo.release_assets.scheduled_changes.t.select().where(dbo.release_assets.scheduled_changes.base_name == "Firefox-66.0-build1").where(dbo.release_assets.scheduled_changes.base_path == ".platforms.WINNT_x86_64-msvc.locales.en-US").execute().fetchall():
+        dbo.release_assets.scheduled_changes.signoffs.t.delete().where(dbo.release_assets.scheduled_changes.signoffs.sc_id == sc_id).execute()
+    ret = api.post("/v2/releases/Firefox-66.0-build1/enact")
+    assert ret.status_code == 400
+    assert "No Signoffs given" in ret.json["exception"]
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_enact_changes_no_scheduled_changes(api):
+    ret = api.post("/v2/releases/Firefox-65.0-build1/enact")
+    assert ret.status_code == 404
+
+
+@pytest.mark.usefixtures("releases_db")
+def test_enact_changes_no_permission(api, mock_verified_userinfo):
+    mock_verified_userinfo("notbob")
+    ret = api.post("/v2/releases/Firefox-67.0-build1/enact")
+    assert ret.status_code == 403
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_enact_insert(api):
+    ret = api.post("/v2/releases/Firefox-64.0-build1/enact")
+    assert ret.status_code == 200
+
+    base_sc = dbo.releases_json.scheduled_changes.t.select().where(dbo.releases_json.scheduled_changes.base_name == "Firefox-64.0-build1").execute().fetchone()
+    assert base_sc["complete"] is True
+    locale_scs = dbo.release_assets.scheduled_changes.t.select().where(dbo.release_assets.scheduled_changes.base_name == "Firefox-64.0-build1").execute().fetchall()
+    print(locale_scs)
+    assert all([sc["complete"] for sc in locale_scs])
+
+    base_row = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-64.0-build1").execute().fetchone()
+    assert base_row is not None
+    locale_rows = dbo.release_assets.t.select().where(dbo.release_assets.name == "Firefox-64.0-build1").execute().fetchall()
+    assert len(locale_rows) == 5
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_enact_update(api):
+    ret = api.post("/v2/releases/Firefox-66.0-build1/enact")
+    assert ret.status_code == 200
+
+    base_sc = dbo.releases_json.scheduled_changes.t.select().where(dbo.releases_json.scheduled_changes.base_name == "Firefox-66.0-build1").execute().fetchone()
+    assert base_sc["complete"] is True
+    locale_scs = dbo.release_assets.scheduled_changes.t.select().where(dbo.release_assets.scheduled_changes.base_name == "Firefox-66.0-build1").execute().fetchall()
+    print(locale_scs)
+    assert all([sc["complete"] for sc in locale_scs])
+
+    base_row = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-66.0-build1").execute().fetchone()
+    assert base_row["data"]["hashFunction"] == "sha1024"
+    assert base_row["data_version"] == 2
+    locale_rows = dbo.release_assets.t.select().where(dbo.release_assets.name == "Firefox-66.0-build1").execute().fetchall()
+    for row in locale_rows:
+        if row["path"].endswith("en-US"):
+            assert row["data"]["buildID"] == "123456789"
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_enact_delete(api):
+    ret = api.post("/v2/releases/Firefox-67.0-build1/enact")
+    assert ret.status_code == 200
+
+    base_sc = dbo.releases_json.scheduled_changes.t.select().where(dbo.releases_json.scheduled_changes.base_name == "Firefox-67.0-build1").execute().fetchone()
+    assert base_sc["complete"] is True
+    locale_scs = dbo.release_assets.scheduled_changes.t.select().where(dbo.release_assets.scheduled_changes.base_name == "Firefox-67.0-build1").execute().fetchall()
+    print(locale_scs)
+    assert all([sc["complete"] for sc in locale_scs])
+
+    base_row = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-67.0-build1").execute().fetchone()
+    assert base_row is None
+    locale_rows = dbo.release_assets.t.select().where(dbo.release_assets.name == "Firefox-67.0-build1").execute().fetchall()
+    assert not any([l["path"].endswith("en-US") for l in locale_rows])
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_enact_changes_one_fails_all_revert(api):
+    sc_id = dbo.release_assets.scheduled_changes.t.select().where(dbo.release_assets.scheduled_changes.base_name == "Firefox-66.0-build1").where(dbo.release_assets.scheduled_changes.base_path == ".platforms.WINNT_x86_64-msvc.locales.en-US").execute().fetchone().sc_id
+    dbo.release_assets.scheduled_changes.signoffs.t.delete().where(dbo.release_assets.scheduled_changes.signoffs.sc_id == sc_id).execute()
+
+    ret = api.post("/v2/releases/Firefox-66.0-build1/enact")
+    assert ret.status_code == 400
+    assert "No Signoffs given" in ret.json["exception"]
+
+    base_sc = dbo.releases_json.scheduled_changes.t.select().where(dbo.releases_json.scheduled_changes.base_name == "Firefox-66.0-build1").execute().fetchone()
+    assert base_sc["complete"] is False
+    locale_scs = dbo.release_assets.scheduled_changes.t.select().where(dbo.release_assets.scheduled_changes.base_name == "Firefox-66.0-build1").execute().fetchall()
+    assert all([not sc["complete"] for sc in locale_scs])
+
+    base_blob = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-66.0-build1").execute().fetchone().data
+    assert base_blob["hashFunction"] == "sha512"
+    locale_blobs = dbo.release_assets.t.select().where(dbo.release_assets.name == "Firefox-66.0-build1").execute().fetchall()
+    for blob in locale_blobs:
+        if blob["path"].endswith("en-US"):
+            assert blob.data["buildID"] != "123456689"

@@ -721,3 +721,21 @@ def revoke_signoff(name, username, trans):
         where={"base_name": name, "complete": False}, columns=[dbo.release_assets.scheduled_changes.sc_id], transaction=trans
     ):
         dbo.release_assets.scheduled_changes.signoffs.delete({"sc_id": sc["sc_id"], "username": username}, changed_by=username, transaction=trans)
+
+
+def enact_scheduled_changes(name, username, trans):
+    coros = []
+    base_sc = dbo.releases_json.scheduled_changes.select(
+        where={"base_name": name, "complete": False}, columns=[dbo.releases_json.scheduled_changes.sc_id], transaction=trans
+    )
+    if base_sc:
+        coro = dbo.releases_json.scheduled_changes.asyncEnactChange(base_sc[0]["sc_id"], username, trans)
+        coros.append(coro)
+
+    for sc in dbo.release_assets.scheduled_changes.select(
+        where={"base_name": name, "complete": False}, columns=[dbo.release_assets.scheduled_changes.sc_id], transaction=trans
+    ):
+        coro = dbo.release_assets.scheduled_changes.asyncEnactChange(sc["sc_id"], username, trans)
+        coros.append(coro)
+
+    await_coroutines(coros)
