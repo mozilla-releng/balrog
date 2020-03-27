@@ -85,6 +85,9 @@ else:
 #   * Credentials have not been provided, or they can't write to the bucket
 #     * If we're local dev disable writes
 #     * If we're anywhere else, raise an Exception (local dev is the only place where we can be sure we can safely disable them)
+import asyncio
+
+loop = asyncio.get_event_loop()
 try:
     # Order is important here, we fall through to the last entry. This works because dictionary keys
     # are returned in insertion order when iterated on.
@@ -95,11 +98,11 @@ try:
         "": storage_client.get_bucket(os.environ["RELEASES_HISTORY_BUCKET"]),
     }
     # fmt: on
+
     for bucket in buckets.values():
         blob = bucket.new_blob("startuptest")
         import asyncio
 
-        loop = asyncio.get_event_loop()
         loop.run_until_complete(blob.upload("startuptest"))
 except (ValueError, Forbidden) as e:
     if not LOCALDEV:
@@ -107,6 +110,8 @@ except (ValueError, Forbidden) as e:
             raise
     log.info("Disabling releases_history writes")
     buckets = None
+finally:
+    loop.close()
 
 dbo.setDb(os.environ["DBURI"], buckets)
 if os.environ.get("NOTIFY_TO_ADDR"):

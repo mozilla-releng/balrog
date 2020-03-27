@@ -18,8 +18,6 @@ log = logging.getLogger(__file__)
 
 store = object()
 
-loop = asyncio.get_event_loop()
-
 # fmt: off
 APP_RELEASE_ASSETS = {
     "platforms": {
@@ -346,15 +344,20 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
     # Raises if there are errors
     createBlob(full_blob).validate(current_product, app.config["WHITELISTED_DOMAINS"])
 
-    results = loop.run_until_complete(asyncio.gather(*futures, return_exceptions=True))
-    for r in results:
-        if isinstance(r, Exception):
-            # aiohttp exceptions indicate a failure uploading to GCS, which don't warrant
-            # sending an error back to the client.
-            if isinstance(r, ClientError):
-                capture_exception(r)
-            else:
-                raise r
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        results = loop.run_until_complete(asyncio.gather(*futures, return_exceptions=True))
+        for r in results:
+            if isinstance(r, Exception):
+                # aiohttp exceptions indicate a failure uploading to GCS, which don't warrant
+                # sending an error back to the client.
+                if isinstance(r, ClientError):
+                    capture_exception(r)
+                else:
+                    raise r
+    finally:
+        loop.close()
 
     return new_data_versions
 
@@ -471,16 +474,20 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
             futures.append(future)
             new_data_versions["."] = 1
 
-    loop = asyncio.get_event_loop()
-    results = loop.run_until_complete(asyncio.gather(*futures, return_exceptions=True))
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        results = loop.run_until_complete(asyncio.gather(*futures, return_exceptions=True))
 
-    for r in results:
-        if isinstance(r, Exception):
-            # aiohttp exceptions indicate a failure uploading to GCS, which don't warrant
-            # sending an error back to the client.
-            if isinstance(r, ClientError):
-                capture_exception(r)
-            else:
-                raise r
+        for r in results:
+            if isinstance(r, Exception):
+                # aiohttp exceptions indicate a failure uploading to GCS, which don't warrant
+                # sending an error back to the client.
+                if isinstance(r, ClientError):
+                    capture_exception(r)
+                else:
+                    raise r
 
+    finally:
+        loop.close()
     return new_data_versions
