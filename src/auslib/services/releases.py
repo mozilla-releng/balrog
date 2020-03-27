@@ -334,7 +334,6 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
                 sc_id = dbo.release_assets.scheduled_changes.insert(
                     name=name, path=str_path, data=item, when=when, change_type="insert", changed_by=changed_by, transaction=trans,
                 )
-                futures.append(future)
                 set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "insert", "data_version": 1})
             else:
                 future = dbo.release_assets.async_insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
