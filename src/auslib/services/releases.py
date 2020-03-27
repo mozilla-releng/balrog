@@ -297,13 +297,14 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
             futures.append(future)
             new_data_versions["."] += 1
 
+    current_assets = get_assets(name, trans)
     for path, item in assets:
         str_path = "." + ".".join(path)
-        current_assets = dbo.release_assets.select(where={"name": name, "path": str_path}, transaction=trans)
-        if current_assets:
-            old_data_version = get_by_path(old_data_versions, path)
-            new_assets = current_assets[0]["data"]
-            if item != new_assets:
+
+        if current_assets.get(str_path):
+            if item != current_assets[str_path]["data"]:
+                old_data_version = get_by_path(old_data_versions, path)
+                new_assets = current_assets[str_path]["data"]
                 release_merger.merge(new_assets, item)
                 ensure_path_exists(full_blob, path)
                 set_by_path(full_blob, path, new_assets)
