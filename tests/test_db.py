@@ -38,7 +38,7 @@ from auslib.db import (
 from auslib.errors import BlobValidationError, ReadOnlyError
 from auslib.global_state import cache, dbo
 
-from .fakes import FakeGCSHistory
+from .fakes import FakeGCSHistory, FakeGCSHistoryAsync
 
 
 def setUpModule():
@@ -3833,7 +3833,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 class TestReleasesJSON(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
-        dbo.setDb(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        dbo.setDb(self.dburi, releases_history_buckets={"*": "fake"}, async_releases_history_class=FakeGCSHistoryAsync)
         self.metadata.create_all(dbo.engine)
         self.rules = dbo.rules
         self.releases = dbo.releases_json
@@ -3882,9 +3882,10 @@ class TestReleasesJSON(unittest.TestCase, MemoryDatabaseMixin):
     def tearDown(self):
         dbo.reset()
 
+    @pytest.mark.asyncio
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testInsertCreatesCorrectHistory(self):
-        self.release_assets.insert(
+    async def testInsertCreatesCorrectHistory(self):
+        await self.release_assets.async_insert(
             changed_by="bob",
             name="Firefox-60.0-build1",
             path=".platforms.WINNT_x86_64-msvc.locales.en-US",
@@ -3918,9 +3919,10 @@ class TestReleasesJSON(unittest.TestCase, MemoryDatabaseMixin):
         ]
         assert history_entries == expected
 
+    @pytest.mark.asyncio
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testUpdateCreatesCorrectHistory(self):
-        self.release_assets.update(
+    async def testUpdateCreatesCorrectHistory(self):
+        await self.release_assets.async_update(
             where={"name": "Firefox-60.0-build1", "path": ".platforms.Linux_x86_64-gcc3.locales.en-US"},
             what={
                 "data": """{
@@ -3955,9 +3957,10 @@ class TestReleasesJSON(unittest.TestCase, MemoryDatabaseMixin):
         ]
         assert history_entries == expected
 
+    @pytest.mark.asyncio
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testDeleteCreatesCorrectHistory(self):
-        self.release_assets.delete(
+    async def testDeleteCreatesCorrectHistory(self):
+        await self.release_assets.async_delete(
             where={"name": "Firefox-60.0-build1", "path": ".platforms.Linux_x86_64-gcc3.locales.en-US"}, changed_by="bob", old_data_version=1,
         )
         history_entries = []

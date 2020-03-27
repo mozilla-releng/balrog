@@ -1,9 +1,12 @@
+import asyncio
 import logging
 from copy import deepcopy
 from itertools import chain
 
+from aiohttp import ClientError
 from deepmerge import Merger
 from flask import current_app as app
+from sentry_sdk import capture_exception
 from sqlalchemy import join, select
 
 from ..blobs.base import createBlob
@@ -263,19 +266,23 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
 
     current_base_blob = dbo.releases_json.select(where={"name": name}, transaction=trans)[0]["data"]
     base_blob, assets = split_release(blob, get_schema_version(name, trans))
+    futures = []
 
-    # new_blob is first used to update the releases_json table
-    # later, it has all asset information added to it so we can
-    # do a full blob validation before committing the transaction
-    new_blob = infinite_defaultdict()
-    new_blob.update(current_base_blob)
+    # new_base_blob is used to update the releases_json row, and ends up
+    # with the current blob + requested changes
+    # full_blob is used to validate the entire new blob after all
+    # (base and asset) changes have been applied
+    new_base_blob = infinite_defaultdict()
+    new_base_blob.update(current_base_blob)
+    full_blob = deepcopy(new_base_blob)
     if base_blob and current_base_blob != base_blob:
-        release_merger.merge(new_blob, base_blob)
+        release_merger.merge(new_base_blob, base_blob)
+        release_merger.merge(full_blob, base_blob)
         if when:
             sc_id = dbo.releases_json.scheduled_changes.insert(
                 name=name,
                 product=current_product,
-                data=new_blob,
+                data=new_base_blob,
                 data_version=old_data_versions["."],
                 when=when,
                 change_type="update",
@@ -284,21 +291,23 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
             )
             new_data_versions["."] = {"sc_id": sc_id, "change_type": "update", "data_version": 1}
         else:
-            dbo.releases_json.update(
-                where={"name": name}, what={"data": new_blob}, old_data_version=old_data_versions["."], changed_by=changed_by, transaction=trans
+            future = dbo.releases_json.async_update(
+                where={"name": name}, what={"data": new_base_blob}, old_data_version=old_data_versions["."], changed_by=changed_by, transaction=trans
             )
+            futures.append(future)
             new_data_versions["."] += 1
 
+    current_assets = get_assets(name, trans)
     for path, item in assets:
         str_path = "." + ".".join(path)
-        current_assets = dbo.release_assets.select(where={"name": name, "path": str_path}, transaction=trans)
-        if current_assets:
-            old_data_version = get_by_path(old_data_versions, path)
-            new_assets = current_assets[0]["data"]
-            if item != new_assets:
+
+        if current_assets.get(str_path):
+            if item != current_assets[str_path]["data"]:
+                old_data_version = get_by_path(old_data_versions, path)
+                new_assets = current_assets[str_path]["data"]
                 release_merger.merge(new_assets, item)
-                ensure_path_exists(new_blob, path)
-                set_by_path(new_blob, path, new_assets)
+                ensure_path_exists(full_blob, path)
+                set_by_path(full_blob, path, new_assets)
                 if when:
                     sc_id = dbo.release_assets.scheduled_changes.insert(
                         name=name,
@@ -312,13 +321,14 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
                     )
                     set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "update", "data_version": 1})
                 else:
-                    dbo.release_assets.update(
+                    future = dbo.release_assets.async_update(
                         where={"name": name, "path": str_path},
                         what={"data": new_assets},
                         old_data_version=old_data_version,
                         changed_by=changed_by,
                         transaction=trans,
                     )
+                    futures.append(future)
                     set_by_path(new_data_versions, path, old_data_version + 1)
         else:
             if when:
@@ -327,11 +337,27 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
                 )
                 set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "insert", "data_version": 1})
             else:
+                future = dbo.release_assets.async_insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
+                futures.append(future)
                 set_by_path(new_data_versions, path, 1)
-                dbo.release_assets.insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
 
     # Raises if there are errors
-    createBlob(new_blob).validate(current_product, app.config["WHITELISTED_DOMAINS"])
+    createBlob(full_blob).validate(current_product, app.config["WHITELISTED_DOMAINS"])
+
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        results = loop.run_until_complete(asyncio.gather(*futures, return_exceptions=True))
+        for r in results:
+            if isinstance(r, Exception):
+                # aiohttp exceptions indicate a failure uploading to GCS, which don't warrant
+                # sending an error back to the client.
+                if isinstance(r, ClientError):
+                    capture_exception(r)
+                else:
+                    raise r
+    finally:
+        loop.close()
 
     return new_data_versions
 
@@ -369,6 +395,7 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
     current_assets = get_assets(name, trans)
     base_blob, new_assets = split_release(blob, blob["schema_version"])
     seen_assets = set()
+    futures = []
     for path, item in new_assets:
         str_path = "." + ".".join(path)
         seen_assets.add(str_path)
@@ -390,10 +417,11 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
                 )
                 set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "update", "data_version": 1})
             else:
-                set_by_path(new_data_versions, path, old_data_version + 1)
-                dbo.release_assets.update(
+                future = dbo.release_assets.async_update(
                     where={"name": name, "path": str_path}, what={"data": item}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans
                 )
+                futures.append(future)
+                set_by_path(new_data_versions, path, old_data_version + 1)
         else:
             if when:
                 sc_id = dbo.release_assets.scheduled_changes.insert(
@@ -401,27 +429,29 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
                 )
                 set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "insert", "data_version": 1})
             else:
+                future = dbo.release_assets.async_insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
+                futures.append(future)
                 set_by_path(new_data_versions, path, 1)
-                dbo.release_assets.insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
 
     removed_assets = {a for a in current_assets} - seen_assets
-    for path in removed_assets:
-        abc = path.split(".")[1:]
+    for str_path in removed_assets:
+        path = str_path.split(".")[1:]
         if when:
             sc_id = dbo.release_assets.scheduled_changes.insert(
                 name=name,
                 path=str_path,
-                data_version=get_by_path(old_data_versions, abc),
+                data_version=get_by_path(old_data_versions, path),
                 when=when,
                 change_type="delete",
                 changed_by=changed_by,
                 transaction=trans,
             )
-            set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "update", "data_version": 1})
+            set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "delete", "data_version": 1})
         else:
-            dbo.release_assets.delete(
-                where={"name": name, "path": path}, old_data_version=get_by_path(old_data_versions, abc), changed_by=changed_by, transaction=trans
+            future = dbo.release_assets.async_delete(
+                where={"name": name, "path": str_path}, old_data_version=get_by_path(old_data_versions, path), changed_by=changed_by, transaction=trans
             )
+            futures.append(future)
 
     if current_base_blob != base_blob:
         if old_data_versions.get("."):
@@ -434,10 +464,30 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
                 )
                 new_data_versions["."] = {"sc_id": sc_id, "change_type": "update", "data_version": 1}
             else:
-                dbo.releases_json.update(where={"name": name}, what=what, old_data_version=old_data_versions["."], changed_by=changed_by, transaction=trans)
+                future = dbo.releases_json.async_update(
+                    where={"name": name}, what=what, old_data_version=old_data_versions["."], changed_by=changed_by, transaction=trans
+                )
+                futures.append(future)
                 new_data_versions["."] = old_data_versions["."] + 1
         else:
-            dbo.releases_json.insert(name=name, product=product, data=base_blob, changed_by=changed_by, transaction=trans)
+            future = dbo.releases_json.async_insert(name=name, product=product, data=base_blob, changed_by=changed_by, transaction=trans)
+            futures.append(future)
             new_data_versions["."] = 1
 
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        results = loop.run_until_complete(asyncio.gather(*futures, return_exceptions=True))
+
+        for r in results:
+            if isinstance(r, Exception):
+                # aiohttp exceptions indicate a failure uploading to GCS, which don't warrant
+                # sending an error back to the client.
+                if isinstance(r, ClientError):
+                    capture_exception(r)
+                else:
+                    raise r
+
+    finally:
+        loop.close()
     return new_data_versions

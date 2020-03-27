@@ -11,5 +11,6 @@ isort
 mock
 pip-compile-multi
 pytest
+pytest-asyncio
 pytest-cov
 pytest-xdist

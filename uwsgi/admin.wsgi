@@ -75,7 +75,9 @@ if not LOCALDEV:
 if LOCALDEV and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")):
     storage_client = storage.Client.create_anonymous_client()
 else:
-    storage_client = storage.Client()
+    from gcloud.aio.storage import Storage
+
+    storage_client = Storage()
 
 # Check if we have write access, and set the bucket configuration appropriately
 # There's basically two cases here:
@@ -83,25 +85,33 @@ else:
 #   * Credentials have not been provided, or they can't write to the bucket
 #     * If we're local dev disable writes
 #     * If we're anywhere else, raise an Exception (local dev is the only place where we can be sure we can safely disable them)
+import asyncio
+
+loop = asyncio.get_event_loop()
 try:
     # Order is important here, we fall through to the last entry. This works because dictionary keys
     # are returned in insertion order when iterated on.
     # Turn off formatting because it is clearer to have these listed one after another
     # fmt: off
     buckets = {
-        "nightly": storage_client.bucket(os.environ["NIGHTLY_HISTORY_BUCKET"]),
-        "": storage_client.bucket(os.environ["RELEASES_HISTORY_BUCKET"]),
+        "nightly": storage_client.get_bucket(os.environ["NIGHTLY_HISTORY_BUCKET"]),
+        "": storage_client.get_bucket(os.environ["RELEASES_HISTORY_BUCKET"]),
     }
     # fmt: on
+
     for bucket in buckets.values():
-        blob = bucket.blob("startuptest")
-        blob.upload_from_string("startuptest", content_type="text/plain")
+        blob = bucket.new_blob("startuptest")
+        import asyncio
+
+        loop.run_until_complete(blob.upload("startuptest"))
 except (ValueError, Forbidden) as e:
     if not LOCALDEV:
         if isinstance(e, Forbidden) or (isinstance(e, ValueError) and "Anonymous credentials" not in e.args[0]):
             raise
     log.info("Disabling releases_history writes")
     buckets = None
+finally:
+    loop.close()
 
 dbo.setDb(os.environ["DBURI"], buckets)
 if os.environ.get("NOTIFY_TO_ADDR"):

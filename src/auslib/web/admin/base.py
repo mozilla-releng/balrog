@@ -116,15 +116,6 @@ def permission_denied_error(error):
     return problem(403, "Forbidden", "Permission Denied", ext={"exception": f"{error}"})
 
 
-@app.errorhandler(500)
-def ise(error):
-    log.error("Caught ISE 500 error.")
-    log.debug("Request path is: %s", request.path)
-    log.debug("Request environment is: %s", request.environ)
-    log.debug("Request headers are: %s", request.headers)
-    return problem(500, "Internal Server Error", "Internal Server Error")
-
-
 # Connexion's error handling sometimes breaks when parameters contain
 # unicode characters (https://github.com/zalando/connexion/issues/604).
 # To work around, we catch them and return a 400 (which is what Connexion
@@ -132,6 +123,15 @@ def ise(error):
 @app.errorhandler(UnicodeEncodeError)
 def unicode(error):
     return problem(400, "Unicode Error", "Connexion was unable to parse some unicode data correctly.")
+
+
+@app.errorhandler(Exception)
+def abc(error):
+    log.error("Caught ISE 500 error.")
+    log.debug("Request path is: %s", request.path)
+    log.debug("Request environment is: %s", request.environ)
+    log.debug("Request headers are: %s", request.headers)
+    return problem(500, "Internal Server Error", "Internal Server Error")
 
 
 @app.after_request

@@ -1,6 +1,5 @@
 import pytest
 
-import auslib.web.public.json
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
@@ -21,6 +20,8 @@ def mock_autograph(monkeypatch):
 
     def mockreturn(*args):
         return ("abcdef", "https://this.is/a.x5u")
+
+    import auslib.web.public.json
 
     monkeypatch.setattr(auslib.web.public.json, "sign_hash", mockreturn)
 
