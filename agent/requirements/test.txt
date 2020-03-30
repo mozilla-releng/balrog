@@ -94,9 +94,9 @@ pep517==0.8.1 \
     --hash=sha256:5ce351f3be71d01bb094d63253854b6139931fcaba8e2f380c02102136c51e40 \
     --hash=sha256:882e2eeeffe39ccd6be6122d98300df18d80950cb5f449766d64149c94c5614a \
     # via check-manifest
-pip-compile-multi==1.5.8 \
-    --hash=sha256:6c77a2cdae62c28d6c151111e6a38ca9935ef37898f9766100ec2064326d74e9 \
-    --hash=sha256:fd92e064e8b187ce919a9b1e22bc7ff41e630bbfba8a9ab0501c260a2580feda
+pip-compile-multi==1.5.9 \
+    --hash=sha256:0bfd864fce280c5b3515e8a2b3871ed8d07d338ffdbe72b7c53b050328270b06 \
+    --hash=sha256:ed9519858a1e9c64cd7ef7b122631fed02545ca038f35fa0f8cc69602775696c
 pip-tools==4.5.1 \
     --hash=sha256:693f30e451875796b1b25203247f0b4cf48a4c4a5ab7341f4f33ffd498cdcc98 \
     --hash=sha256:be9c796aa88b2eec5cabf1323ba1cb60a08212b84bfb75b8b4037a8ef8cb8cb6 \
