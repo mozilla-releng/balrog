@@ -18,6 +18,27 @@ log = logging.getLogger(__file__)
 
 store = object()
 
+
+def await_coroutines(coros):
+    # We use `asyncio.run` to wait on the results of a number of coroutines below.
+    # `asyncio.gather` cannot be used directly with it, so we need to wrap it in
+    # a coroutine.
+    async def coroutine_gather(*args, **kwargs):
+        return await asyncio.gather(*args, **kwargs)
+
+    results = asyncio.run(coroutine_gather(*coros, return_exceptions=True))
+    for r in results:
+        if isinstance(r, Exception):
+            # aiohttp exceptions indicate a failure uploading to GCS, which don't warrant
+            # sending an error back to the client.
+            if isinstance(r, ClientError):
+                capture_exception(r)
+            else:
+                raise r
+
+    return results
+
+
 # fmt: off
 APP_RELEASE_ASSETS = {
     "platforms": {
@@ -266,7 +287,7 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
 
     current_base_blob = dbo.releases_json.select(where={"name": name}, transaction=trans)[0]["data"]
     base_blob, assets = split_release(blob, get_schema_version(name, trans))
-    futures = []
+    coros = []
 
     # new_base_blob is used to update the releases_json row, and ends up
     # with the current blob + requested changes
@@ -291,10 +312,10 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
             )
             new_data_versions["."] = {"sc_id": sc_id, "change_type": "update", "data_version": 1}
         else:
-            future = dbo.releases_json.async_update(
+            coro = dbo.releases_json.async_update(
                 where={"name": name}, what={"data": new_base_blob}, old_data_version=old_data_versions["."], changed_by=changed_by, transaction=trans
             )
-            futures.append(future)
+            coros.append(coro)
             new_data_versions["."] += 1
 
     current_assets = get_assets(name, trans)
@@ -321,14 +342,14 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
                     )
                     set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "update", "data_version": 1})
                 else:
-                    future = dbo.release_assets.async_update(
+                    coro = dbo.release_assets.async_update(
                         where={"name": name, "path": str_path},
                         what={"data": new_assets},
                         old_data_version=old_data_version,
                         changed_by=changed_by,
                         transaction=trans,
                     )
-                    futures.append(future)
+                    coros.append(coro)
                     set_by_path(new_data_versions, path, old_data_version + 1)
         else:
             if when:
@@ -337,27 +358,14 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
                 )
                 set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "insert", "data_version": 1})
             else:
-                future = dbo.release_assets.async_insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
-                futures.append(future)
+                coro = dbo.release_assets.async_insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
+                coros.append(coro)
                 set_by_path(new_data_versions, path, 1)
 
     # Raises if there are errors
     createBlob(full_blob).validate(current_product, app.config["WHITELISTED_DOMAINS"])
 
-    try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        results = loop.run_until_complete(asyncio.gather(*futures, return_exceptions=True))
-        for r in results:
-            if isinstance(r, Exception):
-                # aiohttp exceptions indicate a failure uploading to GCS, which don't warrant
-                # sending an error back to the client.
-                if isinstance(r, ClientError):
-                    capture_exception(r)
-                else:
-                    raise r
-    finally:
-        loop.close()
+    await_coroutines(coros)
 
     return new_data_versions
 
@@ -395,7 +403,7 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
     current_assets = get_assets(name, trans)
     base_blob, new_assets = split_release(blob, blob["schema_version"])
     seen_assets = set()
-    futures = []
+    coros = []
     for path, item in new_assets:
         str_path = "." + ".".join(path)
         seen_assets.add(str_path)
@@ -417,10 +425,10 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
                 )
                 set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "update", "data_version": 1})
             else:
-                future = dbo.release_assets.async_update(
+                coro = dbo.release_assets.async_update(
                     where={"name": name, "path": str_path}, what={"data": item}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans
                 )
-                futures.append(future)
+                coros.append(coro)
                 set_by_path(new_data_versions, path, old_data_version + 1)
         else:
             if when:
@@ -429,8 +437,8 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
                 )
                 set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "insert", "data_version": 1})
             else:
-                future = dbo.release_assets.async_insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
-                futures.append(future)
+                coro = dbo.release_assets.async_insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
+                coros.append(coro)
                 set_by_path(new_data_versions, path, 1)
 
     removed_assets = {a for a in current_assets} - seen_assets
@@ -448,10 +456,10 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
             )
             set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "delete", "data_version": 1})
         else:
-            future = dbo.release_assets.async_delete(
+            coro = dbo.release_assets.async_delete(
                 where={"name": name, "path": str_path}, old_data_version=get_by_path(old_data_versions, path), changed_by=changed_by, transaction=trans
             )
-            futures.append(future)
+            coros.append(coro)
 
     if current_base_blob != base_blob:
         if old_data_versions.get("."):
@@ -464,30 +472,16 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
                 )
                 new_data_versions["."] = {"sc_id": sc_id, "change_type": "update", "data_version": 1}
             else:
-                future = dbo.releases_json.async_update(
+                coro = dbo.releases_json.async_update(
                     where={"name": name}, what=what, old_data_version=old_data_versions["."], changed_by=changed_by, transaction=trans
                 )
-                futures.append(future)
+                coros.append(coro)
                 new_data_versions["."] = old_data_versions["."] + 1
         else:
-            future = dbo.releases_json.async_insert(name=name, product=product, data=base_blob, changed_by=changed_by, transaction=trans)
-            futures.append(future)
+            coro = dbo.releases_json.async_insert(name=name, product=product, data=base_blob, changed_by=changed_by, transaction=trans)
+            coros.append(coro)
             new_data_versions["."] = 1
 
-    try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        results = loop.run_until_complete(asyncio.gather(*futures, return_exceptions=True))
+    await_coroutines(coros)
 
-        for r in results:
-            if isinstance(r, Exception):
-                # aiohttp exceptions indicate a failure uploading to GCS, which don't warrant
-                # sending an error back to the client.
-                if isinstance(r, ClientError):
-                    capture_exception(r)
-                else:
-                    raise r
-
-    finally:
-        loop.close()
     return new_data_versions

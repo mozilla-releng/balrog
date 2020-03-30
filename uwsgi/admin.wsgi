@@ -1,11 +1,13 @@
+import asyncio
 import logging
 import os
 import os.path
 import sys
 
+import aiohttp
 import sentry_sdk
+from gcloud.aio.storage import Storage
 from google.api_core.exceptions import Forbidden
-from google.cloud import storage
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
@@ -73,45 +75,56 @@ if not LOCALDEV:
         sys.exit(1)
 
 if LOCALDEV and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")):
-    storage_client = storage.Client.create_anonymous_client()
+    log.info("Disabling releases_history writes for localdev without google credentials specified")
+    buckets = None
 else:
-    from gcloud.aio.storage import Storage
+    # We use this factory instead of creating an instance of Storage here
+    # because Storage creates an aiohttp.ClientSession upon instantiation,
+    # which grabs a reference to the current EventLoop. Because we're using
+    # asyncio.run in some endpoints to wait on coroutines, we end up with a
+    # new EventLoop each time it is called. This means that the second time
+    # Storage attempts to use the ClientSession it has created, the EventLoop
+    # it holds will be closed, which completely breaks it.
+    # (It is technically possible to override the ClientSession that a Storage
+    # object holds, but it involves digging into the implementation details
+    # of that object, as well as other objects it holds - so it's not a very
+    # robust solution.)
+    #
+    # Because this is a factory, consumers (notably, GCSHistoryAsync) must
+    # instantiate the Storage object themselves before they use it.
+    def BucketFactory(bucket):
+        def factory(*args, **kwargs):
+            return Storage(*args, **kwargs).get_bucket(bucket)
 
-    storage_client = Storage()
+        return factory
 
-# Check if we have write access, and set the bucket configuration appropriately
-# There's basically two cases here:
-#   * Credentials have been provided and can write to the buckets, or no credentials have been provided -> enable writes
-#   * Credentials have not been provided, or they can't write to the bucket
-#     * If we're local dev disable writes
-#     * If we're anywhere else, raise an Exception (local dev is the only place where we can be sure we can safely disable them)
-import asyncio
+    bucket_factory = BucketFactory
 
-loop = asyncio.get_event_loop()
-try:
     # Order is important here, we fall through to the last entry. This works because dictionary keys
     # are returned in insertion order when iterated on.
     # Turn off formatting because it is clearer to have these listed one after another
     # fmt: off
     buckets = {
-        "nightly": storage_client.get_bucket(os.environ["NIGHTLY_HISTORY_BUCKET"]),
-        "": storage_client.get_bucket(os.environ["RELEASES_HISTORY_BUCKET"]),
+        "nightly": bucket_factory(os.environ["NIGHTLY_HISTORY_BUCKET"]),
+        "": bucket_factory(os.environ["RELEASES_HISTORY_BUCKET"]),
     }
     # fmt: on
 
+    # Check if we have write access, and set the bucket configuration appropriately
+    # There's basically two cases here:
+    #   * Credentials have been provided and can write to the buckets, or no credentials have been provided -> enable writes
+    #   * Credentials have not been provided, or they can't write to the bucket
+    #     * If we're local dev disable writes
+    #     * If we're anywhere else, raise an Exception (local dev is the only place where we can be sure we can safely disable them)
     for bucket in buckets.values():
-        blob = bucket.new_blob("startuptest")
-        import asyncio
+        # Needs to be wrapped so we can use `async with` to make sure ClientSession
+        # gets closed.
+        async def wrapper():
+            async with aiohttp.ClientSession() as session:
+                blob = bucket(session=session).new_blob("startuptest")
+                await blob.upload("startuptest")
 
-        loop.run_until_complete(blob.upload("startuptest"))
-except (ValueError, Forbidden) as e:
-    if not LOCALDEV:
-        if isinstance(e, Forbidden) or (isinstance(e, ValueError) and "Anonymous credentials" not in e.args[0]):
-            raise
-    log.info("Disabling releases_history writes")
-    buckets = None
-finally:
-    loop.close()
+        asyncio.run(wrapper())
 
 dbo.setDb(os.environ["DBURI"], buckets)
 if os.environ.get("NOTIFY_TO_ADDR"):

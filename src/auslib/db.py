@@ -886,26 +886,32 @@ class GCSHistoryAsync:
         identifier = "-".join([columns.get(i) for i in self.identifier_columns])
         for data_version, ts, data in ((None, timestamp - 1, ""), (columns.get("data_version"), timestamp, json.dumps(columns[self.data_column]))):
             bname = "{}/{}-{}-{}.json".format(identifier, data_version, ts, changed_by)
-            blob = self._getBucket(identifier).new_blob(bname)
             # Using a separate session for each request is not ideal, but it's
             # the only thing that seems to work. Ideally, we'd share one session
-            # for the entire application, but when bhearsum tried this it resulted
-            # in hangs that he suspected were caused by connection re-use.
+            # for the entire application, but we can't for two reasons:
+            # 1) gcloud-aio won't close the sessions, which results in a lot of
+            # errors (https://github.com/talkiq/gcloud-aio/issues/33)
+            # 2) When bhearsum tried this it resulted in hangs that he suspected
+            # were caused by connection re-use.
             async with ClientSession() as session:
-                await blob.upload(data, session=session)
+                bucket = self._getBucket(identifier)(session=session)
+                blob = bucket.new_blob(bname)
+                await blob.upload(data)
 
     async def forDelete(self, rowData, changed_by, trans):
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
-        blob = self._getBucket(identifier).new_blob(bname)
         async with ClientSession() as session:
+            bucket = self._getBucket(identifier)(session=session)
+            blob = bucket.new_blob(bname)
             await blob.upload("", session=session)
 
     async def forUpdate(self, rowData, changed_by, trans):
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
-        blob = self._getBucket(identifier).new_blob(bname)
         async with ClientSession() as session:
+            bucket = self._getBucket(identifier)(session=session)
+            blob = bucket.new_blob(bname)
             await blob.upload(json.dumps(rowData[self.data_column]), session=session)
 
 
