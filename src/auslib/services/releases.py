@@ -565,6 +565,8 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
 
 
 def delete_release(name, changed_by, trans):
+    coros = []
+
     if exists(name, trans):
         row = dbo.releases_json.select(where={"name": name}, columns={dbo.releases_json.product, dbo.releases_json.data_version})[0]
         product = row["product"]
@@ -582,12 +584,16 @@ def delete_release(name, changed_by, trans):
         if is_read_only(name, trans):
             raise ReadOnlyError("Cannot delete a Release that is marked as read-only")
 
-        dbo.releases_json.delete(where={"name": name}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans)
+        coro = dbo.releases_json.async_delete(where={"name": name}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans)
+        coros.append(coro)
 
         for asset in dbo.release_assets.select(where={"name": name}, columns=[dbo.release_assets.path, dbo.release_assets.data_version], transaction=trans):
-            dbo.release_assets.delete(
+            coro = dbo.release_assets.async_delete(
                 where={"name": name, "path": asset["path"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans
             )
+            coros.append(coro)
+
+    await_coroutines(coros)
 
     if sc_exists(name, trans):
         row = dbo.releases_json.scheduled_changes.select(
@@ -654,9 +660,10 @@ def set_read_only(name, read_only, old_data_version, changed_by, trans):
         )
         return {"sc_id": sc_id, "change_type": "update", "data_version": 1}
     else:
-        dbo.releases_json.update(
+        coro = dbo.releases_json.async_update(
             where={"name": name}, what={"read_only": read_only}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans
         )
+        await_coroutines([coro])
         return {"new_data_version": old_data_version + 1}
 
 
