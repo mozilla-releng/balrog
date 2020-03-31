@@ -1711,7 +1711,7 @@ def test_set_readonly_without_permission(api, mock_verified_userinfo):
 @pytest.mark.usefixtures("releases_db")
 def test_set_readwrite_without_permission(api, mock_verified_userinfo):
     mock_verified_userinfo("notbob")
-    dbo.releases_json.t.update(values={"read_only": True}).where(dbo.releases_json.name == "CDM-16").execute()
+    dbo.releases_json.t.update(values={"read_only": False}).where(dbo.releases_json.name == "CDM-16").execute()
     ret = api.put("/v2/releases/CDM-16/read_only", json={"read_only": True, "old_data_version": 1})
     assert ret.status_code == 403, ret.data
 

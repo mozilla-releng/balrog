@@ -651,6 +651,7 @@ def set_read_only(name, read_only, old_data_version, changed_by, trans):
             name=name,
             product=product,
             data=data,
+            read_only=read_only,
             data_version=old_data_version,
             # 30 seconds in the future
             when=time.time() * 1000 + 30000,
