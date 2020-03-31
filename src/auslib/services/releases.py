@@ -291,7 +291,7 @@ def get_release(name, trans):
     data_versions = infinite_defaultdict()
     sc_data_versions = infinite_defaultdict()
     base_blob = {}
-    scheduled_blob = {}
+    sc_blob = {}
     base_row = dbo.releases_json.select(where={"name": name}, transaction=trans)
     if base_row:
         base_blob = base_row[0]["data"]
@@ -301,27 +301,27 @@ def get_release(name, trans):
     if scheduled_row:
         sc_data_versions["."] = scheduled_row[0]["data_version"]
         if scheduled_row[0]["change_type"] != "delete":
-            scheduled_blob = deepcopy(base_blob)
-            scheduled_blob.update(scheduled_row[0]["base_data"])
+            sc_blob = deepcopy(base_blob)
+            sc_blob.update(scheduled_row[0]["base_data"])
 
     for asset in dbo.release_assets.select(where={"name": name}, transaction=trans):
         path = asset["path"].split(".")[1:]
         ensure_path_exists(base_blob, path)
         set_by_path(base_blob, path, asset["data"])
         set_by_path(data_versions, path, asset["data_version"])
-        if scheduled_blob:
-            ensure_path_exists(scheduled_blob, path)
-            set_by_path(scheduled_blob, path, asset["data"])
+        if sc_blob:
+            ensure_path_exists(sc_blob, path)
+            set_by_path(sc_blob, path, asset["data"])
 
     for scheduled_asset in dbo.release_assets.scheduled_changes.select(where={"base_name": name}, transaction=trans):
         path = scheduled_asset["base_path"].split(".")[1:]
         set_by_path(sc_data_versions, path, scheduled_asset["data_version"])
         if scheduled_asset["change_type"] != "delete":
-            ensure_path_exists(scheduled_blob, path)
-            set_by_path(scheduled_blob, path, scheduled_asset["base_data"])
+            ensure_path_exists(sc_blob, path)
+            set_by_path(sc_blob, path, scheduled_asset["base_data"])
 
-    if base_blob or scheduled_blob:
-        return {"blob": base_blob, "data_versions": data_versions, "scheduled_blob": scheduled_blob, "sc_data_versions": sc_data_versions}
+    if base_blob or sc_blob:
+        return {"blob": base_blob, "data_versions": data_versions, "sc_blob": sc_blob, "sc_data_versions": sc_data_versions}
     else:
         return None
 

@@ -477,7 +477,7 @@ def test_get_release(api, firefox_56_0_build1):
     data_versions = populate_versions_dict(firefox_56_0_build1)
     data_versions["."] = 1
 
-    expected = {"blob": firefox_56_0_build1, "data_versions": data_versions, "scheduled_blob": {}, "sc_data_versions": {}}
+    expected = {"blob": firefox_56_0_build1, "data_versions": data_versions, "sc_blob": {}, "sc_data_versions": {}}
 
     assert ret.json == expected, ret.json
 
@@ -498,7 +498,7 @@ def test_get_release_scheduled_insert(api, firefox_64_0_build1):
 
     sc_data_versions = populate_versions_dict(expected_blob)
     sc_data_versions["."] = 1
-    expected = {"blob": {}, "data_versions": {}, "scheduled_blob": expected_blob, "sc_data_versions": sc_data_versions}
+    expected = {"blob": {}, "data_versions": {}, "sc_blob": expected_blob, "sc_data_versions": sc_data_versions}
 
     assert ret.json == expected, ret.json
 
@@ -523,7 +523,7 @@ def test_get_release_scheduled_update(api, firefox_66_0_build1):
     expected = {
         "blob": firefox_66_0_build1,
         "data_versions": data_versions,
-        "scheduled_blob": expected_blob,
+        "sc_blob": expected_blob,
         "sc_data_versions": sc_data_versions,
     }
 
@@ -544,7 +544,7 @@ def test_get_release_scheduled_delete(api, firefox_67_0_build1):
             if lname == "en-US":
                 assert sc_data_versions["platforms"][pname]["locales"][lname]
 
-    expected = {"blob": firefox_67_0_build1, "data_versions": data_versions, "scheduled_blob": {}, "sc_data_versions": sc_data_versions}
+    expected = {"blob": firefox_67_0_build1, "data_versions": data_versions, "sc_blob": {}, "sc_data_versions": sc_data_versions}
 
     assert ret.json == expected, ret.json
 
