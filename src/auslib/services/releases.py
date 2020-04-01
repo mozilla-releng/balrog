@@ -659,13 +659,13 @@ def set_read_only(name, read_only, old_data_version, changed_by, trans):
             changed_by=changed_by,
             transaction=trans,
         )
-        return {"sc_id": sc_id, "change_type": "update", "data_version": 1}
+        return {".": {"sc_id": sc_id, "change_type": "update", "data_version": 1}}
     else:
         coro = dbo.releases_json.async_update(
             where={"name": name}, what={"read_only": read_only}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans
         )
         await_coroutines([coro])
-        return {"new_data_version": old_data_version + 1}
+        return {".": old_data_version + 1}
 
 
 def signoff(name, role, username, trans):

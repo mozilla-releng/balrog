@@ -35,6 +35,51 @@ components:
           type: integer
           nullable: true
 
+    ScheduledChangeResponse:
+      type: object
+      required:
+        - sc_id
+        - change_type
+        - data_version
+      properties:
+        sc_id:
+          type: number
+        change_type:
+          type: string
+          enum:
+            - insert
+            - update
+            - delete
+        data_version:
+          type: number
+
+    ReleaseModifyResponseLeaf:
+      oneOf:
+        # Direct modifications will return a new data version
+        # for each modified part of a Release
+        - type: number
+        # Scheduled changes will return scheduled change details
+        - $ref: '#/components/schemas/ScheduledChangeResponse'
+
+    # Modified parts of a Release may be at an unknown level of depth
+    # This object handles that by allowing either a Leaf response, or
+    # another level of this object, to an infinite depth.
+    ReleaseModifyResponsePart:
+      type: object
+      additionalProperties:
+        oneOf:
+          - $ref: '#/components/schemas/ReleaseModifyResponseLeaf'
+          - $ref: '#/components/schemas/ReleaseModifyResponsePart'
+
+    ReleaseModifyResponse:
+      type: object
+      properties:
+        .:
+          $ref: '#/components/schemas/ReleaseModifyResponseLeaf'
+      additionalProperties:
+        $ref: '#/components/schemas/ReleaseModifyResponsePart'
+
+
   parameters:
     ReleaseName:
       name: name
@@ -167,7 +212,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/ReleaseModifyResponse'
         '400':
           description: Client error
         '404':
@@ -194,7 +239,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/ReleaseModifyResponse'
         '400':
           description: Client error
 
@@ -327,6 +372,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseModifyResponse'
         '400':
           description: Client error
         '403':

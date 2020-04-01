@@ -1720,7 +1720,7 @@ def test_set_readwrite_without_permission(api, mock_verified_userinfo):
 def test_set_readonly(api):
     ret = api.put("/v2/releases/Firefox-60.0b3-build1/read_only", json={"read_only": True, "old_data_version": 1})
     assert ret.status_code == 200, ret.data
-    assert ret.json["new_data_version"] == 2
+    assert ret.json["."] == 2
 
     got = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute().fetchone().read_only
     assert got is True
@@ -1730,7 +1730,7 @@ def test_set_readonly(api):
 def test_set_readonly_when_rule_requires_signoff(api):
     ret = api.put("/v2/releases/Firefox-56.0-build1/read_only", json={"read_only": True, "old_data_version": 1})
     assert ret.status_code == 200, ret.data
-    assert ret.json["new_data_version"] == 2
+    assert ret.json["."] == 2
 
     got = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-56.0-build1").execute().fetchone().read_only
     assert got is True
@@ -1741,7 +1741,7 @@ def test_set_readwrite(api):
     dbo.releases_json.t.update(values={"read_only": True}).where(dbo.releases_json.name == "CDM-16").execute()
     ret = api.put("/v2/releases/CDM-16/read_only", json={"read_only": False, "old_data_version": 1})
     assert ret.status_code == 200, ret.data
-    assert ret.json["new_data_version"] == 2
+    assert ret.json["."] == 2
 
     got = dbo.releases_json.t.select().where(dbo.releases_json.name == "CDM-16").execute().fetchone().read_only
     assert got is False
@@ -1752,7 +1752,7 @@ def test_set_readwrite_scheduled_change_because_of_rule(api):
     dbo.releases_json.t.update(values={"read_only": True}).where(dbo.releases_json.name == "Firefox-56.0-build1").execute()
     ret = api.put("/v2/releases/Firefox-56.0-build1/read_only", json={"read_only": False, "old_data_version": 1})
     assert ret.status_code == 200, ret.data
-    assert ret.json == {"sc_id": 4, "data_version": 1, "change_type": "update"}
+    assert ret.json == {".": {"sc_id": 4, "data_version": 1, "change_type": "update"}}
 
     read_only = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-56.0-build1").execute().fetchone()["read_only"]
     assert read_only is True
@@ -1771,7 +1771,7 @@ def test_set_readwrite_scheduled_change_because_of_product(api):
     dbo.releases_json.t.update(values={"read_only": True}).where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute()
     ret = api.put("/v2/releases/Firefox-60.0b3-build1/read_only", json={"read_only": False, "old_data_version": 1})
     assert ret.status_code == 200, ret.data
-    assert ret.json == {"sc_id": 4, "data_version": 1, "change_type": "update"}
+    assert ret.json == {".": {"sc_id": 4, "data_version": 1, "change_type": "update"}}
 
     read_only = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute().fetchone()["read_only"]
     assert read_only is True
