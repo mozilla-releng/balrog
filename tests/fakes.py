@@ -56,4 +56,4 @@ class FakeGCSHistoryAsync(GCSHistoryAsync):
         self.data_column = "data"
 
     def _getBucket(self, identifier):
-        return self.bucket
+        return lambda session: self.bucket
