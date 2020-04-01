@@ -5,6 +5,7 @@ from os import path
 import connexion
 from flask import request
 from flask_compress import Compress
+from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
 
 import auslib
@@ -126,7 +127,8 @@ def unicode(error):
 
 
 @app.errorhandler(Exception)
-def abc(error):
+def ise(error):
+    capture_exception(error)
     log.error("Caught ISE 500 error.")
     log.debug("Request path is: %s", request.path)
     log.debug("Request environment is: %s", request.environ)
