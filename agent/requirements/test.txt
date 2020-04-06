@@ -90,10 +90,9 @@ pathspec==0.7.0 \
     --hash=sha256:163b0632d4e31cef212976cf57b43d9fd6b0bac6e67c26015d611a647d5e7424 \
     --hash=sha256:562aa70af2e0d434367d9790ad37aed893de47f1693e4201fd1d3dca15d19b96 \
     # via black
-pep517==0.8.1 \
-    --hash=sha256:5ce351f3be71d01bb094d63253854b6139931fcaba8e2f380c02102136c51e40 \
-    --hash=sha256:882e2eeeffe39ccd6be6122d98300df18d80950cb5f449766d64149c94c5614a \
-    # via check-manifest
+pep517==0.8.2 \
+    --hash=sha256:576c480be81f3e1a70a16182c762311eb80d1f8a7b0d11971e5234967d7a342c \
+    --hash=sha256:8e6199cf1288d48a0c44057f112acf18aa5ebabbf73faa242f598fbe145ba29e    # via check-manifest
 pip-compile-multi==1.5.8 \
     --hash=sha256:6c77a2cdae62c28d6c151111e6a38ca9935ef37898f9766100ec2064326d74e9 \
     --hash=sha256:fd92e064e8b187ce919a9b1e22bc7ff41e630bbfba8a9ab0501c260a2580feda
