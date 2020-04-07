@@ -14,6 +14,12 @@ def FakeBlobFactory(exc=None):
             else:
                 self.data = body
 
+        def upload_from_string(self, body, *args, **kwargs):
+            if exc:
+                raise exc("I failed to upload")
+            else:
+                self.data = body
+
     return fb
 
 
@@ -28,6 +34,8 @@ class FakeBucket:
         self.blobs[blob_name] = FakeBlob()
         return self.blobs[blob_name]
 
+    blob = new_blob
+
 
 class FakeGCSHistory(GCSHistory):
     def __init__(self, *args, identifier_columns=["name"], **kwargs):
@@ -36,7 +44,7 @@ class FakeGCSHistory(GCSHistory):
         self.data_column = "data"
 
     def _getBucket(self, identifier):
-        return self.bucket
+        return lambda use_gcloud_aio: self.bucket
 
     def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
         name = column_values["name"]
