@@ -8,6 +8,7 @@ import aiohttp
 import sentry_sdk
 from gcloud.aio.storage import Storage
 from google.api_core.exceptions import Forbidden
+from google.cloud import storage
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
@@ -79,7 +80,7 @@ if LOCALDEV and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIAL
     buckets = None
 else:
     # We use this factory instead of creating an instance of Storage here
-    # because Storage creates an aiohttp.ClientSession upon instantiation,
+    # because the async Storage creates an aiohttp.ClientSession upon instantiation,
     # which grabs a reference to the current EventLoop. Because we're using
     # asyncio.run in some endpoints to wait on coroutines, we end up with a
     # new EventLoop each time it is called. This means that the second time
@@ -93,8 +94,16 @@ else:
     # Because this is a factory, consumers (notably, GCSHistoryAsync) must
     # instantiate the Storage object themselves before they use it.
     def BucketFactory(bucket):
-        def factory(*args, **kwargs):
-            return Storage(*args, **kwargs).get_bucket(bucket)
+        def factory(*args, use_gcloud_aio=True, **kwargs):
+            if use_gcloud_aio:
+                return Storage(*args, **kwargs).get_bucket(bucket)
+            else:
+                # We tried to use the async Storage class for the
+                # synchronous GCSHistory class, but hit issues with
+                # Event Loops. This code will be removed in the near
+                # future, so in the meantime we'll just continue
+                # using the synchronous client.
+                return storage.Client().get_bucket(bucket)
 
         return factory
 
