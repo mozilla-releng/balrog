@@ -1,4 +1,3 @@
-import asyncio
 import itertools
 import json
 import logging
@@ -832,39 +831,37 @@ class GCSHistory:
             raise KeyError("Couldn't find bucket to place {} history in.".format(identifier))
 
     def forInsert(self, insertedKeys, columns, changed_by, trans):
-        loop = asyncio.get_event_loop()
         timestamp = getMillisecondTimestamp()
         identifier = "-".join([columns.get(i) for i in self.identifier_columns])
         for data_version, ts, data in ((None, timestamp - 1, ""), (columns.get("data_version"), timestamp, json.dumps(columns[self.data_column]))):
             bname = "{}/{}-{}-{}.json".format(identifier, data_version, ts, changed_by)
-            blob = self._getBucket(identifier).new_blob(bname)
-            loop.run_until_complete(blob.upload(data))
+            bucket = self._getBucket(identifier)(use_gcloud_aio=False)
+            blob = bucket.blob(bname)
+            blob.upload_from_string(data, content_type="application/json")
 
     def forDelete(self, rowData, changed_by, trans):
-        loop = asyncio.get_event_loop()
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
-        blob = self._getBucket(identifier).new_blob(bname)
-        loop.run_until_complete(blob.upload(""))
+        bucket = self._getBucket(identifier)(use_gcloud_aio=False)
+        blob = bucket.blob(bname)
+        blob.upload_from_string("", content_type="application/json")
 
     def forUpdate(self, rowData, changed_by, trans):
-        loop = asyncio.get_event_loop()
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
-        blob = self._getBucket(identifier).new_blob(bname)
-        loop.run_until_complete(blob.upload(json.dumps(rowData[self.data_column])))
+        bucket = self._getBucket(identifier)(use_gcloud_aio=False)
+        blob = bucket.blob(bname)
+        blob.upload_from_string(json.dumps(rowData[self.data_column]), content_type="application/json")
 
     def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
-        loop = asyncio.get_event_loop()
         if not set(self.identifier_columns).issubset(column_values.keys()) or not data_version:
             raise ValueError("Cannot find GCS changes without {} and data_version".format(self.identifier_columns))
         identifier = "-".join([column_values[i] for i in self.identifier_columns])
-        bucket = self._getBucket(identifier)
-        blobs = [b for b in loop.run_until_complete(bucket.list_blobs(prefix="{}/{}".format(identifier, data_version)))]
+        bucket = self._getBucket(identifier)(use_gcloud_aio=False)
+        blobs = [b for b in bucket.list_blobs(prefix="{}/{}".format(identifier, data_version))]
         if len(blobs) != 1:
             raise ValueError("Found {} blobs instead of 1".format(len(blobs)))
-        data = loop.run_until_complete(blobs[0].download())
-        return {tuple(self.identifier_columns): identifier, "data_version": data_version, self.data_column: json.loads(data)}
+        return {tuple(self.identifier_columns): identifier, "data_version": data_version, self.data_column: json.loads(blobs[0].download_as_string())}
 
 
 class GCSHistoryAsync:
@@ -896,7 +893,7 @@ class GCSHistoryAsync:
             async with ClientSession() as session:
                 bucket = self._getBucket(identifier)(session=session)
                 blob = bucket.new_blob(bname)
-                await blob.upload(data)
+                await blob.upload(data, session=session)
 
     async def forDelete(self, rowData, changed_by, trans):
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
