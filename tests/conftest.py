@@ -63,6 +63,12 @@ def firefox_64_0_build1():
 
 
 @pytest.fixture(scope="session")
+def firefox_65_0_build1():
+    blob = json.load(open(Path(__file__).parent / "data/Firefox-65.0-build1.json"))
+    return blob
+
+
+@pytest.fixture(scope="session")
 def firefox_66_0_build1():
     blob = json.load(open(Path(__file__).parent / "data/Firefox-66.0-build1.json"))
     return blob
@@ -71,6 +77,12 @@ def firefox_66_0_build1():
 @pytest.fixture(scope="session")
 def firefox_67_0_build1():
     blob = json.load(open(Path(__file__).parent / "data/Firefox-67.0-build1.json"))
+    return blob
+
+
+@pytest.fixture(scope="session")
+def cdm_16():
+    blob = json.load(open(Path(__file__).parent / "data/CDM-16.json"))
     return blob
 
 
