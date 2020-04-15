@@ -561,9 +561,7 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
             dbo.releases_json.scheduled_changes.delete(where={"base_name": name, "complete": False}, old_data_version=sc[0]["data_version"], changed_by=changed_by, transaction=trans)
     else:
         if old_data_versions.get("."):
-            what = {"data": base_blob}
-            if product:
-                what["product"] = product
+            what = {"data": base_blob, "product": product or current_product}
             if when:
                 sc_id = dbo.releases_json.scheduled_changes.insert(
                     name=name, data_version=old_data_versions["."], when=when, change_type="update", changed_by=changed_by, transaction=trans, **what
