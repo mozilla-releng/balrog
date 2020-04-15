@@ -308,7 +308,7 @@ def get_release(name, trans):
         base_blob = base_row[0]["data"]
         data_versions["."] = base_row[0]["data_version"]
 
-    scheduled_row = dbo.releases_json.scheduled_changes.select(where={"base_name": name}, transaction=trans)
+    scheduled_row = dbo.releases_json.scheduled_changes.select(where={"base_name": name, "complete": False}, transaction=trans)
     if scheduled_row:
         sc_data_versions["."] = scheduled_row[0]["data_version"]
         if scheduled_row[0]["change_type"] != "delete":
@@ -324,7 +324,7 @@ def get_release(name, trans):
             ensure_path_exists(sc_blob, path)
             set_by_path(sc_blob, path, asset["data"])
 
-    for scheduled_asset in dbo.release_assets.scheduled_changes.select(where={"base_name": name}, transaction=trans):
+    for scheduled_asset in dbo.release_assets.scheduled_changes.select(where={"base_name": name, "complete": False}, transaction=trans):
         path = scheduled_asset["base_path"].split(".")[1:]
         set_by_path(sc_data_versions, path, scheduled_asset["data_version"])
         if scheduled_asset["change_type"] != "delete":
