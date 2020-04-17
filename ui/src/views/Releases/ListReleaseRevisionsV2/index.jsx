@@ -12,7 +12,7 @@ import Dashboard from '../../../components/Dashboard';
 import Radio from '../../../components/Radio';
 import Button from '../../../components/Button';
 import useAction from '../../../hooks/useAction';
-import { getRevisions, getRelease } from '../../../services/releases';
+import { getRevisions } from '../../../services/releases';
 import { CONTENT_MAX_WIDTH } from '../../../utils/constants';
 import DiffRelease from '../../../components/DiffRelease';
 import RevisionsTable from '../../../components/RevisionsTable';
@@ -42,31 +42,52 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function ListReleaseRevisions(props) {
+function ListReleaseRevisionsV2(props) {
   const classes = useStyles();
+  const { releaseName } = props.match.params;
   const [fetchedRevisions, fetchRevisions] = useAction(getRevisions);
-  const [fetchedRelease, fetchRelease] = useAction(getRelease);
   const [fetchedRevisionData, fetchRevisionData] = useAction(axios.get);
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
   const [leftRadioCheckedIndex, setLeftRadioCheckedIndex] = useState(1);
   const [leftRevisionData, setLeftRevisionData] = useState(null);
-  const [rightRadioCheckedIndex, setRightRadioCheckedIndex] = useState(0);
   const [rightRevisionData, setRightRevisionData] = useState(null);
-  const error =
-    fetchedRelease.error || fetchedRevisions.error || fetchedRevisionData.error;
-  const isLoading = fetchedRelease.loading || fetchedRevisions.loading;
-  const revisions = fetchedRevisions.data ? fetchedRevisions.data : [];
-  const { releaseName } = props.match.params;
+  const [rightRadioCheckedIndex, setRightRadioCheckedIndex] = useState(0);
+  const error = fetchedRevisions.error || fetchedRevisionData.error;
+  const isLoading = fetchedRevisions.loading;
+  // The most recent revision for each part of the Release
+  // and a list of all of the older revisions (of which
+  // there may be many for each part of the Release).
+  const [latestRevisions, olderRevisions] = fetchedRevisions.data
+    ? fetchedRevisions.data
+    : [[], []];
+  // This is a bit of a hack to make sure the very first listed
+  // revision will show the entire Release instead of just the
+  // part of it that changed most recently.
+  // This is the same data structure as the lists above use, but
+  // with semi-faked data. Most notably, `data_url` points at the
+  // Balrog URL that will retrieve the current version of the
+  // entire Release rather than a GCS link that only contains
+  // the most recently changed part.
+  const currentRevision =
+    latestRevisions.length > 0
+      ? {
+          path: null,
+          timestamp: latestRevisions[0].timestamp,
+          changed_by: latestRevisions[0].changed_by,
+          data_url: `/v2/releases/${releaseName}`,
+        }
+      : {};
+  const prettyPath =
+    // eslint-disable-next-line no-nested-ternary
+    olderRevisions.length > 0
+      ? olderRevisions[leftRadioCheckedIndex - 1].path
+        ? olderRevisions[leftRadioCheckedIndex - 1].path
+        : 'Base'
+      : '';
 
   useEffect(() => {
-    fetchRelease(releaseName);
+    fetchRevisions(releaseName, 2);
   }, [releaseName]);
-
-  useEffect(() => {
-    if (fetchedRelease.data) {
-      fetchRevisions(releaseName, 1);
-    }
-  }, [releaseName, fetchedRelease.data]);
 
   const handleLeftRadioChange = ({ target: { value } }) => {
     setLeftRadioCheckedIndex(Number(value));
@@ -84,52 +105,73 @@ function ListReleaseRevisions(props) {
   };
 
   const handleViewClick = item => async () => {
+    const section =
+      // eslint-disable-next-line no-nested-ternary
+      item.path === null
+        ? 'entire Release'
+        : item.path === ''
+        ? 'base'
+        : item.path;
+    const when = new Date(item.timestamp);
     const result = await fetchRevisionData(item.data_url);
 
     setDrawerState({
       ...drawerState,
-      item: result.data.data,
+      // Result could come from Balrog, where what we want to display is in
+      // `blob` or from GCS, where its the entire `data`.
+      item: result.data.data.blob ? result.data.data.blob : result.data.data,
+      title: `Contents of ${section} at ${when}`,
       open: true,
     });
   };
 
   useEffect(() => {
-    const r = revisions[leftRadioCheckedIndex];
+    const olderRevision = olderRevisions[leftRadioCheckedIndex - 1];
 
-    if (r) {
-      axios.get(r.data_url).then(result => {
+    if (olderRevision) {
+      // The left revision is always a part of the Release
+      // that we can retrieve from GCS.
+      axios.get(olderRevision.data_url).then(result => {
         setLeftRevisionData(result.data || {});
       });
+
+      // In order to display a useful diff, we need the right revision
+      // to be the most recent version of the same part of the Release,
+      // which we can find by looking for the older revisions path in
+      // `latestRevisions`.
+      const latestRevision = latestRevisions.find(
+        r => r.path === olderRevision.path
+      );
+
+      if (latestRevision) {
+        axios.get(latestRevision.data_url).then(result => {
+          // FIXME: sometimes the page doesn't rerender the diff after this
+          // for some reason...
+          // I think there's some sort of race condition, or issue with the
+          // depedencies on this useEffect.
+          setRightRevisionData(result.data || {});
+        });
+      }
     }
-  }, [revisions, leftRadioCheckedIndex]);
+  }, [leftRadioCheckedIndex, fetchedRevisions.data]);
 
-  useEffect(() => {
-    const r = revisions[rightRadioCheckedIndex];
-
-    if (r) {
-      axios.get(r.data_url).then(result => {
-        setRightRevisionData(result.data || {});
-      });
-    }
-  }, [revisions, rightRadioCheckedIndex]);
-
-  // TODO: Add logic to restore a revision
-  const handleRestoreClick = () => {};
-  const revisionsCount = revisions.length;
+  const revisionsCount = olderRevisions.length;
   const columnWidth = CONTENT_MAX_WIDTH / 4;
 
   return (
     <Dashboard title={`Release ${releaseName} Revisions`}>
       {error && <ErrorPanel fixed error={error} />}
       {isLoading && <Spinner loading />}
-      {!isLoading && revisions.length === 1 && (
-        <Typography>Role {releaseName} has no revisions</Typography>
+      {!isLoading && olderRevisions.length === 1 && (
+        <Typography>{releaseName} has no revisions</Typography>
       )}
       {!isLoading && revisionsCount > 1 && (
         <Fragment>
           <RevisionsTable
-            rowCount={revisionsCount}
-            rowGetter={({ index }) => revisions[index]}>
+            rowCount={revisionsCount + 1}
+            rowGetter={({ index }) =>
+              index === 0 ? currentRevision : olderRevisions[index - 1]
+            }>
             <Column
               label="Revision Date"
               dataKey="timestamp"
@@ -158,10 +200,18 @@ function ListReleaseRevisions(props) {
                     checked={leftRadioCheckedIndex === rowIndex}
                     onChange={handleLeftRadioChange}
                   />
+                  {/* Always disabled for V2 API because revisions only
+                   contain partial objects. Allowing a diff against
+                   two partial objects would potentially require
+                   fetching hundreds of revisions and rebuilding
+                   the object from scratch.
+                   Instead, we only support diffing the current revision
+                   against one older revision.
+                  */}
                   <Radio
                     variant="green"
                     value={rowIndex}
-                    disabled={rowIndex === revisions.length - 1}
+                    disabled
                     checked={rightRadioCheckedIndex === rowIndex}
                     onChange={handleRightRadioChange}
                   />
@@ -171,21 +221,20 @@ function ListReleaseRevisions(props) {
             <Column
               dataKey="actions"
               width={columnWidth}
-              cellRenderer={({ rowData, rowIndex }) => (
+              cellRenderer={({ rowData }) => (
                 <Fragment>
                   <Button onClick={handleViewClick(rowData)}>View</Button>
-                  {rowIndex > 0 && (
-                    <Button onClick={handleRestoreClick}>Restore</Button>
-                  )}
                 </Fragment>
               )}
             />
           </RevisionsTable>
-          {leftRevisionData && rightRevisionData && (
+          {leftRevisionData && (
             <DiffRelease
               className={classes.jsDiff}
-              firstFilename={`Revision Version ${revisions[leftRadioCheckedIndex].data_version}`}
-              secondFilename={`Revision Version ${revisions[rightRadioCheckedIndex].data_version}`}
+              firstFilename={`Revision Version ${
+                olderRevisions[leftRadioCheckedIndex - 1].data_version
+              } for ${prettyPath}`}
+              secondFilename="Current Version"
               firstRelease={leftRevisionData || {}}
               secondRelease={rightRevisionData || {}}
             />
@@ -196,6 +245,7 @@ function ListReleaseRevisions(props) {
             open={drawerState.open}
             onClose={handleDrawerClose}>
             <pre>
+              <h3>{drawerState.title}</h3>
               <code>{JSON.stringify(drawerState.item, null, 2)}</code>
             </pre>
           </Drawer>
@@ -205,4 +255,4 @@ function ListReleaseRevisions(props) {
   );
 }
 
-export default ListReleaseRevisions;
+export default ListReleaseRevisionsV2;
