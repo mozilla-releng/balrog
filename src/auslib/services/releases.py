@@ -467,9 +467,6 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
         old_data_versions = {}
     new_data_versions = infinite_defaultdict()
 
-    if not when and any([v for v in live_on_product_channels.values()]):
-        raise SignoffRequiredError("Signoff is required, cannot update Release directly")
-
     current_release = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data, dbo.releases_json.product], transaction=trans)
     current_base_blob = {}
     current_product = None
@@ -493,6 +490,11 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
 
     current_assets = get_assets(name, trans)
     base_blob, new_assets = split_release(blob, blob["schema_version"])
+
+    # if current != new, we will just be cancelling a scheduled change
+    if current_base_blob != base_blob and current_assets != new_assets and not when and any([v for v in live_on_product_channels.values()]):
+        raise SignoffRequiredError("Signoff is required, cannot update Release directly")
+
     seen_assets = set()
     coros = []
     for path, item in new_assets:
