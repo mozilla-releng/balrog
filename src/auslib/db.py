@@ -2487,10 +2487,15 @@ class ReleasesJSON(AUSTable):
         for row in self.select(where=where, transaction=transaction):
             new_row = row.copy()
             new_row.update(what)
+            is_readonly_change = row["data"] == new_row["data"] and "read_only" in what and row["read_only"] != what["read_only"]
 
-            if not dryrun:
-                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([row, new_row], transaction=transaction).values() for obj in v]
-                verify_signoffs(potential_required_signoffs, signoffs)
+            # Only do signoff checks when the data is being changed, or we're moving from read-only to read-write
+            if not is_readonly_change or what["read_only"] is False:
+                if not dryrun:
+                    potential_required_signoffs = [
+                        obj for v in self.getPotentialRequiredSignoffs([row, new_row], transaction=transaction).values() for obj in v
+                    ]
+                    verify_signoffs(potential_required_signoffs, signoffs)
 
         return await super(ReleasesJSON, self).async_update(
             where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
