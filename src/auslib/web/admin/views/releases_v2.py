@@ -75,6 +75,7 @@ def revoke_signoff(name):
     ret = releases.revoke_signoff(name, request.username, request.transaction)
     return ret, 200
 
+
 def enact_scheduled_changes(name):
     if not releases.sc_exists(name, request.transaction):
         return problem(404, "Missing", "Release has no scheduled changes")

@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import time
 from copy import deepcopy
 
 from aiohttp import ClientError
@@ -14,7 +13,7 @@ from ..errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
 from ..global_state import dbo
 from ..util.data_structures import ensure_path_exists, get_by_path, infinite_defaultdict, set_by_path
 from ..util.timestamp import getMillisecondTimestamp
-from ..web.admin.views.base import serialize_signoff_requirements # todo: moveme
+from ..web.admin.views.base import serialize_signoff_requirements  # todo: moveme
 
 log = logging.getLogger(__file__)
 
@@ -220,8 +219,12 @@ def exists(name, trans):
 def sc_exists(name, trans):
     if any(
         [
-            dbo.releases_json.scheduled_changes.select(where={"base_name": name}, columns=[dbo.releases_json.scheduled_changes.base_name], transaction=trans),
-            dbo.release_assets.scheduled_changes.select(where={"base_name": name}, columns=[dbo.release_assets.scheduled_changes.base_name], transaction=trans),
+            dbo.releases_json.scheduled_changes.select(
+                where={"base_name": name, "complete": False}, columns=[dbo.releases_json.scheduled_changes.base_name], transaction=trans
+            ),
+            dbo.release_assets.scheduled_changes.select(
+                where={"base_name": name, "complete": False}, columns=[dbo.release_assets.scheduled_changes.base_name], transaction=trans
+            ),
         ]
     ):
         return True
@@ -252,9 +255,7 @@ def get_releases(trans):
         refs = [ref for ref in rule_mappings if ref[0] == row["name"]]
         row["rule_info"] = {str(ref[1]): {"product": ref[2], "channel": ref[3]} for ref in refs}
         row["scheduled_changes"] = []
-        row["required_signoffs"] = serialize_signoff_requirements(
-            [obj for v in dbo.releases_json.getPotentialRequiredSignoffs([row]).values() for obj in v]
-        )
+        row["required_signoffs"] = serialize_signoff_requirements([obj for v in dbo.releases_json.getPotentialRequiredSignoffs([row]).values() for obj in v])
         if row["product"] not in product_required_signoffs:
             product_required_signoffs[row["product"]] = serialize_signoff_requirements(
                 dbo.releases_json.getPotentialRequiredSignoffsForProduct(row["product"])["rs"]
@@ -503,10 +504,15 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
         if item == current_assets.get(str_path, {}).get("data"):
             # If the desired state in the same as the current state, we should cancel any
             # pending scheduled changes, if they exist.
-            # TODO: carry this to base table too
-            sc = dbo.release_assets.scheduled_changes.select(where={"base_name": name, "base_path": str_path, "complete": False}, columns=[dbo.release_assets.scheduled_changes.sc_id, dbo.release_assets.scheduled_changes.data_version], transaction=trans)
+            sc = dbo.release_assets.scheduled_changes.select(
+                where={"base_name": name, "base_path": str_path, "complete": False},
+                columns=[dbo.release_assets.scheduled_changes.sc_id, dbo.release_assets.scheduled_changes.data_version],
+                transaction=trans,
+            )
             if sc:
-                dbo.release_assets.scheduled_changes.delete(where={"sc_id": sc[0]["sc_id"]}, old_data_version=sc[0]["data_version"], changed_by=changed_by, transaction=trans)
+                dbo.release_assets.scheduled_changes.delete(
+                    where={"sc_id": sc[0]["sc_id"]}, old_data_version=sc[0]["data_version"], changed_by=changed_by, transaction=trans
+                )
             continue
 
         old_data_version = get_by_path(old_data_versions, path)
