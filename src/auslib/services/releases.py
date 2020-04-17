@@ -561,9 +561,15 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
             coros.append(coro)
 
     if current_base_blob == base_blob:
-        sc = dbo.releases_json.scheduled_changes.select(where={"base_name": name, "complete": False}, columns=[dbo.releases_json.scheduled_changes.sc_id, dbo.releases_json.scheduled_changes.data_version], transaction=trans)
+        sc = dbo.releases_json.scheduled_changes.select(
+            where={"base_name": name, "complete": False},
+            columns=[dbo.releases_json.scheduled_changes.sc_id, dbo.releases_json.scheduled_changes.data_version],
+            transaction=trans,
+        )
         if sc:
-            dbo.releases_json.scheduled_changes.delete(where={"base_name": name, "complete": False}, old_data_version=sc[0]["data_version"], changed_by=changed_by, transaction=trans)
+            dbo.releases_json.scheduled_changes.delete(
+                where={"sc_id": sc[0]["sc_id"]}, old_data_version=sc[0]["data_version"], changed_by=changed_by, transaction=trans
+            )
     else:
         if old_data_versions.get("."):
             what = {"data": base_blob, "product": product or current_product}
@@ -598,20 +604,31 @@ def delete_release(name, changed_by, trans):
         # scheduled changes (aka scheduled inserts do not require permission to delete)
         # Releases that truly exist will have their permissions checked further down
         row = dbo.releases_json.scheduled_changes.select(
-            where={"base_name": name}, columns=[dbo.releases_json.scheduled_changes.base_product, dbo.releases_json.scheduled_changes.data_version]
+            where={"base_name": name, "complete": False},
+            columns=[
+                dbo.releases_json.scheduled_changes.sc_id,
+                dbo.releases_json.scheduled_changes.base_product,
+                dbo.releases_json.scheduled_changes.data_version,
+            ],
         )
         if row:
             row = row[0]
+            sc_id = row["sc_id"]
             product = row["base_product"]
             old_data_version = row["data_version"]
 
-            dbo.releases_json.scheduled_changes.delete(where={"base_name": name}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans)
+            dbo.releases_json.scheduled_changes.delete(where={"sc_id": sc_id}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans)
 
         for asset in dbo.release_assets.scheduled_changes.select(
-            where={"base_name": name}, columns=[dbo.release_assets.scheduled_changes.base_path, dbo.release_assets.scheduled_changes.data_version]
+            where={"base_name": name, "complete": False},
+            columns=[
+                dbo.release_assets.scheduled_changes.sc_id,
+                dbo.release_assets.scheduled_changes.base_path,
+                dbo.release_assets.scheduled_changes.data_version,
+            ],
         ):
             dbo.release_assets.scheduled_changes.delete(
-                where={"base_name": name, "base_path": asset["base_path"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans
+                where={"sc_id": asset["sc_id"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans
             )
 
     if exists(name, trans):
