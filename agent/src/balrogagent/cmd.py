@@ -8,6 +8,7 @@ from .changes import get_telemetry_uptake, telemetry_is_ready, time_is_ready
 from .log import configure_logging
 
 V1_SCHEDULED_CHANGE_ENDPOINTS = ["rules", "releases", "permissions", "emergency_shutoff", "required_signoffs/product", "required_signoffs/permissions"]
+V2_SCHEDULED_CHANGE_ENDPOINTS = ["/v2/releases"]
 
 
 async def process_v1_scheduled_changes(loop, balrog_api_root, auth0_secrets):
@@ -53,11 +54,22 @@ async def process_v1_scheduled_changes(loop, balrog_api_root, auth0_secrets):
                 logging.debug("Change %s is not ready", change["sc_id"])
 
 
+async def process_v2_scheduled_changes(loop, balrog_api_root, auth0_secrets):
+    for endpoint in V2_SCHEDULED_CHANGE_ENDPOINTS:
+        resp = await client.request(balrog_api_root, endpoint, loop=loop, auth0_secrets=auth0_secrets)
+        for r in filter(lambda r: len(r["scheduled_changes"]) > 0, resp["releases"]):
+            t = time.time()
+            if all([time_is_ready(sc, t) for sc in r["scheduled_changes"]]):
+                await client.request(balrog_api_root, f"{endpoint}/{r['name']}/enact", method="POST", auth0_secrets=auth0_secrets, loop=loop)
+
+
 async def run_agent(loop, balrog_api_root, telemetry_api_root, auth0_secrets, sleeptime=30, once=False, raise_exceptions=False):
 
     while True:
         try:
             await process_v1_scheduled_changes(loop, balrog_api_root, auth0_secrets)
+            await process_v2_scheduled_changes(loop, balrog_api_root, auth0_secrets)
+
         except Exception:
             logging.error("Encountered exception:", exc_info=True)
             if raise_exceptions:
