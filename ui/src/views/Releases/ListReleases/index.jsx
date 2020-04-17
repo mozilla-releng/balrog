@@ -20,13 +20,19 @@ import useAction from '../../../hooks/useAction';
 import Link from '../../../utils/Link';
 import {
   getReleases,
+  getReleasesV2,
   getRelease,
+  getReleaseV2,
+  deleteReleaseV2,
+  setReadOnlyV2,
   deleteRelease,
   setReadOnly,
   getScheduledChanges,
   getScheduledChangeById,
   addScheduledChange,
   getRequiredSignoffsForProduct,
+  makeSignoffV2,
+  revokeSignoffV2,
 } from '../../../services/releases';
 import { getUserInfo } from '../../../services/users';
 import { makeSignoff, revokeSignoff } from '../../../services/signoffs';
@@ -88,27 +94,40 @@ function ListReleases(props) {
     null
   );
   const [releasesAction, fetchReleases] = useAction(getReleases);
+  const [releasesV2Action, fetchReleasesV2] = useAction(getReleasesV2);
   const [releaseAction, fetchRelease] = useAction(getRelease);
+  const [releaseV2Action, fetchReleaseV2] = useAction(getReleaseV2);
   const [scheduledChangesAction, fetchScheduledChanges] = useAction(
     getScheduledChanges
   );
   const delRelease = useAction(deleteRelease)[1];
+  const delReleaseV2 = useAction(deleteReleaseV2)[1];
   const setReadOnlyFlag = useAction(setReadOnly)[1];
+  const setReadOnlyFlagV2 = useAction(setReadOnlyV2)[1];
   const [signoffAction, signoff] = useAction(props =>
     makeSignoff({ type: 'releases', ...props })
   );
   const [revokeAction, revoke] = useAction(props =>
     revokeSignoff({ type: 'releases', ...props })
   );
+  const [signoffV2Action, signoffV2] = useAction(makeSignoffV2);
+  const [revokeV2Action, revokeV2] = useAction(revokeSignoffV2);
   const [rolesAction, fetchRoles] = useAction(getUserInfo);
-  const isLoading = releasesAction.loading || scheduledChangesAction.loading;
+  const isLoading =
+    releasesAction.loading ||
+    releasesV2Action.loading ||
+    scheduledChangesAction.loading;
   const error =
     releasesAction.error ||
+    releasesV2Action.error ||
     scheduledChangesAction.error ||
     rolesAction.error ||
     releaseAction.error ||
+    releaseV2Action.error ||
     revokeAction.error ||
-    (roles.length === 1 && signoffAction.error);
+    revokeV2Action.error ||
+    (roles.length === 1 && signoffAction.error) ||
+    (roles.length === 1 && signoffV2Action.error);
   const filteredReleases = useMemo(() => {
     if (!releases) {
       return [];
@@ -144,15 +163,46 @@ function ListReleases(props) {
     return scheduledChange;
   };
 
+  const buildScheduledChangeV2 = (rel, scheduledChanges) => {
+    // V2 API Releases can have multiple scheduled changes, but they are
+    // generally treated as one larger unit. We can safely take most of the
+    // metadata from one, as it applies to all of them.
+    // read_only is slightly special in that it may exist either on exactly 1
+    // scheduled change, or zero. To handle this, we default to the current
+    // state of it on the actual Release, and override below if it is found.
+    const scheduledChange = {
+      signoffs: scheduledChanges[0].signoffs,
+      read_only: rel.read_only,
+      when: new Date(scheduledChanges[0].when),
+      change_type: scheduledChanges[0].change_type,
+    };
+
+    scheduledChanges.forEach(sc => {
+      if ('read_only' in sc && sc.read_only !== rel.read_only) {
+        scheduledChange.read_only = sc.read_only;
+      }
+    });
+
+    return scheduledChange;
+  };
+
   useEffect(() => {
-    Promise.all([fetchReleases(), fetchScheduledChanges()]).then(
-      ([relData, scData]) => {
-        setReleases(
-          relData.data.data.releases.map(r => {
+    Promise.all([
+      fetchReleases(),
+      fetchScheduledChanges(),
+      fetchReleasesV2(),
+    ]).then(([relData, scData, relV2Data]) => {
+      setReleases(
+        // Releases may only exist in either the old or new API, not both,
+        // so we can concat the results together.
+        relData.data.data.releases
+          .map(r => {
             const sc = scData.data.data.scheduled_changes.find(
               sc => r.name === sc.name
             );
             const release = clone(r);
+
+            release.api_version = 1;
 
             if (sc) {
               release.scheduledChange = buildScheduledChange(sc);
@@ -160,9 +210,35 @@ function ListReleases(props) {
 
             return release;
           })
-        );
-      }
-    );
+          .concat(
+            relV2Data.data.data.releases.map(r => {
+              // V2 data is largely the same as V1, but we need to
+              // massage the scheduled changes a little bit, so it's
+              // easiest to create a new Object and copy over what we
+              // need.
+              const release = {
+                name: r.name,
+                data_version: r.data_version,
+                product: r.product,
+                read_only: r.read_only,
+                rule_info: r.rule_info,
+                required_signoffs: r.required_signoffs,
+                product_required_signoffs: r.product_required_signoffs,
+                api_version: 2,
+              };
+
+              if (r.scheduled_changes.length > 0) {
+                release.scheduledChange = buildScheduledChangeV2(
+                  r,
+                  r.scheduled_changes
+                );
+              }
+
+              return release;
+            })
+          )
+      );
+    });
   }, []);
 
   useEffect(() => {
@@ -318,14 +394,32 @@ function ListReleases(props) {
     return { name: release.name, new_data_version: data.data.new_data_version };
   };
 
+  const updateReadOnlyFlagV2 = async release => {
+    const { error, data } = await setReadOnlyFlagV2(
+      release.name,
+      !release.read_only,
+      release.data_version
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    return { name: release.name, ...data.data };
+  };
+
   const handleReadOnlySubmit = async () => {
     const release = dialogState.item;
 
-    if (release.read_only && requiresSignoffsChangeReadOnly(release)) {
-      return scheduleReadWriteChange(release);
+    if (release.api_version === 1) {
+      if (release.read_only && requiresSignoffsChangeReadOnly(release)) {
+        return scheduleReadWriteChange(release);
+      }
+
+      return updateReadonlyFlag(release);
     }
 
-    return updateReadonlyFlag(release);
+    return updateReadOnlyFlagV2(release);
   };
 
   const handleReadOnlyComplete = result => {
@@ -337,11 +431,19 @@ function ListReleases(props) {
 
         const ret = clone(r);
 
-        if (result.sc) {
-          ret.scheduledChange = buildScheduledChange(result.sc);
+        if (r.api_version === 1) {
+          if (result.sc) {
+            ret.scheduledChange = buildScheduledChange(result.sc);
+          } else {
+            ret.read_only = !r.read_only;
+            ret.data_version = result.new_data_version;
+          }
+        } else if (result['.'].sc_id) {
+          ret.scheduledChange = buildScheduledChangeV2(ret, [result['.']]);
+          ret.scheduledChange.read_only = !r.read_only;
         } else {
           ret.read_only = !r.read_only;
-          ret.data_version = result.new_data_version;
+          ret.data_version = result['.'];
         }
 
         return ret;
@@ -357,10 +459,16 @@ function ListReleases(props) {
 
   const handleDeleteSubmit = async () => {
     const release = dialogState.item;
-    const { error } = await delRelease({
-      name: release.name,
-      dataVersion: release.data_version,
-    });
+    let error = null;
+
+    if (release.api_version === 1) {
+      ({ error } = await delRelease({
+        name: release.name,
+        dataVersion: release.data_version,
+      }));
+    } else {
+      ({ error } = await delReleaseV2(release.name));
+    }
 
     if (error) {
       throw error;
@@ -398,10 +506,16 @@ function ListReleases(props) {
   };
 
   const doSignoff = async (roleToSignoffWith, release) => {
-    const { error } = await signoff({
-      scId: release.scheduledChange.sc_id,
-      role: roleToSignoffWith,
-    });
+    if (release.api_version === 1) {
+      const { error } = await signoff({
+        scId: release.scheduledChange.sc_id,
+        role: roleToSignoffWith,
+      });
+
+      return { error, result: { roleToSignoffWith, release } };
+    }
+
+    const { error } = await signoffV2(release.name, roleToSignoffWith);
 
     return { error, result: { roleToSignoffWith, release } };
   };
@@ -507,10 +621,16 @@ function ListReleases(props) {
   };
 
   const handleRevoke = async release => {
-    const { error } = await revoke({
-      scId: release.scheduledChange.sc_id,
-      role: release.scheduledChange.signoffs[username],
-    });
+    let error = null;
+
+    if (release.api_version === 1) {
+      ({ error } = await revoke({
+        scId: release.scheduledChange.sc_id,
+        role: release.scheduledChange.signoffs[username],
+      }));
+    } else {
+      ({ error } = await revokeV2(release.name));
+    }
 
     if (!error) {
       setReleases(
@@ -533,18 +653,33 @@ function ListReleases(props) {
   };
 
   const handleViewScheduledChangeDiff = async release => {
-    const result = await fetchRelease(release.name);
+    if (release.api_version === 1) {
+      const result = await fetchRelease(release.name);
 
-    setDrawerState({
-      ...drawerState,
-      item: {
-        firstRelease: result.data.data,
-        secondRelease: release.scheduledChange.data,
-        firstFilename: `Data Version: ${release.data_version}`,
-        secondFilename: 'Scheduled Change',
-      },
-      open: true,
-    });
+      setDrawerState({
+        ...drawerState,
+        item: {
+          firstRelease: result.data.data,
+          secondRelease: release.scheduledChange.data,
+          firstFilename: `Data Version: ${release.data_version}`,
+          secondFilename: 'Scheduled Change',
+        },
+        open: true,
+      });
+    } else {
+      const result = await fetchReleaseV2(release.name);
+
+      setDrawerState({
+        ...drawerState,
+        item: {
+          firstRelease: result.data.data.blob,
+          secondRelease: result.data.data.sc_blob,
+          firstFilename: `Current Version`,
+          secondFilename: 'Scheduled Change',
+        },
+        open: true,
+      });
+    }
   };
 
   const Row = ({ index, style }) => {
@@ -596,7 +731,7 @@ function ListReleases(props) {
     // space below the card (margin)
     height += theme.spacing(4);
 
-    if (release.scheduledChange && release.scheduledChange.sc_id) {
+    if (release.scheduledChange && release.scheduledChange.when) {
       // divider
       height += theme.spacing(2) + 1;
 
@@ -604,10 +739,8 @@ function ListReleases(props) {
       // Which one is largest depends on platform/browser.
       height += Math.max(subtitle1TextHeight(), theme.spacing(3), buttonHeight);
 
-      if (Object.keys(release.scheduledChange.required_signoffs).length > 0) {
-        const requiredRoles = Object.keys(
-          release.scheduledChange.required_signoffs
-        ).length;
+      if (Object.keys(release.required_signoffs).length > 0) {
+        const requiredRoles = Object.keys(release.required_signoffs).length;
         const nSignoffs = Object.keys(release.scheduledChange.signoffs).length;
         // Required Roles and Signoffs are beside one another, so we only
         // need to account for the one with the most items.
@@ -711,7 +844,7 @@ function ListReleases(props) {
       </Drawer>
       <Snackbar onClose={handleSnackbarClose} {...snackbarState} />
       {!isLoading && (
-        <Link to="/releases/create">
+        <Link to="/releases/create/v2">
           <Tooltip title="Add Release">
             <Fab color="primary" className={classes.fab}>
               <PlusIcon />
