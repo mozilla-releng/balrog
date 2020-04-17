@@ -52,6 +52,7 @@ import {
 } from '../../../services/emergency_shutoff';
 import {
   getRelease,
+  getReleaseV2,
   getScheduledChangeByName,
 } from '../../../services/releases';
 import { getUserInfo } from '../../../services/users';
@@ -162,6 +163,7 @@ function ListRules(props) {
     getRequiredSignoffs
   );
   const [release, fetchRelease] = useAction(getRelease);
+  const [releaseV2, fetchReleaseV2] = useAction(getReleaseV2);
   const [scheduledChangeNameAction, fetchScheduledChangeByName] = useAction(
     getScheduledChangeByName
   );
@@ -231,6 +233,7 @@ function ListRules(props) {
   const isActionLoading =
     // The first two are to check if "View Release" is currently fetching
     release.loading ||
+    releaseV2.loading ||
     scheduledChangeNameAction.loading ||
     delScAction.loading ||
     delRuleAction.loading ||
@@ -958,24 +961,39 @@ function ListRules(props) {
 
   useEffect(() => {
     if (drawerReleaseName) {
-      Promise.all([
-        fetchRelease(drawerReleaseName),
-        fetchScheduledChangeByName(drawerReleaseName),
-      ]).then(([fetchedRelease, fetchedSC]) => {
-        const item =
-          fetchedSC.data.data.count > 0
-            ? JSON.stringify(
-                fetchedSC.data.data.scheduled_changes[0].data,
-                null,
-                2
-              )
-            : JSON.stringify(fetchedRelease.data.data, null, 2);
+      fetchReleaseV2(drawerReleaseName).then(fetchedRelease => {
+        if (!fetchedRelease.error) {
+          const item =
+            Object.keys(fetchedRelease.data.data.sc_blob).length > 0
+              ? JSON.stringify(fetchedRelease.data.data.sc_blob, null, 2)
+              : JSON.stringify(fetchedRelease.data.data.blob, null, 2);
 
-        setDrawerState({
-          ...drawerState,
-          open: true,
-          item,
-        });
+          setDrawerState({
+            ...drawerState,
+            open: true,
+            item,
+          });
+        } else {
+          Promise.all([
+            fetchRelease(drawerReleaseName),
+            fetchScheduledChangeByName(drawerReleaseName),
+          ]).then(([fetchedRelease, fetchedSC]) => {
+            const item =
+              fetchedSC.data.data.count > 0
+                ? JSON.stringify(
+                    fetchedSC.data.data.scheduled_changes[0].data,
+                    null,
+                    2
+                  )
+                : JSON.stringify(fetchedRelease.data.data, null, 2);
+
+            setDrawerState({
+              ...drawerState,
+              open: true,
+              item,
+            });
+          });
+        }
       });
     }
   }, [drawerReleaseName]);
