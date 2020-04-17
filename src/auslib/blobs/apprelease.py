@@ -1094,7 +1094,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                                 elif v.startswith(">"):
                                     comparable_values.append(increment_version(strip_operator(v)))
                             if len(comparable_values) != 2:
-                                raise BlobValidationError("Couldn't find a comparable value for one of: %s, %s".format(value1, value2))
+                                raise BlobValidationError(f"Couldn't find a comparable value for one of: {value1}, {value2}")
 
                             # Once we have comparable versions, we can check them!
                             if matchVersion(value1, comparable_values[1]) or matchVersion(value2, comparable_values[0]):
@@ -1124,7 +1124,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                                 elif v.startswith(">"):
                                     comparable_values.append(str(int(strip_operator(v)) + 1))
                             if len(comparable_values) != 2:
-                                raise BlobValidationError("Couldn't find a comparable value for one of: %s, %s".format(value1, value2))
+                                raise BlobValidationError(f"Couldn't find a comparable value for one of: {value1}, {value2}")
 
                             # Once we have comparable versions, we can check them!
                             if matchBuildID(value1, comparable_values[1]) or matchBuildID(value2, comparable_values[0]):

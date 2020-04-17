@@ -239,7 +239,7 @@ def testGuardianResponseWithGradualRollout(client, forceValue, response):
     qs = {}
     if forceValue:
         qs["force"] = forceValue.query_value
-    ret = client.get(f"/json/1/Guardian/0.4.0.0/WINNT_x86_64/release-rollout/update.json", query_string=qs)
+    ret = client.get("/json/1/Guardian/0.4.0.0/WINNT_x86_64/release-rollout/update.json", query_string=qs)
     assert ret.status_code == 200
     assert ret.mimetype == "application/json"
     assert ret.get_json() == response
