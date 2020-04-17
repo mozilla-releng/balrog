@@ -6,6 +6,7 @@ from aiohttp import ClientError
 from mock import MagicMock
 
 import auslib.services.releases
+import auslib.util.timestamp
 from auslib.global_state import dbo
 from auslib.util.data_structures import infinite_defaultdict
 
@@ -165,14 +166,25 @@ def test_get_releases(api):
     assert ret.status_code == 200, ret.data
     expected = {
         "releases": [
-            {"name": "CDM-16", "product": "CDM", "data_version": 1, "read_only": False, "rule_info": {}, "scheduled_changes": []},
+            {
+                "name": "CDM-16",
+                "product": "CDM",
+                "data_version": 1,
+                "read_only": False,
+                "rule_info": {},
+                "scheduled_changes": [],
+                "product_required_signoffs": {},
+                "required_signoffs": {},
+            },
             {
                 "name": "CDM-17",
                 "product": "CDM",
                 "data_version": 1,
                 "read_only": False,
-                "rule_info": {"3": {"product": None, "channel": "beta"}},
+                "rule_info": {"4": {"product": None, "channel": "beta"}},
                 "scheduled_changes": [],
+                "product_required_signoffs": {},
+                "required_signoffs": {},
             },
             {
                 "name": "Firefox-56.0-build1",
@@ -181,6 +193,8 @@ def test_get_releases(api):
                 "read_only": False,
                 "rule_info": {"1": {"product": "Firefox", "channel": "release"}},
                 "scheduled_changes": [],
+                "product_required_signoffs": {"releng": 1},
+                "required_signoffs": {"releng": 1},
             },
             {
                 "name": "Firefox-60.0b3-build1",
@@ -189,6 +203,8 @@ def test_get_releases(api):
                 "read_only": False,
                 "rule_info": {"2": {"product": "Firefox", "channel": "beta"}},
                 "scheduled_changes": [],
+                "product_required_signoffs": {"releng": 1},
+                "required_signoffs": {},
             },
             {
                 "name": "Firefox-64.0-build1",
@@ -272,13 +288,22 @@ def test_get_releases(api):
                     },
                 ],
             },
-            {"name": "Firefox-65.0-build1", "product": "Firefox", "data_version": 1, "read_only": False, "rule_info": {}, "scheduled_changes": []},
+            {
+                "name": "Firefox-65.0-build1",
+                "product": "Firefox",
+                "data_version": 1,
+                "read_only": False,
+                "rule_info": {},
+                "scheduled_changes": [],
+                "product_required_signoffs": {"releng": 1},
+                "required_signoffs": {},
+            },
             {
                 "name": "Firefox-66.0-build1",
                 "product": "Firefox",
                 "data_version": 1,
                 "read_only": False,
-                "rule_info": {},
+                "rule_info": {"3": {"product": "Firefox", "channel": "release"}},
                 "scheduled_changes": [
                     {
                         "name": "Firefox-66.0-build1",
@@ -291,7 +316,7 @@ def test_get_releases(api):
                         "change_type": "update",
                         "sc_data_version": 1,
                         "complete": False,
-                        "signoffs": {},
+                        "signoffs": {"bob": "releng"},
                     },
                     {
                         "name": "Firefox-66.0-build1",
@@ -303,7 +328,7 @@ def test_get_releases(api):
                         "change_type": "update",
                         "sc_data_version": 1,
                         "complete": False,
-                        "signoffs": {},
+                        "signoffs": {"bob": "releng"},
                     },
                     {
                         "name": "Firefox-66.0-build1",
@@ -315,7 +340,7 @@ def test_get_releases(api):
                         "change_type": "update",
                         "sc_data_version": 1,
                         "complete": False,
-                        "signoffs": {},
+                        "signoffs": {"bob": "releng"},
                     },
                     {
                         "name": "Firefox-66.0-build1",
@@ -327,7 +352,7 @@ def test_get_releases(api):
                         "change_type": "update",
                         "sc_data_version": 1,
                         "complete": False,
-                        "signoffs": {},
+                        "signoffs": {"bob": "releng"},
                     },
                     {
                         "name": "Firefox-66.0-build1",
@@ -339,7 +364,7 @@ def test_get_releases(api):
                         "change_type": "update",
                         "sc_data_version": 1,
                         "complete": False,
-                        "signoffs": {},
+                        "signoffs": {"bob": "releng"},
                     },
                     {
                         "name": "Firefox-66.0-build1",
@@ -351,7 +376,7 @@ def test_get_releases(api):
                         "change_type": "update",
                         "sc_data_version": 1,
                         "complete": False,
-                        "signoffs": {},
+                        "signoffs": {"bob": "releng"},
                     },
                     {
                         "name": "Firefox-66.0-build1",
@@ -363,9 +388,11 @@ def test_get_releases(api):
                         "change_type": "update",
                         "sc_data_version": 1,
                         "complete": False,
-                        "signoffs": {},
+                        "signoffs": {"bob": "releng"},
                     },
                 ],
+                "product_required_signoffs": {"releng": 1},
+                "required_signoffs": {"releng": 1},
             },
             {
                 "name": "Firefox-67.0-build1",
@@ -460,6 +487,8 @@ def test_get_releases(api):
                         "signoffs": {"bob": "releng"},
                     },
                 ],
+                "product_required_signoffs": {"releng": 1},
+                "required_signoffs": {},
             },
         ]
     }
@@ -1764,11 +1793,17 @@ def test_set_readwrite(api):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_set_readwrite_scheduled_change_because_of_rule(api):
+def test_set_readwrite_scheduled_change_because_of_rule(api, monkeypatch):
+    mocked_time = MagicMock()
+    mocked_time.time.return_value = 3333333333
+    # We patch the time object instead of the method because patching the method
+    # causes SQLAlchemy to break (probably because we're patching a global object?)
+    monkeypatch.setattr(auslib.util.timestamp, "time", mocked_time)
+
     dbo.releases_json.t.update(values={"read_only": True}).where(dbo.releases_json.name == "Firefox-56.0-build1").execute()
     ret = api.put("/v2/releases/Firefox-56.0-build1/read_only", json={"read_only": False, "old_data_version": 1})
     assert ret.status_code == 200, ret.data
-    assert ret.json == {".": {"sc_id": 4, "data_version": 1, "change_type": "update"}}
+    assert ret.json == {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 3333333363000}}
 
     read_only = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-56.0-build1").execute().fetchone()["read_only"]
     assert read_only is True
@@ -1783,11 +1818,18 @@ def test_set_readwrite_scheduled_change_because_of_rule(api):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_set_readwrite_scheduled_change_because_of_product(api):
+def test_set_readwrite_scheduled_change_because_of_product(api, monkeypatch):
+    mocked_time = MagicMock()
+    mocked_time.time.return_value = 3333333333
+    # We patch the time object instead of the method because patching the method
+    # causes SQLAlchemy to break (probably because we're patching a global object?)
+    monkeypatch.setattr(auslib.util.timestamp, "time", mocked_time)
+
     dbo.releases_json.t.update(values={"read_only": True}).where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute()
     ret = api.put("/v2/releases/Firefox-60.0b3-build1/read_only", json={"read_only": False, "old_data_version": 1})
     assert ret.status_code == 200, ret.data
-    assert ret.json == {".": {"sc_id": 4, "data_version": 1, "change_type": "update"}}
+    # This endpoint automatically schedules 30 seconds into the future
+    assert ret.json == {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {}, "when": 3333333363000}}
 
     read_only = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute().fetchone()["read_only"]
     assert read_only is True
