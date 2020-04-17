@@ -200,7 +200,7 @@ if __name__ == "__main__":
         if options.dumpreleases:
             log.info("Releases are \n(name, product, data):")
             for release in dbo.releases.getReleases():
-                log.info("(%s, %s, %s, %s " % (release["name"], release["product"], json.dumps(release["data"], indent=2)))
+                log.info("(%s, %s, %s, " % (release["name"], release["product"], json.dumps(release["data"], indent=2)))
             log.info("-" * 50)
 
         result = walkSnippets(AUS, os.path.join(td, "snippets"))
