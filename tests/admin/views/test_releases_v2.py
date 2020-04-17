@@ -1332,7 +1332,7 @@ def test_put_add_scheduled_change_base_only(api, firefox_56_0_build1):
 
     old_data_versions = versions_dict()
     old_data_versions["."] = 1
-    new_data_versions = {".": {"sc_id": 4, "data_version": 1, "change_type": "update"}}
+    new_data_versions = {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
 
     ret = api.put(
         "/v2/releases/Firefox-56.0-build1",
@@ -1382,7 +1382,13 @@ def test_put_add_scheduled_change_locale_only(api, firefox_56_0_build1):
 
     old_data_versions = versions_dict()
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
-    new_data_versions = {"platforms": {"Linux_x86_64-gcc3": {"locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update"}}}}}
+    new_data_versions = {
+        "platforms": {
+            "Linux_x86_64-gcc3": {
+                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
+            }
+        }
+    }
 
     ret = api.put(
         "/v2/releases/Firefox-56.0-build1",
@@ -1434,8 +1440,12 @@ def test_put_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
     new_data_versions = {
-        ".": {"sc_id": 4, "data_version": 1, "change_type": "update"},
-        "platforms": {"Linux_x86_64-gcc3": {"locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update"}}}},
+        ".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000},
+        "platforms": {
+            "Linux_x86_64-gcc3": {
+                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
+            }
+        },
     }
 
     ret = api.put(
@@ -1520,7 +1530,7 @@ def test_post_add_scheduled_change_base_only(api, firefox_56_0_build1):
 
     old_data_versions = versions_dict()
     old_data_versions["."] = 1
-    new_data_versions = {".": {"sc_id": 4, "data_version": 1, "change_type": "update"}}
+    new_data_versions = {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
 
     ret = api.post(
         "/v2/releases/Firefox-56.0-build1",
@@ -1571,7 +1581,13 @@ def test_post_add_scheduled_change_locale_only(api, firefox_56_0_build1):
 
     old_data_versions = versions_dict()
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
-    new_data_versions = {"platforms": {"Linux_x86_64-gcc3": {"locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update"}}}}}
+    new_data_versions = {
+        "platforms": {
+            "Linux_x86_64-gcc3": {
+                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
+            }
+        }
+    }
 
     ret = api.post(
         "/v2/releases/Firefox-56.0-build1", json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
@@ -1622,8 +1638,12 @@ def test_post_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
     new_data_versions = {
-        ".": {"sc_id": 4, "data_version": 1, "change_type": "update"},
-        "platforms": {"Linux_x86_64-gcc3": {"locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update"}}}},
+        ".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000},
+        "platforms": {
+            "Linux_x86_64-gcc3": {
+                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
+            }
+        },
     }
 
     ret = api.post(

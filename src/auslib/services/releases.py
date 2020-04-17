@@ -402,7 +402,10 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
                 changed_by=changed_by,
                 transaction=trans,
             )
-            new_data_versions["."] = {"sc_id": sc_id, "change_type": "update", "data_version": 1}
+            signoffs = {}
+            for signoff in dbo.releases_json.scheduled_changes.signoffs.select(where={"sc_id": sc_id}, transaction=trans):
+                signoffs[signoff["username"]] = signoff["role"]
+            new_data_versions["."] = {"sc_id": sc_id, "change_type": "update", "data_version": 1, "signoffs": signoffs, "when": when}
         else:
             coro = dbo.releases_json.async_update(
                 where={"name": name}, what={"data": new_base_blob}, old_data_version=old_data_versions["."], changed_by=changed_by, transaction=trans
@@ -432,7 +435,10 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
                         changed_by=changed_by,
                         transaction=trans,
                     )
-                    set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "update", "data_version": 1})
+                    signoffs = {}
+                    for signoff in dbo.release_assets.scheduled_changes.signoffs.select(where={"sc_id": sc_id}, transaction=trans):
+                        signoffs[signoff["username"]] = signoff["role"]
+                    set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "update", "data_version": 1, "signoffs": signoffs, "when": when})
                 else:
                     coro = dbo.release_assets.async_update(
                         where={"name": name, "path": str_path},
@@ -448,7 +454,10 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
                 sc_id = dbo.release_assets.scheduled_changes.insert(
                     name=name, path=str_path, data=item, when=when, change_type="insert", changed_by=changed_by, transaction=trans,
                 )
-                set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "insert", "data_version": 1})
+                signoffs = {}
+                for signoff in dbo.release_assets.scheduled_changes.signoffs.select(where={"sc_id": sc_id}, transaction=trans):
+                    signoffs[signoff["username"]] = signoff["role"]
+                set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "insert", "data_version": 1, "signoffs": signoffs, "when": when})
             else:
                 coro = dbo.release_assets.async_insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
                 coros.append(coro)
@@ -528,7 +537,10 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
                     changed_by=changed_by,
                     transaction=trans,
                 )
-                set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "update", "data_version": 1})
+                signoffs = {}
+                for signoff in dbo.release_assets.scheduled_changes.signoffs.select(where={"sc_id": sc_id}, transaction=trans):
+                    signoffs[signoff["username"]] = signoff["role"]
+                set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "update", "data_version": 1, "signoffs": signoffs, "when": when})
             else:
                 coro = dbo.release_assets.async_update(
                     where={"name": name, "path": str_path}, what={"data": item}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans
@@ -540,7 +552,10 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
                 sc_id = dbo.release_assets.scheduled_changes.insert(
                     name=name, path=str_path, data=item, when=when, change_type="insert", changed_by=changed_by, transaction=trans
                 )
-                set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "insert", "data_version": 1})
+                signoffs = {}
+                for signoff in dbo.release_assets.scheduled_changes.signoffs.select(where={"sc_id": sc_id}, transaction=trans):
+                    signoffs[signoff["username"]] = signoff["role"]
+                set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "insert", "data_version": 1, "signoffs": signoffs, "when": when})
             else:
                 coro = dbo.release_assets.async_insert(name=name, path=str_path, data=item, changed_by=changed_by, transaction=trans)
                 coros.append(coro)
@@ -559,7 +574,10 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
                 changed_by=changed_by,
                 transaction=trans,
             )
-            set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "delete", "data_version": 1})
+            signoffs = {}
+            for signoff in dbo.release_assets.scheduled_changes.signoffs.select(where={"sc_id": sc_id}, transaction=trans):
+                signoffs[signoff["username"]] = signoff["role"]
+            set_by_path(new_data_versions, path, {"sc_id": sc_id, "change_type": "delete", "data_version": 1, "signoffs": signoffs, "when": when})
         else:
             coro = dbo.release_assets.async_delete(
                 where={"name": name, "path": str_path}, old_data_version=get_by_path(old_data_versions, path), changed_by=changed_by, transaction=trans
@@ -583,7 +601,10 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
                 sc_id = dbo.releases_json.scheduled_changes.insert(
                     name=name, data_version=old_data_versions["."], when=when, change_type="update", changed_by=changed_by, transaction=trans, **what
                 )
-                new_data_versions["."] = {"sc_id": sc_id, "change_type": "update", "data_version": 1}
+                signoffs = {}
+                for signoff in dbo.releases_json.scheduled_changes.signoffs.select(where={"sc_id": sc_id}, transaction=trans):
+                    signoffs[signoff["username"]] = signoff["role"]
+                new_data_versions["."] = {"sc_id": sc_id, "change_type": "update", "data_version": 1, "signoffs": signoffs, "when": when}
             else:
                 coro = dbo.releases_json.async_update(
                     where={"name": name}, what=what, old_data_version=old_data_versions["."], changed_by=changed_by, transaction=trans

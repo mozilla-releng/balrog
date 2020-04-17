@@ -21,6 +21,11 @@ components:
           type: number
           nullable: true
 
+    RequiredSignoffs:
+      type: object
+      additionalProperties:
+        type: integer
+
     ReleaseModifyBody:
       type: object
       required:
@@ -41,6 +46,8 @@ components:
         - sc_id
         - change_type
         - data_version
+        - when
+        - signoffs
       properties:
         sc_id:
           type: number
@@ -52,6 +59,12 @@ components:
             - delete
         data_version:
           type: number
+        when:
+          type: integer
+        signoffs:
+          type: object
+          additionalProperties:
+            type: string
 
     ReleaseModifyResponseLeaf:
       oneOf:
@@ -114,6 +127,10 @@ paths:
                             - name
                             - rule_info
                           properties:
+                            product_required_signoffs:
+                              $ref: '#/components/schemas/RequiredSignoffs'
+                            required_signoffs:
+                              $ref: '#/components/schemas/RequiredSignoffs'
                             read_only:
                               nullable: false
                             rule_info:
