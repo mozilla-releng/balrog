@@ -12,8 +12,8 @@ from ..blobs.base import createBlob
 from ..errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
 from ..global_state import dbo
 from ..util.data_structures import ensure_path_exists, get_by_path, infinite_defaultdict, set_by_path
+from ..util.signoffs import serialize_signoff_requirements
 from ..util.timestamp import getMillisecondTimestamp
-from ..web.admin.views.base import serialize_signoff_requirements  # todo: moveme
 
 log = logging.getLogger(__file__)
 
