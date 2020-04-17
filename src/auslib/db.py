@@ -1488,7 +1488,6 @@ class ScheduledChangeTable(AUSTable):
         if change_type == "delete":
             where = []
             for col in self.base_primary_key:
-                print(sc["base_%s" % col])
                 where.append((getattr(self.baseTable, col) == sc["base_%s" % col]))
             await self.baseTable.async_delete(where, sc["scheduled_by"], sc["base_data_version"], transaction=transaction, signoffs=signoffs)
         elif change_type == "update":
@@ -2477,8 +2476,6 @@ class ReleasesJSON(AUSTable):
     async def async_insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
         if not dryrun:
             potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
-            print(potential_required_signoffs)
-            print(signoffs)
             verify_signoffs(potential_required_signoffs, signoffs)
 
         return await super(ReleasesJSON, self).async_insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)

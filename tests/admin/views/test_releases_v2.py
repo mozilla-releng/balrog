@@ -1987,7 +1987,6 @@ def test_enact_insert(api):
     locale_scs = (
         dbo.release_assets.scheduled_changes.t.select().where(dbo.release_assets.scheduled_changes.base_name == "Firefox-64.0-build1").execute().fetchall()
     )
-    print(locale_scs)
     assert all([sc["complete"] for sc in locale_scs])
 
     base_row = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-64.0-build1").execute().fetchone()
@@ -2006,7 +2005,6 @@ def test_enact_update(api):
     locale_scs = (
         dbo.release_assets.scheduled_changes.t.select().where(dbo.release_assets.scheduled_changes.base_name == "Firefox-66.0-build1").execute().fetchall()
     )
-    print(locale_scs)
     assert all([sc["complete"] for sc in locale_scs])
 
     base_row = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-66.0-build1").execute().fetchone()
@@ -2028,7 +2026,6 @@ def test_enact_delete(api):
     locale_scs = (
         dbo.release_assets.scheduled_changes.t.select().where(dbo.release_assets.scheduled_changes.base_name == "Firefox-67.0-build1").execute().fetchall()
     )
-    print(locale_scs)
     assert all([sc["complete"] for sc in locale_scs])
 
     base_row = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-67.0-build1").execute().fetchone()
