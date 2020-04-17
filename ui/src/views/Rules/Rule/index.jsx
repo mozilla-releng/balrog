@@ -31,7 +31,7 @@ import {
   updateScheduledChange,
   deleteScheduledChange,
 } from '../../../services/rules';
-import { getReleaseNames } from '../../../services/releases';
+import { getReleaseNames, getReleaseNamesV2 } from '../../../services/releases';
 import { withUser } from '../../../utils/AuthContext';
 import {
   EMPTY_MENU_ITEM_CHAR,
@@ -91,9 +91,13 @@ function Rule({ isNewRule, user, ...props }) {
       ? props.location.state.rulesFilter
       : [];
   const [rule, setRule] = useState(initialRule);
+  const [releaseNames, setReleaseNames] = useState([]);
   const [products, fetchProducts] = useAction(getProducts);
   const [channels, fetchChannels] = useAction(getChannels);
-  const [releaseNames, fetchReleaseNames] = useAction(getReleaseNames);
+  const [releaseNamesAction, fetchReleaseNames] = useAction(getReleaseNames);
+  const [releaseNamesV2Action, fetchReleaseNamesV2] = useAction(
+    getReleaseNamesV2
+  );
   // 30 seconds - to make sure the helper text "Scheduled for ASAP" shows up
   const [scheduleDate, setScheduleDate] = useState(new Date());
   const [dateTimePickerError, setDateTimePickerError] = useState(null);
@@ -110,12 +114,16 @@ function Rule({ isNewRule, user, ...props }) {
   const isLoading =
     fetchRuleAction.loading || products.loading || channels.loading;
   const actionLoading =
+    releaseNamesAction.loading ||
+    releaseNamesV2Action.loading ||
     addSCAction.loading ||
     updateSCAction.loading ||
     deleteSCAction.loading ||
     scheduledChangeActionRuleId.loading ||
     scheduledChangeActionScId.loading;
   const error =
+    releaseNamesAction.error ||
+    releaseNamesV2Action.error ||
     fetchRuleAction.error ||
     scheduledChangeActionRuleId.error ||
     scheduledChangeActionScId.error ||
@@ -157,6 +165,16 @@ function Rule({ isNewRule, user, ...props }) {
 
     props.history.push(`/rules${query}#${hashFilter}`);
   };
+
+  useEffect(() => {
+    Promise.all([fetchReleaseNames(), fetchReleaseNamesV2()]).then(
+      ([names, namesV2]) => {
+        if (names.data.data && namesV2.data) {
+          setReleaseNames(names.data.data.names.concat(namesV2.data).sort());
+        }
+      }
+    );
+  }, []);
 
   const handleDateTimeChange = date => {
     setScheduleDate(date);
@@ -298,6 +316,7 @@ function Rule({ isNewRule, user, ...props }) {
         fetchProducts(),
         fetchChannels(),
         fetchReleaseNames(),
+        fetchReleaseNamesV2(),
       ]).then(([fetchedRuleResponse, fetchedSCResponse]) => {
         if (fetchedSCResponse.data.data.count > 0) {
           const sc = fetchedSCResponse.data.data.scheduled_changes[0];
@@ -437,10 +456,7 @@ function Rule({ isNewRule, user, ...props }) {
                 <AutoCompleteText
                   value={defaultToEmptyString(rule.mapping)}
                   onValueChange={handleMappingChange}
-                  getSuggestions={
-                    releaseNames.data &&
-                    getSuggestions(releaseNames.data.data.names.sort())
-                  }
+                  getSuggestions={getSuggestions(releaseNames)}
                   label="Mapping"
                   required
                   inputProps={{
@@ -454,10 +470,7 @@ function Rule({ isNewRule, user, ...props }) {
                 <AutoCompleteText
                   value={defaultToEmptyString(rule.fallbackMapping)}
                   onValueChange={handleFallbackMappingChange}
-                  getSuggestions={
-                    releaseNames.data &&
-                    getSuggestions(releaseNames.data.data.names.sort())
-                  }
+                  getSuggestions={getSuggestions(releaseNames)}
                   label="Fallback Mapping"
                   inputProps={{
                     fullWidth: true,
