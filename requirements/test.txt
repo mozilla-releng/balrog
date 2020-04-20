@@ -71,9 +71,9 @@ flake8-black==0.1.1 \
 flake8==3.7.9 \
     --hash=sha256:45681a117ecc81e870cbf1262835ae4af5e7a8b08e40b944a8a6e6b895914cfb \
     --hash=sha256:49356e766643ad15072a789a20915d3c91dc89fd313ccd71802303fd67e4deca
-hypothesis==5.8.3 \
-    --hash=sha256:039b6100163f649cbc5ecc338fd4e238cc88f84b2a460ff42d0ea9ac69b6a412 \
-    --hash=sha256:6e0470a1a7edd990c975429b7451ababd5425136eea72808a719e6d538bba463
+hypothesis==5.10.1 \
+    --hash=sha256:2c33b1f50bbe6eaa2d4b45f125c40957fbc479d20b631f9717963eb589974a7a \
+    --hash=sha256:790acebcd8445fbc897b0f1a8e1e29ec4f476e6fdb64692c13c14b1e4f3c178d
 isort==4.3.21 \
     --hash=sha256:54da7e92468955c4fceacd0c86bd0ec997b0e1ee80d97f67c35a78b719dccab1 \
     --hash=sha256:6e811fcb295968434526407adb8796944f1988c5b65e8139058f2014cbe100fd
@@ -101,10 +101,9 @@ pep517==0.8.2 \
 pip-compile-multi==1.5.9 \
     --hash=sha256:0bfd864fce280c5b3515e8a2b3871ed8d07d338ffdbe72b7c53b050328270b06 \
     --hash=sha256:ed9519858a1e9c64cd7ef7b122631fed02545ca038f35fa0f8cc69602775696c
-pip-tools==4.5.1 \
-    --hash=sha256:693f30e451875796b1b25203247f0b4cf48a4c4a5ab7341f4f33ffd498cdcc98 \
-    --hash=sha256:be9c796aa88b2eec5cabf1323ba1cb60a08212b84bfb75b8b4037a8ef8cb8cb6 \
-    # via pip-compile-multi
+pip-tools==5.0.0 \
+    --hash=sha256:2045d0414e9db71c036443efa229ff1b76dfe47a3cb022d6154a1c9e207f0867 \
+    --hash=sha256:4fdc317a331de8affe481509d7efea7e72fc5cca6c9f6cacbe778617680961fe    # via pip-compile-multi
 pluggy==0.13.1 \
     --hash=sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0 \
     --hash=sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d \
