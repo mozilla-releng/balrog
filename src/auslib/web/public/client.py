@@ -171,6 +171,7 @@ def get_update_blob(transaction, **url):
                 # if we have a SuperBlob of systemaddons, we process the response products and
                 # concatenate their inner XMLs
                 product_query = query.copy()
+                # TODO: use new releases tables too
                 product = dbo.releases.getReleases(name=blob_name, limit=1, transaction=transaction)[0]["product"]
                 product_query["product"] = product
                 response_release = dbo.releases.getReleaseBlob(name=blob_name, transaction=transaction)

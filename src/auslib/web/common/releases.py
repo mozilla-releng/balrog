@@ -28,6 +28,7 @@ def release_list(request):
         kwargs["name_prefix"] = request.args.get("name_prefix")
     if request.args.get("names_only"):
         kwargs["nameOnly"] = True
+    # TODO: use new releases tables too, or make a v2 endpoint
     return dbo.releases.getReleaseInfo(**kwargs)
 
 
@@ -48,6 +49,7 @@ def get_releases():
 
 
 def _get_release(release):
+    # TODO: use new releases tables too, or make a v2 endpoint
     releases = dbo.releases.getReleases(name=release, limit=1)
     return releases[0] if releases else None
 
@@ -75,9 +77,11 @@ def get_release_with_csrf_header(release):
 
 def get_release_single_locale(release, platform, locale, with_csrf_header=False):
     try:
+        # TODO: use new releases tables too, or make a v2 endpoint
         locale = dbo.releases.getLocale(release, platform, locale)
     except KeyError as e:
         return problem(404, "Not Found", json.dumps(e.args))
+    # TODO: use new releases tables too, or make a v2 endpoint
     data_version = dbo.releases.getReleases(name=release)[0]["data_version"]
     headers = {"X-Data-Version": data_version}
     if with_csrf_header:
