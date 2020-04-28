@@ -501,7 +501,7 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
     current_assets = get_assets(name, trans)
     base_blob, new_assets = split_release(blob, blob["schema_version"])
 
-    # if current != new, we will just be cancelling a scheduled change
+    # if current == new, we will just be cancelling a scheduled change
     if current_base_blob != base_blob and current_assets != new_assets and not when and any([v for v in live_on_product_channels.values()]):
         raise SignoffRequiredError("Signoff is required, cannot update Release directly")
 
@@ -641,7 +641,6 @@ def delete_release(name, changed_by, trans):
         if row:
             row = row[0]
             sc_id = row["sc_id"]
-            product = row["base_product"]
             old_data_version = row["data_version"]
 
             dbo.releases_json.scheduled_changes.delete(where={"sc_id": sc_id}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans)
@@ -650,7 +649,6 @@ def delete_release(name, changed_by, trans):
             where={"base_name": name, "complete": False},
             columns=[
                 dbo.release_assets.scheduled_changes.sc_id,
-                dbo.release_assets.scheduled_changes.base_path,
                 dbo.release_assets.scheduled_changes.data_version,
             ],
         ):

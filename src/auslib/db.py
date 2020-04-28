@@ -1452,7 +1452,7 @@ class ScheduledChangeTable(AUSTable):
         return ret
 
     async def asyncEnactChange(self, sc_id, enacted_by, transaction=None):
-        """Enacts a previously scheduled change by running update or insert on
+        """Enacts a previously scheduled change by running update, insert, or delete on
         the base table."""
         if not self.db.hasPermission(enacted_by, "scheduled_change", "enact", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to enact scheduled changes", enacted_by)
@@ -1501,7 +1501,7 @@ class ScheduledChangeTable(AUSTable):
             raise ValueError("Unknown Change Type")
 
     def enactChange(self, sc_id, enacted_by, transaction=None):
-        """Enacts a previously scheduled change by running update or insert on
+        """Enacts a previously scheduled change by running update, insert, or delete on
         the base table."""
         if not self.db.hasPermission(enacted_by, "scheduled_change", "enact", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to enact scheduled changes", enacted_by)
