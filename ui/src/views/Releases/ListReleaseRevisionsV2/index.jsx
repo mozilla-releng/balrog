@@ -153,7 +153,7 @@ function ListReleaseRevisionsV2(props) {
         });
       }
     }
-  }, [leftRadioCheckedIndex, fetchedRevisions.data]);
+  }, [leftRadioCheckedIndex, fetchedRevisions.data, olderRevisions, latestRevisions]);
 
   const revisionsCount = olderRevisions.length;
   const columnWidth = CONTENT_MAX_WIDTH / 4;
@@ -228,7 +228,7 @@ function ListReleaseRevisionsV2(props) {
               )}
             />
           </RevisionsTable>
-          {leftRevisionData && (
+          {leftRevisionData && rightRevisionData && (
             <DiffRelease
               className={classes.jsDiff}
               firstFilename={`Revision Version ${
