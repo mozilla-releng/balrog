@@ -517,7 +517,7 @@ function ViewUser({ isNewUser, ...props }) {
           {!isNewUser && (
             <SpeedDial ariaLabel="Secondary Actions">
               <SpeedDialAction
-                disabled={saveAction.loading || userError}
+                FabProps={{ disabled: saveAction.loading || userError }}
                 icon={<DeleteIcon />}
                 tooltipOpen
                 tooltipTitle="Delete User"

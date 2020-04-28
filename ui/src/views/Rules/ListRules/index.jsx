@@ -1319,13 +1319,14 @@ function ListRules(props) {
       </Link>
       <SpeedDial ariaLabel="Secondary Actions">
         <SpeedDialAction
-          disabled={
-            isLoading ||
-            !username ||
-            filteredProductChannelIsShutoff ||
-            !productChannelQueries ||
-            !productChannelQueries[1]
-          }
+          FabProps={{
+            disabled:
+              isLoading ||
+              !username ||
+              filteredProductChannelIsShutoff ||
+              !productChannelQueries ||
+              !productChannelQueries[1],
+          }}
           icon={<PauseIcon />}
           tooltipOpen
           tooltipTitle="Disable Updates"

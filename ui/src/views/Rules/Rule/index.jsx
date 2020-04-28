@@ -721,7 +721,7 @@ function Rule({ isNewRule, user, ...props }) {
               FabProps={{ disabled: !user || actionLoading }}
               ariaLabel="Secondary Actions">
               <SpeedDialAction
-                disabled={actionLoading}
+                FabProps={{ disabled: actionLoading }}
                 icon={<DeleteIcon />}
                 tooltipOpen
                 tooltipTitle="Cancel Pending Change"
