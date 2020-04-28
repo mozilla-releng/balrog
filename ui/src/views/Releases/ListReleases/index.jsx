@@ -45,6 +45,7 @@ import {
   CONTENT_MAX_WIDTH,
   DIALOG_ACTION_INITIAL_STATE,
   SNACKBAR_INITIAL_STATE,
+  RELEASE_ROOT_LEVEL_KEY,
 } from '../../../utils/constants';
 import { withUser } from '../../../utils/AuthContext';
 import elementsHeight from '../../../utils/elementsHeight';
@@ -438,12 +439,14 @@ function ListReleases(props) {
             ret.read_only = !r.read_only;
             ret.data_version = result.new_data_version;
           }
-        } else if (result['.'].sc_id) {
-          ret.scheduledChange = buildScheduledChangeV2(ret, [result['.']]);
+        } else if (result[RELEASE_ROOT_LEVEL_KEY].sc_id) {
+          ret.scheduledChange = buildScheduledChangeV2(ret, [
+            result[RELEASE_ROOT_LEVEL_KEY],
+          ]);
           ret.scheduledChange.read_only = !r.read_only;
         } else {
           ret.read_only = !r.read_only;
-          ret.data_version = result['.'];
+          ret.data_version = result[RELEASE_ROOT_LEVEL_KEY];
         }
 
         return ret;
