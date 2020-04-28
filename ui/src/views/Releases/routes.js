@@ -5,7 +5,7 @@ const ListReleases = lazy(() =>
 );
 const ListReleaseRevisionsV2 = lazy(() =>
   import(
-    /* webpackChunkName: 'Releases.ListReleaseRevisions' */ './ListReleaseRevisionsV2'
+    /* webpackChunkName: 'Releases.ListReleaseRevisionsV2' */ './ListReleaseRevisionsV2'
   )
 );
 const ListReleaseRevisions = lazy(() =>
@@ -17,7 +17,7 @@ const Release = lazy(() =>
   import(/* webpackChunkName: 'Releases.Release' */ './Release')
 );
 const ReleaseV2 = lazy(() =>
-  import(/* webpackChunkName: 'Releases.Release' */ './ReleaseV2')
+  import(/* webpackChunkName: 'Releases.ReleaseV2' */ './ReleaseV2')
 );
 
 export default path => [
