@@ -153,7 +153,12 @@ function ListReleaseRevisionsV2(props) {
         });
       }
     }
-  }, [leftRadioCheckedIndex, fetchedRevisions.data, olderRevisions, latestRevisions]);
+  }, [
+    leftRadioCheckedIndex,
+    fetchedRevisions.data,
+    olderRevisions,
+    latestRevisions,
+  ]);
 
   const revisionsCount = olderRevisions.length;
   const columnWidth = CONTENT_MAX_WIDTH / 4;
