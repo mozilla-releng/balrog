@@ -7,7 +7,9 @@ from flask import current_app as app
 from flask import make_response
 
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
+from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
+from auslib.services import releases
 from auslib.web.public.helpers import AUS, with_transaction
 
 try:
@@ -171,10 +173,16 @@ def get_update_blob(transaction, **url):
                 # if we have a SuperBlob of systemaddons, we process the response products and
                 # concatenate their inner XMLs
                 product_query = query.copy()
-                # TODO: use new releases tables too
-                product = dbo.releases.getReleases(name=blob_name, limit=1, transaction=transaction)[0]["product"]
-                product_query["product"] = product
-                response_release = dbo.releases.getReleaseBlob(name=blob_name, transaction=transaction)
+                release_row = releases.get_release(blob_name, transaction)
+                response_release = None
+                if release_row:
+                    product_query["product"] = releases.get_product(blob_name, transaction)
+                    response_release = createBlob(release_row["blob"])
+                # TODO: remove me when old releases table dies
+                else:
+                    product = dbo.releases.getReleases(name=blob_name, limit=1, transaction=transaction)[0]["product"]
+                    product_query["product"] = product
+                    response_release = dbo.releases.getReleaseBlob(name=blob_name, transaction=transaction)
                 if not response_release:
                     LOG.warning("No release found with name: %s", blob_name)
                     continue

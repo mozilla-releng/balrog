@@ -110,7 +110,7 @@ class ClientTestBase(ClientTestCommon):
         app.error_handler_spec = cls.error_spec
 
     @pytest.fixture(autouse=True)
-    def setup(self, insert_release, firefox_56_0_build1):
+    def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, timecop_1_0):
         cache.reset()
         cache.make_cache("releases", 50, 10)
         cache.make_cache("releases_data_version", 50, 5)
@@ -123,6 +123,7 @@ class ClientTestBase(ClientTestCommon):
             "a.com": ("b", "c", "e", "f", "response-a", "response-b", "s", "responseblob-a", "responseblob-b", "q", "fallback", "distTest"),
             "download.mozilla.org": ("Firefox",),
             "archive.mozilla.org": ("Firefox",),
+            "ftp.mozilla.org": ("SystemAddons",),
         }
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
@@ -846,7 +847,20 @@ class ClientTestBase(ClientTestCommon):
         dbo.rules.t.insert().execute(
             priority=100, product="Firefox", channel="release", mapping="Firefox-56.0-build1", backgroundRate=100, update_type="minor", data_version=1
         )
+        insert_release(firefox_54_0_1_build1, "Firefox", history=False)
         insert_release(firefox_56_0_build1, "Firefox", history=False)
+        dbo.rules.t.insert().execute(
+            priority=300,
+            product="SystemAddons",
+            channel="releasesjson",
+            mapping="Superblob-e8f4a19cfd695bf0eb66a2115313c31cc23a2369c0dc7b736d2f66d9075d7c66",
+            backgroundRate=100,
+            update_type="minor",
+            data_version=1,
+        )
+        insert_release(superblob_e8f4a19, "SystemAddons", history=False)
+        insert_release(hotfix_bug_1548973_1_1_4, "SystemAddons", history=False)
+        insert_release(timecop_1_0, "SystemAddons", history=False)
 
         yield
 
@@ -1443,12 +1457,37 @@ class ClientTest(ClientTestBase):
         <patch type="complete" URL="http://download.mozilla.org/?product=firefox-56.0-complete&amp;os=win64&amp;lang=en-US" hashFunction="sha512"
             hashValue="d355668278173e0e55f26dc8d6951965317db5779659e0267907ea458d26ca8327a200631a48defca4f2d97066ee8545717a54a2f75569114bd03a0fa30ea37e"
             size="41323124"/>
+        <patch type="partial" URL="http://download.mozilla.org/?product=firefox-56.0-partial-54.0.1&amp;os=win64&amp;lang=en-US" hashFunction="sha512"
+            hashValue="34c7fd9b706111cbe62e86b02122cfc7cd7281a0f1d1569c7c69cf8c2944fab758fc08f4d09895403cb2a19208351801e0d26d6774b6abd727f103ba0db47cef"
+            size="29129138"/>
     </update>
 </updates>""",
                 )
                 validate_cache_stats(
                     arg["lookups"], arg["hits"], arg["misses"], arg["data_version_lookups"], arg["data_version_hits"], arg["data_version_misses"]
                 )
+
+    def test_superblob_multiresponse_releases_json(self):
+        ret = self.client.get("/update/3/SystemAddons/1.0/1/p/l/releasesjson/a/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <addons>
+        <addon id="hotfix-bug-1548973@mozilla.org"
+               URL="https://ftp.mozilla.org/pub/system-addons/hotfix-bug-1548973/hotfix-bug-1548973@mozilla.org-1.1.4-signed.xpi"
+               hashFunction="sha512"
+               hashValue="c9c9e51fb7c642e01915f367c94d3aa00abfb3ea872f40220b8ead0dfd8e82c1e387bc5fca7cc55ac8f45322a3361a29f4947fe601eb9e94cfafad8ade2a1ce8"
+               size="11436" version="1.1.4"/>
+        <addon id="timecop@mozilla.com"
+               URL="https://ftp.mozilla.org/pub/system-addons/timecop/timecop@mozilla.com-1.0-signed.xpi"
+               hashFunction="sha512"
+               hashValue="0bc9ebc56a07ba7d230e175aa9669b40aec1aff2aaef86a9323f27242fe671e07942e8f21d9b37e4643436cb317d5bd087eb471d55cc43174fb96206f8c5c0f7"
+               size="5129" version="1.0"/>
+    </addons>
+</updates>
+""",
+        )
 
 
 class ClientTestMig64(ClientTestCommon):

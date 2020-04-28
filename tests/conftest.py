@@ -186,3 +186,21 @@ def cdm_16():
 def cdm_17():
     blob = json.load(open(Path(__file__).parent / "data/CDM-17.json"))
     return blob
+
+
+@pytest.fixture(scope="session")
+def superblob_e8f4a19():
+    blob = json.load(open(Path(__file__).parent / "data/Superblob-e8f4a19cfd695bf0eb66a2115313c31cc23a2369c0dc7b736d2f66d9075d7c66.json"))
+    return blob
+
+
+@pytest.fixture(scope="session")
+def hotfix_bug_1548973_1_1_4():
+    blob = json.load(open(Path(__file__).parent / "data/hotfix-bug-1548973@mozilla.org-1.1.4.json"))
+    return blob
+
+
+@pytest.fixture(scope="session")
+def timecop_1_0():
+    blob = json.load(open(Path(__file__).parent / "data/timecop@mozilla.com-1.0.json"))
+    return blob

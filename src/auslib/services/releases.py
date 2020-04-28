@@ -373,6 +373,13 @@ def get_release(name, trans):
         return None
 
 
+def get_product(name, trans):
+    if not exists(name, trans):
+        return None
+
+    return dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.product], transaction=trans)[0]["product"]
+
+
 def get_data_versions(name, trans):
     data_versions = infinite_defaultdict()
     base_row = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data_version])
