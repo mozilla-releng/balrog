@@ -309,12 +309,6 @@ def get_release(name, trans):
         base_blob = base_row[0]["data"]
         data_versions["."] = base_row[0]["data_version"]
 
-    scheduled_row = dbo.releases_json.scheduled_changes.select(where={"base_name": name, "complete": False}, transaction=trans)
-    if scheduled_row:
-        sc_data_versions["."] = scheduled_row[0]["data_version"]
-        if scheduled_row[0]["change_type"] != "delete":
-            sc_blob = scheduled_row[0]["base_data"]
-
     for asset in dbo.release_assets.select(where={"name": name}, transaction=trans):
         path = asset["path"].split(".")[1:]
         ensure_path_exists(base_blob, path)
@@ -324,14 +318,23 @@ def get_release(name, trans):
             ensure_path_exists(sc_blob, path)
             set_by_path(sc_blob, path, asset["data"])
 
+    scheduled_row = dbo.releases_json.scheduled_changes.select(where={"base_name": name, "complete": False}, transaction=trans)
+    if sc_exists(name, trans) and (not scheduled_row or scheduled_row[0]["change_type"] != "delete"):
+        sc_blob = deepcopy(base_blob)
+
+    if scheduled_row:
+        sc_data_versions["."] = scheduled_row[0]["data_version"]
+        if scheduled_row[0]["change_type"] != "delete":
+            # We have to merge rather than update because sc_blob
+            # may contain assets and base data, and updating will fully
+            # overwrite any root level keys from sc_blob with the new
+            # data (rather than doing a deep update/merge).
+            release_merger.merge(sc_blob, scheduled_row[0]["base_data"])
+
     for scheduled_asset in dbo.release_assets.scheduled_changes.select(where={"base_name": name, "complete": False}, transaction=trans):
         path = scheduled_asset["base_path"].split(".")[1:]
         set_by_path(sc_data_versions, path, scheduled_asset["data_version"])
         if scheduled_asset["change_type"] != "delete":
-            # This won't exist yet unless the base part of the Release also has a change scheduled
-            if not sc_blob:
-                sc_blob = deepcopy(base_blob)
-
             ensure_path_exists(sc_blob, path)
             set_by_path(sc_blob, path, scheduled_asset["base_data"])
 
