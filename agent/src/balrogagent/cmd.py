@@ -61,9 +61,7 @@ async def process_v2_scheduled_changes(loop, balrog_api_root, auth0_secrets):
         for r in filter(lambda r: len(r["scheduled_changes"]) > 0, resp["releases"]):
             t = time.time()
             required_signoffs = r.get("required_signoffs", {})
-            if all([time_is_ready(sc, t) for sc in r["scheduled_changes"]]) and all(
-                [verify_signoffs(required_signoffs, sc.get("signoffs", {})) for sc in r["scheduled_changes"]]
-            ):
+            if all([time_is_ready(sc, t) and verify_signoffs(required_signoffs, sc.get("signoffs", {})) for sc in r["scheduled_changes"]]):
                 logging.debug(f"Change for {r['name']} is ready, enacting")
                 await client.request(balrog_api_root, f"{endpoint}/{r['name']}/enact", method="POST", auth0_secrets=auth0_secrets, loop=loop)
 
