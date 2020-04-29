@@ -5,6 +5,8 @@ from connexion import problem, request
 from flask import Response, jsonify
 
 from auslib.global_state import dbo
+from auslib.services import releases as releases_service
+from auslib.util.data_structures import get_by_path
 from auslib.web.common.csrf import get_csrf_headers
 
 log = logging.getLogger(__name__)
@@ -28,8 +30,17 @@ def release_list(request):
         kwargs["name_prefix"] = request.args.get("name_prefix")
     if request.args.get("names_only"):
         kwargs["nameOnly"] = True
-    # TODO: use new releases tables too, or make a v2 endpoint
-    return dbo.releases.getReleaseInfo(**kwargs)
+    with dbo.begin() as trans:
+        ret = dbo.releases.getReleaseInfo(**kwargs, transaction=trans)
+        for r in releases_service.get_releases(trans)["releases"]:
+            if kwargs.get("product") and r["product"] != kwargs["product"]:
+                continue
+            if kwargs.get("name_prefix") and not r["name"].startswith(kwargs["name_prefix"]):
+                continue
+
+            ret.append(r)
+
+        return ret
 
 
 def serialize_releases(request, releases):
@@ -49,16 +60,20 @@ def get_releases():
 
 
 def _get_release(release):
-    # TODO: use new releases tables too, or make a v2 endpoint
-    releases = dbo.releases.getReleases(name=release, limit=1)
-    return releases[0] if releases else None
+    with dbo.begin() as trans:
+        release_row = releases_service.get_release(release, trans)
+        if release_row:
+            return {"data": release_row["blob"], "data_version": release_row["data_versions"]["."]}
+        else:
+            releases = dbo.releases.getReleases(name=release, limit=1, transaction=trans)
+            return releases[0] if releases else None
 
 
 def get_release(release, with_csrf_header=False):
-    release = _get_release(release)
-    if not release:
+    release_row = _get_release(release)
+    if not release_row:
         return problem(404, "Not Found", "Release name: %s not found" % release)
-    headers = {"X-Data-Version": release["data_version"]}
+    headers = {"X-Data-Version": release_row["data_version"]}
     if with_csrf_header:
         headers.update(get_csrf_headers())
     if request.args.get("pretty"):
@@ -68,7 +83,9 @@ def get_release(release, with_csrf_header=False):
         indent = None
         separators = None
     # separators set manually due to https://bugs.python.org/issue16333 affecting Python 2
-    return Response(response=json.dumps(release["data"], indent=indent, separators=separators, sort_keys=True), mimetype="application/json", headers=headers)
+    return Response(
+        response=json.dumps(release_row["data"], indent=indent, separators=separators, sort_keys=True), mimetype="application/json", headers=headers
+    )
 
 
 def get_release_with_csrf_header(release):
@@ -76,17 +93,21 @@ def get_release_with_csrf_header(release):
 
 
 def get_release_single_locale(release, platform, locale, with_csrf_header=False):
-    try:
-        # TODO: use new releases tables too, or make a v2 endpoint
-        locale = dbo.releases.getLocale(release, platform, locale)
-    except KeyError as e:
-        return problem(404, "Not Found", json.dumps(e.args))
-    # TODO: use new releases tables too, or make a v2 endpoint
-    data_version = dbo.releases.getReleases(name=release)[0]["data_version"]
-    headers = {"X-Data-Version": data_version}
-    if with_csrf_header:
-        headers.update(get_csrf_headers())
-    return Response(response=json.dumps(locale), mimetype="application/json", headers=headers)
+    with dbo.begin() as trans:
+        release_row = releases_service.get_release(release, trans)
+        if release_row:
+            locale_data = get_by_path(release_row["blob"], ("platforms", platform, "locales", locale))
+            data_version = get_by_path(release_row["data_versions"], ("platforms", platform, "locales", locale))
+        else:
+            try:
+                locale_data = dbo.releases.getLocale(release, platform, locale, transaction=trans)
+            except KeyError as e:
+                return problem(404, "Not Found", json.dumps(e.args))
+            data_version = dbo.releases.getReleases(name=release, transaction=trans)[0]["data_version"]
+        headers = {"X-Data-Version": data_version}
+        if with_csrf_header:
+            headers.update(get_csrf_headers())
+        return Response(response=json.dumps(locale_data), mimetype="application/json", headers=headers)
 
 
 def get_release_single_locale_with_csrf_header(release, platform, locale):
