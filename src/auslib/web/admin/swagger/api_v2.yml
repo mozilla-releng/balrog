@@ -21,6 +21,11 @@ components:
           type: number
           nullable: true
 
+    RequiredSignoffs:
+      type: object
+      additionalProperties:
+        type: integer
+
     ReleaseModifyBody:
       type: object
       required:
@@ -41,6 +46,8 @@ components:
         - sc_id
         - change_type
         - data_version
+        - when
+        - signoffs
       properties:
         sc_id:
           type: number
@@ -52,6 +59,12 @@ components:
             - delete
         data_version:
           type: number
+        when:
+          type: integer
+        signoffs:
+          type: object
+          additionalProperties:
+            type: string
 
     ReleaseModifyResponseLeaf:
       oneOf:
@@ -114,6 +127,10 @@ paths:
                             - name
                             - rule_info
                           properties:
+                            product_required_signoffs:
+                              $ref: '#/components/schemas/RequiredSignoffs'
+                            required_signoffs:
+                              $ref: '#/components/schemas/RequiredSignoffs'
                             read_only:
                               nullable: false
                             rule_info:
@@ -319,6 +336,23 @@ paths:
         '404':
           description: Release not found
 
+  /releases/{name}/enact:
+    parameters:
+      - $ref: '#/components/parameters/ReleaseName'
+
+    post:
+      summary: Enact the current scheduled changes for the named Release
+      operationId: auslib.web.admin.views.releases_v2.enact_scheduled_changes
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Client error
+        '403':
+          description: Permission denied
+        '404':
+          description: Release has no scheduled changes
+        
   /releases/{name}/{path}/data_version:
     parameters:
       - $ref: '#/components/parameters/ReleaseName'

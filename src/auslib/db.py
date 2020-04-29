@@ -1451,8 +1451,57 @@ class ScheduledChangeTable(AUSTable):
         self.conditions.delete(conditions_where, changed_by, old_data_version, transaction, dryrun=dryrun)
         return ret
 
+    async def asyncEnactChange(self, sc_id, enacted_by, transaction=None):
+        """Enacts a previously scheduled change by running update, insert, or delete on
+        the base table."""
+        if not self.db.hasPermission(enacted_by, "scheduled_change", "enact", transaction=transaction):
+            raise PermissionDeniedError("%s is not allowed to enact scheduled changes", enacted_by)
+
+        sc = self.select(where=[self.sc_id == sc_id], transaction=transaction)[0]
+        what = {}
+        change_type = sc["change_type"]
+        for col in sc:
+            if col.startswith("base_"):
+                what[col[5:]] = sc[col]
+
+        # The scheduled change is marked as complete first to avoid it being
+        # updated unnecessarily when the base table's update method calls
+        # mergeUpdate. If the base table update fails, this will get reverted
+        # when the transaction is rolled back.
+        # We explicitly avoid using ScheduledChangeTable's update() method here
+        # because we don't want to trigger its validation of conditions. Doing so
+        # would raise any exception for any timestamp based changes, because
+        # they are already in the past when we're ready to enact them.
+        # Updating in conditions table also so that history view can work
+        # See : https://bugzilla.mozilla.org/show_bug.cgi?id=1333876
+        self.conditions.update(
+            where=[self.conditions.sc_id == sc_id], what={}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"], transaction=transaction
+        )
+        super(ScheduledChangeTable, self).update(
+            where=[self.sc_id == sc_id], what={"complete": True}, changed_by=sc["scheduled_by"], old_data_version=sc["data_version"], transaction=transaction
+        )
+
+        signoffs = self.signoffs.select(where=[self.signoffs.sc_id == sc_id], transaction=transaction)
+
+        # If the scheduled change had a data version, it means the row already
+        # exists, and we need to use update() to enact it.
+        if change_type == "delete":
+            where = []
+            for col in self.base_primary_key:
+                where.append((getattr(self.baseTable, col) == sc["base_%s" % col]))
+            await self.baseTable.async_delete(where, sc["scheduled_by"], sc["base_data_version"], transaction=transaction, signoffs=signoffs)
+        elif change_type == "update":
+            where = []
+            for col in self.base_primary_key:
+                where.append((getattr(self.baseTable, col) == sc["base_%s" % col]))
+            await self.baseTable.async_update(where, what, sc["scheduled_by"], sc["base_data_version"], transaction=transaction, signoffs=signoffs)
+        elif change_type == "insert":
+            await self.baseTable.async_insert(sc["scheduled_by"], transaction=transaction, signoffs=signoffs, **what)
+        else:
+            raise ValueError("Unknown Change Type")
+
     def enactChange(self, sc_id, enacted_by, transaction=None):
-        """Enacts a previously scheduled change by running update or insert on
+        """Enacts a previously scheduled change by running update, insert, or delete on
         the base table."""
         if not self.db.hasPermission(enacted_by, "scheduled_change", "enact", transaction=transaction):
             raise PermissionDeniedError("%s is not allowed to enact scheduled changes", enacted_by)
@@ -2412,6 +2461,53 @@ class ReleasesJSON(AUSTable):
 
         return potential_required_signoffs
 
+    def getPotentialRequiredSignoffsForProduct(self, product, transaction=None):
+        potential_required_signoffs = {"rs": []}
+        where = [self.db.productRequiredSignoffs.product == product]
+        product_rs = self.db.productRequiredSignoffs.select(where=where, transaction=transaction)
+        if product_rs:
+            role_map = defaultdict(list)
+            for rs in product_rs:
+                role_map[rs["role"]].append(rs)
+            signoffs_required = [max(signoffs, default=None, key=lambda k: k["signoffs_required"]) for signoffs in role_map.values()]
+            potential_required_signoffs["rs"] = signoffs_required
+        return potential_required_signoffs
+
+    async def async_insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
+        if not dryrun:
+            potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
+            verify_signoffs(potential_required_signoffs, signoffs)
+
+        return await super(ReleasesJSON, self).async_insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+
+    async def async_update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
+        for row in self.select(where=where, transaction=transaction):
+            new_row = row.copy()
+            new_row.update(what)
+            is_readonly_change = row["data"] == new_row["data"] and "read_only" in what and row["read_only"] != what["read_only"]
+
+            # Only do signoff checks when the data is being changed, or we're moving from read-only to read-write
+            if not is_readonly_change or what["read_only"] is False:
+                if not dryrun:
+                    potential_required_signoffs = [
+                        obj for v in self.getPotentialRequiredSignoffs([row, new_row], transaction=transaction).values() for obj in v
+                    ]
+                    verify_signoffs(potential_required_signoffs, signoffs)
+
+        return await super(ReleasesJSON, self).async_update(
+            where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
+        )
+
+    async def async_delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
+        if not dryrun:
+            for row in self.select(where=where, transaction=transaction):
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([row], transaction=transaction).values() for obj in v]
+                verify_signoffs(potential_required_signoffs, signoffs)
+
+        return await super(ReleasesJSON, self).async_delete(
+            where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
+        )
+
 
 class ReleaseAssets(AUSTable):
     def __init__(self, db, metadata, dialect, history_buckets, historyClass):
@@ -2453,6 +2549,36 @@ class ReleaseAssets(AUSTable):
                 potential_required_signoffs[(release["name"], release["path"])].extend(rs)
 
         return potential_required_signoffs
+
+    async def async_insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
+        if not dryrun:
+            potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
+            verify_signoffs(potential_required_signoffs, signoffs)
+
+        return await super(ReleaseAssets, self).async_insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+
+    async def async_update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
+        for row in self.select(where=where, transaction=transaction):
+            new_row = row.copy()
+            new_row.update(what)
+
+            if not dryrun:
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([row, new_row], transaction=transaction).values() for obj in v]
+                verify_signoffs(potential_required_signoffs, signoffs)
+
+        return await super(ReleaseAssets, self).async_update(
+            where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
+        )
+
+    async def async_delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
+        if not dryrun:
+            for row in self.select(where=where, transaction=transaction):
+                potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([row], transaction=transaction).values() for obj in v]
+                verify_signoffs(potential_required_signoffs, signoffs)
+
+        return await super(ReleaseAssets, self).async_delete(
+            where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
+        )
 
 
 class UserRoles(AUSTable):

@@ -8,7 +8,8 @@ from auslib.blobs.base import createBlob
 from auslib.db import OutdatedDataError
 from auslib.errors import BlobValidationError, ReadOnlyError
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import AdminView, requirelogin, serialize_signoff_requirements
+from auslib.util.signoffs import serialize_signoff_requirements
+from auslib.web.admin.views.base import AdminView, requirelogin
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,

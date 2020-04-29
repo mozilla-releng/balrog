@@ -21,7 +21,10 @@ def process_rule_form(form_data):
     :param form_data: input json form data in dict
     :return: dictionary of processed form field values and list of valid mapping key's value.
     """
-    release_names = dbo.releases.getReleaseNames()
+    release_names = [
+        *dbo.releases.getReleaseNames(),
+        *dbo.releases_json.select(columns=[dbo.releases_json.name]),
+    ]
 
     mapping_choices = [(item["name"], item["name"]) for item in release_names]
 

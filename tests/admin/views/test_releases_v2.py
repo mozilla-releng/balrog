@@ -6,6 +6,7 @@ from aiohttp import ClientError
 from mock import MagicMock
 
 import auslib.services.releases
+import auslib.util.timestamp
 from auslib.global_state import dbo
 from auslib.util.data_structures import infinite_defaultdict
 
@@ -143,7 +144,10 @@ def releases_db(
     dbo.rules.t.insert().execute(
         rule_id=2, priority=100, product="Firefox", channel="beta", mapping="Firefox-60.0b3-build1", update_type="minor", data_version=1
     )
-    dbo.rules.t.insert().execute(rule_id=3, priority=100, channel="beta", mapping="CDM-17", update_type="minor", data_version=1)
+    dbo.rules.t.insert().execute(
+        rule_id=3, priority=50, product="Firefox", channel="release", mapping="Firefox-66.0-build1", update_type="minor", data_version=1
+    )
+    dbo.rules.t.insert().execute(rule_id=4, priority=100, channel="beta", mapping="CDM-17", update_type="minor", data_version=1)
     insert_release(cdm_16, "CDM")
     insert_release(cdm_17, "CDM")
     insert_release(firefox_56_0_build1, "Firefox")
@@ -151,7 +155,7 @@ def releases_db(
     insert_release_sc(firefox_64_0_build1, "Firefox", change_type="insert")
     insert_release(firefox_65_0_build1, "Firefox")
     insert_release(firefox_66_0_build1, "Firefox")
-    insert_release_sc(firefox_66_0_build1, "Firefox")
+    insert_release_sc(firefox_66_0_build1, "Firefox", signoff_user="bob", signoff_role="releng")
     insert_release(firefox_67_0_build1, "Firefox")
     insert_release_sc(firefox_67_0_build1, "Firefox", change_type="delete", signoff_user="bob", signoff_role="releng")
 
@@ -162,14 +166,25 @@ def test_get_releases(api):
     assert ret.status_code == 200, ret.data
     expected = {
         "releases": [
-            {"name": "CDM-16", "product": "CDM", "data_version": 1, "read_only": False, "rule_info": {}, "scheduled_changes": []},
+            {
+                "name": "CDM-16",
+                "product": "CDM",
+                "data_version": 1,
+                "read_only": False,
+                "rule_info": {},
+                "scheduled_changes": [],
+                "product_required_signoffs": {},
+                "required_signoffs": {},
+            },
             {
                 "name": "CDM-17",
                 "product": "CDM",
                 "data_version": 1,
                 "read_only": False,
-                "rule_info": {"3": {"product": None, "channel": "beta"}},
+                "rule_info": {"4": {"product": None, "channel": "beta"}},
                 "scheduled_changes": [],
+                "product_required_signoffs": {},
+                "required_signoffs": {},
             },
             {
                 "name": "Firefox-56.0-build1",
@@ -178,6 +193,8 @@ def test_get_releases(api):
                 "read_only": False,
                 "rule_info": {"1": {"product": "Firefox", "channel": "release"}},
                 "scheduled_changes": [],
+                "product_required_signoffs": {"releng": 1},
+                "required_signoffs": {"releng": 1},
             },
             {
                 "name": "Firefox-60.0b3-build1",
@@ -186,6 +203,8 @@ def test_get_releases(api):
                 "read_only": False,
                 "rule_info": {"2": {"product": "Firefox", "channel": "beta"}},
                 "scheduled_changes": [],
+                "product_required_signoffs": {"releng": 1},
+                "required_signoffs": {},
             },
             {
                 "name": "Firefox-64.0-build1",
@@ -269,13 +288,22 @@ def test_get_releases(api):
                     },
                 ],
             },
-            {"name": "Firefox-65.0-build1", "product": "Firefox", "data_version": 1, "read_only": False, "rule_info": {}, "scheduled_changes": []},
+            {
+                "name": "Firefox-65.0-build1",
+                "product": "Firefox",
+                "data_version": 1,
+                "read_only": False,
+                "rule_info": {},
+                "scheduled_changes": [],
+                "product_required_signoffs": {"releng": 1},
+                "required_signoffs": {},
+            },
             {
                 "name": "Firefox-66.0-build1",
                 "product": "Firefox",
                 "data_version": 1,
                 "read_only": False,
-                "rule_info": {},
+                "rule_info": {"3": {"product": "Firefox", "channel": "release"}},
                 "scheduled_changes": [
                     {
                         "name": "Firefox-66.0-build1",
@@ -288,7 +316,7 @@ def test_get_releases(api):
                         "change_type": "update",
                         "sc_data_version": 1,
                         "complete": False,
-                        "signoffs": {},
+                        "signoffs": {"bob": "releng"},
                     },
                     {
                         "name": "Firefox-66.0-build1",
@@ -300,7 +328,7 @@ def test_get_releases(api):
                         "change_type": "update",
                         "sc_data_version": 1,
                         "complete": False,
-                        "signoffs": {},
+                        "signoffs": {"bob": "releng"},
                     },
                     {
                         "name": "Firefox-66.0-build1",
@@ -312,7 +340,7 @@ def test_get_releases(api):
                         "change_type": "update",
                         "sc_data_version": 1,
                         "complete": False,
-                        "signoffs": {},
+                        "signoffs": {"bob": "releng"},
                     },
                     {
                         "name": "Firefox-66.0-build1",
@@ -324,7 +352,7 @@ def test_get_releases(api):
                         "change_type": "update",
                         "sc_data_version": 1,
                         "complete": False,
-                        "signoffs": {},
+                        "signoffs": {"bob": "releng"},
                     },
                     {
                         "name": "Firefox-66.0-build1",
@@ -336,7 +364,7 @@ def test_get_releases(api):
                         "change_type": "update",
                         "sc_data_version": 1,
                         "complete": False,
-                        "signoffs": {},
+                        "signoffs": {"bob": "releng"},
                     },
                     {
                         "name": "Firefox-66.0-build1",
@@ -348,7 +376,7 @@ def test_get_releases(api):
                         "change_type": "update",
                         "sc_data_version": 1,
                         "complete": False,
-                        "signoffs": {},
+                        "signoffs": {"bob": "releng"},
                     },
                     {
                         "name": "Firefox-66.0-build1",
@@ -360,9 +388,11 @@ def test_get_releases(api):
                         "change_type": "update",
                         "sc_data_version": 1,
                         "complete": False,
-                        "signoffs": {},
+                        "signoffs": {"bob": "releng"},
                     },
                 ],
+                "product_required_signoffs": {"releng": 1},
+                "required_signoffs": {"releng": 1},
             },
             {
                 "name": "Firefox-67.0-build1",
@@ -457,6 +487,8 @@ def test_get_releases(api):
                         "signoffs": {"bob": "releng"},
                     },
                 ],
+                "product_required_signoffs": {"releng": 1},
+                "required_signoffs": {},
             },
         ]
     }
@@ -931,6 +963,31 @@ def test_put_succeeds_for_nonsplit_release(api, cdm_17):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_put_cancels_scheduled_updates(api, firefox_66_0_build1):
+    old_data_versions = populate_versions_dict(firefox_66_0_build1)
+
+    ret = api.put("/v2/releases/Firefox-66.0-build1", json={"blob": firefox_66_0_build1, "product": "Firefox", "old_data_versions": old_data_versions})
+    assert ret.status_code == 200, ret.data
+
+    base_sc = (
+        dbo.releases_json.scheduled_changes.t.select()
+        .where(dbo.releases_json.scheduled_changes.base_name == "Firefox-66.0-build1")
+        .where(dbo.releases_json.scheduled_changes.complete is False)
+        .execute()
+        .fetchall()
+    )
+    assert len(base_sc) == 0
+    locale_sc = (
+        dbo.release_assets.scheduled_changes.t.select()
+        .where(dbo.release_assets.scheduled_changes.base_name == "Firefox-66.0-build1")
+        .where(dbo.release_assets.scheduled_changes.complete is False)
+        .execute()
+        .fetchall()
+    )
+    assert len(locale_sc) == 0
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_post_fails_when_release_doesnt_exist(api):
     blob = {"detailsUrl": "https://newurl", "platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "999999999999999"}}}}}
     old_data_versions = populate_versions_dict(blob)
@@ -1275,7 +1332,7 @@ def test_put_add_scheduled_change_base_only(api, firefox_56_0_build1):
 
     old_data_versions = versions_dict()
     old_data_versions["."] = 1
-    new_data_versions = {".": {"sc_id": 4, "data_version": 1, "change_type": "update"}}
+    new_data_versions = {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
 
     ret = api.put(
         "/v2/releases/Firefox-56.0-build1",
@@ -1325,7 +1382,13 @@ def test_put_add_scheduled_change_locale_only(api, firefox_56_0_build1):
 
     old_data_versions = versions_dict()
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
-    new_data_versions = {"platforms": {"Linux_x86_64-gcc3": {"locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update"}}}}}
+    new_data_versions = {
+        "platforms": {
+            "Linux_x86_64-gcc3": {
+                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
+            }
+        }
+    }
 
     ret = api.put(
         "/v2/releases/Firefox-56.0-build1",
@@ -1377,8 +1440,12 @@ def test_put_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
     new_data_versions = {
-        ".": {"sc_id": 4, "data_version": 1, "change_type": "update"},
-        "platforms": {"Linux_x86_64-gcc3": {"locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update"}}}},
+        ".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000},
+        "platforms": {
+            "Linux_x86_64-gcc3": {
+                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
+            }
+        },
     }
 
     ret = api.put(
@@ -1463,7 +1530,7 @@ def test_post_add_scheduled_change_base_only(api, firefox_56_0_build1):
 
     old_data_versions = versions_dict()
     old_data_versions["."] = 1
-    new_data_versions = {".": {"sc_id": 4, "data_version": 1, "change_type": "update"}}
+    new_data_versions = {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
 
     ret = api.post(
         "/v2/releases/Firefox-56.0-build1",
@@ -1514,7 +1581,13 @@ def test_post_add_scheduled_change_locale_only(api, firefox_56_0_build1):
 
     old_data_versions = versions_dict()
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
-    new_data_versions = {"platforms": {"Linux_x86_64-gcc3": {"locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update"}}}}}
+    new_data_versions = {
+        "platforms": {
+            "Linux_x86_64-gcc3": {
+                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
+            }
+        }
+    }
 
     ret = api.post(
         "/v2/releases/Firefox-56.0-build1", json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
@@ -1565,8 +1638,12 @@ def test_post_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
     new_data_versions = {
-        ".": {"sc_id": 4, "data_version": 1, "change_type": "update"},
-        "platforms": {"Linux_x86_64-gcc3": {"locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update"}}}},
+        ".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000},
+        "platforms": {
+            "Linux_x86_64-gcc3": {
+                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
+            }
+        },
     }
 
     ret = api.post(
@@ -1748,11 +1825,17 @@ def test_set_readwrite(api):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_set_readwrite_scheduled_change_because_of_rule(api):
+def test_set_readwrite_scheduled_change_because_of_rule(api, monkeypatch):
+    mocked_time = MagicMock()
+    mocked_time.time.return_value = 3333333333
+    # We patch the time object instead of the method because patching the method
+    # causes SQLAlchemy to break (probably because we're patching a global object?)
+    monkeypatch.setattr(auslib.util.timestamp, "time", mocked_time)
+
     dbo.releases_json.t.update(values={"read_only": True}).where(dbo.releases_json.name == "Firefox-56.0-build1").execute()
     ret = api.put("/v2/releases/Firefox-56.0-build1/read_only", json={"read_only": False, "old_data_version": 1})
     assert ret.status_code == 200, ret.data
-    assert ret.json == {".": {"sc_id": 4, "data_version": 1, "change_type": "update"}}
+    assert ret.json == {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 3333333363000}}
 
     read_only = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-56.0-build1").execute().fetchone()["read_only"]
     assert read_only is True
@@ -1767,11 +1850,18 @@ def test_set_readwrite_scheduled_change_because_of_rule(api):
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
-def test_set_readwrite_scheduled_change_because_of_product(api):
+def test_set_readwrite_scheduled_change_because_of_product(api, monkeypatch):
+    mocked_time = MagicMock()
+    mocked_time.time.return_value = 3333333333
+    # We patch the time object instead of the method because patching the method
+    # causes SQLAlchemy to break (probably because we're patching a global object?)
+    monkeypatch.setattr(auslib.util.timestamp, "time", mocked_time)
+
     dbo.releases_json.t.update(values={"read_only": True}).where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute()
     ret = api.put("/v2/releases/Firefox-60.0b3-build1/read_only", json={"read_only": False, "old_data_version": 1})
     assert ret.status_code == 200, ret.data
-    assert ret.json == {".": {"sc_id": 4, "data_version": 1, "change_type": "update"}}
+    # This endpoint automatically schedules 30 seconds into the future
+    assert ret.json == {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {}, "when": 3333333363000}}
 
     read_only = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute().fetchone()["read_only"]
     assert read_only is True
@@ -1873,3 +1963,123 @@ def test_revoke_signoff(api):
             .fetchall()
         )
         assert len(signoffs) == 0
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_enact_changes_missing_signoff(api):
+    sc_id = (
+        dbo.releases_json.scheduled_changes.t.select().where(dbo.releases_json.scheduled_changes.base_name == "Firefox-66.0-build1").execute().fetchone().sc_id
+    )
+    dbo.releases_json.scheduled_changes.signoffs.t.delete().where(dbo.releases_json.scheduled_changes.signoffs.sc_id == sc_id).execute()
+    for sc in (
+        dbo.release_assets.scheduled_changes.t.select()
+        .where(dbo.release_assets.scheduled_changes.base_name == "Firefox-66.0-build1")
+        .where(dbo.release_assets.scheduled_changes.base_path == ".platforms.WINNT_x86_64-msvc.locales.en-US")
+        .execute()
+        .fetchall()
+    ):
+        dbo.release_assets.scheduled_changes.signoffs.t.delete().where(dbo.release_assets.scheduled_changes.signoffs.sc_id == sc_id).execute()
+    ret = api.post("/v2/releases/Firefox-66.0-build1/enact")
+    assert ret.status_code == 400
+    assert "No Signoffs given" in ret.json["exception"]
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_enact_changes_no_scheduled_changes(api):
+    ret = api.post("/v2/releases/Firefox-65.0-build1/enact")
+    assert ret.status_code == 404
+
+
+@pytest.mark.usefixtures("releases_db")
+def test_enact_changes_no_permission(api, mock_verified_userinfo):
+    mock_verified_userinfo("notbob")
+    ret = api.post("/v2/releases/Firefox-67.0-build1/enact")
+    assert ret.status_code == 403
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_enact_insert(api):
+    ret = api.post("/v2/releases/Firefox-64.0-build1/enact")
+    assert ret.status_code == 200
+
+    base_sc = dbo.releases_json.scheduled_changes.t.select().where(dbo.releases_json.scheduled_changes.base_name == "Firefox-64.0-build1").execute().fetchone()
+    assert base_sc["complete"] is True
+    locale_scs = (
+        dbo.release_assets.scheduled_changes.t.select().where(dbo.release_assets.scheduled_changes.base_name == "Firefox-64.0-build1").execute().fetchall()
+    )
+    assert all([sc["complete"] for sc in locale_scs])
+
+    base_row = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-64.0-build1").execute().fetchone()
+    assert base_row is not None
+    locale_rows = dbo.release_assets.t.select().where(dbo.release_assets.name == "Firefox-64.0-build1").execute().fetchall()
+    assert len(locale_rows) == 5
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_enact_update(api):
+    ret = api.post("/v2/releases/Firefox-66.0-build1/enact")
+    assert ret.status_code == 200
+
+    base_sc = dbo.releases_json.scheduled_changes.t.select().where(dbo.releases_json.scheduled_changes.base_name == "Firefox-66.0-build1").execute().fetchone()
+    assert base_sc["complete"] is True
+    locale_scs = (
+        dbo.release_assets.scheduled_changes.t.select().where(dbo.release_assets.scheduled_changes.base_name == "Firefox-66.0-build1").execute().fetchall()
+    )
+    assert all([sc["complete"] for sc in locale_scs])
+
+    base_row = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-66.0-build1").execute().fetchone()
+    assert base_row["data"]["hashFunction"] == "sha1024"
+    assert base_row["data_version"] == 2
+    locale_rows = dbo.release_assets.t.select().where(dbo.release_assets.name == "Firefox-66.0-build1").execute().fetchall()
+    for row in locale_rows:
+        if row["path"].endswith("en-US"):
+            assert row["data"]["buildID"] == "123456789"
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_enact_delete(api):
+    ret = api.post("/v2/releases/Firefox-67.0-build1/enact")
+    assert ret.status_code == 200
+
+    base_sc = dbo.releases_json.scheduled_changes.t.select().where(dbo.releases_json.scheduled_changes.base_name == "Firefox-67.0-build1").execute().fetchone()
+    assert base_sc["complete"] is True
+    locale_scs = (
+        dbo.release_assets.scheduled_changes.t.select().where(dbo.release_assets.scheduled_changes.base_name == "Firefox-67.0-build1").execute().fetchall()
+    )
+    assert all([sc["complete"] for sc in locale_scs])
+
+    base_row = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-67.0-build1").execute().fetchone()
+    assert base_row is None
+    locale_rows = dbo.release_assets.t.select().where(dbo.release_assets.name == "Firefox-67.0-build1").execute().fetchall()
+    assert not any([l["path"].endswith("en-US") for l in locale_rows])
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_enact_changes_one_fails_all_revert(api):
+    sc_id = (
+        dbo.release_assets.scheduled_changes.t.select()
+        .where(dbo.release_assets.scheduled_changes.base_name == "Firefox-66.0-build1")
+        .where(dbo.release_assets.scheduled_changes.base_path == ".platforms.WINNT_x86_64-msvc.locales.en-US")
+        .execute()
+        .fetchone()
+        .sc_id
+    )
+    dbo.release_assets.scheduled_changes.signoffs.t.delete().where(dbo.release_assets.scheduled_changes.signoffs.sc_id == sc_id).execute()
+
+    ret = api.post("/v2/releases/Firefox-66.0-build1/enact")
+    assert ret.status_code == 400
+    assert "No Signoffs given" in ret.json["exception"]
+
+    base_sc = dbo.releases_json.scheduled_changes.t.select().where(dbo.releases_json.scheduled_changes.base_name == "Firefox-66.0-build1").execute().fetchone()
+    assert base_sc["complete"] is False
+    locale_scs = (
+        dbo.release_assets.scheduled_changes.t.select().where(dbo.release_assets.scheduled_changes.base_name == "Firefox-66.0-build1").execute().fetchall()
+    )
+    assert all([not sc["complete"] for sc in locale_scs])
+
+    base_blob = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-66.0-build1").execute().fetchone().data
+    assert base_blob["hashFunction"] == "sha512"
+    locale_blobs = dbo.release_assets.t.select().where(dbo.release_assets.name == "Firefox-66.0-build1").execute().fetchall()
+    for blob in locale_blobs:
+        if blob["path"].endswith("en-US"):
+            assert blob.data["buildID"] != "123456689"
