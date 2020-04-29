@@ -274,10 +274,13 @@ async def test_v2_releases_no_changes(monkeypatch, fake_request):
     monkeypatch.setattr(balrogagent.cmd.client, "request", fr)
     time_is_ready = MagicMock(return_value=False)
     monkeypatch.setattr(balrogagent.cmd, "time_is_ready", time_is_ready)
+    verify_signoffs = MagicMock(return_value=True)
+    monkeypatch.setattr(balrogagent.cmd, "verify_signoffs", verify_signoffs)
     await balrogagent.cmd.run_agent(asyncio.get_event_loop(), "http://balrog.fake", "telemetry", auth0_secrets={}, once=True, raise_exceptions=True)
 
     # Once per scheduled change
     assert time_is_ready.call_count == 0
+    assert verify_signoffs.call_count == 0
     # Once for each v1 endpoint, once for each v2 endpoint
     assert fr.call_count == 7
 
@@ -306,11 +309,11 @@ async def test_v2_releases_one_change(monkeypatch, fake_request):
                                 "change_type": "insert",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                         ],
-                        "product_required_signoffs": {},
-                        "required_signoffs": {},
+                        "product_required_signoffs": {"releng": 1},
+                        "required_signoffs": {"releng": 1},
                     }
                 ]
             }
@@ -319,12 +322,17 @@ async def test_v2_releases_one_change(monkeypatch, fake_request):
     monkeypatch.setattr(balrogagent.cmd.client, "request", fr)
     time_is_ready = MagicMock(return_value=True)
     monkeypatch.setattr(balrogagent.cmd, "time_is_ready", time_is_ready)
+    verify_signoffs = MagicMock(return_value=True)
+    monkeypatch.setattr(balrogagent.cmd, "verify_signoffs", verify_signoffs)
     await balrogagent.cmd.run_agent(asyncio.get_event_loop(), "http://balrog.fake", "telemetry", auth0_secrets={}, once=True, raise_exceptions=True)
 
     # Once per scheduled change
     assert time_is_ready.call_count == 1
+    assert verify_signoffs.call_count == 1
     # Once for each v1 endpoint, once for each v2 endpoint, once to enact
     assert fr.call_count == 8
+    called_endpoints = [call[0][1] for call in fr.call_args_list]
+    assert "/v2/releases/Firefox-64.0-build1/enact" in called_endpoints
 
 
 @pytest.mark.asyncio
@@ -351,7 +359,7 @@ async def test_v2_releases_multiple_changes_one_release(monkeypatch, fake_reques
                                 "change_type": "insert",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                             {
                                 "name": "Firefox-64.0-build1",
@@ -363,7 +371,7 @@ async def test_v2_releases_multiple_changes_one_release(monkeypatch, fake_reques
                                 "change_type": "insert",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                             {
                                 "name": "Firefox-64.0-build1",
@@ -375,11 +383,11 @@ async def test_v2_releases_multiple_changes_one_release(monkeypatch, fake_reques
                                 "change_type": "insert",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                         ],
-                        "product_required_signoffs": {},
-                        "required_signoffs": {},
+                        "product_required_signoffs": {"releng": 1},
+                        "required_signoffs": {"releng": 1},
                     }
                 ]
             }
@@ -388,12 +396,17 @@ async def test_v2_releases_multiple_changes_one_release(monkeypatch, fake_reques
     monkeypatch.setattr(balrogagent.cmd.client, "request", fr)
     time_is_ready = MagicMock(return_value=True)
     monkeypatch.setattr(balrogagent.cmd, "time_is_ready", time_is_ready)
+    verify_signoffs = MagicMock(return_value=True)
+    monkeypatch.setattr(balrogagent.cmd, "verify_signoffs", verify_signoffs)
     await balrogagent.cmd.run_agent(asyncio.get_event_loop(), "http://balrog.fake", "telemetry", auth0_secrets={}, once=True, raise_exceptions=True)
 
     # Once per scheduled change
     assert time_is_ready.call_count == 3
+    assert verify_signoffs.call_count == 3
     # Once for each v1 endpoint, once for each v2 endpoint, once to enact
     assert fr.call_count == 8
+    called_endpoints = [call[0][1] for call in fr.call_args_list]
+    assert "/v2/releases/Firefox-64.0-build1/enact" in called_endpoints
 
 
 @pytest.mark.asyncio
@@ -420,7 +433,7 @@ async def test_v2_releases_multiple_changes_multiple_releases(monkeypatch, fake_
                                 "change_type": "insert",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                             {
                                 "name": "Firefox-64.0-build1",
@@ -432,7 +445,7 @@ async def test_v2_releases_multiple_changes_multiple_releases(monkeypatch, fake_
                                 "change_type": "insert",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                             {
                                 "name": "Firefox-64.0-build1",
@@ -444,11 +457,11 @@ async def test_v2_releases_multiple_changes_multiple_releases(monkeypatch, fake_
                                 "change_type": "insert",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                         ],
-                        "product_required_signoffs": {},
-                        "required_signoffs": {},
+                        "product_required_signoffs": {"releng": 1},
+                        "required_signoffs": {"releng": 1},
                     },
                     {
                         "name": "Firefox-66.0-build1",
@@ -468,7 +481,7 @@ async def test_v2_releases_multiple_changes_multiple_releases(monkeypatch, fake_
                                 "change_type": "update",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                             {
                                 "name": "Firefox-66.0-build1",
@@ -480,11 +493,11 @@ async def test_v2_releases_multiple_changes_multiple_releases(monkeypatch, fake_
                                 "change_type": "update",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                         ],
-                        "product_required_signoffs": {},
-                        "required_signoffs": {},
+                        "product_required_signoffs": {"releng": 1},
+                        "required_signoffs": {"releng": 1},
                     },
                 ]
             }
@@ -493,12 +506,18 @@ async def test_v2_releases_multiple_changes_multiple_releases(monkeypatch, fake_
     monkeypatch.setattr(balrogagent.cmd.client, "request", fr)
     time_is_ready = MagicMock(return_value=True)
     monkeypatch.setattr(balrogagent.cmd, "time_is_ready", time_is_ready)
+    verify_signoffs = MagicMock(return_value=True)
+    monkeypatch.setattr(balrogagent.cmd, "verify_signoffs", verify_signoffs)
     await balrogagent.cmd.run_agent(asyncio.get_event_loop(), "http://balrog.fake", "telemetry", auth0_secrets={}, once=True, raise_exceptions=True)
 
     # Once per scheduled change
     assert time_is_ready.call_count == 5
+    assert verify_signoffs.call_count == 5
     # Once for each v1 endpoint, once for each v2 endpoint, once to enact each release's scheduled changes
     assert fr.call_count == 9
+    called_endpoints = [call[0][1] for call in fr.call_args_list]
+    assert "/v2/releases/Firefox-64.0-build1/enact" in called_endpoints
+    assert "/v2/releases/Firefox-66.0-build1/enact" in called_endpoints
 
 
 @pytest.mark.asyncio
@@ -525,7 +544,7 @@ async def test_v2_releases_multiple_changes_not_all_ready(monkeypatch, fake_requ
                                 "change_type": "insert",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                             {
                                 "name": "Firefox-64.0-build1",
@@ -537,7 +556,7 @@ async def test_v2_releases_multiple_changes_not_all_ready(monkeypatch, fake_requ
                                 "change_type": "insert",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                             {
                                 "name": "Firefox-64.0-build1",
@@ -549,11 +568,11 @@ async def test_v2_releases_multiple_changes_not_all_ready(monkeypatch, fake_requ
                                 "change_type": "insert",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                         ],
-                        "product_required_signoffs": {},
-                        "required_signoffs": {},
+                        "product_required_signoffs": {"releng": 1},
+                        "required_signoffs": {"releng": 1},
                     }
                 ]
             }
@@ -562,12 +581,18 @@ async def test_v2_releases_multiple_changes_not_all_ready(monkeypatch, fake_requ
     monkeypatch.setattr(balrogagent.cmd.client, "request", fr)
     time_is_ready = MagicMock(side_effect=[True, False, True])
     monkeypatch.setattr(balrogagent.cmd, "time_is_ready", time_is_ready)
+    verify_signoffs = MagicMock(return_value=True)
+    monkeypatch.setattr(balrogagent.cmd, "verify_signoffs", verify_signoffs)
     await balrogagent.cmd.run_agent(asyncio.get_event_loop(), "http://balrog.fake", "telemetry", auth0_secrets={}, once=True, raise_exceptions=True)
 
     # Once per scheduled change
     assert time_is_ready.call_count == 3
+    # One less here, because the final call is skipped after time_is_ready return False
+    assert verify_signoffs.call_count == 2
     # Once for each v1 endpoint, once for each v2 endpoint
     assert fr.call_count == 7
+    called_endpoints = [call[0][1] for call in fr.call_args_list]
+    assert "/v2/releases/Firefox-64.0-build1/enact" not in called_endpoints
 
 
 @pytest.mark.asyncio
@@ -594,7 +619,7 @@ async def test_v2_releases_multiple_changes_one_release_one_part_not_ready(monke
                                 "change_type": "insert",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                             {
                                 "name": "Firefox-64.0-build1",
@@ -606,7 +631,7 @@ async def test_v2_releases_multiple_changes_one_release_one_part_not_ready(monke
                                 "change_type": "insert",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                             {
                                 "name": "Firefox-64.0-build1",
@@ -618,11 +643,11 @@ async def test_v2_releases_multiple_changes_one_release_one_part_not_ready(monke
                                 "change_type": "insert",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                         ],
-                        "product_required_signoffs": {},
-                        "required_signoffs": {},
+                        "product_required_signoffs": {"releng": 1},
+                        "required_signoffs": {"releng": 1},
                     },
                     {
                         "name": "Firefox-66.0-build1",
@@ -642,7 +667,7 @@ async def test_v2_releases_multiple_changes_one_release_one_part_not_ready(monke
                                 "change_type": "update",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                             {
                                 "name": "Firefox-66.0-build1",
@@ -654,11 +679,11 @@ async def test_v2_releases_multiple_changes_one_release_one_part_not_ready(monke
                                 "change_type": "update",
                                 "sc_data_version": 1,
                                 "complete": False,
-                                "signoffs": {},
+                                "signoffs": {"bill": "releng"},
                             },
                         ],
-                        "product_required_signoffs": {},
-                        "required_signoffs": {},
+                        "product_required_signoffs": {"releng": 1},
+                        "required_signoffs": {"releng": 1},
                     },
                 ]
             }
@@ -667,12 +692,19 @@ async def test_v2_releases_multiple_changes_one_release_one_part_not_ready(monke
     monkeypatch.setattr(balrogagent.cmd.client, "request", fr)
     time_is_ready = MagicMock(side_effect=[True, True, True, True, False])
     monkeypatch.setattr(balrogagent.cmd, "time_is_ready", time_is_ready)
+    verify_signoffs = MagicMock(return_value=True)
+    monkeypatch.setattr(balrogagent.cmd, "verify_signoffs", verify_signoffs)
     await balrogagent.cmd.run_agent(asyncio.get_event_loop(), "http://balrog.fake", "telemetry", auth0_secrets={}, once=True, raise_exceptions=True)
 
     # Once per scheduled change
     assert time_is_ready.call_count == 5
+    # One less here, because the final call is skipped after time_is_ready return False
+    assert verify_signoffs.call_count == 4
     # Once for each v1 endpoint, once for each v2 endpoint, once to enact the one release that was ready
     assert fr.call_count == 8
+    called_endpoints = [call[0][1] for call in fr.call_args_list]
+    assert "/v2/releases/Firefox-64.0-build1/enact" in called_endpoints
+    assert "/v2/releases/Firefox-66.0-build1/enact" not in called_endpoints
 
 
 @pytest.mark.asyncio
@@ -736,9 +768,12 @@ async def test_v2_releases_signoff_requirements_not_met(monkeypatch, fake_reques
     monkeypatch.setattr(balrogagent.cmd.client, "request", fr)
     time_is_ready = MagicMock(return_value=True)
     monkeypatch.setattr(balrogagent.cmd, "time_is_ready", time_is_ready)
+    verify_signoffs = MagicMock(return_value=False)
+    monkeypatch.setattr(balrogagent.cmd, "verify_signoffs", verify_signoffs)
     await balrogagent.cmd.run_agent(asyncio.get_event_loop(), "http://balrog.fake", "telemetry", auth0_secrets={}, once=True, raise_exceptions=True)
 
     # Once per scheduled change
     assert time_is_ready.call_count == 3
+    assert verify_signoffs.call_count == 3
     # Once for each v1 endpoint, once for each v2 endpoint
     assert fr.call_count == 7
