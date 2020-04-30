@@ -1398,6 +1398,9 @@ class ClientTest(ClientTestBase):
         self.assertEqual(ret.status_code, 200)
 
     def test_get_with_release_in_new_tables(self):
+        # The lookups/hits/misses here come in multiples of 4 because we have:
+        #  - a release that the rule is pointing to
+        #  - 3 potential partials, all of which get looked at
         args = [
             {
                 # The first query should be all misses

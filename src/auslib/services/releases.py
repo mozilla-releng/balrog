@@ -320,6 +320,7 @@ def get_release(name, trans):
     def get_asset_data_versions():
         return dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data_version], transaction=trans) or []
 
+    # Get all of the base and asset information, potentially from a cache
     base_row = cache.get("releases", name, get_base_row)
     base_data_version = cache.get("releases_data_version", name, get_base_data_version)
     asset_rows = cache.get("release_assets", name, get_asset_rows)
@@ -330,11 +331,17 @@ def get_release(name, trans):
     base_blob = {}
     sc_blob = {}
     if base_row:
+        # base_data_version is cached for a shorter period of time than the overall row
+        # because it's cheap to retrieve. if the cached row's data_version is older than
+        # the cached data_version we will forcibly update it to make sure we minimize
+        # the time we're serving old release data
         if base_row["data_version"] < base_data_version:
             base_row = get_base_row()
         base_blob = base_row["data"]
         data_versions["."] = base_row["data_version"]
 
+    # same thing here for the assets -- if any of the full asset data versions
+    # do not match the cached asset data versions, we forcibly update
     if [r["data_version"] for r in asset_rows] != asset_data_versions:
         asset_rows = get_asset_rows()
 
