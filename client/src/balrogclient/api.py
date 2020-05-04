@@ -94,19 +94,15 @@ def get_balrog_session(auth0_secrets, session=None):
     return session
 
 
-def balrog_request(session, *args, **kwargs):
-    if len(args) != 2:
-        raise ValueError("args must have 2 values: (method, url)")
-    method = args[0].upper()
-    url = args[1]
+def balrog_request(session, method, url, *args, **kwargs):
     # Guard the potentially expensive `json.dumps` unless it's actually
     # going to be logged.
     if log.isEnabledFor(logging.DEBUG):
         data = kwargs.get("json", kwargs.get("data"))
-        log.debug(f"Balrog request to {url} via {method}")
+        log.debug(f"Balrog request to {url} via {method.upper()}")
         if data:
             log.debug(f"Data sent: {json.dumps(data)}")
-    resp = session.request(*args, **kwargs)
+    resp = session.request(method, url, *args, **kwargs)
     try:
         resp.raise_for_status()
         if resp.content:
@@ -119,7 +115,7 @@ def balrog_request(session, *args, **kwargs):
         log.error("Caught HTTPError: %s", exc.response.content)
         raise
     finally:
-        stats = {"timestamp": time.time(), "method": method, "url": url, "status_code": resp.status_code, "elapsed_secs": resp.elapsed.total_seconds()}
+        stats = {"timestamp": time.time(), "method": method.upper(), "url": url, "status_code": resp.status_code, "elapsed_secs": resp.elapsed.total_seconds()}
         log.debug("REQUEST STATS: %s", json.dumps(stats))
     return
 
