@@ -95,13 +95,13 @@ def get_balrog_session(auth0_secrets, session=None):
 
 
 def balrog_request(session, method, url, *args, **kwargs):
-    # Guard the potentially expensive `json.dumps` unless it's actually
-    # going to be logged.
+    # Guard the potentially expensive json formatting (done implicitly)
+    # unless it's actually going to be logged.
     if log.isEnabledFor(logging.DEBUG):
         data = kwargs.get("json", kwargs.get("data"))
         log.debug(f"Balrog request to {url} via {method.upper()}")
         if data:
-            log.debug(f"Data sent: {json.dumps(data)}")
+            log.debug(f"Data sent: {data}")
     resp = session.request(method, url, *args, **kwargs)
     try:
         resp.raise_for_status()
