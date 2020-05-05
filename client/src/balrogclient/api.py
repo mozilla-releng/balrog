@@ -14,6 +14,8 @@ MAX_LOG_LINE_LENGTH = 10000
 REFRESH_THRESHOLD = 5 * 60
 _token_cache = {}
 
+log = logging.getLogger(__name__)
+
 
 def _json_log_data(data):
     log = json.dumps(data)
@@ -50,10 +52,10 @@ def _get_auth0_token(secrets, session):
         entry = _token_cache[cache_key]
         expiration = entry["exp"]
         if expiration - time.time() > REFRESH_THRESHOLD:
-            logging.debug("Using cached token")
+            log.debug("Using cached token")
             return entry["access_token"]
 
-    logging.debug("Refreshing, getting new token")
+    log.debug("Refreshing, getting new token")
     url = "https://{}/oauth/token".format(secrets["domain"])
     payload = dict(client_id=secrets["client_id"], client_secret=secrets["client_secret"], audience=secrets["audience"], grant_type="client_credentials")
     headers = {"Content-Type": "application/json"}
@@ -81,6 +83,41 @@ class BearerAuth(requests.auth.AuthBase):
     def __call__(self, r):
         r.headers["Authorization"] = "Bearer {}".format(self.access_token)
         return r
+
+
+def get_balrog_session(auth0_secrets, session=None):
+    if not session:
+        session = requests.Session()
+
+    access_token = _get_auth0_token(auth0_secrets, session=session)
+    session.auth = BearerAuth(access_token)
+    return session
+
+
+def balrog_request(session, method, url, *args, **kwargs):
+    # Guard the potentially expensive json formatting (done implicitly)
+    # unless it's actually going to be logged.
+    if log.isEnabledFor(logging.DEBUG):
+        data = kwargs.get("json", kwargs.get("data"))
+        log.debug(f"Balrog request to {url} via {method.upper()}")
+        if data:
+            log.debug(f"Data sent: {data}")
+    resp = session.request(method, url, *args, **kwargs)
+    try:
+        resp.raise_for_status()
+        if resp.content:
+            recieved_data = resp.json()
+            log.info("Data recieved: %s", recieved_data)
+            return recieved_data
+        else:
+            return
+    except requests.HTTPError as exc:
+        log.error("Caught HTTPError: %s", exc.response.content)
+        raise
+    finally:
+        stats = {"timestamp": time.time(), "method": method.upper(), "url": url, "status_code": resp.status_code, "elapsed_secs": resp.elapsed.total_seconds()}
+        log.debug("REQUEST STATS: %s", json.dumps(stats))
+    return
 
 
 class API(object):
@@ -162,13 +199,13 @@ class API(object):
         return self.do_request(url, data, method)
 
     def do_request(self, url, data, method):
-        logging.debug("Balrog request to %s", url)
+        log.debug("Balrog request to %s", url)
         if data is not None and "csrf_token" in data:
             sanitised_data = data.copy()
             del sanitised_data["csrf_token"]
-            logging.debug("Data sent: %s", _json_log_data(sanitised_data))
+            log.debug("Data sent: %s", _json_log_data(sanitised_data))
         else:
-            logging.debug("Data sent: %s", _json_log_data(data))
+            log.debug("Data sent: %s", _json_log_data(data))
         headers = {"Accept-Encoding": "application/json", "Accept": "application/json", "Content-Type": "application/json", "Referer": self.api_root}
         before = time.time()
         access_token = _get_auth0_token(self.auth0_secrets, session=self.session)
@@ -184,11 +221,11 @@ class API(object):
                 req.raise_for_status()
             return req
         except requests.HTTPError as excp:
-            logging.error("Caught HTTPError: %s", excp.response.content)
+            log.error("Caught HTTPError: %s", excp.response.content)
             raise
         finally:
             stats = {"timestamp": time.time(), "method": method, "url": url, "status_code": req.status_code, "elapsed_secs": time.time() - before}
-            logging.debug("REQUEST STATS: %s", json.dumps(stats))
+            log.debug("REQUEST STATS: %s", json.dumps(stats))
 
     def get_data(self):
         resp = self.request()
