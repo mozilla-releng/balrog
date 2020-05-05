@@ -45,6 +45,8 @@ class TestPublicReleasesAPI(CommonTestBase):
         self.assertIn(("Fennec.55.0a1", "Fennec"), releases)
         self.assertIn(("Firefox-54.0.1-build1", "Firefox"), releases)
         self.assertIn(("Firefox-56.0-build1", "Firefox"), releases)
+        self.assertNotIn(("q", "q"), releases)
+        self.assertNotIn(("Superblob-e8f4a19cfd695bf0eb66a2115313c31cc23a2369c0dc7b736d2f66d9075d7c66", "SystemAddons"), releases)
 
     def test_get_release(self):
         release = "Firefox.55.0a1"
