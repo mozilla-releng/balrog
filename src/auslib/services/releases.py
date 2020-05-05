@@ -315,10 +315,13 @@ def get_release(name, trans):
         return None
 
     def get_asset_rows():
-        return dbo.release_assets.select(where={"name": name}, transaction=trans) or []
+        return dbo.release_assets.select(where={"name": name}, order_by=[dbo.release_assets.path], transaction=trans) or []
 
     def get_asset_data_versions():
-        return dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data_version], transaction=trans) or []
+        return (
+            dbo.release_assets.select(where={"name": name}, columns=[dbo.release_assets.data_version], order_by=[dbo.release_assets.path], transaction=trans)
+            or []
+        )
 
     # Get all of the base and asset information, potentially from a cache
     base_row = cache.get("releases", name, get_base_row)
