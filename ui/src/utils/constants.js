@@ -163,3 +163,4 @@ export const DIFF_COLORS = {
   REMOVED: '#fdeff0',
 };
 export const INITIAL_JS_DIFF_SUMMARY = { added: 0, removed: 0 };
+export const RELEASE_ROOT_LEVEL_KEY = '.';

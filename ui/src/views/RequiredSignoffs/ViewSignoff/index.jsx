@@ -360,7 +360,7 @@ function ViewSignoff({ isNewSignoff, ...props }) {
           {!isNewSignoff && (
             <SpeedDial ariaLabel="Secondary Actions">
               <SpeedDialAction
-                disabled={saveAction.loading}
+                FabProps={{ disabled: saveAction.loading }}
                 icon={<DeleteIcon />}
                 tooltipOpen
                 tooltipTitle="Delete Required Signoffs"

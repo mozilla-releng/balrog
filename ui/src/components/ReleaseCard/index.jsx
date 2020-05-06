@@ -140,9 +140,12 @@ function ReleaseCard(props) {
   } = props;
   const classes = useStyles();
   const hasRulesPointingAtRevision = Object.keys(release.rule_info).length > 0;
-  const requiresSignoff =
-    release.scheduledChange &&
-    Object.keys(release.scheduledChange.required_signoffs).length > 0;
+  const hasScheduledChange =
+    release.scheduledChange && Object.keys(release.scheduledChange).length > 0;
+  const requiredSignoffs = release.required_signoffs
+    ? release.required_signoffs
+    : release.scheduledChange && release.scheduledChange.required_signoffs;
+  const requiresSignoff = Object.keys(requiredSignoffs).length > 0;
   const handleAccessChange = ({ target: { checked } }) => {
     onAccessChange({ release, checked });
   };
@@ -203,7 +206,11 @@ function ReleaseCard(props) {
             </Paper>
             <Link
               className={classes.link}
-              to={`/releases/${release.name}/revisions`}>
+              to={
+                release.api_version === 1
+                  ? `/releases/${release.name}/revisions`
+                  : `/releases/${release.name}/revisions/v2`
+              }>
               <Tooltip title="Revisions">
                 <IconButton>
                   <HistoryIcon />
@@ -216,14 +223,16 @@ function ReleaseCard(props) {
       <CardContent classes={{ root: classes.cardContentRoot }}>
         <List>
           <Grid container>
-            <Grid item xs={12}>
-              <ListItem className={classes.listItem}>
-                <ListItemText
-                  primary="Data Version"
-                  secondary={release.data_version}
-                />
-              </ListItem>
-            </Grid>
+            {release.api_version === 1 && (
+              <Grid item xs={12}>
+                <ListItem className={classes.listItem}>
+                  <ListItemText
+                    primary="Data Version"
+                    secondary={release.data_version}
+                  />
+                </ListItem>
+              </Grid>
+            )}
             <Grid item>
               <ListItem className={classes.listItem}>
                 <ListItemText
@@ -300,16 +309,22 @@ function ReleaseCard(props) {
             </div>
           </Fragment>
         )}
-        {requiresSignoff && (
+        {hasScheduledChange && requiresSignoff && (
           <SignoffSummary
-            requiredSignoffs={release.scheduledChange.required_signoffs}
+            requiredSignoffs={requiredSignoffs}
             signoffs={release.scheduledChange.signoffs}
             className={classes.space}
           />
         )}
       </CardContent>
       <CardActions className={classes.cardActions}>
-        <Link className={classes.link} to={`/releases/${release.name}`}>
+        <Link
+          className={classes.link}
+          to={
+            release.api_version === 1
+              ? `/releases/${release.name}`
+              : `/releases/${release.name}/v2`
+          }>
           <Button color="secondary">
             {release.read_only ? 'View' : 'Update'}
           </Button>
@@ -320,7 +335,8 @@ function ReleaseCard(props) {
           onClick={() => onReleaseDelete(release)}>
           Delete
         </Button>
-        {requiresSignoff &&
+        {hasScheduledChange &&
+          requiresSignoff &&
           (user && user.email in release.scheduledChange.signoffs ? (
             <Button color="secondary" disabled={!user} onClick={onRevoke}>
               Revoke Signoff

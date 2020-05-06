@@ -84,6 +84,15 @@ function DiffRelease(props) {
       JSON.stringify(deepSortObject(firstRelease), null, 2),
       JSON.stringify(deepSortObject(secondRelease), null, 2),
     ]);
+
+    // This component usually renders multiple times, and because
+    // the diff is done asynchronously in a worker, the last one to
+    // finish will "win" and be displayed. Terminating the current worker
+    // in a cleanup function like this will make sure any old workers
+    // from previous renders cannot win the race, because they most recent
+    // one will always start (and finish) after any old ones have been
+    // terminated.
+    return () => diffWorker.terminate();
   }, [firstFilename, secondFilename, firstRelease, secondRelease]);
 
   const handleRowRender = ({ index, key, style }) => {
