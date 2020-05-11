@@ -41,7 +41,7 @@
     "react": "^16.13.1",
     "react-auth0-components": "^1.0.4",
     "react-codemirror2": "^7.1.0",
-    "react-diff-view": "^2.4.3",
+    "react-diff-view": "^2.4.4",
     "react-dom": "^16.13.1",
     "react-helmet": "^6.0.0",
     "react-hot-loader": "^4.12.21",
