@@ -2,6 +2,8 @@ from copy import deepcopy
 
 from repoze.lru import ExpiringLRUCache
 
+uncached_sentinel = object()
+
 
 class MaybeCacher(object):
     """MaybeCacher is a very simple wrapper to work around the fact that we
@@ -53,13 +55,16 @@ class MaybeCacher(object):
             else:
                 return None
 
-        value = self.caches[name].get(key)
-        # "if value is None" is important here (instead of "if not value")
-        # because it allows us to cache results of potentially expensive
-        # calls that may end up returning nothing.
-        if value is None and callable(value_getter):
-            value = value_getter()
-            self.put(name, key, value)
+        value = None
+        cached_value = self.caches[name].get(key, uncached_sentinel)
+        # If we got something other than a sentinel value, the key was in the cache, and we should return it
+        if cached_value != uncached_sentinel:
+            value = cached_value
+        else:
+            # If we know how to look up the value, go do it, cache it, and return it
+            if callable(value_getter):
+                value = value_getter()
+                self.put(name, key, value)
 
         if self.make_copies:
             return deepcopy(value)

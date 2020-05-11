@@ -1,6 +1,5 @@
 import logging
 import re
-from functools import wraps
 from os import path
 
 import connexion
@@ -10,9 +9,7 @@ from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
 
 import auslib.web
-from auslib.AUS import AUS
 from auslib.errors import BadDataError
-from auslib.global_state import dbo
 from auslib.web.admin.views.problem import problem
 
 try:
@@ -21,17 +18,7 @@ except ImportError:  # pragma: no cover
     import cgi as html
 
 
-def with_transaction(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        with dbo.begin() as transaction:
-            return f(*args, transaction=transaction, **kwargs)
-
-    return wrapper
-
-
 log = logging.getLogger(__name__)
-AUS = AUS()
 
 connexion_app = connexion.App(__name__, specification_dir=".", options={"swagger_ui": False})
 app = connexion_app.app

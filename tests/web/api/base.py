@@ -26,7 +26,8 @@ class CommonTestBase(unittest.TestCase):
     def tearDownClass(cls):
         app.error_handler_spec = cls.error_spec
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, timecop_1_0):
         app.config["DEBUG"] = True
         self.public_client = app.test_client()
 
@@ -151,3 +152,8 @@ class CommonTestBase(unittest.TestCase):
         dbo.rules.t.insert().execute(
             rule_id=4, priority=90, backgroundRate=100, mapping="Firefox.55.0a1", update_type="minor", product="Firefox", mig64=True, data_version=1
         )
+        insert_release(firefox_54_0_1_build1, "Firefox", history=False)
+        insert_release(firefox_56_0_build1, "Firefox", history=False)
+        insert_release(superblob_e8f4a19, "SystemAddons", history=False)
+        insert_release(hotfix_bug_1548973_1_1_4, "SystemAddons", history=False)
+        insert_release(timecop_1_0, "SystemAddons", history=False)

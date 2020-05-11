@@ -10,7 +10,7 @@ from sqlalchemy import join, select
 
 from ..blobs.base import createBlob
 from ..errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
-from ..global_state import dbo
+from ..global_state import cache, dbo
 from ..util.data_structures import ensure_path_exists, get_by_path, infinite_defaultdict, set_by_path
 from ..util.signoffs import serialize_signoff_requirements
 from ..util.timestamp import getMillisecondTimestamp
@@ -300,16 +300,55 @@ def get_releases(trans):
 
 
 def get_release(name, trans):
+    def get_base_row():
+        row = dbo.releases_json.select(where={"name": name}, transaction=trans)
+        if row:
+            return row[0]
+
+        return None
+
+    def get_base_data_version():
+        row = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data_version], transaction=trans)
+        if row:
+            return row[0]["data_version"]
+
+        return None
+
+    def get_asset_rows():
+        return dbo.release_assets.select(where={"name": name}, order_by=[dbo.release_assets.path], transaction=trans) or []
+
+    def get_asset_data_versions():
+        return (
+            dbo.release_assets.select(where={"name": name}, columns=[dbo.release_assets.data_version], order_by=[dbo.release_assets.path], transaction=trans)
+            or []
+        )
+
+    # Get all of the base and asset information, potentially from a cache
+    base_row = cache.get("releases", name, get_base_row)
+    base_data_version = cache.get("releases_data_version", name, get_base_data_version)
+    asset_rows = cache.get("release_assets", name, get_asset_rows)
+    asset_data_versions = cache.get("release_assets_data_versions", name, get_asset_data_versions)
+
     data_versions = infinite_defaultdict()
     sc_data_versions = infinite_defaultdict()
     base_blob = {}
     sc_blob = {}
-    base_row = dbo.releases_json.select(where={"name": name}, transaction=trans)
     if base_row:
-        base_blob = base_row[0]["data"]
-        data_versions["."] = base_row[0]["data_version"]
+        # base_data_version is cached for a shorter period of time than the overall row
+        # because it's cheap to retrieve. if the cached row's data_version is older than
+        # the cached data_version we will forcibly update it to make sure we minimize
+        # the time we're serving old release data
+        if base_row["data_version"] < base_data_version:
+            base_row = get_base_row()
+        base_blob = base_row["data"]
+        data_versions["."] = base_row["data_version"]
 
-    for asset in dbo.release_assets.select(where={"name": name}, transaction=trans):
+    # same thing here for the assets -- if any of the full asset data versions
+    # do not match the cached asset data versions, we forcibly update
+    if [r["data_version"] for r in asset_rows] != asset_data_versions:
+        asset_rows = get_asset_rows()
+
+    for asset in asset_rows:
         path = asset["path"].split(".")[1:]
         ensure_path_exists(base_blob, path)
         set_by_path(base_blob, path, asset["data"])
@@ -342,6 +381,13 @@ def get_release(name, trans):
         return {"blob": base_blob, "data_versions": data_versions, "sc_blob": sc_blob, "sc_data_versions": sc_data_versions}
     else:
         return None
+
+
+def get_product(name, trans):
+    if not exists(name, trans):
+        return None
+
+    return dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.product], transaction=trans)[0]["product"]
 
 
 def get_data_versions(name, trans):

@@ -23,6 +23,20 @@ def setUpModule():
     logging.getLogger("migrate").setLevel(logging.CRITICAL)
 
 
+def validate_cache_stats(lookups, hits, misses, data_version_lookups, data_version_hits, data_version_misses):
+    for cache_name in ("releases", "release_assets"):
+        c = cache.caches[cache_name]
+        assert c.lookups == lookups, cache_name
+        assert c.hits == hits, cache_name
+        assert c.misses == misses, cache_name
+
+    for cache_name in ("releases_data_version", "release_assets_data_versions"):
+        c = cache.caches[cache_name]
+        assert c.lookups == data_version_lookups, cache_name
+        assert c.hits == data_version_hits, cache_name
+        assert c.misses == data_version_misses, cache_name
+
+
 class TestGetSystemCapabilities(unittest.TestCase):
     def testUnprefixedInstructionSetOnly(self):
         self.assertEqual(client_api.getSystemCapabilities("SSE3"), {"instructionSet": "SSE3", "memory": None, "jaws": None})
@@ -95,12 +109,21 @@ class ClientTestBase(ClientTestCommon):
     def tearDownClass(cls):
         app.error_handler_spec = cls.error_spec
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, timecop_1_0):
+        cache.reset()
+        cache.make_cache("releases", 50, 10)
+        cache.make_cache("releases_data_version", 50, 5)
+        cache.make_cache("release_assets", 50, 10)
+        cache.make_cache("release_assets_data_versions", 50, 5)
         self.version_fd, self.version_file = mkstemp()
         app.config["DEBUG"] = True
-        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
+        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com", "http://download.mozilla.org")
         app.config["WHITELISTED_DOMAINS"] = {
-            "a.com": ("b", "c", "e", "f", "response-a", "response-b", "s", "responseblob-a", "responseblob-b", "q", "fallback", "distTest")
+            "a.com": ("b", "c", "e", "f", "response-a", "response-b", "s", "responseblob-a", "responseblob-b", "q", "fallback", "distTest"),
+            "download.mozilla.org": ("Firefox",),
+            "archive.mozilla.org": ("Firefox",),
+            "ftp.mozilla.org": ("SystemAddons",),
         }
         app.config["VERSION_FILE"] = self.version_file
         with open(self.version_file, "w+") as f:
@@ -115,7 +138,7 @@ class ClientTestBase(ClientTestCommon):
             )
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        dbo.setDomainWhitelist({"a.com": ("b", "c", "e", "distTest")})
+        dbo.setDomainWhitelist(app.config["WHITELISTED_DOMAINS"])
         self.client = app.test_client()
         dbo.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", data_version=1, alias="moz-releng")
@@ -821,8 +844,26 @@ class ClientTestBase(ClientTestCommon):
 """
             ),
         )
+        dbo.rules.t.insert().execute(
+            priority=100, product="Firefox", channel="release", mapping="Firefox-56.0-build1", backgroundRate=100, update_type="minor", data_version=1
+        )
+        insert_release(firefox_54_0_1_build1, "Firefox", history=False)
+        insert_release(firefox_56_0_build1, "Firefox", history=False)
+        dbo.rules.t.insert().execute(
+            priority=300,
+            product="SystemAddons",
+            channel="releasesjson",
+            mapping="Superblob-e8f4a19cfd695bf0eb66a2115313c31cc23a2369c0dc7b736d2f66d9075d7c66",
+            backgroundRate=100,
+            update_type="minor",
+            data_version=1,
+        )
+        insert_release(superblob_e8f4a19, "SystemAddons", history=False)
+        insert_release(hotfix_bug_1548973_1_1_4, "SystemAddons", history=False)
+        insert_release(timecop_1_0, "SystemAddons", history=False)
 
-    def tearDown(self):
+        yield
+
         os.close(self.version_fd)
         os.remove(self.version_file)
 
@@ -1355,6 +1396,101 @@ class ClientTest(ClientTestBase):
     def testUnknownQueryStringParametersAreAllowedV6(self, param, val):
         ret = self.client.get("/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml?{}={}".format(param, val))
         self.assertEqual(ret.status_code, 200)
+
+    def test_get_with_release_in_new_tables(self):
+        # The lookups/hits/misses here come in multiples of 4 because we have:
+        #  - a release that the rule is pointing to
+        #  - 3 potential partials, all of which get looked at
+        args = [
+            {
+                # The first query should be all misses
+                "time": 10,
+                "lookups": 4,
+                "hits": 0,
+                "misses": 4,
+                "data_version_lookups": 4,
+                "data_version_hits": 0,
+                "data_version_misses": 4,
+            },
+            {
+                # Make sure a look up soon after will be fully cached (including data version)
+                "time": 13,
+                "lookups": 8,
+                "hits": 4,
+                "misses": 4,
+                "data_version_lookups": 8,
+                "data_version_hits": 4,
+                "data_version_misses": 4,
+            },
+            {
+                # And a look up after the data version cache expires should only invalidate data version caches
+                "time": 15,
+                "lookups": 12,
+                "hits": 8,
+                "misses": 4,
+                "data_version_lookups": 12,
+                "data_version_hits": 4,
+                "data_version_misses": 8,
+            },
+            {
+                # And make sure the main caches invalidate at the right time
+                "time": 20,
+                "lookups": 16,
+                "hits": 8,
+                "misses": 8,
+                "data_version_lookups": 16,
+                "data_version_hits": 4,
+                "data_version_misses": 12,
+            },
+        ]
+        with mock.patch("time.time") as t:
+            for arg in args:
+                t.return_value = arg["time"]
+
+                ret = self.client.get(
+                    "/update/6/Firefox/54.0.1/20170628075643/WINNT_x86_64-msvc-x64/en-US/release"
+                    "/Windows_NT 6.1.0.0 (x86)/ISET:SSE3,MEM:4096,JAWS:0/default/default/update.xml"
+                )
+                self.assertUpdateEqual(
+                    ret,
+                    """<?xml version="1.0"?>
+<updates>
+    <update type="minor" displayVersion="56.0" appVersion="56.0" platformVersion="56.0" buildID="20170918210324"
+            detailsURL="https://www.mozilla.org/en-US/firefox/56.0/releasenotes/">
+        <patch type="complete" URL="http://download.mozilla.org/?product=firefox-56.0-complete&amp;os=win64&amp;lang=en-US" hashFunction="sha512"
+            hashValue="d355668278173e0e55f26dc8d6951965317db5779659e0267907ea458d26ca8327a200631a48defca4f2d97066ee8545717a54a2f75569114bd03a0fa30ea37e"
+            size="41323124"/>
+        <patch type="partial" URL="http://download.mozilla.org/?product=firefox-56.0-partial-54.0.1&amp;os=win64&amp;lang=en-US" hashFunction="sha512"
+            hashValue="34c7fd9b706111cbe62e86b02122cfc7cd7281a0f1d1569c7c69cf8c2944fab758fc08f4d09895403cb2a19208351801e0d26d6774b6abd727f103ba0db47cef"
+            size="29129138"/>
+    </update>
+</updates>""",
+                )
+                validate_cache_stats(
+                    arg["lookups"], arg["hits"], arg["misses"], arg["data_version_lookups"], arg["data_version_hits"], arg["data_version_misses"]
+                )
+
+    def test_superblob_multiresponse_releases_json(self):
+        ret = self.client.get("/update/3/SystemAddons/1.0/1/p/l/releasesjson/a/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <addons>
+        <addon id="hotfix-bug-1548973@mozilla.org"
+               URL="https://ftp.mozilla.org/pub/system-addons/hotfix-bug-1548973/hotfix-bug-1548973@mozilla.org-1.1.4-signed.xpi"
+               hashFunction="sha512"
+               hashValue="c9c9e51fb7c642e01915f367c94d3aa00abfb3ea872f40220b8ead0dfd8e82c1e387bc5fca7cc55ac8f45322a3361a29f4947fe601eb9e94cfafad8ade2a1ce8"
+               size="11436" version="1.1.4"/>
+        <addon id="timecop@mozilla.com"
+               URL="https://ftp.mozilla.org/pub/system-addons/timecop/timecop@mozilla.com-1.0-signed.xpi"
+               hashFunction="sha512"
+               hashValue="0bc9ebc56a07ba7d230e175aa9669b40aec1aff2aaef86a9323f27242fe671e07942e8f21d9b37e4643436cb317d5bd087eb471d55cc43174fb96206f8c5c0f7"
+               size="5129" version="1.0"/>
+    </addons>
+</updates>
+""",
+        )
 
 
 class ClientTestMig64(ClientTestCommon):
