@@ -23,7 +23,8 @@ class ViewTest(unittest.TestCase):
     """Base class for all view tests. Sets up some sample data, and provides
        some helper methods."""
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, insert_release, firefox_56_0_build1):
         from auslib.web.admin.views import base as view_base
 
         self.view_base = view_base
@@ -409,7 +410,12 @@ class ViewTest(unittest.TestCase):
         )
         self.client = app.test_client()
 
-    def tearDown(self):
+        # Insert a release into the new tables to make sure it doesn't show up
+        # in the old API.
+        insert_release(firefox_56_0_build1, "Firefox", history=False)
+
+        yield
+
         dbo.reset()
         os.close(self.version_fd)
         os.remove(self.version_file)
