@@ -6,6 +6,7 @@ from mock import MagicMock
 
 import auslib.services.releases
 import auslib.util.timestamp
+from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
 from auslib.util.data_structures import deep_dict
 
@@ -90,6 +91,8 @@ def releases_db(
     insert_release_sc(firefox_66_0_build1, "Firefox", signoff_user="bob", signoff_role="releng")
     insert_release(firefox_67_0_build1, "Firefox")
     insert_release_sc(firefox_67_0_build1, "Firefox", change_type="delete", signoff_user="bob", signoff_role="releng")
+    # Insert a Release into the old table to make sure it doesn't show up in the new API
+    dbo.releases.t.insert().execute(name="b", product="b", data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)), data_version=1)
 
 
 @pytest.mark.usefixtures("releases_db")

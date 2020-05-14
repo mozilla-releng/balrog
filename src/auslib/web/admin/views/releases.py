@@ -18,7 +18,7 @@ from auslib.web.admin.views.scheduled_changes import (
     ScheduledChangeView,
     SignoffsView,
 )
-from auslib.web.common.releases import release_list, serialize_releases
+from auslib.web.common.releases import serialize_releases
 
 __all__ = ["SingleReleaseView", "SingleLocaleView"]
 
@@ -351,8 +351,15 @@ class ReleasesAPIView(AdminView):
     """/releases"""
 
     def get(self, **kwargs):
-        releases = release_list(connexion.request)
-        if not connexion.request.args.get("names_only"):
+        opts = {}
+        if connexion.request.args.get("product"):
+            opts["product"] = connexion.request.args.get("product")
+        if connexion.request.args.get("name_prefix"):
+            opts["name_prefix"] = connexion.request.args.get("name_prefix")
+        if connexion.request.args.get("names_only"):
+            opts["nameOnly"] = True
+        releases = dbo.releases.getReleaseInfo(**opts)
+        if not opts.get("names_only"):
             requirements = dbo.releases.getPotentialRequiredSignoffs(releases)
             for release in releases:
                 release["required_signoffs"] = serialize_signoff_requirements(requirements[release["name"]])
