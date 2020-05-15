@@ -88,7 +88,7 @@ class ReleaseBlobBase(XMLBlob):
         # even attempt to look it up.
         if patch["from"] != "*":
             try:
-                release = releases.get_release(patch["from"], None)
+                release = releases.get_release(patch["from"], None, include_sc=False)
                 if release:
                     return createBlob(release["blob"])
                 else:

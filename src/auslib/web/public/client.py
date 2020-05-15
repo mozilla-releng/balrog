@@ -173,7 +173,7 @@ def get_update_blob(transaction, **url):
                 # if we have a SuperBlob of systemaddons, we process the response products and
                 # concatenate their inner XMLs
                 product_query = query.copy()
-                release_row = releases.get_release(blob_name, transaction)
+                release_row = releases.get_release(blob_name, transaction, include_sc=False)
                 response_release = None
                 if release_row:
                     product_query["product"] = releases.get_product(blob_name, transaction)

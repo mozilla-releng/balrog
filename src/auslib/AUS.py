@@ -106,7 +106,7 @@ class AUS:
             if updateQuery["force"] == FORCE_FALLBACK_MAPPING or self.rand() >= rule["backgroundRate"]:
                 fallbackReleaseName = rule["fallbackMapping"]
                 if fallbackReleaseName:
-                    release = releases.get_release(fallbackReleaseName, transaction)
+                    release = releases.get_release(fallbackReleaseName, transaction, include_sc=False)
                     blob = None
                     if release:
                         blob = createBlob(release["blob"])
@@ -125,7 +125,7 @@ class AUS:
         # 3) Incoming release is older than the one in the mapping, defined as one of:
         #    * version decreases
         #    * version is the same and buildID doesn't increase
-        release = releases.get_release(rule["mapping"], transaction)
+        release = releases.get_release(rule["mapping"], transaction, include_sc=False)
         blob = None
         if release:
             blob = createBlob(release["blob"])
