@@ -32,7 +32,7 @@
     "date-fns": "2.13.0",
     "deep-sort-object": "^1.0.2",
     "diff": "^4.0.2",
-    "downshift": "^5.3.0",
+    "downshift": "^5.4.0",
     "is-absolute-url": "^3.0.3",
     "mdi-react": "^7.1.0",
     "prop-types": "^15",
