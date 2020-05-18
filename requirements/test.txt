@@ -147,10 +147,9 @@ pytest-xdist==1.32.0 \
     --hash=sha256:1d4166dcac69adb38eeaedb88c8fada8588348258a3492ab49ba9161f2971129 \
     --hash=sha256:ba5ec9fde3410bd9a116ff7e4f26c92e02fa3d27975ef3ad03f330b3d4b54e91 \
     # via -r test.in
-pytest==5.4.1 \
-    --hash=sha256:0e5b30f5cb04e887b91b1ee519fa3d89049595f428c1db76e73bd7f17b09b172 \
-    --hash=sha256:84dde37075b8805f3d1f392cc47e38a0e59518fb46a431cfdaf7cf1ce805f970 \
-    # via -r test.in, pytest-asyncio, pytest-cov, pytest-forked, pytest-xdist
+pytest==5.4.2 \
+    --hash=sha256:95c710d0a72d91c13fae35dce195633c929c3792f54125919847fdcdf7caa0d3 \
+    --hash=sha256:eb2b5e935f6a019317e455b6da83dd8650ac9ffd2ee73a7b657a30873d67a698    # via -r test.in, pytest-asyncio, pytest-cov, pytest-forked, pytest-xdist
 regex==2020.4.4 \
     --hash=sha256:08119f707f0ebf2da60d2f24c2f39ca616277bb67ef6c92b72cbf90cbe3a556b \
     --hash=sha256:0ce9537396d8f556bcfc317c65b6a0705320701e5ce511f05fc04421ba05b8a8 \
