@@ -75,10 +75,9 @@ flake8-black==0.1.1 \
 flake8==3.8.1 \
     --hash=sha256:6c1193b0c3f853ef763969238f6c81e9e63ace9d024518edc020d5f1d6d93195 \
     --hash=sha256:ea6623797bf9a52f4c9577d780da0bb17d65f870213f7b5bcc9fca82540c31d5    # via -r test.in, flake8-black
-hypothesis==5.10.5 \
-    --hash=sha256:579dbe113a5cf5e3d6cf406b2afd07ad754c97be5542fa35196587eaf88c0cbe \
-    --hash=sha256:8f8c1c2e0ff5b6125d2fd3a47234807690f25117f989019200e19204bce3120a \
-    # via -r test.in
+hypothesis==5.14.0 \
+    --hash=sha256:0c00645c63341f035951cade156112d7c4d3c650c5a54671d104dc8acd41a350 \
+    --hash=sha256:ca58d0d6b37b10c9ae5cfaa97fb9cb8b033f0cbacb19dfea3fed79a7d57cfcfd    # via -r test.in
 isort==4.3.21 \
     --hash=sha256:54da7e92468955c4fceacd0c86bd0ec997b0e1ee80d97f67c35a78b719dccab1 \
     --hash=sha256:6e811fcb295968434526407adb8796944f1988c5b65e8139058f2014cbe100fd \
