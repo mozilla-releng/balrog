@@ -2,6 +2,7 @@
 import logging
 import os
 import unittest
+from contextlib import ExitStack
 from tempfile import mkstemp
 from xml.dom import minidom
 
@@ -1398,52 +1399,55 @@ class ClientTest(ClientTestBase):
         self.assertEqual(ret.status_code, 200)
 
     def test_get_with_release_in_new_tables(self):
-        # The lookups/hits/misses here come in multiples of 4 because we have:
-        #  - a release that the rule is pointing to
-        #  - 3 potential partials, all of which get looked at
-        args = [
-            {
-                # The first query should be all misses
-                "time": 10,
-                "lookups": 4,
-                "hits": 0,
-                "misses": 4,
-                "data_version_lookups": 4,
-                "data_version_hits": 0,
-                "data_version_misses": 4,
-            },
-            {
-                # Make sure a look up soon after will be fully cached (including data version)
-                "time": 13,
-                "lookups": 8,
-                "hits": 4,
-                "misses": 4,
-                "data_version_lookups": 8,
-                "data_version_hits": 4,
-                "data_version_misses": 4,
-            },
-            {
-                # And a look up after the data version cache expires should only invalidate data version caches
-                "time": 15,
-                "lookups": 12,
-                "hits": 8,
-                "misses": 4,
-                "data_version_lookups": 12,
-                "data_version_hits": 4,
-                "data_version_misses": 8,
-            },
-            {
-                # And make sure the main caches invalidate at the right time
-                "time": 20,
-                "lookups": 16,
-                "hits": 8,
-                "misses": 8,
-                "data_version_lookups": 16,
-                "data_version_hits": 4,
-                "data_version_misses": 12,
-            },
-        ]
-        with mock.patch("time.time") as t:
+        with ExitStack() as stack:
+            mocked_releases_json_scheduled_changes = stack.enter_context(mock.patch("auslib.services.releases.dbo.releases_json.scheduled_changes"))
+            mocked_release_assets_scheduled_changes = stack.enter_context(mock.patch("auslib.services.releases.dbo.release_assets.scheduled_changes"))
+            t = stack.enter_context(mock.patch("time.time"))
+            # The lookups/hits/misses here come in multiples of 4 because we have:
+            #  - a release that the rule is pointing to
+            #  - 3 potential partials, all of which get looked at
+            args = [
+                {
+                    # The first query should be all misses
+                    "time": 10,
+                    "lookups": 4,
+                    "hits": 0,
+                    "misses": 4,
+                    "data_version_lookups": 4,
+                    "data_version_hits": 0,
+                    "data_version_misses": 4,
+                },
+                {
+                    # Make sure a look up soon after will be fully cached (including data version)
+                    "time": 13,
+                    "lookups": 8,
+                    "hits": 4,
+                    "misses": 4,
+                    "data_version_lookups": 8,
+                    "data_version_hits": 4,
+                    "data_version_misses": 4,
+                },
+                {
+                    # And a look up after the data version cache expires should only invalidate data version caches
+                    "time": 15,
+                    "lookups": 12,
+                    "hits": 8,
+                    "misses": 4,
+                    "data_version_lookups": 12,
+                    "data_version_hits": 4,
+                    "data_version_misses": 8,
+                },
+                {
+                    # And make sure the main caches invalidate at the right time
+                    "time": 20,
+                    "lookups": 16,
+                    "hits": 8,
+                    "misses": 8,
+                    "data_version_lookups": 16,
+                    "data_version_hits": 4,
+                    "data_version_misses": 12,
+                },
+            ]
             for arg in args:
                 t.return_value = arg["time"]
 
@@ -1470,27 +1474,36 @@ class ClientTest(ClientTestBase):
                     arg["lookups"], arg["hits"], arg["misses"], arg["data_version_lookups"], arg["data_version_hits"], arg["data_version_misses"]
                 )
 
+            assert mocked_releases_json_scheduled_changes.select.call_count == 0
+            assert mocked_release_assets_scheduled_changes.select.call_count == 0
+
     def test_superblob_multiresponse_releases_json(self):
-        ret = self.client.get("/update/3/SystemAddons/1.0/1/p/l/releasesjson/a/a/a/update.xml")
-        self.assertUpdateEqual(
-            ret,
-            """<?xml version="1.0"?>
+        with ExitStack() as stack:
+            mocked_releases_json_scheduled_changes = stack.enter_context(mock.patch("auslib.services.releases.dbo.releases_json.scheduled_changes"))
+            mocked_release_assets_scheduled_changes = stack.enter_context(mock.patch("auslib.services.releases.dbo.release_assets.scheduled_changes"))
+            ret = self.client.get("/update/3/SystemAddons/1.0/1/p/l/releasesjson/a/a/a/update.xml")
+            self.assertUpdateEqual(
+                ret,
+                """<?xml version="1.0"?>
 <updates>
     <addons>
         <addon id="hotfix-bug-1548973@mozilla.org"
-               URL="https://ftp.mozilla.org/pub/system-addons/hotfix-bug-1548973/hotfix-bug-1548973@mozilla.org-1.1.4-signed.xpi"
-               hashFunction="sha512"
-               hashValue="c9c9e51fb7c642e01915f367c94d3aa00abfb3ea872f40220b8ead0dfd8e82c1e387bc5fca7cc55ac8f45322a3361a29f4947fe601eb9e94cfafad8ade2a1ce8"
-               size="11436" version="1.1.4"/>
+            URL="https://ftp.mozilla.org/pub/system-addons/hotfix-bug-1548973/hotfix-bug-1548973@mozilla.org-1.1.4-signed.xpi"
+            hashFunction="sha512"
+            hashValue="c9c9e51fb7c642e01915f367c94d3aa00abfb3ea872f40220b8ead0dfd8e82c1e387bc5fca7cc55ac8f45322a3361a29f4947fe601eb9e94cfafad8ade2a1ce8"
+            size="11436" version="1.1.4"/>
         <addon id="timecop@mozilla.com"
-               URL="https://ftp.mozilla.org/pub/system-addons/timecop/timecop@mozilla.com-1.0-signed.xpi"
-               hashFunction="sha512"
-               hashValue="0bc9ebc56a07ba7d230e175aa9669b40aec1aff2aaef86a9323f27242fe671e07942e8f21d9b37e4643436cb317d5bd087eb471d55cc43174fb96206f8c5c0f7"
-               size="5129" version="1.0"/>
+            URL="https://ftp.mozilla.org/pub/system-addons/timecop/timecop@mozilla.com-1.0-signed.xpi"
+            hashFunction="sha512"
+            hashValue="0bc9ebc56a07ba7d230e175aa9669b40aec1aff2aaef86a9323f27242fe671e07942e8f21d9b37e4643436cb317d5bd087eb471d55cc43174fb96206f8c5c0f7"
+            size="5129" version="1.0"/>
     </addons>
 </updates>
 """,
-        )
+            )
+
+            assert mocked_releases_json_scheduled_changes.select.call_count == 0
+            assert mocked_release_assets_scheduled_changes.select.call_count == 0
 
 
 class ClientTestMig64(ClientTestCommon):
