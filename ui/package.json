@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "@mozilla-frontend-infra/react-lint": "^2.0.1",
-    "@neutrinojs/jest": "^9.1.0",
+    "@neutrinojs/jest": "^9.2.0",
     "@neutrinojs/react": "^9.1.0",
     "dotenv": "^8.2.0",
     "dotenv-cli": "^3.1.0",
