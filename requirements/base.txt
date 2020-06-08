@@ -442,10 +442,9 @@ sqlparse==0.3.1 \
     --hash=sha256:022fb9c87b524d1f7862b3037e541f68597a730a8843245c349fc93e1643dc4e \
     --hash=sha256:e162203737712307dfe78860cc56c8da8a852ab2ee33750e33aeadf38d12c548 \
     # via sqlalchemy-migrate
-swagger-spec-validator==2.5.0 \
-    --hash=sha256:61f2d2a732b886cf33c2c24886565be9692e5814cacc17fd973e095b72b33e4f \
-    --hash=sha256:8eb82682871f8d63067b455e2e055c8dd953ca260e791635b58dfe0b73ba1f43 \
-    # via -r base.in, spec-synthase
+swagger-spec-validator==2.7.0 \
+    --hash=sha256:78c5165b0686788344f0c9f137f0e23e9b2b2b7d1947b1c10061c0984d008af1 \
+    --hash=sha256:ee12f97b058aadd276a53f69fb2ac4d10014d382ae70ce4722562a6fbdecb6ed    # via -r base.in, spec-synthase
 tempita==0.5.2 \
     --hash=sha256:cacecf0baa674d356641f1d406b8bff1d756d739c46b869a54de515d08e6fc9c \
     # via sqlalchemy-migrate
