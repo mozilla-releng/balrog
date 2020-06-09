@@ -1,8 +1,8 @@
-FROM python:3.8-slim
+FROM python:3.9-rc
 
 MAINTAINER bhearsum@mozilla.com
 
-# Some versions of the python:3.8 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
+# Some versions of the python:3.9 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
 # default-libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 # xz-utils is needed to compress production database dumps
 RUN apt-get -q update \
