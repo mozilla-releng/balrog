@@ -75,7 +75,7 @@ export const DIALOG_ACTION_INITIAL_STATE = {
 };
 export const EMPTY_MENU_ITEM_CHAR = '-';
 // product/action restrictions need to match the backend definitions from
-// https://github.com/mozilla/balrog/blob/master/auslib/db.py#L2144
+// https://github.com/mozilla/balrog/blob/main/auslib/db.py#L2144
 export const PERMISSION_RESTRICTION_MAPPINGS = {
   admin: {
     restrict_products: true,

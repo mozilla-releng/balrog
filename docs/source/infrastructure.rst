@@ -83,7 +83,7 @@ Schema Upgrades
 ~~~~~~~~~~~~~~~
 If you need to do a schema change you must ensure that either the current production code can run with your schema change applied, or that your new code can run with the old schema. Code and schema changes cannot be done at the same instant, so you must be able to support one of these scenarios. Generally, additive changes (column or table additions) should do the schema change first, while destructive changes (column or table deletions) should do the schema change second. You can simulate the upgrade with your local Docker containers to verify which is right for you.
 
-A quick way to find out if you have a schema change is to diff the current tip of the master branch against the currently deployed tag, eg:
+A quick way to find out if you have a schema change is to diff the current tip of the main branch against the currently deployed tag, eg:
 ::
 
  tag=REPLACEME
@@ -131,4 +131,4 @@ Pushing live requires CloudOps. For non-urgent pushes, you should begin this pro
   * Make sure you substitute the version number and choose the correct options from the bug template.
 
 2. Once the push has happened, verify that the code was pushed to production by checking the __version__ endpoints on `the Admin <https://aus4-admin.mozilla.org/__version__>`_ and `Public <https://aus5.mozilla.org/__version__>`_ apps.
-3. Bump the `in-repo version <https://github.com/mozilla/balrog/blob/master/version.txt>`_ to the next available one to ensure the next push gets a new version.
+3. Bump the `in-repo version <https://github.com/mozilla/balrog/blob/main/version.txt>`_ to the next available one to ensure the next push gets a new version.
