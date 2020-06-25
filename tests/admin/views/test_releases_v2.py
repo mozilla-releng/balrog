@@ -1986,7 +1986,7 @@ def test_enact_delete(api):
     base_row = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-67.0-build1").execute().fetchone()
     assert base_row is None
     locale_rows = dbo.release_assets.t.select().where(dbo.release_assets.name == "Firefox-67.0-build1").execute().fetchall()
-    assert not any([l["path"].endswith("en-US") for l in locale_rows])
+    assert not any([locale["path"].endswith("en-US") for locale in locale_rows])
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
