@@ -66,8 +66,8 @@ def merge_lists(*lists):
     lists in blobs as sets. In an ideal world, that's what they'd be, but
     because we use jsonschema for validation, we cannot use proper sets."""
     result = []
-    for l in lists:
-        for i in l:
+    for list in lists:
+        for i in list:
             if i not in result or not isinstance(i, type(result[result.index(i)])):
                 result.append(i)
     return result
