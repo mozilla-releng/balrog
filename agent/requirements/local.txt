@@ -6,16 +6,17 @@
 #    pip-compile-multi
 #
 -r test.txt
-distlib==0.3.0 \
-    --hash=sha256:2e166e231a26b36d6dfe35a48c4464346620f8645ed0ace01ee31822b288de21 \
+distlib==0.3.1 \
+    --hash=sha256:8c09de2c67b3e7deef7184574fc060ab8a793e7adbb183d942c389c8b13c52fb \
+    --hash=sha256:edf6116872c863e1aa9d5bb7cb5e05a022c519a4594dc703843343a9ddd9bff1 \
     # via virtualenv
 filelock==3.0.12 \
     --hash=sha256:18d82244ee114f543149c66a6e0c14e9c4f8a1044b5cdaadd0f82159d6a6ff59 \
     --hash=sha256:929b7d63ec5b7d6b71b0fa5ac14e030b3f70b75747cef1b10da9b879fef15836 \
     # via tox, virtualenv
-tox==3.15.2 \
-    --hash=sha256:50a188b8e17580c1fb931f494a754e6507d4185f54fb18aca5ba3e12d2ffd55e \
-    --hash=sha256:c696d36cd7c6a28ada2da780400e44851b20ee19ef08cfe73344a1dcebbbe9f3 \
+tox==3.16.1 \
+    --hash=sha256:60c3793f8ab194097ec75b5a9866138444f63742b0f664ec80be1222a40687c5 \
+    --hash=sha256:9a746cda9cadb9e1e05c7ab99f98cfcea355140d2ecac5f97520be94657c3bc7 \
     # via -r local.in
 virtualenv==20.0.25 \
     --hash=sha256:f332ba0b2dfbac9f6b1da9f11224f0036b05cdb4df23b228527c2a2d5504aeed \
