@@ -56,7 +56,7 @@
     "@neutrinojs/react": "^9.2.0",
     "dotenv": "^8.2.0",
     "dotenv-cli": "^3.2.0",
-    "eslint": "^7.4.0",
+    "eslint": "^7.5.0",
     "jest": "^26.1.0",
     "neutrino": "^9.2.0",
     "webpack": "^4.43.0",
