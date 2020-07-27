@@ -19,10 +19,9 @@ aiohttp==3.6.2 \
     --hash=sha256:ae55bac364c405caa23a4f2d6cfecc6a0daada500274ffca4a9230e7129eac59 \
     --hash=sha256:b778ce0c909a2653741cb4b1ac7015b5c130ab9c897611df43ae6a58523cb965 \
     # via -r base.in, gcloud-aio-auth
-arrow==0.15.6 \
-    --hash=sha256:a24c1de90850f6fb2033fd6bf8a11f281e84cb54825e5eabdda219e673b52aac \
-    --hash=sha256:eb5d339f00072cc297d7de252a2e75f272085d1231a3723f1026d1fa91367118 \
-    # via -r base.in
+arrow==0.15.8 \
+    --hash=sha256:271b8e05174d48e50324ed0dc5d74796c839c7e579a4f21cf1a7394665f9e94f \
+    --hash=sha256:edc31dc051db12c95da9bac0271cd1027b8e36912daf6d4580af53b23e62721a    # via -r base.in
 async-timeout==3.0.1 \
     --hash=sha256:0c3c816a028d47f659d6ff5c745cb2acf1f966da1fe5c19c77a70282b25f4c5f \
     --hash=sha256:4291ca197d287d274d0b6cb5d6f8f8f82d434ed288f962539ff18cc9012f9ea3 \
