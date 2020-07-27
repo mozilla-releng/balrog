@@ -405,10 +405,9 @@ rsa==4.0 \
 sentry-sdk[flask]==0.16.2 \
     --hash=sha256:2de15b13836fa3522815a933bd9c887c77f4868071043349f94f1b896c1bcfb8 \
     --hash=sha256:38bb09d0277117f76507c8728d9a5156f09a47ac5175bb8072513859d19a593b    # via -r base.in
-six==1.14.0 \
-    --hash=sha256:236bdbdce46e6e6a3d61a337c0f8b763ca1e8717c03b369e87a7ec7ce1319c0a \
-    --hash=sha256:8f3cd2e254d8f793e7f3d6d9df77b92252b52637291d0f0da013c76ea2724b6c \
-    # via cryptography, ecdsa, gcloud-aio-auth, google-api-core, google-auth, google-resumable-media, jsonschema, mohawk, openapi-spec-validator, protobuf, pyrsistent, python-dateutil, python-jose, sqlalchemy-migrate, swagger-spec-validator
+six==1.15.0 \
+    --hash=sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259 \
+    --hash=sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced    # via cryptography, ecdsa, gcloud-aio-auth, google-api-core, google-auth, google-resumable-media, jsonschema, mohawk, openapi-spec-validator, protobuf, pyrsistent, python-dateutil, python-jose, sqlalchemy-migrate, swagger-spec-validator
 spec-synthase==0.1.11 \
     --hash=sha256:62396a95541cec2f792fe4f1f10e610e3dbdcdee843ee8f65dc243e8bb387c86 \
     --hash=sha256:9507c2f83a1c0a6fb7e18c0fa4eb9cc7a3d874e964b7c55dd2b531e5c70598bf \
