@@ -81,10 +81,9 @@ hypothesis==5.10.5 \
     --hash=sha256:579dbe113a5cf5e3d6cf406b2afd07ad754c97be5542fa35196587eaf88c0cbe \
     --hash=sha256:8f8c1c2e0ff5b6125d2fd3a47234807690f25117f989019200e19204bce3120a \
     # via -r test.in
-isort==4.3.21 \
-    --hash=sha256:54da7e92468955c4fceacd0c86bd0ec997b0e1ee80d97f67c35a78b719dccab1 \
-    --hash=sha256:6e811fcb295968434526407adb8796944f1988c5b65e8139058f2014cbe100fd \
-    # via -r test.in
+isort==5.2.0 \
+    --hash=sha256:1b0265ff0639af0a6f0f95a44956a985a1256960905aaf57ecf9175356c54ced \
+    --hash=sha256:27c7f27adc4b1a6afde1b66c8af46d42da03671d68648e2a8ab2166df03b668e    # via -r test.in
 mccabe==0.6.1 \
     --hash=sha256:ab8a6258860da4b6677da4bd2fe5dc2c659cff31b3ee4f7f5d64e79735b80d42 \
     --hash=sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f \
