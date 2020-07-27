@@ -56,10 +56,9 @@ coverage==5.2.1 \
     --hash=sha256:c96472b8ca5dc135fb0aa62f79b033f02aa434fb03a8b190600a5ae4102df1fd \
     --hash=sha256:ce7866f29d3025b5b34c2e944e66ebef0d92e4a4f2463f7266daa03a1332a651 \
     --hash=sha256:e26c993bd4b220429d4ec8c1468eca445a4064a61c74ca08da7429af9bc53bb0    # via -r test.in, coveralls, pytest-cov
-coveralls==2.0.0 \
-    --hash=sha256:41bd57b60321dfd5b56e990ab3f7ed876090691c21a9e3b005e1f6e42e6ba4b9 \
-    --hash=sha256:d213f5edd49053d03f0db316ccabfe17725f2758147afc9a37eaca9d8e8602b5 \
-    # via -r test.in
+coveralls==2.1.1 \
+    --hash=sha256:3726d35c0f93a28631a003880e2aa6cc93c401d62bc6919c5cb497217ba30c55 \
+    --hash=sha256:afe359cd5b350e1b3895372bda32af8f0260638c7c4a31a5c0f15aa6a96f40d9    # via -r test.in
 docopt==0.6.2 \
     --hash=sha256:49b3a825280bd66b3aa83585ef59c4a8c82f2c8a522dbe754a8bc8d08c85c491 \
     # via coveralls
