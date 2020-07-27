@@ -75,10 +75,9 @@ brotli==1.0.7 \
     --hash=sha256:f9ee88bb52352588ceb811d045b5c9bb1dc38927bc150fd156244f60ff3f59f1 \
     --hash=sha256:fc7212e36ebeb81aebf7949c92897b622490d7c0e333a479c0395591e7994600 \
     # via flask-compress
-cachetools==4.1.0 \
-    --hash=sha256:1d057645db16ca7fe1f3bd953558897603d6f0b9c51ed9d11eb4d071ec4e2aab \
-    --hash=sha256:de5d88f87781602201cde465d3afe837546663b168e8b39df67411b0bf10cefc \
-    # via google-auth
+cachetools==4.1.1 \
+    --hash=sha256:513d4ff98dd27f85743a8dc0e92f55ddb1b49e060c2d5961512855cda2c01a98 \
+    --hash=sha256:bbaa39c3dede00175df2dc2b03d0cf18dd2d32a7de7beb68072d13043c9edb20    # via google-auth
 certifi==2020.6.20 \
     --hash=sha256:5930595817496dd21bb8dc35dad090f1c2cd0adfaf21204bf6732ca5d8ee34d3 \
     --hash=sha256:8fc0819f1f30ba15bdb34cceffb9ef04d99f420f68eb75d901e9560b8749fc41    # via requests, sentry-sdk
