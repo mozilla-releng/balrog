@@ -172,10 +172,9 @@ flask==1.1.2 \
 future==0.18.2 \
     --hash=sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d \
     # via gcloud-aio-auth
-gcloud-aio-auth==3.1.0 \
-    --hash=sha256:37784f4e40b0f5fc7292c129e20c4c0489a63a4014b08fac0f173af279f072bd \
-    --hash=sha256:4e6ec12d1d30f5598dbb9724738b1c9d43e9c2ea73b70879f3b18c0dd8192e4a \
-    # via gcloud-aio-storage
+gcloud-aio-auth==3.4.3 \
+    --hash=sha256:58a49990b5a45ab7c0017d50a0acf1432556312dea4bad31703acaf46e5724ce \
+    --hash=sha256:bfc47c4ad445d9ce17278b2db12ec93edb4db7f2ac16f46ffea34f13763f97c5    # via gcloud-aio-storage
 gcloud-aio-storage==5.4.0 \
     --hash=sha256:ab587d1a07ce539a5cc08060e4c4e13fc0388743d2a19d701e97ff3a9cc32c26 \
     --hash=sha256:b58550ca77178d5e9e4b91c3074fe262956239a3c27094c6c8b8e1d7ed6b3055 \
