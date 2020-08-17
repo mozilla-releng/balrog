@@ -184,10 +184,9 @@ google-api-core==1.22.1 \
 google-auth==1.20.1 \
     --hash=sha256:2f34dd810090d0d4c9d5787c4ad7b4413d1fbfb941e13682c7a2298d3b6cdcc8 \
     --hash=sha256:ce1fb80b5c6d3dd038babcc43e221edeafefc72d983b3dc28b67b996f76f00b9    # via -r base.in, google-api-core, google-cloud-storage
-google-cloud-core==1.3.0 \
-    --hash=sha256:6ae5c62931e8345692241ac1939b85a10d6c38dc9e2854bdbacb7e5ac3033229 \
-    --hash=sha256:878f9ad080a40cdcec85b92242c4b5819eeb8f120ebc5c9f640935e24fc129d8 \
-    # via google-cloud-storage
+google-cloud-core==1.4.1 \
+    --hash=sha256:4c9e457fcfc026fdde2e492228f04417d4c717fb0f29f070122fb0ab89e34ebd \
+    --hash=sha256:613e56f164b6bee487dd34f606083a0130f66f42f7b10f99730afdf1630df507    # via google-cloud-storage
 google-cloud-storage==1.28.1 \
     --hash=sha256:0b28536acab1d7e856a7a89bbfcad41f26f40b46af59786ca874ff0f94bbc0f9 \
     --hash=sha256:a7b5c326e7307a83fa1f1f0ef71aba9ad1f3a2bc6a768401e13fc02369fd8612 \
