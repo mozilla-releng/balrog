@@ -13,10 +13,9 @@ filelock==3.0.12 \
     --hash=sha256:18d82244ee114f543149c66a6e0c14e9c4f8a1044b5cdaadd0f82159d6a6ff59 \
     --hash=sha256:929b7d63ec5b7d6b71b0fa5ac14e030b3f70b75747cef1b10da9b879fef15836 \
     # via tox, virtualenv
-tox==3.15.0 \
-    --hash=sha256:8d97bfaf70053ed3db56f57377288621f1bcc7621446d301927d18df93b1c4c3 \
-    --hash=sha256:af09c19478e8fc7ce7555b3d802ddf601b82684b874812c5857f774b8aee1b67 \
-    # via -r local.in
+tox==3.19.0 \
+    --hash=sha256:17e61a93afe5c49281fb969ab71f7a3f22d7586d1c56f9a74219910f356fe7d3 \
+    --hash=sha256:3d94b6921a0b6dc90fd8128df83741f30bb41ccd6cd52d131a6a6944ca8f16e6    # via -r local.in
 virtualenv==20.0.20 \
     --hash=sha256:b4c14d4d73a0c23db267095383c4276ef60e161f94fde0427f2f21a0132dde74 \
     --hash=sha256:fd0e54dec8ac96c1c7c87daba85f0a59a7c37fe38748e154306ca21c73244637 \
