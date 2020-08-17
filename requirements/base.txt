@@ -190,10 +190,9 @@ google-cloud-core==1.4.1 \
 google-cloud-storage==1.30.0 \
     --hash=sha256:02ac63059c798d4b8ba9057921be745707dc2d3316f5f366de91c24cc23cd77e \
     --hash=sha256:0634addb7576d48861d9963312fc82a0436042b8f282414ed58ca76d73edee54    # via -r base.in
-google-resumable-media==0.5.0 \
-    --hash=sha256:2a8fd188afe1cbfd5998bf20602f76b0336aa892de88fe842a806b9a3ed78d2a \
-    --hash=sha256:b86140d5a0b6d290084b11bde90ee9aecad357ba0e0d67388d016b8340320927 \
-    # via google-cloud-storage
+google-resumable-media==0.7.1 \
+    --hash=sha256:0572998cc2c7ba9ca996337896a2f93dbe8bc88866ebd81c8b7f4d7b07222957 \
+    --hash=sha256:57841f5e65fb285c01071f439724745b2549a72eb75e5fd979198eb518608ed0    # via google-cloud-storage
 googleapis-common-protos==1.51.0 \
     --hash=sha256:013c91704279119150e44ef770086fdbba158c1f978a6402167d47d5409e226e \
     # via google-api-core
