@@ -206,7 +206,6 @@ wcwidth==0.2.5 \
     --hash=sha256:c4d647b99872929fdb7bdcaa4fbe7f01413ed3d98077df798530e5b04f116c83    # via pytest
 
 # The following packages are considered to be unsafe in a requirements file:
-pip==20.0.2 \
-    --hash=sha256:4ae14a42d8adba3205ebeb38aa68cfc0b6c346e1ae2e699a0b3bad4da19cef5c \
-    --hash=sha256:7db0c8ea4c7ea51c8049640e8e6e7fde949de672bfa4949920675563a5a6967f \
-    # via -r test.in, pip-tools
+pip==20.2.2 \
+    --hash=sha256:5244e51494f5d1dfbb89da492d4250cb07f9246644736d10ed6c45deb1a48500 \
+    --hash=sha256:58a3b0b55ee2278104165c7ee7bc8e2db6f635067f3c66cf637113ec5aa71584    # via -r test.in, pip-tools
