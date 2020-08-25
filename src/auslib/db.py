@@ -2992,8 +2992,8 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
 
 
 def generate_random_string(length):
-    import string
     import random
+    import string
 
     return "".join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(length))
 
