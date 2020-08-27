@@ -160,10 +160,9 @@ deepmerge==0.1.0 \
     --hash=sha256:3d37f739e74e8a284ee0bd683daaef88acc8438ba048545aefb87ade695a2a34 \
     --hash=sha256:ae23dd76d3c0d22d33a3fd3980c92d3f0773e4affb48d9b341847d0b0a24e8f8 \
     # via -r base.in
-ecdsa==0.14.1 \
-    --hash=sha256:64c613005f13efec6541bb0a33290d0d03c27abab5f15fbab20fb0ee162bdd8e \
-    --hash=sha256:e108a5fe92c67639abae3260e43561af914e7fd0d27bae6d2ec1312ae7934dfe \
-    # via -r base.in, python-jose
+ecdsa==0.16.0 \
+    --hash=sha256:494c6a853e9ed2e9be33d160b41d47afc50a6629b993d2b9c5ad7bb226add892 \
+    --hash=sha256:ca359c971594dceebf334f3d623dae43163ab161c7d09f28cae70a86df26eb7a    # via -r base.in, python-jose
 flask-compress==1.5.0 \
     --hash=sha256:f367b2b46003dd62be34f7fb1379938032656dca56377a9bc90e7188e4289a7c \
     # via -r base.in
