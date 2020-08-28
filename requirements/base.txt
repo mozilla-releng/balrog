@@ -182,9 +182,9 @@ gcloud-aio-auth==3.4.3 \
     --hash=sha256:58a49990b5a45ab7c0017d50a0acf1432556312dea4bad31703acaf46e5724ce \
     --hash=sha256:bfc47c4ad445d9ce17278b2db12ec93edb4db7f2ac16f46ffea34f13763f97c5 \
     # via gcloud-aio-storage
-gcloud-aio-storage==5.5.4 \
-    --hash=sha256:2e9906175ea21d7a7b2c6843f375befcc9ae960cd03280525bad8ce3b2b1635b \
-    --hash=sha256:ef35b2ec77c93ad3c5055d613c1097059570310b8a714edbb73e7941d7d7f26e \
+gcloud-aio-storage==5.6.0 \
+    --hash=sha256:31d46aef630f7ef0ba9698ca72563226431347b1099e3c0c9de3801c3c172632 \
+    --hash=sha256:76f7ec414debb830068b23a0966cb20c0ac3d56eab797053e00f9ce1618f2431 \
     # via -r base.in
 google-api-core==1.22.1 \
     --hash=sha256:35cba563034d668ae90ffe1f03193a84e745b38f09592f60258358b5e5ee6238 \
