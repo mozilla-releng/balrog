@@ -27,10 +27,10 @@ def matchRegex(foo, bar):
 
 def matchCsv(csvString, queryString, substring=True):
     """Decides whether a column from a rule matches an incoming one.
-       Some columns in a rule may specify multiple values delimited by a
-       comma. Once split we do a full or substring match against the query
-       string. Because we support substring matches, there's no need
-       to support globbing as well."""
+    Some columns in a rule may specify multiple values delimited by a
+    comma. Once split we do a full or substring match against the query
+    string. Because we support substring matches, there's no need
+    to support globbing as well."""
     if csvString is None:
         return True
     for part in csvString.split(","):
@@ -43,13 +43,13 @@ def matchCsv(csvString, queryString, substring=True):
 
 def matchSimpleExpressionSubRule(subRuleString, queryString, substring):
     """Performs the actual logical 'AND' operation on a rule as well as partial/full string matching
-       for each section of a rule.
-       If all parts of the subRuleString match the queryString, then we have successfully resolved the
-       logical 'AND' operation and return True.
-       Partial matching makes use of Python's "<substring> in <string>" functionality, giving us the ability
-       for an incoming rule to match only a substring of a rule.
-       Full matching makes use of Python's "<string> in <list>" functionality, giving us the ability for
-       an incoming rule to exactly match the whole rule. Currently, incoming rules are comma-separated strings."""
+    for each section of a rule.
+    If all parts of the subRuleString match the queryString, then we have successfully resolved the
+    logical 'AND' operation and return True.
+    Partial matching makes use of Python's "<substring> in <string>" functionality, giving us the ability
+    for an incoming rule to match only a substring of a rule.
+    Full matching makes use of Python's "<string> in <list>" functionality, giving us the ability for
+    an incoming rule to exactly match the whole rule. Currently, incoming rules are comma-separated strings."""
     for rule in subRuleString:
         if substring and rule not in queryString:
             return False
@@ -60,13 +60,13 @@ def matchSimpleExpressionSubRule(subRuleString, queryString, substring):
 
 def matchSimpleExpression(ruleString, queryString, substring=True):
     """Decides whether a column from a rule matches an incoming one using simplified boolean logic.
-       Only two operators are supported: '&&' (and), ',' (or). A rule like 'AMD,SSE' will match incoming
-       rules that contain either 'AMD' or 'SSE'. A rule like 'AMD&&SSE' will only match incoming rules
-       that contain both 'AMD' and 'SSE'.
-       This function can do substring matching or full string matching. When doing substring matching, a rule
-       specifying 'AMD,Windows 10' WILL match an incoming rule such as 'Windows 10.1.2'. When doing full string
-       matching, a rule specifying 'AMD,SSE' will NOT match an incoming rule that contains 'SSE3', but WILL match
-       an incoming rule that contains either 'AMD' or 'SSE3'."""
+    Only two operators are supported: '&&' (and), ',' (or). A rule like 'AMD,SSE' will match incoming
+    rules that contain either 'AMD' or 'SSE'. A rule like 'AMD&&SSE' will only match incoming rules
+    that contain both 'AMD' and 'SSE'.
+    This function can do substring matching or full string matching. When doing substring matching, a rule
+    specifying 'AMD,Windows 10' WILL match an incoming rule such as 'Windows 10.1.2'. When doing full string
+    matching, a rule specifying 'AMD,SSE' will NOT match an incoming rule that contains 'SSE3', but WILL match
+    an incoming rule that contains either 'AMD' or 'SSE3'."""
     if ruleString is None:
         return True
 
@@ -82,10 +82,10 @@ def matchSimpleExpression(ruleString, queryString, substring=True):
 
 def matchChannel(ruleChannel, queryChannel, fallbackChannel):
     """Decides whether a channel from the rules matches an incoming one.
-       If the ruleChannel is null, we match any queryChannel. We also match
-       if the channels match exactly, or match after wildcards in ruleChannel
-       are resolved. Channels may have a fallback specified, too, so we must
-       check if the fallback version of the queryChannel matches the ruleChannel."""
+    If the ruleChannel is null, we match any queryChannel. We also match
+    if the channels match exactly, or match after wildcards in ruleChannel
+    are resolved. Channels may have a fallback specified, too, so we must
+    check if the fallback version of the queryChannel matches the ruleChannel."""
     if ruleChannel is None:
         return True
     if matchRegex(ruleChannel, queryChannel):
@@ -96,8 +96,8 @@ def matchChannel(ruleChannel, queryChannel, fallbackChannel):
 
 def matchVersion(ruleVersion, queryVersion, versionClass=MozillaVersion):
     """Decides whether a version from the rules matches an incoming version.
-       If the ruleVersion is null, we match any queryVersion. If it's not
-       null, we must either match exactly, or match a comparison operator."""
+    If the ruleVersion is null, we match any queryVersion. If it's not
+    null, we must either match exactly, or match a comparison operator."""
     logging.debug("ruleVersion: %s, queryVersion: %s", ruleVersion, queryVersion)
     if ruleVersion is None:
         return True
@@ -116,9 +116,9 @@ def matchLocale(ruleLocales, queryLocale):
 
 def matchBuildID(ruleBuildID, queryBuildID):
     """Decides whether a buildID from the rules matches an incoming one.
-       If the ruleBuildID is null, we match any queryBuildID. If it's not
-       null, we must either match exactly, or match with a camparison
-       operator."""
+    If the ruleBuildID is null, we match any queryBuildID. If it's not
+    null, we must either match exactly, or match with a camparison
+    operator."""
     if ruleBuildID is None:
         return True
     return string_compare(queryBuildID, ruleBuildID)
@@ -126,9 +126,9 @@ def matchBuildID(ruleBuildID, queryBuildID):
 
 def matchMemory(ruleMemory, queryMemory):
     """Decides whether a memory value from the rules matches an incoming one.
-       If the ruleMemory is null, we match any queryMemory. If it's not
-       null, we must either match exactly, or match with a comparison
-       operator."""
+    If the ruleMemory is null, we match any queryMemory. If it's not
+    null, we must either match exactly, or match with a comparison
+    operator."""
     if ruleMemory is None or queryMemory is None:
         return True
     try:

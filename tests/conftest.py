@@ -64,7 +64,10 @@ def insert_release():
                             dbo.release_assets.history.bucket.blobs[f"{name}-{path}/1-2-bob.json"] = ldata
 
         dbo.releases_json.t.insert().execute(
-            name=name, product=product, data=base, data_version=1,
+            name=name,
+            product=product,
+            data=base,
+            data_version=1,
         )
         if history:
             dbo.releases_json.history.bucket.blobs[f"{name}/None-1-bob.json"] = ""

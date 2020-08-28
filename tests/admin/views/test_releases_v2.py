@@ -1525,7 +1525,8 @@ def test_post_add_scheduled_change_locale_only(api, firefox_56_0_build1):
     }
 
     ret = api.post(
-        "/v2/releases/Firefox-56.0-build1", json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
+        "/v2/releases/Firefox-56.0-build1",
+        json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
     )
     assert ret.status_code == 200, ret.data
     assert ret.json == new_data_versions, ret.json
@@ -1582,7 +1583,8 @@ def test_post_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     }
 
     ret = api.post(
-        "/v2/releases/Firefox-56.0-build1", json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
+        "/v2/releases/Firefox-56.0-build1",
+        json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
     )
     assert ret.status_code == 200, ret.data
     assert ret.json == new_data_versions, ret.json

@@ -33,45 +33,45 @@ def createRelease(release, product, changed_by, transaction, releaseData):
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1246993 has more details
 def changeRelease(release, changed_by, transaction, existsCallback, commitCallback, log):
     """Generic function to change an aspect of a release. It relies on a
-       PartialReleaseForm existing and does some upfront work and checks before
-       doing anything. It will, for the named release and any found in the
-       'copyTo' field of the PartialReleaseForm:
-        - Create the release if it doesn't already exist.
-        - return a 400 Response if the release exists and old_data_version doesn't.
-        - return a 400 Response if the product name in the form doesn't match the existing one.
-        - update the version column of the release table if the one in the form doesn't match it.
-        - if the release already exists, 'existsCallback' will be called. If
-          that function returns True, a 201 Response will be returned upon
-          successful completion. If that function returns False, a 200 Response
-          will be returned instead.
+     PartialReleaseForm existing and does some upfront work and checks before
+     doing anything. It will, for the named release and any found in the
+     'copyTo' field of the PartialReleaseForm:
+      - Create the release if it doesn't already exist.
+      - return a 400 Response if the release exists and old_data_version doesn't.
+      - return a 400 Response if the product name in the form doesn't match the existing one.
+      - update the version column of the release table if the one in the form doesn't match it.
+      - if the release already exists, 'existsCallback' will be called. If
+        that function returns True, a 201 Response will be returned upon
+        successful completion. If that function returns False, a 200 Response
+        will be returned instead.
 
-      @type  release: string
-      @param release: The primary release to update. Additional releases found
-                      in the 'copyTo' field of the PartialReleaseForm will also be
-                      updated.
-      @type  changed_by: string
-      @param changed_by: The username making the change.
-      @type  transaction: AUSTransaction object
-      @param transaction: The transaction object to be used for all database
-                          operations.
-      @type  existsCallback: callable
-      @param existsCallback: The callable to call to determine whether to
-                             consider this a "new" change or not. It must
-                             receive 3 positional arguments:
-                              - the name of the release
-                              - the product name from the PartialReleaseForm
-                              - the version from the PartialReleaseForm
-      @type  commitCallback: callable
-      @param commitCallback: The callable to call after all prerequisite checks
-                             and updates are done. It must receive 6 positional
-                             arguments:
-                              - the name of the release
-                              - the product name from the PartialReleaseForm
-                              - the version from the PartialReleaseForm
-                              - the data from the PartialReleaseForm
-                              - the most recent version of the data for the
-                                release from the database
-                              - the old_data_version from the PartialReleaseForm
+    @type  release: string
+    @param release: The primary release to update. Additional releases found
+                    in the 'copyTo' field of the PartialReleaseForm will also be
+                    updated.
+    @type  changed_by: string
+    @param changed_by: The username making the change.
+    @type  transaction: AUSTransaction object
+    @param transaction: The transaction object to be used for all database
+                        operations.
+    @type  existsCallback: callable
+    @param existsCallback: The callable to call to determine whether to
+                           consider this a "new" change or not. It must
+                           receive 3 positional arguments:
+                            - the name of the release
+                            - the product name from the PartialReleaseForm
+                            - the version from the PartialReleaseForm
+    @type  commitCallback: callable
+    @param commitCallback: The callable to call after all prerequisite checks
+                           and updates are done. It must receive 6 positional
+                           arguments:
+                            - the name of the release
+                            - the product name from the PartialReleaseForm
+                            - the version from the PartialReleaseForm
+                            - the data from the PartialReleaseForm
+                            - the most recent version of the data for the
+                              release from the database
+                            - the old_data_version from the PartialReleaseForm
     """
     new = True
     product = connexion.request.get_json().get("product")
@@ -192,12 +192,12 @@ class SingleLocaleView(AdminView):
     @requirelogin
     def _put(self, release, platform, locale, changed_by, transaction):
         """Something important to note about this method is that using the
-           "copyTo" field of the form, updates can be made to more than just
-           the release named in the URL. However, the release in the URL is
-           still considered the primary one, and used to make decisions about
-           what to set the status code to, and what data_version applies to.
-           In an ideal world we would probably require a data_version for the
-           releases named in copyTo as well."""
+        "copyTo" field of the form, updates can be made to more than just
+        the release named in the URL. However, the release in the URL is
+        still considered the primary one, and used to make decisions about
+        what to set the status code to, and what data_version applies to.
+        In an ideal world we would probably require a data_version for the
+        releases named in copyTo as well."""
 
         def exists(rel, product):
             if rel == release:
