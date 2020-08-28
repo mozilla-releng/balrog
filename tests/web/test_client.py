@@ -1930,8 +1930,8 @@ class ClientTestEmergencyShutoff(ClientTestBase):
 
 class ClientTestWithErrorHandlers(ClientTestCommon):
     """Most of the tests are run without the error handler because it gives more
-       useful output when things break. However, we still need to test that our
-       error handlers works!"""
+    useful output when things break. However, we still need to test that our
+    error handlers works!"""
 
     def setUp(self):
         app.config["DEBUG"] = True

@@ -169,7 +169,7 @@ class Blob(dict):
 
     def loadJSON(self, data):
         """Replaces this blob's contents with parsed contents of the json
-           string provided."""
+        string provided."""
         self.clear()
         self.update(json.loads(data))
 
