@@ -39,9 +39,9 @@ attrs==20.1.0 \
     --hash=sha256:0ef97238856430dcf9228e07f316aefc17e8939fc8507e18c6501b761ef1a42a \
     --hash=sha256:2867b7b9f8326499ab5b0e2d12801fa5c98842d2cbd22b35112ae04bf85b4dff \
     # via aiohttp, hypothesis, jsonschema, pytest
-auth0-python==3.12.0 \
-    --hash=sha256:07d803cf46df6f750748a3e23bead0860d84b95e3f074ff43fcfcb5ee08f0419 \
-    --hash=sha256:fbc54a231ca787ae0917223028269582abbd963cfa9d53ba822a601dd9cd2215 \
+auth0-python==3.13.0 \
+    --hash=sha256:2e968d01364c8c94fbe85154ab77ebe9e51a3f8282405bb33748071452063004 \
+    --hash=sha256:42b0174fd00655b4d238bdc4afd592cee5508c166a3eaeba7321b3fa59d4caba \
     # via -r base.in
 backoff==1.10.0 \
     --hash=sha256:5e73e2cbe780e1915a204799dba0a01896f45f4385e636bcca7a0614d879d0cd \
