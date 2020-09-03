@@ -58,9 +58,9 @@ multidict==4.7.6 \
     --hash=sha256:fcfbb44c59af3f8ea984de67ec7c306f618a3ec771c2843804069917a8f2e255 \
     --hash=sha256:feed85993dbdb1dbc29102f50bca65bdc68f2c0c8d352468c25b54874f23c39d \
     # via aiohttp, yarl
-sentry-sdk==0.17.0 \
-    --hash=sha256:09cbc253c827a88064c5ed548d24fb4294568bfe9b1816a857fa5a423d4ce762 \
-    --hash=sha256:1d654ac57be9967dae67545fb759f6e7594de07f487c21a276e6466dd52e83f1 \
+sentry-sdk==0.17.3 \
+    --hash=sha256:0af429c221670e602f960fca85ca3f607c85510a91f11e8be8f742a978127f78 \
+    --hash=sha256:a088a1054673c6a19ea590045c871c38da029ef743b61a07bfee95e9f3c060f7 \
     # via -r base.in
 urllib3==1.25.10 \
     --hash=sha256:91056c15fa70756691db97756772bb1eb9678fa585d9184f24534b100dc60f4a \
