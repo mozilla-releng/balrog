@@ -345,7 +345,7 @@ def get_release(name, trans, include_sc=True):
 
     # same thing here for the assets -- if any of the full asset data versions
     # do not match the cached asset data versions, we forcibly update
-    if [r["data_version"] for r in asset_rows] != asset_data_versions:
+    if [r["data_version"] for r in asset_rows] != [r["data_version"] for r in asset_data_versions]:
         asset_rows = get_asset_rows()
 
     for asset in asset_rows:
