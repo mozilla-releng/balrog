@@ -1,0 +1,29 @@
+commit 895ff8fb5e860bb6707857b6ff5ee1acf9c5c013
+Author: Ben Hearsum <bhearsum@mozilla.com>
+Date:   Thu Aug 8 11:26:13 2019 -0400
+
+    Fix syntax error.
+
+diff --git a/src/views/Rules/ListRules/index.jsx b/src/views/Rules/ListRules/index.jsx
+index 152bd1b..46090d8 100644
+--- a/src/views/Rules/ListRules/index.jsx
++++ b/src/views/Rules/ListRules/index.jsx
+@@ -519,17 +519,17 @@ function ListRules(props) {
+         <RuleCard
+           className={classes.ruleCard}
+           key={rule.rule_id}
+           rule={rule}
+           onRuleDelete={handleRuleDelete}
+           disableActions={!!rewindDate}
+         />
+         ) : (
+-        {/* todo: why is the current version of the rule showing up on the left side? */}
++        /* todo: why is the current version of the rule showing up on the left side? */
+         <DiffRule firstRule={rule} secondRule={currentRule} />
+         )}
+       </div>
+     );
+   };
+ 
+   useEffect(() => {
+     if (filteredRulesCount) {

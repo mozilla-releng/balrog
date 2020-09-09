@@ -1,0 +1,344 @@
+commit a71c93ca901ac260b1db694820e7a7933385eda5
+Author: Ben Hearsum <bhearsum@mozilla.com>
+Date:   Fri Aug 2 09:35:26 2019 -0400
+
+    Proof of concept implementation of rewind-the-rules-table UI.
+
+diff --git a/src/components/RuleCard/index.jsx b/src/components/RuleCard/index.jsx
+index 63ae2d3..3e0e86b 100644
+--- a/src/components/RuleCard/index.jsx
++++ b/src/components/RuleCard/index.jsx
+@@ -133,16 +133,17 @@ const useStyles = makeStyles(theme => ({
+   },
+ }));
+ 
+ function RuleCard({
+   rule,
+   onRuleDelete,
+   user,
+   readOnly,
++  disableActions,
+   onAuthorize,
+   onUnauthorize,
+   ...props
+ }) {
+   const classes = useStyles();
+   const requiresSignoff =
+     rule.scheduledChange &&
+     Object.keys(rule.scheduledChange.required_signoffs).length > 0;
+@@ -715,47 +716,61 @@ function RuleCard({
+           <Link
+             className={classes.link}
+             to={{
+               pathname: '/rules/create',
+               state: {
+                 rule,
+               },
+             }}>
+-            <Button color="secondary">Duplicate</Button>
++            <Button color="secondary" disabled={disableActions}>
++              Duplicate
++            </Button>
+           </Link>
+           <Link
+             className={classes.link}
+             to={
+               rule.rule_id
+                 ? `/rules/${rule.rule_id}`
+                 : `/rules/create/${rule.scheduledChange.sc_id}`
+             }>
+-            <Button color="secondary">Update</Button>
++            <Button color="secondary" disabled={disableActions}>
++              Update
++            </Button>
+           </Link>
+-          <Button color="secondary" onClick={() => onRuleDelete(rule)}>
++          <Button
++            color="secondary"
++            disabled={disableActions}
++            onClick={() => onRuleDelete(rule)}>
+             Delete
+           </Button>
+           {requiresSignoff &&
+             (user && user.email in rule.scheduledChange.signoffs ? (
+-              <Button color="secondary">Revoke Signoff</Button>
++              <Button color="secondary" disabled={disableActions}>
++                Revoke Signoff
++              </Button>
+             ) : (
+-              <Button color="secondary">Signoff as</Button>
++              <Button color="secondary" disabled={disableActions}>
++                Signoff as
++              </Button>
+             ))}
+         </CardActions>
+       )}
+     </Card>
+   );
+ }
+ 
+ RuleCard.propTypes = {
+   rule: rule.isRequired,
+   onRuleDelete: func,
+   // If true, the card will hide all buttons.
+   readOnly: bool,
++  // If true, the card will disable all buttons
++  disableActions: bool,
+ };
+ 
+ RuleCard.defaultProps = {
+   onRuleDelete: Function.prototype,
+   readOnly: false,
++  disableActions: false,
+ };
+ 
+ export default withUser(RuleCard);
+diff --git a/src/services/rules.js b/src/services/rules.js
+index 45d322a..8477603 100644
+--- a/src/services/rules.js
++++ b/src/services/rules.js
+@@ -1,12 +1,13 @@
+ import { stringify } from 'qs';
+ import axios from 'axios';
+ 
+-const getRules = () => axios.get('/rules');
++const getRules = (timestamp = null) =>
++  timestamp ? axios.get(`/rules?timestamp=${timestamp}`) : axios.get('/rules');
+ const getRule = id => axios.get(`/rules/${id}`);
+ const getChannels = () => axios.get('/rules/columns/channel');
+ const getProducts = () => axios.get('/rules/columns/product');
+ const getRevisions = id => axios.get(`/rules/${id}/revisions?limit=10000`);
+ // const getRule = () => axios.get();
+ // const updateRule = () => axios.put();
+ const deleteRule = ({ ruleId, dataVersion }) =>
+   axios.delete(`/rules/${ruleId}`, { params: { data_version: dataVersion } });
+diff --git a/src/views/Rules/ListRules/index.jsx b/src/views/Rules/ListRules/index.jsx
+index 4a60cdb..78a38e7 100644
+--- a/src/views/Rules/ListRules/index.jsx
++++ b/src/views/Rules/ListRules/index.jsx
+@@ -2,16 +2,19 @@ import React, { Fragment, useEffect, useState, useMemo } from 'react';
+ import { stringify, parse } from 'qs';
+ import { addSeconds } from 'date-fns';
+ import Spinner from '@mozilla-frontend-infra/components/Spinner';
+ import { makeStyles, useTheme } from '@material-ui/styles';
+ import Fab from '@material-ui/core/Fab';
+ import Tooltip from '@material-ui/core/Tooltip';
+ import TextField from '@material-ui/core/TextField';
+ import MenuItem from '@material-ui/core/MenuItem';
++import FormControl from '@material-ui/core/FormControl';
++import FormLabel from '@material-ui/core/FormLabel';
++import Checkbox from '@material-ui/core/Checkbox';
+ import PlusIcon from 'mdi-react/PlusIcon';
+ import Dashboard from '../../../components/Dashboard';
+ import ErrorPanel from '../../../components/ErrorPanel';
+ import RuleCard from '../../../components/RuleCard';
+ import DialogAction from '../../../components/DialogAction';
+ import DateTimePicker from '../../../components/DateTimePicker';
+ import VariableSizeList from '../../../components/VariableSizeList';
+ import Link from '../../../utils/Link';
+@@ -87,24 +90,28 @@ function ListRules(props) {
+       ? searchQueries.filter(Boolean).join(productChannelSeparator)
+       : ALL
+   );
+   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
+   const [scheduleDeleteDate, setScheduleDeleteDate] = useState(
+     addSeconds(new Date(), -30)
+   );
+   const [dateTimePickerError, setDateTimePickerError] = useState(null);
++  const [rewindDate, setRewindDate] = useState(null);
++  const [rewindDateError, setRewindDateError] = useState(null);
+   const [scrollToRow, setScrollToRow] = useState(null);
+   const [products, fetchProducts] = useAction(getProducts);
+   const [channels, fetchChannels] = useAction(getChannels);
+   const [rules, fetchRules] = useAction(getRules);
+   const [scheduledChanges, fetchScheduledChanges] = useAction(
+     getScheduledChanges
+   );
+-  const fetchRequiredSignoffs = useAction(getRequiredSignoffs)[1];
++  const [requiredSignoffs, fetchRequiredSignoffs] = useAction(
++    getRequiredSignoffs
++  );
+   const delRule = useAction(deleteRule)[1];
+   const isLoading = products.loading || channels.loading || rules.loading;
+   const error =
+     products.error || channels.error || rules.error || scheduledChanges.error;
+   const handleFilterChange = ({ target: { value } }) => {
+     const [product, channel] = value.split(productChannelSeparator);
+     const query =
+       value !== ALL
+@@ -152,52 +159,47 @@ function ListRules(props) {
+         }
+       });
+     });
+ 
+     setProductChannelOptions(options.sort());
+   }, [products.data, channels.data, rules.data]);
+ 
+   useEffect(() => {
+-    Promise.all([
+-      fetchScheduledChanges(),
+-      fetchRules(),
+-      fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
+-      fetchProducts(),
+-      fetchChannels(),
+-    ]).then(([sc, r, rs]) => {
+-      if (!sc.data || !r.data || !rs.data) {
+-        return;
+-      }
++    if (!rules.data || !scheduledChanges.data || !requiredSignoffs.data) {
++      return;
++    }
+ 
+-      const scheduledChanges = sc.data.data.scheduled_changes;
+-      const requiredSignoffs = rs.data.data.required_signoffs;
+-      const { rules } = r.data.data;
+-      const rulesWithScheduledChanges = rules.map(rule => {
+-        const sc = scheduledChanges.find(sc => rule.rule_id === sc.rule_id);
++    if (rewindDate) {
++      setRulesWithScheduledChanges(rules.data.data.rules);
++    } else {
++      const rulesWithScheduledChanges = rules.data.data.rules.map(rule => {
++        const sc = scheduledChanges.data.data.scheduled_changes.find(
++          sc => rule.rule_id === sc.rule_id
++        );
+         const returnedRule = Object.assign({}, rule);
+ 
+         if (sc) {
+           returnedRule.scheduledChange = sc;
+           returnedRule.scheduledChange.when = new Date(
+             returnedRule.scheduledChange.when
+           );
+         }
+ 
+         returnedRule.requiredSignoffs = {};
+-        requiredSignoffs.forEach(rs => {
++        requiredSignoffs.data.data.required_signoffs.forEach(rs => {
+           if (ruleMatchesRequiredSignoff(rule, rs)) {
+             returnedRule.requiredSignoffs[rs.role] = rs.signoffs_required;
+           }
+         });
+ 
+         return returnedRule;
+       });
+ 
+-      scheduledChanges.forEach(sc => {
++      scheduledChanges.data.data.scheduled_changes.forEach(sc => {
+         if (sc.change_type === 'insert') {
+           const rule = { scheduledChange: sc };
+ 
+           Object.assign(rule, { scheduledChange: sc });
+           Object.assign(rule.scheduledChange, {
+             when: new Date(rule.scheduledChange.when),
+           });
+ 
+@@ -220,17 +222,31 @@ function ListRules(props) {
+           ruleB.priority === null || ruleB.priority === undefined
+             ? ruleB.scheduledChange.priority
+             : ruleB.priority;
+ 
+         return priorityB - priorityA;
+       });
+ 
+       setRulesWithScheduledChanges(sortedRules);
+-    });
++    }
++  }, [rules, scheduledChanges, requiredSignoffs]);
++
++  useEffect(() => {
++    fetchRules(rewindDate ? rewindDate.getTime() : null);
++  }, [rewindDate]);
++
++  useEffect(() => {
++    Promise.all([
++      fetchScheduledChanges(),
++      fetchRules(),
++      fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
++      fetchProducts(),
++      fetchChannels(),
++    ]);
+   }, []);
+   const filteredRulesWithScheduledChanges = useMemo(
+     () =>
+       productChannelFilter === ALL
+         ? rulesWithScheduledChanges
+         : rulesWithScheduledChanges.filter(rule => {
+             const [productFilter, channelFilter] = searchQueries;
+             const ruleProduct =
+@@ -259,16 +275,22 @@ function ListRules(props) {
+     setDateTimePickerError(error);
+   };
+ 
+   const handleDateTimeChange = date => {
+     setScheduleDeleteDate(date);
+     setDateTimePickerError(null);
+   };
+ 
++  const handleRewindDateTimePickerError = error => setRewindDateError(error);
++  const handleRewindDateTimeChange = date => {
++    setRewindDate(date);
++    setRewindDateError(null);
++  };
++
+   const handleDialogError = error => {
+     setDialogState({ ...dialogState, error });
+   };
+ 
+   const dialogBody =
+     dialogState.item &&
+     (Object.keys(dialogState.item.requiredSignoffs).length > 0 ? (
+       <DateTimePicker
+@@ -470,21 +492,23 @@ function ListRules(props) {
+     return (
+       <div
+         key={
+           rule.rule_id
+             ? rule.rule_id
+             : Object.values(rule.scheduledChange).join('-')
+         }
+         style={style}>
++        {/* should we go read only mode if rewindDAte is set instead? */}
+         <RuleCard
+           className={classes.ruleCard}
+           key={rule.rule_id}
+           rule={rule}
+           onRuleDelete={handleRuleDelete}
++          disableActions={!!rewindDate}
+         />
+       </div>
+     );
+   };
+ 
+   useEffect(() => {
+     if (filteredRulesCount) {
+       if (hashQuery.ruleId && hashQuery.ruleId !== ruleIdHash) {
+@@ -515,16 +539,30 @@ function ListRules(props) {
+ 
+   return (
+     <Dashboard title="Rules">
+       {isLoading && <Spinner loading />}
+       {error && <ErrorPanel fixed error={error} />}
+       {!isLoading && productChannelOptions && (
+         <Fragment>
+           <div className={classes.options}>
++            <DateTimePicker
++              disableFuture
++              inputVariant="outlined"
++              label="Rewind to..."
++              onError={handleRewindDateTimePickerError}
++              helperText={rewindDateError}
++              onDateTimeChange={handleRewindDateTimeChange}
++              value={rewindDate}
++            />
++            <FormControl>
++              <FormLabel>Diff?</FormLabel>
++              <Checkbox disabled={!rewindDate} />
++            </FormControl>
++
+             <TextField
+               className={classes.dropdown}
+               select
+               label={`Product${productChannelSeparator}Channel`}
+               value={productChannelFilter}
+               onChange={handleFilterChange}>
+               <MenuItem value="all">All Rules</MenuItem>
+               {productChannelOptions.map(option => (

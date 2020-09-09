@@ -1,0 +1,206 @@
+commit 5ddd638dce96ce0b558ded03fd50f51302c7a72d
+Author: Ben Hearsum <bhearsum@mozilla.com>
+Date:   Wed Aug 7 17:13:12 2019 -0400
+
+    WIP: Implement horrible hardcoded way to use diff mode.
+
+diff --git a/src/components/DiffRule/index.jsx b/src/components/DiffRule/index.jsx
+index dc4f648..c9f00cc 100644
+--- a/src/components/DiffRule/index.jsx
++++ b/src/components/DiffRule/index.jsx
+@@ -20,16 +20,18 @@ const useStyles = makeStyles(theme => ({
+       width: '100%',
+     },
+   },
+ }));
+ 
+ function DiffRule(props) {
+   const classes = useStyles();
+   const { firstRule, secondRule } = props;
++  console.log(firstRule);
++  console.log(secondRule);
+   const diffedProperties = getDiffedProperties(
+     RULE_DIFF_PROPERTIES,
+     firstRule,
+     secondRule
+   );
+   const diff = useMemo(() => {
+     const [oldText, newText] = getDiff(diffedProperties, firstRule, secondRule);
+     const diffText = formatLines(diffLines(oldText, newText), {
+diff --git a/src/views/Rules/ListRules/index.jsx b/src/views/Rules/ListRules/index.jsx
+index 78a38e7..152bd1b 100644
+--- a/src/views/Rules/ListRules/index.jsx
++++ b/src/views/Rules/ListRules/index.jsx
+@@ -12,16 +12,17 @@ import FormLabel from '@material-ui/core/FormLabel';
+ import Checkbox from '@material-ui/core/Checkbox';
+ import PlusIcon from 'mdi-react/PlusIcon';
+ import Dashboard from '../../../components/Dashboard';
+ import ErrorPanel from '../../../components/ErrorPanel';
+ import RuleCard from '../../../components/RuleCard';
+ import DialogAction from '../../../components/DialogAction';
+ import DateTimePicker from '../../../components/DateTimePicker';
+ import VariableSizeList from '../../../components/VariableSizeList';
++import DiffRule from '../../../components/DiffRule';
+ import Link from '../../../utils/Link';
+ import getDiffedProperties from '../../../utils/getDiffedProperties';
+ import useAction from '../../../hooks/useAction';
+ import {
+   getProducts,
+   getChannels,
+   getRules,
+   getScheduledChanges,
+@@ -78,16 +79,19 @@ function ListRules(props) {
+   } = elementsHeight(theme);
+   const productChannelSeparator = ' : ';
+   const [snackbarState, setSnackbarState] = useState(SNACKBAR_INITIAL_STATE);
+   const [ruleIdHash, setRuleIdHash] = useState(null);
+   const [scheduledIdHash, setScheduledIdHash] = useState(null);
+   const [rulesWithScheduledChanges, setRulesWithScheduledChanges] = useState(
+     []
+   );
++  const [rewoundRules, setRewoundRules] = useState(
++    []
++  );
+   const [productChannelOptions, setProductChannelOptions] = useState([]);
+   const searchQueries = query.product ? [query.product, query.channel] : null;
+   const [productChannelFilter, setProductChannelFilter] = useState(
+     searchQueries
+       ? searchQueries.filter(Boolean).join(productChannelSeparator)
+       : ALL
+   );
+   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
+@@ -164,17 +168,17 @@ function ListRules(props) {
+   }, [products.data, channels.data, rules.data]);
+ 
+   useEffect(() => {
+     if (!rules.data || !scheduledChanges.data || !requiredSignoffs.data) {
+       return;
+     }
+ 
+     if (rewindDate) {
+-      setRulesWithScheduledChanges(rules.data.data.rules);
++      setRewoundRules(rules.data.data.rules);
+     } else {
+       const rulesWithScheduledChanges = rules.data.data.rules.map(rule => {
+         const sc = scheduledChanges.data.data.scheduled_changes.find(
+           sc => rule.rule_id === sc.rule_id
+         );
+         const returnedRule = Object.assign({}, rule);
+ 
+         if (sc) {
+@@ -222,16 +226,17 @@ function ListRules(props) {
+           ruleB.priority === null || ruleB.priority === undefined
+             ? ruleB.scheduledChange.priority
+             : ruleB.priority;
+ 
+         return priorityB - priorityA;
+       });
+ 
+       setRulesWithScheduledChanges(sortedRules);
++      setRewoundRules([]);
+     }
+   }, [rules, scheduledChanges, requiredSignoffs]);
+ 
+   useEffect(() => {
+     fetchRules(rewindDate ? rewindDate.getTime() : null);
+   }, [rewindDate]);
+ 
+   useEffect(() => {
+@@ -239,20 +244,27 @@ function ListRules(props) {
+       fetchScheduledChanges(),
+       fetchRules(),
+       fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
+       fetchProducts(),
+       fetchChannels(),
+     ]);
+   }, []);
+   const filteredRulesWithScheduledChanges = useMemo(
+-    () =>
+-      productChannelFilter === ALL
+-        ? rulesWithScheduledChanges
+-        : rulesWithScheduledChanges.filter(rule => {
++    () => {
++      // should be rulesWithScheduledChanges if rewoundRules.length is 0, or we're diffing
++      // rewound rules against current rules
++      // TODO: make this work without hardcodes :)
++      // use this line for non-diff mode
++      //const rulesToShow = rewoundRules.length === 0 ? rulesWithScheduledChanges : rewoundRules;
++      // use this line for diff mode
++      const rulesToShow = rulesWithScheduledChanges;
++      return productChannelFilter === ALL
++        ? rulesToShow
++        : rulesToShow.filter(rule => {
+             const [productFilter, channelFilter] = searchQueries;
+             const ruleProduct =
+               rule.product ||
+               (rule.scheduledChange && rule.scheduledChange.product);
+             const ruleChannel =
+               rule.channel ||
+               (rule.scheduledChange && rule.scheduledChange.channel);
+ 
+@@ -263,18 +275,19 @@ function ListRules(props) {
+             if (
+               channelFilter &&
+               ruleChannel.replace('*', '') !== channelFilter
+             ) {
+               return false;
+             }
+ 
+             return true;
+-          }),
+-    [productChannelFilter, rulesWithScheduledChanges]
++          });
++    },
++    [productChannelFilter, rulesWithScheduledChanges, rewoundRules]
+   );
+   const handleDateTimePickerError = error => {
+     setDateTimePickerError(error);
+   };
+ 
+   const handleDateTimeChange = date => {
+     setScheduleDeleteDate(date);
+     setDateTimePickerError(null);
+@@ -482,34 +495,43 @@ function ListRules(props) {
+ 
+     // space below the card (margin)
+     height += theme.spacing(6);
+ 
+     return height;
+   };
+ 
+   const Row = ({ index, style }) => {
++    // if we're in rewind mode, rule is a historical rule, not the current one
+     const rule = filteredRulesWithScheduledChanges[index];
+ 
++    // this is always the current version
++    const currentRule = rulesWithScheduledChanges.filter(r => r.rule_id == rule.rule_id);
++
+     return (
+       <div
+         key={
+           rule.rule_id
+             ? rule.rule_id
+             : Object.values(rule.scheduledChange).join('-')
+         }
+         style={style}>
+         {/* should we go read only mode if rewindDAte is set instead? */}
++        {rewoundRules === 0 ? (
+         <RuleCard
+           className={classes.ruleCard}
+           key={rule.rule_id}
+           rule={rule}
+           onRuleDelete={handleRuleDelete}
+           disableActions={!!rewindDate}
+         />
++        ) : (
++        {/* todo: why is the current version of the rule showing up on the left side? */}
++        <DiffRule firstRule={rule} secondRule={currentRule} />
++        )}
+       </div>
+     );
+   };
+ 
+   useEffect(() => {
+     if (filteredRulesCount) {
+       if (hashQuery.ruleId && hashQuery.ruleId !== ruleIdHash) {
+         const ruleId = Number(hashQuery.ruleId);
