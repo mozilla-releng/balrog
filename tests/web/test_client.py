@@ -11,6 +11,7 @@ import pytest
 from hypothesis import assume, example, given
 from hypothesis.strategies import characters, integers, just, text
 
+import auslib.services.releases as releases_service
 import auslib.web.public.client as client_api
 from auslib.blobs.base import createBlob
 from auslib.errors import BadDataError
@@ -1402,6 +1403,10 @@ class ClientTest(ClientTestBase):
         with ExitStack() as stack:
             mocked_releases_json_scheduled_changes = stack.enter_context(mock.patch("auslib.services.releases.dbo.releases_json.scheduled_changes"))
             mocked_release_assets_scheduled_changes = stack.enter_context(mock.patch("auslib.services.releases.dbo.release_assets.scheduled_changes"))
+            mocked_get_asset_rows = stack.enter_context(mock.patch.object(releases_service, "get_asset_rows", wraps=releases_service.get_asset_rows))
+            mocked_get_asset_data_versions = stack.enter_context(
+                mock.patch.object(releases_service, "get_asset_data_versions", wraps=releases_service.get_asset_data_versions)
+            )
             t = stack.enter_context(mock.patch("time.time"))
             # The lookups/hits/misses here come in multiples of 4 because we have:
             #  - a release that the rule is pointing to
@@ -1473,6 +1478,11 @@ class ClientTest(ClientTestBase):
                 validate_cache_stats(
                     arg["lookups"], arg["hits"], arg["misses"], arg["data_version_lookups"], arg["data_version_hits"], arg["data_version_misses"]
                 )
+                # In addition to validating cache hits and misses, we need to make
+                # sure that we didn't call the database layer more than we expected
+                # to without going through the cache layer.
+                assert mocked_get_asset_rows.call_count == arg["misses"]
+                assert mocked_get_asset_data_versions.call_count == arg["data_version_misses"]
 
             assert mocked_releases_json_scheduled_changes.select.call_count == 0
             assert mocked_release_assets_scheduled_changes.select.call_count == 0

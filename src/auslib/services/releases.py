@@ -299,35 +299,38 @@ def get_releases(trans):
     return {"releases": sorted(releases, key=lambda r: r["name"])}
 
 
+def get_base_row(name, trans):
+    row = dbo.releases_json.select(where={"name": name}, transaction=trans)
+    if row:
+        return row[0]
+
+    return None
+
+
+def get_base_data_version(name, trans):
+    row = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data_version], transaction=trans)
+    if row:
+        return row[0]["data_version"]
+
+    return None
+
+
+def get_asset_rows(name, trans):
+    return dbo.release_assets.select(where={"name": name}, order_by=[dbo.release_assets.path], transaction=trans) or []
+
+
+def get_asset_data_versions(name, trans):
+    return (
+        dbo.release_assets.select(where={"name": name}, columns=[dbo.release_assets.data_version], order_by=[dbo.release_assets.path], transaction=trans) or []
+    )
+
+
 def get_release(name, trans, include_sc=True):
-    def get_base_row():
-        row = dbo.releases_json.select(where={"name": name}, transaction=trans)
-        if row:
-            return row[0]
-
-        return None
-
-    def get_base_data_version():
-        row = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data_version], transaction=trans)
-        if row:
-            return row[0]["data_version"]
-
-        return None
-
-    def get_asset_rows():
-        return dbo.release_assets.select(where={"name": name}, order_by=[dbo.release_assets.path], transaction=trans) or []
-
-    def get_asset_data_versions():
-        return (
-            dbo.release_assets.select(where={"name": name}, columns=[dbo.release_assets.data_version], order_by=[dbo.release_assets.path], transaction=trans)
-            or []
-        )
-
     # Get all of the base and asset information, potentially from a cache
-    base_row = cache.get("releases", name, get_base_row)
-    base_data_version = cache.get("releases_data_version", name, get_base_data_version)
-    asset_rows = cache.get("release_assets", name, get_asset_rows)
-    asset_data_versions = cache.get("release_assets_data_versions", name, get_asset_data_versions)
+    base_row = cache.get("releases", name, lambda: get_base_row(name, trans))
+    base_data_version = cache.get("releases_data_version", name, lambda: get_base_data_version(name, trans))
+    asset_rows = cache.get("release_assets", name, lambda: get_asset_rows(name, trans))
+    asset_data_versions = cache.get("release_assets_data_versions", name, lambda: get_asset_data_versions(name, trans))
 
     data_versions = infinite_defaultdict()
     sc_data_versions = infinite_defaultdict()
@@ -345,7 +348,7 @@ def get_release(name, trans, include_sc=True):
 
     # same thing here for the assets -- if any of the full asset data versions
     # do not match the cached asset data versions, we forcibly update
-    if [r["data_version"] for r in asset_rows] != asset_data_versions:
+    if [r["data_version"] for r in asset_rows] != [r["data_version"] for r in asset_data_versions]:
         asset_rows = get_asset_rows()
 
     for asset in asset_rows:
