@@ -522,7 +522,7 @@ yarl==1.5.1 \
     # via aiohttp
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==49.6.0 \
-    --hash=sha256:46bd862894ed22c2edff033c758c2dc026324788d758e96788e8f7c11f4e9707 \
-    --hash=sha256:4dd5bb0a0a0cff77b46ca5dd3a84857ee48c83e8223886b556613c724994073f \
+setuptools==50.3.0 \
+    --hash=sha256:39060a59d91cf5cf403fa3bacbb52df4205a8c3585e0b9ba4b30e0e19d4c4b18 \
+    --hash=sha256:c77b3920663a435c9450d9d971c48f5a7478fca8881b2cd2564e59f970f03536 \
     # via -r base.in, google-api-core, google-auth, jsonschema, protobuf
