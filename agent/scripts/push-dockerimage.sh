@@ -4,17 +4,10 @@ set -e
 
 tags=( $@ )
 
-password_url="taskcluster/secrets/v1/secret/repo:github.com/mozilla/balrog:dockerhub"
+password_url="taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:dockerhub"
 artifact_url="taskcluster/queue/v1/task/${TASK_ID}/runs/${RUN_ID}/artifacts/public/docker-image-shasum256.txt"
 artifact_expiry=$(date -d "+1 year" -u +%FT%TZ)
-dockerhub_email=release+balrog@mozilla.com
-dockerhub_username=mozillabalrog
-dockerhub_password=$(curl ${password_url} | python -c 'import json, sys; a = json.load(sys.stdin); print a["secret"]["dockerhub_password"]')
 
-if [ -z $dockerhub_password ]; then
-    echo "Dockerhub password not set, can't continue!"
-    exit 1
-fi
 if [ ${#tags[*]} -eq 0 ]; then
     echo "Must pass at least one tag"
     exit 2
@@ -23,19 +16,22 @@ fi
 commit=$(git rev-parse HEAD)
 version=$(cat version.txt)
 
+apt-get update && apt-get -y install jq
+
 cat > version.json <<EOF
 {
     "commit": "${commit}",
     "version": "${version}",
-    "source": "https://github.com/mozilla/balrog",
+    "source": "https://github.com/mozilla-releng/balrog",
     "build": "https://tools.taskcluster.net/task-inspector/#${TASK_ID}"
 }
 EOF
 
 echo "Building Docker image"
 docker build -t buildtemp .
-echo "Logging into Dockerhub"
-docker login -e $dockerhub_email -u $dockerhub_username -p $dockerhub_password
+# docker login stopped working in Taskcluster for some reason
+wget -qO- $password_url | jq '.secret.dockercfg' > /root/.dockercfg
+chmod 600 /root/.dockercfg
 
 for tag in ${tags[*]}; do
     echo "Tagging Docker image with ${tag}"

@@ -1,0 +1,18 @@
+-r base.in
+
+black
+check-manifest
+coverage
+coveralls
+flake8
+flake8-black
+hypothesis
+isort
+mock
+# Pinned due to unknown issues with pip 10.1
+pip==20.0.2
+pip-compile-multi
+pytest
+pytest-asyncio
+pytest-cov
+pytest-xdist

@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+set -o errexit -o pipefail
+set -e
+
+export AWS_ACCESS_KEY_ID=$(curl ${AWS_CREDENTIALS_SECRET} | python3 -c 'import json, sys; a = json.load(sys.stdin); print(a["secret"]["aws_access_key"])')
+export AWS_SECRET_ACCESS_KEY=$(curl ${AWS_CREDENTIALS_SECRET} | python3 -c 'import json, sys; a = json.load(sys.stdin); print(a["secret"]["aws_secret_key"])')
+
+# Grab app config and convert it to shell format
+curl "${APP_CONFIG_SECRET}" | python3 -c 'import json, sys; a = json.load(sys.stdin); [print("{}=\"{}\"".format(k, v)) for k,v in a["secret"].items()]' > .env
+
+source .env
+
+HEADERS=$(cat <<EOF
+{ \
+    "Content-Security-Policy": "default-src 'none'; script-src 'self'; img-src 'self' https://*.gravatar.com https://*.githubusercontent.com https://i1.wp.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src $BALROG_ROOT_URL https://auth.mozilla.auth0.com https://www.googleapis.com/; frame-src https://auth.mozilla.auth0.com; frame-ancestors 'self'; base-uri 'none'; form-action 'none'", \
+    "Strict-Transport-Security": "max-age=63072000", \
+    "X-Content-Type-Options": "nosniff", \
+    "X-Content-Type-Options": "nosniff", \
+    "X-XSS-Protection": "1; mode=block", \
+    "Referrer-Policy": "no-referrer", \
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; always;" \
+}
+EOF
+)
+
+yarn build
+
+cp scripts/404.html build/404.html
+
+SYNC_OPTIONS=(
+    --metadata "$HEADERS"
+    --metadata-directive "REPLACE"
+    --cache-control "max-age=300"
+    --delete
+)
+aws s3 sync \
+    "${SYNC_OPTIONS[@]}" \
+    ./build/ "s3://${WEBSITE_BUCKET}/"

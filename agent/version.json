@@ -1,6 +1,6 @@
 {
     "commit": "stub",
     "version": "stub",
-    "source": "https://github.com/mozilla/balrog",
+    "source": "https://github.com/mozilla-releng/balrog",
     "build": "https://tools.taskcluster.net/task-inspector/#XXXXXXXXXXXXXXXXXX"
 }

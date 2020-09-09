@@ -1,4 +1,4 @@
-.. Balrog documentation master file, created by
+.. Balrog documentation main file, created by
    sphinx-quickstart on Fri Oct 28 03:43:39 2016.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -15,13 +15,15 @@ Contents:
    :maxdepth: 2
 
    contribute
-   withoutdocker
    codeoverview
    database
    admin_api
    blobs
+   blob_examples
    balrog_agent
-   autodocs/auslib
+   client_domains
+   infrastructure
+   autodocs
 
 Indices and tables
 ==================

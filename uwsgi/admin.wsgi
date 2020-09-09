@@ -1,32 +1,41 @@
+import asyncio
 import logging
 import os
 import os.path
 import sys
 
+import aiohttp
+import sentry_sdk
+from gcloud.aio.storage import Storage
 from google.api_core.exceptions import Forbidden
-from google.auth.credentials import AnonymousCredentials
 from google.cloud import storage
+from sentry_sdk.integrations.flask import FlaskIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 from auslib.log import configure_logging
 
+STAGING = bool(int(os.environ.get("STAGING", 0)))
+LOCALDEV = bool(int(os.environ.get("LOCALDEV", 0)))
+
 SYSTEM_ACCOUNTS = ["balrogagent", "balrog-ffxbld", "balrog-tbirdbld", "seabld"]
 DOMAIN_WHITELIST = {
-    "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-    "download.cdn.mozilla.net": ("Firefox", "Fennec", "SeaMonkey"),
-    "mozilla-nightly-updates.s3.amazonaws.com": ("Firefox",),
+    "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
+    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
+    "download.cdn.mozilla.net": ("Firefox", "Fennec"),
     "ciscobinary.openh264.org": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),
     "clients2.googleusercontent.com": ("Widevine",),
     "redirector.gvt1.com": ("Widevine",),
     "ftp.mozilla.org": ("SystemAddons",),
+    "fpn.firefox.com": ("FirefoxVPN", "Guardian"),
 }
-if os.environ.get("STAGING") or os.environ.get("LOCALDEV"):
+if STAGING or LOCALDEV:
     SYSTEM_ACCOUNTS.extend(["balrog-stage-ffxbld", "balrog-stage-tbirdbld"])
     DOMAIN_WHITELIST.update(
         {
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
             "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
+            "stage.guardian.nonprod.cloudops.mozgcp.net": ("FirefoxVPN", "Guardian"),
         }
     )
 
@@ -61,41 +70,70 @@ cache.make_cache("users", 1, 300)
 if not os.environ.get("RELEASES_HISTORY_BUCKET") or not os.environ.get("NIGHTLY_HISTORY_BUCKET"):
     log.critical("RELEASES_HISTORY_BUCKET and NIGHTLY_HISTORY_BUCKET must be provided")
     sys.exit(1)
-if not os.environ.get("LOCALDEV"):
+if not LOCALDEV:
     if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")):
         log.critical("GOOGLE_APPLICATION_CREDENTIALS provided, but does not exist")
         sys.exit(1)
 
-if os.environ.get("LOCALDEV") and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")):
-    storage_client = storage.Client.create_anonymous_client()
+if LOCALDEV and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")):
+    log.info("Disabling releases_history writes for localdev without google credentials specified")
+    buckets = None
 else:
-    storage_client = storage.Client()
+    # We use this factory instead of creating an instance of Storage here
+    # because the async Storage creates an aiohttp.ClientSession upon instantiation,
+    # which grabs a reference to the current EventLoop. Because we're using
+    # asyncio.run in some endpoints to wait on coroutines, we end up with a
+    # new EventLoop each time it is called. This means that the second time
+    # Storage attempts to use the ClientSession it has created, the EventLoop
+    # it holds will be closed, which completely breaks it.
+    # (It is technically possible to override the ClientSession that a Storage
+    # object holds, but it involves digging into the implementation details
+    # of that object, as well as other objects it holds - so it's not a very
+    # robust solution.)
+    #
+    # Because this is a factory, consumers (notably, GCSHistoryAsync) must
+    # instantiate the Storage object themselves before they use it.
+    def BucketFactory(bucket):
+        def factory(*args, use_gcloud_aio=True, **kwargs):
+            if use_gcloud_aio:
+                return Storage(*args, **kwargs).get_bucket(bucket)
+            else:
+                # We tried to use the async Storage class for the
+                # synchronous GCSHistory class, but hit issues with
+                # Event Loops. This code will be removed in the near
+                # future, so in the meantime we'll just continue
+                # using the synchronous client.
+                return storage.Client().get_bucket(bucket)
 
-# Check if we have write access, and set the bucket configuration appropriately
-# There's basically two cases here:
-#   * Credentials have been provided and can write to the buckets, or no credentials have been provided -> enable writes
-#   * Credentials have not been provided, or they can't write to the bucket
-#     * If we're local dev disable writes
-#     * If we're anywhere else, raise an Exception (local dev is the only place where we can be sure we can safely disable them)
-try:
+        return factory
+
+    bucket_factory = BucketFactory
+
     # Order is important here, we fall through to the last entry. This works because dictionary keys
     # are returned in insertion order when iterated on.
     # Turn off formatting because it is clearer to have these listed one after another
     # fmt: off
     buckets = {
-        "nightly": storage_client.bucket(os.environ["NIGHTLY_HISTORY_BUCKET"]),
-        "": storage_client.bucket(os.environ["RELEASES_HISTORY_BUCKET"]),
-    # fmt: on
+        "nightly": bucket_factory(os.environ["NIGHTLY_HISTORY_BUCKET"]),
+        "": bucket_factory(os.environ["RELEASES_HISTORY_BUCKET"]),
     }
+    # fmt: on
+
+    # Check if we have write access, and set the bucket configuration appropriately
+    # There's basically two cases here:
+    #   * Credentials have been provided and can write to the buckets, or no credentials have been provided -> enable writes
+    #   * Credentials have not been provided, or they can't write to the bucket
+    #     * If we're local dev disable writes
+    #     * If we're anywhere else, raise an Exception (local dev is the only place where we can be sure we can safely disable them)
     for bucket in buckets.values():
-        blob = bucket.blob("startuptest")
-        blob.upload_from_string("startuptest", content_type="text/plain")
-except (ValueError, Forbidden) as e:
-    if not os.environ.get("LOCALDEV"):
-        if isinstance(e, Forbidden) or (isinstance(e, ValueError) and"Anonymous credentials" not in e.args[0]):
-            raise
-    log.info("Disabling releases_history writes")
-    buckets = None
+        # Needs to be wrapped so we can use `async with` to make sure ClientSession
+        # gets closed.
+        async def wrapper():
+            async with aiohttp.ClientSession() as session:
+                blob = bucket(session=session).new_blob("startuptest")
+                await blob.upload("startuptest")
+
+        asyncio.run(wrapper())
 
 dbo.setDb(os.environ["DBURI"], buckets)
 if os.environ.get("NOTIFY_TO_ADDR"):
@@ -147,10 +185,7 @@ application.config["CORS_ORIGINS"] = [o.strip() for o in os.environ.get("CORS_OR
 application.config["SESSION_COOKIE_SAMESITE"] = "Strict"
 
 if os.environ.get("SENTRY_DSN"):
-    application.config["SENTRY_DSN"] = os.environ.get("SENTRY_DSN")
-    from auslib.web.admin.base import sentry
-
-    sentry.init_app(application)
+    sentry_sdk.init(os.environ["SENTRY_DSN"], integrations=[FlaskIntegration(), LoggingIntegration()])
 
 # version.json is created when the Docker image is built, and contains details
 # about the current code (version number, commit hash), but doesn't exist in
@@ -184,26 +219,3 @@ application.config["M2M_ACCOUNT_MAPPING"] = {
     "DqmXymgjiz6XuRXIewDnuR7oB8bOxkf0": "balrog-ffxbld",
     "ztM3MdGFNjbPYOq7R4br2EukKhuL6qlY": "balrog-tbirdbld",
 }
-
-# Generate frontend config
-# It feels a bit hacky to be writing out a frontend config on the fly, but none
-# of the alternatives seemed better (baking dev/stage/prod configs into one image,
-# building separate images for those environments, cloudops maintaining this config).
-frontend_config = os.environ.get("FRONTEND_CONFIG", "/app/ui/dist/js/config.js")
-config_dir = os.path.dirname(frontend_config)
-if not os.path.exists(config_dir):
-    os.makedirs(config_dir)
-with open(frontend_config, "w+") as f:
-    f.write(
-        """
-angular.module('config', [])
-
-.constant('Auth0Config', {})
-.constant('GCSConfig', {{
-    'nightly_history_bucket': 'https://www.googleapis.com/storage/v1/b/{}/o',
-    'releases_history_bucket': 'https://www.googleapis.com/storage/v1/b/{}/o',
-}});
-""".format(
-            auth0_config, os.environ["NIGHTLY_HISTORY_BUCKET"], os.environ["RELEASES_HISTORY_BUCKET"]
-        )
-    )

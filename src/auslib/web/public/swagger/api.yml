@@ -1,0 +1,333 @@
+swagger: '2.0'
+info:
+  version: '1.0'
+  title: Balrog Public API
+  license:
+    name: Mozilla Public License 2.0
+    url: https://www.mozilla.org/en-US/MPL/2.0/
+  contact:
+    name: Mozilla Release Engineering
+    url: https://github.com/mozilla-releng/balrog
+    email: release-engineering@lists.mozilla.org
+  description: >
+    **Balrog** is the software that runs the server side component of the update
+    system used by Firefox and other Mozilla products. It is the successor to *AUS*
+    (Application Update Service), which did not scale to our current needs nor allow
+    us to adapt to more recent business requirements. Balrog helps us ship updates faster
+    and with much more flexibility than we’ve had in the past.
+paths:
+  /update/1/{product}/{version}/{buildID}/{buildTarget}/{locale}/{channel}/update.xml:
+    get:
+      operationId: 'auslib.web.public.client.get_update_blob_1'
+      description: Returns an update blob for the given parameters.
+      produces:
+        - text/xml
+      parameters:
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildID'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/locale'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/avast'
+        - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
+      responses:
+        200:
+          description: Update blob in text/xml format.
+
+  /update/2/{product}/{version}/{buildID}/{buildTarget}/{locale}/{channel}/{osVersion}/update.xml:
+    get:
+      operationId: 'auslib.web.public.client.get_update_blob_2'
+      description: Returns an update blob for the given parameters.
+      produces:
+        - text/xml
+      parameters:
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildID'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/locale'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/osVersion'
+        - $ref: '#/parameters/avast'
+        - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
+      responses:
+        200:
+          description: Update blob in text/xml format.
+
+  /update/3/{product}/{version}/{buildID}/{buildTarget}/{locale}/{channel}/{osVersion}/{distribution}/{distVersion}/update.xml:
+    get:
+      operationId: 'auslib.web.public.client.get_update_blob_3'
+      description: Returns an update blob for the given parameters.
+      produces:
+        - text/xml
+      parameters:
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildID'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/locale'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/osVersion'
+        - $ref: '#/parameters/distribution'
+        - $ref: '#/parameters/distVersion'
+        - $ref: '#/parameters/avast'
+        - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
+      responses:
+        200:
+          description: Update blob in text/xml format.
+
+  /update/4/{product}/{version}/{buildID}/{buildTarget}/{locale}/{channel}/{osVersion}/{distribution}/{distVersion}/{platformVersion}/update.xml:
+    get:
+      operationId: 'auslib.web.public.client.get_update_blob_4'
+      description: Returns an update blob for the given parameters.
+      produces:
+        - text/xml
+      parameters:
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildID'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/locale'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/osVersion'
+        - $ref: '#/parameters/distribution'
+        - $ref: '#/parameters/distVersion'
+        - name: platformVersion
+          in: path
+          description: Platform Version.
+          required: true
+          type: string
+        - $ref: '#/parameters/avast'
+        - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
+      responses:
+        200:
+          description: Update blob in text/xml format.
+
+  /update/5/{product}/{version}/{buildID}/{buildTarget}/{locale}/{channel}/{osVersion}/{distribution}/{distVersion}/{IMEI}/update.xml:
+    get:
+      operationId: 'auslib.web.public.client.get_update_blob_5'
+      description: Returns an update blob for the given parameters.
+      produces:
+        - text/xml
+      parameters:
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildID'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/locale'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/osVersion'
+        - $ref: '#/parameters/distribution'
+        - $ref: '#/parameters/distVersion'
+        - name: IMEI
+          in: path
+          description: IMEI
+          required: true
+          type: string
+        - $ref: '#/parameters/avast'
+        - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
+      responses:
+        200:
+          description: Update blob in text/xml format.
+
+  /update/6/{product}/{version}/{buildID}/{buildTarget}/{locale}/{channel}/{osVersion}/{systemCapabilities}/{distribution}/{distVersion}/update.xml:
+    get:
+      operationId: 'auslib.web.public.client.get_update_blob_6'
+      description: Returns an update blob for the given parameters.
+      produces:
+        - text/xml
+      parameters:
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildID'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/locale'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/osVersion'
+        - name: systemCapabilities
+          in: path
+          description: |
+            The supported hardware features of the application requesting an update. This field is primarily used to point desupported users based on their hardware. Eg: users who do not support SSE2.
+          required: true
+          type: string
+        - $ref: '#/parameters/distribution'
+        - $ref: '#/parameters/distVersion'
+        - $ref: '#/parameters/avast'
+        - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
+      responses:
+        200:
+          description: Update blob in text/xml format.
+
+  # Routes to deal with edge cases.
+  # bug 1133250 - support for old-style nightly ESR versions
+  /update/3/{product}/{version}esrpre/{buildID}/{buildTarget}/{locale}/{channel}/{osVersion}/{distribution}/{distVersion}/update.xml:
+    get:
+      operationId: 'auslib.web.public.client.get_update_blob_3_esrpre'
+      description: Returns an update blob for the given parameters.
+      produces:
+        - text/xml
+      parameters:
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildID'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/locale'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/osVersion'
+        - $ref: '#/parameters/distribution'
+        - $ref: '#/parameters/distVersion'
+        - $ref: '#/parameters/avast'
+        - $ref: '#/parameters/force'
+        - $ref: '#/parameters/mig64'
+      responses:
+        200:
+          description: Update blob in text/xml format.
+
+  /json/1/{product}/{version}/{buildTarget}/{channel}/update.json:
+    get:
+      operationId: 'auslib.web.public.json.get_update'
+      description: Return the appropriate update for the given parameters
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/force'
+      responses:
+        200:
+          description: Update response in JSON format
+
+  /__heartbeat__:
+    get:
+      operationId: 'auslib.web.public.dockerflow.heartbeat'
+      description: |
+        Respond to /__heartbeat__ with a HTTP 200 or 5xx on error.
+        This should check backing services like a database for connectivity.
+      responses:
+        200:
+          description: Service is healthy.
+        502:
+          description: Service is unhealthy.
+
+  /__lbheartbeat__:
+    get:
+      operationId: 'auslib.web.public.dockerflow.lbheartbeat'
+      description: |
+        Respond to /__lbheartbeat__ with an HTTP 200.
+        This is for load balancer checks and should not check backing services.
+      responses:
+        200:
+          description: Service is healthy.
+
+  /__version__:
+    get:
+      operationId: 'auslib.web.public.dockerflow.version'
+      description: Respond to /__version__ with the contents of /app/version.json.
+      responses:
+        200:
+          description: version.json content.
+
+parameters:
+  product:
+    name: product
+    in: path
+    description: The name of the application requesting an update.
+    required: true
+    type: string
+
+  productQuery:
+    name: product
+    description: The name of the application.
+    in: query
+    required: false
+    type: string
+
+  version:
+    name: version
+    in: path
+    description: The version of the application requesting an update.
+    required: true
+    type: string
+
+  buildID:
+    name: buildID
+    in: path
+    description: The build ID of the application requesting an update.
+    required: true
+    type: string
+
+  buildTarget:
+    name: buildTarget
+    in: path
+    description: The “build target” of the application requesting an update. This is usually related to the target platform the app was built for.
+    required: true
+    type: string
+
+  locale:
+    name: locale
+    in: path
+    description: The locale of the application requesting an update.
+    required: true
+    type: string
+
+  channel:
+    name: channel
+    in: path
+    description: The update channel of the application request an update.
+    required: true
+    type: string
+
+  # This parameter used to have a default of "", but it started causing a lot
+  # of ExtraParameterProblems when we upgraded to Connexion 2.5.1. It wasn't
+  # clear why the default was needed, so it was removed. It's also not clear
+  # why having a default caused bustage, so there may be an underlying issue.
+  osVersion:
+    name: osVersion
+    in: path
+    description: The OS Version of the application requesting an update. This field is primarily used to point desupported operating systems to their last supported build.
+    required: true
+    type: string
+
+  distribution:
+    name: distribution
+    in: path
+    description: The partner distribution name of the application requesting an update or “default” if the application is not a partner build.
+    required: true
+    type: string
+
+  distVersion:
+    name: distVersion
+    in: path
+    description: The version of the partner distribution of the application requesting an update or “default” if the application is not a partner build.
+    required: true
+    type: string
+
+  avast:
+    name: avast
+    in: query
+    description: avast
+    required: false
+    type: string
+
+  force:
+    name: force
+    in: query
+    description: force
+    required: false
+    type: string
+
+  mig64:
+    name: mig64
+    in: query
+    description: mig64
+    required: false
+    type: string

@@ -1,4 +1,4 @@
 #!/bin/bash
 
-pip install -r /app/requirements-tox.txt
+pip install -r /app/requirements/local.txt
 tox

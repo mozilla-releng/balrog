@@ -2,6 +2,7 @@
 
 import difflib
 import glob
+import json
 import logging
 import os
 import os.path
@@ -9,19 +10,12 @@ import re
 import site
 import time
 
-try:
-    import json
-
-    assert json  # to shut pyflakes up
-except Exception:
-    import simplejson as json
+from auslib.AUS import AUS as AUS_Class  # noqa: E402
+from auslib.global_state import dbo  # noqa: E402
 
 mydir = os.path.dirname(os.path.abspath(__file__))
 site.addsitedir(os.path.join(mydir, ".."))
 site.addsitedir(os.path.join(mydir, "..", "vendor/lib/python"))
-
-from auslib.AUS import AUS as AUS_Class  # noqa: E402
-from auslib.global_state import dbo  # noqa: E402
 
 
 log = logging.getLogger(__name__)
@@ -172,7 +166,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=log_level, format="%(message)s")
 
-    testdir = os.path.join(mydir, "..", "aus-data-snapshots")
+    testdir = os.path.join(mydir, "..", "tests", "aus-data-snapshots")
     if not options.testDirs:
         for dirname in os.listdir(testdir):
             d = os.path.join(testdir, dirname)
@@ -206,7 +200,7 @@ if __name__ == "__main__":
         if options.dumpreleases:
             log.info("Releases are \n(name, product, data):")
             for release in dbo.releases.getReleases():
-                log.info("(%s, %s, %s, %s " % (release["name"], release["product"], json.dumps(release["data"], indent=2)))
+                log.info("(%s, %s, %s, " % (release["name"], release["product"], json.dumps(release["data"], indent=2)))
             log.info("-" * 50)
 
         result = walkSnippets(AUS, os.path.join(td, "snippets"))

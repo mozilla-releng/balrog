@@ -1,17 +1,20 @@
-FROM python:3.7-stretch
+FROM python:3.8-slim
 
 MAINTAINER bhearsum@mozilla.com
 
 WORKDIR /app
 
-COPY requirements.txt /app/
-RUN pip install -r requirements.txt
+COPY requirements/ /app/requirements/
+RUN pip install -r requirements/base.txt
 
-COPY balrogagent/ /app/balrogagent/
+COPY src/ /app/src/
+COPY tests/ /app/tests/
 COPY scripts/ /app/scripts/
-COPY run.sh MANIFEST.in setup.py version.json /app/
+COPY run.sh MANIFEST.in pyproject.toml setup.py version.json /app/
 # test-only stuff
-COPY .coveragerc requirements-tox.txt requirements-test.txt run-tests.sh tox.ini version.txt /app/
+COPY tox.ini version.txt /app/
+
+RUN python setup.py install
 
 # Using /bin/bash as the entrypoint works around some volume mount issues on Windows
 # where volume-mounted files do not have execute bits set.

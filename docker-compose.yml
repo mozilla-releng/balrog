@@ -6,7 +6,9 @@ services:
   balrogadmin:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.test
+      args:
+        PYTHON_VERSION: 3.8
     depends_on:
       balrogdb:
         condition: service_healthy
@@ -23,14 +25,12 @@ services:
     environment:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
       - DB_HOST=balrogdb
-      - CACHEDIR=.cache
       - SECRET_KEY=blahblah
       - PORT=7070
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
       - INSECURE_SESSION_COOKIE=1
       - LOCALDEV=1
-      - FRONTEND_CONFIG=/app/ui/generated/js/config.js
       - AUTH0_CLIENT_ID=GlZhJQfx52b7MLQ19AjuTJHieiB4oh1j
       - AUTH0_REDIRECT_URI=https://localhost:8010/login
       - AUTH0_DOMAIN=balrog-localdev.auth0.com
@@ -65,7 +65,9 @@ services:
   balrogpub:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.test
+      args:
+        PYTHON_VERSION: 3.8
     depends_on:
       balrogdb:
         condition: service_healthy
@@ -74,8 +76,14 @@ services:
       - "9010:9010"
     volumes:
       - .:/app
+    links:
+      - autograph
     environment:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
+      - AUTOGRAPH_URL=http://autograph:8000
+      - AUTOGRAPH_KEYID=normandy
+      - AUTOGRAPH_USERNAME=alice
+      - AUTOGRAPH_PASSWORD=fs5wgcer9qj819kfptdlp8gm227ewxnzvsuj9ztycsx08hfhzu
       - SECRET_KEY=blahblah
       - PORT=9010
       - LOG_FORMAT=plain
@@ -85,7 +93,10 @@ services:
 
 
   balrogagent:
-    build: ./agent
+    build:
+      context: ./agent
+      args:
+        PYTHON_VERSION: 3.8
     depends_on:
       nginx:
         condition: service_healthy
@@ -109,8 +120,8 @@ services:
       - AUTH0_M2M_CLIENT_SECRET=updk4Gi1f6ncXDCDBH5ZclbsbIUaZmqvEXYCQLCFI56RnWlnTQXCQe6-h9n86QTv
 
 
-  balrogreactui:
-    build: ./react-ui
+  balrogui:
+    build: ./ui
     depends_on:
       balrogadmin:
         condition: service_healthy
@@ -121,34 +132,13 @@ services:
       - HOST=0.0.0.0
       - PORT=9000
     volumes:
-      - ./react-ui:/app
+      - ./ui:/app
       - node_modules:/app/node_modules
     entrypoint:
       - /bin/bash
       - --login
       - -c
       - yarn install && yarn start
-
-
-  # This container exists solely to have something automatically rebuilding the UI
-  # in the background during local development. Although it runs a web server, we
-  # don't use it. Instead, the nginx one below is used as our entry point to more
-  # closely mimic production, and support SSL.
-  balrogui:
-    image: node:0.10
-    depends_on:
-      balrogadmin:
-        condition: service_healthy
-    volumes:
-      - ./ui:/app
-      - .cache:/cache
-    environment:
-      - WEB_PORT=6060
-      - HOST_PROXY=balrogadmin
-      - HOST_PROXY_PORT=7070
-    entrypoint:
-      - /bin/bash
-      - /app/docker-entrypoint.sh
 
 
   nginx:
@@ -183,18 +173,41 @@ services:
       dockerfile: Dockerfile.database
     expose:
       - "3306"
+    ports:
+      - "3306:3306"
     environment:
       - MYSQL_DATABASE=balrog
       - MYSQL_USER=balrogadmin
       - MYSQL_PASSWORD=balrogadmin
       - MYSQL_ROOT_PASSWORD=admin
     volumes:
-      - .cache/mysql:/var/lib/mysql
+      - mysqldb:/var/lib/mysql
+    logging:
+      driver: none
     healthcheck:
         test: nc -z -v balrogdb 3306
         interval: 30s
         timeout: 30s
         retries: 10
 
+  # TODO: provide our own config so that we can guarantee the keyid
+  autograph:
+    image: mozilla/autograph:latest
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - autographtmp:/tmp/
+    logging:
+      driver: none
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/__heartbeat__"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
 volumes:
   node_modules:
+  autographtmp:
+  mysqldb:

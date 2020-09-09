@@ -1,0 +1,22 @@
+{
+    "name": "Balrog",
+    "description": "Next generation update service for Mozilla products.",
+    "repository": {
+        "url": "https://github.com/mozilla-releng/balrog",
+        "license": "MPL-2.0"
+    },
+    "participate": {
+        "home": "https://mozilla-balrog.readthedocs.io/en/latest/contribute.html",
+        "docs": "https://mozilla-balrog.readthedocs.io/en/latest/",
+        "irc": "irc://irc.mozilla.org/#balrog"
+    },
+    "bugs": {
+        "list": "https://bugzilla.mozilla.org/buglist.cgi?list_id=13406852&emailtype1=exact&status_whiteboard_type=allwordssubstr&emailassigned_to1=1&status_whiteboard=%5Bready%5D&email1=nobody%40mozilla.org&resolution=---&query_format=advanced&component=Balrog%3A%20Backend&component=Balrog%3A%20Frontend"
+    },
+    "urls": {
+        "prod": "https://aus5.mozilla.org/"
+    },
+    "keywords": [
+        "python"
+    ]
+}

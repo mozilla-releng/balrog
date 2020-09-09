@@ -1,0 +1,416 @@
+openapi: 3.0.0
+info:
+  title: Balrog Admin API
+  description: Balrog Admin API
+  version: 2.0.0
+
+components:
+  schemas:
+    Release:
+      type: object
+      properties:
+        name:
+          type: string
+        product:
+          type: string
+          nullable: true
+        read_only:
+          type: boolean
+          nullable: true
+        data_version:
+          type: number
+          nullable: true
+
+    RequiredSignoffs:
+      type: object
+      additionalProperties:
+        type: integer
+
+    ReleaseModifyBody:
+      type: object
+      required:
+        - blob
+      properties:
+        blob:
+          type: object
+        old_data_versions:
+          type: object
+        # Creates a scheduled change if passed
+        when:
+          type: integer
+          nullable: true
+
+    ScheduledChangeResponse:
+      type: object
+      required:
+        - sc_id
+        - change_type
+        - data_version
+        - when
+        - signoffs
+      properties:
+        sc_id:
+          type: number
+        change_type:
+          type: string
+          enum:
+            - insert
+            - update
+            - delete
+        data_version:
+          type: number
+        when:
+          type: integer
+        signoffs:
+          type: object
+          additionalProperties:
+            type: string
+
+    ReleaseModifyResponseLeaf:
+      oneOf:
+        # Direct modifications will return a new data version
+        # for each modified part of a Release
+        - type: number
+        # Scheduled changes will return scheduled change details
+        - $ref: '#/components/schemas/ScheduledChangeResponse'
+
+    # Modified parts of a Release may be at an unknown level of depth
+    # This object handles that by allowing either a Leaf response, or
+    # another level of this object, to an infinite depth.
+    ReleaseModifyResponsePart:
+      type: object
+      additionalProperties:
+        oneOf:
+          - $ref: '#/components/schemas/ReleaseModifyResponseLeaf'
+          - $ref: '#/components/schemas/ReleaseModifyResponsePart'
+
+    ReleaseModifyResponse:
+      type: object
+      properties:
+        .:
+          $ref: '#/components/schemas/ReleaseModifyResponseLeaf'
+      additionalProperties:
+        $ref: '#/components/schemas/ReleaseModifyResponsePart'
+
+
+  parameters:
+    ReleaseName:
+      name: name
+      in: path
+      required: true
+      description: Release name
+      schema:
+        type: string
+
+paths:
+  /releases:
+    get:
+      summary: Get a list of basic information about Releases in Balrog's database
+      operationId: auslib.web.admin.views.releases_v2.get_releases
+      responses:
+        '200':
+          description: List of Releases
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - releases
+                properties:
+                  releases:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Release'
+                        - type: object
+                          required:
+                            - name
+                            - rule_info
+                          properties:
+                            product_required_signoffs:
+                              $ref: '#/components/schemas/RequiredSignoffs'
+                            required_signoffs:
+                              $ref: '#/components/schemas/RequiredSignoffs'
+                            read_only:
+                              nullable: false
+                            rule_info:
+                              type: object
+                              properties:
+                                ^.*$:
+                                  type: object
+                                  required:
+                                    - product
+                                    - channel
+                                  properties:
+                                    product:
+                                      type: string
+                                      nullable: true
+                                    channel:
+                                      type: string
+                                      nullable: true
+                            scheduled_changes:
+                              type: array
+                              items:
+                                allOf:
+                                  - $ref: '#/components/schemas/Release'
+                                  - type: object
+                                    required:
+                                      - name
+                                      - data_version
+                                      - sc_id
+                                      - when
+                                      - change_type
+                                      - scheduled_by
+                                      - sc_data_version
+                                      - complete
+                                    properties:
+                                      path:
+                                        type: string
+                                      rule_info:
+                                        type: object
+                                      sc_id:
+                                        type: number
+                                      when:
+                                        type: number
+                                      change_type:
+                                        type: string
+                                        enum:
+                                          - insert
+                                          - update
+                                          - delete
+                                      scheduled_by:
+                                        type: string
+                                      sc_data_version:
+                                        type: number
+                                      complete:
+                                        type: boolean
+
+  /releases/{name}:
+    parameters:
+      - $ref: '#/components/parameters/ReleaseName'
+
+    get:
+      summary: Get a Release blob and data versions
+      operationId: auslib.web.admin.views.releases_v2.get_release
+      responses:
+        '200':
+          description: Release blob and data versions
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - blob
+                  - data_versions
+                properties:
+                  blob:
+                    type: object
+                  data_versions:
+                    type: object
+        '404':
+          description: Release not found
+
+    post:
+      summary: Update part of a Release
+      operationId: auslib.web.admin.views.releases_v2.update_release
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReleaseModifyBody'
+                - type: object
+                  required:
+                    - old_data_versions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseModifyResponse'
+        '400':
+          description: Client error
+        '404':
+          description: Release does not exist
+
+    put:
+      summary: Overwrites an entire release
+      operationId: auslib.web.admin.views.releases_v2.set_release
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReleaseModifyBody'
+                - type: object
+                  properties:
+                    # Required if the Release doesn't yet exist, but it's not possible to encode this into the schema
+                    product:
+                      type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseModifyResponse'
+        '400':
+          description: Client error
+
+    delete:
+      summary: Delete an entire Release
+      operationId: auslib.web.admin.views.releases_v2.delete_release
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Client error
+        '403':
+          description: Permission denied
+        '404':
+          description: Release does not exist
+
+  /releases/{name}/signoff:
+    parameters:
+      - $ref: '#/components/parameters/ReleaseName'
+
+    put:
+      summary: Signoff on the current scheduled changes for the named Release
+      operationId: auslib.web.admin.views.releases_v2.signoff
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+              properties:
+                role:
+                  type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Client error
+        '403':
+          description: Permission denied
+        '404':
+          description: Release has no scheduled changes
+
+    delete:
+      summary: Revoke signoffs on the current scheduled changes for the named Release
+      operationId: auslib.web.admin.views.releases_v2.revoke_signoff
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Client error
+        '403':
+          description: Permission denied
+        '404':
+          description: Release has no scheduled changes
+
+  /releases/{name}/data_versions:
+    parameters:
+      - $ref: '#/components/parameters/ReleaseName'
+
+    get:
+      summary: Get the data versions for a Release
+      operationId: auslib.web.admin.views.releases_v2.get_data_versions
+      responses:
+        '200':
+          description: Data versions
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data_versions
+                properties:
+                  data_versions:
+                    type: object
+        '404':
+          description: Release not found
+
+  /releases/{name}/enact:
+    parameters:
+      - $ref: '#/components/parameters/ReleaseName'
+
+    post:
+      summary: Enact the current scheduled changes for the named Release
+      operationId: auslib.web.admin.views.releases_v2.enact_scheduled_changes
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Client error
+        '403':
+          description: Permission denied
+        '404':
+          description: Release has no scheduled changes
+        
+  /releases/{name}/{path}/data_version:
+    parameters:
+      - $ref: '#/components/parameters/ReleaseName'
+
+    get:
+      summary: Get the data version for a part of a Release
+      operationId: auslib.web.admin.views.releases_v2.get_data_version
+      parameters:
+        - name: path
+          in: path
+          required: true
+          description: Path to part of the named Release
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Data version
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data_version
+                properties:
+                  data_version:
+                    type: integer
+        '404':
+          description: Release part not found
+
+  /releases/{name}/read_only:
+    parameters:
+      - $ref: '#/components/parameters/ReleaseName'
+
+    put:
+      summary: Set a Release as read-only or read-write
+      operationId: auslib.web.admin.views.releases_v2.set_read_only
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - read_only
+                - old_data_version
+              properties:
+                read_only:
+                  type: boolean
+                old_data_version:
+                  type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseModifyResponse'
+        '400':
+          description: Client error
+        '403':
+          description: Permission denied
