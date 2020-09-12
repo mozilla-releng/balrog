@@ -460,11 +460,13 @@ function ListRules(props) {
       }
 
       if (channelFilter) {
-        if (ruleChannel.indexOf('*') === -1) {
-          if (ruleChannel !== channelFilter) {
-            return false;
-          }
-        } else if (!channelFilter.startsWith(ruleChannel.split('*')[0])) {
+        let channelRoot = channelFilter.split('-')[0];
+        if (ruleChannel === channelFilter
+          || ruleChannel.startsWith(channelRoot) 
+          && !ruleChannel.includes('-')) {
+            return true;
+        }
+        else {
           return false;
         }
       }
