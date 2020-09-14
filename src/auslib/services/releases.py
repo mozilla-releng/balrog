@@ -342,14 +342,14 @@ def get_release(name, trans, include_sc=True):
         # the cached data_version we will forcibly update it to make sure we minimize
         # the time we're serving old release data
         if base_row["data_version"] < base_data_version:
-            base_row = get_base_row()
+            base_row = get_base_row(name, trans)
         base_blob = base_row["data"]
         data_versions["."] = base_row["data_version"]
 
     # same thing here for the assets -- if any of the full asset data versions
     # do not match the cached asset data versions, we forcibly update
     if [r["data_version"] for r in asset_rows] != [r["data_version"] for r in asset_data_versions]:
-        asset_rows = get_asset_rows()
+        asset_rows = get_asset_rows(name, trans)
 
     for asset in asset_rows:
         path = asset["path"].split(".")[1:]
