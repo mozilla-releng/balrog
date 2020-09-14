@@ -8023,10 +8023,10 @@ react-codemirror2@^7.2.1:
   resolved "https://registry.yarnpkg.com/react-codemirror2/-/react-codemirror2-7.2.1.tgz#38dab492fcbe5fb8ebf5630e5bb7922db8d3a10c"
   integrity sha512-t7YFmz1AXdlImgHXA9Ja0T6AWuopilub24jRaQdPVbzUJVNKIYuy3uCFZYa7CE5S3UW6SrSa5nAqVQvtzRF9gw==
 
-react-diff-view@^2.4.5:
-  version "2.4.5"
-  resolved "https://registry.yarnpkg.com/react-diff-view/-/react-diff-view-2.4.5.tgz#ce77284dc1e5c5a2dfcba7d5d5515bb19c7279eb"
-  integrity sha512-82x2Y4j894KsQUy2ouL6k5vr9v8PXrrXPTeQNOEadu6DAJQRb/0dJNPJbgHvk2zCwoKRwQb34Ijhocp5jbTDHA==
+react-diff-view@^2.4.6:
+  version "2.4.6"
+  resolved "https://registry.yarnpkg.com/react-diff-view/-/react-diff-view-2.4.6.tgz#5091ea1c326673fb5fced8b471ecbf1ab84c98fb"
+  integrity sha512-kiF9RyRSefPa86xSqJDFesekYFqN6rhrMQbUwH8WZuBKHVDZmT5dobaiba7WPQOywOUTyJAm54kE0G4UDP3fxA==
 
 react-dom@^16.13.1:
   version "16.13.1"
