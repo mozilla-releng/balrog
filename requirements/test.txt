@@ -300,9 +300,9 @@ googleapis-common-protos==1.52.0 \
     --hash=sha256:560716c807117394da12cecb0a54da5a451b5cf9866f1d37e9a5e2329a665351 \
     --hash=sha256:c8961760f5aad9a711d37b675be103e0cc4e9a39327e0d6d857872f698403e24 \
     # via google-api-core
-hypothesis==5.33.2 \
-    --hash=sha256:4255b68a15c13efde4136bcbcde09e6b526500bca01d0927382d525196581305 \
-    --hash=sha256:5cc9073ee5a5c109c8d731a52c304729dbb6affed570eb7d35908bfdd937975e \
+hypothesis==5.35.1 \
+    --hash=sha256:15f68c69b4d9007769f4ee9ec97ebad1fe2da801e110eb210bd951eb6f14453b \
+    --hash=sha256:63ef65b9abe71f4d3342a47dcdd3f18bd01d729d3878b024d9c22e5caf0a58eb \
     # via -r test.in
 idna==2.10 \
     --hash=sha256:b307872f855b18632ce0c21c5e45be78c0ea7ae4c15c828c20788b26921eb3f6 \
