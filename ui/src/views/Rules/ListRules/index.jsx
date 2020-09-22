@@ -452,20 +452,30 @@ function ListRules(props) {
       const [productFilter, channelFilter] = productChannelQueries;
       const ruleProduct =
         rule.product || (rule.scheduledChange && rule.scheduledChange.product);
-      const ruleChannel =
-        rule.channel || (rule.scheduledChange && rule.scheduledChange.channel);
+      const ruleScheduledChange =
+        rule.scheduledChange && rule.scheduledChange.channel;
+      let ruleChannel;
 
       if (ruleProduct !== productFilter) {
         return false;
       }
 
-      if (channelFilter) {
-        const channelRoot = channelFilter.split('-')[0];
+      if (ruleScheduledChange) {
+        if (ruleScheduledChange.includes('*')) {
+          ruleChannel = rule.channel && ruleScheduledChange;
+        } else {
+          ruleChannel = ruleScheduledChange && rule.channel;
+        }
+      } else {
+        ruleChannel = rule.channel;
+      }
 
-        if (
-          ruleChannel !== channelFilter &&
-          (!ruleChannel.startsWith(channelRoot) || ruleChannel.includes('-'))
-        ) {
+      if (channelFilter) {
+        if (ruleChannel.indexOf('*') === -1) {
+          if (ruleChannel !== channelFilter) {
+            return false;
+          }
+        } else if (!channelFilter.startsWith(ruleChannel.split('*')[0])) {
           return false;
         }
       }
