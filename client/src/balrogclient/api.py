@@ -107,7 +107,7 @@ def balrog_request(session, method, url, *args, **kwargs):
         resp.raise_for_status()
         if resp.content:
             recieved_data = resp.json()
-            log.info("Data recieved: %s", recieved_data)
+            log.info("Data recieved: %s", _json_log_data(recieved_data))
             return recieved_data
         else:
             return
