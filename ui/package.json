@@ -28,7 +28,7 @@
     "change-case": "^4.1.1",
     "classnames": "^2.2.6",
     "clipboard-copy": "^3.1.0",
-    "codemirror": "^5.57.0",
+    "codemirror": "^5.58.1",
     "date-fns": "2.16.1",
     "deep-sort-object": "^1.0.2",
     "diff": "^4.0.2",
