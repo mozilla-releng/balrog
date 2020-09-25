@@ -17,7 +17,7 @@ def test_logger(caplog):
     assert r.message == "TEST OUTPUT"
 
     o = json.loads(stream.getvalue())
-    assert o["Severity"] == 6
+    assert o["Severity"] == 200
     assert o["Fields"]["message"] == "TEST OUTPUT"
 
 
@@ -37,7 +37,7 @@ def test_exception(caplog):
     assert r.exc_info
 
     o = json.loads(stream.getvalue())
-    assert o["Severity"] == 3
+    assert o["Severity"] == 500
     assert o["Fields"]["message"] == "TEST OUTPUT"
     assert o["Fields"]["error"].startswith("ValueError")
 
