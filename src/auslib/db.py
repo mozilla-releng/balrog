@@ -835,23 +835,35 @@ class GCSHistory:
         identifier = "-".join([columns.get(i) for i in self.identifier_columns])
         for data_version, ts, data in ((None, timestamp - 1, ""), (columns.get("data_version"), timestamp, json.dumps(columns[self.data_column]))):
             bname = "{}/{}-{}-{}.json".format(identifier, data_version, ts, changed_by)
+            start = time.time()
+            logging.info(f"Beginning GCS upload of {bname}")
             bucket = self._getBucket(identifier)(use_gcloud_aio=False)
             blob = bucket.blob(bname)
             blob.upload_from_string(data, content_type="application/json")
+            duration = time.time() - start
+            logging.info(f"Completed GCS upload of {bname}, took {duration} seconds", extra={"duration": duration})
 
     def forDelete(self, rowData, changed_by, trans):
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
+        start = time.time()
+        logging.info(f"Beginning GCS upload of {bname}")
         bucket = self._getBucket(identifier)(use_gcloud_aio=False)
         blob = bucket.blob(bname)
         blob.upload_from_string("", content_type="application/json")
+        duration = time.time() - start
+        logging.info(f"Completed GCS upload of {bname}, took {duration} seconds", extra={"duration": duration})
 
     def forUpdate(self, rowData, changed_by, trans):
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
+        start = time.time()
+        logging.info(f"Beginning GCS upload of {bname}")
         bucket = self._getBucket(identifier)(use_gcloud_aio=False)
         blob = bucket.blob(bname)
         blob.upload_from_string(json.dumps(rowData[self.data_column]), content_type="application/json")
+        duration = time.time() - start
+        logging.info(f"Completed GCS upload of {bname}, took {duration} seconds", extra={"duration": duration})
 
     def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
         if not set(self.identifier_columns).issubset(column_values.keys()) or not data_version:
@@ -883,6 +895,8 @@ class GCSHistoryAsync:
         identifier = "-".join([columns.get(i) for i in self.identifier_columns])
         for data_version, ts, data in ((None, timestamp - 1, ""), (columns.get("data_version"), timestamp, json.dumps(columns[self.data_column]))):
             bname = "{}/{}-{}-{}.json".format(identifier, data_version, ts, changed_by)
+            start = time.time()
+            logging.info(f"Beginning GCS upload of {bname}")
             # Using a separate session for each request is not ideal, but it's
             # the only thing that seems to work. Ideally, we'd share one session
             # for the entire application, but we can't for two reasons:
@@ -894,22 +908,32 @@ class GCSHistoryAsync:
                 bucket = self._getBucket(identifier)(session=session)
                 blob = bucket.new_blob(bname)
                 await blob.upload(data, session=session)
+            duration = time.time() - start
+            logging.info(f"Completed GCS upload of {bname}, took {duration} seconds", extra={"duration": duration})
 
     async def forDelete(self, rowData, changed_by, trans):
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
+        start = time.time()
+        logging.info(f"Beginning GCS upload of {bname}")
         async with ClientSession() as session:
             bucket = self._getBucket(identifier)(session=session)
             blob = bucket.new_blob(bname)
             await blob.upload("", session=session)
+        duration = time.time() - start
+        logging.info(f"Completed GCS upload of {bname}, took {duration} seconds", extra={"duration": duration})
 
     async def forUpdate(self, rowData, changed_by, trans):
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
+        start = time.time()
+        logging.info(f"Beginning GCS upload of {bname}")
         async with ClientSession() as session:
             bucket = self._getBucket(identifier)(session=session)
             blob = bucket.new_blob(bname)
             await blob.upload(json.dumps(rowData[self.data_column]), session=session)
+        duration = time.time() - start
+        logging.info(f"Completed GCS upload of {bname}, took {duration} seconds", extra={"duration": duration})
 
 
 class HistoryTable(AUSTable):
