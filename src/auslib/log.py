@@ -52,11 +52,18 @@ class JsonLogFormatter(logging.Formatter):
 
     LOGGING_FORMAT_VERSION = "2.0"
 
-    # Map from Python logging to Syslog severity levels
-    SYSLOG_LEVEL_MAP = {logging.DEBUG: 2, logging.ERROR: 3, logging.WARNING: 4, logging.INFO: 6, logging.DEBUG: 7}
+    # Map from Python logging to GCP severity levels
+    # From https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
+    SYSLOG_LEVEL_MAP = {
+        logging.CRITICAL: 600,
+        logging.ERROR: 500,
+        logging.WARNING: 400,
+        logging.INFO: 200,
+        logging.DEBUG: 100,
+    }
 
     # Syslog level to use when/if python level isn't found in map
-    DEFAULT_SYSLOG_LEVEL = 7
+    DEFAULT_SYSLOG_LEVEL = 200
 
     EXCLUDED_LOGRECORD_ATTRS = set(
         (
