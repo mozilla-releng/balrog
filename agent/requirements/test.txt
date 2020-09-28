@@ -119,10 +119,6 @@ mccabe==0.6.1 \
     --hash=sha256:ab8a6258860da4b6677da4bd2fe5dc2c659cff31b3ee4f7f5d64e79735b80d42 \
     --hash=sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f \
     # via flake8
-more-itertools==8.4.0 \
-    --hash=sha256:68c70cc7167bdf5c7c9d8f6954a7837089c6a36bf565383919bb595efb8a17e5 \
-    --hash=sha256:b78134b2063dd214000685165d81c154522c3ee0a1c0d4d113c80361c234c5a2 \
-    # via pytest
 multidict==4.7.6 \
     --hash=sha256:1ece5a3369835c20ed57adadc663400b5525904e53bae59ec854a5d36b39b21a \
     --hash=sha256:275ca32383bc5d1894b6975bb4ca6a7ff16ab76fa622967625baeebcf8079000 \
@@ -202,9 +198,9 @@ pytest-xdist==2.1.0 \
     --hash=sha256:7c629016b3bb006b88ac68e2b31551e7becf173c76b977768848e2bbed594d90 \
     --hash=sha256:82d938f1a24186520e2d9d3a64ef7d9ac7ecdf1a0659e095d18e596b8cbd0672 \
     # via -r test.in
-pytest==6.0.2 \
-    --hash=sha256:0e37f61339c4578776e090c3b8f6b16ce4db333889d65d0efb305243ec544b40 \
-    --hash=sha256:c8f57c2a30983f469bf03e68cdfa74dc474ce56b8f280ddcb080dfd91df01043 \
+pytest==6.1.0 \
+    --hash=sha256:1cd09785c0a50f9af72220dd12aa78cfa49cbffc356c61eab009ca189e018a33 \
+    --hash=sha256:d010e24666435b39a4cf48740b039885642b6c273a3f77be3e7e03554d2806b7 \
     # via -r test.in, pytest-asyncio, pytest-cov, pytest-forked, pytest-xdist
 regex==2020.7.14 \
     --hash=sha256:0dc64ee3f33cd7899f79a8d788abfbec168410be356ed9bd30bbd3f0a23a7204 \
