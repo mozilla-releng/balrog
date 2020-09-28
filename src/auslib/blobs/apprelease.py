@@ -22,22 +22,27 @@ class ReleaseBlobBase(XMLBlob):
                 url += "?force=" + force_arg.query_value
         return url
 
-    def matchesUpdateQuery(self, updateQuery):
+    def matchesUpdateQuery(self, updateQuery, aliases=set()):
         self.log.debug("Trying to match update query to %s" % self["name"])
         buildTarget = updateQuery["buildTarget"]
         buildID = updateQuery["buildID"]
         locale = updateQuery["locale"]
 
-        if buildTarget in self["platforms"]:
-            try:
-                releaseBuildID = self.getBuildID(buildTarget, locale)
-            # Platform doesn't exist in release, clearly it's not a match!
-            except BadDataError:
-                return False
-            self.log.debug("releasePlat buildID is: %s", releaseBuildID)
-            if buildID == releaseBuildID:
-                self.log.debug("Query matched!")
-                return True
+        # We specifically look for buildTarget first because it is
+        # the most specific match (it's the actual string we get from
+        # the client). After that, we look through potential alias'.
+        for bt in (buildTarget, *aliases):
+            if bt in self["platforms"]:
+                try:
+                    releaseBuildID = self.getBuildID(bt, locale)
+                # Platform doesn't exist in release, clearly it's not a match!
+                except BadDataError:
+                    pass
+                self.log.debug("releasePlat buildID is: %s", releaseBuildID)
+                if buildID == releaseBuildID:
+                    self.log.debug("Query matched!")
+                    return True
+        return False
 
     def getResolvedPlatform(self, platform):
         try:
@@ -104,8 +109,15 @@ class ReleaseBlobBase(XMLBlob):
 
     def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts):
         fromRelease = self._getFromRelease(patch)
+        # Find all the alias' for this build target so we can look for the current platform
+        # in the fromRelease
+        unaliasedBuildTarget = self["platforms"][updateQuery["buildTarget"]].get("alias", updateQuery["buildTarget"])
+        aliases = set([unaliasedBuildTarget])
+        for bt in self["platforms"]:
+            if self["platforms"][bt].get("alias", "") == unaliasedBuildTarget:
+                aliases.add(bt)
         # don't return an update if we don't match the from restriction
-        if fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
+        if fromRelease and not fromRelease.matchesUpdateQuery(updateQuery, aliases):
             return None
         # don't return an update if an older release isn't in the DB for some reason
         if patch["from"] != "*" and fromRelease is None:
