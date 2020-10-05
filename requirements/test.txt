@@ -230,9 +230,9 @@ execnet==1.7.1 \
 flake8-black==0.2.1 \
     --hash=sha256:f26651bc10db786c03f4093414f7c9ea982ed8a244cec323c984feeffdf4c118 \
     # via -r test.in
-flake8==3.8.3 \
-    --hash=sha256:15e351d19611c887e482fb960eae4d44845013cc142d42896e9862f775d8cf5c \
-    --hash=sha256:f04b9fcbac03b0a3e58c0ab3a0ecc462e023a9faf046d57794184028123aa208 \
+flake8==3.8.4 \
+    --hash=sha256:749dbbd6bfd0cf1318af27bf97a14e28e5ff548ef8e5b1566ccfb25a11e7c839 \
+    --hash=sha256:aadae8761ec651813c24be05c6f7b4680857ef6afaae4651a4eccaef97ce6c3b \
     # via -r test.in, flake8-black
 flask-compress==1.5.0 \
     --hash=sha256:f367b2b46003dd62be34f7fb1379938032656dca56377a9bc90e7188e4289a7c \
