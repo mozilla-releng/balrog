@@ -18,7 +18,7 @@ aiohttp==3.6.2 \
     --hash=sha256:65f31b622af739a802ca6fd1a3076fd0ae523f8485c52924a89561ba10c49b48 \
     --hash=sha256:ae55bac364c405caa23a4f2d6cfecc6a0daada500274ffca4a9230e7129eac59 \
     --hash=sha256:b778ce0c909a2653741cb4b1ac7015b5c130ab9c897611df43ae6a58523cb965 \
-    # via -r base.in, gcloud-aio-auth, google-auth
+    # via -r base.in, gcloud-aio-auth
 arrow==0.16.0 \
     --hash=sha256:92aac856ea5175c804f7ccb96aca4d714d936f1c867ba59d747a8096ec30e90a \
     --hash=sha256:98184d8dd3e5d30b96c2df4596526f7de679ccb467f358b82b0f686436f3a6b8 \
@@ -190,9 +190,9 @@ google-api-core==1.22.2 \
     --hash=sha256:67e33a852dcca7cb7eff49abc35c8cc2c0bb8ab11397dc8306d911505cae2990 \
     --hash=sha256:779107f17e0fef8169c5239d56a8fbff03f9f72a3893c0c9e5842ec29dfedd54 \
     # via -r base.in, google-cloud-core
-google-auth==1.22.0 \
-    --hash=sha256:a73e6fb6d232ed1293ef9a5301e6f8aada7880d19c65d7f63e130dc50ec05593 \
-    --hash=sha256:e86e72142d939a8d90a772947268aacc127ab7a1d1d6f3e0fecca7a8d74d8257 \
+google-auth==1.22.1 \
+    --hash=sha256:712dd7d140a9a1ea218e5688c7fcb04af71b431a29ec9ce433e384c60e387b98 \
+    --hash=sha256:9c0f71789438d703f77b94aad4ea545afaec9a65f10e6cc1bc8b89ce242244bb \
     # via -r base.in, google-api-core, google-cloud-storage
 google-cloud-core==1.4.1 \
     --hash=sha256:4c9e457fcfc026fdde2e492228f04417d4c717fb0f29f070122fb0ab89e34ebd \
