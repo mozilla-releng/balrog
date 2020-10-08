@@ -316,9 +316,9 @@ iniconfig==1.0.1 \
     --hash=sha256:80cf40c597eb564e86346103f609d74efce0f6b4d4f30ec8ce9e2c26411ba437 \
     --hash=sha256:e5f92f89355a67de0595932a6c6c02ab4afddc6fcdc0bfc5becd0d60884d3f69 \
     # via pytest
-isort==5.5.4 \
-    --hash=sha256:36f0c6659b9000597e92618d05b72d4181104cf59472b1c6a039e3783f930c95 \
-    --hash=sha256:ba040c24d20aa302f78f4747df549573ae1eaf8e1084269199154da9c483f07f \
+isort==5.5.5 \
+    --hash=sha256:47e0fdc03aed3a9ba507284f90e4b3b6f2a4725d919816a7b547675befc38ffb \
+    --hash=sha256:87355bbc3465bf096a8bf09c4dd949b6b9294958c478740442fd9fbd01b817f2 \
     # via -r test.in
 itsdangerous==1.1.0 \
     --hash=sha256:321b033d07f2a4136d3ec762eac9f16a10ccd60f53c0c91af90217ace7ba1f19 \
