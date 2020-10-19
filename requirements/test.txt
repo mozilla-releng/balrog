@@ -760,7 +760,7 @@ pip==20.2.3 \
     --hash=sha256:0f35d63b7245205f4060efe1982f5ea2196aa6e5b26c07669adcf800e2542026 \
     --hash=sha256:30c70b6179711a7c4cf76da89e8a0f5282279dfb0278bec7b94134be92543b6d \
     # via -r test.in, pip-tools
-setuptools==50.3.1 \
-    --hash=sha256:0e9772768fa6e9d3cf818a3e6e24dd2236f319d2c478312995edcb30ddeb8343 \
-    --hash=sha256:8d057d7a928a82cdc985654355fc9e5431def7b6bdfc9e0f32d1e388a63c8ec6 \
+setuptools==50.3.2 \
+    --hash=sha256:2c242a0856fbad7efbe560df4a7add9324f340cf48df43651e9604924466794a \
+    --hash=sha256:ed0519d27a243843b05d82a5e9d01b0b083d9934eaa3d02779a23da18077bd3c \
     # via -r base.in, check-manifest, google-api-core, google-auth, jsonschema, protobuf
