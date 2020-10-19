@@ -452,7 +452,7 @@ function ListRules(props) {
       const [productFilter, channelFilter] = productChannelQueries;
       const ruleProduct =
         rule.product || (rule.scheduledChange && rule.scheduledChange.product);
-      const ruleScheduledChange =
+      const ruleScheduledChangeChannel =
         rule.scheduledChange && rule.scheduledChange.channel;
       let ruleChannel;
 
@@ -460,11 +460,11 @@ function ListRules(props) {
         return false;
       }
 
-      if (ruleScheduledChange) {
-        if (ruleScheduledChange.includes('*')) {
-          ruleChannel = rule.channel && ruleScheduledChange;
+      if (ruleScheduledChangeChannel) {
+        if (ruleScheduledChangeChannel.includes('*')) {
+          ruleChannel = rule.channel && ruleScheduledChangeChannel;
         } else {
-          ruleChannel = ruleScheduledChange && rule.channel;
+          ruleChannel = ruleScheduledChangeChannel && rule.channel;
         }
       } else {
         ruleChannel = rule.channel;
