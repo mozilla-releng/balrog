@@ -38,7 +38,7 @@ def get_version(version_file):
 
 # Keeping flask dockerflow endpoints here to maintain the admin api compatibility.
 def create_dockerflow_endpoints(app, heartbeat_database_fn=_heartbeat_database_fn):
-    """ Wrapper that creates the endpoints required by CloudOps' Dockerflow spec:
+    """Wrapper that creates the endpoints required by CloudOps' Dockerflow spec:
     https://github.com/mozilla-services/Dockerflow. This gets used by both the admin and public apps.
     :param heartbeat_database_fn: Function that calls the database when reponding to /__heartbeat__.
     A database object is passed to this function.

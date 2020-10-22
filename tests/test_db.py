@@ -49,7 +49,7 @@ def setUpModule():
 
 class MemoryDatabaseMixin(object):
     """Use this when writing tests that don't require multiple connections to
-       the database."""
+    the database."""
 
     def setUp(self):
         self.dburi = "sqlite:///:memory:"
@@ -57,13 +57,13 @@ class MemoryDatabaseMixin(object):
 
 class NamedFileDatabaseMixin(object):
     """Use this when writing tests that *do* require multiple connections to
-       the database. SQLite memory database don't support multiple connections
-       to the same database. When you try to use them, you get weird behaviour
-       like the second "connection" seeing the state of an in-progress
-       transaction in the first. See the following links for more detail:
-        http://www.sqlalchemy.org/docs/dialects/sqlite.html#threading-pooling-behavior
-        http://www.sqlalchemy.org/trac/wiki/FAQ#IamusingmultipleconnectionswithaSQLitedatabasetypicallytotesttransactionoperationandmytestprogramisnotworking
-       """
+    the database. SQLite memory database don't support multiple connections
+    to the same database. When you try to use them, you get weird behaviour
+    like the second "connection" seeing the state of an in-progress
+    transaction in the first. See the following links for more detail:
+     http://www.sqlalchemy.org/docs/dialects/sqlite.html#threading-pooling-behavior
+     http://www.sqlalchemy.org/trac/wiki/FAQ#IamusingmultipleconnectionswithaSQLitedatabasetypicallytotesttransactionoperationandmytestprogramisnotworking
+    """
 
     def setUp(self):
         self.tmpfiles = []
@@ -3842,7 +3842,14 @@ class TestReleasesJSON(unittest.TestCase, MemoryDatabaseMixin):
         dbo.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
         dbo.productRequiredSignoffs.t.insert().execute(product="Firefox", channel="release", role="releng", signoffs_required=1, data_version=1)
         self.rules.t.insert().execute(
-            rule_id=1, product="Firefox", channel="beta", mapping="Firefox-60.0-build1", backgroundRate=100, priority=100, update_type="minor", data_version=1,
+            rule_id=1,
+            product="Firefox",
+            channel="beta",
+            mapping="Firefox-60.0-build1",
+            backgroundRate=100,
+            priority=100,
+            update_type="minor",
+            data_version=1,
         )
         self.releases.t.insert().execute(
             name="Firefox-60.0-build1",
@@ -3961,7 +3968,9 @@ class TestReleasesJSON(unittest.TestCase, MemoryDatabaseMixin):
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     async def testDeleteCreatesCorrectHistory(self):
         await self.release_assets.async_delete(
-            where={"name": "Firefox-60.0-build1", "path": ".platforms.Linux_x86_64-gcc3.locales.en-US"}, changed_by="bob", old_data_version=1,
+            where={"name": "Firefox-60.0-build1", "path": ".platforms.Linux_x86_64-gcc3.locales.en-US"},
+            changed_by="bob",
+            old_data_version=1,
         )
         history_entries = []
         for k in self.release_assets.history.bucket.blobs:

@@ -22,22 +22,27 @@ class ReleaseBlobBase(XMLBlob):
                 url += "?force=" + force_arg.query_value
         return url
 
-    def matchesUpdateQuery(self, updateQuery):
+    def matchesUpdateQuery(self, updateQuery, aliases=set()):
         self.log.debug("Trying to match update query to %s" % self["name"])
         buildTarget = updateQuery["buildTarget"]
         buildID = updateQuery["buildID"]
         locale = updateQuery["locale"]
 
-        if buildTarget in self["platforms"]:
-            try:
-                releaseBuildID = self.getBuildID(buildTarget, locale)
-            # Platform doesn't exist in release, clearly it's not a match!
-            except BadDataError:
-                return False
-            self.log.debug("releasePlat buildID is: %s", releaseBuildID)
-            if buildID == releaseBuildID:
-                self.log.debug("Query matched!")
-                return True
+        # We specifically look for buildTarget first because it is
+        # the most specific match (it's the actual string we get from
+        # the client). After that, we look through potential alias'.
+        for bt in (buildTarget, *aliases):
+            if bt in self["platforms"]:
+                try:
+                    releaseBuildID = self.getBuildID(bt, locale)
+                # Platform doesn't exist in release, clearly it's not a match!
+                except BadDataError:
+                    pass
+                self.log.debug("releasePlat buildID is: %s", releaseBuildID)
+                if buildID == releaseBuildID:
+                    self.log.debug("Query matched!")
+                    return True
+        return False
 
     def getResolvedPlatform(self, platform):
         try:
@@ -104,8 +109,15 @@ class ReleaseBlobBase(XMLBlob):
 
     def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts):
         fromRelease = self._getFromRelease(patch)
+        # Find all the alias' for this build target so we can look for the current platform
+        # in the fromRelease
+        unaliasedBuildTarget = self["platforms"][updateQuery["buildTarget"]].get("alias", updateQuery["buildTarget"])
+        aliases = set([unaliasedBuildTarget])
+        for bt in self["platforms"]:
+            if self["platforms"][bt].get("alias", "") == unaliasedBuildTarget:
+                aliases.add(bt)
         # don't return an update if we don't match the from restriction
-        if fromRelease and not fromRelease.matchesUpdateQuery(updateQuery):
+        if fromRelease and not fromRelease.matchesUpdateQuery(updateQuery, aliases):
             return None
         # don't return an update if an older release isn't in the DB for some reason
         if patch["from"] != "*" and fromRelease is None:
@@ -155,41 +167,41 @@ class ReleaseBlobBase(XMLBlob):
 
     def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
         """This method, along with getHeaderXML and getFooterXML are the entry point
-           for update XML creation for all Gecko app blobs. However, the XML and
-           underlying data has changed over time, so there is a lot of indirection
-           and calls factored out to subclasses. Below is a brief description of the
-           flow of control that should help in understanding this code. Inner methods
-           that are shared between blob versions live in Mixin classes so that they can
-           be easily shared. Inner methods that only apply to a single blob
-           version live on concrete blob classes (but should be moved if they
-           need to be shared in the future).
+        for update XML creation for all Gecko app blobs. However, the XML and
+        underlying data has changed over time, so there is a lot of indirection
+        and calls factored out to subclasses. Below is a brief description of the
+        flow of control that should help in understanding this code. Inner methods
+        that are shared between blob versions live in Mixin classes so that they can
+        be easily shared. Inner methods that only apply to a single blob
+        version live on concrete blob classes (but should be moved if they
+        need to be shared in the future).
 
-            - getInnerXML, getFooterXML and getHeaderXML called by web layer,
-              live on this base class. The V1 blob class override them to
-              support bug 1113475, but still calls the base class one to do most of the work.
+         - getInnerXML, getFooterXML and getHeaderXML called by web layer,
+           live on this base class. The V1 blob class override them to
+           support bug 1113475, but still calls the base class one to do most of the work.
 
-             - _getUpdateLineXML() called to get information that is independent
-               of specific MARs. Most notably, version information changed
-               starting with V2 blobs.
+          - _getUpdateLineXML() called to get information that is independent
+            of specific MARs. Most notably, version information changed
+            starting with V2 blobs.
 
-             - _getPatchesXML() called to get the information that describes
-               specific MARs. Where in the blob this information comes from
-               changed significantly starting with V3 blobs.
+          - _getPatchesXML() called to get the information that describes
+            specific MARs. Where in the blob this information comes from
+            changed significantly starting with V3 blobs.
 
-               - _getSpecificPatchXML() called to translate MAR information into
-                 XML. This transformation in blob version independent, so it
-                 lives on the base class to avoid duplication.
+            - _getSpecificPatchXML() called to translate MAR information into
+              XML. This transformation in blob version independent, so it
+              lives on the base class to avoid duplication.
 
-                - _getUrl() called to figure out what the MAR URL is for a
-                  specific patch. This changed starting with V4 blobs. V3 and
-                  earlier use SeparatedFileUrlsMixin, V4 and later use
-                  UnifiedFileUrlsMixin.
+             - _getUrl() called to figure out what the MAR URL is for a
+               specific patch. This changed starting with V4 blobs. V3 and
+               earlier use SeparatedFileUrlsMixin, V4 and later use
+               UnifiedFileUrlsMixin.
 
-                 - _getFtpFilename/_getBouncerProduct called to substitute some
-                   paths with real information. This is another part of the blob
-                   format that changed starting with V3 blobs. It was later
-                   deprecated in V4 and thus not used for UnifiedFileUrlsMixin
-                   blobs.
+              - _getFtpFilename/_getBouncerProduct called to substitute some
+                paths with real information. This is another part of the blob
+                format that changed starting with V3 blobs. It was later
+                deprecated in V4 and thus not used for UnifiedFileUrlsMixin
+                blobs.
 
         """
 
@@ -223,7 +235,7 @@ class ReleaseBlobBase(XMLBlob):
 
     def containsForbiddenDomain(self, product, whitelistedDomains):
         """Returns True if the blob contains any file URLs that contain a
-           domain that we're not allowed to serve updates to."""
+        domain that we're not allowed to serve updates to."""
         # Check the top level URLs, if the exist.
         for c in self.get("fileUrls", {}).values():
             # New-style
@@ -340,7 +352,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         return self.getLocaleOrTopLevelParam(platform, locale, "extv")
 
     def getApplicationVersion(self, platform, locale):
-        """ We used extv as the application version for v1 schema, while appv
+        """We used extv as the application version for v1 schema, while appv
         may have been a pretty version for users to see"""
         return self.getExtv(platform, locale)
 
@@ -429,7 +441,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         return updateLine
 
     def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
-        """ In order to update some older versions of Firefox without prompting
+        """In order to update some older versions of Firefox without prompting
         them for add-on compatibility, we need to be able to modify the appVersion
         and extVersion attributes. bug 998721 and bug 1174605 have additional
         background on this.
@@ -520,18 +532,18 @@ class NewStyleVersionsMixin(object):
 class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin, SeparatedFileUrlsMixin):
     """Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
 
-        Client-side changes in https://bugzilla.mozilla.org/show_bug.cgi?id=530872
-        renamed or introduced several attributes in update.xml
+    Client-side changes in https://bugzilla.mozilla.org/show_bug.cgi?id=530872
+    renamed or introduced several attributes in update.xml
 
-        Changed parameters from ReleaseBlobV1:
-         - appv, extv become appVersion, platformVersion, displayVersion
+    Changed parameters from ReleaseBlobV1:
+     - appv, extv become appVersion, platformVersion, displayVersion
 
-        Added:
-         - actions, billboardURL, openURL, notificationURL,
-           alertURL, showPrompt, showNeverForVersion, isOSUpdate
+    Added:
+     - actions, billboardURL, openURL, notificationURL,
+       alertURL, showPrompt, showNeverForVersion, isOSUpdate
 
-        Removed:
-         - oldVersionSpecialCases
+    Removed:
+     - oldVersionSpecialCases
     """
 
     jsonschema = "apprelease-v2.yml"
@@ -630,15 +642,15 @@ class MultipleUpdatesXMLMixin(object):
 
 
 class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, SeparatedFileUrlsMixin):
-    """ Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
+    """Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
 
-        This is an internal change to add functionality to Balrog.
+    This is an internal change to add functionality to Balrog.
 
-        Changes from ReleaseBlobV2:
-          - support multiple partials
+    Changes from ReleaseBlobV2:
+      - support multiple partials
 
-            - remove "partial" and "complete" from locale level
-            - add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
+        - remove "partial" and "complete" from locale level
+        - add "partials" and "completes" to locale level, ftpFilenames, and bouncerProducts
     """
 
     jsonschema = "apprelease-v3.yml"
@@ -721,7 +733,7 @@ class UnifiedFileUrlsMixin(object):
 
 
 class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
-    """ Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
+    """Compatible with Gecko 1.9.3a3 and above, ie Firefox/Thunderbird 4.0 and above.
 
     This is an internal change to add functionality to Balrog.
 
@@ -804,7 +816,7 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
 
 
 class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
-    """ Compatible with Gecko 19.0 and above, ie Firefox/Thunderbird 19.0 and above.
+    """Compatible with Gecko 19.0 and above, ie Firefox/Thunderbird 19.0 and above.
 
     Driven by a client-side change made in
       https://bugzilla.mozilla.org/show_bug.cgi?id=813322
@@ -844,7 +856,7 @@ class ReleaseBlobV5(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
 
 
 class ReleaseBlobV6(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
-    """  Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
+    """Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
 
     Changes from ReleaseBlobV5:
         * Removes support for platformVersion, billboardURL, licenseURL, version, and extensionVersion
@@ -895,7 +907,7 @@ class ProofXMLMixin(object):
 
 
 class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
-    """  Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
+    """Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
 
     Changes from ReleaseBlobV6:
         * Adds support for ProofXMLMixin (placed as first parameter for inheritance preference)
@@ -947,7 +959,7 @@ class ReleaseBlobV8(ProofXMLMixin, ReleaseBlobBase, NewStyleVersionsMixin, Multi
 
 
 class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, UnifiedFileUrlsMixin):
-    """  Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
+    """Compatible with Gecko 51.0 and above, ie Firefox/Thunderbird 51.0 and above.
 
     Changes from ReleaseBlobV8:
         * Moved most <update> properties into new updateLine data structure

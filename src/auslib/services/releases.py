@@ -114,55 +114,55 @@ def separate_base_blob(blob, assets_keys):
 
 def separate_assets(blob, assets_keys, path=()):
     """Separate the assets of a Release into individual parts according to the structure provided in "asset_keys".
-        :Example:
+    :Example:
 
-        Given the following arguments:
-        assets: {
-            "platforms": {
-                "WINNT_x86_64-msvc": {
-                    "locales": {
-                        "af": {
-                            "buildID": "123456789",
-                            "completes": [...],
-                            "partials": [...],
-                        }
-                        "de": {
-                            "buildID": "123456789",
-                            "completes": [...],
-                            "partials": [...],
-                        }
+    Given the following arguments:
+    assets: {
+        "platforms": {
+            "WINNT_x86_64-msvc": {
+                "locales": {
+                    "af": {
+                        "buildID": "123456789",
+                        "completes": [...],
+                        "partials": [...],
+                    }
+                    "de": {
+                        "buildID": "123456789",
+                        "completes": [...],
+                        "partials": [...],
                     }
                 }
             }
         }
-        asset_keys: {
-            "platforms": {
-                "*": {
-                    "locales": {
-                        "*": store
-                    }
+    }
+    asset_keys: {
+        "platforms": {
+            "*": {
+                "locales": {
+                    "*": store
                 }
             }
         }
+    }
 
-        This function will yield these items:
-        (("platforms", "WINNT_x86_64-msvc", "locales", "af"), {"buildID": "123456789", "completes": [...], "partials": [...]})
-        (("platforms", "WINNT_x86_64-msvc", "locales", "de"), {"buildID": "123456789", "completes": [...], "partials": [...]})
+    This function will yield these items:
+    (("platforms", "WINNT_x86_64-msvc", "locales", "af"), {"buildID": "123456789", "completes": [...], "partials": [...]})
+    (("platforms", "WINNT_x86_64-msvc", "locales", "de"), {"buildID": "123456789", "completes": [...], "partials": [...]})
 
-        :param assets: Release data that contains one or more parts not considered part of the "base" Release.
-        :type assets: dict
+    :param assets: Release data that contains one or more parts not considered part of the "base" Release.
+    :type assets: dict
 
-        :param asset_keys: A deeply nested dictionary containing information about how assets are split. Dictionary values may be
-                           either another dictionary, or a "store" object, which is a sentinel value that indicates that the current
-                           nesting level represents one asset, and any values beneath it stored as is as part of that asset.
-        :type asset_keys: dict or "store" sentinel value
+    :param asset_keys: A deeply nested dictionary containing information about how assets are split. Dictionary values may be
+                       either another dictionary, or a "store" object, which is a sentinel value that indicates that the current
+                       nesting level represents one asset, and any values beneath it stored as is as part of that asset.
+    :type asset_keys: dict or "store" sentinel value
 
-        :param path:
-        :type path: tuple
+    :param path:
+    :type path: tuple
 
-        :return: yields tuples of (path, assets), where path is the path in the dict that the assets are associated with,
-                 and assets are a dict of details
-        :rtype: tuple of (tuple, dict)
+    :return: yields tuples of (path, assets), where path is the path in the dict that the assets are associated with,
+             and assets are a dict of details
+    :rtype: tuple of (tuple, dict)
     """
     if assets_keys == store:
         yield (path, blob)
@@ -179,19 +179,19 @@ def separate_assets(blob, assets_keys, path=()):
 def split_release(blob, schema_version):
     """Split a full or partial Release into its base object and list of assets objects.
 
-        :param blob: The Release to split
-        :type blob: auslib.blobs.base.Blob
+    :param blob: The Release to split
+    :type blob: auslib.blobs.base.Blob
 
-        :param schema_version: The schema version of the blob. Because this function can handle
-                               splitting partial Releases (eg: just "platforms"), this must be passed
-                               because it may not exist in the blob.
-        :type schema_version: int
+    :param schema_version: The schema version of the blob. Because this function can handle
+                           splitting partial Releases (eg: just "platforms"), this must be passed
+                           because it may not exist in the blob.
+    :type schema_version: int
 
-        :return: A tuple whose first item is the parts of the blob that are part of the "base", and whose second item
-                 is a list of non-base assets. This list contains tuples whose first item is the path to the asset, relative
-                 to the root of the base (eg: ("platforms", "WINNT_x86_64-msvc", "locales", "en-US")), and whose second
-                 item is a dict of the contents of that asset.
-        :rtype: tuple of (dict, list of tuples)
+    :return: A tuple whose first item is the parts of the blob that are part of the "base", and whose second item
+             is a list of non-base assets. This list contains tuples whose first item is the path to the asset, relative
+             to the root of the base (eg: ("platforms", "WINNT_x86_64-msvc", "locales", "en-US")), and whose second
+             item is a dict of the contents of that asset.
+    :rtype: tuple of (dict, list of tuples)
     """
     assets_keys = RELEASE_BLOB_ASSETS.get(schema_version, {})
 
@@ -299,35 +299,38 @@ def get_releases(trans):
     return {"releases": sorted(releases, key=lambda r: r["name"])}
 
 
+def get_base_row(name, trans):
+    row = dbo.releases_json.select(where={"name": name}, transaction=trans)
+    if row:
+        return row[0]
+
+    return None
+
+
+def get_base_data_version(name, trans):
+    row = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data_version], transaction=trans)
+    if row:
+        return row[0]["data_version"]
+
+    return None
+
+
+def get_asset_rows(name, trans):
+    return dbo.release_assets.select(where={"name": name}, order_by=[dbo.release_assets.path], transaction=trans) or []
+
+
+def get_asset_data_versions(name, trans):
+    return (
+        dbo.release_assets.select(where={"name": name}, columns=[dbo.release_assets.data_version], order_by=[dbo.release_assets.path], transaction=trans) or []
+    )
+
+
 def get_release(name, trans, include_sc=True):
-    def get_base_row():
-        row = dbo.releases_json.select(where={"name": name}, transaction=trans)
-        if row:
-            return row[0]
-
-        return None
-
-    def get_base_data_version():
-        row = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data_version], transaction=trans)
-        if row:
-            return row[0]["data_version"]
-
-        return None
-
-    def get_asset_rows():
-        return dbo.release_assets.select(where={"name": name}, order_by=[dbo.release_assets.path], transaction=trans) or []
-
-    def get_asset_data_versions():
-        return (
-            dbo.release_assets.select(where={"name": name}, columns=[dbo.release_assets.data_version], order_by=[dbo.release_assets.path], transaction=trans)
-            or []
-        )
-
     # Get all of the base and asset information, potentially from a cache
-    base_row = cache.get("releases", name, get_base_row)
-    base_data_version = cache.get("releases_data_version", name, get_base_data_version)
-    asset_rows = cache.get("release_assets", name, get_asset_rows)
-    asset_data_versions = cache.get("release_assets_data_versions", name, get_asset_data_versions)
+    base_row = cache.get("releases", name, lambda: get_base_row(name, trans))
+    base_data_version = cache.get("releases_data_version", name, lambda: get_base_data_version(name, trans))
+    asset_rows = cache.get("release_assets", name, lambda: get_asset_rows(name, trans))
+    asset_data_versions = cache.get("release_assets_data_versions", name, lambda: get_asset_data_versions(name, trans))
 
     data_versions = infinite_defaultdict()
     sc_data_versions = infinite_defaultdict()
@@ -339,14 +342,14 @@ def get_release(name, trans, include_sc=True):
         # the cached data_version we will forcibly update it to make sure we minimize
         # the time we're serving old release data
         if base_row["data_version"] < base_data_version:
-            base_row = get_base_row()
+            base_row = get_base_row(name, trans)
         base_blob = base_row["data"]
         data_versions["."] = base_row["data_version"]
 
     # same thing here for the assets -- if any of the full asset data versions
     # do not match the cached asset data versions, we forcibly update
-    if [r["data_version"] for r in asset_rows] != asset_data_versions:
-        asset_rows = get_asset_rows()
+    if [r["data_version"] for r in asset_rows] != [r["data_version"] for r in asset_data_versions]:
+        asset_rows = get_asset_rows(name, trans)
 
     for asset in asset_rows:
         path = asset["path"].split(".")[1:]
@@ -502,7 +505,13 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
         else:
             if when:
                 sc_id = dbo.release_assets.scheduled_changes.insert(
-                    name=name, path=str_path, data=item, when=when, change_type="insert", changed_by=changed_by, transaction=trans,
+                    name=name,
+                    path=str_path,
+                    data=item,
+                    when=when,
+                    change_type="insert",
+                    changed_by=changed_by,
+                    transaction=trans,
                 )
                 signoffs = {}
                 for signoff in dbo.release_assets.scheduled_changes.signoffs.select(where={"sc_id": sc_id}, transaction=trans):

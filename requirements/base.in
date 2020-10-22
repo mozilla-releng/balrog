@@ -3,6 +3,8 @@ arrow
 auth0-python
 connexion
 deepmerge
+# Pinned due to python-jose pinning it
+ecdsa<0.15
 flask
 flask_compress
 flask_wtf

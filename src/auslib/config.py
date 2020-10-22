@@ -1,9 +1,5 @@
 import logging
-
-try:
-    from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
-except ImportError:  # pragma: no cover
-    from configparser import RawConfigParser, NoSectionError, NoOptionError
+from configparser import NoOptionError, NoSectionError, RawConfigParser
 
 
 class AUSConfig(object):

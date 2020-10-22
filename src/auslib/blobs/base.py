@@ -17,6 +17,7 @@ def createBlob(data):
     # These imports need to be done here to avoid errors due to circular
     # between this module and specific blob modules like apprelease.
     from auslib.blobs.apprelease import (
+        DesupportBlob,
         ReleaseBlobV1,
         ReleaseBlobV2,
         ReleaseBlobV3,
@@ -25,7 +26,6 @@ def createBlob(data):
         ReleaseBlobV6,
         ReleaseBlobV8,
         ReleaseBlobV9,
-        DesupportBlob,
     )
     from auslib.blobs.gmp import GMPBlobV1
     from auslib.blobs.guardian import GuardianBlob
@@ -66,8 +66,8 @@ def merge_lists(*lists):
     lists in blobs as sets. In an ideal world, that's what they'd be, but
     because we use jsonschema for validation, we cannot use proper sets."""
     result = []
-    for l in lists:
-        for i in l:
+    for list in lists:
+        for i in list:
             if i not in result or not isinstance(i, type(result[result.index(i)])):
                 result.append(i)
     return result
@@ -169,7 +169,7 @@ class Blob(dict):
 
     def loadJSON(self, data):
         """Replaces this blob's contents with parsed contents of the json
-           string provided."""
+        string provided."""
         self.clear()
         self.update(json.loads(data))
 
