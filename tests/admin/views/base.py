@@ -21,7 +21,7 @@ def setUpModule():
 @pytest.mark.usefixtures("current_db_schema")
 class ViewTest(unittest.TestCase):
     """Base class for all view tests. Sets up some sample data, and provides
-    some helper methods."""
+       some helper methods."""
 
     @pytest.fixture(autouse=True)
     def setup(self, insert_release, firefox_56_0_build1):

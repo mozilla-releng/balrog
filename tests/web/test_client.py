@@ -11,7 +11,6 @@ import pytest
 from hypothesis import assume, example, given
 from hypothesis.strategies import characters, integers, just, text
 
-import auslib.services.releases as releases_service
 import auslib.web.public.client as client_api
 from auslib.blobs.base import createBlob
 from auslib.errors import BadDataError
@@ -1399,35 +1398,10 @@ class ClientTest(ClientTestBase):
         ret = self.client.get("/update/6/s/1.0/1/p/l/a/a/SSE/a/a/update.xml?{}={}".format(param, val))
         self.assertEqual(ret.status_code, 200)
 
-    def test_get_with_release_with_missing_alias_in_from_release(self):
-        ret = self.client.get(
-            "/update/6/Firefox/54.0.1/20170628075643/WINNT_x86-msvc-x64/en-US/release"
-            "/Windows_NT 6.1.0.0 (x86)/ISET:SSE3,MEM:4096,JAWS:0/default/default/update.xml"
-        )
-        self.assertUpdateEqual(
-            ret,
-            """<?xml version="1.0"?>
-<updates>
-    <update type="minor" displayVersion="56.0" appVersion="56.0" platformVersion="56.0" buildID="20170918210324"
-            detailsURL="https://www.mozilla.org/en-US/firefox/56.0/releasenotes/">
-        <patch type="complete" URL="http://download.mozilla.org/?product=firefox-56.0-complete&amp;os=win&amp;lang=en-US" hashFunction="sha512"
-                hashValue="3530e6d88cb44c0360ec2aec4e171bdc4a45a6062d2fcbca25264882876dce3486a23a903a71fa612f93fcf9261067dbe22e2f4f8cc8e7dd3e55578095b43b4e"
-                size="38171451"/>
-        <patch type="partial" URL="http://download.mozilla.org/?product=firefox-56.0-partial-54.0.1&amp;os=win&amp;lang=en-US" hashFunction="sha512"
-                hashValue="ce5820a550a7b9c9d0be29c629242def63ff333bc12b5d2d45d23c8e2b238adda9bd9f7ef14649616aae8b78e9545e8e7ec3fe93ac1b3d808027254087790af6"
-                size="26673535"/>
-    </update>
-</updates>""",
-        )
-
     def test_get_with_release_in_new_tables(self):
         with ExitStack() as stack:
             mocked_releases_json_scheduled_changes = stack.enter_context(mock.patch("auslib.services.releases.dbo.releases_json.scheduled_changes"))
             mocked_release_assets_scheduled_changes = stack.enter_context(mock.patch("auslib.services.releases.dbo.release_assets.scheduled_changes"))
-            mocked_get_asset_rows = stack.enter_context(mock.patch.object(releases_service, "get_asset_rows", wraps=releases_service.get_asset_rows))
-            mocked_get_asset_data_versions = stack.enter_context(
-                mock.patch.object(releases_service, "get_asset_data_versions", wraps=releases_service.get_asset_data_versions)
-            )
             t = stack.enter_context(mock.patch("time.time"))
             # The lookups/hits/misses here come in multiples of 4 because we have:
             #  - a release that the rule is pointing to
@@ -1499,11 +1473,6 @@ class ClientTest(ClientTestBase):
                 validate_cache_stats(
                     arg["lookups"], arg["hits"], arg["misses"], arg["data_version_lookups"], arg["data_version_hits"], arg["data_version_misses"]
                 )
-                # In addition to validating cache hits and misses, we need to make
-                # sure that we didn't call the database layer more than we expected
-                # to without going through the cache layer.
-                assert mocked_get_asset_rows.call_count == arg["misses"]
-                assert mocked_get_asset_data_versions.call_count == arg["data_version_misses"]
 
             assert mocked_releases_json_scheduled_changes.select.call_count == 0
             assert mocked_release_assets_scheduled_changes.select.call_count == 0
@@ -1961,8 +1930,8 @@ class ClientTestEmergencyShutoff(ClientTestBase):
 
 class ClientTestWithErrorHandlers(ClientTestCommon):
     """Most of the tests are run without the error handler because it gives more
-    useful output when things break. However, we still need to test that our
-    error handlers works!"""
+       useful output when things break. However, we still need to test that our
+       error handlers works!"""
 
     def setUp(self):
         app.config["DEBUG"] = True

@@ -11,7 +11,6 @@ recursive-include uwsgi *
 exclude .dirschema.yml
 exclude .editorconfig
 exclude .pyup.yml
-exclude .readthedocs.yml
 exclude .taskcluster.yml
 exclude CODE_OF_CONDUCT.md
 exclude Dockerfile*

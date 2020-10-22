@@ -88,7 +88,7 @@ class SystemAddonsBlob(XMLBlob):
 
     def containsForbiddenDomain(self, product, whitelistedDomains):
         """Returns True if the blob contains any file URLs that contain a
-        domain that we're not allowed to serve updates to."""
+           domain that we're not allowed to serve updates to."""
 
         for addon in self.get("addons", {}).values():
             for platform in addon.get("platforms", {}).values():

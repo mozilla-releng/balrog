@@ -52,7 +52,7 @@ License
 Balrog is released under `Mozilla Public License 2.0 <https://opensource.org/licenses/MPL-2.0>`_.
 
 
-.. |CI| image:: https://firefox-ci-tc.services.mozilla.com/api/github/v1/repository/mozilla-releng/balrog/main/badge.svg
-   :target: https://firefox-ci-tc.services.mozilla.com/api/github/v1/repository/mozilla-releng/balrog/main/latest
+.. |CI| image:: https://firefox-ci-tc.services.mozilla.com/api/github/v1/repository/mozilla-releng/balrog/master/badge.svg
+   :target: https://firefox-ci-tc.services.mozilla.com/api/github/v1/repository/mozilla-releng/balrog/master/latest
 .. |Coverage| image:: https://coveralls.io/repos/github/mozilla-releng/balrog/badge.svg?branch=HEAD
    :target: https://coveralls.io/github/mozilla-releng/balrog?branch=HEAD

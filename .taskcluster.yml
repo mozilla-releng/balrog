@@ -59,7 +59,7 @@ tasks:
     }
   in:
     $flattenDeep:
-      - $if: '(tasks_for == "github-pull-request" && event["action"] in ["edited", "opened", "reopened", "synchronize"]) || (tasks_for == "github-push" && branch == "refs/heads/main")'
+      - $if: '(tasks_for == "github-pull-request" && event["action"] in ["edited", "opened", "reopened", "synchronize"]) || (tasks_for == "github-push" && branch == "refs/heads/master")'
         then:
           - taskId: {$eval: as_slugid("backend-tests")}
             created: {$fromNow: ''}
@@ -71,7 +71,7 @@ tasks:
             routes: []
             payload:
               maxRunTime: 1200
-              image: "python:3.9-rc"
+              image: "python:3.9"
               env:
                 # For Coveralls to function properly CIRCLECI and CI_PULL_REQUEST need to be set
                 CIRCLECI: "1"
@@ -104,7 +104,7 @@ tasks:
             routes: []
             payload:
               maxRunTime: 1200
-              image: "python:3.9-rc"
+              image: "python:3.9"
               env:
                 TOXENV: "check,py39"
               command:
@@ -126,7 +126,7 @@ tasks:
             routes: []
             payload:
               maxRunTime: 1200
-              image: "python:3.9-rc"
+              image: "python:3.9"
               env:
                 TOXENV: "check,py39"
               command:

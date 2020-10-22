@@ -6,7 +6,7 @@ from auslib.errors import BadDataError
 
 class PostModernMozillaVersion(StrictVersion):
     """A version class that supports Firefox versions 5.0 and up, which
-    may have "a1" but not "b2" tags in them"""
+       may have "a1" but not "b2" tags in them"""
 
     version_re = re.compile(
         r"""^(\d+) \. (\d+) (\. (\d+))?
@@ -17,9 +17,9 @@ class PostModernMozillaVersion(StrictVersion):
 
 class ModernMozillaVersion(StrictVersion):
     """A version class that is slightly less restrictive than StrictVersion.
-    Instead of just allowing "a" or "b" as prerelease tags, it allows any
-    alpha. This allows us to support the once-shipped "3.6.3plugin1" and
-    similar versions."""
+       Instead of just allowing "a" or "b" as prerelease tags, it allows any
+       alpha. This allows us to support the once-shipped "3.6.3plugin1" and
+       similar versions."""
 
     version_re = re.compile(
         r"""^(\d+) \. (\d+) (\. (\d+))?
@@ -30,11 +30,11 @@ class ModernMozillaVersion(StrictVersion):
 
 class AncientMozillaVersion(StrictVersion):
     """A version class that is slightly less restrictive than StrictVersion.
-    Instead of just allowing "a" or "b" as prerelease tags, it allows any
-    alpha. This allows us to support the once-shipped "3.6.3plugin1" and
-    similar versions.
-    It also supports versions w.x.y.z by transmuting to w.x.z, which
-    is useful for versions like 1.5.0.x and 2.0.0.y"""
+       Instead of just allowing "a" or "b" as prerelease tags, it allows any
+       alpha. This allows us to support the once-shipped "3.6.3plugin1" and
+       similar versions.
+       It also supports versions w.x.y.z by transmuting to w.x.z, which
+       is useful for versions like 1.5.0.x and 2.0.0.y"""
 
     version_re = re.compile(
         r"""^(\d+) \. (\d+) \. \d (\. (\d+))

@@ -1525,8 +1525,7 @@ def test_post_add_scheduled_change_locale_only(api, firefox_56_0_build1):
     }
 
     ret = api.post(
-        "/v2/releases/Firefox-56.0-build1",
-        json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
+        "/v2/releases/Firefox-56.0-build1", json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
     )
     assert ret.status_code == 200, ret.data
     assert ret.json == new_data_versions, ret.json
@@ -1583,8 +1582,7 @@ def test_post_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     }
 
     ret = api.post(
-        "/v2/releases/Firefox-56.0-build1",
-        json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
+        "/v2/releases/Firefox-56.0-build1", json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
     )
     assert ret.status_code == 200, ret.data
     assert ret.json == new_data_versions, ret.json
@@ -1988,7 +1986,7 @@ def test_enact_delete(api):
     base_row = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-67.0-build1").execute().fetchone()
     assert base_row is None
     locale_rows = dbo.release_assets.t.select().where(dbo.release_assets.name == "Firefox-67.0-build1").execute().fetchall()
-    assert not any([locale["path"].endswith("en-US") for locale in locale_rows])
+    assert not any([l["path"].endswith("en-US") for l in locale_rows])
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")

@@ -1,4 +1,4 @@
-.. Balrog documentation main file, created by
+.. Balrog documentation master file, created by
    sphinx-quickstart on Fri Oct 28 03:43:39 2016.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.

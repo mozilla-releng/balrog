@@ -9,7 +9,7 @@ from http.client import HTTPSConnection
 from socket import gaierror
 
 try:
-    from urllib2 import HTTPError, URLError, urlopen
+    from urllib2 import urlopen, HTTPError, URLError
 except ImportError:  # pragma: no cover
     from urllib.error import HTTPError, URLError
     from urllib.request import urlopen

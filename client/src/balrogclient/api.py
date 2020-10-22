@@ -107,7 +107,7 @@ def balrog_request(session, method, url, *args, **kwargs):
         resp.raise_for_status()
         if resp.content:
             recieved_data = resp.json()
-            log.info("Data recieved: %s", _json_log_data(recieved_data))
+            log.info("Data recieved: %s", recieved_data)
             return recieved_data
         else:
             return
@@ -122,22 +122,22 @@ def balrog_request(session, method, url, *args, **kwargs):
 
 class API(object):
     """A class that knows how to make requests to a Balrog server, including
-    pre-retrieving CSRF tokens and data versions.
+       pre-retrieving CSRF tokens and data versions.
 
-    url_template: The URL to submit to when request() is called. Standard
-                  Python string interpolation can be used here in
-                  combination with url_template_vars.
-    prerequest_url_template: Before submitting the real request, a HEAD
-                             operation will be done on this URL. If the
-                             HEAD request succeeds, it is expected that
-                             there will be X-CSRF-Token and X-Data-Version
-                             headers in the response. If the HEAD request
-                             results in a 404, another HEAD request to
-                             /csrf_token will be made in attempt to get a
-                             CSRF Token. This URL can use string
-                             interpolation the same way url_template can.
-                             In some cases this may be the same as the
-                             url_template.
+       url_template: The URL to submit to when request() is called. Standard
+                     Python string interpolation can be used here in
+                     combination with url_template_vars.
+       prerequest_url_template: Before submitting the real request, a HEAD
+                                operation will be done on this URL. If the
+                                HEAD request succeeds, it is expected that
+                                there will be X-CSRF-Token and X-Data-Version
+                                headers in the response. If the HEAD request
+                                results in a 404, another HEAD request to
+                                /csrf_token will be made in attempt to get a
+                                CSRF Token. This URL can use string
+                                interpolation the same way url_template can.
+                                In some cases this may be the same as the
+                                url_template.
     """
 
     verify = False
@@ -146,7 +146,7 @@ class API(object):
     url_template_vars = None
 
     def __init__(self, auth0_secrets, api_root="https://aus4-admin-dev.allizom.org/api", ca_certs=True, timeout=60, raise_exceptions=True, session=None):
-        """Creates an API object which wraps REST API of Balrog server.
+        """ Creates an API object which wraps REST API of Balrog server.
 
         api_root: API root URL of balrog server
         ca_certs: CA bundle. It follows python-requests `verify' usage.

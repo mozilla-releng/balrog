@@ -452,22 +452,11 @@ function ListRules(props) {
       const [productFilter, channelFilter] = productChannelQueries;
       const ruleProduct =
         rule.product || (rule.scheduledChange && rule.scheduledChange.product);
-      const ruleScheduledChangeChannel =
-        rule.scheduledChange && rule.scheduledChange.channel;
-      let ruleChannel;
+      const ruleChannel =
+        rule.channel || (rule.scheduledChange && rule.scheduledChange.channel);
 
       if (ruleProduct !== productFilter) {
         return false;
-      }
-
-      if (ruleScheduledChangeChannel) {
-        if (ruleScheduledChangeChannel.includes('*')) {
-          ruleChannel = rule.channel && ruleScheduledChangeChannel;
-        } else {
-          ruleChannel = ruleScheduledChangeChannel && rule.channel;
-        }
-      } else {
-        ruleChannel = rule.channel;
       }
 
       if (channelFilter) {

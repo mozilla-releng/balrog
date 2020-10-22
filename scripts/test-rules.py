@@ -48,22 +48,22 @@ def populateDB(testdir):
 
 
 def getQueryFromPath(snippetPath):
-    """Use regexp to turn a path to a release snippet like
-        "Firefox/3.6.13/WINNT_x86-msvc/20101122053531/af/beta/complete.txt"
-    into
-        testUpdate = {
-              'product': 'Firefox',
-              'version': '3.6.13',
-              'buildID': '20101122053531',
-              'buildTarget': 'WINNT_x86-msvc',
-              'locale': 'af',
-              'channel': 'beta',
-              'osVersion': 'foo',
-              'distribution': 'foo',
-              'distVersion': 'foo',
-              'headerArchitecture': 'Intel',
-              'name': ''
-             }
+    """ Use regexp to turn a path to a release snippet like
+            "Firefox/3.6.13/WINNT_x86-msvc/20101122053531/af/beta/complete.txt"
+        into
+            testUpdate = {
+                  'product': 'Firefox',
+                  'version': '3.6.13',
+                  'buildID': '20101122053531',
+                  'buildTarget': 'WINNT_x86-msvc',
+                  'locale': 'af',
+                  'channel': 'beta',
+                  'osVersion': 'foo',
+                  'distribution': 'foo',
+                  'distVersion': 'foo',
+                  'headerArchitecture': 'Intel',
+                  'name': ''
+                 }
     """
     m = re.match("^(?P<product>.*?)/(?P<version>.*?)/(?P<buildTarget>.*?)/(?P<buildID>.*?)/(?P<locale>.*?)/(?P<channel>.*?)/", snippetPath)
     if m:
