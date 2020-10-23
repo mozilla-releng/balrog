@@ -38,7 +38,7 @@
     "prop-types": "^15",
     "qs": "^6.9.4",
     "ramda": "^0.27.1",
-    "react": "^16.13.1",
+    "react": "^17.0.1",
     "react-auth0-components": "^1.0.4",
     "react-codemirror2": "^7.2.1",
     "react-diff-view": "^2.4.6",
