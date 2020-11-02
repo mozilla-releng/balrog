@@ -103,6 +103,10 @@ brotli==1.0.9 \
     --hash=sha256:defed7ea5f218a9f2336301e6fd379f55c655bea65ba2476346340a0ce6f74a1 \
     --hash=sha256:f909bbbc433048b499cb9db9e713b5d8d949e8c109a2a548502fb9aa8630f0b1 \
     # via flask-compress
+build==0.1.0 \
+    --hash=sha256:08b2b58098ff617d1154056c79f8a70beed18f7cfa710bca23a072196910d5b4 \
+    --hash=sha256:2390c690a53bc22a09cbd35f70ece69d40cc8553e267ece046db4a5a1d32d856 \
+    # via check-manifest
 cachetools==4.1.1 \
     --hash=sha256:513d4ff98dd27f85743a8dc0e92f55ddb1b49e060c2d5961512855cda2c01a98 \
     --hash=sha256:bbaa39c3dede00175df2dc2b03d0cf18dd2d32a7de7beb68072d13043c9edb20 \
@@ -153,9 +157,9 @@ chardet==3.0.4 \
     --hash=sha256:84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae \
     --hash=sha256:fc323ffcaeaed0e0a02bf4d117757b98aed530d9ed4531e3e15460124c106691 \
     # via aiohttp, requests
-check-manifest==0.44 \
-    --hash=sha256:1d09db87162a70aa2877660c0ac1a1153e62b8e69bbde5e6155af7507e417af1 \
-    --hash=sha256:5866028482fb05c411f5e0dc27d4d86209959c1334645f223667cec445be363d \
+check-manifest==0.45 \
+    --hash=sha256:636b65a3b685374ad429ff22fe213966765b145f08bc560c8d033b604c7bee4c \
+    --hash=sha256:79dfd287348504a6f5195507dd15d0a6f66574feb34d3dbe1b33c80e24d2ceb9 \
     # via -r test.in
 click==7.1.2 \
     --hash=sha256:d2b5255c7c6349bc1bd1e59e08cd12acbbd63ce649f2588755783aa94dfb6b1a \
@@ -441,7 +445,7 @@ openapi-spec-validator==0.2.9 \
 packaging==20.4 \
     --hash=sha256:4357f74f47b9c12db93624a82154e9b120fa8293699949152b22065d556079f8 \
     --hash=sha256:998416ba6962ae7fbd6596850b80e17859a5753ba17c32284f67bfff33784181 \
-    # via pytest
+    # via build, pytest
 pathspec==0.8.0 \
     --hash=sha256:7d91249d21749788d07a2d0f94147accd8f845507400749ea19c1ec9054a12b0 \
     --hash=sha256:da45173eb3a6f2a5a487efba21f050af2b41948be6ab52b6a1e3ff22bb8b7061 \
@@ -450,10 +454,10 @@ pbr==5.5.0 \
     --hash=sha256:14bfd98f51c78a3dd22a1ef45cf194ad79eee4a19e8e1a0d5c7f8e81ffe182ea \
     --hash=sha256:5adc0f9fc64319d8df5ca1e4e06eea674c26b80e6f00c530b18ce6a6592ead15 \
     # via sqlalchemy-migrate
-pep517==0.8.2 \
-    --hash=sha256:576c480be81f3e1a70a16182c762311eb80d1f8a7b0d11971e5234967d7a342c \
-    --hash=sha256:8e6199cf1288d48a0c44057f112acf18aa5ebabbf73faa242f598fbe145ba29e \
-    # via check-manifest
+pep517==0.9.1 \
+    --hash=sha256:3985b91ebf576883efe5fa501f42a16de2607684f3797ddba7202b71b7d0da51 \
+    --hash=sha256:aeb78601f2d1aa461960b43add204cc7955667687fbcf9cdb5170f00556f117f \
+    # via build
 pip-compile-multi==2.1.0 \
     --hash=sha256:888788ad738f71121faf6a6ecce87af3ec5eacc11c47cb363f120cde88a2a821 \
     --hash=sha256:c199a48921c63859707853c36cc506eac978c089e21b347215c979d5fc99161c \
@@ -707,7 +711,7 @@ tempita==0.5.2 \
 toml==0.10.1 \
     --hash=sha256:926b612be1e5ce0634a2ca03470f95169cf16f939018233a670519cb4ac58b0f \
     --hash=sha256:bda89d5935c2eac546d648028b9901107a595863cb36bae0c73ac804a9b4ce88 \
-    # via black, check-manifest, pep517, pytest
+    # via black, build, check-manifest, pep517, pytest
 toposort==1.5 \
     --hash=sha256:d80128b83b411d503b0cdb4a8f172998bc1d3b434b6402a349b8ebd734d51a80 \
     --hash=sha256:dba5ae845296e3bf37b042c640870ffebcdeb8cd4df45adaa01d8c5476c557dd \
