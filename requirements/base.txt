@@ -212,9 +212,9 @@ gcloud-aio-storage==5.6.0 \
     --hash=sha256:31d46aef630f7ef0ba9698ca72563226431347b1099e3c0c9de3801c3c172632 \
     --hash=sha256:76f7ec414debb830068b23a0966cb20c0ac3d56eab797053e00f9ce1618f2431 \
     # via -r base.in
-google-api-core==1.23.0 \
-    --hash=sha256:1bb3c485c38eacded8d685b1759968f6cf47dd9432922d34edb90359eaa391e2 \
-    --hash=sha256:94d8c707d358d8d9e8b0045c42be20efb58433d308bd92cf748511c7825569c8 \
+google-api-core==1.24.0 \
+    --hash=sha256:2f74562c6c2df8d2df1fd3f8d08d64cadd71ee6830b4ab6a83ed862e75b8a0b0 \
+    --hash=sha256:6f7ff9c88af7b76a33e7cd04999f763a21b40efc64ac5ec488ea2918a94b354b \
     # via -r base.in, google-cloud-core
 google-auth==1.22.1 \
     --hash=sha256:712dd7d140a9a1ea218e5688c7fcb04af71b431a29ec9ce433e384c60e387b98 \
