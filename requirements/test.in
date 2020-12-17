@@ -9,7 +9,6 @@ flake8-black
 hypothesis
 isort
 mock
-# Pinned due to unknown issues with pip 10.1
 pip
 pip-compile-multi
 pytest
