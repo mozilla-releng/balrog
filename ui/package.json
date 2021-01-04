@@ -25,7 +25,7 @@
     "@material-ui/styles": "^4.11.2",
     "@mozilla-frontend-infra/components": "^3.0.7",
     "axios": "^0.21.1",
-    "change-case": "^4.1.1",
+    "change-case": "^4.1.2",
     "classnames": "^2.2.6",
     "clipboard-copy": "^3.1.0",
     "codemirror": "^5.59.1",
