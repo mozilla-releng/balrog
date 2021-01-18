@@ -224,9 +224,9 @@ gcloud-aio-storage==5.6.0 \
     --hash=sha256:31d46aef630f7ef0ba9698ca72563226431347b1099e3c0c9de3801c3c172632 \
     --hash=sha256:76f7ec414debb830068b23a0966cb20c0ac3d56eab797053e00f9ce1618f2431 \
     # via -r base.txt
-google-api-core==1.24.1 \
-    --hash=sha256:0f1dee446db2685863c3c493a90fefa5fc7f4defaf8e1a320b50ccaddfb5d469 \
-    --hash=sha256:a7f5794446a22ff7d36764959ba5f319f37628faf4da04fdc0dedf1598b556c1 \
+google-api-core==1.25.0 \
+    --hash=sha256:4656345cba9627ab1290eab51300a6397cc50370d99366133df1ae64b744e1eb \
+    --hash=sha256:d967beae8d8acdb88fb2f6f769e2ee0ee813042576a08891bded3b8e234150ae \
     # via -r base.txt, google-cloud-core
 google-auth==1.24.0 \
     --hash=sha256:0b0e026b412a0ad096e753907559e4bdb180d9ba9f68dd9036164db4fdc4ad2e \
@@ -516,14 +516,14 @@ spec-synthase==0.1.11 \
     --hash=sha256:62396a95541cec2f792fe4f1f10e610e3dbdcdee843ee8f65dc243e8bb387c86 \
     --hash=sha256:9507c2f83a1c0a6fb7e18c0fa4eb9cc7a3d874e964b7c55dd2b531e5c70598bf \
     # via -r base.txt
-sphinx-rtd-theme==0.5.0 \
-    --hash=sha256:22c795ba2832a169ca301cd0a083f7a434e09c538c70beb42782c073651b707d \
-    --hash=sha256:373413d0f82425aaa28fb288009bf0d0964711d347763af2f1b65cafcb028c82 \
-    # via -r docs.in
 sphinx==3.4.3 \
     --hash=sha256:41cad293f954f7d37f803d97eb184158cfd90f51195131e94875bc07cd08b93c \
     --hash=sha256:c314c857e7cd47c856d2c5adff514ac2e6495f8b8e0f886a8a37e9305dfea0d8 \
     # via -r docs.in, sphinx-rtd-theme
+sphinx_rtd_theme==0.5.1 \
+    --hash=sha256:eda689eda0c7301a80cf122dad28b1861e5605cbf455558f3775e1e8200e83a5 \
+    --hash=sha256:fa6bebd5ab9a73da8e102509a86f3fcc36dec04a0b52ea80e5a033b2aba00113 \
+    # via -r docs.in
 sphinxcontrib-applehelp==1.0.2 \
     --hash=sha256:806111e5e962be97c29ec4c1e7fe277bfd19e9652fb1a4392105b43e01af885a \
     --hash=sha256:a072735ec80e7675e3f432fcae8610ecf509c5f1869d17e2eecff44389cdbc58 \
