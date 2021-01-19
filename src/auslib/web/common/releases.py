@@ -32,13 +32,20 @@ def release_list(request):
         kwargs["nameOnly"] = True
     with dbo.begin() as trans:
         ret = dbo.releases.getReleaseInfo(**kwargs, transaction=trans)
-        for r in releases_service.get_releases(trans)["releases"]:
-            if kwargs.get("product") and r["product"] != kwargs["product"]:
-                continue
-            if kwargs.get("name_prefix") and not r["name"].startswith(kwargs["name_prefix"]):
-                continue
+        if kwargs.get("nameOnly"):
+            for name in releases_service.get_release_names(trans, product=kwargs.get("product")):
+                if kwargs.get("name_prefix") and not name.startswith(kwargs["name_prefix"]):
+                    continue
 
-            ret.append(r)
+                ret.append({"name": name})
+        else:
+            for r in releases_service.get_releases(trans)["releases"]:
+                if kwargs.get("product") and r["product"] != kwargs["product"]:
+                    continue
+                if kwargs.get("name_prefix") and not r["name"].startswith(kwargs["name_prefix"]):
+                    continue
+
+                ret.append(r)
 
         return ret
 
