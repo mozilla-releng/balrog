@@ -244,6 +244,14 @@ def get_assets(name, trans):
     return assets
 
 
+def get_release_names(trans, product=None):
+    where = {}
+    if product:
+        where["product"] = product
+
+    return sorted([r["name"] for r in dbo.releases_json.select(columns=[dbo.releases_json.name], where=where)])
+
+
 def get_releases(trans):
     releases = dbo.releases_json.select(
         columns=[dbo.releases_json.name, dbo.releases_json.product, dbo.releases_json.data_version, dbo.releases_json.read_only], transaction=trans
