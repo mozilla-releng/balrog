@@ -249,7 +249,7 @@ def get_release_names(trans, product=None):
     if product:
         where["product"] = product
 
-    return sorted([r["name"] for r in dbo.releases_json.select(columns=[dbo.releases_json.name], where=where)])
+    return sorted([r["name"] for r in dbo.releases_json.select(columns=[dbo.releases_json.name], where=where, transaction=trans)])
 
 
 def get_releases(trans):
