@@ -73,14 +73,15 @@ describe('channel matching', () => {
   });
   test('should not match anything when rule is null', () => {
     const result = ruleMatchesChannel(
-        {
-            scheduledChange: {
-                channel: 'nightly',
-            },
+      {
+        scheduledChange: {
+          channel: 'nightly',
         },
-        'beta',
+      },
+      'beta'
     );
-      expect(result).toBeFalsy();
+
+    expect(result).toBeFalsy();
   });
   test('should not match rule substring without a glob', () => {
     const result = ruleMatchesChannel(
