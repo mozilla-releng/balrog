@@ -4,101 +4,119 @@ describe('channel matching', () => {
   test('should match when only current rule matches', () => {
     const result = ruleMatchesChannel(
       {
-          channel: "nightly",
-          scheduledChange: null,
-        },
-        "nightly",
+        channel: 'nightly',
+        scheduledChange: null,
+      },
+      'nightly'
     );
-      expect(result).toBeTruthy();
+
+    expect(result).toBeTruthy();
   });
   test('should match when only scheduled change matches', () => {
     const result = ruleMatchesChannel(
       {
-          channel: "nightly",
-          scheduledChange: {
-              "channel": "release",
-          }
+        channel: 'nightly',
+        scheduledChange: {
+          channel: 'release',
         },
-        "release",
+      },
+      'release'
     );
-      expect(result).toBeTruthy();
+
+    expect(result).toBeTruthy();
   });
   test('should match when rule is null', () => {
     const result = ruleMatchesChannel(
       {
-          channel: null,
-          scheduledChange: {
-              channel: "nightly"
-          },
+        scheduledChange: {
+          channel: 'nightly',
         },
-        "nightly",
+      },
+      'nightly'
     );
-      expect(result).toBeTruthy();
+
+    expect(result).toBeTruthy();
   });
   test('should match when rule has glob', () => {
     const rule = {
-          channel: "nightly*",
-          scheduledChange: null,
-        };
-    const channels = ["nightly", "nightly-cdntest", "nightlytest"]
+      channel: 'nightly*',
+      scheduledChange: null,
+    };
+    const channels = ['nightly', 'nightly-cdntest', 'nightlytest'];
     const results = channels.map(c => ruleMatchesChannel(rule, c));
+
     expect(results).toEqual(expect.not.arrayContaining([false]));
   });
   test('should match when scheduled change has glob', () => {
-      const rule = {
-          channel: "nightly",
-          scheduledChange: {
-              "channel": "beta*",
-          },
-      };
-          const channels = ["beta", "beta-localtest"];
+    const rule = {
+      channel: 'nightly',
+      scheduledChange: {
+        channel: 'beta*',
+      },
+    };
+    const channels = ['beta', 'beta-localtest'];
     const results = channels.map(c => ruleMatchesChannel(rule, c));
+
     expect(results).toEqual(expect.not.arrayContaining([false]));
   });
   test('should match when rule and scheduled change have null channel', () => {
     const result = ruleMatchesChannel(
       {
+        scheduledChange: {
           channel: null,
-          scheduledChange: {
-              channel: null,
-          },
         },
-        "nightly",
+      },
+      'nightly'
     );
-      expect(result).toBeTruthy();
+
+    expect(result).toBeTruthy();
+  });
+  test('should not match anything when rule is null', () => {
+    const result = ruleMatchesChannel(
+        {
+            scheduledChange: {
+                channel: 'nightly',
+            },
+        },
+        'beta',
+    );
+      expect(result).toBeFalsy();
   });
   test('should not match rule substring without a glob', () => {
     const result = ruleMatchesChannel(
       {
-          channel: "nightly",
-          scheduledChange: null,
-        },
-        "nightly-cdntest",
+        channel: 'nightly',
+        scheduledChange: null,
+      },
+      'nightly-cdntest'
     );
-      expect(result).toBeFalsy();
+
+    expect(result).toBeFalsy();
   });
   test('should not match scheduled change substring without a glob', () => {
     const result = ruleMatchesChannel(
       {
-          channel: "nightly",
-          scheduledChange: {
-            "channel": "beta",
-          },
+        channel: 'nightly',
+        scheduledChange: {
+          channel: 'beta',
         },
-        "beta-cdntest",
+      },
+      'beta-cdntest'
     );
-      expect(result).toBeFalsy();
+
+    expect(result).toBeFalsy();
   });
   test('should not match when rule and scheduled change are a different channel', () => {
     const result = ruleMatchesChannel(
       {
-          channel: "nightly",
-          scheduledChange: {
-              "channel": "beta",
-          },
+        channel: 'nightly',
+        scheduledChange: {
+          channel: 'beta',
         },
-        "release",
+      },
+      'release'
     );
-      expect(result).toBeFalsy();
+
+    expect(result).toBeFalsy();
   });
 });
