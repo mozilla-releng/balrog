@@ -5,7 +5,7 @@ const ruleMatchesChannel = (rule, channel) => {
   // similarly, if the rule or scheduled rule has a wildcard, and the
   // selected channel does not match either, this rule does not match
   const ruleChannel = rule.channel;
-  const ruleScheduledChangeChannel =
+  const scChannel =
     rule.scheduledChange && rule.scheduledChange.channel;
   let ruleChannelMatches = false;
   let scChannelMatches = false;
@@ -18,23 +18,29 @@ const ruleMatchesChannel = (rule, channel) => {
     } else if (channel.startsWith(ruleChannel.split('*')[0])) {
       ruleChannelMatches = true;
     }
-  }
+  } else {
+      ruleChannelMatches = true;
+    }
 
-  if (ruleScheduledChangeChannel) {
-    if (ruleScheduledChangeChannel.indexOf('*') === -1) {
-      if (ruleScheduledChangeChannel === channel) {
+  if (scChannel) {
+    if (scChannel.indexOf('*') === -1) {
+      if (scChannel === channel) {
         scChannelMatches = true;
       }
-    } else if (channel.startsWith(ruleScheduledChangeChannel.split('*')[0])) {
+    } else if (channel.startsWith(scChannel.split('*')[0])) {
       scChannelMatches = true;
     }
+  } else {
+      if (rule.scheduledChange) {
+      scChannelMatches = true;
+      }
   }
 
-  if (!ruleChannelMatches && !scChannelMatches) {
-    return false;
+  if (ruleChannelMatches || scChannelMatches) {
+    return true;
   }
 
-  return true;
+  return false;
 };
 
 export {
