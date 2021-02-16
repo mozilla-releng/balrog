@@ -68,6 +68,7 @@ import { withUser } from '../../../utils/AuthContext';
 import remToPx from '../../../utils/remToPx';
 import elementsHeight from '../../../utils/elementsHeight';
 import Snackbar from '../../../components/Snackbar';
+import { ruleMatchesChannel } from '../../../utils/rules';
 
 const ALL = 'all';
 const useStyles = makeStyles(theme => ({
@@ -452,48 +453,13 @@ function ListRules(props) {
       const [productFilter, channelFilter] = productChannelQueries;
       const ruleProduct =
         rule.product || (rule.scheduledChange && rule.scheduledChange.product);
-      const ruleScheduledChangeChannel =
-        rule.scheduledChange && rule.scheduledChange.channel;
-      const ruleChannel = rule.channel;
 
       if (ruleProduct !== productFilter) {
         return false;
       }
 
-      if (channelFilter) {
-        // if neither the rule nor the scheduled rule's channel is an exact
-        // match for the filter (after stripping away a possible wildcard)
-        // this rule does not match
-        // similarly, if the rule or scheduled rule has a wildcard, and the
-        // selected channel does not match either, this rule does not match
-        let ruleChannelMatches = false;
-        let scChannelMatches = false;
-
-        if (ruleChannel) {
-          if (ruleChannel.indexOf('*') === -1) {
-            if (ruleChannel === channelFilter) {
-              ruleChannelMatches = true;
-            }
-          } else if (channelFilter.startsWith(ruleChannel.split('*')[0])) {
-            ruleChannelMatches = true;
-          }
-        }
-
-        if (ruleScheduledChangeChannel) {
-          if (ruleScheduledChangeChannel.indexOf('*') === -1) {
-            if (ruleScheduledChangeChannel === channelFilter) {
-              scChannelMatches = true;
-            }
-          } else if (
-            channelFilter.startsWith(ruleScheduledChangeChannel.split('*')[0])
-          ) {
-            scChannelMatches = true;
-          }
-        }
-
-        if (!ruleChannelMatches && !scChannelMatches) {
-          return false;
-        }
+      if (channelFilter && !ruleMatchesChannel(rule, channelFilter)) {
+        return false;
       }
 
       return true;
