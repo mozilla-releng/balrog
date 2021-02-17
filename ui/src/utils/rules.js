@@ -25,11 +25,7 @@ const ruleMatchesChannel = (rule, channel) => {
       matchesGlob(rule.scheduledChange.channel, channel)
     : false;
 
-  if (ruleChannelMatches || scChannelMatches) {
-    return true;
-  }
-
-  return false;
+  return ruleChannelMatches || scChannelMatches;
 };
 
 export {
