@@ -68,6 +68,7 @@ import { withUser } from '../../../utils/AuthContext';
 import remToPx from '../../../utils/remToPx';
 import elementsHeight from '../../../utils/elementsHeight';
 import Snackbar from '../../../components/Snackbar';
+import { ruleMatchesChannel } from '../../../utils/rules';
 
 const ALL = 'all';
 const useStyles = makeStyles(theme => ({
@@ -452,32 +453,13 @@ function ListRules(props) {
       const [productFilter, channelFilter] = productChannelQueries;
       const ruleProduct =
         rule.product || (rule.scheduledChange && rule.scheduledChange.product);
-      const ruleScheduledChangeChannel =
-        rule.scheduledChange && rule.scheduledChange.channel;
-      let ruleChannel;
 
       if (ruleProduct !== productFilter) {
         return false;
       }
 
-      if (ruleScheduledChangeChannel) {
-        if (ruleScheduledChangeChannel.includes('*')) {
-          ruleChannel = rule.channel && ruleScheduledChangeChannel;
-        } else {
-          ruleChannel = ruleScheduledChangeChannel && rule.channel;
-        }
-      } else {
-        ruleChannel = rule.channel;
-      }
-
-      if (channelFilter) {
-        if (ruleChannel.indexOf('*') === -1) {
-          if (ruleChannel !== channelFilter) {
-            return false;
-          }
-        } else if (!channelFilter.startsWith(ruleChannel.split('*')[0])) {
-          return false;
-        }
+      if (channelFilter && !ruleMatchesChannel(rule, channelFilter)) {
+        return false;
       }
 
       return true;
