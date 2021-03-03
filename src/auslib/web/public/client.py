@@ -136,6 +136,12 @@ def extract_query_version(request_url):
     return version
 
 
+def get_aus_metadata_headers(eval_metadata):
+    header_name_metadata_map = {"rule": "Rule-ID", "rule_data_version": "Rule-Data-Version"}
+    headers = {header_name_metadata_map.get(name, name): value for name, value in eval_metadata.items()}
+    return headers
+
+
 @with_transaction
 def get_update_blob(transaction, **url):
     url["queryVersion"] = extract_query_version(request.url)
@@ -150,7 +156,7 @@ def get_update_blob(transaction, **url):
 
     query = getQueryFromURL(url)
     LOG.debug("Got query: %s", query)
-    release, update_type = AUS.evaluateRules(query, transaction=transaction)
+    release, update_type, eval_metadata = AUS.evaluateRules(query, transaction=transaction)
 
     # passing {},None returns empty xml
     if release:
@@ -163,7 +169,7 @@ def get_update_blob(transaction, **url):
             for product in response_products:
                 product_query = query.copy()
                 product_query["product"] = product
-                response_release, response_update_type = AUS.evaluateRules(product_query, transaction=transaction)
+                response_release, response_update_type, eval_metadata = AUS.evaluateRules(product_query, transaction=transaction)
                 if not response_release:
                     continue
 
@@ -229,6 +235,7 @@ def get_update_blob(transaction, **url):
     LOG.debug("Sending XML: %s", xml)
     response = make_response(xml)
     response.headers["Cache-Control"] = app.cacheControl
+    response.headers.extend(get_aus_metadata_headers(eval_metadata))
     response.mimetype = "text/xml"
     return response
 

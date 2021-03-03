@@ -42,7 +42,9 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
         mapping = "b"
         with mock.patch("auslib.db.Rules.getRulesMatchingQuery") as m:
             fallback = fallback and "fallback"  # convert True to string
-            m.return_value = [dict(backgroundRate=background_rate, priority=1, mapping=mapping, update_type="minor", fallbackMapping=fallback)]
+            m.return_value = [
+                dict(rule_id=1, data_version=1, backgroundRate=background_rate, priority=1, mapping=mapping, update_type="minor", fallbackMapping=fallback)
+            ]
 
             results = list(ENTIRE_RANGE)
             resultsLength = len(results)
@@ -57,7 +59,7 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
             tested = 0
             while len(results) > 0:
                 updateQuery = dict(channel="foo", force=force, buildTarget="a", buildID="0", locale="a", version="1.0", product="bar")
-                r, _ = aus.evaluateRules(updateQuery)
+                r, _, _ = aus.evaluateRules(updateQuery)
                 tested += 1
                 if r and r["name"] == mapping:
                     served_mapping += 1

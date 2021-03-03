@@ -73,21 +73,27 @@ class AUS:
         self.log.debug("Looking for rules that apply to:")
         self.log.debug(updateQuery)
 
+        eval_metadata = {}
+
         if self.updates_are_disabled(updateQuery["product"], updateQuery["channel"], transaction) or self.updates_are_disabled(
             updateQuery["product"], getFallbackChannel(updateQuery["channel"]), transaction
         ):
             log_message = "Updates are disabled for {}/{}.".format(updateQuery["product"], updateQuery["channel"])
             self.log.debug(log_message)
-            return None, None
+            return None, None, eval_metadata
 
         rules = dbo.rules.getRulesMatchingQuery(updateQuery, fallbackChannel=getFallbackChannel(updateQuery["channel"]), transaction=transaction)
 
         # TODO: throw any N->N update rules and keep the highest priority remaining one?
         if len(rules) < 1:
-            return None, None
+            return None, None, eval_metadata
 
         rules = sorted(rules, key=lambda rule: rule["priority"], reverse=True)
         rule = rules[0]
+
+        eval_metadata["rule"] = rule["rule_id"]
+        eval_metadata["rule_data_version"] = rule["data_version"]
+
         self.log.debug("Matching rule: %s" % rule)
 
         # There's a few cases where we have a matching rule but don't want
@@ -95,7 +101,7 @@ class AUS:
         # 1) No mapping.
         if not rule["mapping"]:
             self.log.debug("Matching rule points at null mapping.")
-            return None, None
+            return None, None, eval_metadata
 
         # 2) For background checks (force=1 missing from query), we might not
         # serve every request an update
@@ -115,12 +121,12 @@ class AUS:
                         release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1, transaction=transaction)[0]
                         blob = release["data"]
                     if not blob or not blob.shouldServeUpdate(updateQuery):
-                        return None, None
+                        return None, None, eval_metadata
                     self.log.debug("Returning fallback release %s", fallbackReleaseName)
-                    return blob, rule["update_type"]
+                    return blob, rule["update_type"], eval_metadata
 
                 self.log.debug("No fallback releases. Request was dropped")
-                return None, None
+                return None, None, eval_metadata
 
         # 3) Incoming release is older than the one in the mapping, defined as one of:
         #    * version decreases
@@ -134,7 +140,7 @@ class AUS:
             release = dbo.releases.getReleases(name=rule["mapping"], limit=1, transaction=transaction)[0]
             blob = release["data"]
         if not blob or not blob.shouldServeUpdate(updateQuery):
-            return None, None
+            return None, None, eval_metadata
 
         self.log.debug("Returning release %s", rule["mapping"])
-        return blob, rule["update_type"]
+        return blob, rule["update_type"], eval_metadata

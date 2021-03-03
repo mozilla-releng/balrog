@@ -101,7 +101,7 @@ def walkSnippets(AUS, testPath):
         log.debug("test-rules.walkSnippets: %s" % f)
         testQuery = getQueryFromPath(f.lstrip(testPath))
         testQuery["queryVersion"] = 3
-        release, update_type = AUS.evaluateRules(testQuery)
+        release, update_type, _ = AUS.evaluateRules(testQuery)
         if release:
             balrog_snippets = release.createSnippets(testQuery, update_type, WHITELISTED_DOMAINS, SPECIAL_FORCE_HOSTS)
         else:

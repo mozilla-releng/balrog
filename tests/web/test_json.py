@@ -185,6 +185,8 @@ def testGuardianResponse(client, version, buildTarget, channel, code, response):
         assert ret.mimetype == "application/json"
         assert ret.get_json() == response
         assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
+        assert "Rule-ID" in ret.headers
+        assert "Rule-Data-Version" in ret.headers
 
 
 @pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler")

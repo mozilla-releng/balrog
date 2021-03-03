@@ -9,15 +9,22 @@ from auslib.util.autograph import make_hash, sign_hash
 from auslib.web.public.helpers import AUS, with_transaction
 
 
+def get_aus_metadata_headers(eval_metadata):
+    header_name_metadata_map = {"rule": "Rule-ID", "rule_data_version": "Rule-Data-Version"}
+    headers = {header_name_metadata_map.get(name, name): value for name, value in eval_metadata.items()}
+    return headers
+
+
 @with_transaction
 def get_update(transaction, **parameters):
     force = parameters.get("force")
     parameters["force"] = {FORCE_MAIN_MAPPING.query_value: FORCE_MAIN_MAPPING, FORCE_FALLBACK_MAPPING.query_value: FORCE_FALLBACK_MAPPING}.get(force)
-    release = AUS.evaluateRules(parameters, transaction=transaction)[0]
+    release, _, eval_metadata = AUS.evaluateRules(parameters, transaction=transaction)
     if not release:
         return Response(status=404)
 
-    headers = {}
+    headers = get_aus_metadata_headers(eval_metadata)
+
     response = json.dumps(release.getResponse(parameters, app.config["WHITELISTED_DOMAINS"]))
 
     if app.config.get("AUTOGRAPH_URL"):
