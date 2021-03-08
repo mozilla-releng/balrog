@@ -10,7 +10,7 @@ from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
 from auslib.services import releases
-from auslib.web.public.helpers import AUS, with_transaction
+from auslib.web.public.helpers import AUS, get_aus_metadata_headers, with_transaction
 
 try:
     from urllib import unquote
@@ -150,7 +150,7 @@ def get_update_blob(transaction, **url):
 
     query = getQueryFromURL(url)
     LOG.debug("Got query: %s", query)
-    release, update_type = AUS.evaluateRules(query, transaction=transaction)
+    release, update_type, eval_metadata = AUS.evaluateRules(query, transaction=transaction)
 
     # passing {},None returns empty xml
     if release:
@@ -163,7 +163,7 @@ def get_update_blob(transaction, **url):
             for product in response_products:
                 product_query = query.copy()
                 product_query["product"] = product
-                response_release, response_update_type = AUS.evaluateRules(product_query, transaction=transaction)
+                response_release, response_update_type, eval_metadata = AUS.evaluateRules(product_query, transaction=transaction)
                 if not response_release:
                     continue
 
@@ -229,6 +229,7 @@ def get_update_blob(transaction, **url):
     LOG.debug("Sending XML: %s", xml)
     response = make_response(xml)
     response.headers["Cache-Control"] = app.cacheControl
+    response.headers.extend(get_aus_metadata_headers(eval_metadata))
     response.mimetype = "text/xml"
     return response
 

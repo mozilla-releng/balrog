@@ -279,7 +279,9 @@ class ClientTestBase(ClientTestCommon):
 """
             ),
         )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c", distribution="default", data_version=1)
+        dbo.rules.t.insert().execute(
+            rule_id=42024, priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c", distribution="default", data_version=1
+        )
         dbo.releases.t.insert().execute(
             name="c",
             product="c",
@@ -1535,6 +1537,13 @@ class ClientTest(ClientTestBase):
 
             assert mocked_releases_json_scheduled_changes.select.call_count == 0
             assert mocked_release_assets_scheduled_changes.select.call_count == 0
+
+    def test_serve_update_with_rule_information_in_header(self):
+        ret = self.client.get("/update/6/c/1.0/1/p/l/a/a/SSE/default/a/update.xml")
+        assert "Rule-ID" in ret.headers
+        assert "Rule-Data-Version" in ret.headers
+        assert "42024" == ret.headers["Rule-ID"]
+        assert "1" == ret.headers["Rule-Data-Version"]
 
 
 class ClientTestMig64(ClientTestCommon):
