@@ -236,10 +236,6 @@ ecdsa==0.14.1 \
     # via
     #   -r base.txt
     #   python-jose
-flask-compress==1.8.0 \
-    --hash=sha256:c132590e7c948877a96d675c13cbfa64edec0faafa2381678dea6f36aa49a552 \
-    --hash=sha256:fda1b8a834176c485c7018a4b9326599311afbaaa08a715771c1fd9021f871fa
-    # via -r base.txt
 flask-wtf==0.14.3 \
     --hash=sha256:57b3faf6fe5d6168bda0c36b0df1d05770f8e205e18332d0376ddb954d17aef2 \
     --hash=sha256:d417e3a0008b5ba583da1763e4db0f55a1269d9dd91dcc3eb3c026d3c5dbd720
@@ -253,6 +249,9 @@ flask==1.1.2 \
     #   flask-compress
     #   flask-wtf
     #   sentry-sdk
+flask_compress==1.9.0 \
+    --hash=sha256:d93edd8fc02ae74b73c3df10a8e7ee26dee489c65dedce0b3a1d2ce05ac3d1be
+    # via -r base.txt
 future==0.18.2 \
     --hash=sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d
     # via
