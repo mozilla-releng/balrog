@@ -542,9 +542,9 @@ pep517==0.9.1 \
     --hash=sha256:3985b91ebf576883efe5fa501f42a16de2607684f3797ddba7202b71b7d0da51 \
     --hash=sha256:aeb78601f2d1aa461960b43add204cc7955667687fbcf9cdb5170f00556f117f
     # via build
-pip-compile-multi==2.1.0 \
-    --hash=sha256:888788ad738f71121faf6a6ecce87af3ec5eacc11c47cb363f120cde88a2a821 \
-    --hash=sha256:c199a48921c63859707853c36cc506eac978c089e21b347215c979d5fc99161c
+pip-compile-multi==2.3.2 \
+    --hash=sha256:6582ff39f99ab6d815d07317d737eafca57cbf8d043d53098b2ee65e7aa31984 \
+    --hash=sha256:b491bd3d2eccfcab9430e8e0d76a11a2dfd6a2aece5f9a54bd1542f210b360ea
     # via -r test.in
 pip-tools==5.5.0 \
     --hash=sha256:10841c1e56c234d610d0466447685b9ea4ee4a2c274f858c0ef3c33d9bd0d985 \
