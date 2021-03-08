@@ -56,9 +56,9 @@ appdirs==1.4.4 \
     # via
     #   black
     #   virtualenv
-arrow==0.17.0 \
-    --hash=sha256:e098abbd9af3665aea81bdd6c869e93af4feb078e98468dd351c383af187aac5 \
-    --hash=sha256:ff08d10cda1d36c68657d6ad20d74fbea493d980f8b2d45344e00d6ed2bf6ed4
+arrow==1.0.3 \
+    --hash=sha256:3515630f11a15c61dcb4cdd245883270dd334c83f3e639824e65a4b79cc48543 \
+    --hash=sha256:399c9c8ae732270e1aa58ead835a79a40d7be8aa109c579898eb41029b5a231d
     # via -r base.in
 async-timeout==3.0.1 \
     --hash=sha256:0c3c816a028d47f659d6ff5c745cb2acf1f966da1fe5c19c77a70282b25f4c5f \
