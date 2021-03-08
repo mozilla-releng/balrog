@@ -73,7 +73,7 @@ class AUS:
         self.log.debug("Looking for rules that apply to:")
         self.log.debug(updateQuery)
 
-        eval_metadata = {}
+        eval_metadata = dict(rule_id="unknown", rule_data_version="unknown")
 
         if self.updates_are_disabled(updateQuery["product"], updateQuery["channel"], transaction) or self.updates_are_disabled(
             updateQuery["product"], getFallbackChannel(updateQuery["channel"]), transaction
@@ -91,7 +91,7 @@ class AUS:
         rules = sorted(rules, key=lambda rule: rule["priority"], reverse=True)
         rule = rules[0]
 
-        eval_metadata["rule"] = rule["rule_id"]
+        eval_metadata["rule_id"] = rule["rule_id"]
         eval_metadata["rule_data_version"] = rule["data_version"]
 
         self.log.debug("Matching rule: %s" % rule)

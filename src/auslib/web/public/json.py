@@ -6,13 +6,7 @@ from flask import current_app as app
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.global_state import cache
 from auslib.util.autograph import make_hash, sign_hash
-from auslib.web.public.helpers import AUS, with_transaction
-
-
-def get_aus_metadata_headers(eval_metadata):
-    header_name_metadata_map = {"rule": "Rule-ID", "rule_data_version": "Rule-Data-Version"}
-    headers = {header_name_metadata_map.get(name, name): value for name, value in eval_metadata.items()}
-    return headers
+from auslib.web.public.helpers import AUS, get_aus_metadata_headers, with_transaction
 
 
 @with_transaction

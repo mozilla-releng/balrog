@@ -10,7 +10,7 @@ from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
 from auslib.services import releases
-from auslib.web.public.helpers import AUS, with_transaction
+from auslib.web.public.helpers import AUS, get_aus_metadata_headers, with_transaction
 
 try:
     from urllib import unquote
@@ -134,12 +134,6 @@ def extract_query_version(request_url):
     if match:
         version = int(match.group(1))
     return version
-
-
-def get_aus_metadata_headers(eval_metadata):
-    header_name_metadata_map = {"rule": "Rule-ID", "rule_data_version": "Rule-Data-Version"}
-    headers = {header_name_metadata_map.get(name, name): value for name, value in eval_metadata.items()}
-    return headers
 
 
 @with_transaction
