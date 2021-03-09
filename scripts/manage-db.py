@@ -63,6 +63,38 @@ def mysql_data_only_command(host, user, password, db, cmd):
     return mysql_command(host, user, password, db, "--skip-add-drop-table --no-create-info {}".format(cmd))
 
 
+def extract_releases(release_names, url, dump_file, source_tables="releases_json release_assets"):
+    if release_names:
+        batch_generator = chunk_list(list(release_names), 30)
+        for batched_release_list in batch_generator:
+            query = ", ".join("'" + names + "'" for names in batched_release_list)
+            cmd = mysql_data_only_command(url.host, url.username, url.password, url.database, source_tables).split()
+            cmd.append("--where=name IN ({})".format(query))
+            run(cmd, stdout=dump_file, check=True)
+
+
+def get_active_release_names(trans, source_table="releases_json"):
+    # Because Releases are so massive, we only want the actively used ones. Specifically:
+    #   - All releases referenced by a Rule or a Active Scheduled Rule Change
+    #   - All releases referenced by a Release from the above query
+    query_release_mapping = f"""SELECT DISTINCT releases.* \
+                FROM {source_table} as releases, rules, rules_scheduled_changes \
+                WHERE (releases.name IN (rules.mapping, rules.fallbackMapping))
+                OR (rules_scheduled_changes.complete = 0 AND
+                    releases.name IN (rules_scheduled_changes.base_mapping, rules_scheduled_changes.base_fallbackMapping))
+                """
+    result = trans.execute(query_release_mapping).fetchall()
+    release_names = set()
+    for row in result:
+        try:
+            release_names.add(str(row["name"]))
+            release_blob = createBlob(row["data"])
+            release_names.update(release_blob.getReferencedReleases())
+        except ValueError:
+            continue
+    return release_names
+
+
 def extract_active_data(trans, url, dump_location="dump.sql"):
     """
     Stores sqldump data in the specified location. If not specified, stores it in current directory in file dump.sql
@@ -94,32 +126,11 @@ def extract_active_data(trans, url, dump_location="dump.sql"):
         # We always want all the data from a few tables...
         run(mysql_data_only_command(host, user, password, db, "dockerflow rules rules_history migrate_version").split(), stdout=dump_file, check=True)
 
-        # Because Releases are so massive, we only want the actively used ones. Specifically:
-        #   - All releases referenced by a Rule or a Active Scheduled Rule Change
-        #   - All releases referenced by a Release from the above query
-        query_release_mapping = """SELECT DISTINCT releases.* \
-            FROM releases, rules, rules_scheduled_changes \
-            WHERE (releases.name IN (rules.mapping, rules.fallbackMapping))
-            OR (rules_scheduled_changes.complete = 0 AND
-                releases.name IN (rules_scheduled_changes.base_mapping, rules_scheduled_changes.base_fallbackMapping))
-            """
+        release_names = get_active_release_names(trans)
+        extract_releases(release_names, url, dump_file)
 
-        result = trans.execute(query_release_mapping).fetchall()
-        release_names = set()
-        for row in result:
-            try:
-                release_names.add(str(row["name"]))
-                release_blob = createBlob(row["data"])
-                release_names.update(release_blob.getReferencedReleases())
-            except ValueError:
-                continue
-        if release_names:
-            batch_generator = chunk_list(list(release_names), 30)
-            for batched_release_list in batch_generator:
-                query = ", ".join("'" + names + "'" for names in batched_release_list)
-                cmd = mysql_data_only_command(host, user, password, db, "releases").split()
-                cmd.append("--where=releases.name IN ({})".format(query))
-                run(cmd, stdout=dump_file, check=True)
+        release_names = get_active_release_names(trans, "releases")
+        extract_releases(release_names, url, dump_file, "releases")
 
         # Notably absent from this dump are all Permissions, Roles, and Scheduled
         # Changes tables. Permissions & Roles are excluded to avoid leaking any
