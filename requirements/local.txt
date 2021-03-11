@@ -279,9 +279,9 @@ decorator==4.4.2 \
     --hash=sha256:41fa54c2a0cc4ba648be4fd43cff00aedf5b9465c9bf18d64325bc225f08f760 \
     --hash=sha256:e3a62f0520172440ca0dcc823749319382e377f37f140a0b99ef45fecb84bfe7
     # via sqlalchemy-migrate
-deepmerge==0.1.1 \
-    --hash=sha256:190e133a6657303db37f9bb302aa853d8d2b15a0e055d41b99a362598e79206a \
-    --hash=sha256:fa1d44269786bcc12d30a7471b0b39478aa37a43703b134d7f12649792f92c1f
+deepmerge==0.2.1 \
+    --hash=sha256:5fbd777507dd86c767048bddb2c50adf7da30f7688fe3f3f4e6ede6226dd4b20 \
+    --hash=sha256:8270901f85fbe249686236cb18bf4bccc69775da2c2e1fa35de3714d5d9d01b3
     # via -r base.in
 distlib==0.3.1 \
     --hash=sha256:8c09de2c67b3e7deef7184574fc060ab8a793e7adbb183d942c389c8b13c52fb \
