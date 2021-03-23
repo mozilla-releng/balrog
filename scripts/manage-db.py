@@ -56,7 +56,7 @@ def chunk_list(list_object, n):
 def mysql_command(host, user, password, db, cmd):
     # --protocol=tcp prevent's a socket from being used, so that balrogdb
     # in docker can be called from localhost (via port forwarding for instance)
-    return "mysqldump -h {} -u {} -p{} --protocol=tcp --single-transaction --lock-tables=false {} {}".format(host, user, password, db, cmd)
+    return "mysqldump -h {} -u {} -p{} --protocol=tcp --single-transaction --lock-tables=false --no-tablespaces {} {}".format(host, user, password, db, cmd)
 
 
 def mysql_data_only_command(host, user, password, db, cmd):
