@@ -70,9 +70,9 @@ attrs==20.3.0 \
     #   hypothesis
     #   jsonschema
     #   pytest
-auth0-python==3.14.0 \
-    --hash=sha256:21eae503e622a1f43c288317d7c96a1279f77ca94c16991489714907f615e0e6 \
-    --hash=sha256:ac7808d00676c5e7ffa9eaa228807ca1f8db7a0f4dc115337c80fb6d7eb2b50a
+auth0-python==3.15.0 \
+    --hash=sha256:2ad17af5f0099f687cc6707ef2049364b5058c18db14e2a0a85a0eedf83ea627 \
+    --hash=sha256:7e6f816730d941993dc7cd9e840f0d2f0d9e3b88c458f43c79fb2b331ae187a1
     # via -r base.in
 backoff==1.10.0 \
     --hash=sha256:5e73e2cbe780e1915a204799dba0a01896f45f4385e636bcca7a0614d879d0cd \
