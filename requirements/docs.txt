@@ -287,9 +287,9 @@ google-cloud-core==1.5.0 \
     # via
     #   -r base.txt
     #   google-cloud-storage
-google-cloud-storage==1.35.0 \
-    --hash=sha256:555c0db2f88f3419f123bf9c621d7fd92f7c9e4f8b11f08eda57facacba16a9e \
-    --hash=sha256:7b48b74683dafec5da315c7b0861ab168c208e04c763aa5db7ea8d7ecd8b6c5d
+google-cloud-storage==1.37.1 \
+    --hash=sha256:63a9dab155bf81c51354db3d11f3e83a1db7d58eff453f1ce51ffa565d32617b \
+    --hash=sha256:e06a4797c87ac73c4a74801539fdf0a91761c3014281ff58b7b29f15b34c206e
     # via -r base.txt
 google-crc32c==1.1.0 \
     --hash=sha256:279f38be88b274872d9c9ef8d0479a0bc3279e5b7faebea45a86501d18000242 \
