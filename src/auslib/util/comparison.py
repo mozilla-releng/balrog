@@ -15,8 +15,8 @@ def has_operator(value):
 
 
 def get_op(pattern):
-    # only alphanumeric characters means no operator
-    if re.match(r"\w+", pattern):
+    # only alphanumeric or glob characters means no operator
+    if re.match(r"[\w\*]+", pattern):
         return operator.eq, pattern
     for op in operators:
         m = re.match(r"(%s)([\.\w]+)" % op, pattern)

@@ -62,3 +62,10 @@ class TestMozillaVersions(unittest.TestCase):
                 else:
                     raise AssertionError(("cmp(%s, %s) " "shouldn't raise BadDataError") % (v1, v2))
             self.assertEqual(res, wanted, "cmp(%s, %s) should be %s, got %s" % (v1, v2, wanted, res))
+
+    def test_glob(self):
+        version = MozillaVersion("78.8.*")
+        self.assertEqual(version.version, (78, 8, 12))
+        self.assertEqual(version.version, (78, 8, 0))
+        self.assertEqual(version.prerelease, None)
+        self.assertEqual(str(version), "78.8.*")
