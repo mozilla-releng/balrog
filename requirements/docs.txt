@@ -5,6 +5,12 @@
 #
 #    pip-compile-multi
 #
+aiofiles==0.6.0 \
+    --hash=sha256:bd3019af67f83b739f8e4053c6c0512a7f545b9a8d91aaeab55e6e0f9d123c27 \
+    --hash=sha256:e0281b157d3d5d59d803e3f4557dcc9a3dff28a4dd4829a9ff478adae50ca092
+    # via
+    #   -r base.txt
+    #   gcloud-aio-storage
 aiohttp==3.7.3 \
     --hash=sha256:0b795072bb1bf87b8620120a6373a3c61bfcb8da7e5c2377f4bb23ff4f0b62c9 \
     --hash=sha256:0d438c8ca703b1b714e82ed5b7a4412c82577040dadff479c08405e2a715564f \
@@ -180,6 +186,7 @@ chardet==3.0.4 \
     # via
     #   -r base.txt
     #   aiohttp
+    #   gcloud-aio-auth
     #   requests
 click==7.1.2 \
     --hash=sha256:d2b5255c7c6349bc1bd1e59e08cd12acbbd63ce649f2588755783aa94dfb6b1a \
@@ -258,15 +265,15 @@ future==0.18.2 \
     # via
     #   -r base.txt
     #   gcloud-aio-auth
-gcloud-aio-auth==3.4.4 \
-    --hash=sha256:2af66439511504c5360d9430aadef4713277a558ec80076154551bb6860f4dc1 \
-    --hash=sha256:9310c36257b37eb1f1d29d7822aa457dbd613d4d4dc2e82dd8be1d99987c2ae7
+gcloud-aio-auth==3.6.0 \
+    --hash=sha256:0085a8b6539c9cf6fab514349b9e20e9628299e1766adc8dccd14ccb142bba28 \
+    --hash=sha256:623ca19a8d1b3493bd31ea660d242c8c43f541f170a7ebc710869392cbeada2a
     # via
     #   -r base.txt
     #   gcloud-aio-storage
-gcloud-aio-storage==5.6.0 \
-    --hash=sha256:31d46aef630f7ef0ba9698ca72563226431347b1099e3c0c9de3801c3c172632 \
-    --hash=sha256:76f7ec414debb830068b23a0966cb20c0ac3d56eab797053e00f9ce1618f2431
+gcloud-aio-storage==5.7.0 \
+    --hash=sha256:080da78eafb1d34914db666fcce01047cfad878c200f968500dd5ecc7c22ac45 \
+    --hash=sha256:71ef3e412f32afc6558cbb5f207f157df63a012d742d4e0350ef15efd99f75aa
     # via -r base.txt
 google-api-core==1.25.0 \
     --hash=sha256:4656345cba9627ab1290eab51300a6397cc50370d99366133df1ae64b744e1eb \
