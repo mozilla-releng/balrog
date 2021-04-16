@@ -738,6 +738,15 @@ class ClientTestBase(ClientTestCommon):
         dbo.rules.t.insert().execute(
             priority=200,
             backgroundRate=100,
+            mapping="superblobaddon-with-multiple-response-blob-glob",
+            update_type="minor",
+            product="superblobaddon-with-multiple-response-blob-glob",
+            version="99.8.*",
+            data_version=1,
+        )
+        dbo.rules.t.insert().execute(
+            priority=200,
+            backgroundRate=100,
             mapping="superblobaddon-with-one-response-blob",
             update_type="minor",
             product="superblobaddon-with-one-response-blob",
@@ -1323,6 +1332,34 @@ class ClientTest(ClientTestBase):
         <addon id="d" URL="http://a.com/c" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
         <addon id="b" URL="http://a.com/b" hashFunction="sha512" hashValue="23" size="27" version="1"/>
     </addons>
+</updates>
+""",
+        )
+
+    def testSuperBlobAddOnMultipleUpdatesGlob(self):
+        # Matches version glob
+        ret = self.client.get("/update/3/superblobaddon-with-multiple-response-blob-glob/99.8.1/1/p/l/a/a/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <addons>
+        <addon id="c" URL="http://a.com/e" hashFunction="SHA512" hashValue="3" size="2" version="1"/>
+        <addon id="d" URL="http://a.com/c" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
+        <addon id="b" URL="http://a.com/b" hashFunction="sha512" hashValue="23" size="27" version="1"/>
+    </addons>
+</updates>
+""",
+        )
+
+        # Doesn't match version glob
+        ret = self.client.get("/update/3/superblobaddon-with-multiple-response-blob-glob/99.9.0/1/p/l/a/a/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+
+
 </updates>
 """,
         )
