@@ -1352,6 +1352,7 @@ class ClientTest(ClientTestBase):
 """,
         )
 
+    def testSuperBlobAddOnNoUpdatesGlob(self):
         # Doesn't match version glob
         ret = self.client.get("/update/3/superblobaddon-with-multiple-response-blob-glob/99.9.0/1/p/l/a/a/a/a/update.xml")
         self.assertUpdateEqual(
