@@ -270,6 +270,15 @@ class TestRulesAPI_JSON(ViewTest):
         ret = self._post("/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightlyÁ"))
         self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
+    def testNewRulePostWithGlob(self):
+        ret = self._post(
+            "/rules",
+            # We really only want to use glob versions with SystemAddons, but
+            # we don't seem to have any SystemAddons releases populated?
+            data=dict(backgroundRate=100, mapping="c", priority=33, product="Firefox", update_type="minor", channel="sysaddon-glob", version="88.99.*"),
+        )
+        self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+
     def testBackgroundRateZero(self):
         ret = self._post("/rules", data=dict(backgroundRate=0, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly"))
         rule_id = int(ret.get_data())
