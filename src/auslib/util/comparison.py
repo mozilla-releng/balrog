@@ -7,11 +7,11 @@ operators = {">=": operator.ge, ">": operator.gt, "<": operator.lt, "<=": operat
 
 
 def strip_operator(value):
-    return value.lstrip("<>=")
+    return value.lstrip("<>=").rstrip("*")
 
 
 def has_operator(value):
-    return value.startswith(("<", ">"))
+    return value.startswith(("<", ">")) or value.endswith(".*")
 
 
 def glob_op(value, operand):

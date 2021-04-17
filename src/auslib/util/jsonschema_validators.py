@@ -5,7 +5,7 @@ import operator
 import jsonschema
 from jsonschema.compat import str_types
 
-from auslib.util.comparison import get_op, strip_operator
+from auslib.util.comparison import get_op, glob_op, strip_operator
 from auslib.util.versions import MozillaVersion
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,8 @@ def version_validator(field_value):
                 raise jsonschema.ValidationError(
                     "Invalid input for %s .Relational Operators are not allowed" " when providing a list of versions." % field_value
                 )
-            version = MozillaVersion(operand)
+            if op is not glob_op:
+                version = MozillaVersion(operand)
         except jsonschema.ValidationError:
             raise
         except ValueError:
@@ -57,7 +58,7 @@ def version_validator(field_value):
         except Exception:
             raise jsonschema.ValidationError("Invalid input for %s . No Operator or Match found." % field_value)
         # MozillaVersion doesn't error on empty strings
-        if not hasattr(version, "version"):
+        if not hasattr(version, "version") and op is not glob_op:
             raise jsonschema.ValidationError("Couldn't parse the version for %s. No attribute 'version' was detected." % field_value)
     return True
 
