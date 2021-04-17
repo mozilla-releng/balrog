@@ -46,7 +46,7 @@ class AncientMozillaVersion(StrictVersion):
 def MozillaVersion(version):
     try:
         if version.count(".") in (1, 2):
-            if int(version[0]) > 4:
+            if int(version.split(".")[0]) > 4:
                 return PostModernMozillaVersion(version)
             else:
                 return ModernMozillaVersion(version)
