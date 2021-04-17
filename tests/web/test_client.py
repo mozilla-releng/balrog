@@ -1373,8 +1373,6 @@ class ClientTest(ClientTestBase):
             ret,
             """<?xml version="1.0"?>
 <updates>
-
-
 </updates>
 """,
         )
