@@ -781,6 +781,20 @@ class ClientTestBase(ClientTestCommon):
             ),
         )
         dbo.releases.t.insert().execute(
+            name="superblobaddon-with-multiple-response-blob-glob",
+            product="superblobaddon-with-multiple-response-blob-glob",
+            data_version=1,
+            data=createBlob(
+                """
+{
+    "name": "superblobaddon",
+    "schema_version": 4000,
+    "blobs": ["responseblob-a", "responseblob-b"]
+}
+"""
+            ),
+        )
+        dbo.releases.t.insert().execute(
             name="responseblob-a",
             product="responseblob-a",
             data_version=1,
