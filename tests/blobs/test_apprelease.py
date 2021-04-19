@@ -3670,6 +3670,144 @@ class TestSchema9Blob(unittest.TestCase):
         )
         self.assertRaises(BlobValidationError, blob.validate, "h", self.whitelistedDomains)
 
+    def testDisableBackgroundUpdates(self):
+        blob = ReleaseBlobV9()
+        blob.loadJSON(
+            """
+{
+    "name": "bbb",
+    "schema_version": 9,
+    "hashFunction": "sha512",
+    "appVersion": "68.0",
+    "displayVersion": "68.0",
+    "updateLine": [
+        {
+            "for": {},
+            "fields": {
+                "detailsURL": "http://example.org/%LOCALE%",
+                "disableBackgroundUpdates": true,
+                "type": "minor"
+            }
+        }
+    ],
+    "fileUrls": {
+        "*": {
+            "partials": {
+                "bb": "http://a.com/bb-partial"
+            },
+            "completes": {
+                "*": "http://a.com/complete"
+            }
+        }
+    },
+    "platforms": {
+        "p": {
+            "buildID": 50,
+            "OS_FTP": "p",
+            "OS_BOUNCER": "p",
+            "locales": {
+                "en-US": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": "9"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "41"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+"""
+        )
+        blob.validate("h", self.whitelistedDomains)
+        updateQuery = {
+            "product": "b",
+            "buildID": "23",
+            "version": "65.0",
+            "buildTarget": "p",
+            "locale": "en-US",
+            "channel": "release",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
+            "force": None,
+        }
+        returned_header = blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        expected_header = (
+            '<update appVersion="68.0" buildID="50" detailsURL="http://example.org/en-US" disableBackgroundUpdates="true"'
+            ' displayVersion="68.0" type="minor">'
+        )
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+
+    def testDisableBackgroundUpdatesFalseNotAllowed(self):
+        blob = ReleaseBlobV9()
+        blob.loadJSON(
+            """
+    {
+        "name": "bbb",
+        "schema_version": 9,
+        "hashFunction": "sha512",
+        "appVersion": "68.0",
+        "displayVersion": "68.0",
+        "updateLine": [
+            {
+                "for": {},
+                "fields": {
+                    "detailsURL": "http://example.org/%LOCALE%",
+                    "disableBackgroundUpdates": false,
+                    "type": "minor"
+                }
+            }
+        ],
+        "fileUrls": {
+            "*": {
+                "partials": {
+                    "bb": "http://a.com/bb-partial"
+                },
+                "completes": {
+                    "*": "http://a.com/complete"
+                }
+            }
+        },
+        "platforms": {
+            "p": {
+                "buildID": 50,
+                "OS_FTP": "p",
+                "OS_BOUNCER": "p",
+                "locales": {
+                    "en-US": {
+                        "partials": [
+                            {
+                                "filesize": 8,
+                                "from": "h1",
+                                "hashValue": "9"
+                            }
+                        ],
+                        "completes": [
+                            {
+                                "filesize": 40,
+                                "from": "*",
+                                "hashValue": "41"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+    """
+        )
+        self.assertRaises(BlobValidationError, blob.validate, "h", self.whitelistedDomains)
+
 
 @pytest.mark.parametrize(
     "for1,for2",
