@@ -272,7 +272,7 @@ class TestRulesAPI_JSON(ViewTest):
 
     def testNewRulePostWithGlob(self):
         ret = self._post("/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", version="99.98.*"))
-        self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.data))
 
     def testBackgroundRateZero(self):
         ret = self._post("/rules", data=dict(backgroundRate=0, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly"))
