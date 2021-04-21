@@ -45,6 +45,8 @@ class AncientMozillaVersion(StrictVersion):
 
 class GlobVersionTuple(tuple):
     def __eq__(self, value):
+        if len(value) < len(self):
+            return False
         for i, j in enumerate(self):
             if j != value[i]:
                 return False
