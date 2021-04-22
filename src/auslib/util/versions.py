@@ -43,10 +43,51 @@ class AncientMozillaVersion(StrictVersion):
     )
 
 
+class GlobVersionTuple(tuple):
+    def __eq__(self, value):
+        if len(value) < len(self):
+            return False
+        for i, j in enumerate(self):
+            if j != value[i]:
+                return False
+        return True
+
+    def __ne__(self, value):
+        return not self.__eq__(value)
+
+
+class GlobVersion(StrictVersion):
+    """A version class that supports Firefox versions 5.0 and up, which ends
+    with a glob `*`. Not really a StrictVersion at all, but it needs to be
+    to compare with other MozillaVersions."""
+
+    version_re = re.compile(
+        r"""^(\d+) \. (\d+\.\*|\*)$""",
+        re.VERBOSE,
+    )
+    prerelease = None
+
+    def parse(self, vstring):
+        self.vstring = vstring
+        match = self.version_re.match(vstring)
+        if not match:
+            raise ValueError("invalid version number '%s'" % vstring)
+        parts = [int(i) for i in vstring.split(".") if i != "*"]
+        self.version = GlobVersionTuple(parts)
+
+    def __eq__(self, value):
+        return str(value).startswith(self.vstring.rstrip("*"))
+
+    def __str__(self):
+        return self.vstring
+
+
 def MozillaVersion(version):
     try:
         if version.count(".") in (1, 2):
-            if int(version[0]) > 4:
+            if int(version.split(".")[0]) > 4:
+                if version.endswith(".*"):
+                    return GlobVersion(version)
                 return PostModernMozillaVersion(version)
             else:
                 return ModernMozillaVersion(version)
