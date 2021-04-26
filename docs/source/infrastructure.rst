@@ -65,7 +65,7 @@ Balrog uses the built-in RDS backups. The database in snapshotted nightly, and i
 -----------------
 Deploying Changes
 -----------------
-Balrog's `stage and production infrastructure <https://mana.mozilla.org/wiki/display/SVCOPS/Balrog+%28aus5%2C+aus4%2C+...%29+Firefox+Update+Service>`_ are managed by `the CloudOps team <https://mana.mozilla.org/wiki/display/SVCOPS/Contacting+Cloud+Operations>`_.
+Balrog's `stage and production infrastructure <https://github.com/mozilla-services/cloudops-docs/tree/master/Services/Balrog>`_ are managed by `CloudOps <https://mana.mozilla.org/wiki/display/SVCOPS/Contacting+Services+SRE>`_.
 
 This section describes how to go from a reviewed patch to deploying it in production.
 
@@ -76,7 +76,7 @@ Before you deploy, consider whether or not it's an appropriate time to. Some fac
 
 * Are we in the middle of an important release such as a chemspill? If so, it's probably not a good time to deploy.
 * Is it Friday? You probably don't want to deploy on a Friday except in extreme circumstances.
-* Do you have enough time to safely do a push? Most pushes take at most 60 minutes to complete once the production push has begun.
+* Do you have enough time to safely do a push? Most pushes take at most 30 minutes to complete once the production push has begun.
 
 ~~~~~~~~~~~~~~~
 Schema Upgrades
@@ -107,16 +107,11 @@ To get the new code in stage you must create a new Release in Github as follows:
 
   * Look for anything unexpected, or any schema changes. If schema changes are present, see the above section for instructions on handling them.
 
-3. `Create a new Release on Github <https://github.com/mozilla/balrog/releases>`_. This create new Docker images tagged with your version, and deploys them to stage. It may take upwards of 30 minutes for the deployment to happen.
+3. `Create a new Release on Github <https://github.com/mozilla/balrog/releases>`_. This create new Docker images tagged with your version, and deploys them to stage. It may take upwards of 30 minutes for the deployment to happen. Deployment notifications will show up in #balrog on Slack.
 
-Once the changes are deployed to stage, let them bake for at least 24 hours. You can do additional targeted testing here if you wish, or simply wait for nightlies/releases to prod things along. It's a good idea to watch Sentry for new exceptions that may show up, and Datadog for any notable changes in the shape of the traffic.
+Once the changes are deployed to stage, you should do some testing to make sure that the new features, fixes, etc. are working properly there. It's a good idea to `watch Sentry for new exceptions <https://sentry.prod.mozaws.net/settings/operations/teams/balrog/members/>`_ that may show up, and Grafana for any notable changes in the shape of the traffic.
 
 **Important Note!** Only two-part version numbers (like shown above) are supported by our deployment pipeline.
-
-~~~~~~~~~~~~~~~~~~~~~
-Verification in Stage
-~~~~~~~~~~~~~~~~~~~~~
-After deploying, you should do some functional testing in stage. At the very least, you should do explicit testing of all the new code that would be included in the push. Eg: if you're changing the format of a blob, make sure that you can add a new blob of that type, and that the response looks correct. In many cases you should `push a Release to try <https://firefox-source-docs.mozilla.org/tools/try/selectors/release.html?highlight=release>`_ as well.
 
 ~~~~~~~~~~~~~~~~~~~~~
 Pushing to Production
@@ -126,8 +121,6 @@ Pushing live requires CloudOps. For non-urgent pushes, you should begin this pro
 
 1. `File a bug <https://bugzilla.mozilla.org/enter_bug.cgi?assigned_to=oremj%40mozilla.com&bug_file_loc=http%3A%2F%2F&bug_ignored=0&bug_severity=normal&bug_status=NEW&bug_type=task&cc=oremj%40mozilla.com&cc=jbuckley%40mozilla.com&cc=bhearsum%40mozilla.com&cf_fx_iteration=---&cf_fx_points=---&cf_status_firefox77=---&cf_status_firefox78=---&cf_status_firefox79=---&cf_status_firefox80=---&cf_status_firefox_esr68=---&cf_status_firefox_esr78=---&cf_tracking_firefox77=---&cf_tracking_firefox78=---&cf_tracking_firefox79=---&cf_tracking_firefox80=---&cf_tracking_firefox_esr68=---&cf_tracking_firefox_esr78=---&cf_tracking_firefox_relnote=---&cf_tracking_firefox_sumo=---&comment=Balrog%20version%20X.Y%20is%20ready%20to%20be%20pushed%20to%20prod.%20Please%20deploy%20the%20new%20Docker%20images%20%28vX.Y%29%20for%20admin%2C%20public%2C%20and%20the%20agent.%0D%0A%0D%0AWe%27d%20like%20the%20production%20push%20for%20this%20to%20happen%20today.&component=Operations%3A%20Balrog&contenttypemethod=list&contenttypeselection=text%2Fplain&defined_groups=1&filed_via=standard_form&flag_type-37=X&flag_type-607=X&flag_type-708=X&flag_type-721=X&flag_type-737=X&flag_type-748=X&flag_type-787=X&flag_type-800=X&flag_type-803=X&flag_type-846=X&flag_type-864=X&flag_type-936=X&flag_type-941=X&flag_type-945=X&form_name=enter_bug&maketemplate=Remember%20values%20as%20bookmarkable%20template&op_sys=Unspecified&priority=--&product=Cloud%20Services&rep_platform=Unspecified&short_desc=please%20deploy%20balrog%20X.Y%20to%20prod&target_milestone=---&version=unspecified>`_ to have the new version pushed to production
 
-  * Wednesdays around 11am Pacific are usually the best day to push to production, because they are generally free of release events, nightlies, and cronjobs. Unless you have a specific need to deploy on a different day, you should request the prod push for a Wednesday between those hours
-  * You should link any bugs being deployed is the "Blocks" field.
   * Make sure you substitute the version number and choose the correct options from the bug template.
 
 2. Once the push has happened, verify that the code was pushed to production by checking the __version__ endpoints on `the Admin <https://aus4-admin.mozilla.org/__version__>`_ and `Public <https://aus5.mozilla.org/__version__>`_ apps.
