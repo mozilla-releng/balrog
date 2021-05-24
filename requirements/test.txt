@@ -969,9 +969,9 @@ pip==20.3.3 \
     # via
     #   -r test.in
     #   pip-tools
-setuptools==51.1.1 \
-    --hash=sha256:0b43d1e0e0ac1467185581c2ceaf86b5c1a1bc408f8f6407687b0856302d1850 \
-    --hash=sha256:6d119767443a0f770bab9738b86ce9c0a699a7759ff4f61af583ee73d2e528a0
+setuptools==57.0.0 \
+    --hash=sha256:401cbf33a7bf817d08014d51560fc003b895c4cdc1a5b521ad2969e928a07535 \
+    --hash=sha256:c8b9f1a457949002e358fea7d3f2a1e1b94ddc0354b2e40afc066bf95d21bf7b
     # via
     #   -r base.in
     #   check-manifest
