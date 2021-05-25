@@ -5,6 +5,10 @@
 #
 #    pip-compile-multi
 #
+aiofiles==0.7.0 \
+    --hash=sha256:a1c4fc9b2ff81568c83e21392a82f344ea9d23da906e4f6a52662764545e19d4 \
+    --hash=sha256:c67a6823b5f23fcab0a2595a289cec7d8c863ffcb4322fb8cd6b90400aedfdbc
+    # via gcloud-aio-storage
 aiohttp==3.7.3 \
     --hash=sha256:0b795072bb1bf87b8620120a6373a3c61bfcb8da7e5c2377f4bb23ff4f0b62c9 \
     --hash=sha256:0d438c8ca703b1b714e82ed5b7a4412c82577040dadff479c08405e2a715564f \
@@ -177,6 +181,7 @@ chardet==3.0.4 \
     --hash=sha256:fc323ffcaeaed0e0a02bf4d117757b98aed530d9ed4531e3e15460124c106691
     # via
     #   aiohttp
+    #   gcloud-aio-auth
     #   requests
 check-manifest==0.46 \
     --hash=sha256:5895e42a012989bdc51854a02c82c8d6898112a4ab11f2d7878200520b49d428 \
@@ -323,13 +328,13 @@ flask==1.1.2 \
 future==0.18.2 \
     --hash=sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d
     # via gcloud-aio-auth
-gcloud-aio-auth==3.4.4 \
-    --hash=sha256:2af66439511504c5360d9430aadef4713277a558ec80076154551bb6860f4dc1 \
-    --hash=sha256:9310c36257b37eb1f1d29d7822aa457dbd613d4d4dc2e82dd8be1d99987c2ae7
+gcloud-aio-auth==3.6.0 \
+    --hash=sha256:0085a8b6539c9cf6fab514349b9e20e9628299e1766adc8dccd14ccb142bba28 \
+    --hash=sha256:623ca19a8d1b3493bd31ea660d242c8c43f541f170a7ebc710869392cbeada2a
     # via gcloud-aio-storage
-gcloud-aio-storage==5.6.0 \
-    --hash=sha256:31d46aef630f7ef0ba9698ca72563226431347b1099e3c0c9de3801c3c172632 \
-    --hash=sha256:76f7ec414debb830068b23a0966cb20c0ac3d56eab797053e00f9ce1618f2431
+gcloud-aio-storage==6.1.0 \
+    --hash=sha256:4ac5df0e934981973a58dafca10a49cf8e1e2dcc48f7ae4e20298b3ae3e047cf \
+    --hash=sha256:bca5f155aa018b20ccb557336e2f296e6fdbbe48ee81a5f501717940fc377c78
     # via -r base.in
 google-api-core==1.24.1 \
     --hash=sha256:0f1dee446db2685863c3c493a90fefa5fc7f4defaf8e1a320b50ccaddfb5d469 \
@@ -596,7 +601,9 @@ pyasn1-modules==0.2.8 \
     --hash=sha256:cbac4bc38d117f2a49aeedec4407d23e8866ea4ac27ff2cf7fb3e5b570df19e0 \
     --hash=sha256:f39edd8c4ecaa4556e989147ebf219227e2cd2e8a43c7e7fcb1f1c18c5fd6a3d \
     --hash=sha256:fe0644d9ab041506b62782e92b06b8c68cca799e1a9636ec398675459e031405
-    # via google-auth
+    # via
+    #   gcloud-aio-storage
+    #   google-auth
 pyasn1==0.4.8 \
     --hash=sha256:014c0e9976956a08139dc0712ae195324a75e142284d5f87f1a87ee1b068a359 \
     --hash=sha256:03840c999ba71680a131cfaee6fab142e1ed9bbd9c693e285cc6aca0d555e576 \
@@ -761,6 +768,7 @@ rsa==4.6 \
     --hash=sha256:109ea5a66744dd859bf16fe904b8d8b627adafb9408753161e766a92e7d681fa \
     --hash=sha256:6166864e23d6b5195a5cfed6cd9fed0fe774e226d8f854fcb23b7bbef0350233
     # via
+    #   gcloud-aio-storage
     #   google-auth
     #   python-jose
 sentry-sdk[flask]==0.19.5 \
