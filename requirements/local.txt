@@ -343,15 +343,15 @@ gcloud-aio-storage==5.6.0 \
     --hash=sha256:31d46aef630f7ef0ba9698ca72563226431347b1099e3c0c9de3801c3c172632 \
     --hash=sha256:76f7ec414debb830068b23a0966cb20c0ac3d56eab797053e00f9ce1618f2431
     # via -r base.in
-google-api-core==1.24.1 \
-    --hash=sha256:0f1dee446db2685863c3c493a90fefa5fc7f4defaf8e1a320b50ccaddfb5d469 \
-    --hash=sha256:a7f5794446a22ff7d36764959ba5f319f37628faf4da04fdc0dedf1598b556c1
+google-api-core==1.29.0 \
+    --hash=sha256:dbe885011111a9afd9ea9a347db6a9c608e82e5c7648c1f7fabf2b4079a579b5 \
+    --hash=sha256:f83118319d2a28806ec3399671cbe4af5351bd0dac54c40a0395da6162ebe324
     # via
     #   -r base.in
     #   google-cloud-core
-google-auth==1.24.0 \
-    --hash=sha256:0b0e026b412a0ad096e753907559e4bdb180d9ba9f68dd9036164db4fdc4ad2e \
-    --hash=sha256:ce752cc51c31f479dbf9928435ef4b07514b20261b021c7383bee4bda646acb8
+google-auth==1.30.1 \
+    --hash=sha256:044d81b1e58012f8ebc71cc134e191c1fa312f543f1fbc99973afe28c25e3228 \
+    --hash=sha256:b3ca7a8ff9ab3bdefee3ad5aefb11fc6485423767eee016f5942d8e606ca23fb
     # via
     #   -r base.in
     #   google-api-core
@@ -541,6 +541,7 @@ packaging==20.8 \
     --hash=sha256:78598185a7008a470d64526a8059de9aaa449238f280fc9eb6b13ba6c4109093
     # via
     #   build
+    #   google-api-core
     #   pytest
     #   tox
 pathspec==0.8.1 \
