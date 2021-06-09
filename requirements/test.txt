@@ -337,9 +337,9 @@ google-api-core==1.24.1 \
     # via
     #   -r base.in
     #   google-cloud-core
-google-auth==1.24.0 \
-    --hash=sha256:0b0e026b412a0ad096e753907559e4bdb180d9ba9f68dd9036164db4fdc4ad2e \
-    --hash=sha256:ce752cc51c31f479dbf9928435ef4b07514b20261b021c7383bee4bda646acb8
+google-auth==1.30.2 \
+    --hash=sha256:9b235dbc876e49454cbedc52ae0abd540ef705ebccdf4fbe93553bb13f26b1a4 \
+    --hash=sha256:eb017521276a75492282c6ca4b718f26de112ed3bcbeaeeb02c1b82de425f909
     # via
     #   -r base.in
     #   google-api-core
