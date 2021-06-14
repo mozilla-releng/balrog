@@ -79,4 +79,3 @@ class TestMozillaVersions(unittest.TestCase):
         self.assertEqual(str(version), "78.8.*")
         version2 = MozillaVersion("78.*")
         self.assertEqual(version2.version, MozillaVersion("78.0a1").version)
-        self.assertEqual(version2.version, MozillaVersion("78.0b5").version)
