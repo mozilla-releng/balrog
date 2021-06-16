@@ -14,9 +14,17 @@ def has_operator(value):
     return value.startswith(("<", ">"))
 
 
+def flip_eq(value, operand):
+    """GlobVersions can equal StrictVersions but not always vice versa."""
+    return operator.eq(operand, value)
+
+
 def get_op(pattern):
-    # only alphanumeric or glob characters means no operator
-    if re.match(r"[\w\*]+", pattern):
+    # ending with a glob means flip_eq
+    if re.search(r"\*$", pattern):
+        return flip_eq, pattern
+    # only alphanumeric characters means no operator
+    if re.match(r"\w+", pattern):
         return operator.eq, pattern
     for op in operators:
         m = re.match(r"(%s)([\.\w]+)" % op, pattern)
