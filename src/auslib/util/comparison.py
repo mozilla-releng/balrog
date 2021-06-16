@@ -14,15 +14,27 @@ def has_operator(value):
     return value.startswith(("<", ">"))
 
 
-def flip_eq(value, operand):
-    """GlobVersions can equal StrictVersions but not always vice versa."""
-    return operator.eq(operand, value)
+def either_eq(value, operand):
+    """The order of eq matters with GlobVersion; test both orders.
+
+    Nightly: because StrictVersion also compares self.prerelease,
+             StrictVersion("70.0a1") != GlobVersion("70.*"), but
+             GlobVersion("70.*") == StrictVersion("70.0a1")
+
+    dot-0: because StrictVersion can drop the trailing .0,
+           GlobVersion("80.0.*") != StrictVersion("80.0.0"), but
+           StrictVersion("80.0.0") == GlobVersion("80.0.*)
+
+    Because of this, let's test eq in both directions.
+
+    """
+    return operator.eq(value, operand) or operator.eq(operand, value)
 
 
 def get_op(pattern):
-    # ending with a glob means flip_eq
-    if re.search(r"\*$", pattern):
-        return flip_eq, pattern
+    # ending with a glob means either_eq
+    if pattern.endswith("*"):
+        return either_eq, pattern
     # only alphanumeric characters means no operator
     if re.match(r"\w+", pattern):
         return operator.eq, pattern
