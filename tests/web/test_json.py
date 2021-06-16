@@ -28,7 +28,7 @@ def mock_autograph(monkeypatch):
 
 @pytest.fixture(scope="module")
 def appconfig():
-    app.config["WHITELISTED_DOMAINS"] = {"good.com": ("Guardian",)}
+    app.config["ALLOWLISTED_DOMAINS"] = {"good.com": ("Guardian",)}
 
 
 @pytest.fixture(scope="module")

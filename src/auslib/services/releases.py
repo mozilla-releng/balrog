@@ -531,7 +531,7 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
                 set_by_path(new_data_versions, path, 1)
 
     # Raises if there are errors
-    createBlob(full_blob).validate(current_product, app.config["WHITELISTED_DOMAINS"])
+    createBlob(full_blob).validate(current_product, app.config["ALLOWLISTED_DOMAINS"])
 
     await_coroutines(coros)
 
@@ -563,7 +563,7 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
         raise ReadOnlyError("Cannot overwrite a Release that is marked as read-only")
 
     # Raises if there are errors
-    createBlob(blob).validate(product or current_product, app.config["WHITELISTED_DOMAINS"])
+    createBlob(blob).validate(product or current_product, app.config["ALLOWLISTED_DOMAINS"])
 
     current_assets = get_assets(name, trans)
     base_blob, new_assets = split_release(blob, blob["schema_version"])

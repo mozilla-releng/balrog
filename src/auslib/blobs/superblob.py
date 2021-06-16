@@ -25,15 +25,15 @@ class SuperBlob(XMLBlob):
         # Since a superblob update will always be returned.
         return True
 
-    def containsForbiddenDomain(self, product, whitelistedDomains):
+    def containsForbiddenDomain(self, product, allowlistedDomains):
         # Since SuperBlobs don't have any URLs
         return False
 
-    def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerHeaderXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         """
         :return: Header specific to GMP and systemaddons superblob
         """
         return "    <addons>"
 
-    def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerFooterXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         return "    </addons>"

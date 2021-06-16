@@ -11,7 +11,7 @@ STAGING = bool(int(os.environ.get("STAGING", 0)))
 LOCALDEV = bool(int(os.environ.get("LOCALDEV", 0)))
 
 SPECIAL_FORCE_HOSTS = ["http://download.mozilla.org"]
-DOMAIN_WHITELIST = {
+DOMAIN_ALLOWLIST = {
     "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
     "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
     "download.cdn.mozilla.net": ("Firefox", "Fennec"),
@@ -24,7 +24,7 @@ DOMAIN_WHITELIST = {
     "vpn.mozilla.org": ("FirefoxVPN", "Guardian"),
 }
 if STAGING or LOCALDEV:
-    DOMAIN_WHITELIST.update(
+    DOMAIN_ALLOWLIST.update(
         {
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
             "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
@@ -76,8 +76,8 @@ cache.make_cache("rules", 500, 30)
 cache.make_cache("updates_disabled", 100, 60)
 
 dbo.setDb(os.environ["DBURI"])
-dbo.setDomainWhitelist(DOMAIN_WHITELIST)
-application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
+dbo.setDomainAllowlist(DOMAIN_ALLOWLIST)
+application.config["ALLOWLISTED_DOMAINS"] = DOMAIN_ALLOWLIST
 application.config["SPECIAL_FORCE_HOSTS"] = SPECIAL_FORCE_HOSTS
 # version.json is created when the Docker image is built, and contains details
 # about the current code (version number, commit hash), but doesn't exist in

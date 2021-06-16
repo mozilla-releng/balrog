@@ -8,7 +8,7 @@ class TestSchema1Blob(unittest.TestCase):
 
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
-        self.whitelistedDomains = {"a.com": ("gg",), "boring.com": ("gg",)}
+        self.allowlistedDomains = {"a.com": ("gg",), "boring.com": ("gg",)}
         self.blob1 = SystemAddonsBlob()
         self.blob1.loadJSON(
             """
@@ -106,9 +106,9 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        returned_header = self.blob1.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob1.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob1.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob1.getInnerHeaderXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        returned = self.blob1.getInnerXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        returned_footer = self.blob1.getInnerFooterXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected_header = "    <addons>"
         expected = [
@@ -138,9 +138,9 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        returned_header = self.empty_blob.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.empty_blob.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.empty_blob.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.empty_blob.getInnerHeaderXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        returned = self.empty_blob.getInnerXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        returned_footer = self.empty_blob.getInnerFooterXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected_header = ""
         expected = []
@@ -163,9 +163,9 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        returned_header = self.blob2.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob2.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob2.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob2.getInnerHeaderXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        returned = self.blob2.getInnerXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        returned_footer = self.blob2.getInnerFooterXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected_header = "    <addons>"
         expected = []
@@ -189,9 +189,9 @@ class TestSchema1Blob(unittest.TestCase):
             "distVersion": "a",
             "force": 0,
         }
-        returned_header = self.blob3.getInnerHeaderXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned = self.blob3.getInnerXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
-        returned_footer = self.blob3.getInnerFooterXML(updateQuery, "minor", self.whitelistedDomains, self.specialForceHosts)
+        returned_header = self.blob3.getInnerHeaderXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        returned = self.blob3.getInnerXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        returned_footer = self.blob3.getInnerFooterXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected_header = ""
         expected = []
@@ -225,7 +225,7 @@ class TestSchema1Blob(unittest.TestCase):
 }
 """
         )
-        self.assertTrue(blob.containsForbiddenDomain("gg", self.whitelistedDomains))
+        self.assertTrue(blob.containsForbiddenDomain("gg", self.allowlistedDomains))
 
     def testDoesNotContainForbiddenDomain(self):
         blob = SystemAddonsBlob()
@@ -250,7 +250,7 @@ class TestSchema1Blob(unittest.TestCase):
 }
 """
         )
-        self.assertFalse(blob.containsForbiddenDomain("gg", self.whitelistedDomains))
+        self.assertFalse(blob.containsForbiddenDomain("gg", self.allowlistedDomains))
 
     def testAddonLayoutEmptyAddons(self):
 
@@ -267,7 +267,7 @@ class TestSchema1Blob(unittest.TestCase):
     }
     """
         )
-        blob.validate("gg", self.whitelistedDomains)
+        blob.validate("gg", self.allowlistedDomains)
 
     def testAddonLayoutWithUninstall(self):
 
@@ -284,7 +284,7 @@ class TestSchema1Blob(unittest.TestCase):
     }
     """
         )
-        blob.validate("gg", self.whitelistedDomains)
+        blob.validate("gg", self.allowlistedDomains)
 
     def testAddonLayoutNoAddonsNoUninstall(self):
 
@@ -300,7 +300,7 @@ class TestSchema1Blob(unittest.TestCase):
     }
     """
         )
-        self.assertRaises(Exception, blob.validate, "gg", self.whitelistedDomains)
+        self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testAddonLayoutTwoPlatforms(self):
 
@@ -331,7 +331,7 @@ class TestSchema1Blob(unittest.TestCase):
     }
     """
         )
-        blob.validate("gg", self.whitelistedDomains)
+        blob.validate("gg", self.allowlistedDomains)
 
     def testAddonLayoutNoVersion(self):
 
@@ -361,7 +361,7 @@ class TestSchema1Blob(unittest.TestCase):
     }
     """
         )
-        self.assertRaises(Exception, blob.validate, "gg", self.whitelistedDomains)
+        self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testAddonLayoutEmptyPlatforms(self):
 
@@ -383,7 +383,7 @@ class TestSchema1Blob(unittest.TestCase):
     }
     """
         )
-        blob.validate("gg", self.whitelistedDomains)
+        blob.validate("gg", self.allowlistedDomains)
 
     def testAddonLayoutEmptyPlatformName(self):
 
@@ -412,7 +412,7 @@ class TestSchema1Blob(unittest.TestCase):
     }
     """
         )
-        self.assertRaises(Exception, blob.validate, "gg", self.whitelistedDomains)
+        self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testAddonLayoutNoFilesize(self):
 
@@ -442,4 +442,4 @@ class TestSchema1Blob(unittest.TestCase):
     }
     """
         )
-        self.assertRaises(Exception, blob.validate, "gg", self.whitelistedDomains)
+        self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)

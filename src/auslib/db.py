@@ -1949,7 +1949,7 @@ class Rules(AUSTable):
         return matchingRules
 
     def getRule(self, id_or_alias, transaction=None):
-        """ Returns the unique rule that matches the give rule_id or alias."""
+        """Returns the unique rule that matches the give rule_id or alias."""
         where = []
         # Figuring out which column to use ahead of times means there's only
         # one potential index for the database to use, which should make
@@ -2014,7 +2014,7 @@ class Rules(AUSTable):
 
 class Releases(AUSTable):
     def __init__(self, db, metadata, dialect, history_buckets, historyClass):
-        self.domainWhitelist = []
+        self.domainAllowlist = []
 
         self.table = Table(
             "releases",
@@ -2083,8 +2083,8 @@ class Releases(AUSTable):
             potential_required_signoffs["rs"] = signoffs_required
         return potential_required_signoffs
 
-    def setDomainWhitelist(self, domainWhitelist):
-        self.domainWhitelist = domainWhitelist
+    def setDomainAllowlist(self, domainAllowlist):
+        self.domainAllowlist = domainAllowlist
 
     def getReleases(self, name=None, product=None, limit=None, transaction=None):
         self.log.debug("Looking for releases with:")
@@ -2204,7 +2204,7 @@ class Releases(AUSTable):
 
         blob = columns["data"]
 
-        blob.validate(columns["product"], self.domainWhitelist)
+        blob.validate(columns["product"], self.domainAllowlist)
         if columns["name"] != blob["name"]:
             raise ValueError("name in database (%s) does not match name in blob (%s)" % (columns["name"], blob["name"]))
 
@@ -2234,7 +2234,7 @@ class Releases(AUSTable):
                     self._proceedIfNotReadOnly(current_release["name"], transaction=transaction)
 
                 if blob:
-                    blob.validate(what.get("product", current_release["product"]), self.domainWhitelist)
+                    blob.validate(what.get("product", current_release["product"]), self.domainAllowlist)
                     name = what.get("name", name)
                     if name != blob["name"]:
                         raise ValueError("name in database (%s) does not match name in blob (%s)" % (name, blob.get("name")))
@@ -2345,7 +2345,7 @@ class Releases(AUSTable):
                 if a not in releaseBlob["platforms"]:
                     releaseBlob["platforms"][a] = {"alias": platform}
 
-        releaseBlob.validate(product, self.domainWhitelist)
+        releaseBlob.validate(product, self.domainAllowlist)
         what = dict(data=releaseBlob)
 
         self.update(where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
@@ -2441,7 +2441,7 @@ class Releases(AUSTable):
 
 class ReleasesJSON(AUSTable):
     def __init__(self, db, metadata, dialect, history_buckets, historyClass):
-        self.domainWhitelist = []
+        self.domainAllowlist = []
 
         self.table = Table(
             "releases_json",
@@ -3117,8 +3117,8 @@ class AUSDatabase(object):
     def setSystemAccounts(self, systemAccounts):
         self.systemAccounts = systemAccounts
 
-    def setDomainWhitelist(self, domainWhitelist):
-        self.releasesTable.setDomainWhitelist(domainWhitelist)
+    def setDomainAllowlist(self, domainAllowlist):
+        self.releasesTable.setDomainAllowlist(domainAllowlist)
 
     def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr, use_tls=False, notify_tables=None):
         bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr, use_tls)

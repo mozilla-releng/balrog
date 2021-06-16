@@ -20,7 +20,7 @@ dburi=sqlite:///:memory:
 logfile=/foo/bar/baz
 
 [site-specific]
-domain_whitelist=a.com:c|d, boring.com:e
+domain_allowlist=a.com:c|d, boring.com:e
 """
             )
         self.cfg = AUSConfig(self.config_file)
@@ -29,6 +29,6 @@ domain_whitelist=a.com:c|d, boring.com:e
         os.close(self.config_fd)
         os.remove(self.config_file)
 
-    def testWhitelistDomains(self):
+    def testAllowlistDomains(self):
         expected = {"a.com": ("c", "d"), "boring.com": ("e",)}
-        self.assertEqual(expected, self.cfg.getDomainWhitelist())
+        self.assertEqual(expected, self.cfg.getDomainAllowlist())

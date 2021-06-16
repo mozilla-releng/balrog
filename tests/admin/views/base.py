@@ -47,7 +47,7 @@ class ViewTest(unittest.TestCase):
         app.config["SECRET_KEY"] = "abc123"
         app.config["DEBUG"] = True
         app.config["WTF_CSRF_ENABLED"] = False
-        app.config["WHITELISTED_DOMAINS"] = {"good.com": ("a", "b", "c", "d")}
+        app.config["ALLOWLISTED_DOMAINS"] = {"good.com": ("a", "b", "c", "d")}
         app.config["VERSION_FILE"] = self.version_file
         app.config["AUTH_DOMAIN"] = "balrog.test.dev"
         app.config["AUTH_AUDIENCE"] = "balrog test"
@@ -72,7 +72,7 @@ class ViewTest(unittest.TestCase):
         # maybe we should mock this only in the tests we care about?
         dbo.releases.history = FakeGCSHistory()
 
-        dbo.setDomainWhitelist({"good.com": ("a", "b", "c", "d")})
+        dbo.setDomainAllowlist({"good.com": ("a", "b", "c", "d")})
         self.metadata.create_all(dbo.engine)
         dbo.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         dbo.permissions.t.insert().execute(permission="permission", username="bob", data_version=1)

@@ -20,7 +20,7 @@ site.addsitedir(os.path.join(mydir, "..", "vendor/lib/python"))
 
 log = logging.getLogger(__name__)
 
-WHITELISTED_DOMAINS = {
+ALLOWLISTED_DOMAINS = {
     "download.mozilla.org": ("Firefox",),
     "stage-old.mozilla.org": ("Firefox",),
     "ftp.mozilla.org": ("Firefox",),
@@ -103,7 +103,7 @@ def walkSnippets(AUS, testPath):
         testQuery["queryVersion"] = 3
         release, update_type, _ = AUS.evaluateRules(testQuery)
         if release:
-            balrog_snippets = release.createSnippets(testQuery, update_type, WHITELISTED_DOMAINS, SPECIAL_FORCE_HOSTS)
+            balrog_snippets = release.createSnippets(testQuery, update_type, ALLOWLISTED_DOMAINS, SPECIAL_FORCE_HOSTS)
         else:
             balrog_snippets = {"partial": "", "complete": ""}
 
@@ -186,7 +186,7 @@ if __name__ == "__main__":
         AUS = AUS_Class()
         dbo.setDb(dbPath)
         dbo.create()
-        dbo.setDomainWhitelist(WHITELISTED_DOMAINS)
+        dbo.setDomainAllowlist(ALLOWLISTED_DOMAINS)
         populateDB(td)
         if options.dumprules:
             log.info(

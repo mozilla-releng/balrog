@@ -221,7 +221,7 @@ paths:
                   rule_id: 308
                   update_type: "minor"
                   version: null
-                  whitelist: null
+                  allowlist: null
         '404':
           $ref: '#/responses/resourceNotFound'
         '400':

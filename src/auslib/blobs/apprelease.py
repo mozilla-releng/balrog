@@ -107,7 +107,7 @@ class ReleaseBlobBase(XMLBlob):
     def _getAdditionalPatchAttributes(self, patch):
         return {}
 
-    def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts):
+    def _getSpecificPatchXML(self, patchKey, patchType, patch, updateQuery, allowlistedDomains, specialForceHosts):
         fromRelease = self._getFromRelease(patch)
         # Find all the alias' for this build target so we can look for the current platform
         # in the fromRelease
@@ -142,7 +142,7 @@ class ReleaseBlobBase(XMLBlob):
         # the update entirely? Right now, another patch type could still
         # return an update. Eg, the partial could contain a forbidden domain
         # but the complete could still return an update from an accepted one.
-        if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
+        if isForbiddenUrl(url, updateQuery["product"], allowlistedDomains):
             return None
 
         patchXML = '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"' % (
@@ -159,13 +159,13 @@ class ReleaseBlobBase(XMLBlob):
 
         return patchXML
 
-    def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerHeaderXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         return self._getUpdateLineXML(updateQuery, update_type)
 
-    def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerFooterXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         return "    </update>"
 
-    def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         """This method, along with getHeaderXML and getFooterXML are the entry point
         for update XML creation for all Gecko app blobs. However, the XML and
         underlying data has changed over time, so there is a lot of indirection
@@ -209,7 +209,7 @@ class ReleaseBlobBase(XMLBlob):
         locale = updateQuery["locale"]
         localeData = self.getLocaleData(buildTarget, locale)
 
-        patches = self._getPatchesXML(localeData, updateQuery, whitelistedDomains, specialForceHosts)
+        patches = self._getPatchesXML(localeData, updateQuery, allowlistedDomains, specialForceHosts)
         return patches
 
     def shouldServeUpdate(self, updateQuery):
@@ -233,7 +233,7 @@ class ReleaseBlobBase(XMLBlob):
 
         return True
 
-    def containsForbiddenDomain(self, product, whitelistedDomains):
+    def containsForbiddenDomain(self, product, allowlistedDomains):
         """Returns True if the blob contains any file URLs that contain a
         domain that we're not allowed to serve updates to."""
         # Check the top level URLs, if the exist.
@@ -242,11 +242,11 @@ class ReleaseBlobBase(XMLBlob):
             if isinstance(c, dict):
                 for from_ in c.values():
                     for url in from_.values():
-                        if isForbiddenUrl(url, product, whitelistedDomains):
+                        if isForbiddenUrl(url, product, allowlistedDomains):
                             return True
             # Old-style
             else:
-                if isForbiddenUrl(c, product, whitelistedDomains):
+                if isForbiddenUrl(c, product, allowlistedDomains):
                     return True
 
         # And also the locale-level URLs.
@@ -254,12 +254,12 @@ class ReleaseBlobBase(XMLBlob):
             for locale in platform.get("locales", {}).values():
                 for type_ in ("partial", "complete"):
                     if type_ in locale and "fileUrl" in locale[type_]:
-                        if isForbiddenUrl(locale[type_]["fileUrl"], product, whitelistedDomains):
+                        if isForbiddenUrl(locale[type_]["fileUrl"], product, allowlistedDomains):
                             return True
                 for type_ in ("partials", "completes"):
                     for update in locale.get(type_, {}):
                         if "fileUrl" in update:
-                            if isForbiddenUrl(update["fileUrl"], product, whitelistedDomains):
+                            if isForbiddenUrl(update["fileUrl"], product, allowlistedDomains):
                                 return True
 
         return False
@@ -311,14 +311,14 @@ class SeparatedFileUrlsMixin(object):
 
 
 class SingleUpdateXMLMixin(object):
-    def _getPatchesXML(self, localeData, updateQuery, whitelistedDomains, specialForceHosts):
+    def _getPatchesXML(self, localeData, updateQuery, allowlistedDomains, specialForceHosts):
         patches = []
         for patchKey in ("complete", "partial"):
             patch = localeData.get(patchKey)
             if not patch:
                 continue
 
-            xml = self._getSpecificPatchXML(patchKey, patchKey, patch, updateQuery, whitelistedDomains, specialForceHosts)
+            xml = self._getSpecificPatchXML(patchKey, patchKey, patch, updateQuery, allowlistedDomains, specialForceHosts)
             if xml:
                 patches.append(xml)
 
@@ -370,7 +370,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
 
     # TODO: kill me when aus3.m.o is dead, and snippet tests have been
     # converted to unit tests.
-    def createSnippets(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def createSnippets(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         snippets = {}
         buildTarget = updateQuery["buildTarget"]
         locale = updateQuery["locale"]
@@ -385,7 +385,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
                 continue
 
             url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
-            if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
+            if isForbiddenUrl(url, updateQuery["product"], allowlistedDomains):
                 break
 
             snippet = [
@@ -440,7 +440,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
 
         return updateLine
 
-    def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerHeaderXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         """In order to update some older versions of Firefox without prompting
         them for add-on compatibility, we need to be able to modify the appVersion
         and extVersion attributes. bug 998721 and bug 1174605 have additional
@@ -449,7 +449,7 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         this method, but that doesn't have access to the updateQuery to lookup
         the version making the request.
         """
-        xml = super(ReleaseBlobV1, self).getInnerHeaderXML(updateQuery, update_type, whitelistedDomains, specialForceHosts)
+        xml = super(ReleaseBlobV1, self).getInnerHeaderXML(updateQuery, update_type, allowlistedDomains, specialForceHosts)
 
         if self.get("oldVersionSpecialCases"):
             query_ver = MozillaVersion(updateQuery["version"])
@@ -480,7 +480,7 @@ class NewStyleVersionsMixin(object):
         return self.getLocaleOrTopLevelParam(platform, locale, "platformVersion")
 
     def getApplicationVersion(self, platform, locale):
-        """ For v2 schema, appVersion really is the app version """
+        """For v2 schema, appVersion really is the app version"""
         return self.getAppVersion(platform, locale)
 
     def _getUpdateLineXML(self, updateQuery, update_type):
@@ -561,7 +561,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
 
     # TODO: kill me when aus3.m.o is dead, and snippet tests have been
     # converted to unit tests.
-    def createSnippets(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def createSnippets(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         snippets = {}
         buildTarget = updateQuery["buildTarget"]
         locale = updateQuery["locale"]
@@ -576,7 +576,7 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
                 continue
 
             url = self._getUrl(updateQuery, patchKey, patch, specialForceHosts)
-            if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
+            if isForbiddenUrl(url, updateQuery["product"], allowlistedDomains):
                 break
 
             snippet = [
@@ -629,11 +629,11 @@ class ReleaseBlobV2(ReleaseBlobBase, NewStyleVersionsMixin, SingleUpdateXMLMixin
 
 
 class MultipleUpdatesXMLMixin(object):
-    def _getPatchesXML(self, localeData, updateQuery, whitelistedDomains, specialForceHosts):
+    def _getPatchesXML(self, localeData, updateQuery, allowlistedDomains, specialForceHosts):
         patches = []
         for patchKey, patchType in (("completes", "complete"), ("partials", "partial")):
             for patch in localeData.get(patchKey, {}):
-                xml = self._getSpecificPatchXML(patchKey, patchType, patch, updateQuery, whitelistedDomains, specialForceHosts)
+                xml = self._getSpecificPatchXML(patchKey, patchType, patch, updateQuery, allowlistedDomains, specialForceHosts)
                 if xml:
                     patches.append(xml)
                     break
@@ -672,7 +672,7 @@ class ReleaseBlobV3(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     def _getBouncerProduct(self, patchKey, from_):
         return self.get("bouncerProducts", {}).get(patchKey, {}).get(from_, "")
 
-    def createSnippets(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def createSnippets(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         # We have no tests that require this, probably not worthwhile to implement.
         return {}
 
@@ -1203,10 +1203,10 @@ class DesupportBlob(XMLBlob):
         # desupport messages should always be returned
         return True
 
-    def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerHeaderXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         return ""
 
-    def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         tmp_url = (
             self["detailsUrl"]
             .replace("%LOCALE%", updateQuery["locale"])
@@ -1222,10 +1222,10 @@ class DesupportBlob(XMLBlob):
         xml.append('    <update type="%s" unsupported="true" detailsURL="%s" displayVersion="%s">' % (update_type, tmp_url, self["displayVersion"]))
         return xml
 
-    def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerFooterXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         return "</update>"
 
-    def containsForbiddenDomain(self, product, whitelistedDomains):
+    def containsForbiddenDomain(self, product, allowlistedDomains):
         # Although DesupportBlob contains a domain (detailsUrl), that attribute
-        # is not used to deliver binaries, so it is exempt from whitelist checks.
+        # is not used to deliver binaries, so it is exempt from allowlist checks.
         return False

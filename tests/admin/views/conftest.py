@@ -24,7 +24,7 @@ def api():
     app.config["AUTH_DOMAIN"] = "balrog.test.dev"
     app.config["AUTH_AUDIENCE"] = "balrog test"
     app.config["M2M_ACCOUNT_MAPPING"] = {}
-    app.config["WHITELISTED_DOMAINS"] = {
+    app.config["ALLOWLISTED_DOMAINS"] = {
         "download.mozilla.org": ("Firefox",),
         "archive.mozilla.org": ("Firefox",),
         "cdmdownload.adobe.com": ("CDM",),
