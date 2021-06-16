@@ -23,7 +23,7 @@ def either_eq(value, operand):
 
     dot-0: because StrictVersion can drop the trailing .0,
            GlobVersion("80.0.*") != StrictVersion("80.0.0"), but
-           StrictVersion("80.0.0") == GlobVersion("80.0.*)
+           StrictVersion("80.0.0") == GlobVersion("80.0.*")
 
     Because of this, let's test eq in both directions.
 
