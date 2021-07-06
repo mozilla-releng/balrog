@@ -437,7 +437,7 @@ definitions:
                 rule_id: 308
                 update_type: "minor"
                 version: null
-                whitelist: null
+                allowlist: null
 
   EmergencyShutOffModel:
     title: Emergency shut off data.

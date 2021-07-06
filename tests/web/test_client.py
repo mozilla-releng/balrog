@@ -121,7 +121,7 @@ class ClientTestBase(ClientTestCommon):
         self.version_fd, self.version_file = mkstemp()
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com", "http://download.mozilla.org")
-        app.config["WHITELISTED_DOMAINS"] = {
+        app.config["ALLOWLISTED_DOMAINS"] = {
             "a.com": ("b", "c", "e", "f", "response-a", "response-b", "s", "responseblob-a", "responseblob-b", "q", "fallback", "distTest"),
             "download.mozilla.org": ("Firefox",),
             "archive.mozilla.org": ("Firefox",),
@@ -140,7 +140,7 @@ class ClientTestBase(ClientTestCommon):
             )
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        dbo.setDomainWhitelist(app.config["WHITELISTED_DOMAINS"])
+        dbo.setDomainAllowlist(app.config["ALLOWLISTED_DOMAINS"])
         self.client = app.test_client()
         dbo.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", data_version=1, alias="moz-releng")
@@ -1132,7 +1132,7 @@ class ClientTest(ClientTestBase):
         ret = self.client.get("/update/6/s/1.0/1/p/l/a/a/SSE2/a/a/update.xml")
         self.assertUpdatesAreEmpty(ret)
 
-    def testGetURLNotInWhitelist(self):
+    def testGetURLNotInAllowlist(self):
         ret = self.client.get("/update/3/d/20.0/1/p/l/a/a/a/a/update.xml")
         self.assertHttpResponse(ret)
         self.assertEqual(minidom.parseString(ret.get_data()).getElementsByTagName("updates")[0].firstChild.nodeValue, "\n    ")
@@ -1615,11 +1615,11 @@ class ClientTestMig64(ClientTestCommon):
     def setUp(self):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
-        app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
+        app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
-        dbo.setDomainWhitelist({"a.com": ("a", "b", "c")})
+        dbo.setDomainAllowlist({"a.com": ("a", "b", "c")})
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a", data_version=1)
         dbo.releases.t.insert().execute(
             name="a",
@@ -1787,11 +1787,11 @@ class ClientTestJaws(ClientTestCommon):
     def setUp(self):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
-        app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
+        app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
-        dbo.setDomainWhitelist({"a.com": ("a", "b", "c")})
+        dbo.setDomainAllowlist({"a.com": ("a", "b", "c")})
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a", data_version=1)
         dbo.releases.t.insert().execute(
             name="a",
@@ -2025,7 +2025,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
 
     def setUp(self):
         app.config["DEBUG"] = True
-        app.config["WHITELISTED_DOMAINS"] = {"a.com": ("a",)}
+        app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a",)}
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
@@ -2223,10 +2223,10 @@ class ClientTestCompactXML(ClientTestCommon):
         self.version_fd, self.version_file = mkstemp()
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
-        app.config["WHITELISTED_DOMAINS"] = {"a.com": ("b",)}
+        app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("b",)}
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        dbo.setDomainWhitelist({"a.com": ("b",)})
+        dbo.setDomainAllowlist({"a.com": ("b",)})
         self.client = app.test_client()
         dbo.rules.t.insert().execute(
             priority=90, backgroundRate=100, mapping="Firefox-mozilla-central-nightly-latest", update_type="minor", product="b", data_version=1

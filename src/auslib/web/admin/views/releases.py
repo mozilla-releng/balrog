@@ -397,7 +397,7 @@ class ReleasesAPIView(AdminView):
 
 
 class SingleReleaseColumnView(AdminView):
-    """ /releases/columns/:column"""
+    """/releases/columns/:column"""
 
     def get(self, column):
         releases = dbo.releases.getReleaseInfo()

@@ -18,7 +18,7 @@ STAGING = bool(int(os.environ.get("STAGING", 0)))
 LOCALDEV = bool(int(os.environ.get("LOCALDEV", 0)))
 
 SYSTEM_ACCOUNTS = ["balrogagent", "balrog-ffxbld", "balrog-tbirdbld", "seabld"]
-DOMAIN_WHITELIST = {
+DOMAIN_ALLOWLIST = {
     "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
     "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
     "download.cdn.mozilla.net": ("Firefox", "Fennec"),
@@ -32,7 +32,7 @@ DOMAIN_WHITELIST = {
 }
 if STAGING or LOCALDEV:
     SYSTEM_ACCOUNTS.extend(["balrog-stage-ffxbld", "balrog-stage-tbirdbld"])
-    DOMAIN_WHITELIST.update(
+    DOMAIN_ALLOWLIST.update(
         {
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
             "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
@@ -152,8 +152,8 @@ if os.environ.get("NOTIFY_TO_ADDR"):
         use_tls,
     )
 dbo.setSystemAccounts(SYSTEM_ACCOUNTS)
-dbo.setDomainWhitelist(DOMAIN_WHITELIST)
-application.config["WHITELISTED_DOMAINS"] = DOMAIN_WHITELIST
+dbo.setDomainAllowlist(DOMAIN_ALLOWLIST)
+application.config["ALLOWLISTED_DOMAINS"] = DOMAIN_ALLOWLIST
 application.config["PAGE_TITLE"] = "Balrog Administration"
 application.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
 

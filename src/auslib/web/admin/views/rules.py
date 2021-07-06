@@ -82,7 +82,7 @@ class RulesAPIView(AdminView):
 
 
 class SingleRuleView(AdminView):
-    """ /rules/:id"""
+    """/rules/:id"""
 
     # changed_by is available via the requirelogin decorator
     @requirelogin

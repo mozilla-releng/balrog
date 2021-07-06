@@ -31,9 +31,9 @@ def guardianblob():
     return blob
 
 
-@pytest.mark.parametrize("whitelistedDomains,expected", [({"a.com": ("Guardian",)}, False), ({}, True)])
-def testContainsForbiddenDomain(guardianblob, whitelistedDomains, expected):
-    assert guardianblob.containsForbiddenDomain("Guardian", whitelistedDomains) is expected
+@pytest.mark.parametrize("allowlistedDomains,expected", [({"a.com": ("Guardian",)}, False), ({}, True)])
+def testContainsForbiddenDomain(guardianblob, allowlistedDomains, expected):
+    assert guardianblob.containsForbiddenDomain("Guardian", allowlistedDomains) is expected
 
 
 @pytest.mark.parametrize(
@@ -50,7 +50,7 @@ def testShouldServeUpdateMissingBuildTarget(guardianblob):
 
 
 @pytest.mark.parametrize(
-    "buildTarget,whitelistedDomains,expected",
+    "buildTarget,allowlistedDomains,expected",
     [
         (
             "WINNT_x86_64",
@@ -66,6 +66,6 @@ def testShouldServeUpdateMissingBuildTarget(guardianblob):
         ("WINNT_x86_64", {}, {}),
     ],
 )
-def testGetResponse(guardianblob, buildTarget, whitelistedDomains, expected):
+def testGetResponse(guardianblob, buildTarget, allowlistedDomains, expected):
     updateQuery = {"product": "Guardian", "version": "0.5.0.0", "buildTarget": buildTarget, "channel": "release"}
-    assert guardianblob.getResponse(updateQuery, whitelistedDomains) == expected
+    assert guardianblob.getResponse(updateQuery, allowlistedDomains) == expected

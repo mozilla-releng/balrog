@@ -7,9 +7,9 @@ from auslib.blobs.base import GenericBlob
 class GuardianBlob(GenericBlob):
     jsonschema = "guardian.yml"
 
-    def containsForbiddenDomain(self, product, whitelistedDomains):
+    def containsForbiddenDomain(self, product, allowlistedDomains):
         urls = [p["fileUrl"] for p in self["platforms"].values()]
-        return any([isForbiddenUrl(url, product, whitelistedDomains) for url in urls])
+        return any([isForbiddenUrl(url, product, allowlistedDomains) for url in urls])
 
     def shouldServeUpdate(self, updateQuery):
         if updateQuery["buildTarget"] not in self.get("platforms", {}):
@@ -19,13 +19,13 @@ class GuardianBlob(GenericBlob):
 
         return True
 
-    def getResponse(self, updateQuery, whitelistedDomains):
+    def getResponse(self, updateQuery, allowlistedDomains):
         url = self.get("platforms", {}).get(updateQuery["buildTarget"], {}).get("fileUrl")
         hashValue = self.get("platforms", {}).get(updateQuery["buildTarget"], {}).get("hashValue")
         if not url:
             return {}
 
-        if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
+        if isForbiddenUrl(url, updateQuery["product"], allowlistedDomains):
             return {}
 
         return {"version": self["version"], "url": url, "required": self["required"], "hashFunction": self["hashFunction"], "hashValue": hashValue}

@@ -203,16 +203,16 @@ def get_update_blob(transaction, **url):
 
         # Appending Header
         # In case of superblob Extracting Header form parent release
-        xml.append(release.getInnerHeaderXML(query, update_type, app.config["WHITELISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"]))
+        xml.append(release.getInnerHeaderXML(query, update_type, app.config["ALLOWLISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"]))
         for response_blob in response_blobs:
             xml.extend(
                 response_blob["response_release"].getInnerXML(
-                    response_blob["product_query"], response_blob["response_update_type"], app.config["WHITELISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"]
+                    response_blob["product_query"], response_blob["response_update_type"], app.config["ALLOWLISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"]
                 )
             )
         # Appending Footer
         # In case of superblob Extracting Header form parent release
-        xml.append(release.getInnerFooterXML(query, update_type, app.config["WHITELISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"]))
+        xml.append(release.getInnerFooterXML(query, update_type, app.config["ALLOWLISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"]))
         xml.append(release.getFooterXML())
         # ensure valid xml by using the right entity for ampersand
         xml = re.sub("&(?!amp;)", "&amp;", "\n".join(xml))

@@ -37,17 +37,17 @@ class AUSConfig(object):
     def getDburi(self):
         return self.cfg.get("database", "dburi")
 
-    def getDomainWhitelist(self):
+    def getDomainAllowlist(self):
         # the config should have a format like this
-        # domain_whitelist = download.mozilla.org:Firefox|Fennec|Thunderbird, ftp.mozilla.org:SystemAddons
+        # domain_allowlist = download.mozilla.org:Firefox|Fennec|Thunderbird, ftp.mozilla.org:SystemAddons
         try:
-            whitelist_config = dict()
-            pref = self.cfg.get("site-specific", "domain_whitelist").split(", ")
+            allowlist_config = dict()
+            pref = self.cfg.get("site-specific", "domain_allowlist").split(", ")
             for domain_pref in pref:
                 domain, products = domain_pref.split(":")
                 products = products.split("|")
-                whitelist_config[domain] = tuple(products)
-            return whitelist_config
+                allowlist_config[domain] = tuple(products)
+            return allowlist_config
         except (NoSectionError, NoOptionError):
             return dict()
 

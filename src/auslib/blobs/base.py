@@ -145,7 +145,7 @@ class Blob(dict):
         logger_name = "{0}.{1}".format(self.__class__.__module__, self.__class__.__name__)
         self.__class__.log = logging.getLogger(logger_name)
 
-    def validate(self, product, whitelistedDomains):
+    def validate(self, product, allowlistedDomains):
         """Raises a BlobValidationError if the blob is invalid."""
         self.log.debug("Validating blob %s" % self)
         validator = jsonschema.Draft4Validator(self.getSchema(), format_checker=jsonschema.draft4_format_checker)
@@ -158,7 +158,7 @@ class Blob(dict):
         if errors:
             raise BlobValidationError("Invalid blob! See 'errors' for details.", errors)
 
-        if self.containsForbiddenDomain(product, whitelistedDomains):
+        if self.containsForbiddenDomain(product, allowlistedDomains):
             raise ValueError("Blob contains forbidden domain(s)")
 
     def getSchema(self):
@@ -183,7 +183,7 @@ class Blob(dict):
         failing open)."""
         return False
 
-    def containsForbiddenDomain(self, product, whitelistedDomains):
+    def containsForbiddenDomain(self, product, allowlistedDomains):
         raise NotImplementedError()
 
     def getReferencedReleases(self):
@@ -212,19 +212,19 @@ class XMLBlob(Blob):
         """
         return None
 
-    def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerHeaderXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         """
         :return: Releases-specific header should be implemented for individual blobs
         """
         raise NotImplementedError()
 
-    def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerFooterXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         """
         :return: Releases-specific header should be implemented for individual blobs
         """
         raise NotImplementedError()
 
-    def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         raise NotImplementedError()
 
     def getHeaderXML(self):

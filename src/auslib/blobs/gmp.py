@@ -12,8 +12,8 @@ class GMPBlobV1(XMLBlob):
         if "schema_version" not in self:
             self["schema_version"] = 1000
 
-    def validate(self, product, whitelistedDomains):
-        XMLBlob.validate(self, product, whitelistedDomains)
+    def validate(self, product, allowlistedDomains):
+        XMLBlob.validate(self, product, allowlistedDomains)
         for vendor in self["vendors"]:
             for platform in self["vendors"][vendor].get("platforms", {}).values():
                 if "hashValue" in platform:
@@ -50,16 +50,16 @@ class GMPBlobV1(XMLBlob):
         # of the client to decide whether or not any action needs to be taken.
         return True
 
-    def getInnerHeaderXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerHeaderXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         return "    <addons>"
 
-    def getInnerFooterXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerFooterXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         return "    </addons>"
 
     # Because specialForceHosts is only relevant to our own internal servers,
     # and these type of updates are always served externally, we don't process
     # them in GMP blobs.
-    def getInnerXML(self, updateQuery, update_type, whitelistedDomains, specialForceHosts):
+    def getInnerXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         buildTarget = updateQuery["buildTarget"]
 
         vendorXML = []
@@ -68,7 +68,7 @@ class GMPBlobV1(XMLBlob):
             platformData = self.getPlatformData(vendor, buildTarget)
 
             url = platformData["fileUrl"]
-            if isForbiddenUrl(url, updateQuery["product"], whitelistedDomains):
+            if isForbiddenUrl(url, updateQuery["product"], allowlistedDomains):
                 continue
             vendorXML.append(
                 '        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>'
@@ -77,12 +77,12 @@ class GMPBlobV1(XMLBlob):
 
         return vendorXML
 
-    def containsForbiddenDomain(self, product, whitelistedDomains):
+    def containsForbiddenDomain(self, product, allowlistedDomains):
         """Returns True if the blob contains any file URLs that contain a
         domain that we're not allowed to serve updates to."""
         for vendor in self.get("vendors", {}).values():
             for platform in vendor.get("platforms", {}).values():
                 if "fileUrl" in platform:
-                    if isForbiddenUrl(platform["fileUrl"], product, whitelistedDomains):
+                    if isForbiddenUrl(platform["fileUrl"], product, allowlistedDomains):
                         return True
         return False

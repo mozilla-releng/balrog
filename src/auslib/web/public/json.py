@@ -19,7 +19,7 @@ def get_update(transaction, **parameters):
 
     headers = get_aus_metadata_headers(eval_metadata)
 
-    response = json.dumps(release.getResponse(parameters, app.config["WHITELISTED_DOMAINS"]))
+    response = json.dumps(release.getResponse(parameters, app.config["ALLOWLISTED_DOMAINS"]))
 
     if app.config.get("AUTOGRAPH_URL"):
         hash_ = make_hash(response)

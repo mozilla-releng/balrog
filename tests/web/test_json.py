@@ -28,12 +28,44 @@ def mock_autograph(monkeypatch):
 
 @pytest.fixture(scope="module")
 def appconfig():
-    app.config["WHITELISTED_DOMAINS"] = {"good.com": ("Guardian",)}
+    app.config["ALLOWLISTED_DOMAINS"] = {"good.com": ("Guardian",)}
 
 
 @pytest.fixture(scope="module")
 def guardian_db(db_schema):
     db_schema.create_all(dbo.engine)
+    dbo.releases.t.insert().execute(
+        name="Guardian-Evil-1.0.0.0",
+        product="Guardian",
+        data_version=1,
+        data=createBlob(
+            """
+{
+    "name": "Guardian-Evil-1.0.0.0",
+    "product": "Guardian",
+    "schema_version": 10000,
+    "version": "1.0.0.0",
+    "required": true,
+    "hashFunction": "sha512",
+    "platforms": {
+        "Darwin_x86_64": {
+            "fileUrl": "https://evil.com/1.0.0.0.dmg",
+            "hashValue": "ghijkl"
+        }
+    }
+}
+"""
+        ),
+    )
+    dbo.rules.t.insert().execute(
+        priority=150,
+        backgroundRate=100,
+        mapping="Guardian-Evil-1.0.0.0",
+        update_type="minor",
+        product="Guardian",
+        channel="evilrelease",
+        data_version=1,
+    )
     dbo.releases.t.insert().execute(
         name="Guardian-0.5.0.0",
         product="Guardian",
@@ -176,6 +208,7 @@ def client():
         ("0.6.0.0", "WINNT_x86_64", "beta", 404, {}),
         # This shouldn't match because the rule on the alpha channel contains fields not used by this type of update query.
         ("0.6.0.0", "WINNT_x86_64", "alpha", 404, {}),
+        ("0.6.0.0", "Darwin_x86_64", "evilrelease", 200, {}),
     ],
 )
 def testGuardianResponse(client, version, buildTarget, channel, code, response):
