@@ -3130,10 +3130,10 @@ co@^4.6.0:
   resolved "https://registry.yarnpkg.com/co/-/co-4.6.0.tgz#6ea6bdf3d853ae54ccb8e47bfa0bf3f9031fb184"
   integrity sha1-bqa989hTrlTMuOR7+gvz+QMfsYQ=
 
-codemirror@^5.39.0, codemirror@^5.59.1:
-  version "5.59.1"
-  resolved "https://registry.yarnpkg.com/codemirror/-/codemirror-5.59.1.tgz#cd6465555a87f8a2243eb41ffb460c777e15212c"
-  integrity sha512-d0SSW/PCCD4LoSCBPdnP0BzmZB1v3emomCUtVlIWgZHJ06yVeBOvBtOH7vYz707pfAvEeWbO9aP6akh8vl1V3w==
+codemirror@^5.39.0, codemirror@^5.62.1:
+  version "5.62.1"
+  resolved "https://registry.yarnpkg.com/codemirror/-/codemirror-5.62.1.tgz#917c7406c7b7f05b974c7fe4c4f2088ae64cc874"
+  integrity sha512-39ce8tHh/M9J+Epa90R5zMGg06pxVXc1+Y0SRR6eKaUjjzuj5iYkk7rHc2uU+FzvfsWYGEYKPFf0pBVBLmYXNQ==
 
 collect-v8-coverage@^1.0.0:
   version "1.0.0"
