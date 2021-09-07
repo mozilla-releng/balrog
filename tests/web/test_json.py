@@ -21,9 +21,9 @@ def mock_autograph(monkeypatch):
     def mockreturn(*args):
         return ("abcdef", "https://this.is/a.x5u")
 
-    import auslib.web.public.json
+    import auslib.web.public.helpers
 
-    monkeypatch.setattr(auslib.web.public.json, "sign_hash", mockreturn)
+    monkeypatch.setattr(auslib.web.public.helpers, "sign_hash", mockreturn)
 
 
 @pytest.fixture(scope="module")

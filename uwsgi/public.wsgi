@@ -50,9 +50,9 @@ if os.environ.get("AUTOGRAPH_URL"):
     application.config["AUTOGRAPH_PASSWORD"] = os.environ["AUTOGRAPH_PASSWORD"]
 
     # Autograph responses
-    # When we start signing things other than Guardian responses we'll need to increase the size of this cache.
+    # If additional types of responses require signing, consider increasing the size of this cache.
     # We cache for one day to make sure we resign once per day, because the signatures eventually expire.
-    cache.make_cache("content_signatures", 50, 86400)
+    cache.make_cache("content_signatures", 200, 86400)
 
 
 cache.make_cache("blob", 500, 3600)
