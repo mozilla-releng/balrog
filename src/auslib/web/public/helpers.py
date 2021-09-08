@@ -1,3 +1,4 @@
+import logging
 from functools import wraps
 
 from flask import current_app as app
@@ -5,6 +6,8 @@ from flask import current_app as app
 from auslib.AUS import AUS
 from auslib.global_state import cache, dbo
 from auslib.util.autograph import make_hash, sign_hash
+
+log = logging.getLogger(__name__)
 
 
 def with_transaction(f):
@@ -36,6 +39,7 @@ def get_content_signature_headers(content):
 
         signature, x5u = cache.get("content_signatures", hash_, sign)
         headers = {"Content-Signature": f"x5u={x5u}; p384ecdsa={signature}"}
+        log.debug("Added header: %s" % headers)
     return headers
 
 

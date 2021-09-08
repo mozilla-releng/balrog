@@ -83,6 +83,7 @@ application.config["SPECIAL_FORCE_HOSTS"] = SPECIAL_FORCE_HOSTS
 # about the current code (version number, commit hash), but doesn't exist in
 # the repo itself
 application.config["VERSION_FILE"] = "/app/version.json"
+application.config["CONTENT_SIGNATURE_PRODUCTS"] = ["GMP"]
 
 if os.environ.get("SENTRY_DSN"):
     sentry_sdk.init(os.environ["SENTRY_DSN"], integrations=[FlaskIntegration(), LoggingIntegration()])
