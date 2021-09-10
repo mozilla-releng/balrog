@@ -898,10 +898,10 @@ class ClientTestBase(ClientTestCommon):
 
 @pytest.fixture(scope="function")
 def mock_autograph(monkeypatch):
-    monkeypatch.setitem(app.config, "AUTOGRAPH_GMP_URL", "fake")
-    monkeypatch.setitem(app.config, "AUTOGRAPH_GMP_KEYID", "fake")
-    monkeypatch.setitem(app.config, "AUTOGRAPH_GMP_USERNAME", "fake")
-    monkeypatch.setitem(app.config, "AUTOGRAPH_GMP_PASSWORD", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_URL", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_KEYID", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_USERNAME", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_PASSWORD", "fake")
 
     def mockreturn(*args):
         return ("abcdef", "https://this.is/a.x5u")

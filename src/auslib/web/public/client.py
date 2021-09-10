@@ -231,7 +231,7 @@ def get_update_blob(transaction, **url):
     response.headers["Cache-Control"] = app.cacheControl
     response.headers.extend(get_aus_metadata_headers(eval_metadata))
     if query["product"] in app.config.get("CONTENT_SIGNATURE_PRODUCTS", []):
-        response.headers.extend(get_content_signature_headers(xml, True))
+        response.headers.extend(get_content_signature_headers(xml, query["product"]))
     response.mimetype = "text/xml"
     return response
 

@@ -27,21 +27,19 @@ def get_aus_metadata_headers(eval_metadata):
     return headers
 
 
-def get_content_signature_headers(content, is_gmp):
+def get_content_signature_headers(content, product):
     headers = {}
-    if is_gmp:
-        gmp = "GMP_"
-    else:
-        gmp = ""
-    if app.config.get("AUTOGRAPH_%sURL" % gmp):
+    if product:
+        product += "_"
+    if app.config.get("AUTOGRAPH_%sURL" % product):
         hash_ = make_hash(content)
 
         def sign():
             return sign_hash(
-                app.config["AUTOGRAPH_%sURL" % gmp],
-                app.config["AUTOGRAPH_%sKEYID" % gmp],
-                app.config["AUTOGRAPH_%sUSERNAME" % gmp],
-                app.config["AUTOGRAPH_%sPASSWORD" % gmp],
+                app.config["AUTOGRAPH_%sURL" % product],
+                app.config["AUTOGRAPH_%sKEYID" % product],
+                app.config["AUTOGRAPH_%sUSERNAME" % product],
+                app.config["AUTOGRAPH_%sPASSWORD" % product],
                 hash_,
             )
 

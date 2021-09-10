@@ -19,6 +19,6 @@ def get_update(transaction, **parameters):
 
     response = json.dumps(release.getResponse(parameters, app.config["ALLOWLISTED_DOMAINS"]))
 
-    headers.update(get_content_signature_headers(response, False))
+    headers.update(get_content_signature_headers(response, ""))
 
     return Response(response=response, status=200, headers=headers, mimetype="application/json")
