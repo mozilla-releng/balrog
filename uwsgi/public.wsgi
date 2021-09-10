@@ -54,6 +54,16 @@ if os.environ.get("AUTOGRAPH_URL"):
     # We cache for one day to make sure we resign once per day, because the signatures eventually expire.
     cache.make_cache("content_signatures", 200, 86400)
 
+if os.environ.get("AUTOGRAPH_GMP_URL"):
+    application.config["AUTOGRAPH_GMP_URL"] = os.environ["AUTOGRAPH_GMP_URL"]
+    application.config["AUTOGRAPH_GMP_KEYID"] = os.environ["AUTOGRAPH_GMP_KEYID"]
+    application.config["AUTOGRAPH_GMP_USERNAME"] = os.environ["AUTOGRAPH_GMP_USERNAME"]
+    application.config["AUTOGRAPH_GMP_PASSWORD"] = os.environ["AUTOGRAPH_GMP_PASSWORD"]
+elif "AUTOGRAPH_URL" in application.config:
+    application.config["AUTOGRAPH_GMP_URL"] = application.config["AUTOGRAPH_URL"]
+    application.config["AUTOGRAPH_GMP_KEYID"] = application.config["AUTOGRAPH_KEYID"]
+    application.config["AUTOGRAPH_GMP_USERNAME"] = application.config["AUTOGRAPH_USERNAME"]
+    application.config["AUTOGRAPH_GMP_PASSWORD"] = application.config["AUTOGRAPH_PASSWORD"]
 
 cache.make_cache("blob", 500, 3600)
 cache.make_cache("releases", 500, 3600)

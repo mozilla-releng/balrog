@@ -27,14 +27,22 @@ def get_aus_metadata_headers(eval_metadata):
     return headers
 
 
-def get_content_signature_headers(content):
+def get_content_signature_headers(content, is_gmp):
     headers = {}
-    if app.config.get("AUTOGRAPH_URL"):
+    if is_gmp:
+        gmp = "GMP_"
+    else:
+        gmp = ""
+    if app.config.get("AUTOGRAPH_%sURL" % gmp):
         hash_ = make_hash(content)
 
         def sign():
             return sign_hash(
-                app.config["AUTOGRAPH_URL"], app.config["AUTOGRAPH_KEYID"], app.config["AUTOGRAPH_USERNAME"], app.config["AUTOGRAPH_PASSWORD"], hash_
+                app.config["AUTOGRAPH_%sURL" % gmp],
+                app.config["AUTOGRAPH_%sKEYID" % gmp],
+                app.config["AUTOGRAPH_%sUSERNAME" % gmp],
+                app.config["AUTOGRAPH_%sPASSWORD" % gmp],
+                hash_,
             )
 
         signature, x5u = cache.get("content_signatures", hash_, sign)
