@@ -10,7 +10,7 @@ from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
 from auslib.services import releases
-from auslib.web.public.helpers import AUS, get_aus_metadata_headers, with_transaction
+from auslib.web.public.helpers import AUS, get_aus_metadata_headers, get_content_signature_headers, with_transaction
 
 try:
     from urllib import unquote
@@ -230,6 +230,8 @@ def get_update_blob(transaction, **url):
     response = make_response(xml)
     response.headers["Cache-Control"] = app.cacheControl
     response.headers.extend(get_aus_metadata_headers(eval_metadata))
+    if query["product"] in app.config.get("CONTENT_SIGNATURE_PRODUCTS", []):
+        response.headers.extend(get_content_signature_headers(xml, query["product"]))
     response.mimetype = "text/xml"
     return response
 

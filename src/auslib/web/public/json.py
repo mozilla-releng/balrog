@@ -4,9 +4,7 @@ from flask import Response
 from flask import current_app as app
 
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
-from auslib.global_state import cache
-from auslib.util.autograph import make_hash, sign_hash
-from auslib.web.public.helpers import AUS, get_aus_metadata_headers, with_transaction
+from auslib.web.public.helpers import AUS, get_aus_metadata_headers, get_content_signature_headers, with_transaction
 
 
 @with_transaction
@@ -21,15 +19,6 @@ def get_update(transaction, **parameters):
 
     response = json.dumps(release.getResponse(parameters, app.config["ALLOWLISTED_DOMAINS"]))
 
-    if app.config.get("AUTOGRAPH_URL"):
-        hash_ = make_hash(response)
-
-        def sign():
-            return sign_hash(
-                app.config["AUTOGRAPH_URL"], app.config["AUTOGRAPH_KEYID"], app.config["AUTOGRAPH_USERNAME"], app.config["AUTOGRAPH_PASSWORD"], hash_
-            )
-
-        signature, x5u = cache.get("content_signatures", hash_, sign)
-        headers["Content-Signature"] = f"x5u={x5u}; p384ecdsa={signature}"
+    headers.update(get_content_signature_headers(response, ""))
 
     return Response(response=response, status=200, headers=headers, mimetype="application/json")

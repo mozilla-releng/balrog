@@ -128,6 +128,7 @@ class ClientTestBase(ClientTestCommon):
             "ftp.mozilla.org": ("SystemAddons",),
         }
         app.config["VERSION_FILE"] = self.version_file
+        app.config["CONTENT_SIGNATURE_PRODUCTS"] = ["gmp"]
         with open(self.version_file, "w+") as f:
             f.write(
                 """
@@ -895,6 +896,21 @@ class ClientTestBase(ClientTestCommon):
         os.remove(self.version_file)
 
 
+@pytest.fixture(scope="function")
+def mock_autograph(monkeypatch):
+    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_URL", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_KEYID", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_USERNAME", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_PASSWORD", "fake")
+
+    def mockreturn(*args):
+        return ("abcdef", "https://this.is/a.x5u")
+
+    import auslib.web.public.helpers
+
+    monkeypatch.setattr(auslib.web.public.helpers, "sign_hash", mockreturn)
+
+
 class ClientTest(ClientTestBase):
     def testGetHeaderArchitectureWindows(self):
         self.assertEqual(client_api.getHeaderArchitecture("WINNT_x86-msvc", "Firefox Intel Windows"), "Intel")
@@ -1269,6 +1285,15 @@ class ClientTest(ClientTestBase):
 </updates>
 """,
         )
+
+    def testGMPResponseWithoutSigning(self):
+        ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
+        assert "Content-Signature" not in ret.headers
+
+    @pytest.mark.usefixtures("mock_autograph")
+    def testGMPResponseWithSigning(self):
+        ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
+        assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
 
     def testGetWithResponseProducts(self):
         ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
