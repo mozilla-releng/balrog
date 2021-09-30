@@ -86,7 +86,7 @@ tasks:
                   git clone ${repo_url} balrog &&
                   cd balrog &&
                   git checkout ${head_sha} &&
-                  pip install tox &&
+                  pip install tox 'virtualenv<20.8.0' &&
                   tox
               features:
                 taskclusterProxy: true
