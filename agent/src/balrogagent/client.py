@@ -46,8 +46,6 @@ def get_url(api_root, path):
 async def request(api_root, path, auth0_secrets, method="GET", data={}, headers=default_headers, loop=None):
     headers = headers.copy()
     url = get_url(api_root, path)
-    csrf_url = get_url(api_root, "/csrf_token")
-    data = data.copy()
     access_token = await _get_auth0_token(auth0_secrets, loop)
     headers["Authorization"] = "Bearer {}".format(access_token)
 
@@ -57,13 +55,6 @@ async def request(api_root, path, auth0_secrets, method="GET", data={}, headers=
     cookie_jar = aiohttp.CookieJar(unsafe=os.environ.get("ALLOW_COOKIE_FROM_IP_URL", False))
 
     async with aiohttp.ClientSession(loop=loop, cookie_jar=cookie_jar) as client:
-        # CSRF tokens are only required for POST/PUT/DELETE.
-        if method not in ("HEAD", "GET"):
-            logging.debug("Sending %s request to %s", "HEAD", csrf_url)
-            async with client.request("HEAD", csrf_url, headers=headers) as resp:
-                resp.raise_for_status()
-                data["csrf_token"] = resp.headers["X-CSRF-Token"]
-
         # Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=1471109
         # In our deployed environments, the Agent doesn't connect to admin over
         # https, which means it won't send back the session token by default,
