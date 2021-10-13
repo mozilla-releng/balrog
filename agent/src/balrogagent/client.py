@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import time
 
 import aiohttp
@@ -49,20 +48,7 @@ async def request(api_root, path, auth0_secrets, method="GET", data={}, headers=
     access_token = await _get_auth0_token(auth0_secrets, loop)
     headers["Authorization"] = "Bearer {}".format(access_token)
 
-    # Aiohttp does not allow cookie from urls that using IP address instead dns name,
-    # so if for any reason agent needs point to IP address, the envvar "ALLOW_COOKIE_FROM_IP_URL"
-    # should be set. (https://aiohttp.readthedocs.io/en/stable/client_advanced.html#cookie-safety)
-    cookie_jar = aiohttp.CookieJar(unsafe=os.environ.get("ALLOW_COOKIE_FROM_IP_URL", False))
-
-    async with aiohttp.ClientSession(loop=loop, cookie_jar=cookie_jar) as client:
-        # Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=1471109
-        # In our deployed environments, the Agent doesn't connect to admin over
-        # https, which means it won't send back the session token by default,
-        # which breaks csrf token validation. Changing the cookies to insecure
-        # will let them be sent back, but it's a horrible back.
-        for c in client.cookie_jar:
-            c["secure"] = False
-
+    async with aiohttp.ClientSession(loop=loop) as client:
         logging.debug("Sending %s request to %s", method, url)
         async with client.request(method, url, data=json.dumps(data), headers=headers) as resp:
             # Raises on 400 code or higher, we can assume things are good if we make it past this.
