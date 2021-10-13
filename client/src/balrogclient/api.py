@@ -25,23 +25,6 @@ def _json_log_data(data):
     return log
 
 
-def is_csrf_token_expired(token):
-    """Checks whether a CSRF token is still valid
-
-    Expects a token of the form "YYYYMMDDHHMMSS##..."
-
-    Returns:
-        True if the token has expired
-        False if the token is still valid
-    """
-    from datetime import datetime
-
-    expiry = token.split("##")[0]
-    if expiry <= datetime.now().strftime("%Y%m%d%H%M%S"):
-        return True
-    return False
-
-
 def _get_auth0_token(secrets, session):
     """Get Auth0 token
 
@@ -122,22 +105,18 @@ def balrog_request(session, method, url, *args, **kwargs):
 
 class API(object):
     """A class that knows how to make requests to a Balrog server, including
-    pre-retrieving CSRF tokens and data versions.
+    pre-retrieving data versions.
 
     url_template: The URL to submit to when request() is called. Standard
                   Python string interpolation can be used here in
                   combination with url_template_vars.
     prerequest_url_template: Before submitting the real request, a HEAD
                              operation will be done on this URL. If the
-                             HEAD request succeeds, it is expected that
-                             there will be X-CSRF-Token and X-Data-Version
-                             headers in the response. If the HEAD request
-                             results in a 404, another HEAD request to
-                             /csrf_token will be made in attempt to get a
-                             CSRF Token. This URL can use string
-                             interpolation the same way url_template can.
-                             In some cases this may be the same as the
-                             url_template.
+                             HEAD request succeeds, it is expected that there
+                             will be a X-Data-Version header in the response.
+                             This URL can use string interpolation the same way
+                             url_template can.  In some cases this may be the
+                             same as the url_template.
     """
 
     verify = False
@@ -164,17 +143,15 @@ class API(object):
         self.timeout = timeout
         self.raise_exceptions = raise_exceptions
         self.session = session or requests.session()
-        self.csrf_token = None
         self.auth0_secrets = auth0_secrets
 
     def request(self, data=None, method="GET"):
         url = self.api_root + self.url_template % self.url_template_vars
         prerequest_url = self.api_root + self.prerequest_url_template % self.url_template_vars
-        # If we'll be modifying things, do a GET first to get a CSRF token
-        # and possibly a data_version.
+        # If we'll be modifying things, do a GET first to maybe get a data_version.
         if method != "GET" and method != "HEAD":
             # Use the URL of the resource we're going to modify first,
-            # because we'll need a CSRF token, and maybe its data version.
+            # because we may need its data version.
             try:
                 res = self.do_request(prerequest_url, None, "HEAD")
                 # If a data_version was specified we shouldn't overwrite it
@@ -182,30 +159,18 @@ class API(object):
                 # a specific older version of the data.
                 if "data_version" not in data:
                     data["data_version"] = int(res.headers["X-Data-Version"])
-                # We may already have a non-expired CSRF token, but it's
-                # faster/easier just to set it again even if we do, since
-                # we've already made the request.
-                data["csrf_token"] = self.csrf_token = res.headers["X-CSRF-Token"]
             except requests.HTTPError as excp:
                 # However, if the resource doesn't exist yet we may as well
                 # not bother doing another request solely for a token unless
                 # we don't have a valid one already.
                 if excp.response.status_code != 404:
                     raise
-                if not self.csrf_token or is_csrf_token_expired(self.csrf_token):
-                    res = self.do_request(self.api_root + "/csrf_token", None, "HEAD")
-                    data["csrf_token"] = self.csrf_token = res.headers["X-CSRF-Token"]
 
         return self.do_request(url, data, method)
 
     def do_request(self, url, data, method):
         log.debug("Balrog request to %s", url)
-        if data is not None and "csrf_token" in data:
-            sanitised_data = data.copy()
-            del sanitised_data["csrf_token"]
-            log.debug("Data sent: %s", _json_log_data(sanitised_data))
-        else:
-            log.debug("Data sent: %s", _json_log_data(data))
+        log.debug("Data sent: %s", _json_log_data(data))
         headers = {"Accept-Encoding": "application/json", "Accept": "application/json", "Content-Type": "application/json", "Referer": self.api_root}
         before = time.time()
         access_token = _get_auth0_token(self.auth0_secrets, session=self.session)
