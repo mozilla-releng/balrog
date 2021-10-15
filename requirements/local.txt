@@ -777,9 +777,9 @@ requests==2.25.1 \
     #   google-api-core
     #   google-cloud-storage
     #   requests-hawk
-requests-hawk==1.1.0 \
-    --hash=sha256:1a5e61cab14627f1b5ba7de0e3fb2b681007ff7b2a49110d504e5cd6d7fd62d6 \
-    --hash=sha256:5ad9393ec0979067d07a725ccf8c18bfbbbe1f3455df59692bed71462904efe9
+requests-hawk==1.1.1 \
+    --hash=sha256:4a5c7135ee2f5f8be70054a8c3874c918dd4dcd355d675f2de8653aab6f94e39 \
+    --hash=sha256:4c74bd31b581f6d2b36d575bb537b1f29469509f560f5050339a48195d48929b
     # via -r base.in
 rsa==4.7 \
     --hash=sha256:69805d6b69f56eb05b62daea3a7dbd7aa44324ad1306445e05da8060232d00f4 \
