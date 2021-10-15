@@ -312,9 +312,9 @@ flask==1.1.2 \
     #   flask-compress
     #   flask-wtf
     #   sentry-sdk
-flask-compress==1.8.0 \
-    --hash=sha256:c132590e7c948877a96d675c13cbfa64edec0faafa2381678dea6f36aa49a552 \
-    --hash=sha256:fda1b8a834176c485c7018a4b9326599311afbaaa08a715771c1fd9021f871fa
+flask_compress==1.10.1 \
+    --hash=sha256:28352387efbbe772cfb307570019f81957a13ff718d994a9125fa705efb73680 \
+    --hash=sha256:a6c2d1ff51771e9b39d7a612754f4cb4e8af20cebe16b02fd19d98d8dd6966e5
     # via -r base.in
 flask-wtf==0.14.3 \
     --hash=sha256:57b3faf6fe5d6168bda0c36b0df1d05770f8e205e18332d0376ddb954d17aef2 \
