@@ -647,9 +647,9 @@ pytest==6.2.1 \
     #   pytest-cov
     #   pytest-forked
     #   pytest-xdist
-pytest-asyncio==0.14.0 \
-    --hash=sha256:2eae1e34f6c68fc0a9dc12d4bea190483843ff4708d24277c41568d6b6044f1d \
-    --hash=sha256:9882c0c6b24429449f5f969a5158b528f39bde47dc32e85b9f0403965017e700
+pytest-asyncio==0.15.1 \
+    --hash=sha256:2564ceb9612bbd560d19ca4b41347b54e7835c2f792c504f698e05395ed63f6f \
+    --hash=sha256:3042bcdf1c5d978f6b74d96a151c4cfb9dcece65006198389ccd7e6c60eb1eea
     # via -r test.in
 pytest-cov==2.10.1 \
     --hash=sha256:45ec2d5182f89a81fc3eb29e3d1ed3113b9e9a873bcddb2a71faaab066110191 \
