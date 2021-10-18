@@ -70,9 +70,9 @@ attrs==20.3.0 \
     #   hypothesis
     #   jsonschema
     #   pytest
-auth0-python==3.14.0 \
-    --hash=sha256:21eae503e622a1f43c288317d7c96a1279f77ca94c16991489714907f615e0e6 \
-    --hash=sha256:ac7808d00676c5e7ffa9eaa228807ca1f8db7a0f4dc115337c80fb6d7eb2b50a
+auth0-python==3.18.0 \
+    --hash=sha256:8e2b4917ea6e5da2efdeac893a32c57adcf14699e56e2e01292d13cc398245ef \
+    --hash=sha256:b039ff88435f74350fc275b9c7b19a1ee900afd431a25c993de2af5debbda3ea
     # via -r base.in
 backoff==1.10.0 \
     --hash=sha256:5e73e2cbe780e1915a204799dba0a01896f45f4385e636bcca7a0614d879d0cd \
@@ -277,7 +277,9 @@ cryptography==3.3.2 \
     --hash=sha256:aa4969f24d536ae2268c902b2c3d62ab464b5a66bcb247630d208a79a8098e9b \
     --hash=sha256:c7390f9b2119b2b43160abb34f63277a638504ef8df99f11cb52c1fda66a2e6f \
     --hash=sha256:e18e6ab84dfb0ab997faf8cca25a86ff15dfea4027b986322026cc99e0a892da
-    # via gcloud-aio-auth
+    # via
+    #   gcloud-aio-auth
+    #   pyjwt
 decorator==4.4.2 \
     --hash=sha256:41fa54c2a0cc4ba648be4fd43cff00aedf5b9465c9bf18d64325bc225f08f760 \
     --hash=sha256:e3a62f0520172440ca0dcc823749319382e377f37f140a0b99ef45fecb84bfe7
@@ -632,10 +634,12 @@ pyflakes==2.4.0 \
     --hash=sha256:05a85c2872edf37a4ed30b0cce2f6093e1d0581f8c19d7393122da7e25b2b24c \
     --hash=sha256:3bb3a3f256f4b7968c9c788781e4ff07dce46bdf12339dcda61053375426ee2e
     # via flake8
-pyjwt==1.7.1 \
+pyjwt[crypto]==1.7.1 \
     --hash=sha256:5c6eca3c2940464d106b99ba83b00c6add741c9becaec087fb7ccdefea71350e \
     --hash=sha256:8d59a976fb773f3e6a39c85636357c4f0e242707394cadadd9814f5cbaa20e96
-    # via gcloud-aio-auth
+    # via
+    #   auth0-python
+    #   gcloud-aio-auth
 pyparsing==2.4.7 \
     --hash=sha256:c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1 \
     --hash=sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b

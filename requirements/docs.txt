@@ -67,9 +67,9 @@ attrs==20.3.0 \
     #   -r base.txt
     #   aiohttp
     #   jsonschema
-auth0-python==3.14.0 \
-    --hash=sha256:21eae503e622a1f43c288317d7c96a1279f77ca94c16991489714907f615e0e6 \
-    --hash=sha256:ac7808d00676c5e7ffa9eaa228807ca1f8db7a0f4dc115337c80fb6d7eb2b50a
+auth0-python==3.18.0 \
+    --hash=sha256:8e2b4917ea6e5da2efdeac893a32c57adcf14699e56e2e01292d13cc398245ef \
+    --hash=sha256:b039ff88435f74350fc275b9c7b19a1ee900afd431a25c993de2af5debbda3ea
     # via -r base.txt
 babel==2.9.0 \
     --hash=sha256:9d35c22fcc79893c3ecc85ac4a56cde1ecf3f19c540bba0922308a6c06ca6fa5 \
@@ -221,6 +221,7 @@ cryptography==3.3.2 \
     # via
     #   -r base.txt
     #   gcloud-aio-auth
+    #   pyjwt
 decorator==4.4.2 \
     --hash=sha256:41fa54c2a0cc4ba648be4fd43cff00aedf5b9465c9bf18d64325bc225f08f760 \
     --hash=sha256:e3a62f0520172440ca0dcc823749319382e377f37f140a0b99ef45fecb84bfe7
@@ -546,11 +547,12 @@ pygments==2.7.4 \
     --hash=sha256:bc9591213a8f0e0ca1a5e68a479b4887fdc3e75d0774e5c71c31920c427de435 \
     --hash=sha256:df49d09b498e83c1a73128295860250b0b7edd4c723a32e9bc0d295c7c2ec337
     # via sphinx
-pyjwt==1.7.1 \
+pyjwt[crypto]==1.7.1 \
     --hash=sha256:5c6eca3c2940464d106b99ba83b00c6add741c9becaec087fb7ccdefea71350e \
     --hash=sha256:8d59a976fb773f3e6a39c85636357c4f0e242707394cadadd9814f5cbaa20e96
     # via
     #   -r base.txt
+    #   auth0-python
     #   gcloud-aio-auth
 pyparsing==2.4.7 \
     --hash=sha256:c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1 \
