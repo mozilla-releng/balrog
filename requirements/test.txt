@@ -197,9 +197,9 @@ clickclick==20.10.2 \
     --hash=sha256:4efb13e62353e34c5eef7ed6582c4920b418d7dedc86d819e22ee089ba01802c \
     --hash=sha256:c8f33e6d9ec83f68416dd2136a7950125bd256ec39ccc9a85c6e280a16be2bb5
     # via connexion
-connexion==2.7.0 \
-    --hash=sha256:1ccfac57d4bb7adf4295ba6f5e48f5a1f66057df6a0713417766c9b5235182ee \
-    --hash=sha256:5439e9659a89c4380d93a07acfbf3380d70be4130574de8881e5f0dfec7ad0e2
+connexion==2.9.0 \
+    --hash=sha256:0105b03ea1c54fa0e8160825c729e416b8bd6bf3f007981b04c92ce6d5ae990b \
+    --hash=sha256:656d451e21df5f38c4ddb826b805ebe5a641423253f7f33c798ca3ec1cb94cda
     # via -r base.in
 coverage==5.5 \
     --hash=sha256:004d1880bed2d97151facef49f08e255a20ceb6f9432df75f4eef018fdd5a78c \
@@ -317,11 +317,11 @@ flask==1.1.2 \
     #   flask-compress
     #   flask-wtf
     #   sentry-sdk
-flask_compress==1.10.1 \
+flask-compress==1.10.1 \
     --hash=sha256:28352387efbbe772cfb307570019f81957a13ff718d994a9125fa705efb73680 \
     --hash=sha256:a6c2d1ff51771e9b39d7a612754f4cb4e8af20cebe16b02fd19d98d8dd6966e5
     # via -r base.in
-flask_wtf==0.15.1 \
+flask-wtf==0.15.1 \
     --hash=sha256:6ff7af73458f182180906a37a783e290bdc8a3817fe4ad17227563137ca285bf \
     --hash=sha256:ff177185f891302dc253437fe63081e7a46a4e99aca61dfe086fb23e54fff2dc
     # via -r base.in
@@ -929,7 +929,9 @@ uwsgi==2.0.20 \
 werkzeug==1.0.1 \
     --hash=sha256:2de2a5db0baeae7b2d2664949077c2ac63fbd16d98da0ff71837f7d1dea3fd43 \
     --hash=sha256:6c80b1e5ad3665290ea39320b91e1be1e0d5f60652b964a3070216de83d2e47c
-    # via flask
+    # via
+    #   connexion
+    #   flask
 wtforms==2.3.3 \
     --hash=sha256:7b504fc724d0d1d4d5d5c114e778ec88c37ea53144683e084215eed5155ada4c \
     --hash=sha256:81195de0ac94fbc8368abbaf9197b88c4f3ffd6c2719b5bf5fc9da744f3d829c
