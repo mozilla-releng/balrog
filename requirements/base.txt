@@ -476,9 +476,9 @@ python-dateutil==2.8.1 \
     --hash=sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c \
     --hash=sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a
     # via arrow
-python-jose==3.2.0 \
-    --hash=sha256:4e4192402e100b5fb09de5a8ea6bcc39c36ad4526341c123d401e2561720335b \
-    --hash=sha256:67d7dfff599df676b04a996520d9be90d6cdb7e6dd10b4c7cacc0c3e2e92f2be
+python-jose==3.3.0 \
+    --hash=sha256:55779b5e6ad599c6336191246e95eb2293a9ddebd555f796a65f838f07e5d78a \
+    --hash=sha256:9b1376b023f8b298536eedd47ae1089bcdb848f1535ab30555cd92002d78923a
     # via -r base.in
 pytz==2020.5 \
     --hash=sha256:16962c5fb8db4a8f63a26646d8886e9d769b6c511543557bc84e9569fb9a9cb4 \
@@ -556,7 +556,6 @@ six==1.15.0 \
     #   openapi-spec-validator
     #   protobuf
     #   python-dateutil
-    #   python-jose
     #   sqlalchemy-migrate
     #   swagger-spec-validator
 spec-synthase==0.1.11 \
