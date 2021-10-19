@@ -317,11 +317,11 @@ flask==1.1.2 \
     #   flask-compress
     #   flask-wtf
     #   sentry-sdk
-flask_compress==1.10.1 \
+flask-compress==1.10.1 \
     --hash=sha256:28352387efbbe772cfb307570019f81957a13ff718d994a9125fa705efb73680 \
     --hash=sha256:a6c2d1ff51771e9b39d7a612754f4cb4e8af20cebe16b02fd19d98d8dd6966e5
     # via -r base.in
-flask_wtf==0.15.1 \
+flask-wtf==0.15.1 \
     --hash=sha256:6ff7af73458f182180906a37a783e290bdc8a3817fe4ad17227563137ca285bf \
     --hash=sha256:ff177185f891302dc253437fe63081e7a46a4e99aca61dfe086fb23e54fff2dc
     # via -r base.in
@@ -383,9 +383,9 @@ googleapis-common-protos==1.52.0 \
     --hash=sha256:560716c807117394da12cecb0a54da5a451b5cf9866f1d37e9a5e2329a665351 \
     --hash=sha256:c8961760f5aad9a711d37b675be103e0cc4e9a39327e0d6d857872f698403e24
     # via google-api-core
-hypothesis==6.6.0 \
-    --hash=sha256:0f6b970178b7676267029eb5d352ea7ff4fda4533d2d2eaa3adbda660db54b65 \
-    --hash=sha256:6a23d0c342d01a88f3b30b54ad459246beb01b0ce28d865cf06623a9209aac03
+hypothesis==6.23.3 \
+    --hash=sha256:8bb632ecb8861a15896f0e6d31f4fa6c1aad2a30a2cf3d7e1f988868c8023c3a \
+    --hash=sha256:cf73011c43b51daa09ab5656df3a5db087097858c6984681c883bac61f2c2b55
     # via -r test.in
 idna==2.10 \
     --hash=sha256:b307872f855b18632ce0c21c5e45be78c0ea7ae4c15c828c20788b26921eb3f6 \
