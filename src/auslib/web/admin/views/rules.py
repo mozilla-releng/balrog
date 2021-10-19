@@ -1,6 +1,5 @@
 import connexion
 from flask import Response, jsonify
-from jsonschema.compat import str_types
 
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import AdminView, requirelogin
@@ -37,7 +36,7 @@ def process_rule_form(form_data):
     # Replaces wtfForms validations
     rule_form_dict = dict()
     for key in form_data:
-        if isinstance(form_data[key], str_types):
+        if isinstance(form_data[key], str):
             rule_form_dict[key] = None if form_data[key].strip() == "" else form_data[key].strip()
         else:
             rule_form_dict[key] = form_data[key]
@@ -243,7 +242,7 @@ class RuleScheduledChangesView(ScheduledChangesView):
 
         elif change_type == "insert":
             for field in ["update_type", "backgroundRate", "priority"]:
-                if what.get(field, None) is None or isinstance(what.get(field), str_types) and what.get(field).strip() == "":
+                if what.get(field, None) is None or isinstance(what.get(field), str) and what.get(field).strip() == "":
                     return problem(
                         400,
                         "Bad Request",
@@ -310,7 +309,7 @@ class RuleScheduledChangeView(ScheduledChangeView):
         elif change_type == "insert":
             # edit scheduled change for new rule
             for field in ["update_type", "backgroundRate", "priority"]:
-                if field in what and what.get(field) is None or isinstance(what.get(field), str_types) and what.get(field).strip() == "":
+                if field in what and what.get(field) is None or isinstance(what.get(field), str) and what.get(field).strip() == "":
                     return problem(
                         400, "Bad Request", "Null/Empty Value", ext={"exception": "%s cannot be set to null " "when scheduling insertion of a new rule" % field}
                     )
