@@ -1,4 +1,19 @@
--r base.txt
+aiohttp
+arrow
+auth0-python
+connexion
+deepmerge
+flask
+flask_compress
+flask_wtf
+jsonschema
+python-jose
+repoze.lru
+requests-hawk
+sentry-sdk[flask]
+spec-synthase
+sqlalchemy
+sqlalchemy-migrate
 
 sphinx
 sphinx_rtd_theme
