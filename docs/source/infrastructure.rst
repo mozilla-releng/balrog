@@ -30,7 +30,7 @@ Support & Escalation
 
 RelEng is the first point of contact for issues. To contact them, follow `the standard RelEng escalation path <https://wiki.mozilla.org/ReleaseEngineering#Contacting_Release_Engineering>`_.
 
-If RelEng is unable to correct the issue, they may `escalate to CloudOps <https://mana.mozilla.org/wiki/display/SVCOPS/Contacting+Cloud+Operations>`_.
+If RelEng is unable to correct the issue, they may `escalate to CloudOps <https://mana.mozilla.org/wiki/display/SVCOPS/Contacting+Services+SRE>`_.
 
 --------------------
 Monitoring & Metrics
