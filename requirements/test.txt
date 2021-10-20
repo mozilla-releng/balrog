@@ -55,7 +55,7 @@ check-manifest==0.47 \
 #   pip-tools
 # via connexion
 # via -r requirements/base.in
-coverage==5.5 \
+coverage[toml]==5.5 \
     --hash=sha256:004d1880bed2d97151facef49f08e255a20ceb6f9432df75f4eef018fdd5a78c \
     --hash=sha256:01d84219b5cdbfc8122223b39a954820929497a1cb1422824bb86b07b74594b6 \
     --hash=sha256:040af6c32813fa3eae5305d53f18875bedd079960822ef8ec067a66dd8afcd45 \
@@ -271,9 +271,9 @@ pytest-asyncio==0.16.0 \
     --hash=sha256:5f2a21273c47b331ae6aa5b36087047b4899e40f03f18397c0e65fa5cca54e9b \
     --hash=sha256:7496c5977ce88c34379df64a66459fe395cd05543f0a2f837016e7144391fcfb
 # via -r requirements/test.in
-pytest-cov==2.10.1 \
-    --hash=sha256:45ec2d5182f89a81fc3eb29e3d1ed3113b9e9a873bcddb2a71faaab066110191 \
-    --hash=sha256:47bd0ce14056fdd79f93e1713f88fad7bdcc583dcd7783da86ef2f085a0bb88e
+pytest-cov==3.0.0 \
+    --hash=sha256:578d5d15ac4a25e5f961c938b85a05b09fdaae9deef3bb6de9a6e766622ca7a6 \
+    --hash=sha256:e7f0f5b1617d2210a2cabc266dfe2f4c75a8d32fb89eafb7ad9d06f6d076d470
 # via -r requirements/test.in
 pytest-forked==1.3.0 \
     --hash=sha256:6aa9ac7e00ad1a539c41bec6d21011332de671e938c7637378ec9710204e37ca \
@@ -394,6 +394,7 @@ toml==0.10.2 \
 #   black
 #   build
 #   check-manifest
+#   coverage
 #   pep517
 #   pytest
 toposort==1.6 \
