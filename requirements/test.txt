@@ -43,9 +43,9 @@ build==0.1.0 \
 #   google-crc32c
 # via aiohttp
 # via requests
-check-manifest==0.46 \
-    --hash=sha256:5895e42a012989bdc51854a02c82c8d6898112a4ab11f2d7878200520b49d428 \
-    --hash=sha256:b59b0e7c7ed3946537677c9ab9b2c2cb7be9b1807fd40bc4dfc1eef31d42cff5
+check-manifest==0.47 \
+    --hash=sha256:365c94d65de4c927d9d8b505371d08ee19f9f369c86b9ac3db97c2754c827c95 \
+    --hash=sha256:56dadd260a9c7d550b159796d2894b6d0bcc176a94cbc426d9bb93e5e48d12ce
 # via -r requirements/test.in
 # via
 #   black
@@ -116,7 +116,9 @@ coveralls==3.2.0 \
     --hash=sha256:15a987d9df877fff44cd81948c5806ffb6eafb757b3443f737888358e96156ee \
     --hash=sha256:aedfcc5296b788ebaf8ace8029376e5f102f67c53d1373f2e821515c15b36527
 # via -r requirements/test.in
-# via gcloud-aio-auth
+# via
+#   gcloud-aio-auth
+#   pyjwt
 # via sqlalchemy-migrate
 # via -r requirements/base.in
 docopt==0.6.2 \
@@ -257,7 +259,9 @@ pyflakes==2.4.0 \
     --hash=sha256:05a85c2872edf37a4ed30b0cce2f6093e1d0581f8c19d7393122da7e25b2b24c \
     --hash=sha256:3bb3a3f256f4b7968c9c788781e4ff07dce46bdf12339dcda61053375426ee2e
 # via flake8
-# via gcloud-aio-auth
+# via
+#   auth0-python
+#   gcloud-aio-auth
 pyparsing==2.4.7 \
     --hash=sha256:c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1 \
     --hash=sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b
