@@ -163,9 +163,9 @@ flake8==4.0.1 \
 # via google-resumable-media
 # via google-cloud-storage
 # via google-api-core
-hypothesis==6.6.0 \
-    --hash=sha256:0f6b970178b7676267029eb5d352ea7ff4fda4533d2d2eaa3adbda660db54b65 \
-    --hash=sha256:6a23d0c342d01a88f3b30b54ad459246beb01b0ce28d865cf06623a9209aac03
+hypothesis==6.23.4 \
+    --hash=sha256:0996bc15581f8b810af1921a0814b3efee0c095f4f041597512733dac327d23a \
+    --hash=sha256:1a93f81c95bf585cf091866a0daf7765fa489f3b69091ab00e949756718ae872
 # via -r requirements/test.in
 # via
 #   requests
