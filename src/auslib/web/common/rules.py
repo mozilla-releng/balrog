@@ -6,7 +6,6 @@ from flask import Response, jsonify
 from sqlalchemy.sql.expression import null
 
 from auslib.global_state import dbo
-from auslib.web.common.csrf import get_csrf_headers
 from auslib.web.common.history import HistoryHelper
 
 log = logging.getLogger(__name__)
@@ -29,19 +28,13 @@ def get_rules():
     return jsonify(count=len(rules), rules=rules)
 
 
-def get_rule(id_or_alias, with_csrf_headers=False):
+def get_rule(id_or_alias):
     rule = dbo.rules.getRule(id_or_alias)
     if not rule:
         return problem(status=404, title="Not Found", detail="Requested rule wasn't found", ext={"exception": "Requested rule does not exist"})
 
     headers = {"X-Data-Version": rule["data_version"]}
-    if with_csrf_headers:
-        headers.update(get_csrf_headers())
     return Response(response=json.dumps(rule), mimetype="application/json", headers=headers)
-
-
-def get_rule_with_csrf_headers(id_or_alias):
-    return get_rule(id_or_alias, with_csrf_headers=True)
 
 
 def _get_filters(rule, history_table):

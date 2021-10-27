@@ -160,13 +160,7 @@ class PermissionScheduledChangesView(ScheduledChangesView):
             return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permission")
         change_type = connexion.request.get_json().get("change_type")
 
-        what = {}
-        for field in connexion.request.get_json():
-            if field == "csrf_token":
-                continue
-
-            what[field] = connexion.request.get_json()[field]
-
+        what = connexion.request.get_json()
         if what.get("options", None):
             what["options"] = json.loads(what.get("options"))
             if len(what["options"]) == 0:

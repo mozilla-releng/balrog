@@ -146,10 +146,6 @@ auslib.web.admin
     :members:
     :undoc-members:
 
-.. automodule:: auslib.web.admin.views.csrf
-    :members:
-    :undoc-members:
-
 .. automodule:: auslib.web.admin.views.history
     :members:
     :undoc-members:
@@ -189,10 +185,6 @@ auslib.web.admin
 -----------------
 auslib.web.common
 -----------------
-
-.. automodule:: auslib.web.common.csrf
-    :members:
-    :undoc-members:
 
 .. automodule:: auslib.web.common.emergency_shutoff
     :members:

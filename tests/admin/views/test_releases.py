@@ -15,7 +15,7 @@ class TestReleasesAPI_JSON(ViewTest):
     def testGetRelease(self):
         ret = self._get("/releases/b")
         self.assertStatusCode(ret, 200)
-        self.assertIn("X-CSRF-Token", ret.headers)
+        self.assertNotIn("X-CSRF-Token", ret.headers)
         self.assertDictEqual(
             ret.get_json(),
             json.loads(

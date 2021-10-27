@@ -70,9 +70,6 @@ class RulesAPIView(AdminView):
         if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
             return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
 
-        # Solves Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
-        what.pop("csrf_token", None)
-
         alias = what.get("alias", None)
         if alias is not None and dbo.rules.getRule(alias):
             return problem(400, "Bad Request", "Rule with alias exists.")
@@ -104,8 +101,6 @@ class SingleRuleView(AdminView):
         if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
             return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
 
-        # Solves https://bugzilla.mozilla.org/show_bug.cgi?id=1361158
-        what.pop("csrf_token", None)
         data_version = what.pop("data_version", None)
 
         dbo.rules.update(changed_by=changed_by, where={"rule_id": id_or_alias}, what=what, old_data_version=data_version, transaction=transaction)
@@ -223,10 +218,8 @@ class RuleScheduledChangesView(ScheduledChangesView):
         for field in connexion.request.get_json():
             # TODO: currently UI passes extra rule model fields in change_type == 'delete' request body. Fix it and
             # TODO: change the below operation from filter/pop to throw Error when extra fields are passed.
-            if (
-                field == "csrf_token"
-                or (change_type == "insert" and field in ["rule_id", "data_version"])
-                or (change_type == "delete" and field not in delete_change_type_allowed_fields)
+            if (change_type == "insert" and field in ["rule_id", "data_version"]) or (
+                change_type == "delete" and field not in delete_change_type_allowed_fields
             ):
                 continue
 
@@ -296,7 +289,7 @@ class RuleScheduledChangeView(ScheduledChangeView):
             # required (or even allowed) when modifying a scheduled change for an
             # existing rule. Allowing it to be modified would be confusing.
             if (
-                field in ["csrf_token", "rule_id", "sc_data_version"]
+                field in ["rule_id", "sc_data_version"]
                 or (change_type == "insert" and field == "data_version")
                 or (change_type == "delete" and field not in ["sc_data_version", "when", "telemetry_product", "telemetry_channel", "telemetry_uptake"])
             ):
