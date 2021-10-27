@@ -46,7 +46,6 @@ class ViewTest(unittest.TestCase):
         cache.make_copies = True
         app.config["SECRET_KEY"] = "abc123"
         app.config["DEBUG"] = True
-        app.config["WTF_CSRF_ENABLED"] = False
         app.config["ALLOWLISTED_DOMAINS"] = {"good.com": ("a", "b", "c", "d")}
         app.config["VERSION_FILE"] = self.version_file
         app.config["AUTH_DOMAIN"] = "balrog.test.dev"

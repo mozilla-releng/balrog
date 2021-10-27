@@ -119,10 +119,6 @@ class SingleRuleView(AdminView):
             return problem(status=404, title="Not Found", detail="Requested rule wasn't found", ext={"exception": "Requested rule does not exist"})
 
         # Bodies are ignored for DELETE requests, so we need to look at the request arguments instead.
-        # Even though we aren't going to use most of the form fields (just
-        # rule_id and data_version), we still want to create and validate the
-        # form to make sure that the CSRF token is checked.
-
         old_data_version = int(connexion.request.args.get("data_version"))
         dbo.rules.delete(where={"rule_id": id_or_alias}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
