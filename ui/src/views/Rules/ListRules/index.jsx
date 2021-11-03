@@ -639,9 +639,9 @@ function ListRules(props) {
   };
 
   const handleSignoff = async rule => {
-    console.log(rule)
+
     const requiredRole = roles.filter(role => role in rule.required_signoffs);
-    console.log(requiredSignoffs)
+
     if (requiredRole.length === 1) {
       const { error, result } = await doSignoff(requiredRole[0], rule);
 
