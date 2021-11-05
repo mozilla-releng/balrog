@@ -189,7 +189,7 @@ function ListSignoffs({ user }) {
 
   const handleSignoff = async (...props) => {
     if (roles.length === 1) {
-      const { error, result } = await doSignoff(roles[0], ...props);
+      const { error, result } = await (roles[0], ...props);
 
       if (!error) {
         updateSignoffs(result);
@@ -232,7 +232,7 @@ function ListSignoffs({ user }) {
   };
 
   const handleDialogSubmit = async () => {
-    const { error, result } = await doSignoff(signoffRole, ...dialogState.item);
+    const { error, result } = await (signoffRole, ...dialogState.item);
 
     if (error) {
       throw error;
