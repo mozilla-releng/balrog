@@ -1,8 +1,16 @@
 import React from 'react';
 import { func, object } from 'prop-types';
+import {
+  revokeSignoffV2,
+} from '../../../services/releases';
+import useAction from '../../../hooks/useAction';
 import Button from '../Button';
 
-function SignoffButton({user, signoffs, roles, signoffType, updateSignoffs, setDialogState }) {
+function SignoffButton({user, signoffs, roles, signoffType, updateSignoffs, setDialogState, setSignoffType }) {
+  const [revokeAction, revoke] = useAction(props =>
+    revokeSignoff({ type: 'releases', ...props })
+  );
+  const [revokeV2Action, revokeV2] = useAction(revokeSignoffV2);
 
   const doSignoff = async (roleToSignoffWith) => {
     // special conditions just for releases?
@@ -35,6 +43,37 @@ function SignoffButton({user, signoffs, roles, signoffType, updateSignoffs, setD
   //   handleDialogClose();
   // };
 
+  const handleRevoke = async () => {
+    let error = null;
+    // rules also use revoke, but doesn't check version first
+    if (signoffType.api_version === 1) {
+      ({ error } = await revoke({
+        scId: signoffType.scheduledChange.sc_id,
+        role: signoffType.scheduledChange.signoffs[username],
+      }));
+    } else {
+      ({ error } = await revokeV2(signoffType.name));
+    }
+
+    if (!error) {
+      setSignoffType(
+        releases.map(r => {
+          if (
+            !r.scheduledChange ||
+            r.scheduledChange.sc_id !== signoffType.scheduledChange.sc_id
+          ) {
+            return r;
+          }
+
+          const newSignoffType = clone(r);
+
+          delete newSignoffType.scheduledChange.signoffs[username];
+
+          return newSignoffType;
+        })
+      );
+    }
+  };
   const handleSignoff = async () => {
     const requiredRole = roles.filter(role => role in signoffType.required_signoffs);
   
@@ -59,7 +98,7 @@ function SignoffButton({user, signoffs, roles, signoffType, updateSignoffs, setD
     }
   };
   return (user && user.email in signoffs ? (
-    <Button color="secondary" disabled={!user} onClick={onRevoke}>
+    <Button color="secondary" disabled={!user} onClick={handleRevoke}>
       Revoke Signoff
     </Button>
   ) : (
