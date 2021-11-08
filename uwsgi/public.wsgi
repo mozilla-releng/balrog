@@ -12,8 +12,8 @@ LOCALDEV = bool(int(os.environ.get("LOCALDEV", 0)))
 
 SPECIAL_FORCE_HOSTS = ["http://download.mozilla.org"]
 DOMAIN_ALLOWLIST = {
-    "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird"),
-    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird", "FirefoxVPN"),
+    "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird", "Pinebuild"),
+    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird", "FirefoxVPN", "Pinebuild"),
     "download.cdn.mozilla.net": ("Firefox", "Fennec"),
     "ciscobinary.openh264.org": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),
