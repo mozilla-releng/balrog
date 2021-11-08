@@ -43,9 +43,9 @@ build==0.1.0 \
 #   google-crc32c
 # via aiohttp
 # via requests
-check-manifest==0.46 \
-    --hash=sha256:5895e42a012989bdc51854a02c82c8d6898112a4ab11f2d7878200520b49d428 \
-    --hash=sha256:b59b0e7c7ed3946537677c9ab9b2c2cb7be9b1807fd40bc4dfc1eef31d42cff5
+check-manifest==0.47 \
+    --hash=sha256:365c94d65de4c927d9d8b505371d08ee19f9f369c86b9ac3db97c2754c827c95 \
+    --hash=sha256:56dadd260a9c7d550b159796d2894b6d0bcc176a94cbc426d9bb93e5e48d12ce
 # via -r requirements/test.in
 # via
 #   black
@@ -55,7 +55,7 @@ check-manifest==0.46 \
 #   pip-tools
 # via connexion
 # via -r requirements/base.in
-coverage==5.5 \
+coverage[toml]==5.5 \
     --hash=sha256:004d1880bed2d97151facef49f08e255a20ceb6f9432df75f4eef018fdd5a78c \
     --hash=sha256:01d84219b5cdbfc8122223b39a954820929497a1cb1422824bb86b07b74594b6 \
     --hash=sha256:040af6c32813fa3eae5305d53f18875bedd079960822ef8ec067a66dd8afcd45 \
@@ -116,7 +116,9 @@ coveralls==3.2.0 \
     --hash=sha256:15a987d9df877fff44cd81948c5806ffb6eafb757b3443f737888358e96156ee \
     --hash=sha256:aedfcc5296b788ebaf8ace8029376e5f102f67c53d1373f2e821515c15b36527
 # via -r requirements/test.in
-# via gcloud-aio-auth
+# via
+#   gcloud-aio-auth
+#   pyjwt
 # via sqlalchemy-migrate
 # via -r requirements/base.in
 docopt==0.6.2 \
@@ -161,9 +163,9 @@ flake8==4.0.1 \
 # via google-resumable-media
 # via google-cloud-storage
 # via google-api-core
-hypothesis==6.6.0 \
-    --hash=sha256:0f6b970178b7676267029eb5d352ea7ff4fda4533d2d2eaa3adbda660db54b65 \
-    --hash=sha256:6a23d0c342d01a88f3b30b54ad459246beb01b0ce28d865cf06623a9209aac03
+hypothesis==6.23.4 \
+    --hash=sha256:0996bc15581f8b810af1921a0814b3efee0c095f4f041597512733dac327d23a \
+    --hash=sha256:1a93f81c95bf585cf091866a0daf7765fa489f3b69091ab00e949756718ae872
 # via -r requirements/test.in
 # via
 #   requests
@@ -257,31 +259,33 @@ pyflakes==2.4.0 \
     --hash=sha256:05a85c2872edf37a4ed30b0cce2f6093e1d0581f8c19d7393122da7e25b2b24c \
     --hash=sha256:3bb3a3f256f4b7968c9c788781e4ff07dce46bdf12339dcda61053375426ee2e
 # via flake8
-# via gcloud-aio-auth
+# via
+#   auth0-python
+#   gcloud-aio-auth
 pyparsing==2.4.7 \
     --hash=sha256:c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1 \
     --hash=sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b
 # via packaging
 # via jsonschema
-pytest-asyncio==0.14.0 \
-    --hash=sha256:2eae1e34f6c68fc0a9dc12d4bea190483843ff4708d24277c41568d6b6044f1d \
-    --hash=sha256:9882c0c6b24429449f5f969a5158b528f39bde47dc32e85b9f0403965017e700
+pytest-asyncio==0.16.0 \
+    --hash=sha256:5f2a21273c47b331ae6aa5b36087047b4899e40f03f18397c0e65fa5cca54e9b \
+    --hash=sha256:7496c5977ce88c34379df64a66459fe395cd05543f0a2f837016e7144391fcfb
 # via -r requirements/test.in
-pytest-cov==2.10.1 \
-    --hash=sha256:45ec2d5182f89a81fc3eb29e3d1ed3113b9e9a873bcddb2a71faaab066110191 \
-    --hash=sha256:47bd0ce14056fdd79f93e1713f88fad7bdcc583dcd7783da86ef2f085a0bb88e
+pytest-cov==3.0.0 \
+    --hash=sha256:578d5d15ac4a25e5f961c938b85a05b09fdaae9deef3bb6de9a6e766622ca7a6 \
+    --hash=sha256:e7f0f5b1617d2210a2cabc266dfe2f4c75a8d32fb89eafb7ad9d06f6d076d470
 # via -r requirements/test.in
 pytest-forked==1.3.0 \
     --hash=sha256:6aa9ac7e00ad1a539c41bec6d21011332de671e938c7637378ec9710204e37ca \
     --hash=sha256:dc4147784048e70ef5d437951728825a131b81714b398d5d52f17c7c144d8815
 # via pytest-xdist
-pytest-xdist==2.2.0 \
-    --hash=sha256:1d8edbb1a45e8e1f8e44b1260583107fc23f8bc8da6d18cb331ff61d41258ecf \
-    --hash=sha256:f127e11e84ad37cc1de1088cb2990f3c354630d428af3f71282de589c5bb779b
+pytest-xdist==2.4.0 \
+    --hash=sha256:7b61ebb46997a0820a263553179d6d1e25a8c50d8a8620cd1aa1e20e3be99168 \
+    --hash=sha256:89b330316f7fc475f999c81b577c2b926c9569f3d397ae432c0c2e2496d61ff9
 # via -r requirements/test.in
-pytest==6.2.1 \
-    --hash=sha256:1969f797a1a0dbd8ccf0fecc80262312729afea9c17f1d70ebf85c5e76c6f7c8 \
-    --hash=sha256:66e419b1899bc27346cb2c993e12c5e5e8daba9073c1fbce33b9807abc95c306
+pytest==6.2.5 \
+    --hash=sha256:131b36680866a76e6781d13f101efb86cf674ebb9762eb70d3082b6f29889e89 \
+    --hash=sha256:7310f8d27bc79ced999e760ca304d69f6ba6c6649c0b60fb0e04a4a77cacc134
 # via
 #   -r requirements/test.in
 #   pytest-asyncio
@@ -390,6 +394,7 @@ toml==0.10.2 \
 #   black
 #   build
 #   check-manifest
+#   coverage
 #   pep517
 #   pytest
 toposort==1.6 \
