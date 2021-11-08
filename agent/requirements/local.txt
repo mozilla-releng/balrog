@@ -241,9 +241,9 @@ pep517==0.9.1 \
     --hash=sha256:3985b91ebf576883efe5fa501f42a16de2607684f3797ddba7202b71b7d0da51 \
     --hash=sha256:aeb78601f2d1aa461960b43add204cc7955667687fbcf9cdb5170f00556f117f
     # via build
-pip-compile-multi==2.1.0 \
-    --hash=sha256:888788ad738f71121faf6a6ecce87af3ec5eacc11c47cb363f120cde88a2a821 \
-    --hash=sha256:c199a48921c63859707853c36cc506eac978c089e21b347215c979d5fc99161c
+pip-compile-multi==2.4.2 \
+    --hash=sha256:7e4549eea418096a97c4bb85fff7a0f54e858afb78e2e37098c1dc5fb91e1c11 \
+    --hash=sha256:c1214bd4670e7432356c709354a3c6bc24ca457f48359ee1a2d7621f501de745
     # via -r test.in
 pip-tools==5.5.0 \
     --hash=sha256:10841c1e56c234d610d0466447685b9ea4ee4a2c274f858c0ef3c33d9bd0d985 \
