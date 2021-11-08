@@ -26,8 +26,8 @@ DOMAIN_ALLOWLIST = {
 if STAGING or LOCALDEV:
     DOMAIN_ALLOWLIST.update(
         {
-            "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
-            "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
+            "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird", "Pinebuild"),
+            "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird", "Pinebuild"),
             "stage.guardian.nonprod.cloudops.mozgcp.net": ("FirefoxVPN", "Guardian"),
             "stage-vpn.guardian.nonprod.cloudops.mozgcp.net": ("FirefoxVPN", "Guardian"),
         }
