@@ -78,27 +78,27 @@ aiohttp==3.8.0 \
     --hash=sha256:f348ebd20554e8bc26e8ef3ed8a134110c0f4bf015b3b4da6a4ddf34e0515b19 \
     --hash=sha256:fa818609357dde5c4a94a64c097c6404ad996b1d38ca977a72834b682830a722 \
     --hash=sha256:fe4a327da0c6b6e59f2e474ae79d6ee7745ac3279fd15f200044602fa31e3d79
-# via -r requirements/base.in
+    # via -r base.in
 aiosignal==1.2.0 \
     --hash=sha256:26e62109036cd181df6e6ad646f91f0dcfd05fe16d0cb924138ff2ab75d64e3a \
     --hash=sha256:78ed67db6c7b7ced4f98e495e572106d5c432a93e1ddd1bf475e1dc05f5b7df2
-# via aiohttp
+    # via aiohttp
 async-timeout==4.0.0 \
     --hash=sha256:7d87a4e8adba8ededb52e579ce6bc8276985888913620c935094c2276fd83382 \
     --hash=sha256:f3303dddf6cafa748a92747ab6c2ecf60e0aeca769aee4c151adfce243a05d9b
-# via aiohttp
+    # via aiohttp
 attrs==21.2.0 \
     --hash=sha256:149e90d6d8ac20db7a955ad60cf0e6881a3f20d37096140088356da6c716b0b1 \
     --hash=sha256:ef6aaac3ca6cd92904cdd0d83f629a15f18053ec84e6432106f7a4d04ae4f5fb
-# via aiohttp
+    # via aiohttp
 certifi==2021.10.8 \
     --hash=sha256:78884e7c1d4b00ce3cea67b44566851c4343c120abd683433ce934a68ea58872 \
     --hash=sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569
-# via sentry-sdk
+    # via sentry-sdk
 charset-normalizer==2.0.7 \
     --hash=sha256:e019de665e2bcf9c2b64e2e5aa025fa991da8720daa3c1138cadd2fd1856aed0 \
     --hash=sha256:f7af805c321bfa1ce6714c51f254e0d5bb5e5834039bc17db7ebe3a4cec9492b
-# via aiohttp
+    # via aiohttp
 frozenlist==1.2.0 \
     --hash=sha256:01d79515ed5aa3d699b05f6bdcf1fe9087d61d6b53882aa599a10853f0479c6c \
     --hash=sha256:0a7c7cce70e41bc13d7d50f0e5dd175f14a4f1837a8549b0936ed0cbe6170bf9 \
@@ -172,13 +172,13 @@ frozenlist==1.2.0 \
     --hash=sha256:f025f1d6825725b09c0038775acab9ae94264453a696cc797ce20c0769a7b367 \
     --hash=sha256:f5f3b2942c3b8b9bfe76b408bbaba3d3bb305ee3693e8b1d631fe0a0d4f93673 \
     --hash=sha256:fbd4844ff111449f3bbe20ba24fbb906b5b1c2384d0f3287c9f7da2354ce6d23
-# via
-#   aiohttp
-#   aiosignal
+    # via
+    #   aiohttp
+    #   aiosignal
 idna==3.3 \
     --hash=sha256:84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff \
     --hash=sha256:9d643ff0a55b762d5cdb124b8eaa99c66322e2157b69160bc32796e824360e6d
-# via yarl
+    # via yarl
 multidict==5.2.0 \
     --hash=sha256:06560fbdcf22c9387100979e65b26fba0816c162b888cb65b845d3def7a54c9b \
     --hash=sha256:067150fad08e6f2dd91a650c7a49ba65085303fcc3decbd64a57dc13a2733031 \
@@ -252,22 +252,22 @@ multidict==5.2.0 \
     --hash=sha256:f9bef5cff994ca3026fcc90680e326d1a19df9841c5e3d224076407cc21471a1 \
     --hash=sha256:fc66d4016f6e50ed36fb39cd287a3878ffcebfa90008535c62e0e90a7ab713ae \
     --hash=sha256:fd77c8f3cba815aa69cb97ee2b2ef385c7c12ada9c734b0f3b32e26bb88bbf1d
-# via
-#   aiohttp
-#   yarl
-sentry-sdk==1.4.3 \
-    --hash=sha256:b9844751e40710e84a457c5bc29b21c383ccb2b63d76eeaad72f7f1c808c8828 \
-    --hash=sha256:c091cc7115ff25fe3a0e410dbecd7a996f81a3f6137d2272daef32d6c3cfa6dc
-# via -r requirements/base.in
+    # via
+    #   aiohttp
+    #   yarl
+sentry-sdk==1.5.0 \
+    --hash=sha256:0db297ab32e095705c20f742c3a5dac62fe15c4318681884053d0898e5abb2f6 \
+    --hash=sha256:789a11a87ca02491896e121efdd64e8fd93327b69e8f2f7d42f03e2569648e88
+    # via -r base.in
 typing-extensions==3.10.0.2 \
     --hash=sha256:49f75d16ff11f1cd258e1b988ccff82a3ca5570217d7ad8c5f48205dd99a677e \
     --hash=sha256:d8226d10bc02a29bcc81df19a26e56a9647f8b0a6d4a83924139f4a8b01f17b7 \
     --hash=sha256:f1d25edafde516b146ecd0613dabcc61409817af4766fbbcfb8d1ad4ec441a34
-# via async-timeout
+    # via async-timeout
 urllib3==1.26.7 \
     --hash=sha256:4987c65554f7a2dbf30c18fd48778ef124af6fab771a377103da0585e2336ece \
     --hash=sha256:c4fdf4019605b6e5423637e01bc9fe4daef873709a7973e195ceba0a62bbc844
-# via sentry-sdk
+    # via sentry-sdk
 yarl==1.7.2 \
     --hash=sha256:044daf3012e43d4b3538562da94a88fb12a6490652dbc29fb19adfa02cf72eac \
     --hash=sha256:0cba38120db72123db7c58322fa69e3c0efa933040ffb586c3a87c063ec7cae8 \
@@ -341,4 +341,4 @@ yarl==1.7.2 \
     --hash=sha256:fc4dd8b01a8112809e6b636b00f487846956402834a7fd59d46d4f4267181c41 \
     --hash=sha256:fce78593346c014d0d986b7ebc80d782b7f5e19843ca798ed62f8e3ba8728576 \
     --hash=sha256:fd547ec596d90c8676e369dd8a581a21227fe9b4ad37d0dc7feb4ccf544c2d59
-# via aiohttp
+    # via aiohttp
