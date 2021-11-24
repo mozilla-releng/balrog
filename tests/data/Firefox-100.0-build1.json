@@ -1,0 +1,674 @@
+{
+    "appVersion": "100.0",
+    "detailsUrl": "https://www.mozilla.org/%LOCALE%/firefox/100.0/releasenotes/",
+    "displayVersion": "100.0",
+    "fileUrls": {
+        "*": {
+            "completes": {
+                "*": "http://download.mozilla.org/?product=firefox-100.0-complete&os=%OS_BOUNCER%&lang=%LOCALE%"
+            },
+            "partials": {
+                "Firefox-54.0.1-build1": "http://download.mozilla.org/?product=firefox-100.0-partial-54.0.1&os=%OS_BOUNCER%&lang=%LOCALE%",
+                "Firefox-55.0.3-build2": "http://download.mozilla.org/?product=firefox-100.0-partial-55.0.3&os=%OS_BOUNCER%&lang=%LOCALE%",
+                "Firefox-100.0b12-build1": "http://download.mozilla.org/?product=firefox-100.0-partial-100.0b12&os=%OS_BOUNCER%&lang=%LOCALE%"
+            }
+        },
+        "beta": {
+            "completes": {
+                "*": "http://download.mozilla.org/?product=firefox-100.0build1-complete&os=%OS_BOUNCER%&lang=%LOCALE%"
+            },
+            "partials": {
+                "Firefox-100.0b12-build1": "http://download.mozilla.org/?product=firefox-100.0build1-partial-100.0b12build1&os=%OS_BOUNCER%&lang=%LOCALE%"
+            }
+        },
+        "beta-cdntest": {
+            "completes": {
+                "*": "http://download.mozilla.org/?product=firefox-100.0build1-complete&os=%OS_BOUNCER%&lang=%LOCALE%"
+            },
+            "partials": {
+                "Firefox-100.0b12-build1": "http://download.mozilla.org/?product=firefox-100.0build1-partial-100.0b12build1&os=%OS_BOUNCER%&lang=%LOCALE%"
+            }
+        },
+        "beta-localtest": {
+            "completes": {
+                "*": "http://archive.mozilla.org/pub/firefox/candidates/100.0-candidates/build1/update/%OS_FTP%/%LOCALE%/firefox-100.0.complete.mar"
+            },
+            "partials": {
+                "Firefox-100.0b12-build1": "http://archive.mozilla.org/pub/firefox/candidates/100.0-candidates/build1/update/%OS_FTP%/%LOCALE%/firefox-100.0b12-100.0.partial.mar"
+            }
+        },
+        "release-localtest": {
+            "completes": {
+                "*": "http://archive.mozilla.org/pub/firefox/candidates/100.0-candidates/build1/update/%OS_FTP%/%LOCALE%/firefox-100.0.complete.mar"
+            },
+            "partials": {
+                "Firefox-54.0.1-build1": "http://archive.mozilla.org/pub/firefox/candidates/100.0-candidates/build1/update/%OS_FTP%/%LOCALE%/firefox-54.0.1-100.0.partial.mar",
+                "Firefox-55.0.3-build2": "http://archive.mozilla.org/pub/firefox/candidates/100.0-candidates/build1/update/%OS_FTP%/%LOCALE%/firefox-55.0.3-100.0.partial.mar"
+            }
+        }
+    },
+    "hashFunction": "sha512",
+    "name": "Firefox-100.0-build1",
+    "platformVersion": "100.0",
+    "platforms": {
+        "Darwin_x86-gcc3": {
+            "alias": "Darwin_x86_64-gcc3-u-i386-x86_64"
+        },
+        "Darwin_x86-gcc3-u-i386-x86_64": {
+            "alias": "Darwin_x86_64-gcc3-u-i386-x86_64"
+        },
+        "Darwin_x86_64-gcc3": {
+            "alias": "Darwin_x86_64-gcc3-u-i386-x86_64"
+        },
+        "Darwin_x86_64-gcc3-u-i386-x86_64": {
+            "OS_BOUNCER": "osx",
+            "OS_FTP": "mac",
+            "locales": {
+                "af": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 41653247,
+                            "from": "*",
+                            "hashValue": "da7081c7283ed85af9d4b63c3599498332f2cd3475c5f9f0805a20109741c13eccfc7be9cde3fbdad001300c84d918174b3ce56d49fbd1e97b821917b457f272"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 2543023,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "d2deca7fafec25ad7b813f7e92cb54f735c3a74519919a55b9654ef0afda8b18f3f533d38079d198bcf71e3752a631a31f954a0518ba16106c699673dda40607"
+                        },
+                        {
+                            "filesize": 38527423,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "8668135081381b79f81b5214dd799d642213f62afe0b67dfd78b1a59a7c5a89e527357b628719bc3acf7597c6912d50dc9419148427af7d65ee5e7c6c28ab952"
+                        },
+                        {
+                            "filesize": 20092145,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "982ace0fbce1136a442c13867be3c69254e6ec487dfb09ba4b7ed31a5549b52889012a70de3ed88cc8226c45046535986360c319e7f72192146837a7f05f72a2"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                },
+                "de": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 41662499,
+                            "from": "*",
+                            "hashValue": "65a8ed5c77af87988adacbe3206014158190b0dc8a1fba641e5b9317d205c517b8b6ff3ddf552630434d9192533edec310317f5057c0f2e686406cf384d33a0f"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 2544279,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "ec15a880e019c6aa825d91b665266d887f0ea6ef4f52861c989091416390cf78e9a5eb02382268c0a54a6d0c0e876ca7ca21ae7af0487052de28b248a2853377"
+                        },
+                        {
+                            "filesize": 20090817,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "71f2a6768443e126bf01b669f48397fe44318c4ff2d84751485a042502a6c9abb7fe465807aa1794ad6a91f591aa87c71e2c6707cd4cd5fdf042f82db2052f9a"
+                        },
+                        {
+                            "filesize": 38535099,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "0dbc33fcf72a6568b433ab9d497320426bbcb047c4f66555d3dcbb05a09d5c8813488ecd4cc21c0b85ba0b3cf10593d807ff3a91c00fedf8fcacaf98cd08988d"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                },
+                "en-US": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 41806055,
+                            "from": "*",
+                            "hashValue": "f79b04e0f2d1607f2fc327b5c47fc4744970bfe986fac742d00f01776471449f0edf4b2458fd1102743616c6f5a0c9c7d56eda022c88bb176ad837f803642964"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 2542151,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "53aa3633280949ed82bc28979f0c7b5c1081068dfb2ebee7b0139f95ccbf42f200faf9f13ada81f1b521b6fba165b2a3655139862855fafba4347697b36b7ee2"
+                        },
+                        {
+                            "filesize": 20089441,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "cea3a6a70f8dc71f76f8dff4a3a7166cb2daafcac1d393b1dcdf39fe358f8a8b49fd999b679c6c929304a55fac5dde1f6c7e3c233097d1b77a36b6a69c1abe9b"
+                        },
+                        {
+                            "filesize": 38510103,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "90ca9ad0aeedb3ab816fe09a8a279fe986c93249b56a1de1c05004c2c4b2ac6dd905a7467bc83559528096b4c09a6ca095654d345bda16028ccf5995fb8c6f53"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                },
+                "zh-TW": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 41832562,
+                            "from": "*",
+                            "hashValue": "1ad47608443bcf29f10a67b0a1ab2b0c43279fdb7494546a27db4ee14b74a36a604e47c7e59d23e581bb1fcf6fbb1540fdd1beb2d7eec4a23244babdcfeb2f08"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 2541131,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "7e584df8704dc800d301fb001fd58f2aaead772b0c56a30e74a12e81f05d48d53e7ce7b0b0a249a7d97068c58831c41ee15fae231f830efc0145529af5f7b538"
+                        },
+                        {
+                            "filesize": 20091008,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "980fa46741a727437ac8071777cca79f50e6cdb6200f7978ba7e66610d16bc9449076289bb7542069d072fe946e29e152729badc811c66a74a9be65b8c67bccf"
+                        },
+                        {
+                            "filesize": 38526606,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "c46cc963919fd14844408a5a525d6d6093f33c095327d81e294acdaaf1e100444b56a25d09034f4ab6e104d712f34583d0bd3d2a2db07c56308f195eea362793"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                }
+            }
+        },
+        "Linux_x86-gcc3": {
+            "OS_BOUNCER": "linux",
+            "OS_FTP": "linux-i686",
+            "locales": {
+                "af": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 43694725,
+                            "from": "*",
+                            "hashValue": "fe560be3f72b1d3b5e313be3623eb7bfefe77c2a564b949a1147cec7cbda954e5c59b5ce7304acf7ab50ec31ceb8d9451234ac004befe074c6b8ded709bda72b"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 4775643,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "846b3bbe08ebc37865e3254c12bd7c5249b1f2925ed9dcadbb8e4203cf3b95f6a484b3c3dc758b05a43852268d6bb0803889bd863a5c39caec52c778266696b2"
+                        },
+                        {
+                            "filesize": 18028953,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "8e4bb644f38590826787955a52223f98b09cd5ebe77dae62d2827c3d66888826a4bb3d89d02ed4c2a26ad3938b292233af84b1668246954fbfa3ab2f996ebf65"
+                        },
+                        {
+                            "filesize": 35666032,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "9d55961f05d7bc085d3dec305cbcd93a65c286699ebde27fa4b58b7952bd18eab87cfeb1f08de4a8dca28b060cf16376e93aa8c62e44db9f42c9b5f33d6120e0"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                },
+                "de": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 43704429,
+                            "from": "*",
+                            "hashValue": "0aace0cf33996fcfba47974027214dff54d6b5d68bd7600bc135f063c77c17b237843c881f31329d7e38e2b2c75863db8c04defc740180154875d980f48d432c"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 4775659,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "644b3eb29798ba94c527d7d30ccf2811dd3d908cbdc881b0df782f224bc2dbd833a2e57f3eb09ecf3e3ffa7862ccaa0705d168ba2c2102e2c1491c4ea21e86e9"
+                        },
+                        {
+                            "filesize": 18027453,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "d61c94ca360ee80e96e19933d8b8e6508954f4a9a1bff275c873b86bb26fe7ee8400e2482ce44c97c4b94041dab04593b622953c86c92c45120eb13e7996755b"
+                        },
+                        {
+                            "filesize": 35677480,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "bdb2678a0e38e9d98b09275d8131ca38b0d37935b43fb6c960b43b7d01f4893f7dd3a4bad77a6b7b06732100ec69f8b00f596484fd95017579fc4652d5d1819e"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                },
+                "en-US": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 43847123,
+                            "from": "*",
+                            "hashValue": "6955b078349e11486a32426f016c71a2a8403080ba87e886125cce7950e61fb1280043156020c845ddef2c4ea73c6d7881679605399d90919db57939d93327fe"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 4775699,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "63457c5863ad539be5d3bd88ea30563cc2e35d2ab098f854b4444ce9cef72e9363985afc2d99d038f129e0bbdd55a7f5d013c12a47cd3d7334be825a16a780bd"
+                        },
+                        {
+                            "filesize": 18027066,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "d5959f9470b4a9c4d48b4df69c4f2aab9bfc2cd9c61358edfacca4fa86bb7f4a1b90f9bff591d17cbd7343cad876227aebee393f5109f670402f32164376cb93"
+                        },
+                        {
+                            "filesize": 35650413,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "7a72a8d0deed4563816d569a5a45655b2be39a45808d44e6e3081379351bfba29b18c21a304a7c1dda2858c78497ae4cf8faabd00b263f8ce033d729a14f40ea"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                },
+                "zh-TW": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 43875727,
+                            "from": "*",
+                            "hashValue": "ac6f435e793d0807bccbffc1bef790a13fcb5acfada11e2658c3ff2700a518523429a40b0d34be6162b639f899e81e92b95dc9a3a6dc5469d2eecd7c61c7c2d2"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 4775691,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "3281d37c737c8255571798685a008697d703bf731a5bf77dade08ad44c75ff10043de0b207f929c6df11d3111f3409918b18269f553d054972762d7bf32edbe8"
+                        },
+                        {
+                            "filesize": 18028061,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "21e08940be6d9da5623b97d75cad35cc9345578e8a121ba6336c8afcfb06eb252707c4c04f48e75dc7e25ac506a239cc4c9bed7a6360034692c9f41fb4d11696"
+                        },
+                        {
+                            "filesize": 35670704,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "3f9ab7717b69e8d3a697350a74cf622357b2a8c252a7710fb8866ad256bec0e8807e4a6cfa2df77fd5643838807bf95ae3089f62ee41b7d1f68031a49aa29f66"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                }
+            }
+        },
+        "Linux_x86_64-gcc3": {
+            "OS_BOUNCER": "linux64",
+            "OS_FTP": "linux-x86_64",
+            "locales": {
+                "af": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 43402441,
+                            "from": "*",
+                            "hashValue": "b6255f1d60d8bad9801db1b832053daccc1ed2855f93fd0c4774a97430624bf5ea71b45f9d7f1b317262536511afa61b25239ee4205bb573eb7e132fa6430b12"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 6076531,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "00c13f3c741ffd2f9955b2b56aa1e46272e0d39525e6d5e0a6f472a1d3d6aaa0775b653cbd2d2ca62d05eaa6e9d3b3dafad7d12a6bcf0d9436654d6c263885a9"
+                        },
+                        {
+                            "filesize": 19395817,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "123dc131e547b408090cd1fd87429a27eee4dffd6e074e9e2b6a045b6c651bdf404801caba1ba3d5c6594f1cc5daa4570b70b41ecc935889e2bf0c2aa11ce0e1"
+                        },
+                        {
+                            "filesize": 36445262,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "1e56443ff05b135171a937c733d2e35f4b4b5c7da3fb88e464b01479eaf7a2a4335be009ea64fcbdbd18989716e987d37d2f3e536d3807bb221370fef6d24c60"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                },
+                "en-US": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 43556475,
+                            "from": "*",
+                            "hashValue": "bfe3403d13322ff07dd728d2edcecf7426bfef3adbfd535c52142ce762be257649f6b26e7821dbd16f9a7590a1945a4061cbeb66bbca0d736c668e01b09341f2"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 6076527,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "a48dfbf1f87577f50ca242ac3bf3687c070236450f19504b873da216eec6705900a3ecabaef3b643e897e8d1a000c39a14c659f4029156a881f3bd23b1ef55fe"
+                        },
+                        {
+                            "filesize": 36431163,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "8060a12064afca81727e855d6ed4387ad4894e095dd4848cf40716bd6e65e175ae6c80a7b2347b9ef0ac0e167e8ecaedb5dea47e023c73e2149266e7e322374f"
+                        },
+                        {
+                            "filesize": 19393770,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "9ae947d7ff4b352afc4e45bb509eca76a9890180a6dc0d8cee276832ba76474c8b27b8a21982e676e8f13af8ef63d8bb0bccea493f5c4dcfebbc052ae7ab41b5"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                },
+                "zh-TW": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 43583399,
+                            "from": "*",
+                            "hashValue": "7a2d9a96085d9d9120af0eb7a0ee6dc7ca59170095f05474cea663f46e8a072ab4112fd2d66f7f4f7f0e8d6945f0ac9c323d8ee700a8b0e7390ac0c7d95a319e"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 6076587,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "c7e14e499dd48d0864fb4b57ef02baf0005469e8cd21c3ebdbe88ff7ace95a5e252342828beb50014524dc90104b2a69ba6527cbd7b4c89bea534e24872c6276"
+                        },
+                        {
+                            "filesize": 19394997,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "de1761ef7248fc455e327555594d2b46f2db7bc313875c9b69907c137f1b701060b004c22c0f154093dd7847580bc9b4c967c8ba5882bab64676c0c528d8cc6c"
+                        },
+                        {
+                            "filesize": 36448014,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "9a42fc86ac50d7284565655e8b855f1eaf5a3222aedce3a63911ded292055c21b1c464d29477318f1f4846e4fca577c8618744d5947dd618632284388aacbf02"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                }
+            }
+        },
+        "WINNT_x86-msvc": {
+            "OS_BOUNCER": "win",
+            "OS_FTP": "win32",
+            "locales": {
+                "af": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 38016849,
+                            "from": "*",
+                            "hashValue": "f228d521049cd4665c8d56ee14319d1ef319030631789641d19797a90841745db3313cc11fda1453dee1be56a3e700dc390ce884c6d739b2c310b8aedf5c6556"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 5676707,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "f1e75d84c4ddd9ce26f21d10bfd45743ef748ed9edb7d8847f144986bc6f862e272d8f6136d9cce7467a75ec6452d1f500ffe80ddc09a0ccffa3fe90668acd64"
+                        },
+                        {
+                            "filesize": 12554214,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "9bc7502e2302131798a653bc9a0d9497acee1e7384a532c4d409a408f805670592d994d1d21e7b0736569ce1c088bce73aa5fec08fde500a5f7d9acebb6cbf47"
+                        },
+                        {
+                            "filesize": 26683506,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "e664a7bf2f76fb09380ab662f33bb6a26960ab1ed347ca9f00bd28bcb3fa3ade619296976e423d4c04866b4b4ac2a600f042ac256f2e637734858948f2d4bb45"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                },
+                "de": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 38025961,
+                            "from": "*",
+                            "hashValue": "3d5a96035b1a311a07c595344bbba4fed9120c8528c075823b8e903fe1f62e1045da2fbb6bcfc7d2687dca079a97d73e7c20da990592cdec80fae1ebbba58a18"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 5676727,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "08a2ae0de6a1937c68791cbf177ae329445cac12c5415768944ac56c30d58a3269a85df3a651b3b4088cb835aea43b1c55e813aec01696cc39831afdf70b0ebb"
+                        },
+                        {
+                            "filesize": 26694926,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "b960ea85b942782117d674b6450f67641ac59942a5a6661a36a8c2cae422d6acacb58aa656948c9e78dac363bf15c46b20378ffa7d71be0f362e0897b3ce9de4"
+                        },
+                        {
+                            "filesize": 12552986,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "99733d7095052409e3611b86e6cb1b557fca3f5b3e20cb33a9f8b18453cf83ac38ff5a7e02b9b001e385ec4160e91a90fe757e53eb2b38c9657389915bd6b42c"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                },
+                "en-US": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 38171451,
+                            "from": "*",
+                            "hashValue": "3530e6d88cb44c0360ec2aec4e171bdc4a45a6062d2fcbca25264882876dce3486a23a903a71fa612f93fcf9261067dbe22e2f4f8cc8e7dd3e55578095b43b4e"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 5676679,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "c79f251c8928d17e25afca86d282937e1e2b28f28366bd01fc54c0c60891bedf684bae2736b117239de10c10879e151dd280b778ce7b1c4242d447979c5416fd"
+                        },
+                        {
+                            "filesize": 26673535,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "ce5820a550a7b9c9d0be29c629242def63ff333bc12b5d2d45d23c8e2b238adda9bd9f7ef14649616aae8b78e9545e8e7ec3fe93ac1b3d808027254087790af6"
+                        },
+                        {
+                            "filesize": 12552331,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "7180e48b1bd665002e1e13ea63a04ef740e71c5f442c13e0fd69927ab1e882383e2cefd0b251feee8f930847b4ec89281d86f1d8d708214c3d5807187ab02093"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                },
+                "zh-TW": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 38196007,
+                            "from": "*",
+                            "hashValue": "4804f30f11449e763d1d04acd4fc9dcdd5b34f5fa698151829113d3599823cf40a3fab29b8ddff04fbb55cc44a03a660b204890e1fd6c768618dededb254b620"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 12553090,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "56be2ab6dcd65307d9bad0041ffa331d66182de16be647e2f56580ef684db33e4d881ddb8039698f9787aa7a4d5cb49173db93ea948091bbbf7488b906de22b2"
+                        },
+                        {
+                            "filesize": 5676735,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "cabe2d052521a60d7e14b3430173b9b82a8420fb8dc2b0eefe49e895edd1976e9e12037ec8b1c712764d04214d622047bc748505d67f78b52b0bea6609c41cce"
+                        },
+                        {
+                            "filesize": 26685446,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "d63924671a674fd1f3af4f34ee18a99c6ff06b7f0de6f94921536bce642191bfb8b7ccacf128813530450a00061285b248dfb25d69d0b598e376370b2c13a522"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                }
+            }
+        },
+        "WINNT_x86-msvc-x64": {
+            "alias": "WINNT_x86-msvc"
+        },
+        "WINNT_x86-msvc-x86": {
+            "alias": "WINNT_x86-msvc"
+        },
+        "WINNT_x86_64-msvc": {
+            "OS_BOUNCER": "win64",
+            "OS_FTP": "win64",
+            "locales": {
+                "af": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 41169950,
+                            "from": "*",
+                            "hashValue": "1715957874ac520c4145660b0392adc4ca0d84a0386f0ab73fa5de5d484862b9dd2c1521ca5718490a2a413ceec412738466e8fa71215fa55f8575d8a610aa23"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 7178094,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "1e1c80cbc28c3302a265e6926a3e895c97c3082dec82bce9276f78c83a896dc6b85aa0ad5f97b507488201bf5fb5941da3447ed5f829587eb7b05db21f0a9b3c"
+                        },
+                        {
+                            "filesize": 14582077,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "0062039ac7a1ea707c310962791d5003d4a35f68ecf57c022394a39fa24edee2a93143c5a2dd0fb8a87deede0d425c00629b5ffad12686ac8789e8043fbc6db6"
+                        },
+                        {
+                            "filesize": 29141401,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "4fa4aa2c77197ca9cca76ead02b80b86104f6077a604c6e6c7dad85547f9d5d3337aba20012d9fef3ec06b8495d28e228c76226dd9740a3d5cf943c21d9651e9"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                },
+                "de": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 41178106,
+                            "from": "*",
+                            "hashValue": "c7388382da8b9a072a2cee85e35569ee63f696b4cbc2b32af6b74dd0178735b0a6e02dde02dea0df46b7d08bbb9f80ca432e08cea257c4f27119082326f7421e"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 7178126,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "4c01aa65893b4e96c586c1a336371a0c086a652f672378756503cde791d9f07c55ab02f1083fc388c09cd32fb7559bdd43d9a1dea44a194cb76aecdf56d18e16"
+                        },
+                        {
+                            "filesize": 14580301,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "455445338f39de7f48127ad2177fb6b319c4e046899303788dc0e9fe750debf717bb8ca6af1798e02a240c8c81912e9c16f0aef558a4605bb5c117623e821eb2"
+                        },
+                        {
+                            "filesize": 29150117,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "bd2b023682a962ad2d154f94f5dfba8598a0ce7a0fdcb50c9600312a1706abf99b72a7099286c325e7d8e4d1fccdbf024b50ed6dfdbba81f88b64d066a56d93e"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                },
+                "en-US": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 41323124,
+                            "from": "*",
+                            "hashValue": "d355668278173e0e55f26dc8d6951965317db5779659e0267907ea458d26ca8327a200631a48defca4f2d97066ee8545717a54a2f75569114bd03a0fa30ea37e"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 14580390,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "12d83c164c230e33fb2e6b27e8d29232d038cfed440d225216ecf9f71be5d598c889226957b082eb5fe6503d76e30b0be2e88ef767cdc9eed3a3fceb1dc55c26"
+                        },
+                        {
+                            "filesize": 7178074,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "4466f4059bea1670091ee2370076664e3ca552104f9d1551517f74bfe6f1470d2425ac92a35d45c1e8f0d0450d3d7b0209934ffeb9e571eb92259dba627aa49c"
+                        },
+                        {
+                            "filesize": 29129138,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "34c7fd9b706111cbe62e86b02122cfc7cd7281a0f1d1569c7c69cf8c2944fab758fc08f4d09895403cb2a19208351801e0d26d6774b6abd727f103ba0db47cef"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                },
+                "zh-TW": {
+                    "appVersion": "100.0",
+                    "buildID": "20170918210324",
+                    "completes": [
+                        {
+                            "filesize": 41347368,
+                            "from": "*",
+                            "hashValue": "89677d3146e104cd254ba9954e0a4e3eaff3d5cd6caa735950561192355145166a3e1bc7d5902c7406aa37c60d7bef60be32b861de7b9b2d694442cbf3f7a81a"
+                        }
+                    ],
+                    "displayVersion": "100.0",
+                    "partials": [
+                        {
+                            "filesize": 14580861,
+                            "from": "Firefox-55.0.3-build2",
+                            "hashValue": "12982456084a0c7bc4baad433f284b1c4b5f672250aed16b314e35d6d7f2f5bc10c93105684561887c2dd5218a367c8a719080e5527911131176cb36c33e772c"
+                        },
+                        {
+                            "filesize": 7178122,
+                            "from": "Firefox-100.0b12-build1",
+                            "hashValue": "182c49ac76d45e079b1492f3ac61802fe67152d6dc27535ede5f59fc0bd5721939c99fc61ca1f5d6990920c5013e2079e018b276d9906c28ce0cc7948d60d2ff"
+                        },
+                        {
+                            "filesize": 29143865,
+                            "from": "Firefox-54.0.1-build1",
+                            "hashValue": "083c9af0d37280ef382f7dee76c597801c24a675ffc9668f9a72ac6268bf28042e88a284bf67deda5e1ae8b733bfcdfca7e99e32a38bab40f288afff1efd6670"
+                        }
+                    ],
+                    "platformVersion": "100.0"
+                }
+            }
+        },
+        "WINNT_x86_64-msvc-x64": {
+            "alias": "WINNT_x86_64-msvc"
+        }
+    },
+    "schema_version": 4
+}
