@@ -112,16 +112,18 @@ def increment_version(version):
 
 def decrement_version(version):
     """Decrements a version to its 'previous' version by subtracting one from
-    its last part. If the last part is 0, it is changed to 99, and the second
+    its last part. If the last part is 0, it is changed to 999, and the second
     last part is subtracted by one. This is repeated until subtraction happens
     or we run out of parts."""
 
     parts = get_version_parts(version)
     for i in reversed(range(len(parts))):
         if parts[i] == 0:
+            if i == 0:
+                raise BadDataError("Version number %s is invalid: all 0's." % version)
             # Horrible assumption! Doesn't work if incoming versions have parts
-            # that are greater than 99. But that will never happen....
-            parts[i] = 99
+            # that are greater than 999. But that will never happen....
+            parts[i] = 999
         else:
             parts[i] -= 1
             break

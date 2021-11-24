@@ -180,6 +180,12 @@ def firefox_67_0_build1():
 
 
 @pytest.fixture(scope="session")
+def firefox_100_0_build1():
+    blob = json.load(open(Path(__file__).parent / "data/Firefox-100.0-build1.json"))
+    return blob
+
+
+@pytest.fixture(scope="session")
 def cdm_16():
     blob = json.load(open(Path(__file__).parent / "data/CDM-16.json"))
     return blob

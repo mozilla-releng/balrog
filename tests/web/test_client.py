@@ -112,7 +112,7 @@ class ClientTestBase(ClientTestCommon):
         app.error_handler_spec = cls.error_spec
 
     @pytest.fixture(autouse=True)
-    def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, timecop_1_0):
+    def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, firefox_100_0_build1, timecop_1_0):
         cache.reset()
         cache.make_cache("releases", 50, 10)
         cache.make_cache("releases_data_version", 50, 5)
@@ -877,6 +877,10 @@ class ClientTestBase(ClientTestCommon):
         )
         insert_release(firefox_54_0_1_build1, "Firefox", history=False)
         insert_release(firefox_56_0_build1, "Firefox", history=False)
+        insert_release(firefox_100_0_build1, "Firefox", history=False)
+        dbo.rules.t.insert().execute(
+            priority=100, product="Firefox", channel="release100", mapping="Firefox-100.0-build1", backgroundRate=100, update_type="minor", data_version=1
+        )
         dbo.rules.t.insert().execute(
             priority=300,
             product="SystemAddons",
@@ -1619,6 +1623,27 @@ class ClientTest(ClientTestBase):
         assert "Rule-Data-Version" in ret.headers
         assert "42024" == ret.headers["Rule-ID"]
         assert "1" == ret.headers["Rule-Data-Version"]
+
+    def test_version_100(self):
+        ret = self.client.get(
+            "/update/6/Firefox/54.0.1/20170628075643/WINNT_x86-msvc-x64/en-US/release100"
+            "/Windows_NT 6.1.0.0 (x86)/ISET:SSE3,MEM:4096,JAWS:0/default/default/update.xml"
+        )
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" displayVersion="100.0" appVersion="100.0" platformVersion="100.0" buildID="20170918210324"
+            detailsURL="https://www.mozilla.org/en-US/firefox/100.0/releasenotes/">
+        <patch type="complete" URL="http://download.mozilla.org/?product=firefox-100.0-complete&amp;os=win&amp;lang=en-US" hashFunction="sha512"
+                hashValue="3530e6d88cb44c0360ec2aec4e171bdc4a45a6062d2fcbca25264882876dce3486a23a903a71fa612f93fcf9261067dbe22e2f4f8cc8e7dd3e55578095b43b4e"
+                size="38171451"/>
+        <patch type="partial" URL="http://download.mozilla.org/?product=firefox-100.0-partial-54.0.1&amp;os=win&amp;lang=en-US" hashFunction="sha512"
+                hashValue="ce5820a550a7b9c9d0be29c629242def63ff333bc12b5d2d45d23c8e2b238adda9bd9f7ef14649616aae8b78e9545e8e7ec3fe93ac1b3d808027254087790af6"
+                size="26673535"/>
+    </update>
+</updates>""",
+        )
 
 
 class ClientTestMig64(ClientTestCommon):
