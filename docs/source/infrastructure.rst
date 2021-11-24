@@ -107,7 +107,7 @@ To get the new code in stage you must create a new Release in Github as follows:
 
   * Look for anything unexpected, or any schema changes. If schema changes are present, see the above section for instructions on handling them.
 
-3. `Create a new Release on Github <https://github.com/mozilla/balrog/releases>`_. This create new Docker images tagged with your version, and deploys them to stage. It may take upwards of 30 minutes for the deployment to happen. Deployment notifications will show up in #balrog on Slack.
+3. `Create a new Release on Github <https://github.com/mozilla-releng/balrog/releases>`_. This create new Docker images tagged with your version, and deploys them to stage. It may take upwards of 30 minutes for the deployment to happen. Deployment notifications will show up in #balrog on Slack.
 
 Once the changes are deployed to stage, you should do some testing to make sure that the new features, fixes, etc. are working properly there. It's a good idea to `watch Sentry for new exceptions <https://sentry.prod.mozaws.net/settings/operations/teams/balrog/members/>`_ that may show up, and Grafana for any notable changes in the shape of the traffic.
 
@@ -130,4 +130,4 @@ Pushing live requires CloudOps. For non-urgent pushes, you should begin this pro
   * On https://github.com/mozilla-releng/balrog/releases/tag/production-ui, click "Delete" (this deletes the Git tag, even though it's the same URL).
   * On https://github.com/mozilla-releng/balrog/releases/new, create a new `production-ui` Release. This will trigger automation to deploy the new UI.
 
-4. Bump the `in-repo version <https://github.com/mozilla/balrog/blob/main/version.txt>`_ to the next available one to ensure the next push gets a new version.
+4. Bump the `in-repo version <https://github.com/mozilla-releng/balrog/blob/main/version.txt>`_ to the next available one to ensure the next push gets a new version.
