@@ -119,6 +119,8 @@ def decrement_version(version):
     parts = get_version_parts(version)
     for i in reversed(range(len(parts))):
         if parts[i] == 0:
+            if i == 0:
+                raise BadDataError("Version number %s is invalid: all 0's." % version)
             # Horrible assumption! Doesn't work if incoming versions have parts
             # that are greater than 999. But that will never happen....
             parts[i] = 999
