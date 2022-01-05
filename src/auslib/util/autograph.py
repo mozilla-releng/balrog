@@ -4,6 +4,8 @@ from hashlib import sha384
 import requests
 from requests_hawk import HawkAuth
 
+from auslib.util.retry import retry_sync
+
 SIGNATURE_PREFIX = "Content-Signature:\x00"
 
 
@@ -12,7 +14,7 @@ def make_hash(content):
     return sha384(templated).digest()
 
 
-def sign_hash(autograph_uri, keyid, id_, key, hash_):
+def _sign_hash(autograph_uri, keyid, id_, key, hash_):
     auth = HawkAuth(id=id_, key=key)
     with requests.Session() as session:
         body = [{"input": b64encode(hash_).decode("ascii"), "keyid": keyid}]
@@ -22,3 +24,7 @@ def sign_hash(autograph_uri, keyid, id_, key, hash_):
         if len(response) != 1:
             raise Exception("Response is not length 1, cannot parse it")
         return response[0]["signature"], response[0]["x5u"]
+
+
+def sign_hash(autograph_uri, keyid, id, key, hash):
+    return retry_sync(_sign_hash, args=(autograph_uri, keyid, id, key, hash), attempts=3, sleeptime_kwargs={"delay_factor": 2.0})
