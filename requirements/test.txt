@@ -41,8 +41,9 @@ build==0.1.0 \
 # via
 #   cryptography
 #   google-crc32c
-# via aiohttp
-# via requests
+# via
+#   aiohttp
+#   requests
 check-manifest==0.47 \
     --hash=sha256:365c94d65de4c927d9d8b505371d08ee19f9f369c86b9ac3db97c2754c827c95 \
     --hash=sha256:56dadd260a9c7d550b159796d2894b6d0bcc176a94cbc426d9bb93e5e48d12ce
@@ -148,6 +149,9 @@ flake8==4.0.1 \
 #   flask-compress
 #   flask-wtf
 #   sentry-sdk
+# via
+#   aiohttp
+#   aiosignal
 # via gcloud-aio-auth
 # via gcloud-aio-storage
 # via -r requirements/base.in
@@ -433,9 +437,10 @@ typed-ast==1.4.2 \
     --hash=sha256:d746a437cdbca200622385305aedd9aef68e8a645e385cc483bdc5e488f07166 \
     --hash=sha256:e683e409e5c45d5c9082dc1daf13f6374300806240719f95dc783d1fc942af10
 # via black
-# via
-#   aiohttp
-#   black
+typing-extensions==4.0.1 \
+    --hash=sha256:4ca091dea149f945ec56afb48dae714f21e8692ef22a395223bcd328961b6a0e \
+    --hash=sha256:7f001e5ac290a0c0401508864c7ec868be4e701886d5b573a9528ed3973d9d3b
+# via black
 # via
 #   requests
 #   sentry-sdk
