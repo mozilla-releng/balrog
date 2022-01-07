@@ -19,6 +19,8 @@ from auslib.global_state import cache, dbo
 from auslib.web.public.base import app
 from auslib.web.public.client import extract_query_version
 
+mock_autograph_exception_count = 0
+
 
 def setUpModule():
     # Silence SQLAlchemy-Migrate's debugging logger
@@ -908,11 +910,15 @@ def mock_autograph(monkeypatch):
     monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_PASSWORD", "fake")
 
     def mockreturn(*args):
+        global mock_autograph_exception_count
+        if mock_autograph_exception_count > 0:
+            mock_autograph_exception_count -= 1
+            raise Exception("unable to contact autograph")
         return ("abcdef", "https://this.is/a.x5u")
 
-    import auslib.web.public.helpers
+    import auslib.util.autograph
 
-    monkeypatch.setattr(auslib.web.public.helpers, "sign_hash", mockreturn)
+    monkeypatch.setattr(auslib.util.autograph, "_sign_hash", mockreturn)
 
 
 class ClientTest(ClientTestBase):
@@ -1298,6 +1304,20 @@ class ClientTest(ClientTestBase):
     def testGMPResponseWithSigning(self):
         ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
         assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
+
+    @pytest.mark.usefixtures("mock_autograph")
+    def testGMPResponseWithSigningAutographTempFailure(self):
+        global mock_autograph_exception_count
+        mock_autograph_exception_count = 1
+        ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
+        assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
+
+    @pytest.mark.usefixtures("mock_autograph")
+    def testGMPResponseWithSigningAutographPermanentFailure(self):
+        global mock_autograph_exception_count
+        mock_autograph_exception_count = 3
+        with pytest.raises(Exception):
+            self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
 
     def testGetWithResponseProducts(self):
         ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
