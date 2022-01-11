@@ -1,4 +1,3 @@
-from auslib.web.admin.views.csrf import CSRFView
 from auslib.web.admin.views.permissions import (
     EnactPermissionScheduledChangeView,
     PermissionScheduledChangeHistoryView,
@@ -52,11 +51,6 @@ from auslib.web.admin.views.rules import (
     SingleRuleColumnView,
     SingleRuleView,
 )
-
-
-def csrf_get():
-    """GET /csrf_token"""
-    return CSRFView().get()
 
 
 def rules_post():

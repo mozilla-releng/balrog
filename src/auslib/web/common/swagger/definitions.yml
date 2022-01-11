@@ -208,7 +208,7 @@ definitions:
     description: Balrog's Rule Attributes except rule_id and data_version
     type: object
 
-    # Cannot have additionalProperties as false for strict validation ,else it disallows csrf_token or any other model's properties to be added
+    # Cannot have additionalProperties as false for strict validation, else it disallows any other model's properties to be added
     #additionalProperties: false
 
     properties:

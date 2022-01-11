@@ -15,7 +15,6 @@ class TestReleasesAPI_JSON(ViewTest):
     def testGetRelease(self):
         ret = self._get("/releases/b")
         self.assertStatusCode(ret, 200)
-        self.assertIn("X-CSRF-Token", ret.headers)
         self.assertDictEqual(
             ret.get_json(),
             json.loads(
@@ -912,7 +911,7 @@ class TestReleasesAPI_JSON(ViewTest):
 
     def testLocalePutNotAllowed(self):
         data = json.dumps({"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}})
-        inp_data = dict(csrf_token="lorem", data=data, product="d", data_version=1, schema_version=1)
+        inp_data = dict(data=data, product="d", data_version=1, schema_version=1)
         ret = self._put("/releases/d/builds/p/d", data=inp_data, username=None)
         self.assertStatusCode(ret, 401)
 

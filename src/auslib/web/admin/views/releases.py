@@ -435,16 +435,10 @@ class ReleaseScheduledChangesView(ScheduledChangesView):
 
     @requirelogin
     def _post(self, transaction, changed_by):
-        sc = connexion.request.get_json()
-        if sc.get("when", None) is None:
+        what = connexion.request.get_json()
+        if what.get("when", None) is None:
             return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Release")
-        change_type = sc.get("change_type")
-
-        what = {}
-        for field in sc:
-            if field == "csrf_token":
-                continue
-            what[field] = sc[field]
+        change_type = what.get("change_type")
 
         if change_type == "update":
             if not what.get("data_version", None):

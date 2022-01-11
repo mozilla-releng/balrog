@@ -49,8 +49,6 @@ def scheduled_changes():
 @requirelogin
 @transactionHandler
 def schedule_deletion(sc_emergency_shutoff, changed_by, transaction):
-    if "csrf_token" in sc_emergency_shutoff:
-        del sc_emergency_shutoff["csrf_token"]
     change_type = sc_emergency_shutoff.get("change_type")
     if change_type != "delete":
         return problem(400, "Bad Request", "Invalid or missing change_type")
@@ -62,8 +60,6 @@ def schedule_deletion(sc_emergency_shutoff, changed_by, transaction):
 @requirelogin
 @transactionHandler
 def update_scheduled_deletion(sc_id, sc_emergency_shutoff, changed_by, transaction):
-    if "csrf_token" in sc_emergency_shutoff:
-        del sc_emergency_shutoff["csrf_token"]
     view = ScheduledChangeView("emergency_shutoff", dbo.emergencyShutoffs)
     return view._post(sc_id, sc_emergency_shutoff, transaction, changed_by, sc_emergency_shutoff["sc_data_version"])
 

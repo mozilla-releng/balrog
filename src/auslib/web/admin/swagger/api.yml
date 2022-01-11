@@ -43,12 +43,6 @@ tags:
       description: "Find out more about users"
       url: "http://mozilla-balrog.readthedocs.io/en/latest/database.html#users"
 
-  - name: "CSRF Token"
-    description: "Cross-site request forgery Token for preventing execution of unauthorized commands"
-    externalDocs:
-      description: "Find out more about CSRF-Token"
-      url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#csrf-token"
-
   - name: "Releases"
     description: "To Balrog, a 'release' is data about a related set of builds. This does _not_ match up with the concept of a 'release' being on the 'beta', 'release' or 'esr' channel elsewhere."
     externalDocs:
@@ -92,14 +86,6 @@ parameters:
     minLength: 1
     maxLength: 100
     x-nullable: true
-    required: false
-
-  csrfTokenParam:
-    name: csrf_token
-    in: query
-    description: valid csrf token
-    type: string
-    format: ascii
     required: false
 
   dataVersionParam:
@@ -232,17 +218,15 @@ parameters:
     description: change_id of the Rule/Release/Scheduled_Change to revert back to
     required: true
     schema:
-      allOf:
-        - $ref: '#/definitions/CSRFModel'
-        - type: object
-          required:
-            - change_id
-          properties:
-            change_id:
-              type: integer
-              description: change_id of the Rule/Release/Scheduled_Change revision to revert to
-              minimum: 0
-              example: 85142
+      type: object
+      required:
+        - change_id
+      properties:
+        change_id:
+          type: integer
+          description: change_id of the Rule/Release/Scheduled_Change revision to revert to
+          minimum: 0
+          example: 85142
 
   sc_signoff_post_body_param:
     name: sc_post_signoffs_body
@@ -254,7 +238,6 @@ parameters:
       allOf:
         - required:
           - role
-        - $ref: '#/definitions/CSRFModel'
         - $ref: '#/definitions/RoleModel'
 
   userPermissionFormDataParam:
@@ -264,7 +247,6 @@ parameters:
     required: true
     schema:
       allOf:
-        - $ref: '#/definitions/CSRFModel'
         - $ref: '#/definitions/DataVersionModel'
         - $ref: '#/definitions/OptionsJSON'
       # accommodate 'options_as_json' and 'permission' which are duplicate values of 'options'
@@ -405,31 +387,6 @@ responses:
         data_version: [1,2,3,4,5]
 
 paths:
-  /csrf_token:
-    get:
-      summary: Returns valid csrf_token in response header.
-      description: >
-        Returns an empty response with a valid CSRF token in the X-CSRF-Token header. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#csrf-token)
-      tags:
-        - "CSRF Token"
-      operationId: auslib.web.admin.views.mapper.csrf_get
-      consumes: []
-      produces:
-        - text/html
-      externalDocs:
-        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#csrf-token"
-        description: Returns an empty response with a valid CSRF token in the X-CSRF-Token header.
-      responses:
-        '200':
-          description: Generate csrf token
-          headers:
-            X-CSRF-Token:
-              description: token
-              type: string
-              format: ascii
-          examples:
-            text/html: "csrf_token: 1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
-
   /rules/history:
     get:
       summary: Returns a list of all rules and it's scheduled change history.
@@ -690,7 +647,7 @@ paths:
         Returns the 'data' portion of the named Release, which is a JSON Object. If 'pretty' is present in the query string and set to true, it will be pretty formatted. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release)
       tags:
         - Releases
-      operationId: auslib.web.common.releases.get_release_with_csrf_header
+      operationId: auslib.web.common.releases.get_release
       consumes: []
       produces:
         - application/json
@@ -792,7 +749,6 @@ paths:
         description: Deletes the named Release
       parameters:
         - $ref: '#/parameters/releaseParam'
-        - $ref: '#/parameters/csrfTokenParam'
         - $ref: '#/parameters/dataVersionParam'
       responses:
         '200':
@@ -861,7 +817,6 @@ paths:
               - required:
                 - data_version
                 - read_only
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/DataVersionModel'
               - type: object
                 description: read_only boolean flag
@@ -944,7 +899,7 @@ paths:
         Returns the platform+locale specific data of the named Release, which is a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-builds-platform-locale)
       tags:
         - Releases
-      operationId: auslib.web.common.releases.get_release_single_locale_with_csrf_header
+      operationId: auslib.web.common.releases.get_release_single_locale
       consumes: []
       produces:
         - application/json
@@ -1072,7 +1027,6 @@ paths:
                 - role
                 - channel
                 - signoffs_required
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/RoleModel'
               - $ref: '#/definitions/ChannelModel'
@@ -1230,7 +1184,6 @@ paths:
                 - product
                 - role
                 - signoffs_required
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/ProductModel'
               - $ref: '#/definitions/RoleModel'
               - $ref: '#/definitions/SignoffsRequiredModel'
@@ -1480,7 +1433,6 @@ paths:
       parameters:
         - $ref: '#/parameters/usernameParam'
         - $ref: '#/parameters/roleParam'
-        - $ref: '#/parameters/csrfTokenParam'
         - $ref: '#/parameters/dataVersionParam'
       responses:
         '200':
@@ -1603,7 +1555,6 @@ paths:
       parameters:
         - $ref: '#/parameters/usernameParam'
         - $ref: '#/parameters/permissionParam'
-        - $ref: '#/parameters/csrfTokenParam'
         - $ref: '#/parameters/dataVersionParam'
       responses:
         '200':
@@ -1667,7 +1618,6 @@ paths:
                 - update_type
                 - backgroundRate
                 - priority
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/UpdateType'
               - $ref: '#/definitions/RulesBase'
       responses:
@@ -1693,7 +1643,7 @@ paths:
         Returns the entire rule identified by the id or alias given in JSON format. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#rules-id-or-alias)
       tags:
         - Rules
-      operationId: auslib.web.common.rules.get_rule_with_csrf_headers
+      operationId: auslib.web.common.rules.get_rule
       consumes: []
       produces:
         - application/json
@@ -1740,7 +1690,6 @@ paths:
             allOf:
               - required:
                 - data_version
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/RulesBase'
               - $ref: '#/definitions/RulesNonNullable'
       responses:
@@ -1780,7 +1729,6 @@ paths:
             allOf:
               - required:
                 - data_version
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/RulesBase'
               - $ref: '#/definitions/RulesNonNullable'
       responses:
@@ -1811,7 +1759,6 @@ paths:
         description: "Deletes the rule identified by the rule_id."
       parameters:
         - $ref: '#/parameters/rule_id_or_alias_param'
-        - $ref: '#/parameters/csrfTokenParam'
         - $ref: '#/parameters/dataVersionParam'
       responses:
         '200':
@@ -2015,7 +1962,6 @@ paths:
           schema:
             type: object
             allOf:
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/SCUptake'
@@ -2089,7 +2035,6 @@ paths:
           schema:
             type: object
             allOf:
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/SCUptake'
@@ -2125,7 +2070,6 @@ paths:
       parameters:
         - $ref: '#/parameters/sc_id_param'
         - $ref: '#/parameters/dataVersionParam'
-        - $ref: '#/parameters/csrfTokenParam'
       responses:
         '200':
           description: Successfully deleted the given scheduled change.
@@ -2292,7 +2236,6 @@ paths:
                 - permission
                 - username
                 - when
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/DataVersionNullable'
@@ -2335,7 +2278,6 @@ paths:
           schema:
             type: object
             allOf:
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/SCDataVersion'
               - $ref: "#/definitions/DataVersionNullable"
@@ -2370,7 +2312,6 @@ paths:
       parameters:
         - $ref: '#/parameters/sc_id_param'
         - $ref: '#/parameters/dataVersionParam'
-        - $ref: '#/parameters/csrfTokenParam'
       responses:
         '200':
           description: Successfully deleted the given scheduled change.
@@ -2551,7 +2492,6 @@ paths:
                 - change_type
                 - name
                 - when
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/DataVersionModel'
@@ -2644,7 +2584,6 @@ paths:
           schema:
             type: object
             allOf:
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/SCDataVersion'
               - $ref: "#/definitions/DataVersionNullable"
@@ -2680,7 +2619,6 @@ paths:
       parameters:
         - $ref: '#/parameters/sc_id_param'
         - $ref: '#/parameters/dataVersionParam'
-        - $ref: '#/parameters/csrfTokenParam'
       responses:
         '200':
           description: Successfully deleted the given scheduled change.
@@ -2868,7 +2806,6 @@ paths:
                 - channel
                 - role
                 - when
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
               # TODO: UI passes data_version as 'null' for change_type == 'insert'. It shouldn't pass it at all in request body. Fix it and change the below model to 'DataVersionModel'
@@ -2914,7 +2851,6 @@ paths:
           schema:
             type: object
             allOf:
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/SCDataVersion'
               - $ref: "#/definitions/DataVersionNullable"
@@ -2951,7 +2887,6 @@ paths:
       parameters:
         - $ref: '#/parameters/sc_id_param'
         - $ref: '#/parameters/dataVersionParam'
-        - $ref: '#/parameters/csrfTokenParam'
       responses:
         '200':
           description: Successfully deleted the given scheduled change.
@@ -3136,7 +3071,6 @@ paths:
                 - product
                 - role
                 - when
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCChangeType'
               - $ref: '#/definitions/SCTime'
               # TODO: UI passes data_version as 'null' for change_type == 'insert'. It shouldn't pass it at all in request body. Fix it and change the below model to 'DataVersionModel'
@@ -3181,7 +3115,6 @@ paths:
           schema:
             type: object
             allOf:
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/SCDataVersion'
               - $ref: "#/definitions/DataVersionNullable"
@@ -3217,7 +3150,6 @@ paths:
       parameters:
         - $ref: '#/parameters/sc_id_param'
         - $ref: '#/parameters/dataVersionParam'
-        - $ref: '#/parameters/csrfTokenParam'
       responses:
         '200':
           description: Successfully deleted the given scheduled change.
@@ -3489,7 +3421,6 @@ paths:
       parameters:
         - $ref: '#/parameters/sc_id_param'
         - $ref: '#/parameters/usernameQueryParam'
-        - $ref: '#/parameters/csrfTokenParam'
       responses:
         '200':
           description: Successfully deleted the signoff on the given scheduled change.
@@ -3546,7 +3477,6 @@ paths:
       parameters:
         - $ref: '#/parameters/sc_id_param'
         - $ref: '#/parameters/usernameQueryParam'
-        - $ref: '#/parameters/csrfTokenParam'
       responses:
         '200':
           description: Successfully deleted the signoff on the given scheduled change.
@@ -3603,7 +3533,6 @@ paths:
       parameters:
         - $ref: '#/parameters/sc_id_param'
         - $ref: '#/parameters/usernameQueryParam'
-        - $ref: '#/parameters/csrfTokenParam'
       responses:
         '200':
           description: Successfully deleted the signoff on the given scheduled change.
@@ -3660,7 +3589,6 @@ paths:
       parameters:
         - $ref: '#/parameters/sc_id_param'
         - $ref: '#/parameters/usernameQueryParam'
-        - $ref: '#/parameters/csrfTokenParam'
       responses:
         '200':
           description: Successfully deleted the signoff on the given scheduled change.
@@ -3717,7 +3645,6 @@ paths:
       parameters:
         - $ref: '#/parameters/sc_id_param'
         - $ref: '#/parameters/usernameQueryParam'
-        - $ref: '#/parameters/csrfTokenParam'
       responses:
         '200':
           description: Successfully deleted the signoff on the given scheduled change.
@@ -3809,7 +3736,6 @@ paths:
       parameters:
         - $ref: '#/parameters/productPathParam'
         - $ref: '#/parameters/channelPathParam'
-        - $ref: '#/parameters/csrfTokenParam'
         - $ref: '#/parameters/dataVersionParam'
       responses:
         '200':
@@ -3880,7 +3806,6 @@ paths:
           schema:
             type: object
             allOf:
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/EmergencyShutOffModel'
             properties:
@@ -3930,7 +3855,6 @@ paths:
           schema:
             type: object
             allOf:
-              - $ref: '#/definitions/CSRFModel'
               - $ref: '#/definitions/SCTime'
               - $ref: '#/definitions/SCDataVersion'
       responses:
@@ -3959,7 +3883,6 @@ paths:
       parameters:
         - $ref: '#/parameters/sc_id_param'
         - $ref: '#/parameters/dataVersionParam'
-        - $ref: '#/parameters/csrfTokenParam'
       responses:
         '200':
           description: Successfully deleted the given scheduled change.
@@ -4030,7 +3953,6 @@ paths:
       parameters:
         - $ref: '#/parameters/sc_id_param'
         - $ref: '#/parameters/usernameQueryParam'
-        - $ref: '#/parameters/csrfTokenParam'
       responses:
         '200':
           description: Successfully deleted the signoff on the given scheduled change.
@@ -4042,16 +3964,6 @@ paths:
           $ref: '#/responses/resourceNotFound'
 
 definitions:
-  CSRFModel:
-    title: CSRF Token
-    description: CSRF Token in POST/PUT or UPDATE requests
-    type: object
-    properties:
-      csrf_token:
-        type: string
-        format: ascii
-        example: "1491342563##c4e6fef0b978e6c89af9ff1015e67b9ca7c45d14"
-
   DataVersionNullable:
     title: Nullable Data Version
     description: "model to re-use nullable 'data_version' field for scheduled_changes"
@@ -4268,7 +4180,6 @@ definitions:
         - name
         - product
         - blob
-      - $ref: "#/definitions/CSRFModel"
       - $ref: '#/definitions/DataVersionModel'
       - $ref: '#/definitions/ProductModel'
       - $ref: '#/definitions/ReleaseName'
@@ -4320,7 +4231,6 @@ definitions:
         - product
         - data
       # Note: 'name' is inherited with other required fields from Base model but never used when processing the input request
-      - $ref: '#/definitions/CSRFModel'
       - $ref: '#/definitions/DataVersionModel'
       - $ref: '#/definitions/ProductModel'
       - $ref: '#/definitions/ReleaseName'

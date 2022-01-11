@@ -7,7 +7,6 @@ from flask import Response, jsonify
 from auslib.global_state import dbo
 from auslib.services import releases as releases_service
 from auslib.util.data_structures import get_by_path
-from auslib.web.common.csrf import get_csrf_headers
 
 log = logging.getLogger(__name__)
 
@@ -76,13 +75,11 @@ def _get_release(release):
             return releases[0] if releases else None
 
 
-def get_release(release, with_csrf_header=False):
+def get_release(release):
     release_row = _get_release(release)
     if not release_row:
         return problem(404, "Not Found", "Release name: %s not found" % release)
     headers = {"X-Data-Version": release_row["data_version"]}
-    if with_csrf_header:
-        headers.update(get_csrf_headers())
     if request.args.get("pretty"):
         indent = 4
         separators = (",", ": ")
@@ -95,11 +92,7 @@ def get_release(release, with_csrf_header=False):
     )
 
 
-def get_release_with_csrf_header(release):
-    return get_release(release, with_csrf_header=True)
-
-
-def get_release_single_locale(release, platform, locale, with_csrf_header=False):
+def get_release_single_locale(release, platform, locale):
     with dbo.begin() as trans:
         release_row = releases_service.get_release(release, trans)
         if release_row:
@@ -112,10 +105,4 @@ def get_release_single_locale(release, platform, locale, with_csrf_header=False)
                 return problem(404, "Not Found", json.dumps(e.args))
             data_version = dbo.releases.getReleases(name=release, transaction=trans)[0]["data_version"]
         headers = {"X-Data-Version": data_version}
-        if with_csrf_header:
-            headers.update(get_csrf_headers())
         return Response(response=json.dumps(locale_data), mimetype="application/json", headers=headers)
-
-
-def get_release_single_locale_with_csrf_header(release, platform, locale):
-    return get_release_single_locale(release, platform, locale, with_csrf_header=True)

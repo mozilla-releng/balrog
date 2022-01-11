@@ -158,8 +158,7 @@ application.config["PAGE_TITLE"] = "Balrog Administration"
 application.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
 
 
-# Secure cookies should be enabled when we're using https (otherwise the
-# session cookie won't get set, and that will cause CSRF failures).
+# Secure cookies should be enabled when we're using https.
 # For now, this means disabling it for local development. In the future
 # we should start using self signed SSL for local dev, so we can enable it.
 if not os.environ.get("INSECURE_SESSION_COOKIE"):
