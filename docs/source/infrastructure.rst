@@ -131,3 +131,17 @@ Pushing live requires CloudOps. For non-urgent pushes, you should begin this pro
   * On https://github.com/mozilla-releng/balrog/releases/new, create a new `production-ui` Release. This will trigger automation to deploy the new UI.
 
 4. Bump the `in-repo version <https://github.com/mozilla-releng/balrog/blob/main/version.txt>`_ to the next available one to ensure the next push gets a new version.
+
+~~~~~~~~~
+Rollbacks
+~~~~~~~~~
+
+If something goes wrong, CloudOps can rollback to an earlier version on request.
+
+If the UI needs a rollback, update the "production-ui" tag to point to the earlier version. Something like (to point to v3.08):
+::
+
+ git tag -d production-ui
+ git tag -s production-ui v3.08^{}
+ git push origin production-ui
+
