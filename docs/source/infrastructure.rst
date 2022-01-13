@@ -138,7 +138,7 @@ Rollbacks
 
 If something goes wrong, CloudOps can rollback to an earlier version on request.
 
-If the UI needs a rollback, update the "production-ui" tag to point to the earlier version. Something like (to point to v3.08):
+If the UI needs a rollback, after deleting the previous production-ui release and tag as above, update the "production-ui" tag to point to the earlier version. Something like (to point to v3.08):
 ::
 
  git tag -d production-ui
