@@ -10,11 +10,11 @@ from os import path
 
 import migrate.versioning.api
 import migrate.versioning.schema
+import sqlalchemy.event
 import sqlalchemy.types
 from aiohttp import ClientSession
 from sqlalchemy import JSON, BigInteger, Boolean, Column, Integer, MetaData, String, Table, Text, create_engine, func, join, select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.interfaces import PoolListener
 from sqlalchemy.sql.expression import null
 from sqlalchemy.sql.functions import max as sql_max
 
@@ -3059,10 +3059,9 @@ def make_change_notifier_for_read_only(relayhost, port, username, password, to_a
 # lets us put the database in a stricter mode that will disallow things like
 # automatic data truncation.
 # From http://www.enricozini.org/2012/tips/sa-sqlmode-traditional/
-class SetSqlMode(PoolListener):
-    def connect(self, dbapi_con, connection_record):
-        cur = dbapi_con.cursor()
-        cur.execute("SET SESSION sql_mode='TRADITIONAL'")
+def my_on_connect(dbapi_con, connection_record):
+    cur = dbapi_con.cursor()
+    cur.execute("SET SESSION sql_mode='TRADITIONAL'")
 
 
 class AUSDatabase(object):
@@ -3098,10 +3097,9 @@ class AUSDatabase(object):
             raise AlreadySetupError()
         self.dburi = dburi
         self.metadata = MetaData()
-        listeners = []
+        self.engine = create_engine(self.dburi, pool_recycle=60)
         if mysql_traditional_mode and "mysql" in dburi:
-            listeners.append(SetSqlMode())
-        self.engine = create_engine(self.dburi, pool_recycle=60, listeners=listeners)
+            sqlalchemy.event.listen(self.engine, "connect", my_on_connect)
         dialect = self.engine.name
         self.rulesTable = Rules(self, self.metadata, dialect)
         self.releasesTable = Releases(self, self.metadata, dialect, releases_history_buckets, releases_history_class)
