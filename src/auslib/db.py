@@ -307,7 +307,7 @@ class AUSTable(object):
         self.onDelete = onDelete
         # Mirror the columns as attributes for easy access
         self.primary_key = []
-        for col in self.table.get_children():
+        for col in self.table.columns:
             setattr(self, col.name, col)
             if col.primary_key:
                 self.primary_key.append(col)
@@ -972,7 +972,7 @@ class HistoryTable(AUSTable):
         else:
             self.table.append_column(Column("timestamp", BigInteger, nullable=False))
         self.base_primary_key = [pk.name for pk in baseTable.primary_key]
-        for col in baseTable.t.get_children():
+        for col in baseTable.t.columns:
             newcol = col.copy()
             if col.primary_key:
                 newcol.primary_key = False
@@ -996,7 +996,7 @@ class HistoryTable(AUSTable):
         # Black wants to format this all on one line, which is more difficult
         # to read.
         # fmt: off
-        q = (select(self.table.get_children())
+        q = (select(self.table.columns)
              .where(self.change_id.in_(
                  select([sql_max(self.change_id)])
                  .where(self.timestamp <= timestamp)
@@ -1013,7 +1013,7 @@ class HistoryTable(AUSTable):
         rows = []
         # Filter out any rows who have no non-primary key data, because this
         # means the row has been deleted.
-        non_primary_key_columns = [col.name for col in self.baseTable.t.get_children() if not col.primary_key]
+        non_primary_key_columns = [col.name for col in self.baseTable.t.columns if not col.primary_key]
         for row in result:
             if any([row[col] for col in non_primary_key_columns]):
                 rows.append(row)
@@ -1206,7 +1206,7 @@ class ScheduledChangeTable(AUSTable):
         self.base_primary_key = []
         # A ScheduledChangesTable requires all of the columns from its base
         # table, with a few tweaks:
-        for col in baseTable.t.get_children():
+        for col in baseTable.t.columns:
             if col.primary_key:
                 self.base_primary_key.append(col.name)
             newcol = col.copy()
@@ -1246,7 +1246,7 @@ class ScheduledChangeTable(AUSTable):
         table columns - and returns key/values pairs of the same columns
         with the base table ones prefixed."""
         ret = {}
-        base_columns = [c.name for c in self.baseTable.t.get_children()]
+        base_columns = [c.name for c in self.baseTable.t.columns]
         for k, v in columns.items():
             if k in base_columns:
                 ret["base_%s" % k] = v

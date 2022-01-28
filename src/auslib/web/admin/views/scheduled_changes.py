@@ -249,7 +249,7 @@ class ScheduledChangeHistoryView(HistoryView):
             telemetry_uptake=cond_change["telemetry_uptake"],
         )
         # Copy in all the base table columns, too.
-        for col in self.table.t.get_children():
+        for col in self.table.t.columns:
             if col.name.startswith("base_"):
                 what[col.name] = change[col.name]
 

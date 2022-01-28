@@ -265,8 +265,8 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         TestTableMixin.setUp(self)
 
     def testColumnMirroring(self):
-        self.assertTrue(self.test.id in self.test.table.get_children())
-        self.assertTrue(self.test.foo in self.test.table.get_children())
+        self.assertTrue(self.test.id in list(self.test.table.columns))
+        self.assertTrue(self.test.foo in list(self.test.table.columns))
 
     def testSelect(self):
         expected = [dict(id=1, foo=33, data_version=4), dict(id=2, foo=22, data_version=5), dict(id=3, foo=11, data_version=6)]
@@ -457,7 +457,7 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertTrue(self.test.history)
 
     def testHistoryTableHasAllColumns(self):
-        columns = [c.name for c in self.test.history.t.get_children()]
+        columns = [c.name for c in self.test.history.t.columns]
         self.assertTrue("change_id" in columns)
         self.assertTrue("id" in columns)
         self.assertTrue("foo" in columns)
@@ -597,7 +597,7 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
         self.assertTrue(self.test.history)
 
     def testMultiplePrimaryHistoryTableHasAllColumns(self):
-        columns = [c.name for c in self.test.history.t.get_children()]
+        columns = [c.name for c in self.test.history.t.columns]
         self.assertTrue("change_id" in columns)
         self.assertTrue("id1" in columns)
         self.assertTrue("id2" in columns)
@@ -744,7 +744,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertTrue(self.table.scheduled_changes.signoffs.history)
 
     def testTablesHaveCorrectColumns(self):
-        sc_columns = [c.name for c in self.sc_table.t.get_children()]
+        sc_columns = [c.name for c in self.sc_table.t.columns]
         self.assertEqual(len(sc_columns), 9)
         self.assertTrue("sc_id" in sc_columns)
         self.assertTrue("scheduled_by" in sc_columns)
@@ -760,7 +760,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertTrue("telemetry_uptake" not in sc_columns)
         self.assertTrue("when" not in sc_columns)
 
-        cond_columns = [c.name for c in self.sc_table.conditions.t.get_children()]
+        cond_columns = [c.name for c in self.sc_table.conditions.t.columns]
         self.assertEqual(len(cond_columns), 6)
         self.assertTrue("sc_id" in cond_columns)
         self.assertTrue("telemetry_product" in cond_columns)
@@ -769,7 +769,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertTrue("when" in cond_columns)
         self.assertTrue("data_version" in cond_columns)
 
-        signoff_columns = [c.name for c in self.sc_table.signoffs.t.get_children()]
+        signoff_columns = [c.name for c in self.sc_table.signoffs.t.columns]
         self.assertTrue("sc_id" in signoff_columns)
         self.assertTrue("username" in signoff_columns)
         self.assertTrue("role" in signoff_columns)
@@ -1410,7 +1410,7 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         self.assertTrue(self.table.scheduled_changes.signoffs.history)
 
     def testSCTableHasCorrectColumns(self):
-        sc_columns = [c.name for c in self.sc_table.t.get_children()]
+        sc_columns = [c.name for c in self.sc_table.t.columns]
         self.assertTrue("sc_id" in sc_columns)
         self.assertTrue("scheduled_by" in sc_columns)
         self.assertTrue("complete" in sc_columns)
@@ -1424,14 +1424,14 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         self.assertTrue("telemetry_uptake" not in sc_columns)
         self.assertTrue("when" not in sc_columns)
 
-        cond_columns = [c.name for c in self.sc_table.conditions.t.get_children()]
+        cond_columns = [c.name for c in self.sc_table.conditions.t.columns]
         self.assertTrue("sc_id" in cond_columns)
         self.assertTrue("telemetry_product" not in cond_columns)
         self.assertTrue("telemetry_channel" not in cond_columns)
         self.assertTrue("telemetry_uptake" not in cond_columns)
         self.assertTrue("when" in cond_columns)
 
-        signoff_columns = [c.name for c in self.sc_table.signoffs.t.get_children()]
+        signoff_columns = [c.name for c in self.sc_table.signoffs.t.columns]
         self.assertTrue("sc_id" in signoff_columns)
         self.assertTrue("username" in signoff_columns)
         self.assertTrue("role" in signoff_columns)
@@ -1568,10 +1568,10 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.signoffs.t.insert().execute(sc_id=1, username="nancy", role="relman")
 
     def testSignoffsHasCorrectTablesAndColumns(self):
-        columns = [c.name for c in self.signoffs.t.get_children()]
+        columns = [c.name for c in self.signoffs.t.columns]
         expected = ["sc_id", "username", "role"]
         self.assertEqual(set(columns), set(expected))
-        history_columns = [c.name for c in self.signoffs.history.t.get_children()]
+        history_columns = [c.name for c in self.signoffs.history.t.columns]
         expected = ["change_id", "changed_by", "timestamp"] + expected
         self.assertEqual(set(history_columns), set(expected))
 
@@ -1990,7 +1990,7 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertTrue(self.db.rules.scheduled_changes.conditions.history)
 
     def testAllColumnsExist(self):
-        columns = [c.name for c in self.db.rules.t.get_children()]
+        columns = [c.name for c in self.db.rules.t.columns]
         expected = [
             "rule_id",
             "alias",
@@ -2020,13 +2020,13 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertEqual(set(columns), set(expected))
         # No need to test the non-base parts of history nor scheduled changes table
         # because tests for those table types verify them.
-        history_columns = [c.name for c in self.db.rules.history.t.get_children()]
+        history_columns = [c.name for c in self.db.rules.history.t.columns]
         self.assertTrue(set(expected).issubset(set(history_columns)))
 
-        sc_columns = [c.name for c in self.db.rules.scheduled_changes.t.get_children()]
+        sc_columns = [c.name for c in self.db.rules.scheduled_changes.t.columns]
         self.assertTrue(set(sc_expected).issubset(set(sc_columns)))
 
-        sc_history_columns = [c.name for c in self.db.rules.scheduled_changes.history.t.get_children()]
+        sc_history_columns = [c.name for c in self.db.rules.scheduled_changes.history.t.columns]
         self.assertTrue(set(sc_expected).issubset(set(sc_history_columns)))
 
     def testGetOrderedRules(self):
@@ -5323,18 +5323,18 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertTrue(self.db.permissions.scheduled_changes.conditions.history)
 
     def testPermissionsHasCorrectTablesAndColumns(self):
-        columns = [c.name for c in self.permissions.t.get_children()]
+        columns = [c.name for c in self.permissions.t.columns]
         expected = ["username", "permission", "options", "data_version"]
         self.assertEqual(set(columns), set(expected))
-        history_columns = [c.name for c in self.permissions.history.t.get_children()]
+        history_columns = [c.name for c in self.permissions.history.t.columns]
         expected = ["change_id", "changed_by", "timestamp"] + expected
         self.assertEqual(set(history_columns), set(expected))
 
     def testUserRolesHasCorrectTablesAndColumns(self):
-        columns = [c.name for c in self.user_roles.t.get_children()]
+        columns = [c.name for c in self.user_roles.t.columns]
         expected = ["username", "role", "data_version"]
         self.assertEqual(set(columns), set(expected))
-        history_columns = [c.name for c in self.user_roles.history.t.get_children()]
+        history_columns = [c.name for c in self.user_roles.history.t.columns]
         expected = ["change_id", "changed_by", "timestamp"] + expected
         self.assertEqual(set(history_columns), set(expected))
 
