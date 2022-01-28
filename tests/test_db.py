@@ -15,6 +15,7 @@ import pytest
 from migrate.versioning.api import version
 from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, select
 from sqlalchemy.engine.reflection import Inspector
+from sqlalchemy.testing.assertions import emits_warning
 
 import auslib
 from auslib.blobs.apprelease import ReleaseBlobV1
@@ -4456,6 +4457,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         expected = [("d", "d", False, createBlob(dict(name="d", schema_version=1, hashFunction="sha512")), 1)]
         self.assertEqual(self.releases.t.select().where(self.releases.name == "d").execute().fetchall(), expected)
 
+    @emits_warning()
     def testAddReleaseAlreadyExists(self):
         blob = ReleaseBlobV1(name="a", hashFunction="sha512")
         self.assertRaises(TransactionError, self.releases.insert, changed_by="bill", name="a", product="a", data=blob)
@@ -5365,6 +5367,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
     def testGrantRoleWithoutPermission(self):
         self.assertRaises(PermissionDeniedError, self.permissions.grantRole, username="rory", role="releng", changed_by="cathy")
 
+    @emits_warning()
     def testGrantRoleExistingRole(self):
         self.assertRaises(TransactionError, self.permissions.grantRole, username="bob", role="releng", changed_by="bill")
 
