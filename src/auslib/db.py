@@ -21,6 +21,7 @@ from sqlalchemy.sql.functions import max as sql_max
 from auslib.blobs.base import createBlob, merge_dicts
 from auslib.errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
 from auslib.global_state import cache
+from auslib.util.compat import query_param, query_params, whereclause
 from auslib.util.rulematching import (
     matchBoolean,
     matchBuildID,
@@ -2995,12 +2996,12 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
         body = ["Changed by: %s" % changed_by]
         if type_ == "UPDATE":
             body.append("Row(s) to be updated as follows:")
-            where = [c for c in query._whereclause.get_children()]
+            where = [c for c in whereclause(query).get_children()]
             changed = {}
             unchanged = {}
             for row in table.select(where=where, transaction=transaction):
                 for k in row:
-                    parameters = copy(query.parameters)
+                    parameters = query_params(query)
                     if additional_columns:
                         parameters.update(additional_columns)
                     if parameters[k] != row[k]:
@@ -3014,12 +3015,12 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
             body.append("\n\n")
         elif type_ == "DELETE":
             body.append("Row(s) to be removed:")
-            where = [c for c in query._whereclause.get_children()]
+            where = [c for c in whereclause(query).get_children()]
             for row in table.select(where=where, transaction=transaction):
                 body.append(UTF8PrettyPrinter().pformat(row))
         elif type_ == "INSERT":
             body.append("Row to be inserted:")
-            parameters = copy(query.parameters)
+            parameters = query_params(query)
             parameters.update(pk_args)
             if additional_columns:
                 parameters.update(additional_columns)
@@ -3042,18 +3043,18 @@ def generate_random_string(length):
 def make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr, use_tls):
     def bleet(table, type_, changed_by, query, transaction, additional_columns=None):
         body = ["Changed by: %s" % changed_by]
-        where = [c for c in query._whereclause.get_children()]
+        where = [c for c in whereclause(query).get_children()]
         # TODO: How are we sometimes (always?) getting no rows for this. It shouldn't be possible...
         # It's possible that the where clause is not getting extracted properly.
         rows = table.select(where=where, transaction=transaction)
         if rows:
             row = rows[0]
-            if not query.parameters["read_only"] and row["read_only"]:
+            if not query_param(query, "read_only") and row["read_only"]:
                 body.append("Row(s) to be updated as follows:")
                 data = {}
                 data["name"] = UnquotedStr(repr(row["name"]))
                 data["product"] = UnquotedStr(repr(row["product"]))
-                data["read_only"] = UnquotedStr("%s ---> %s" % (repr(row["read_only"]), repr(query.parameters["read_only"])))
+                data["read_only"] = UnquotedStr("%s ---> %s" % (repr(row["read_only"]), repr(query_param(query, "read_only"))))
                 body.append(UTF8PrettyPrinter().pformat(data))
 
                 subj = "Read only release %s changed to modifiable" % data["name"]
