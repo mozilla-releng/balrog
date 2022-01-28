@@ -1573,6 +1573,10 @@ class ScheduledChangeTable(AUSTable):
                 where.append((getattr(self.baseTable, col) == sc["base_%s" % col]))
             self.baseTable.update(where, what, sc["scheduled_by"], sc["base_data_version"], transaction=transaction, signoffs=signoffs)
         elif change_type == "insert":
+            for col in self.base_primary_key:
+                # as we want sqlalchemy to return the automatically inserted id, we need to not pass it (for 1.4)
+                if what[col] is None:
+                    del what[col]
             self.baseTable.insert(sc["scheduled_by"], transaction=transaction, signoffs=signoffs, **what)
         else:
             raise ValueError("Unknown Change Type")
