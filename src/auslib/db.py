@@ -1817,7 +1817,7 @@ class Rules(AUSTable):
                 break
             cond.append(row["product"])
         else:  # nobreak
-            where = [self.product.in_(tuple(cond))]
+            where = [self.db.productRequiredSignoffs.product.in_(tuple(cond))]
 
         q = self.db.productRequiredSignoffs.select(where=where, transaction=transaction)
 
@@ -2368,8 +2368,8 @@ class Releases(AUSTable):
             return False
 
     def isMappedTo(self, name, transaction=None):
-        mapping_count = self.count(where=[self.db.rules.mapping == name], transaction=transaction)
-        fallbackMapping_count = self.count(where=[self.db.rules.fallbackMapping == name], transaction=transaction)
+        mapping_count = self.db.rules.count(where=[self.db.rules.mapping == name], transaction=transaction)
+        fallbackMapping_count = self.db.rules.count(where=[self.db.rules.fallbackMapping == name], transaction=transaction)
         return mapping_count > 0 or fallbackMapping_count > 0
 
     def delete(self, where, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
