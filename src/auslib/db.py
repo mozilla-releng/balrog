@@ -85,6 +85,7 @@ class JSONColumn(sqlalchemy.types.TypeDecorator):
     storage, and deserialized just after retrieval."""
 
     impl = Text
+    cache_ok = True
 
     def process_bind_param(self, value, dialect):
         if value:
@@ -104,6 +105,7 @@ class CompatibleBooleanColumn(sqlalchemy.types.TypeDecorator):
     it impossible to downgrade a database with sqlalchemy-migrate."""
 
     impl = Integer
+    cache_ok = True
 
     def process_bind_param(self, value, dialect):
         if value is not None:
@@ -132,6 +134,8 @@ def BlobColumn(impl=Text):
     desired type may be passed in as an argument."""
 
     class cls(sqlalchemy.types.TypeDecorator):
+        cache_ok = True
+
         def process_bind_param(self, value, dialect):
             if value:
                 value = value.getJSON()
