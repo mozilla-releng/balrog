@@ -37,6 +37,7 @@ from auslib.db import (
 )
 from auslib.errors import BlobValidationError, ReadOnlyError
 from auslib.global_state import cache, dbo
+from auslib.util.compat import query_params, whereclause
 
 from .fakes import FakeGCSHistory, FakeGCSHistoryAsync
 
@@ -321,7 +322,7 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertEqual(shared[0], self.test)
         self.assertEqual(shared[1], "INSERT")
         self.assertEqual(shared[2], "bob")
-        self.assertEqual(shared[3].parameters, what)
+        self.assertEqual(query_params(shared[3]), what)
 
     def testDelete(self):
         ret = self.test.delete(changed_by="bill", where=[self.test.id == 1, self.test.foo == 33], old_data_version=4)
@@ -347,7 +348,7 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertEqual(shared[2], "bob")
         # There should be two WHERE clauses, because AUSTable adds a data_version one in addition
         # to the id condition above.
-        self.assertEqual(len(shared[3]._whereclause.get_children()), 2)
+        self.assertEqual(len(whereclause(shared[3])), 2)
 
     def testUpdate(self):
         ret = self.test.update(changed_by="bob", where=[self.test.id == 1], what=dict(foo=123), old_data_version=4)
@@ -381,12 +382,12 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertEqual(shared[0], self.test)
         self.assertEqual(shared[1], "UPDATE")
         self.assertEqual(shared[2], "bob")
-        self.assertEqual(shared[3].parameters, what)
+        self.assertEqual(query_params(shared[3]), what)
         self.assertIsInstance(shared[4], AUSTransaction)
         self.assertEqual(shared[5], additional_columns)
         # There should be two WHERE clauses, because AUSTable adds a data_version one in addition
         # to the id condition above.
-        self.assertEqual(len(shared[3]._whereclause.get_children()), 2)
+        self.assertEqual(len(whereclause(shared[3])), 2)
 
     def test_count(self):
         count = self.test.count()
