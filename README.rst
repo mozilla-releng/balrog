@@ -18,6 +18,21 @@ Run the following command to create and run the necessary containers:
 
     $ docker-compose up
 
+**Note**
+
+*On ARM (M1) chips*
+
+Make sure you are running a recent version of docker compose:
+::
+
+    $ docker-compose version
+    Docker Compose version v2.2.3
+
+Then, run the following command to create and run the necessary containers:
+::
+
+    $ docker-compose -f docker-compose.yml -f docker-compose.arm.yml up
+
 Once it completes, you should be able to access
 
 - http://localhost:9010 - The public API
