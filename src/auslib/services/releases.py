@@ -205,8 +205,8 @@ def get_schema_version(name, trans):
     # Set a constant name for the returned column. Otherwise this will end up as "anon_1", with no guarantee
     # that it won't change in the future.
     column = dbo.releases_json.data["schema_version"]
-    column.anon_label = "schema_version"
-    return dbo.releases_json.select(where={"name": name}, columns=[column], transaction=trans)[0]["schema_version"]
+    label = column.label("schema_version")
+    return dbo.releases_json.select(where={"name": name}, columns=[label], transaction=trans)[0]["schema_version"]
 
 
 def exists(name, trans):
