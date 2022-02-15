@@ -17,10 +17,10 @@ from auslib.log import configure_logging
 STAGING = bool(int(os.environ.get("STAGING", 0)))
 LOCALDEV = bool(int(os.environ.get("LOCALDEV", 0)))
 
-SYSTEM_ACCOUNTS = ["balrogagent", "balrog-ffxbld", "balrog-tbirdbld", "seabld"]
+SYSTEM_ACCOUNTS = ["balrogagent", "balrog-ffxbld", "balrog-tbirdbld", "seabld", "balrog-xpibld"]
 DOMAIN_ALLOWLIST = {
     "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird", "Pinebuild"),
-    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird", "FirefoxVPN", "Pinebuild"),
+    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird", "FirefoxVPN", "Pinebuild", "SystemAddons"),
     "download.cdn.mozilla.net": ("Firefox", "Fennec"),
     "ciscobinary.openh264.org": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),
@@ -31,7 +31,7 @@ DOMAIN_ALLOWLIST = {
     "vpn.mozilla.org": ("FirefoxVPN", "Guardian"),
 }
 if STAGING or LOCALDEV:
-    SYSTEM_ACCOUNTS.extend(["balrog-stage-ffxbld", "balrog-stage-tbirdbld"])
+    SYSTEM_ACCOUNTS.extend(["balrog-stage-ffxbld", "balrog-stage-tbirdbld", "balrog-stage-xpibld"])
     DOMAIN_ALLOWLIST.update(
         {
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird", "Pinebuild", "SystemAddons"),
