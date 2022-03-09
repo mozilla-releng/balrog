@@ -13,7 +13,6 @@ if sqlalchemy.__version__.startswith("1.3."):
     def query_params(query):
         return copy(query.parameters)
 
-
 else:
 
     def whereclause(q):
