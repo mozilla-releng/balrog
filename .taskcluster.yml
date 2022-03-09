@@ -72,12 +72,12 @@ tasks:
             routes: []
             payload:
               maxRunTime: 1200
-              image: "python:3.8"
+              image: "python:3.9"
               env:
                 # For Coveralls to function properly CIRCLECI and CI_PULL_REQUEST need to be set
                 CIRCLECI: "1"
                 CI_PULL_REQUEST: "${pull_request_number}"
-                TOXENV: "check,py38,coveralls"
+                TOXENV: "check,py39,coveralls"
               command:
                 - "/bin/bash"
                 - "-c"
@@ -105,9 +105,9 @@ tasks:
             routes: []
             payload:
               maxRunTime: 1200
-              image: "python:3.8"
+              image: "python:3.9"
               env:
-                TOXENV: "check,py38"
+                TOXENV: "check,py39"
               command:
                 - "/bin/bash"
                 - "-c"
@@ -118,7 +118,7 @@ tasks:
               owner: ${owner_email}
               source: ${repo_url}
 
-          - taskId: {$eval: as_slugid("client-tests-py38")}
+          - taskId: {$eval: as_slugid("client-tests-py39")}
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: releng-t
@@ -127,9 +127,9 @@ tasks:
             routes: []
             payload:
               maxRunTime: 1200
-              image: "python:3.8"
+              image: "python:3.9"
               env:
-                TOXENV: "check,py38"
+                TOXENV: "check,py39"
               command:
                 - "/bin/bash"
                 - "-c"

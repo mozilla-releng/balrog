@@ -1,6 +1,6 @@
-FROM python:3.8-slim
+FROM python:3.9-slim
 
-MAINTAINER bhearsum@mozilla.com
+MAINTAINER jcristau@mozilla.com
 
 # Some versions of the python:3.8 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
 # default-libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.

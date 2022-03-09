@@ -2,7 +2,7 @@ ARG PYTHON_VERSION
 
 FROM python:${PYTHON_VERSION}-slim
 
-MAINTAINER bhearsum@mozilla.com
+MAINTAINER jcristau@mozilla.com
 
 # netcat is needed for health checks
 # Some versions of the python:3.8 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
