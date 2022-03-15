@@ -26,7 +26,7 @@ cat > version.json <<EOF
     "commit": "${commit}",
     "version": "${version}",
     "source": "https://github.com/mozilla-releng/balrog",
-    "build": "https://tools.taskcluster.net/task-inspector/#${TASK_ID}"
+    "build": "https://firefox-ci-tc.services.mozilla.com/tasks/${TASK_ID}"
 }
 EOF
 
