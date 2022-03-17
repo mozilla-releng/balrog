@@ -130,7 +130,7 @@ class CompatibleBooleanColumn(sqlalchemy.types.TypeDecorator):
 def BlobColumn(impl=Text):
     """BlobColumns are used to store Release Blobs, which are ultimately dicts.
     Release Blobs must be serialized before storage, and deserialized upon
-    retrevial. This type handles both conversions. Some database engines
+    retrieval. This type handles both conversions. Some database engines
     (eg: mysql) may require a different underlying type than Text. The
     desired type may be passed in as an argument."""
 
@@ -2855,7 +2855,7 @@ class Permissions(AUSTable):
                 if options.get("actions") and action not in options["actions"]:
                     return False
                 # Similarly, permissions without products specified grant that
-                # that permission without any limitation on the product.
+                # permission without any limitation on the product.
                 if options.get("products") and product not in options["products"]:
                     return False
             return True
@@ -3176,7 +3176,7 @@ class AUSDatabase(object):
         # it doesn't actually create tables or upgrade it. So we need to call it
         # and then do the upgrade to get to the state we want. We also have to
         # tell create that we're creating at version 0 of the database, otherwise
-        # uprgade will do nothing!
+        # upgrade will do nothing!
         migrate.versioning.schema.ControlledSchema.create(self.engine, self.migrate_repo, 0)
         self.upgrade(version)
 
@@ -3184,7 +3184,7 @@ class AUSDatabase(object):
         # This method was taken from Buildbot:
         # https://github.com/buildbot/buildbot/blob/87108ec4088dc7fd5394ac3c1d0bd3b465300d92/master/buildbot/db/model.py#L455
         # http://code.google.com/p/sqlalchemy-migrate/issues/detail?id=100
-        # means  we cannot use the migrate.versioning.api module.  So these
+        # means we cannot use the migrate.versioning.api module.  So these
         # methods perform similar wrapping functions to what is done by the API
         # functions, but without disposing of the engine.
         schema = migrate.versioning.schema.ControlledSchema(self.engine, self.migrate_repo)
