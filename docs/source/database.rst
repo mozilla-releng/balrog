@@ -50,8 +50,8 @@ Following tables show columns according to different Categories:
   |                        |                    | request based on the Matchable columns, the rule |                                 | positive                   |
   |                        |                    | with the highest priority is chosen.             |                                 | integers.                  |
   +------------------------+--------------------+--------------------------------------------------+---------------------------------+----------------------------+
-  | Info                   | Alias              | The id of the rule. This id is necessary to      | N/A                             | "firefox-release-betatest" |
-  |                        |                    | make changes to the rule through the REST API.   |                                 | , "firefox-nightly"        |
+  | Info                   | Alias              | Optional alias for the rule.                     | N/A                             | "firefox-release-betatest" |
+  |                        |                    | Can be used instead of the id in most cases      |                                 | , "firefox-nightly"        |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | Comment            | A string describing the purpose of the           | N/A                             | Any string                 |
   |                        |                    | rule. Not always necessary for obvious rules.    |                                 |                            |
