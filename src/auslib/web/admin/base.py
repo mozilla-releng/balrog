@@ -88,7 +88,7 @@ def setup_request():
 
 @app.after_request
 def complete_request(response):
-    if request.full_path.startswith("/v2"):
+    if hasattr(request, "transaction"):
         if response.status_code >= 400:
             request.transaction.rollback()
         else:
