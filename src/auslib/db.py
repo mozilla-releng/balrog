@@ -2944,6 +2944,36 @@ class EmergencyShutoffs(AUSTable):
         super(EmergencyShutoffs, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
 
+class PinnableReleasesTable(AUSTable):
+    def __init__(self, db, metadata, dialect):
+        self.table = Table(
+            "pinnable_releases",
+            metadata,
+            Column("product", String(15), nullable=False, primary_key=True),
+            Column("version", String(75), nullable=False, primary_key=True),
+            Column("channel", String(75), nullable=False, primary_key=True),
+            Column("mapping", String(100), nullable=False)
+        )
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=HistoryTable)
+
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        if not self.db.hasPermission(changed_by, "pinnable_release", "create", columns.get("product"), transaction):
+            raise PermissionDeniedError("{} is not allowed to create pinnable releases for product {}".format(changed_by, columns.get("product")))
+
+        ret = super(PinnableReleases, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        if not dryrun:
+            return ret.last_inserted_params()
+
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "pinnable_release", "delete", product, transaction):
+            raise PermissionDeniedError("{} is not allowed to delete pinnable releases for product {}".format(changed_by, product))
+
+        # XXX signoffs?
+
+        super(PinnableReleases, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
+
+
 class UTF8PrettyPrinter(pprint.PrettyPrinter):
     """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
     Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
@@ -3115,6 +3145,7 @@ class AUSDatabase(object):
         self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)
         self.permissionsRequiredSignoffsTable = PermissionsRequiredSignoffsTable(self, self.metadata, dialect)
         self.emergencyShutoffsTable = EmergencyShutoffs(self, self.metadata, dialect)
+        self.pinnableReleasesTable = PinnableReleasesTable(self, self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def setSystemAccounts(self, systemAccounts):
