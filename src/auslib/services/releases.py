@@ -864,3 +864,7 @@ def enact_scheduled_changes(name, username, trans):
         coros.append(coro)
 
     await_coroutines(coros)
+
+
+def set_pinnable(name, product, channel, version, username, trans):
+    return dbo.pinnable_releases.insert(username, product=product, channel=channel, version=version, mapping=name, transaction=trans)

@@ -81,3 +81,10 @@ def enact_scheduled_changes(name):
         return problem(404, "Missing", "Release has no scheduled changes")
     ret = releases.enact_scheduled_changes(name, request.username, request.transaction)
     return ret, 200
+
+
+def set_pinnable(name, body):
+    if not releases.exists(name, request.transaction):
+        return problem(404, "Not Found", "Release does not exist")
+    ret = releases.set_pinnable(name, body["product"], body["channel"], body["version"], request.username, request.transaction)
+    return ret, 200

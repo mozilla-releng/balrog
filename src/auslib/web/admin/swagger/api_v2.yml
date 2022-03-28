@@ -414,3 +414,36 @@ paths:
           description: Client error
         '403':
           description: Permission denied
+
+  /releases/{name}/pinnable:
+    parameters:
+      - $ref: '#/components/parameters/ReleaseName'
+
+    put:
+      summary: Set a release as pinnable on a channel
+      operationId: auslib.web.admin.views.releases_v2.set_pinnable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - product
+                - channel
+                - version
+              properties:
+                product:
+                  type: string
+                channel:
+                  type: string
+                version:
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content: ???
+        '400':
+          description: Client error
+        '403':
+          description: Permission denied
