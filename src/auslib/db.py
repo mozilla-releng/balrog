@@ -2952,7 +2952,7 @@ class PinnableReleasesTable(AUSTable):
             Column("product", String(15), nullable=False, primary_key=True),
             Column("version", String(75), nullable=False, primary_key=True),
             Column("channel", String(75), nullable=False, primary_key=True),
-            Column("mapping", String(100), nullable=False)
+            Column("mapping", String(100), nullable=False),
         )
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=HistoryTable)
 
