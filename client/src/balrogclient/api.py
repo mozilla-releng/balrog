@@ -8,6 +8,7 @@ import time
 
 import requests
 import requests.auth
+from requests.packages.urllib3.util.retry import Retry
 
 MAX_LOG_LINE_LENGTH = 10000
 # Refresh the tokens 5 minutes before they expire
