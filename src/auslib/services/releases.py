@@ -722,6 +722,16 @@ def delete_release(name, changed_by, trans):
                 where={"sc_id": asset["sc_id"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans
             )
 
+        for row in dbo.pinnable_releases.scheduled_changes.select(
+            where={"base_mapping": name, "complete": False},
+            columns=[dbo.pinnable_releases.scheduled_changes.sc_id, dbo.release_assets.scheduled_changes.data_version],
+        ):
+            sc_id = row["sc_id"]
+            old_data_version = row["data_version"]
+            dbo.pinnable_releases.scheduled_changes.delete(
+                where={"sc_id": sc_id}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans
+            )
+
     if exists(name, trans):
         row = dbo.releases_json.select(where={"name": name}, columns={dbo.releases_json.product, dbo.releases_json.data_version})[0]
         product = row["product"]
@@ -747,6 +757,10 @@ def delete_release(name, changed_by, trans):
                 where={"name": name, "path": asset["path"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans
             )
             coros.append(coro)
+        for pin in dbo.pinnable_releases.select(where={"mapping": name}, columns=[dbo.pinnable_releases.data_version], transaction=trans):
+            coros.append(dbo.pinnable_releases.async_delete(
+                where={"mapping": name}, old_data_version=pin["data_version"]
+            ))
 
     await_coroutines(coros)
 
