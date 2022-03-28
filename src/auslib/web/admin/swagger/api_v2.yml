@@ -442,7 +442,11 @@ paths:
       responses:
         '200':
           description: OK
-          content: ???
+          content:
+            # TODO: check
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseModifyResponse'
         '400':
           description: Client error
         '403':
