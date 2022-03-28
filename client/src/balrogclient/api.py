@@ -71,6 +71,10 @@ class BearerAuth(requests.auth.AuthBase):
 def get_balrog_session(auth0_secrets, session=None):
     if not session:
         session = requests.Session()
+        retry = Retry(total=5, backoff_factor=0.1, status_forcelist=[429, 500, 502, 503, 504])
+        http_adapter = requests.adapters.HTTPAdapter(max_retries=retry)
+        session.mount("https://", http_adapter)
+        session.mount("http://", http_adapter)
 
     access_token = _get_auth0_token(auth0_secrets, session=session)
     session.auth = BearerAuth(access_token)
