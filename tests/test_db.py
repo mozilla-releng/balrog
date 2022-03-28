@@ -5767,6 +5767,11 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
                 "permissions_req_signoffs_scheduled_changes_history",
                 "permissions_req_signoffs_scheduled_changes_signoffs",
                 "permissions_req_signoffs_scheduled_changes_signoffs_history",
+                "pinnable_releases",
+                "pinnable_releases_scheduled_changes",
+                "pinnable_releases_scheduled_changes_conditions",
+                "pinnable_releases_scheduled_changes_conditions_history",
+                "pinnable_releases_scheduled_changes_history",
                 "product_req_signoffs",
                 "product_req_signoffs_history",
                 "product_req_signoffs_scheduled_changes",
@@ -6104,6 +6109,22 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             for table in releases_tables:
                 self.assertNotIn(table, metadata.tables)
 
+    def _add_pinnable_releases_tables(self, db, upgrade=True):
+        metadata = self._get_reflected_metadata(db)
+        pin_tables = [
+            "pinnable_releases",
+            "pinnable_releases_scheduled_changes",
+            "pinnable_releases_scheduled_changes_history",
+            "pinnable_releases_scheduled_changes_conditions",
+            "pinnable_releases_scheduled_changes_conditions_history",
+        ]
+        if upgrade:
+            for table in pin_tables:
+                self.assertIn(table, metadata.tables)
+        else:
+            for table in pin_tables:
+                self.assertNotIn(table, metadata.tables)
+
     def _fix_column_attributes_migration_test(self, db, upgrade=True):
         """
         Tests the upgrades and downgrades for version 22 work properly.
@@ -6170,6 +6191,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             pass
 
         versions_migrate_tests_dict = {
+            34: self._add_pinnable_releases_tables,
             33: self._add_release_json_tables,
             # This version removes the releases_history table, which is verified by other tests
             32: _noop,
