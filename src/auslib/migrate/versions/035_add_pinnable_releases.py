@@ -17,6 +17,20 @@ def upgrade(migrate_engine):
         Column("mapping", String(100), nullable=False),
         Column("data_version", Integer, nullable=False),
     )
+
+    pinnable_releases_history = Table(  # noqa
+        "pinnable_releases_history",
+        metadata,
+        Column("change_id", Integer, primary_key=True, autoincrement=True),
+        Column("changed_by", String(100), nullable=False),
+        Column("timestamp", bigintType, nullable=False),
+        Column("product", String(15), nullable=False),
+        Column("version", String(75), nullable=False),
+        Column("channel", String(75), nullable=False),
+        Column("mapping", String(100), nullable=True),
+        Column("data_version", Integer, nullable=True),
+    )
+
     pinnable_releases_scheduled_changes = Table(  # noqa
         "pinnable_releases_scheduled_changes",
         metadata,
@@ -28,8 +42,8 @@ def upgrade(migrate_engine):
         Column("base_product", String(15), nullable=False),
         Column("base_version", String(75), nullable=False),
         Column("base_channel", String(75), nullable=False),
-        Column("base_mapping", String(100), nullable=False),
-        Column("base_data_version", Integer, nullable=False),
+        Column("base_mapping", String(100), nullable=True),
+        Column("base_data_version", Integer, nullable=True),
     )
 
     pinnable_releases_scheduled_changes_history = Table(  # noqa
@@ -43,11 +57,11 @@ def upgrade(migrate_engine):
         Column("complete", Boolean, default=False),
         Column("change_type", String(50), nullable=True),
         Column("data_version", Integer),
-        Column("base_product", String(15), nullable=False),
-        Column("base_version", String(75), nullable=False),
-        Column("base_channel", String(75), nullable=False),
-        Column("base_mapping", String(100), nullable=False),
-        Column("base_data_version", Integer, nullable=False),
+        Column("base_product", String(15), nullable=True),
+        Column("base_version", String(75), nullable=True),
+        Column("base_channel", String(75), nullable=True),
+        Column("base_mapping", String(100), nullable=True),
+        Column("base_data_version", Integer, nullable=True),
     )
 
     pinnable_releases_scheduled_changes_conditions = Table(  # noqa
@@ -67,6 +81,25 @@ def upgrade(migrate_engine):
         Column("sc_id", Integer, nullable=False),
         Column("when", bigintType),
         Column("data_version", Integer),
+    )
+
+    pinnable_releases_scheduled_changes_signoffs = Table(  # noqa
+        "pinnable_releases_scheduled_changes_signoffs",
+        metadata,
+        Column("sc_id", Integer, primary_key=True, autoincrement=False),
+        Column("username", String(100), primary_key=True),
+        Column("role", String(50), nullable=False),
+    )
+
+    pinnable_releases_scheduled_changes_signoffs_history = Table(  # noqa
+        "pinnable_releases_scheduled_changes_signoffs_history",
+        metadata,
+        Column("change_id", Integer, primary_key=True, autoincrement=True),
+        Column("changed_by", String(100), nullable=False),
+        Column("timestamp", bigintType, nullable=False),
+        Column("sc_id", Integer, nullable=False),
+        Column("username", String(100), nullable=False),
+        Column("role", String(50), nullable=True),
     )
 
     metadata.create_all()
