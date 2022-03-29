@@ -2960,7 +2960,7 @@ class PinnableReleasesTable(AUSTable):
         if not self.db.hasPermission(changed_by, "pinnable_release", "create", columns.get("product"), transaction):
             raise PermissionDeniedError("{} is not allowed to create pinnable releases for product {}".format(changed_by, columns.get("product")))
 
-        ret = super(PinnableReleases, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        ret = super(PinnableReleasesTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
             return ret.last_inserted_params()
 
@@ -2971,7 +2971,7 @@ class PinnableReleasesTable(AUSTable):
 
         # XXX signoffs?
 
-        super(PinnableReleases, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
+        super(PinnableReleasesTable, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
 
 class UTF8PrettyPrinter(pprint.PrettyPrinter):
