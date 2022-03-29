@@ -3271,3 +3271,7 @@ class AUSDatabase(object):
     @property
     def emergencyShutoffs(self):
         return self.emergencyShutoffsTable
+
+    @property
+    def pinnable_releases(self):
+        return self.pinnableReleasesTable

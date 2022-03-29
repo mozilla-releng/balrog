@@ -717,6 +717,7 @@ def delete_release(name, changed_by, trans):
         for asset in dbo.release_assets.scheduled_changes.select(
             where={"base_name": name, "complete": False},
             columns=[dbo.release_assets.scheduled_changes.sc_id, dbo.release_assets.scheduled_changes.data_version],
+            transaction=trans,
         ):
             dbo.release_assets.scheduled_changes.delete(
                 where={"sc_id": asset["sc_id"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans
@@ -724,7 +725,8 @@ def delete_release(name, changed_by, trans):
 
         for row in dbo.pinnable_releases.scheduled_changes.select(
             where={"base_mapping": name, "complete": False},
-            columns=[dbo.pinnable_releases.scheduled_changes.sc_id, dbo.release_assets.scheduled_changes.data_version],
+            columns=[dbo.pinnable_releases.scheduled_changes.sc_id, dbo.pinnable_releases.scheduled_changes.data_version],
+            transaction=trans,
         ):
             sc_id = row["sc_id"]
             old_data_version = row["data_version"]
