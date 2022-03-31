@@ -2644,6 +2644,7 @@ class Permissions(AUSTable):
         "release_locale": ["actions", "products"],
         "release_read_only": ["actions", "products"],
         "rule": ["actions", "products"],
+        "pinnable_release": ["products"],
         "permission": ["actions"],
         "required_signoff": ["products"],
         "scheduled_change": ["actions"],
@@ -2957,6 +2958,9 @@ class PinnableReleasesTable(AUSTable):
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=HistoryTable)
 
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        # XXX check the release exists?
+        # XXX signoffs?
+
         if not self.db.hasPermission(changed_by, "pinnable_release", "create", columns.get("product"), transaction):
             raise PermissionDeniedError("{} is not allowed to create pinnable releases for product {}".format(changed_by, columns.get("product")))
 
@@ -2968,8 +2972,6 @@ class PinnableReleasesTable(AUSTable):
         product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
         if not self.db.hasPermission(changed_by, "pinnable_release", "delete", product, transaction):
             raise PermissionDeniedError("{} is not allowed to delete pinnable releases for product {}".format(changed_by, product))
-
-        # XXX signoffs?
 
         super(PinnableReleasesTable, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
