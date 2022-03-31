@@ -5300,6 +5300,28 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
 
 
 @pytest.mark.usefixtures("current_db_schema")
+class TestPinnableReleases(unittest.TestCase, MemoryDatabaseMixin):
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        self.db = AUSDatabase(self.dburi)
+        self.metadata.create_all(self.db.engine)
+        self.pinnable_releases = self.db.pinnable_releases
+        self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
+        self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
+
+    def testInsertPinnableRelease(self):
+        self.pinnable_releases.insert(
+            changed_by="bob",
+            product="Firefox",
+            version="60.0",
+            channel="beta",
+            mapping="Firefox-60.0-build1"
+        )
+        x = select([self.pinnable_releases.mapping]).where(self.pinnable_releases.channel == "beta").execute().fetchone()
+        self.assertEqual(x["mapping"], "Firefox-60.0-build1")
+
+
+@pytest.mark.usefixtures("current_db_schema")
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
