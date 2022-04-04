@@ -2,10 +2,10 @@
 
 import json
 import logging
-import os
+import time
+
 import requests
 import requests.auth
-import time
 
 log = logging.getLogger(__name__)
 
@@ -13,15 +13,15 @@ log = logging.getLogger(__name__)
 class AdhocBalrogTester:
 
     BASE_URLS = {
-        "local-admin":       "https://localhost:8010",
-        "local-public":      "https://localhost:9010",
-        "local-ui":          "https://localhost:9000",
-        "production-admin":  "https://aus4-admin.mozilla.org",
+        "local-admin": "https://localhost:8010",
+        "local-public": "https://localhost:9010",
+        "local-ui": "https://localhost:9000",
+        "production-admin": "https://aus4-admin.mozilla.org",
         "production-public": "https://aus5.mozilla.org",
-        "production-ui":     "https://balrog.services.mozilla.com",
-        "staging-admin":     "https://admin-stage.balrog.nonprod.cloudops.mozgcp.net",
-        "staging-public":    "https://stage.balrog.nonprod.cloudops.mozgcp.net",
-        "staging-ui":        "https://balrog-admin-static-stage.stage.mozaws.net",
+        "production-ui": "https://balrog.services.mozilla.com",
+        "staging-admin": "https://admin-stage.balrog.nonprod.cloudops.mozgcp.net",
+        "staging-public": "https://stage.balrog.nonprod.cloudops.mozgcp.net",
+        "staging-ui": "https://balrog-admin-static-stage.stage.mozaws.net",
     }
 
     def __init__(self, environment="staging", test_level=2):
@@ -53,14 +53,20 @@ class AdhocBalrogTester:
             log.error("Caught HTTPError: %s", exc.response.content)
             raise
         finally:
-            stats = {"timestamp": time.time(), "method": method.upper(), "url": url, "status_code": resp.status_code, "elapsed_secs": resp.elapsed.total_seconds()}
+            stats = {
+                "timestamp": time.time(),
+                "method": method.upper(),
+                "url": url,
+                "status_code": resp.status_code,
+                "elapsed_secs": resp.elapsed.total_seconds(),
+            }
             log.debug("REQUEST STATS: %s", json.dumps(stats))
         return
 
     def make_url(self, environment, interface, append):
         destination = environment + "-" + interface
         base = self.BASE_URLS[destination]
-        return '/'.join([base, append])
+        return "/".join([base, append])
 
     def version(self, environment, interface):
         url = self.make_url(environment, interface, "__version__")
@@ -73,10 +79,10 @@ class AdhocBalrogTester:
             return
         url = self.make_url(environment, interface, "__heartbeat__")
         heartbeat = self.balrog_request("GET", url, headers=self.headers)
-        log.info(f'  {environment}-{interface} heartbeat: {heartbeat}')
+        log.info(f"  {environment}-{interface} heartbeat: {heartbeat}")
         url = self.make_url(environment, interface, "__lbheartbeat__")
         heartbeat = self.balrog_request("GET", url, headers=self.headers)
-        log.info(f'  {environment}-{interface} load balancer heartbeat: {heartbeat}')
+        log.info(f"  {environment}-{interface} load balancer heartbeat: {heartbeat}")
 
     def admin_releases(self, environment, interface):
         url = self.make_url(environment, interface, "releases")
@@ -89,7 +95,7 @@ class AdhocBalrogTester:
             for r in releases["releases"]:
                 log.info(f'{r["name"]} ({r["product"]}, {r["data_version"]})')
                 url = self.make_url(environment, interface, f'releases/{r["name"]}')
-                release = self.balrog_request("GET", url, headers=self.headers)
+                self.balrog_request("GET", url, headers=self.headers)
 
     def admin_scheduled_changes(self, environment, interface):
         url = self.make_url(environment, interface, "scheduled_changes/emergency_shutoff")
@@ -109,9 +115,13 @@ class AdhocBalrogTester:
         log.info(f'  {resp["count"]} scheduled changes')
 
     def public_updates(self, environment, interface):
-        url = self.make_url(environment, interface, "update/3/GMP/85.0/20200518093924/WINNT_x86_64-msvc-x64/en-US/release/Windows_NT%2010.0.0.0.18363.1016%20(x64)/default/default/update.xml")
+        url = self.make_url(
+            environment,
+            interface,
+            "update/3/GMP/85.0/20200518093924/WINNT_x86_64-msvc-x64/en-US/release/Windows_NT%2010.0.0.0.18363.1016%20(x64)/default/default/update.xml",
+        )
         resp = self.balrog_request("GET", url, headers=self.headers)
-        log.info(f'  GMP update found, length: {len(resp)}')  # XML blob
+        log.info(f"  GMP update found, length: {len(resp)}")  # XML blob
 
     def run_tests_admin(self):
         interface = "admin"
