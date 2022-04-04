@@ -439,6 +439,10 @@ paths:
                   type: string
                 version:
                   type: string
+                # Creates a scheduled change if passed
+                when:
+                  type: integer
+                  nullable: true
       responses:
         '200':
           description: OK
