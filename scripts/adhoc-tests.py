@@ -34,6 +34,8 @@ class AdhocBalrogTester:
 
     def balrog_request(self, method, url, *args, **kwargs):
         log.info(f"Balrog request to {url} via {method.upper()}")
+        if self.environment == "local":
+            kwargs["verify"] = False
         data = kwargs.get("json", kwargs.get("data"))
         if data:
             log.debug(f"Data sent: {data}")
@@ -74,9 +76,6 @@ class AdhocBalrogTester:
         log.info(f'  {environment}-{interface} version: {version["version"]}')
 
     def heartbeat(self, environment, interface):
-        if environment == "local":
-            log.info("heartbeat not available on local - skipped")
-            return
         url = self.make_url(environment, interface, "__heartbeat__")
         heartbeat = self.balrog_request("GET", url, headers=self.headers)
         log.info(f"  {environment}-{interface} heartbeat: {heartbeat}")
@@ -92,7 +91,7 @@ class AdhocBalrogTester:
         releases = self.balrog_request("GET", url, headers=self.headers)
         log.info(f'  {len(releases["releases"])} api/releases found')
         if test_level > 2:
-            for r in releases["releases"]:
+            for r in releases["releases"][-10:]:
                 log.info(f'{r["name"]} ({r["product"]}, {r["data_version"]})')
                 url = self.make_url(environment, interface, f'releases/{r["name"]}')
                 self.balrog_request("GET", url, headers=self.headers)
@@ -115,6 +114,7 @@ class AdhocBalrogTester:
         log.info(f'  {resp["count"]} scheduled changes')
 
     def public_updates(self, environment, interface):
+        # TODO many other interesting endpoints
         url = self.make_url(
             environment,
             interface,
@@ -122,6 +122,19 @@ class AdhocBalrogTester:
         )
         resp = self.balrog_request("GET", url, headers=self.headers)
         log.info(f"  GMP update found, length: {len(resp)}")  # XML blob
+
+    def public_releases(self, environment, interface):
+        url = self.make_url(environment, interface, "api/v1/releases")
+        releases = self.balrog_request("GET", url, headers=self.headers)
+        log.info(f'  {len(releases["releases"])} api/v1/releases found')
+        url = self.make_url(environment, interface, "api/v1/releases?name_prefix=Firefox")
+        releases = self.balrog_request("GET", url, headers=self.headers)
+        log.info(f'  {len(releases["releases"])} api/v1/releases starting with "Firefox" found')
+        if test_level > 2:
+            for r in releases["releases"][-10:]:
+                log.info(f'{r["name"]} ({r["product"]}, {r["data_version"]})')
+                url = self.make_url(environment, interface, f'api/v1/releases/{r["name"]}')
+                self.balrog_request("GET", url, headers=self.headers)
 
     def run_tests_admin(self):
         interface = "admin"
@@ -139,6 +152,7 @@ class AdhocBalrogTester:
         self.version(self.environment, interface)
         if test_level > 1:
             self.public_updates(self.environment, interface)
+            self.public_releases(self.environment, interface)
 
     def run_tests(self):
         self.run_tests_public()
