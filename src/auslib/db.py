@@ -202,12 +202,8 @@ class AUSTransaction(object):
                 e = exc_type(exc_value)
                 e.__traceback__ = exc_traceback
                 raise e
-            # Also need to check for exceptions during commit!
-            try:
-                self.commit()
-            except Exception:
-                self.rollback()
-                raise
+            # self.commit will issue a rollback if it raises
+            self.commit()
         finally:
             # Always make sure the connection is closed, bug 740360
             self.close()
