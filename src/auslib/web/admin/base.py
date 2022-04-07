@@ -89,10 +89,13 @@ def setup_request():
 @app.after_request
 def complete_request(response):
     if hasattr(request, "transaction"):
-        if response.status_code >= 400:
-            request.transaction.rollback()
-        else:
-            request.transaction.commit()
+        try:
+            if response.status_code >= 400:
+                request.transaction.rollback()
+            else:
+                request.transaction.commit()
+        finally:
+            request.transaction.close()
 
     return response
 
