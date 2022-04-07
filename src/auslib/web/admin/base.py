@@ -88,7 +88,7 @@ def setup_request():
 
 @app.after_request
 def complete_request(response):
-    if request.full_path.startswith("/v2"):
+    if hasattr(request, "transaction"):
         if response.status_code >= 400:
             request.transaction.rollback()
         else:
@@ -134,7 +134,7 @@ def unicode(error):
 @app.errorhandler(Exception)
 def ise(error):
     capture_exception(error)
-    log.error("Caught ISE 500 error.")
+    log.exception("Caught ISE 500 error: %r", error)
     log.debug("Request path is: %s", request.path)
     log.debug("Request environment is: %s", request.environ)
     log.debug("Request headers are: %s", request.headers)
