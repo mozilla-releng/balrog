@@ -10,6 +10,10 @@ import requests.auth
 log = logging.getLogger(__name__)
 
 
+# TODO: better --env=local support (I get SSL errors)
+# TODO: some POST/DELETEs? disallow on production??
+
+
 class AdhocBalrogTester:
 
     BASE_URLS = {
@@ -26,9 +30,10 @@ class AdhocBalrogTester:
 
     def __init__(self, environment="staging", test_level=2):
         self.session = requests.Session()
+        # TODO: should we do this...?
         # access_token = _get_auth0_token(auth0_secrets, session=session)
         # session.auth = BearerAuth(access_token)
-        self.headers = {"User-Agent": "adhoc_balrog_tester.py"}
+        self.headers = {"User-Agent": "adhoc-tester.py"}
         self.environment = environment
         self.test_level = test_level
 
@@ -90,10 +95,13 @@ class AdhocBalrogTester:
         url = self.make_url(environment, interface, "api/releases")
         releases = self.balrog_request("GET", url, headers=self.headers)
         log.info(f'  {len(releases["releases"])} api/releases found')
+        url = self.make_url(environment, interface, "api/v2/releases")
+        releases = self.balrog_request("GET", url, headers=self.headers)
+        log.info(f'  {len(releases["releases"])} api/v2/releases found')
         if test_level > 2:
             for r in releases["releases"][-10:]:
                 log.info(f'{r["name"]} ({r["product"]}, {r["data_version"]})')
-                url = self.make_url(environment, interface, f'releases/{r["name"]}')
+                url = self.make_url(environment, interface, f'api/v2/releases/{r["name"]}')
                 self.balrog_request("GET", url, headers=self.headers)
 
     def admin_scheduled_changes(self, environment, interface):
@@ -114,7 +122,7 @@ class AdhocBalrogTester:
         log.info(f'  {resp["count"]} scheduled changes')
 
     def public_updates(self, environment, interface):
-        # TODO many other interesting endpoints
+        # TODO many other interesting and important endpoints
         url = self.make_url(
             environment,
             interface,
