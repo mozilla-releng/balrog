@@ -263,15 +263,17 @@ def get_releases(trans):
         refs = [ref for ref in rule_mappings if ref[0] == row["name"]]
         row["rule_info"] = {str(ref[1]): {"product": ref[2], "channel": ref[3]} for ref in refs}
         row["scheduled_changes"] = []
-        row["required_signoffs"] = serialize_signoff_requirements([obj for v in dbo.releases_json.getPotentialRequiredSignoffs([row]).values() for obj in v])
+        row["required_signoffs"] = serialize_signoff_requirements(
+            [obj for v in dbo.releases_json.getPotentialRequiredSignoffs([row], transaction=trans).values() for obj in v]
+        )
         if row["product"] not in product_required_signoffs:
             product_required_signoffs[row["product"]] = serialize_signoff_requirements(
-                dbo.releases_json.getPotentialRequiredSignoffsForProduct(row["product"])["rs"]
+                dbo.releases_json.getPotentialRequiredSignoffsForProduct(row["product"], transaction=trans)["rs"]
             )
         row["product_required_signoffs"] = product_required_signoffs[row["product"]]
 
     for table in (dbo.releases_json.scheduled_changes, dbo.release_assets.scheduled_changes):
-        for sc in table.select(where={"complete": False}):
+        for sc in table.select(where={"complete": False}, transaction=trans):
             release = [r for r in releases if r["name"] == sc["base_name"]]
             if release:
                 release = release[0]
@@ -296,7 +298,7 @@ def get_releases(trans):
                 else:
                     munged_sc[k.replace("base_", "")] = sc[k]
 
-            for signoff in table.signoffs.select(where={"sc_id": sc["sc_id"]}):
+            for signoff in table.signoffs.select(where={"sc_id": sc["sc_id"]}, transaction=trans):
                 munged_sc["signoffs"][signoff["username"]] = signoff["role"]
 
             release["scheduled_changes"].append(munged_sc)
