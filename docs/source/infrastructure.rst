@@ -38,7 +38,7 @@ Monitoring & Metrics
 
 Metrics from deployment environments are available in `Grafana <https://earthangel-b40313e5.influxcloud.net/d/fRuT9IGZk/balrog?orgId=1&refresh=10s>`_ and `the GCP console <https://console.cloud.google.com/home/dashboard?project=moz-fx-balrog-prod-3fa2&folder=&organizationId=>`_.
 
-We aggregate exceptions from both the Admin & Public apps to `Sentry <https://sentry.prod.mozaws.net/operations/>`_.
+We aggregate exceptions from both the Admin & Public apps to `Sentry <https://sentry.io/organizations/mozilla/projects/>`_.
 
 --------
 ELB Logs
@@ -109,7 +109,7 @@ To get the new code in stage you must create a new Release in Github as follows:
 
 3. `Create a new Release on Github <https://github.com/mozilla-releng/balrog/releases>`_. This create new Docker images tagged with your version, and deploys them to stage. It may take upwards of 30 minutes for the deployment to happen. Deployment notifications will show up in #balrog on Slack.
 
-Once the changes are deployed to stage, you should do some testing to make sure that the new features, fixes, etc. are working properly there. It's a good idea to `watch Sentry for new exceptions <https://sentry.prod.mozaws.net/settings/operations/teams/balrog/members/>`_ that may show up, and Grafana for any notable changes in the shape of the traffic.
+Once the changes are deployed to stage, you should do some testing to make sure that the new features, fixes, etc. are working properly there. It's a good idea to `watch Sentry for new exceptions <https://sentry.io/organizations/mozilla/projects/>`_ that may show up, and Grafana for any notable changes in the shape of the traffic.
 
 **Important Note!** Only two-part version numbers (like shown above) are supported by our deployment pipeline.
 
