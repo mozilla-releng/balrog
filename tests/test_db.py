@@ -179,6 +179,9 @@ class TestAUSTransactionRequiresRealFile(unittest.TestCase, NamedFileDatabaseMix
         self.table.insert().execute(id=2, foo=22)
         self.table.insert().execute(id=3, foo=11)
 
+    def tearDown(self):
+        NamedFileDatabaseMixin.tearDown(self)
+
     def testTransactionNotChangedUntilCommit(self):
         trans = AUSTransaction(self.metadata.bind.connect())
         trans.execute(self.table.update(values=dict(foo=66)).where(self.table.c.id == 1))
@@ -405,6 +408,9 @@ class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileD
     def setUp(self):
         NamedFileDatabaseMixin.setUp(self)
         TestTableMixin.setUp(self)
+
+    def tearDown(self):
+        NamedFileDatabaseMixin.tearDown(self)
 
     def testDeleteWithTransaction(self):
         trans = AUSTransaction(self.metadata.bind.connect())
@@ -5830,6 +5836,9 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
         NamedFileDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
         self.db.metadata.create_all()
+
+    def tearDown(self):
+        NamedFileDatabaseMixin.tearDown(self)
 
     def _is_column_unique(self, col_obj):
         """
