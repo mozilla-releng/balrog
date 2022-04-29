@@ -5310,13 +5310,7 @@ class TestPinnableReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
 
     def testInsertPinnableRelease(self):
-        self.pinnable_releases.insert(
-            changed_by="bob",
-            product="Firefox",
-            version="60.0",
-            channel="beta",
-            mapping="Firefox-60.0-build1"
-        )
+        self.pinnable_releases.insert(changed_by="bob", product="Firefox", version="60.0", channel="beta", mapping="Firefox-60.0-build1")
         x = select([self.pinnable_releases.mapping]).where(self.pinnable_releases.channel == "beta").execute().fetchone()
         self.assertEqual(x["mapping"], "Firefox-60.0-build1")
 
