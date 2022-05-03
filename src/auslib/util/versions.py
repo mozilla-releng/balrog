@@ -1,5 +1,5 @@
 import re
-from distutils.version import LooseVersion, StrictVersion
+from distutils.version import LooseVersion, StrictVersion, Version
 
 from auslib.errors import BadDataError
 
@@ -135,3 +135,67 @@ def get_version_class(product):
         return LooseVersion
 
     return MozillaVersion
+
+
+class PinVersion(Version):
+    """A version class that supports application update pins. These are used for
+    pinning an install to a particular version (see Bug 1529943). Update pins
+    are formatted like 'X.' or 'X.Y.', where X is the major version and Y is the
+    minor version.
+
+    Note that unlike the other version types in this file, this one does not
+    derive from StrictVersion. This is because this is not a strict version and
+    it should not be treated as such. '100.', for example, is equal to '100.0.0'
+    and '100.99.99'. It is less than '101.0.0' and greater than '99.99.99'.
+    Deriving from StrictVersion would allow StrictVersion's operators to operate
+    on PinVersions, which would not function correctly.
+    Despite these differences, the PinVersion interface is identical to that of
+    StrictVersion and PinVersions can be compared to StrictVersions because
+    PinVersion provides the necessary operators.
+
+    This class is very similar to GlobVersion, but needs to be separate.
+    GlobVersion comparisons must be made via
+    auslib.util.comparison.version_compare, which only supports equality
+    checking for GlobVersion."""
+
+    version_re = re.compile(r"^(\d+) \. ((\d+) \.)?$", re.VERBOSE)
+
+    def parse(self, vstring):
+        match = self.version_re.match(vstring)
+        if not match:
+            raise ValueError(f"Invalid pin version '{vstring}'")
+
+        version = list(match.group(1, 3))
+        if version[-1] is None:
+            version.pop()
+        self.version = tuple(map(int, version))
+
+    def __str__(self):
+        vstring = ""
+        for part in self.version:
+            vstring += f"{part}."
+        return vstring
+
+    def _cmp(self, other):
+        if not isinstance(other, StrictVersion):
+            return NotImplemented
+        if isinstance(other, GlobVersion):
+            # This would require some extra handling. Since this type of
+            # comparison isn't currently needed, explicitly do not handle it.
+            return NotImplemented
+
+        if len(other.version) < len(self.version):
+            # StrictVersions should have a version tuple that is 3 elements
+            # long, whereas PinVersions should have a version tuple 1 or 2
+            # elements long. It's conceivable that we could subclass
+            # StrictVersion in a way that breaks this assumption, in which case
+            # we would need to determine what it means to compare, for example,
+            # PinVersion("100.0.") and StrictVersion("100").
+            raise ValueError("len(StrictVersion.version) is expected to be 3.")
+
+        other_trimmed_version = other.version[: len(self.version)]
+        if self.version < other_trimmed_version:
+            return -1
+        elif self.version > other_trimmed_version:
+            return 1
+        return 0
