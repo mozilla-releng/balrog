@@ -3,8 +3,10 @@ import logging
 from random import randint
 
 from auslib.blobs.base import createBlob
+from auslib.errors import BadDataError
 from auslib.global_state import cache, dbo
 from auslib.services import releases
+from auslib.util.versions import MozillaVersion, PinVersion
 
 try:
     from urlparse import urlparse
@@ -131,16 +133,62 @@ class AUS:
         # 3) Incoming release is older than the one in the mapping, defined as one of:
         #    * version decreases
         #    * version is the same and buildID doesn't increase
-        release = releases.get_release(rule["mapping"], transaction, include_sc=False)
-        blob = None
-        if release:
-            blob = createBlob(release["blob"])
-        # TODO: remove me when old releases table dies
-        else:
-            release = dbo.releases.getReleases(name=rule["mapping"], limit=1, transaction=transaction)[0]
-            blob = release["data"]
+        def get_blob(mapping):
+            release = releases.get_release(mapping, transaction, include_sc=False)
+            blob = None
+            if release:
+                blob = createBlob(release["blob"])
+            # TODO: remove me when old releases table dies
+            else:
+                release = dbo.releases.getReleases(name=mapping, limit=1, transaction=transaction)[0]
+                blob = release["data"]
+            return blob
+
+        mapping = rule["mapping"]
+        blob = get_blob(mapping)
         if not blob or not blob.shouldServeUpdate(updateQuery):
             return None, None, eval_metadata
 
-        self.log.debug("Returning release %s", rule["mapping"])
+        version_pin = updateQuery.get("pin")
+        if version_pin is not None:
+            try:
+                version_pin = PinVersion(version_pin)
+            except ValueError:
+                raise BadDataError(f"Version Pin String '{version_pin}' is invalid.")
+            blob_version = blob.getApplicationVersion(updateQuery["buildTarget"], updateQuery["locale"])
+            if blob_version:
+                blob_version = MozillaVersion(blob_version)
+                # We should only pay attention to the pin version if we would otherwise return
+                # something newer. If we unconditionally returned the pinned version, we would do
+                # incorrect things like skipping watersheds.
+                if blob_version > version_pin:
+                    pin_mapping = dbo.pinnable_releases.getPinMapping(updateQuery["product"], getFallbackChannel(updateQuery["channel"]), str(version_pin))
+                    # Note that we fall back to serving the original update if the pin is not found
+                    # in the pin table, even if the version that we will serve is past the pinned
+                    # version. This is because, if there is something wrong with the update pin,
+                    # we would rather default to keeping the user up-to-date.
+                    # The alternative would mean that setting invalid pin would be a subtle problem
+                    # that would potentially be difficult to recognize. For example:
+                    #  - A sysadmin installs Firefox ESR 120.0 and sets the pin to '120.15.'.
+                    #  - Every time that a new minor version of 120 is available, the sysadmin
+                    #    updates to it promptly.
+                    #  - Eventually, the sysadmin updates to 120.14, but 120.15 is never released.
+                    #    The next version is ESR 134.0.
+                    #  - The relevant update rule now points to ESR 134, but it isn't returned as
+                    #    an available update so, as far as the sysadmin knows, the pin is working
+                    #    as expected.
+                    #  - A loaner laptop is given out that still has ESR 120.0 installed.
+                    #  - When the loaner laptop asks for updates, Balrog sees that the newest
+                    #    version is ESR 134.0, but that would be newer than the '120.15' pin,
+                    #    so no update is returned.
+                    #  - The loaner laptop never updates and stays at ESR 120.0.
+                    # This situation hides the problem from the sysadmin and leaves some
+                    # installations vulnerable.
+                    if pin_mapping is not None:
+                        mapping = pin_mapping
+                        blob = get_blob(mapping)
+                        if not blob or not blob.shouldServeUpdate(updateQuery):
+                            return None, None, eval_metadata
+
+        self.log.debug("Returning release %s", mapping)
         return blob, rule["update_type"], eval_metadata

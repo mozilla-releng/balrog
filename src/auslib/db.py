@@ -2975,6 +2975,12 @@ class PinnableReleasesTable(AUSTable):
 
         super(PinnableReleasesTable, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
+    def getPinMapping(self, product, channel, version, transaction=None):
+        rows = self.select(where=[self.product == product, self.channel == channel, self.version == version], columns=[self.mapping], transaction=transaction)
+        if len(rows) == 0:
+            return None
+        return rows[0]["mapping"]
+
 
 class UTF8PrettyPrinter(pprint.PrettyPrinter):
     """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
