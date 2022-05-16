@@ -8,7 +8,7 @@ flask_compress
 flask_wtf
 jsonschema
 python-jose
-repoze.lru
+cachetools
 requests-hawk
 sentry-sdk[flask]
 spec-synthase

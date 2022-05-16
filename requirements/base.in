@@ -17,7 +17,7 @@ python-jose
 sentry-sdk[flask]
 requests
 requests-hawk
-repoze.lru
+cachetools
 spec-synthase
 swagger-spec-validator
 setuptools

@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from repoze.lru import ExpiringLRUCache
+from cachetools import TTLCache
 
 uncached_sentinel = object()
 
@@ -38,7 +38,7 @@ class MaybeCacher(object):
     def make_cache(self, name, maxsize, timeout):
         if name in self.caches:
             raise Exception()
-        self.caches[name] = ExpiringLRUCache(maxsize, timeout)
+        self.caches[name] = TTLCache(maxsize=maxsize, ttl=timeout)
 
     def reset(self):
         self.caches.clear()
@@ -77,7 +77,7 @@ class MaybeCacher(object):
 
         if self.make_copies:
             value = deepcopy(value)
-        return self.caches[name].put(key, value)
+        self.caches[name][key] = value
 
     def clear(self, name=None):
         if name and name not in self.caches:
@@ -93,4 +93,4 @@ class MaybeCacher(object):
         if name not in self.caches:
             return
 
-        self.caches[name].invalidate(key)
+        del self.caches[name][key]

@@ -1,8 +1,7 @@
 import jose.jwt
 import requests
 from auth0.v3.authentication import Users as auth0_Users
-from repoze.lru import lru_cache
-
+from cachetools import cached, TTLCache, LRUCache
 
 class AuthError(Exception):
     def __init__(self, error, status_code):
@@ -40,7 +39,7 @@ def get_access_token(request):
 
 # Cache this for 1 hour. Without this, we'd need to restart the admin app
 # to pick up changes to the keys.
-@lru_cache(2048, timeout=3600)
+@cached(cache=TTLCache(maxsize=2048, ttl=3600))
 def get_jwks(auth_domain):
     jwks_url = "https://{}/.well-known/jwks.json".format(auth_domain)
     req = requests.get(jwks_url)
@@ -48,7 +47,7 @@ def get_jwks(auth_domain):
     return req.json()
 
 
-@lru_cache(2048)
+@cached(cache=LRUCache(maxsize=2048))
 def get_additional_userinfo(auth_domain, access_token):
     return auth0_Users(auth_domain).userinfo(access_token)
 
