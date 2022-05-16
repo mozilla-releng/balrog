@@ -3,6 +3,7 @@ import requests
 from auth0.v3.authentication import Users as auth0_Users
 from cachetools import cached, TTLCache, LRUCache
 
+
 class AuthError(Exception):
     def __init__(self, error, status_code):
         self.error = error
