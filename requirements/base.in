@@ -24,4 +24,4 @@ setuptools
 sqlalchemy
 sqlalchemy-migrate
 uwsgi
-pyjwt==2.3.0
+pyjwt==2.4.0
