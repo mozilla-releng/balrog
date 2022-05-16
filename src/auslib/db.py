@@ -2662,19 +2662,14 @@ class Permissions(AUSTable):
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=HistoryTable)
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        potential_required_signoffs = {"rs": []}
-        for row in affected_rows:
-            if not row:
-                continue
-            # XXX: This kindof sucks because it means that we don't have great control
-            # over the signoffs required permissions that don't specify products, or
-            # don't support them.
-            if "products" in self.allPermissions[row["permission"]] and row.get("options") and row["options"].get("products"):
-                for product in row["options"]["products"]:
-                    potential_required_signoffs["rs"].extend(self.db.permissionsRequiredSignoffs.select(where={"product": product}, transaction=transaction))
-            else:
-                potential_required_signoffs["rs"].extend(self.db.permissionsRequiredSignoffs.select(transaction=transaction))
-        return potential_required_signoffs
+        return {
+            "rs": [
+                {
+                    "role": "releng",
+                    "signoffs_required": 2,
+                }
+            ]
+        }
 
     def assertPermissionExists(self, permission):
         if permission not in self.allPermissions.keys():
