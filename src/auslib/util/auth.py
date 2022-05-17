@@ -1,7 +1,7 @@
 import jose.jwt
 import requests
 from auth0.v3.authentication import Users as auth0_Users
-from cachetools import LRUCache, TTLCache, cached
+from cachetools.func import lru_cache, ttl_cache
 
 
 class AuthError(Exception):
@@ -40,7 +40,7 @@ def get_access_token(request):
 
 # Cache this for 1 hour. Without this, we'd need to restart the admin app
 # to pick up changes to the keys.
-@cached(cache=TTLCache(maxsize=2048, ttl=3600))
+@ttl_cache(maxsize=2048, ttl=3600)
 def get_jwks(auth_domain):
     jwks_url = "https://{}/.well-known/jwks.json".format(auth_domain)
     req = requests.get(jwks_url)
@@ -48,7 +48,7 @@ def get_jwks(auth_domain):
     return req.json()
 
 
-@cached(cache=LRUCache(maxsize=2048))
+@lru_cache(maxsize=2048)
 def get_additional_userinfo(auth_domain, access_token):
     return auth0_Users(auth_domain).userinfo(access_token)
 

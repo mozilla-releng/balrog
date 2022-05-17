@@ -1,4 +1,5 @@
 from copy import deepcopy
+from threading import RLock
 
 from cachetools import TTLCache
 
@@ -24,6 +25,7 @@ class MaybeCacher(object):
     def __init__(self):
         self.caches = {}
         self._make_copies = False
+        self.lock = RLock()
 
     @property
     def make_copies(self):
@@ -56,7 +58,8 @@ class MaybeCacher(object):
                 return None
 
         value = None
-        cached_value = self.caches[name].get(key, uncached_sentinel)
+        with self.lock:
+            cached_value = self.caches[name].get(key, uncached_sentinel)
         # If we got something other than a sentinel value, the key was in the cache, and we should return it
         if cached_value != uncached_sentinel:
             value = cached_value
@@ -77,7 +80,8 @@ class MaybeCacher(object):
 
         if self.make_copies:
             value = deepcopy(value)
-        self.caches[name][key] = value
+        with self.lock:
+            self.caches[name][key] = value
 
     def clear(self, name=None):
         if name and name not in self.caches:
@@ -87,10 +91,11 @@ class MaybeCacher(object):
             for c in self.caches.values():
                 c.clear()
         else:
-            self.caches[name].clear()
+            with self.lock:
+                self.caches[name].clear()
 
     def invalidate(self, name, key):
         if name not in self.caches:
             return
-
-        del self.caches[name][key]
+        with self.lock:
+            del self.caches[name][key]
