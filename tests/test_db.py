@@ -5309,10 +5309,25 @@ class TestPinnableReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
 
-    def testInsertPinnableRelease(self):
-        self.pinnable_releases.insert(changed_by="bob", product="Firefox", version="60.0", channel="beta", mapping="Firefox-60.0-build1")
-        x = select([self.pinnable_releases.mapping]).where(self.pinnable_releases.channel == "beta").execute().fetchone()
-        self.assertEqual(x["mapping"], "Firefox-60.0-build1")
+    def testInsertUpdateAndDeletePinnableRelease(self):
+        product = "Firefox"
+        version = "60."
+        channel = "beta"
+        row = self.pinnable_releases.insert(changed_by="bob", product=product, version=version, channel=channel, mapping="Firefox-60.0-build1")
+        self.assertEqual(self.pinnable_releases.getPinMapping(product=product, version=version, channel=channel), "Firefox-60.0-build1")
+        row = self.pinnable_releases.update(
+            where=[self.pinnable_releases.product == product, self.pinnable_releases.version == version, self.pinnable_releases.channel == channel],
+            what={"mapping": "Firefox-60.0-build2"},
+            changed_by="bob",
+            old_data_version=row["data_version"],
+        )
+        self.assertEqual(self.pinnable_releases.getPinMapping(product=product, version=version, channel=channel), "Firefox-60.0-build2")
+        row = self.pinnable_releases.delete(
+            changed_by="bob",
+            where=[self.pinnable_releases.product == product, self.pinnable_releases.version == version, self.pinnable_releases.channel == channel],
+            old_data_version=row["data_version"],
+        )
+        self.assertEqual(self.pinnable_releases.getPinMapping(product=product, version=version, channel=channel), None)
 
 
 @pytest.mark.usefixtures("current_db_schema")

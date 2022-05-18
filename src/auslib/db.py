@@ -2968,6 +2968,22 @@ class PinnableReleasesTable(AUSTable):
         if not dryrun:
             return ret.last_inserted_params()
 
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "pinnable_release", "modify", product, transaction):
+            raise PermissionDeniedError("{} is not allowed to modify pinnable releases for product {}".format(changed_by, product))
+
+        ret = super(PinnableReleasesTable, self).update(
+            where=where,
+            what=what,
+            changed_by=changed_by,
+            old_data_version=old_data_version,
+            transaction=transaction,
+            dryrun=dryrun,
+        )
+        if not dryrun:
+            return ret.last_updated_params()
+
     def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
         product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
         if not self.db.hasPermission(changed_by, "pinnable_release", "delete", product, transaction):
