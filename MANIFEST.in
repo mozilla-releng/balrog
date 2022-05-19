@@ -30,6 +30,7 @@ exclude version.json
 recursive-exclude agent *
 recursive-exclude client *
 recursive-exclude docs *
+recursive-exclude maintenance *
 recursive-exclude requirements *
 recursive-exclude scripts *
 recursive-exclude tests *
