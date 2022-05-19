@@ -2020,3 +2020,76 @@ def test_enact_changes_one_fails_all_revert(api):
     for blob in locale_blobs:
         if blob["path"].endswith("en-US"):
             assert blob.data["buildID"] != "123456689"
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_set_pin_succeeds(api):
+    product = "Firefox"
+    channel = "release"
+    version = "66."
+    ret = api.put("v2/releases/Firefox-56.0-build1/pinnable", json={"product": product, "channel": channel, "version": version})
+    assert ret.status_code == 200
+
+    mapping = dbo.pinnable_releases.getPinMapping(product=product, channel=channel, version=version)
+    assert mapping == "Firefox-56.0-build1"
+
+    ret = api.put("v2/releases/Firefox-66.0-build1/pinnable", json={"product": product, "channel": channel, "version": version})
+    assert ret.status_code == 200
+
+    mapping = dbo.pinnable_releases.getPinMapping(product=product, channel=channel, version=version)
+    assert mapping == "Firefox-66.0-build1"
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_schedule_pin_insert(api):
+    product = "Firefox"
+    channel = "release"
+    version = "66."
+    ret = api.put("v2/releases/Firefox-56.0-build1/pinnable", json={"product": product, "channel": channel, "version": version, "when": 1681639932000})
+    assert ret.status_code == 200
+    assert ret.json["."]["change_type"] == "insert"
+
+    base_sc = (
+        dbo.pinnable_releases.scheduled_changes.t.select().where(dbo.pinnable_releases.scheduled_changes.sc_id == ret.json["."]["sc_id"]).execute().fetchone()
+    )
+    base_sc_cond = (
+        dbo.pinnable_releases.scheduled_changes.conditions.t.select()
+        .where(dbo.pinnable_releases.scheduled_changes.conditions.sc_id == ret.json["."]["sc_id"])
+        .execute()
+        .fetchone()
+    )
+    assert base_sc["base_product"] == product
+    assert base_sc["base_channel"] == channel
+    assert base_sc["base_version"] == version
+    assert base_sc["base_mapping"] == "Firefox-56.0-build1"
+    assert base_sc["change_type"] == "insert"
+    assert base_sc_cond["when"] == 1681639932000
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_schedule_pin_update(api):
+    product = "Firefox"
+    channel = "release"
+    version = "66."
+    ret = api.put("v2/releases/Firefox-56.0-build1/pinnable", json={"product": product, "channel": channel, "version": version})
+    assert ret.status_code == 200
+
+    ret = api.put("v2/releases/Firefox-66.0-build1/pinnable", json={"product": product, "channel": channel, "version": version, "when": 1681639932000})
+    assert ret.status_code == 200
+    assert ret.json["."]["change_type"] == "update"
+
+    base_sc = (
+        dbo.pinnable_releases.scheduled_changes.t.select().where(dbo.pinnable_releases.scheduled_changes.sc_id == ret.json["."]["sc_id"]).execute().fetchone()
+    )
+    base_sc_cond = (
+        dbo.pinnable_releases.scheduled_changes.conditions.t.select()
+        .where(dbo.pinnable_releases.scheduled_changes.conditions.sc_id == ret.json["."]["sc_id"])
+        .execute()
+        .fetchone()
+    )
+    assert base_sc["base_product"] == product
+    assert base_sc["base_channel"] == channel
+    assert base_sc["base_version"] == version
+    assert base_sc["base_mapping"] == "Firefox-66.0-build1"
+    assert base_sc["change_type"] == "update"
+    assert base_sc_cond["when"] == 1681639932000

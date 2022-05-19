@@ -2957,6 +2957,10 @@ class PinnableReleasesTable(AUSTable):
         )
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=HistoryTable)
 
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+        # Implementing this is required to schedule changes to this table
+        return None
+
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         # XXX check the release exists?
         # XXX signoffs?
@@ -2990,6 +2994,16 @@ class PinnableReleasesTable(AUSTable):
             raise PermissionDeniedError("{} is not allowed to delete pinnable releases for product {}".format(changed_by, product))
 
         super(PinnableReleasesTable, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
+
+    def getPinRow(self, product, channel, version, transaction):
+        rows = self.select(
+            where=[self.product == product, self.channel == channel, self.version == version],
+            columns=[self.mapping, self.data_version],
+            transaction=transaction,
+        )
+        if len(rows) == 0:
+            return None
+        return rows[0]
 
     def getPinMapping(self, product, channel, version, transaction=None):
         rows = self.select(where=[self.product == product, self.channel == channel, self.version == version], columns=[self.mapping], transaction=transaction)

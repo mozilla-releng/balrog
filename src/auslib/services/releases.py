@@ -865,17 +865,43 @@ def enact_scheduled_changes(name, username, trans):
 
 
 def set_pinnable(name, product, channel, version, when, username, trans):
-    if when:
-        return dbo.pinnable_releases.insert(username, product=product, channel=channel, version=version, mapping=name, transaction=trans)
+    old_row = dbo.pinnable_releases.getPinRow(product=product, channel=channel, version=version, transaction=trans)
 
-    sc_id = dbo.pinnable_releases.scheduled_changes.insert(
-        mapping=name,
-        product=product,
-        channel=channel,
-        version=version,
-        when=when,
-        change_type="insert",
-        changed_by=username,
-        transaction=trans,
-    )
-    return sc_id
+    if not when:
+        if old_row is None:
+            row = dbo.pinnable_releases.insert(changed_by=username, product=product, channel=channel, version=version, mapping=name, transaction=trans)
+        else:
+            row = dbo.pinnable_releases.update(
+                where=[dbo.pinnable_releases.product == product, dbo.pinnable_releases.channel == channel, dbo.pinnable_releases.version == version],
+                what={"mapping": name},
+                changed_by=username,
+                old_data_version=old_row["data_version"],
+                transaction=trans,
+            )
+        return {".": row["data_version"]}
+
+    if old_row is None:
+        sc_id = dbo.pinnable_releases.scheduled_changes.insert(
+            mapping=name,
+            product=product,
+            channel=channel,
+            version=version,
+            when=when,
+            change_type="insert",
+            changed_by=username,
+            transaction=trans,
+        )
+        return {".": {"sc_id": sc_id, "change_type": "insert", "data_version": 1, "signoffs": {}, "when": when}}
+    else:
+        sc_id = dbo.pinnable_releases.scheduled_changes.insert(
+            mapping=name,
+            product=product,
+            channel=channel,
+            version=version,
+            when=when,
+            change_type="update",
+            changed_by=username,
+            transaction=trans,
+            data_version=old_row["data_version"],
+        )
+        return {".": {"sc_id": sc_id, "change_type": "update", "data_version": old_row["data_version"] + 1, "signoffs": {}, "when": when}}
