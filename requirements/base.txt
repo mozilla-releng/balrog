@@ -83,7 +83,7 @@ aiohttp==3.8.1 \
     --hash=sha256:fa0ffcace9b3aa34d205d8130f7873fcfefcb6a4dd3dd705b0dab69af6712642 \
     --hash=sha256:fc5471e1a54de15ef71c1bc6ebe80d4dc681ea600e68bfd1cbce40427f0b7578
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   gcloud-aio-auth
 aiosignal==1.2.0 \
     --hash=sha256:26e62109036cd181df6e6ad646f91f0dcfd05fe16d0cb924138ff2ab75d64e3a \
@@ -92,7 +92,7 @@ aiosignal==1.2.0 \
 arrow==1.2.2 \
     --hash=sha256:05caf1fd3d9a11a1135b2b6f09887421153b94558e5ef4d090b567b47173ac2b \
     --hash=sha256:d622c46ca681b5b3e3574fcb60a04e5cc81b9625112d5fb2b44220c36c892177
-    # via -r requirements/base.in
+    # via -r base.in
 async-timeout==4.0.2 \
     --hash=sha256:2163e1640ddb52b7a8c80d0a67a08587e5d245cc9c553a74a847056bc2976b15 \
     --hash=sha256:8ca1e4fcf50d07413d66d1a5e416e42cfdf5851c981d679a09851a6853383b3c
@@ -103,10 +103,10 @@ attrs==21.4.0 \
     # via
     #   aiohttp
     #   jsonschema
-auth0-python==3.21.0 \
-    --hash=sha256:341068f96b2ab1cef0974c721f4b681f9b1f58bf2d5e6897771a5dde8a1ee1a4 \
-    --hash=sha256:c5cf527bd4c6c6121ba47e6aab38a349c4351c4f308276ab9e5ea71a13471d6f
-    # via -r requirements/base.in
+auth0-python==3.23.0 \
+    --hash=sha256:8a1950fc488afae15982751bd4bf27f22da826795b571297c0c92f48ca9f0a31 \
+    --hash=sha256:dc7e5ccbc1ee36138656324ec9a1a530c6890177e242d95b25d3e6919dce362b
+    # via -r base.in
 backoff==1.11.1 \
     --hash=sha256:61928f8fa48d52e4faa81875eecf308eccfb1016b018bb6bd21e05b5d90a96c5 \
     --hash=sha256:ccb962a2378418c667b3c979b504fdeb7d9e0d29c0579e3b13b86467177728cb
@@ -263,7 +263,7 @@ clickclick==20.10.2 \
 connexion==2.12.0 \
     --hash=sha256:2d163976fbc8766038d71f4232ace07826be7dd0a8fe7a539ce5fc8a80f1ab35 \
     --hash=sha256:c08b530418a1c448d34cd142713ddd1b245e7694f45cd80533fe8538b64aa7eb
-    # via -r requirements/base.in
+    # via -r base.in
 cryptography==36.0.1 \
     --hash=sha256:0a817b961b46894c5ca8a66b599c745b9a3d9f822725221f0e0fe49dc043a3a3 \
     --hash=sha256:2d87cdcb378d3cfed944dac30596da1968f88fb96d7fc34fdae30a99054b2e31 \
@@ -295,18 +295,18 @@ decorator==5.1.1 \
 deepmerge==1.0.1 \
     --hash=sha256:4b44779ed3d2fb791bb181fc2683423496fea428abb7af37feb23286de7f0a1a \
     --hash=sha256:f851fff957697cb8f4580b465acf5c2d35841695306ff0abb9cb9c273ad76112
-    # via -r requirements/base.in
+    # via -r base.in
 ecdsa==0.17.0 \
     --hash=sha256:5cf31d5b33743abe0dfc28999036c849a69d548f994b535e527ee3cb7f3ef676 \
     --hash=sha256:b9f500bb439e4153d0330610f5d26baaf18d17b8ced1bc54410d189385ea68aa
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   python-jose
 flask==2.0.3 \
     --hash=sha256:59da8a3170004800a2837844bfa84d49b022550616070f7cb1a659682b2e7c9f \
     --hash=sha256:e1120c228ca2f553b470df4a5fa927ab66258467526069981b3eb0a91902687d
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   connexion
     #   flask-compress
     #   flask-wtf
@@ -314,11 +314,11 @@ flask==2.0.3 \
 flask-compress==1.11 \
     --hash=sha256:7ccc4102104a63e6207f39eb307f99aebbfbaf4e70992d727440cff29119a0a0 \
     --hash=sha256:f569f32c446d6b25ca8e347d5003a0531811ef732678005b0036fc1c9eb1c21c
-    # via -r requirements/base.in
+    # via -r base.in
 flask-wtf==1.0.0 \
     --hash=sha256:01feccfc395405cea48a3f36c23f0d766e2cc6fd2a5a065ad50ad3e5827ec797 \
     --hash=sha256:872fbb17b5888bfc734edbdcf45bc08fb365ca39f69d25dc752465a455517b28
-    # via -r requirements/base.in
+    # via -r base.in
 frozenlist==1.3.0 \
     --hash=sha256:006d3595e7d4108a12025ddf415ae0f6c9e736e726a5db0183326fd191b14c5e \
     --hash=sha256:01a73627448b1f2145bddb6e6c2259988bb8aee0fb361776ff8604b99616cd08 \
@@ -392,19 +392,19 @@ gcloud-aio-auth==3.8.0 \
 gcloud-aio-storage==6.3.0 \
     --hash=sha256:9516b720b3f96e70fbe561bcc82f43a64bb2afc739072f63d7959f1a0e1f340f \
     --hash=sha256:c511c3e70ab3d460f9f2c334c641e117a21098c326859a796e09db2b45969992
-    # via -r requirements/base.in
+    # via -r base.in
 google-api-core==2.7.1 \
     --hash=sha256:6be1fc59e2a7ba9f66808bbc22f976f81e4c3e7ab20fa0620ce42686288787d0 \
     --hash=sha256:b0fa577e512f0c8e063386b974718b8614586a798c5894ed34bedf256d9dae24
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   google-cloud-core
     #   google-cloud-storage
 google-auth==2.6.0 \
     --hash=sha256:218ca03d7744ca0c8b6697b6083334be7df49b7bf76a69d555962fd1a7657b5f \
     --hash=sha256:ad160fc1ea8f19e331a16a14a79f3d643d813a69534ba9611d2c80dc10439dad
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   google-api-core
     #   google-cloud-core
     #   google-cloud-storage
@@ -415,7 +415,7 @@ google-cloud-core==2.2.3 \
 google-cloud-storage==2.2.0 \
     --hash=sha256:5f78346bc45b37c27cf9f6f11241f22d8e03c576a24e9fce09f0304e6ef40d64 \
     --hash=sha256:d35996801135d51db49bb8f7a7e29cedcc25aa8b435eed0c4c0ef2f9ee56d1d9
-    # via -r requirements/base.in
+    # via -r base.in
 google-crc32c==1.3.0 \
     --hash=sha256:04e7c220798a72fd0f08242bc8d7a05986b2a08a0573396187fd32c1dcdd58b3 \
     --hash=sha256:05340b60bf05b574159e9bd940152a47d38af3fb43803ffe71f11d704b7696a6 \
@@ -551,7 +551,7 @@ jsonschema==4.4.0 \
     --hash=sha256:636694eb41b3535ed608fe04129f26542b59ed99808b4f688aa32dcf55317a83 \
     --hash=sha256:77281a1f71684953ee8b3d488371b162419767973789272434bbc3f29d9c8823
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   connexion
     #   swagger-spec-validator
 markupsafe==2.1.0 \
@@ -671,7 +671,7 @@ mysqlclient==2.1.0 \
     --hash=sha256:973235686f1b720536d417bf0a0d39b4ab3d5086b2b6ad5e6752393428c02b12 \
     --hash=sha256:b62d23c11c516cedb887377c8807628c1c65d57593b57853186a6ee18b0c6a5b \
     --hash=sha256:e6279263d5a9feca3e0edbc2b2a52c057375bf301d47da2089c075ff76331d14
-    # via -r requirements/base.in
+    # via -r base.in
 pbr==5.8.1 \
     --hash=sha256:27108648368782d07bbf1cb468ad2e2eeef29086affd14087a6d04b7de8af4ec \
     --hash=sha256:66bc5a34912f408bb3925bf21231cb6f59206267b7f63f3503ef865c1a292e25
@@ -728,7 +728,7 @@ pyjwt[crypto]==2.4.0 \
     --hash=sha256:72d1d253f32dbd4f5c88eaf1fdc62f3a19f676ccbadb9dbc5d07e951b2b26daf \
     --hash=sha256:d42908208c699b3b973cbeb01a969ba6a96c821eefb1c5bfe4c390c01d67abba
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   auth0-python
     #   gcloud-aio-auth
 pyrsistent==0.18.1 \
@@ -761,7 +761,7 @@ python-dateutil==2.8.2 \
 python-jose==3.3.0 \
     --hash=sha256:55779b5e6ad599c6336191246e95eb2293a9ddebd555f796a65f838f07e5d78a \
     --hash=sha256:9b1376b023f8b298536eedd47ae1089bcdb848f1535ab30555cd92002d78923a
-    # via -r requirements/base.in
+    # via -r base.in
 pyyaml==5.4.1 \
     --hash=sha256:08682f6b72c722394747bddaf0aa62277e02557c0fd1c42cb853016a38f8dedf \
     --hash=sha256:0f5f5786c0e09baddcd8b4b45f20a7b5d61a7e7e99846e3c799b05c7c53fa696 \
@@ -797,15 +797,15 @@ pyyaml==5.4.1 \
     #   connexion
     #   spec-synthase
     #   swagger-spec-validator
-repoze.lru==0.7 \
+repoze-lru==0.7 \
     --hash=sha256:0429a75e19380e4ed50c0694e26ac8819b4ea7851ee1fc7583c8572db80aff77 \
     --hash=sha256:f77bf0e1096ea445beadd35f3479c5cff2aa1efe604a133e67150bc8630a62ea
-    # via -r requirements/base.in
+    # via -r base.in
 requests==2.27.1 \
     --hash=sha256:68d7c56fd5a8999887728ef304a6d12edc7be74f1cfa47714fc8b414525c9a61 \
     --hash=sha256:f22fa1e554c9ddfd16e6e41ac79759e17be9e492b3587efa038054674760e72d
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   auth0-python
     #   connexion
     #   google-api-core
@@ -814,7 +814,7 @@ requests==2.27.1 \
 requests-hawk==1.1.1 \
     --hash=sha256:4a5c7135ee2f5f8be70054a8c3874c918dd4dcd355d675f2de8653aab6f94e39 \
     --hash=sha256:4c74bd31b581f6d2b36d575bb537b1f29469509f560f5050339a48195d48929b
-    # via -r requirements/base.in
+    # via -r base.in
 rsa==4.8 \
     --hash=sha256:5c6bd9dc7a543b7fe4304a631f8a8a3b674e2bbfc49c2ae96200cdbe55df6b17 \
     --hash=sha256:95c5d300c4e879ee69708c428ba566c59478fd653cc3a22243eeb8ed846950bb
@@ -825,7 +825,7 @@ rsa==4.8 \
 sentry-sdk[flask]==1.5.7 \
     --hash=sha256:411a8495bd18cf13038e5749e4710beb4efa53da6351f67b4c2f307c2d9b6d49 \
     --hash=sha256:aa52da941c56b5a76fd838f8e9e92a850bf893a9eb1e33ffce6c21431d07ee30
-    # via -r requirements/base.in
+    # via -r base.in
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
     --hash=sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254
@@ -840,7 +840,7 @@ six==1.16.0 \
 spec-synthase==0.1.11 \
     --hash=sha256:62396a95541cec2f792fe4f1f10e610e3dbdcdee843ee8f65dc243e8bb387c86 \
     --hash=sha256:9507c2f83a1c0a6fb7e18c0fa4eb9cc7a3d874e964b7c55dd2b531e5c70598bf
-    # via -r requirements/base.in
+    # via -r base.in
 sqlalchemy==1.4.32 \
     --hash=sha256:04164e0063feb7aedd9d073db0fd496edb244be40d46ea1f0d8990815e4b8c34 \
     --hash=sha256:159c2f69dd6efd28e894f261ffca1100690f28210f34cfcd70b895e0ea7a64f3 \
@@ -878,12 +878,12 @@ sqlalchemy==1.4.32 \
     --hash=sha256:f7e4a3c0c3c596296b37f8427c467c8e4336dc8d50f8ed38042e8ba79507b2c9 \
     --hash=sha256:fff677fa4522dafb5a5e2c0cf909790d5d367326321aeabc0dffc9047cb235bd
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   sqlalchemy-migrate
 sqlalchemy-migrate==0.13.0 \
     --hash=sha256:0bc02e292a040ade5e35a01d3ea744119e1309cdddb704fdb99bac13236614f8 \
     --hash=sha256:e5d2348db19a5062132d93e3b4d9e7644af552fffbec4c78cc5358f848d2f6c1
-    # via -r requirements/base.in
+    # via -r base.in
 sqlparse==0.4.2 \
     --hash=sha256:0c00730c74263a94e5a9919ade150dfc3b19c574389985446148402998287dae \
     --hash=sha256:48719e356bb8b42991bdbb1e8b83223757b93789c00910a616a071910ca4a64d
@@ -892,7 +892,7 @@ swagger-spec-validator==2.7.4 \
     --hash=sha256:2aee5e1fc0503be9f8299378b10c92169572781573c6de3315e831fd0559ba73 \
     --hash=sha256:4e373a4db5262e7257fde17d84c5c0178327b8057985ab1be63f580bfa009855
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   spec-synthase
 tempita==0.5.2 \
     --hash=sha256:cacecf0baa674d356641f1d406b8bff1d756d739c46b869a54de515d08e6fc9c \
@@ -906,7 +906,7 @@ urllib3==1.26.8 \
     #   sentry-sdk
 uwsgi==2.0.20 \
     --hash=sha256:88ab9867d8973d8ae84719cf233b7dafc54326fcaec89683c3f9f77c002cdff9
-    # via -r requirements/base.in
+    # via -r base.in
 werkzeug==2.0.3 \
     --hash=sha256:1421ebfc7648a39a5c58c601b154165d05cf47a3cd0ccb70857cbdacf6c8f2b8 \
     --hash=sha256:b863f8ff057c522164b6067c9e28b041161b4be5ba4d0daceeaa50a163822d3c
