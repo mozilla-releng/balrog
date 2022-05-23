@@ -2963,7 +2963,6 @@ class PinnableReleasesTable(AUSTable):
 
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         # XXX check the release exists?
-        # XXX signoffs?
 
         if not self.db.hasPermission(changed_by, "pinnable_release", "create", columns.get("product"), transaction):
             raise PermissionDeniedError("{} is not allowed to create pinnable releases for product {}".format(changed_by, columns.get("product")))

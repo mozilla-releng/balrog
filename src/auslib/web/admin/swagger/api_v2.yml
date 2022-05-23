@@ -447,7 +447,6 @@ paths:
         '200':
           description: OK
           content:
-            # TODO: check
             application/json:
               schema:
                 $ref: '#/components/schemas/ReleaseModifyResponse'
