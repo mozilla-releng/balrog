@@ -113,3 +113,5 @@ def downgrade(migrate_engine):
     Table("pinnable_releases_scheduled_changes_history", metadata, autoload=True).drop()
     Table("pinnable_releases_scheduled_changes_conditions", metadata, autoload=True).drop()
     Table("pinnable_releases_scheduled_changes_conditions_history", metadata, autoload=True).drop()
+    Table("pinnable_releases_scheduled_changes_signoffs", metadata, autoload=True).drop()
+    Table("pinnable_releases_scheduled_changes_signoffs_history", metadata, autoload=True).drop()
