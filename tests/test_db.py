@@ -5305,6 +5305,12 @@ class TestPinnableReleases(unittest.TestCase, MemoryDatabaseMixin):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
         self.metadata.create_all(self.db.engine)
+        self.db.releases.t.insert().execute(
+            name="Firefox-60.0-build1", product="a", data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), data_version=1
+        )
+        self.db.releases.t.insert().execute(
+            name="Firefox-60.0-build2", product="a", data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), data_version=1
+        )
         self.pinnable_releases = self.db.pinnable_releases
         self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
         self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
@@ -5328,6 +5334,9 @@ class TestPinnableReleases(unittest.TestCase, MemoryDatabaseMixin):
             old_data_version=row["data_version"],
         )
         self.assertEqual(self.pinnable_releases.getPinMapping(product=product, version=version, channel=channel), None)
+
+    def testCannotInsertNonexistentRelease(self):
+        self.assertRaises(ValueError, self.pinnable_releases.insert, changed_by="bob", product="Firefox", version="60.", channel="beta", mapping="fakemapping")
 
 
 @pytest.mark.usefixtures("current_db_schema")

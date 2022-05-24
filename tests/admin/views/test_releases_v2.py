@@ -71,6 +71,15 @@ def releases_db(
     dbo.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
     dbo.permissions.user_roles.t.insert().execute(username="bob", role="tb-releng", data_version=1)
     dbo.productRequiredSignoffs.t.insert().execute(product="Firefox", channel="release", role="releng", signoffs_required=1, data_version=1)
+    dbo.releases.t.insert().execute(
+        name="Firefox-56.0-build1", product="Firefox", data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), data_version=1
+    )
+    dbo.releases.t.insert().execute(
+        name="Firefox-60.0b3-build1", product="Firefox", data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), data_version=1
+    )
+    dbo.releases.t.insert().execute(
+        name="Firefox-66.0-build1", product="Firefox", data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), data_version=1
+    )
     dbo.rules.t.insert().execute(
         rule_id=1, priority=100, product="Firefox", channel="release", mapping="Firefox-56.0-build1", update_type="minor", data_version=1
     )
