@@ -6160,6 +6160,8 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             "pinnable_releases_scheduled_changes_history",
             "pinnable_releases_scheduled_changes_conditions",
             "pinnable_releases_scheduled_changes_conditions_history",
+            "pinnable_releases_scheduled_changes_signoffs",
+            "pinnable_releases_scheduled_changes_signoffs_history"
         ]
         if upgrade:
             for table in pin_tables:
