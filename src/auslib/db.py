@@ -2959,7 +2959,7 @@ class PinnableReleasesTable(AUSTable):
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         # Implementing this is required to schedule changes to this table
-        return None
+        return {}
 
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
         release_rows = self.db.releases.getReleaseNames(names=[columns.get("mapping")])

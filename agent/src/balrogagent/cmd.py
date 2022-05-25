@@ -7,7 +7,15 @@ from . import client
 from .changes import get_telemetry_uptake, telemetry_is_ready, time_is_ready
 from .log import configure_logging
 
-V1_SCHEDULED_CHANGE_ENDPOINTS = ["rules", "releases", "permissions", "emergency_shutoff", "required_signoffs/product", "required_signoffs/permissions"]
+V1_SCHEDULED_CHANGE_ENDPOINTS = [
+    "rules",
+    "releases",
+    "permissions",
+    "emergency_shutoff",
+    "required_signoffs/product",
+    "required_signoffs/permissions",
+    "pinnable_releases",
+]
 V2_SCHEDULED_CHANGE_ENDPOINTS = ["/v2/releases"]
 
 
