@@ -5338,6 +5338,15 @@ class TestPinnableReleases(unittest.TestCase, MemoryDatabaseMixin):
     def testCannotInsertNonexistentRelease(self):
         self.assertRaises(ValueError, self.pinnable_releases.insert, changed_by="bob", product="Firefox", version="60.", channel="beta", mapping="fakemapping")
 
+    def testMustRemovePinToRemoveRelease(self):
+        self.assertEqual(self.db.releases.count(where=[self.db.releases.name == "Firefox-60.0-build1"]), 1)
+        row = self.pinnable_releases.insert(changed_by="bob", product="Firefox", version="60.", channel="beta", mapping="Firefox-60.0-build1")
+        self.assertRaises(ValueError, self.db.releases.delete, where=[self.db.releases.name == "Firefox-60.0-build1"], changed_by="bob", old_data_version=1)
+        self.assertEqual(self.db.releases.count(where=[self.db.releases.name == "Firefox-60.0-build1"]), 1)
+        self.pinnable_releases.delete(changed_by="bob", where=[self.pinnable_releases.mapping == "Firefox-60.0-build1"], old_data_version=row["data_version"])
+        self.db.releases.delete(where=[self.db.releases.name == "Firefox-60.0-build1"], changed_by="bob", old_data_version=1)
+        self.assertEqual(self.db.releases.count(where=[self.db.releases.name == "Firefox-60.0-build1"]), 0)
+
 
 @pytest.mark.usefixtures("current_db_schema")
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
