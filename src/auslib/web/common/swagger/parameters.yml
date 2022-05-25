@@ -2,7 +2,7 @@ parameters:
   productParam:
     name: product
     in: query
-    description: Name of the product to filter the rules/releases/pins against.
+    description: Name of the product to filter the rules/releases against.
     type: string
     format: ascii
     x-nullable: true
