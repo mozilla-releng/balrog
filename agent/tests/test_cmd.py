@@ -36,7 +36,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 0)
-        self.assertEqual(request.call_count, 7)
+        self.assertEqual(request.call_count, 8)
 
     @asynctest.patch("time.time")
     async def testTimeBasedNotReadyRules(self, time, time_is_ready, telemetry_is_ready, request):
@@ -46,7 +46,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 1)
-        self.assertEqual(request.call_count, 7)
+        self.assertEqual(request.call_count, 8)
 
     @asynctest.patch("time.time")
     async def testTimeBasedNotReadyReleases(self, time, time_is_ready, telemetry_is_ready, request):
@@ -56,7 +56,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 1)
-        self.assertEqual(request.call_count, 7)
+        self.assertEqual(request.call_count, 8)
 
     @asynctest.patch("time.time")
     async def testTimeBasedNotReadyPermissions(self, time, time_is_ready, telemetry_is_ready, request):
@@ -66,7 +66,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 1)
-        self.assertEqual(request.call_count, 7)
+        self.assertEqual(request.call_count, 8)
 
     @asynctest.patch("time.time")
     async def testTimeBasedIsNotReadyRequiredSignoffs(self, time, time_is_ready, telemetry_is_ready, request):
@@ -79,7 +79,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 2)
-        self.assertEqual(request.call_count, 7)
+        self.assertEqual(request.call_count, 8)
 
     @asynctest.patch("time.time")
     async def testTimeBasedIsReadyRules(self, time, time_is_ready, telemetry_is_ready, request):
@@ -89,7 +89,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 1)
-        self.assertEqual(request.call_count, 8)
+        self.assertEqual(request.call_count, 9)
 
     @asynctest.patch("time.time")
     async def testTimeBasedIsReadyReleases(self, time, time_is_ready, telemetry_is_ready, request):
@@ -99,7 +99,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 1)
-        self.assertEqual(request.call_count, 8)
+        self.assertEqual(request.call_count, 9)
 
     @asynctest.patch("time.time")
     async def testTimeBasedIsReadyPermissions(self, time, time_is_ready, telemetry_is_ready, request):
@@ -109,7 +109,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 1)
-        self.assertEqual(request.call_count, 8)
+        self.assertEqual(request.call_count, 9)
 
     @asynctest.patch("time.time")
     async def testTimeBasedIsReadyRequiredSignoffs(self, time, time_is_ready, telemetry_is_ready, request):
@@ -122,7 +122,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 2)
-        self.assertEqual(request.call_count, 9)
+        self.assertEqual(request.call_count, 10)
 
     @asynctest.patch("balrogagent.cmd.get_telemetry_uptake")
     async def testTelemetryBasedNotReady(self, get_telemetry_uptake, time_is_ready, telemetry_is_ready, request):
@@ -132,7 +132,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 1)
         self.assertEqual(time_is_ready.call_count, 0)
-        self.assertEqual(request.call_count, 7)
+        self.assertEqual(request.call_count, 8)
 
     @asynctest.patch("balrogagent.cmd.get_telemetry_uptake")
     async def testTelemetryBasedIsReady(self, get_telemetry_uptake, time_is_ready, telemetry_is_ready, request):
@@ -142,7 +142,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 1)
         self.assertEqual(time_is_ready.call_count, 0)
-        self.assertEqual(request.call_count, 8)
+        self.assertEqual(request.call_count, 9)
 
     @asynctest.patch("time.time")
     async def testMultipleEndpointsAtOnce(self, time, time_is_ready, telemetry_is_ready, request):
@@ -156,7 +156,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 3)
-        self.assertEqual(request.call_count, 10)
+        self.assertEqual(request.call_count, 11)
 
     @asynctest.patch("time.time")
     async def testMultipleChangesOneEndpoint(self, time, time_is_ready, telemetry_is_ready, request):
@@ -172,7 +172,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 3)
-        self.assertEqual(request.call_count, 10)
+        self.assertEqual(request.call_count, 11)
         called_endpoints = [call[0][1] for call in request.call_args_list]
         self.assertIn("/scheduled_changes/releases", called_endpoints)
         self.assertIn("/scheduled_changes/permissions", called_endpoints)
@@ -202,7 +202,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 1)
-        self.assertEqual(request.call_count, 8)
+        self.assertEqual(request.call_count, 9)
 
     @asynctest.patch("time.time")
     async def testSignoffsAbsent(self, time, time_is_ready, telemetry_is_ready, request):
@@ -224,7 +224,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 1)
-        self.assertEqual(request.call_count, 7)
+        self.assertEqual(request.call_count, 8)
 
     @asynctest.patch("time.time")
     async def testRightEnactOrderForMultipleEndpointsAtOnce(self, time, time_is_ready, telemetry_is_ready, request):
@@ -252,7 +252,7 @@ class TestRunAgent(asynctest.TestCase):
         await self._runAgent(sc, request)
         self.assertEqual(telemetry_is_ready.call_count, 0)
         self.assertEqual(time_is_ready.call_count, 11)
-        self.assertEqual(request.call_count, 18)
+        self.assertEqual(request.call_count, 19)
         called_endpoints = [call[0][1] for call in request.call_args_list]
         self.assertLess(called_endpoints.index("/scheduled_changes/rules"), called_endpoints.index("/scheduled_changes/releases"))
         self.assertLess(called_endpoints.index("/scheduled_changes/rules/1/enact"), called_endpoints.index("/scheduled_changes/rules/4/enact"))
@@ -282,7 +282,7 @@ async def test_v2_releases_no_changes(monkeypatch, fake_request):
     assert time_is_ready.call_count == 0
     assert verify_signoffs.call_count == 0
     # Once for each v1 endpoint, once for each v2 endpoint
-    assert fr.call_count == 7
+    assert fr.call_count == 8
 
 
 @pytest.mark.asyncio
@@ -330,7 +330,7 @@ async def test_v2_releases_one_change(monkeypatch, fake_request):
     assert time_is_ready.call_count == 1
     assert verify_signoffs.call_count == 1
     # Once for each v1 endpoint, once for each v2 endpoint, once to enact
-    assert fr.call_count == 8
+    assert fr.call_count == 9
     called_endpoints = [call[0][1] for call in fr.call_args_list]
     assert "/v2/releases/Firefox-64.0-build1/enact" in called_endpoints
 
@@ -404,7 +404,7 @@ async def test_v2_releases_multiple_changes_one_release(monkeypatch, fake_reques
     assert time_is_ready.call_count == 3
     assert verify_signoffs.call_count == 3
     # Once for each v1 endpoint, once for each v2 endpoint, once to enact
-    assert fr.call_count == 8
+    assert fr.call_count == 9
     called_endpoints = [call[0][1] for call in fr.call_args_list]
     assert "/v2/releases/Firefox-64.0-build1/enact" in called_endpoints
 
@@ -514,7 +514,7 @@ async def test_v2_releases_multiple_changes_multiple_releases(monkeypatch, fake_
     assert time_is_ready.call_count == 5
     assert verify_signoffs.call_count == 5
     # Once for each v1 endpoint, once for each v2 endpoint, once to enact each release's scheduled changes
-    assert fr.call_count == 9
+    assert fr.call_count == 10
     called_endpoints = [call[0][1] for call in fr.call_args_list]
     assert "/v2/releases/Firefox-64.0-build1/enact" in called_endpoints
     assert "/v2/releases/Firefox-66.0-build1/enact" in called_endpoints
@@ -590,7 +590,7 @@ async def test_v2_releases_multiple_changes_not_all_ready(monkeypatch, fake_requ
     # One less here, because the final call is skipped after time_is_ready return False
     assert verify_signoffs.call_count == 2
     # Once for each v1 endpoint, once for each v2 endpoint
-    assert fr.call_count == 7
+    assert fr.call_count == 8
     called_endpoints = [call[0][1] for call in fr.call_args_list]
     assert "/v2/releases/Firefox-64.0-build1/enact" not in called_endpoints
 
@@ -701,7 +701,7 @@ async def test_v2_releases_multiple_changes_one_release_one_part_not_ready(monke
     # One less here, because the final call is skipped after time_is_ready return False
     assert verify_signoffs.call_count == 4
     # Once for each v1 endpoint, once for each v2 endpoint, once to enact the one release that was ready
-    assert fr.call_count == 8
+    assert fr.call_count == 9
     called_endpoints = [call[0][1] for call in fr.call_args_list]
     assert "/v2/releases/Firefox-64.0-build1/enact" in called_endpoints
     assert "/v2/releases/Firefox-66.0-build1/enact" not in called_endpoints
@@ -776,4 +776,4 @@ async def test_v2_releases_signoff_requirements_not_met(monkeypatch, fake_reques
     assert time_is_ready.call_count == 3
     assert verify_signoffs.call_count == 3
     # Once for each v1 endpoint, once for each v2 endpoint
-    assert fr.call_count == 7
+    assert fr.call_count == 8
