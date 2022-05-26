@@ -887,7 +887,6 @@ def set_pinnable(name, product, channel, version, when, username, trans):
         return MozillaVersion(version)
 
     if old_row is not None:
-        print(f"found old row: {old_row}")
         current_pin_version = get_version(old_row["mapping"], trans=trans)
         submitted_version = get_version(name, trans=trans)
         if current_pin_version and submitted_version and current_pin_version > submitted_version:
