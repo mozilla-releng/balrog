@@ -8,6 +8,9 @@ from flask import current_app as app
 from sentry_sdk import capture_exception
 from sqlalchemy import join, select
 
+from auslib.services import releases
+from auslib.util.versions import MozillaVersion
+
 from ..blobs.base import createBlob
 from ..errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
 from ..global_state import cache, dbo
@@ -866,6 +869,31 @@ def enact_scheduled_changes(name, username, trans):
 
 def set_pinnable(name, product, channel, version, when, username, trans):
     old_row = dbo.pinnable_releases.getPinRow(product=product, channel=channel, version=version, transaction=trans)
+
+    def get_version(mapping, trans):
+        release = releases.get_release(mapping, trans=trans, include_sc=False)
+        blob = None
+        if release:
+            blob = createBlob(release["blob"])
+        # TODO: remove me when old releases table dies
+        else:
+            release = dbo.releases.getReleases(name=mapping, limit=1, transaction=trans)[0]
+            blob = release["data"]
+        if not blob:
+            return None
+        version = blob.getApplicationVersion(None, None)
+        if not version:
+            return None
+        return MozillaVersion(version)
+
+    if old_row is not None:
+        print(f"found old row: {old_row}")
+        current_pin_version = get_version(old_row["mapping"], trans=trans)
+        submitted_version = get_version(name, trans=trans)
+        if current_pin_version and submitted_version and current_pin_version > submitted_version:
+            # Just in case we build, for example, '102.1.0' and later build '102.0.3', we
+            # don't want to update the '102.' pin to '102.0.3'.
+            return {"pin_not_set": True, "reason": "existing_pin_is_newer"}
 
     if not when:
         if old_row is None:

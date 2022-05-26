@@ -92,6 +92,20 @@ components:
       additionalProperties:
         $ref: '#/components/schemas/ReleaseModifyResponsePart'
 
+    ReleasePinNotSetResponse:
+      type: object
+      properties:
+        pin_not_set:
+          # This property is intended for identifying a ReleasePinNotSetResponse
+          # which is why it cannot be set to false.
+          type: boolean
+          enum:
+            - true
+        reason:
+          type: string
+          enum:
+            - existing_pin_is_newer
+
 
   parameters:
     ReleaseName:
@@ -450,6 +464,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReleaseModifyResponse'
+                $ref: '#/components/schemas/ReleasePinNotSetResponse'
         '400':
           description: Client error
         '403':

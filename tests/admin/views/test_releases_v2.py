@@ -2102,3 +2102,30 @@ def test_schedule_pin_update(api):
     assert base_sc["base_mapping"] == "Firefox-66.0-build1"
     assert base_sc["change_type"] == "update"
     assert base_sc_cond["when"] == 1681639932000
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_set_older_pin_does_nothing(api):
+    product = "Firefox"
+    channel = "release"
+    ret = api.put("v2/releases/Firefox-66.0-build1/pinnable", json={"product": product, "channel": channel, "version": "66."})
+    assert ret.status_code == 200
+    ret = api.put("v2/releases/Firefox-66.0-build1/pinnable", json={"product": product, "channel": channel, "version": "66.1."})
+    assert ret.status_code == 200
+    mapping = dbo.pinnable_releases.getPinMapping(product=product, channel=channel, version="66.")
+    assert mapping == "Firefox-66.0-build1"
+    mapping = dbo.pinnable_releases.getPinMapping(product=product, channel=channel, version="66.1.")
+    assert mapping == "Firefox-66.0-build1"
+
+    # Attempting to set the '66.' pin to an earlier version should succeed but not result in a pinning change
+    ret = api.put("v2/releases/Firefox-56.0-build1/pinnable", json={"product": product, "channel": channel, "version": "66."})
+    assert ret.status_code == 200
+    assert ret.json == {"pin_not_set": True, "reason": "existing_pin_is_newer"}
+    mapping = dbo.pinnable_releases.getPinMapping(product=product, channel=channel, version="66.")
+    assert mapping == "Firefox-66.0-build1"
+
+    # Attempting to set a different minor pin ('66.0.' instead of '66.1.') should work normally.
+    ret = api.put("v2/releases/Firefox-56.0-build1/pinnable", json={"product": product, "channel": channel, "version": "66.0."})
+    assert ret.status_code == 200
+    mapping = dbo.pinnable_releases.getPinMapping(product=product, channel=channel, version="66.0.")
+    assert mapping == "Firefox-56.0-build1"
