@@ -24,7 +24,7 @@ Release Automation
 
 The process starts when a new release is built.
 When the build has completed, Release Automation automatically submits the release to Balrog.
-The Balrog submission Taskcluster jobs specify one or more channels that the release should be pinned for (See `Bug 1762979 <https://bugzilla.mozilla.org/show_bug.cgi?id=1762979>`_ for details).
+The Balrog submission jobs (in Taskcluster) specify one or more channels that the release should be pinned for (See `Bug 1762979 <https://bugzilla.mozilla.org/show_bug.cgi?id=1762979>`_ for details).
 
 These channel names are passed, along with the rest of the release submission data to `balrogscript <https://github.com/mozilla-releng/scriptworker-scripts/tree/master/balrogscript>`_.
 Balrogscript then makes 2 requests (one for the major pin and one for the minor pin) to the Balrog REST API to associate the release with its pin for the specified channel (See `Bug 1770827 <https://bugzilla.mozilla.org/show_bug.cgi?id=1770827>`_ for details).
