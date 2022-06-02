@@ -39,6 +39,7 @@ from auslib.db import (
 from auslib.errors import BlobValidationError, ReadOnlyError
 from auslib.global_state import cache, dbo
 from auslib.util.compat import query_params, whereclause
+from auslib.services import releases
 
 from .fakes import FakeGCSHistory, FakeGCSHistoryAsync
 
@@ -5303,17 +5304,31 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
 class TestPinnableReleases(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
-        self.db = AUSDatabase(self.dburi)
-        self.metadata.create_all(self.db.engine)
-        self.db.releases.t.insert().execute(
-            name="Firefox-60.0-build1", product="a", data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), data_version=1
+        dbo.setDb(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        self.metadata.create_all(dbo.engine)
+        dbo.releases_json.t.insert().execute(
+            name="Firefox-60.0-build1",
+            product="Firefox",
+            data_version=1,
+            data="""{
+    "name": "Firefox-60.0-build1",
+    "schema_version": 9,
+    "hashFunction": "sha512"
+}""",
         )
-        self.db.releases.t.insert().execute(
-            name="Firefox-60.0-build2", product="a", data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), data_version=1
+        dbo.releases_json.t.insert().execute(
+            name="Firefox-60.0-build2",
+            product="Firefox",
+            data_version=1,
+            data="""{
+    "name": "Firefox-60.0-build2",
+    "schema_version": 9,
+    "hashFunction": "sha512"
+}""",
         )
-        self.pinnable_releases = self.db.pinnable_releases
-        self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
+        self.pinnable_releases = dbo.pinnable_releases
+        dbo.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
+        dbo.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
 
     def testInsertUpdateAndDeletePinnableRelease(self):
         product = "Firefox"
@@ -5336,16 +5351,19 @@ class TestPinnableReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(self.pinnable_releases.getPinMapping(product=product, version=version, channel=channel), None)
 
     def testCannotInsertNonexistentRelease(self):
-        self.assertRaises(ValueError, self.pinnable_releases.insert, changed_by="bob", product="Firefox", version="60.", channel="beta", mapping="fakemapping")
+        with dbo.begin() as trans:
+            with self.assertRaises(ValueError):
+                releases.set_pinnable("fakemapping", product="Firefox", channel="beta", version="60.", when=None, username="bob", trans=trans)
 
     def testMustRemovePinToRemoveRelease(self):
-        self.assertEqual(self.db.releases.count(where=[self.db.releases.name == "Firefox-60.0-build1"]), 1)
+        self.assertEqual(dbo.releases_json.count(where=[dbo.releases_json.name == "Firefox-60.0-build1"]), 1)
         row = self.pinnable_releases.insert(changed_by="bob", product="Firefox", version="60.", channel="beta", mapping="Firefox-60.0-build1")
-        self.assertRaises(ValueError, self.db.releases.delete, where=[self.db.releases.name == "Firefox-60.0-build1"], changed_by="bob", old_data_version=1)
-        self.assertEqual(self.db.releases.count(where=[self.db.releases.name == "Firefox-60.0-build1"]), 1)
+        with dbo.begin() as trans:
+            self.assertRaises(ValueError, releases.delete_release, name="Firefox-60.0-build1", changed_by="bob", trans=trans)
+        self.assertEqual(dbo.releases_json.count(where=[dbo.releases_json.name == "Firefox-60.0-build1"]), 1)
         self.pinnable_releases.delete(changed_by="bob", where=[self.pinnable_releases.mapping == "Firefox-60.0-build1"], old_data_version=row["data_version"])
-        self.db.releases.delete(where=[self.db.releases.name == "Firefox-60.0-build1"], changed_by="bob", old_data_version=1)
-        self.assertEqual(self.db.releases.count(where=[self.db.releases.name == "Firefox-60.0-build1"]), 0)
+        dbo.releases_json.delete(where=[dbo.releases_json.name == "Firefox-60.0-build1"], changed_by="bob", old_data_version=1)
+        self.assertEqual(dbo.releases_json.count(where=[dbo.releases_json.name == "Firefox-60.0-build1"]), 0)
 
 
 @pytest.mark.usefixtures("current_db_schema")

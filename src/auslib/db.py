@@ -2387,9 +2387,6 @@ class Releases(AUSTable):
             msg = "%s has rules pointing to it. Hence it cannot be deleted." % (release["name"])
             raise ValueError(msg)
 
-        if self.db.pinnable_releases.mappingHasPin(release["name"], transaction=transaction):
-            raise ValueError("{} has pins pointing to it. Hence it cannot be deleted.".format(release["name"]))
-
         self._proceedIfNotReadOnly(release["name"], transaction=transaction)
         if not self.db.hasPermission(changed_by, "release", "delete", release["product"], transaction):
             raise PermissionDeniedError("%s is not allowed to delete releases for product %s" % (changed_by, release["product"]))
@@ -2965,10 +2962,6 @@ class PinnableReleasesTable(AUSTable):
         return {}
 
     def insert(self, changed_by, transaction=None, dryrun=False, **columns):
-        release_rows = self.db.releases.getReleaseNames(names=[columns.get("mapping")])
-        if len(release_rows) == 0:
-            raise ValueError("'{}' is not an existing mapping.".format(columns.get("mapping")))
-
         if not self.db.hasPermission(changed_by, "pinnable_release", "create", columns.get("product"), transaction):
             raise PermissionDeniedError("{} is not allowed to create pinnable releases for product {}".format(changed_by, columns.get("product")))
 

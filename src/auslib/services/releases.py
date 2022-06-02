@@ -726,15 +726,6 @@ def delete_release(name, changed_by, trans):
                 where={"sc_id": asset["sc_id"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans
             )
 
-        for row in dbo.pinnable_releases.scheduled_changes.select(
-            where={"base_mapping": name, "complete": False},
-            columns=[dbo.pinnable_releases.scheduled_changes.sc_id, dbo.pinnable_releases.scheduled_changes.data_version],
-            transaction=trans,
-        ):
-            sc_id = row["sc_id"]
-            old_data_version = row["data_version"]
-            dbo.pinnable_releases.scheduled_changes.delete(where={"sc_id": sc_id}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans)
-
     if exists(name, trans):
         row = dbo.releases_json.select(where={"name": name}, columns={dbo.releases_json.product, dbo.releases_json.data_version})[0]
         product = row["product"]
@@ -744,7 +735,9 @@ def delete_release(name, changed_by, trans):
             ((dbo.releases_json.name == dbo.rules.mapping) | (dbo.releases_json.name == dbo.rules.fallbackMapping)) & (dbo.releases_json.name == name)
         )
         if trans.execute(stmt).fetchall():
-            raise ValueError("Cannot deleted release that is mapped to")
+            raise ValueError("Cannot delete release that is mapped to")
+        if dbo.pinnable_releases.mappingHasPin(name, transaction=trans):
+            raise ValueError("Cannot delete release that is pinnable")
 
         if not dbo.hasPermission(changed_by, "release", "delete", product, trans):
             raise PermissionDeniedError(f"{changed_by} is not allowed to delete {product} releases")
@@ -760,8 +753,6 @@ def delete_release(name, changed_by, trans):
                 where={"name": name, "path": asset["path"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans
             )
             coros.append(coro)
-        for pin in dbo.pinnable_releases.select(where={"mapping": name}, columns=[dbo.pinnable_releases.data_version], transaction=trans):
-            coros.append(dbo.pinnable_releases.async_delete(where={"mapping": name}, old_data_version=pin["data_version"]))
 
     await_coroutines(coros)
 
@@ -868,6 +859,8 @@ def enact_scheduled_changes(name, username, trans):
 
 
 def set_pinnable(name, product, channel, version, when, username, trans):
+    if not exists(name, trans):
+        raise ValueError(f"'{name}' is not an existing mapping.")
     old_row = dbo.pinnable_releases.getPinRow(product=product, channel=channel, version=version, transaction=trans)
 
     def get_version(mapping, trans):
@@ -875,10 +868,6 @@ def set_pinnable(name, product, channel, version, when, username, trans):
         blob = None
         if release:
             blob = createBlob(release["blob"])
-        # TODO: remove me when old releases table dies
-        else:
-            release = dbo.releases.getReleases(name=mapping, limit=1, transaction=trans)[0]
-            blob = release["data"]
         if not blob:
             return None
         version = blob.getApplicationVersion(None, None)
