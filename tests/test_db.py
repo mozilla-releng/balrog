@@ -38,8 +38,8 @@ from auslib.db import (
 )
 from auslib.errors import BlobValidationError, ReadOnlyError
 from auslib.global_state import cache, dbo
-from auslib.util.compat import query_params, whereclause
 from auslib.services import releases
+from auslib.util.compat import query_params, whereclause
 
 from .fakes import FakeGCSHistory, FakeGCSHistoryAsync
 
