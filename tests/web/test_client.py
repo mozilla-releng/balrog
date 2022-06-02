@@ -2358,17 +2358,6 @@ class ClientTestPinning(ClientTestCommon):
     """Tests that setting update pins work as expected - by holding an install back to the specified
     version."""
 
-    @classmethod
-    def setUpClass(cls):
-        # Error handlers are removed in order to give us better debug messages
-        cls.error_spec = app.error_handler_spec
-        # Ripped from https://github.com/mitsuhiko/flask/blob/1f5927eee2288b4aaf508af5dc1f148aa2140d91/flask/app.py#L394
-        app.error_handler_spec = {None: {}}
-
-    @classmethod
-    def tearDownClass(cls):
-        app.error_handler_spec = cls.error_spec
-
     def setUp(self):
         self.version_fd, self.version_file = mkstemp()
         app.config["DEBUG"] = True
@@ -2769,3 +2758,9 @@ class ClientTestPinning(ClientTestCommon):
     def testMinorPinUpdateBackwards(self):
         ret = self.client.get("/update/6/b/2.2/30000101000022/p/l/c/a/a/a/a/update.xml?pin=2.1.")
         self.assertUpdatesAreEmpty(ret)
+
+    def testBrokenPin(self):
+        ret = self.client.get("/update/6/b/2.2/30000101000022/p/l/c/a/a/a/a/update.xml?pin=2")
+        self.assertEqual(ret.status_code, 400)
+        error_message = ret.get_data(as_text=True)
+        self.assertEqual(error_message, "Version Pin String '2' is invalid.")
