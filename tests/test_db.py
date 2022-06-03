@@ -38,6 +38,7 @@ from auslib.db import (
 )
 from auslib.errors import BlobValidationError, ReadOnlyError
 from auslib.global_state import cache, dbo
+from auslib.services import releases
 from auslib.util.compat import query_params, whereclause
 
 from .fakes import FakeGCSHistory, FakeGCSHistoryAsync
@@ -5300,6 +5301,72 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
 
 
 @pytest.mark.usefixtures("current_db_schema")
+class TestPinnableReleases(unittest.TestCase, MemoryDatabaseMixin):
+    def setUp(self):
+        MemoryDatabaseMixin.setUp(self)
+        dbo.setDb(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
+        self.metadata.create_all(dbo.engine)
+        dbo.releases_json.t.insert().execute(
+            name="Firefox-60.0-build1",
+            product="Firefox",
+            data_version=1,
+            data="""{
+    "name": "Firefox-60.0-build1",
+    "schema_version": 9,
+    "hashFunction": "sha512"
+}""",
+        )
+        dbo.releases_json.t.insert().execute(
+            name="Firefox-60.0-build2",
+            product="Firefox",
+            data_version=1,
+            data="""{
+    "name": "Firefox-60.0-build2",
+    "schema_version": 9,
+    "hashFunction": "sha512"
+}""",
+        )
+        self.pinnable_releases = dbo.pinnable_releases
+        dbo.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
+        dbo.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
+
+    def testInsertUpdateAndDeletePinnableRelease(self):
+        product = "Firefox"
+        version = "60."
+        channel = "beta"
+        row = self.pinnable_releases.insert(changed_by="bob", product=product, version=version, channel=channel, mapping="Firefox-60.0-build1")
+        self.assertEqual(self.pinnable_releases.getPinMapping(product=product, version=version, channel=channel), "Firefox-60.0-build1")
+        row = self.pinnable_releases.update(
+            where=[self.pinnable_releases.product == product, self.pinnable_releases.version == version, self.pinnable_releases.channel == channel],
+            what={"mapping": "Firefox-60.0-build2"},
+            changed_by="bob",
+            old_data_version=row["data_version"],
+        )
+        self.assertEqual(self.pinnable_releases.getPinMapping(product=product, version=version, channel=channel), "Firefox-60.0-build2")
+        row = self.pinnable_releases.delete(
+            changed_by="bob",
+            where=[self.pinnable_releases.product == product, self.pinnable_releases.version == version, self.pinnable_releases.channel == channel],
+            old_data_version=row["data_version"],
+        )
+        self.assertEqual(self.pinnable_releases.getPinMapping(product=product, version=version, channel=channel), None)
+
+    def testCannotInsertNonexistentRelease(self):
+        with dbo.begin() as trans:
+            with self.assertRaises(ValueError):
+                releases.set_pinnable("fakemapping", product="Firefox", channel="beta", version="60.", when=None, username="bob", trans=trans)
+
+    def testMustRemovePinToRemoveRelease(self):
+        self.assertEqual(dbo.releases_json.count(where=[dbo.releases_json.name == "Firefox-60.0-build1"]), 1)
+        row = self.pinnable_releases.insert(changed_by="bob", product="Firefox", version="60.", channel="beta", mapping="Firefox-60.0-build1")
+        with dbo.begin() as trans:
+            self.assertRaises(ValueError, releases.delete_release, name="Firefox-60.0-build1", changed_by="bob", trans=trans)
+        self.assertEqual(dbo.releases_json.count(where=[dbo.releases_json.name == "Firefox-60.0-build1"]), 1)
+        self.pinnable_releases.delete(changed_by="bob", where=[self.pinnable_releases.mapping == "Firefox-60.0-build1"], old_data_version=row["data_version"])
+        dbo.releases_json.delete(where=[dbo.releases_json.name == "Firefox-60.0-build1"], changed_by="bob", old_data_version=1)
+        self.assertEqual(dbo.releases_json.count(where=[dbo.releases_json.name == "Firefox-60.0-build1"]), 0)
+
+
+@pytest.mark.usefixtures("current_db_schema")
 class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
@@ -5767,6 +5834,14 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
                 "permissions_req_signoffs_scheduled_changes_history",
                 "permissions_req_signoffs_scheduled_changes_signoffs",
                 "permissions_req_signoffs_scheduled_changes_signoffs_history",
+                "pinnable_releases",
+                "pinnable_releases_history",
+                "pinnable_releases_scheduled_changes",
+                "pinnable_releases_scheduled_changes_conditions",
+                "pinnable_releases_scheduled_changes_conditions_history",
+                "pinnable_releases_scheduled_changes_history",
+                "pinnable_releases_scheduled_changes_signoffs",
+                "pinnable_releases_scheduled_changes_signoffs_history",
                 "product_req_signoffs",
                 "product_req_signoffs_history",
                 "product_req_signoffs_scheduled_changes",
@@ -6104,6 +6179,24 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             for table in releases_tables:
                 self.assertNotIn(table, metadata.tables)
 
+    def _add_pinnable_releases_tables(self, db, upgrade=True):
+        metadata = self._get_reflected_metadata(db)
+        pin_tables = [
+            "pinnable_releases",
+            "pinnable_releases_scheduled_changes",
+            "pinnable_releases_scheduled_changes_history",
+            "pinnable_releases_scheduled_changes_conditions",
+            "pinnable_releases_scheduled_changes_conditions_history",
+            "pinnable_releases_scheduled_changes_signoffs",
+            "pinnable_releases_scheduled_changes_signoffs_history",
+        ]
+        if upgrade:
+            for table in pin_tables:
+                self.assertIn(table, metadata.tables)
+        else:
+            for table in pin_tables:
+                self.assertNotIn(table, metadata.tables)
+
     def _fix_column_attributes_migration_test(self, db, upgrade=True):
         """
         Tests the upgrades and downgrades for version 22 work properly.
@@ -6170,6 +6263,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             pass
 
         versions_migrate_tests_dict = {
+            34: self._add_pinnable_releases_tables,
             33: self._add_release_json_tables,
             # This version removes the releases_history table, which is verified by other tests
             32: _noop,

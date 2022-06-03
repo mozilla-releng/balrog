@@ -23,6 +23,7 @@ Contents:
    balrog_agent
    client_domains
    infrastructure
+   pinning
    autodocs
 
 Indices and tables

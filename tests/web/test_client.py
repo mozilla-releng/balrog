@@ -2352,3 +2352,415 @@ class ClientTestCompactXML(ClientTestCommon):
             '<?xml version="1.0"?><updates><update type="minor" version="1.0" extensionVersion="1.0" buildID="30000101000000">'
             '<patch type="complete" URL="http://a.com/z" hashFunction="sha512" hashValue="4" size="3"/></update></updates>',
         )
+
+
+class ClientTestPinning(ClientTestCommon):
+    """Tests that setting update pins work as expected - by holding an install back to the specified
+    version."""
+
+    def setUp(self):
+        self.version_fd, self.version_file = mkstemp()
+        app.config["DEBUG"] = True
+        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
+        app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("b",)}
+        dbo.setDb("sqlite:///:memory:")
+        self.metadata.create_all(dbo.engine)
+        dbo.setDomainAllowlist({"a.com": ("b",)})
+        self.client = app.test_client()
+        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="1.", mapping="Firefox-mozilla-central-nightly-1")
+        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="1.0.", mapping="Firefox-mozilla-central-nightly-1")
+        dbo.releases.t.insert().execute(
+            name="Firefox-mozilla-central-nightly-1",
+            product="b",
+            data_version=1,
+            data=createBlob(
+                """
+{
+    "name": "Firefox-mozilla-central-nightly-1",
+    "schema_version": 1,
+    "appv": "1.0",
+    "extv": "1.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "30000101000010",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/1"
+                    }
+                }
+            }
+        }
+    }
+}
+"""
+            ),
+        )
+        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.0.", mapping="Firefox-mozilla-central-nightly-2")
+        dbo.releases.t.insert().execute(
+            name="Firefox-mozilla-central-nightly-2",
+            product="b",
+            data_version=1,
+            data=createBlob(
+                """
+{
+    "name": "Firefox-mozilla-central-nightly-2",
+    "schema_version": 1,
+    "appv": "2.0",
+    "extv": "2.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "30000101000020",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/2"
+                    }
+                }
+            }
+        }
+    }
+}
+"""
+            ),
+        )
+        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.1.", mapping="Firefox-mozilla-central-nightly-2-1")
+        dbo.releases.t.insert().execute(
+            name="Firefox-mozilla-central-nightly-2-1",
+            product="b",
+            data_version=1,
+            data=createBlob(
+                """
+{
+    "name": "Firefox-mozilla-central-nightly-2-1",
+    "schema_version": 1,
+    "appv": "2.1",
+    "extv": "2.1",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "30000101000021",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/2_1"
+                    }
+                }
+            }
+        }
+    }
+}
+"""
+            ),
+        )
+        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.2.", mapping="Firefox-mozilla-central-nightly-2-2")
+        dbo.releases.t.insert().execute(
+            name="Firefox-mozilla-central-nightly-2-2",
+            product="b",
+            data_version=1,
+            data=createBlob(
+                """
+{
+    "name": "Firefox-mozilla-central-nightly-2-2",
+    "schema_version": 1,
+    "appv": "2.2",
+    "extv": "2.2",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "30000101000022",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/2_2"
+                    }
+                }
+            }
+        }
+    }
+}
+"""
+            ),
+        )
+        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.", mapping="Firefox-mozilla-central-nightly-2-3")
+        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.3.", mapping="Firefox-mozilla-central-nightly-2-3")
+        dbo.releases.t.insert().execute(
+            name="Firefox-mozilla-central-nightly-2-3",
+            product="b",
+            data_version=1,
+            data=createBlob(
+                """
+{
+    "name": "Firefox-mozilla-central-nightly-2-3",
+    "schema_version": 1,
+    "appv": "2.3",
+    "extv": "2.3",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "30000101000023",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/2_3"
+                    }
+                }
+            }
+        }
+    }
+}
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(
+            priority=200, backgroundRate=100, mapping="Firefox-mozilla-central-nightly-3", update_type="minor", product="b", data_version=1, version="<3.0"
+        )
+        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="3.", mapping="Firefox-mozilla-central-nightly-3")
+        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="3.0.", mapping="Firefox-mozilla-central-nightly-3")
+        dbo.releases.t.insert().execute(
+            name="Firefox-mozilla-central-nightly-3",
+            product="b",
+            data_version=1,
+            data=createBlob(
+                """
+{
+    "name": "Firefox-mozilla-central-nightly-3",
+    "schema_version": 1,
+    "appv": "3.0",
+    "extv": "3.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "30000101000030",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/3"
+                    }
+                }
+            }
+        }
+    }
+}
+"""
+            ),
+        )
+        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="4.", mapping="Firefox-mozilla-central-nightly-4")
+        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="4.0.", mapping="Firefox-mozilla-central-nightly-4")
+        dbo.releases.t.insert().execute(
+            name="Firefox-mozilla-central-nightly-4",
+            product="b",
+            data_version=1,
+            data=createBlob(
+                """
+{
+    "name": "Firefox-mozilla-central-nightly-4",
+    "schema_version": 1,
+    "appv": "4.0",
+    "extv": "4.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "30000101000040",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/4"
+                    }
+                }
+            }
+        }
+    }
+}
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(
+            priority=90, backgroundRate=100, mapping="Firefox-mozilla-central-nightly-5", update_type="minor", product="b", data_version=1
+        )
+        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="5.", mapping="Firefox-mozilla-central-nightly-5")
+        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="5.0.", mapping="Firefox-mozilla-central-nightly-5")
+        dbo.releases.t.insert().execute(
+            name="Firefox-mozilla-central-nightly-5",
+            product="b",
+            data_version=1,
+            data=createBlob(
+                """
+{
+    "name": "Firefox-mozilla-central-nightly-5",
+    "schema_version": 1,
+    "appv": "5.0",
+    "extv": "5.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "30000101000050",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/5"
+                    }
+                }
+            }
+        }
+    }
+}
+"""
+            ),
+        )
+
+    def testUnpinnedRecent(self):
+        ret = self.client.get("/update/6/b/3.0/30000101000030/p/l/c/a/a/a/a/update.xml")
+        self.assertUpdateTextEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="5.0" extensionVersion="5.0" buildID="30000101000050">
+        <patch type="complete" URL="http://a.com/5" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>""",
+        )
+
+    def testUnpinnedWatershed(self):
+        ret = self.client.get("/update/6/b/1.0/30000101000010/p/l/c/a/a/a/a/update.xml")
+        self.assertUpdateTextEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="3.0" extensionVersion="3.0" buildID="30000101000030">
+        <patch type="complete" URL="http://a.com/3" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>""",
+        )
+
+    def testMajorPinSameVersion(self):
+        ret = self.client.get("/update/6/b/1.0/30000101000010/p/l/c/a/a/a/a/update.xml?pin=1.")
+        self.assertUpdatesAreEmpty(ret)
+
+    def testMinorPinSameVersion(self):
+        ret = self.client.get("/update/6/b/1.0/30000101000010/p/l/c/a/a/a/a/update.xml?pin=1.0.")
+        self.assertUpdatesAreEmpty(ret)
+
+    def testMajorPinWatershed(self):
+        ret = self.client.get("/update/6/b/1.0/30000101000010/p/l/c/a/a/a/a/update.xml?pin=5.")
+        self.assertUpdateTextEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="3.0" extensionVersion="3.0" buildID="30000101000030">
+        <patch type="complete" URL="http://a.com/3" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>""",
+        )
+
+    def testMinorPinWatershed(self):
+        ret = self.client.get("/update/6/b/1.0/30000101000010/p/l/c/a/a/a/a/update.xml?pin=5.0.")
+        self.assertUpdateTextEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="3.0" extensionVersion="3.0" buildID="30000101000030">
+        <patch type="complete" URL="http://a.com/3" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>""",
+        )
+
+    def testMajorPin(self):
+        ret = self.client.get("/update/6/b/1.0/30000101000010/p/l/c/a/a/a/a/update.xml?pin=2.")
+        self.assertUpdateTextEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="2.3" extensionVersion="2.3" buildID="30000101000023">
+        <patch type="complete" URL="http://a.com/2_3" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>""",
+        )
+
+    def testMinorPinThroughMajorVersion(self):
+        ret = self.client.get("/update/6/b/1.0/30000101000010/p/l/c/a/a/a/a/update.xml?pin=2.2.")
+        self.assertUpdateTextEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="2.2" extensionVersion="2.2" buildID="30000101000022">
+        <patch type="complete" URL="http://a.com/2_2" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>""",
+        )
+
+    def testMinorPin(self):
+        ret = self.client.get("/update/6/b/2.0/30000101000020/p/l/c/a/a/a/a/update.xml?pin=2.2.")
+        self.assertUpdateTextEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="2.2" extensionVersion="2.2" buildID="30000101000022">
+        <patch type="complete" URL="http://a.com/2_2" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>""",
+        )
+
+    def testMajorPinFromWatershed(self):
+        ret = self.client.get("/update/6/b/3.0/30000101000030/p/l/c/a/a/a/a/update.xml?pin=4.")
+        self.assertUpdateTextEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="4.0" extensionVersion="4.0" buildID="30000101000040">
+        <patch type="complete" URL="http://a.com/4" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>""",
+        )
+
+    def testMinorPinFromWatershed(self):
+        ret = self.client.get("/update/6/b/3.0/30000101000030/p/l/c/a/a/a/a/update.xml?pin=4.0.")
+        self.assertUpdateTextEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="4.0" extensionVersion="4.0" buildID="30000101000040">
+        <patch type="complete" URL="http://a.com/4" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>""",
+        )
+
+    def testMajorPinUpdateBackwards(self):
+        ret = self.client.get("/update/6/b/2.0/30000101000020/p/l/c/a/a/a/a/update.xml?pin=1.")
+        self.assertUpdatesAreEmpty(ret)
+
+    def testMinorPinUpdateBackwards(self):
+        ret = self.client.get("/update/6/b/2.2/30000101000022/p/l/c/a/a/a/a/update.xml?pin=2.1.")
+        self.assertUpdatesAreEmpty(ret)
+
+    def testBrokenPin(self):
+        ret = self.client.get("/update/6/b/2.2/30000101000022/p/l/c/a/a/a/a/update.xml?pin=2")
+        self.assertEqual(ret.status_code, 400)
+        error_message = ret.get_data(as_text=True)
+        self.assertEqual(error_message, "Version Pin String '2' is invalid.")

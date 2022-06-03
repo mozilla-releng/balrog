@@ -2644,6 +2644,7 @@ class Permissions(AUSTable):
         "release_locale": ["actions", "products"],
         "release_read_only": ["actions", "products"],
         "rule": ["actions", "products"],
+        "pinnable_release": ["products"],
         "permission": ["actions"],
         "required_signoff": ["products"],
         "scheduled_change": ["actions"],
@@ -2944,6 +2945,73 @@ class EmergencyShutoffs(AUSTable):
         super(EmergencyShutoffs, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
 
+class PinnableReleasesTable(AUSTable):
+    def __init__(self, db, metadata, dialect):
+        self.table = Table(
+            "pinnable_releases",
+            metadata,
+            Column("product", String(15), nullable=False, primary_key=True),
+            Column("version", String(75), nullable=False, primary_key=True),
+            Column("channel", String(75), nullable=False, primary_key=True),
+            Column("mapping", String(100), nullable=False),
+        )
+        AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=HistoryTable)
+
+    def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
+        # Implementing this is required to schedule changes to this table
+        return {}
+
+    def insert(self, changed_by, transaction=None, dryrun=False, **columns):
+        if not self.db.hasPermission(changed_by, "pinnable_release", "create", columns.get("product"), transaction):
+            raise PermissionDeniedError("{} is not allowed to create pinnable releases for product {}".format(changed_by, columns.get("product")))
+
+        ret = super(PinnableReleasesTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        if not dryrun:
+            return ret.last_inserted_params()
+
+    def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "pinnable_release", "modify", product, transaction):
+            raise PermissionDeniedError("{} is not allowed to modify pinnable releases for product {}".format(changed_by, product))
+
+        ret = super(PinnableReleasesTable, self).update(
+            where=where,
+            what=what,
+            changed_by=changed_by,
+            old_data_version=old_data_version,
+            transaction=transaction,
+            dryrun=dryrun,
+        )
+        if not dryrun:
+            return ret.last_updated_params()
+
+    def delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
+        product = self.select(where=where, columns=[self.product], transaction=transaction)[0]["product"]
+        if not self.db.hasPermission(changed_by, "pinnable_release", "delete", product, transaction):
+            raise PermissionDeniedError("{} is not allowed to delete pinnable releases for product {}".format(changed_by, product))
+
+        super(PinnableReleasesTable, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
+
+    def getPinRow(self, product, channel, version, transaction):
+        rows = self.select(
+            where=[self.product == product, self.channel == channel, self.version == version],
+            columns=[self.mapping, self.data_version],
+            transaction=transaction,
+        )
+        if len(rows) == 0:
+            return None
+        return rows[0]
+
+    def mappingHasPin(self, mapping, transaction=None):
+        return self.count(where=[self.mapping == mapping], transaction=transaction) > 0
+
+    def getPinMapping(self, product, channel, version, transaction=None):
+        rows = self.select(where=[self.product == product, self.channel == channel, self.version == version], columns=[self.mapping], transaction=transaction)
+        if len(rows) == 0:
+            return None
+        return rows[0]["mapping"]
+
+
 class UTF8PrettyPrinter(pprint.PrettyPrinter):
     """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
     Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
@@ -3115,6 +3183,7 @@ class AUSDatabase(object):
         self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)
         self.permissionsRequiredSignoffsTable = PermissionsRequiredSignoffsTable(self, self.metadata, dialect)
         self.emergencyShutoffsTable = EmergencyShutoffs(self, self.metadata, dialect)
+        self.pinnableReleasesTable = PinnableReleasesTable(self, self.metadata, dialect)
         self.metadata.bind = self.engine
 
     def setSystemAccounts(self, systemAccounts):
@@ -3240,3 +3309,7 @@ class AUSDatabase(object):
     @property
     def emergencyShutoffs(self):
         return self.emergencyShutoffsTable
+
+    @property
+    def pinnable_releases(self):
+        return self.pinnableReleasesTable

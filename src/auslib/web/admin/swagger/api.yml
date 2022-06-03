@@ -3963,6 +3963,80 @@ paths:
         '404':
           $ref: '#/responses/resourceNotFound'
 
+  /scheduled_changes/pinnable_releases:
+    get:
+      summary: Returns scheduled changes for release pins.
+      description: >
+        Endpoint to get Scheduled Changes for Release Pins. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.scheduled_changes_pinnable_releases_get
+      consumes: []
+      produces:
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object"
+        description: Returns scheduled changes for release pins.
+      parameters:
+        - $ref: '#/parameters/allSCParam'
+      responses:
+        '200':
+          description: Returns JSON object of list of all scheduled changes for release pins plus total count
+          schema:
+            type: object
+            required:
+              - scheduled_changes
+            allOf:
+              - $ref: "#/definitions/CountModel"
+              - type: object
+                properties:
+                  scheduled_changes:
+                    description: array where each element is a scheduled change for a Release Pin
+                    type: array
+                    minItems: 0
+                    items:
+                      type: object
+                      allOf:
+                        - required:
+                          - change_type
+                          - channel
+                          - mapping
+                          - product
+                          - version
+                          - when
+                        - $ref: '#/definitions/DataVersionNullable'
+                        - $ref: '#/definitions/PinnableReleaseModel'
+                        - $ref: '#/definitions/SCChangeType'
+                        - $ref: '#/definitions/SCCommonFieldsModel'
+                        - $ref: '#/definitions/SCDataVersion'
+                        - $ref: '#/definitions/SCIdModel'
+                        - $ref: '#/definitions/SCTime'
+
+  /scheduled_changes/pinnable_releases/{sc_id}/enact:
+    post:
+      summary: Execute the scheduled change for the release pin.
+      description: >
+        Execute the scheduled change for the release pin identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
+      tags:
+        - Scheduled Changes
+      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_pinnable_releases_post
+      consumes: []
+      produces:
+        - text/html
+        - application/json
+      externalDocs:
+        url: "http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact"
+        description: "Execute the scheduled change for the release pin."
+      parameters:
+        - $ref: '#/parameters/sc_id_param'
+      responses:
+        '200':
+          description: Successfully enacted the scheduled change
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+
 definitions:
   DataVersionNullable:
     title: Nullable Data Version
@@ -4454,6 +4528,40 @@ definitions:
         maxLength: 15
         enum: [ "major", "minor", null]
         example: minor
+
+  PinnableReleaseModel:
+    title: Release Pin
+    description: Release Pin JSON Field Model
+    type: object
+    properties:
+      channel:
+        description: Release channel name
+        type: string
+        format: ascii
+        minLength: 1
+        maxLength: 75
+        example: beta
+      mapping:
+        description: The name of the release that the pin maps to
+        type: string
+        format: ascii
+        minLength: 1
+        maxLength: 100
+        example: Firefox-102.0.1-build1
+      product:
+        description: The product name that the pin applies to
+        type: string
+        format: ascii
+        minLength: 1
+        maxLength: 15
+        example: Firefox
+      version:
+        description: The version pin that the release corresponds to
+        type: string
+        format: ascii
+        minLength: 1
+        maxLength: 75
+        example: "102.0."
 
     #Warning: Do NOT add an example object here. Interferes with Example Value during
     # request generation in Swagger-UI

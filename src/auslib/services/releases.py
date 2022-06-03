@@ -8,6 +8,9 @@ from flask import current_app as app
 from sentry_sdk import capture_exception
 from sqlalchemy import join, select
 
+from auslib.services import releases
+from auslib.util.versions import MozillaVersion
+
 from ..blobs.base import createBlob
 from ..errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
 from ..global_state import cache, dbo
@@ -717,6 +720,7 @@ def delete_release(name, changed_by, trans):
         for asset in dbo.release_assets.scheduled_changes.select(
             where={"base_name": name, "complete": False},
             columns=[dbo.release_assets.scheduled_changes.sc_id, dbo.release_assets.scheduled_changes.data_version],
+            transaction=trans,
         ):
             dbo.release_assets.scheduled_changes.delete(
                 where={"sc_id": asset["sc_id"]}, old_data_version=asset["data_version"], changed_by=changed_by, transaction=trans
@@ -731,7 +735,9 @@ def delete_release(name, changed_by, trans):
             ((dbo.releases_json.name == dbo.rules.mapping) | (dbo.releases_json.name == dbo.rules.fallbackMapping)) & (dbo.releases_json.name == name)
         )
         if trans.execute(stmt).fetchall():
-            raise ValueError("Cannot deleted release that is mapped to")
+            raise ValueError("Cannot delete release that is mapped to")
+        if dbo.pinnable_releases.mappingHasPin(name, transaction=trans):
+            raise ValueError("Cannot delete release that is pinnable")
 
         if not dbo.hasPermission(changed_by, "release", "delete", product, trans):
             raise PermissionDeniedError(f"{changed_by} is not allowed to delete {product} releases")
@@ -850,3 +856,68 @@ def enact_scheduled_changes(name, username, trans):
         coros.append(coro)
 
     await_coroutines(coros)
+
+
+def set_pinnable(name, product, channel, version, when, username, trans):
+    if not exists(name, trans):
+        raise ValueError(f"'{name}' is not an existing mapping.")
+    old_row = dbo.pinnable_releases.getPinRow(product=product, channel=channel, version=version, transaction=trans)
+
+    def get_version(mapping, trans):
+        release = releases.get_release(mapping, trans=trans, include_sc=False)
+        blob = None
+        if release:
+            blob = createBlob(release["blob"])
+        if not blob:
+            return None
+        version = blob.getApplicationVersion(None, None)
+        if not version:
+            return None
+        return MozillaVersion(version)
+
+    if old_row is not None:
+        current_pin_version = get_version(old_row["mapping"], trans=trans)
+        submitted_version = get_version(name, trans=trans)
+        if current_pin_version and submitted_version and current_pin_version > submitted_version:
+            # Just in case we build, for example, '102.1.0' and later build '102.0.3', we
+            # don't want to update the '102.' pin to '102.0.3'.
+            return {"pin_not_set": True, "reason": "existing_pin_is_newer"}
+
+    if not when:
+        if old_row is None:
+            row = dbo.pinnable_releases.insert(changed_by=username, product=product, channel=channel, version=version, mapping=name, transaction=trans)
+        else:
+            row = dbo.pinnable_releases.update(
+                where=[dbo.pinnable_releases.product == product, dbo.pinnable_releases.channel == channel, dbo.pinnable_releases.version == version],
+                what={"mapping": name},
+                changed_by=username,
+                old_data_version=old_row["data_version"],
+                transaction=trans,
+            )
+        return {".": row["data_version"]}
+
+    if old_row is None:
+        sc_id = dbo.pinnable_releases.scheduled_changes.insert(
+            mapping=name,
+            product=product,
+            channel=channel,
+            version=version,
+            when=when,
+            change_type="insert",
+            changed_by=username,
+            transaction=trans,
+        )
+        return {".": {"sc_id": sc_id, "change_type": "insert", "data_version": 1, "signoffs": {}, "when": when}}
+    else:
+        sc_id = dbo.pinnable_releases.scheduled_changes.insert(
+            mapping=name,
+            product=product,
+            channel=channel,
+            version=version,
+            when=when,
+            change_type="update",
+            changed_by=username,
+            transaction=trans,
+            data_version=old_row["data_version"],
+        )
+        return {".": {"sc_id": sc_id, "change_type": "update", "data_version": old_row["data_version"] + 1, "signoffs": {}, "when": when}}
