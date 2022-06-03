@@ -159,6 +159,7 @@ parameters:
       - required_signoff
       - permission
       - scheduled_change
+      - pinnable_release
     maxLength: 50
     required: true
 
@@ -4132,6 +4133,7 @@ definitions:
           - required_signoff
           - permission
           - scheduled_change
+          - pinnable_release
         example: admin
       username:
         description: user name
@@ -4461,6 +4463,10 @@ definitions:
                     items:
                       type: string
                       format: ascii
+
+      pinnable_release:
+        description: "permission to perform actions on release pins"
+        $ref: "#/definitions/UserPermissionsModel"
 
   SCRulesItemBase:
     title: SC Rules Base Model
