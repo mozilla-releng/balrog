@@ -122,6 +122,11 @@ export const PERMISSION_RESTRICTION_MAPPINGS = {
     restrict_actions: true,
     supported_actions: ['enact'],
   },
+  pinnable_release: {
+    restrict_products: true,
+    restrict_actions: false,
+    supported_actions: [],
+  },
 };
 export const ALL_PERMISSIONS = [
   'admin',
@@ -133,6 +138,7 @@ export const ALL_PERMISSIONS = [
   'required_signoff',
   'permission',
   'scheduled_change',
+  'pinnable_release',
 ];
 export const NEW_LINES_REGEX = /\r?\n|\r/g;
 export const SPLIT_WITH_NEWLINES_AND_COMMA_REGEX = /[,\r\n]+/;

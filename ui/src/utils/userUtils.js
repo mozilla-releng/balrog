@@ -14,6 +14,7 @@ const permissionStrings = (productStr, actionStr) => ({
   permission: `allowed to ${actionStr} User Permissions`,
   required_signoff: `allowed to ${actionStr} on Required Signoff configuration ${productStr}`,
   scheduled_change: `allowed to ${actionStr} Scheduled Changes`,
+  pinnable_release: `allowed to manage Pinnable Releases ${productStr}`,
 });
 const getPermissionString = (
   permission,
