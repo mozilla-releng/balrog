@@ -29,6 +29,9 @@ class TestPublicReleasesAPI(CommonTestBase):
         self.assertIn("Superblob-e8f4a19cfd695bf0eb66a2115313c31cc23a2369c0dc7b736d2f66d9075d7c66", got["names"])
         self.assertIn("hotfix-bug-1548973@mozilla.org-1.1.4", got["names"])
         self.assertIn("timecop@mozilla.com-1.0", got["names"])
+        ret = self.public_client.get("/api/v1/releases?names_only=1&product=Firefox")
+        got = ret.get_json()
+        self.assertEqual(len(got["names"]), 3)
 
     def test_get_releases_by_product(self):
         ret = self.public_client.get("/api/v1/releases?product=Fennec")
