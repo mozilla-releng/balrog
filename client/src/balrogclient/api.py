@@ -94,9 +94,9 @@ def balrog_request(session, method, url, *args, **kwargs):
     try:
         resp.raise_for_status()
         if resp.content:
-            recieved_data = resp.json()
-            log.info("Data recieved: %s", _json_log_data(recieved_data))
-            return recieved_data
+            received_data = resp.json()
+            log.info("Data received: %s", _json_log_data(received_data))
+            return received_data
         else:
             return
     except requests.HTTPError as exc:
@@ -137,11 +137,11 @@ class API(object):
                   If set to False, no SSL verification is done.
                   If set to True, it tries to load a CA bundle from certifi
                   module.
-                  If set to string, puthon-requests uses it as a pth to path to
+                  If set to string, python-requests uses it as a pth to path to
                   CA bundle.
         timeout : request timeout
         raise_exceptions: controls exception handling of python-requests.
-        session: requests esssion to use for API calls
+        session: requests session to use for API calls
         """
         self.api_root = api_root.rstrip("/")
         self.verify = ca_certs
