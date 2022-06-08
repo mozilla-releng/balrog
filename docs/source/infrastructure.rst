@@ -81,7 +81,7 @@ Before you deploy, consider whether or not it's an appropriate time to. Some fac
 ~~~~~~~~~~~~~~~
 Schema Upgrades
 ~~~~~~~~~~~~~~~
-If you need to do a schema change you must ensure that either the current production code can run with your schema change applied, or that your new code can run with the old schema. Code and schema changes cannot be done at the same instant, so you must be able to support one of these scenarios. Generally, additive changes (column or table additions) should do the schema change first, while destructive changes (column or table deletions) should do the schema change second. You can simulate the upgrade with your local Docker containers to verify which is right for you.
+If you need to do a schema change you must ensure that either the current production code can run with your schema change applied, or that your new code can run with the old schema. Code and schema changes cannot be done at the same instant, so you must be able to support one of these scenarios. Generally, additive changes (column or table additions) should do the schema change first, while destructive changes (column or table deletions) should do the schema change second. You can simulate the upgrade with your local Docker containers to verify which is right for you.  In staging and production, the schema upgrade is done automatically as part of the `balrog-admin` deployment.
 
 A quick way to find out if you have a schema change is to diff the current tip of the main branch against the currently deployed tag, eg:
 ::
@@ -93,9 +93,9 @@ A quick way to find out if you have a schema change is to diff the current tip o
 When you file the deployment bug (see below), include a note about the schema change in it. Something like:
 ::
 
- This push requires a schema change that needs to be done _prior_ to the new code going out. That can be performed by running the Docker image with the "upgrade-db" command, with DBURI set.
+ This push requires a schema change, so admin should be deployed first to do the migration.
 
-`Bug 1295678 <https://bugzilla.mozilla.org/show_bug.cgi?id=1295678>`_ is an example of a push with a schema change.
+`Bug 1772799 <https://bugzilla.mozilla.org/show_bug.cgi?id=1772799>`_ is an example of a push with a schema change.
 
 ~~~~~~~~~~~~~~~~~~
 Deploying to Stage
@@ -105,7 +105,7 @@ To get the new code in stage you must create a new Release in Github as follows:
 1. Tag the repository with a ``vX.Y`` tag. Eg: ``git tag -s vX.Y && git push --tags``
 2. Diff against the previous release tag. Eg: ``git diff v2.24 v2.25``, to double whether or not there's schema changes.
 
-  * Look for anything unexpected, or any schema changes. If schema changes are present, see the above section for instructions on handling them.
+  * Look for anything unexpected.
 
 3. `Create a new Release on Github <https://github.com/mozilla-releng/balrog/releases>`_. This create new Docker images tagged with your version, and deploys them to stage. It may take upwards of 30 minutes for the deployment to happen. Deployment notifications will show up in #balrog on Slack.
 
