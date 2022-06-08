@@ -3012,16 +3012,6 @@ class PinnableReleasesTable(AUSTable):
         return rows[0]["mapping"]
 
 
-class UTF8PrettyPrinter(pprint.PrettyPrinter):
-    """Encodes strings as UTF-8 before printing to avoid ugly u'' style prints.
-    Adapted from http://stackoverflow.com/questions/10883399/unable-to-encode-decode-pprint-output"""
-
-    def format(self, object, context, maxlevels, level):
-        if isinstance(object, str):
-            return pprint._safe_repr(object.encode("utf8"), context, maxlevels, level, True)
-        return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
-
-
 class UnquotedStr(str):
     def __repr__(self):
         return self.__str__()
@@ -3073,22 +3063,22 @@ def make_change_notifier(relayhost, port, username, password, to_addr, from_addr
                     else:
                         unchanged[k] = UnquotedStr("%s" % repr(row[k]))
                 body.append("Changed values:")
-                body.append(UTF8PrettyPrinter().pformat(changed))
+                body.append(pprint.pformat(changed))
                 body.append("\nUnchanged:")
-                body.append(UTF8PrettyPrinter().pformat(unchanged))
+                body.append(pprint.pformat(unchanged))
             body.append("\n\n")
         elif type_ == "DELETE":
             body.append("Row(s) to be removed:")
             where = [c for c in whereclause(query).get_children()]
             for row in table.select(where=where, transaction=transaction):
-                body.append(UTF8PrettyPrinter().pformat(row))
+                body.append(pprint.pformat(row))
         elif type_ == "INSERT":
             body.append("Row to be inserted:")
             parameters = query_params(query)
             parameters.update(pk_args)
             if additional_columns:
                 parameters.update(additional_columns)
-            body.append(UTF8PrettyPrinter().pformat(parameters))
+            body.append(pprint.pformat(parameters))
 
         subj = "%s to %s detected %s" % (type_, table.t.name, generate_random_string(6))
         send_email(relayhost, port, username, password, to_addr, from_addr, table, subj, body, use_tls)
@@ -3119,7 +3109,7 @@ def make_change_notifier_for_read_only(relayhost, port, username, password, to_a
                 data["name"] = UnquotedStr(repr(row["name"]))
                 data["product"] = UnquotedStr(repr(row["product"]))
                 data["read_only"] = UnquotedStr("%s ---> %s" % (repr(row["read_only"]), repr(query_param(query, "read_only"))))
-                body.append(UTF8PrettyPrinter().pformat(data))
+                body.append(pprint.pformat(data))
 
                 subj = "Read only release %s changed to modifiable" % data["name"]
                 send_email(relayhost, port, username, password, to_addr, from_addr, table, subj, body, use_tls)
