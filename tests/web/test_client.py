@@ -1525,6 +1525,10 @@ class ClientTest(ClientTestBase):
         with ExitStack() as stack:
             mocked_releases_json_scheduled_changes = stack.enter_context(mock.patch("auslib.services.releases.dbo.releases_json.scheduled_changes"))
             mocked_release_assets_scheduled_changes = stack.enter_context(mock.patch("auslib.services.releases.dbo.release_assets.scheduled_changes"))
+            mocked_get_base_row = stack.enter_context(mock.patch.object(releases_service, "get_base_row", wraps=releases_service.get_base_row))
+            mocked_get_base_data_version = stack.enter_context(
+                mock.patch.object(releases_service, "get_base_data_version", wraps=releases_service.get_base_data_version)
+            )
             mocked_get_asset_rows = stack.enter_context(mock.patch.object(releases_service, "get_asset_rows", wraps=releases_service.get_asset_rows))
             mocked_get_asset_data_versions = stack.enter_context(
                 mock.patch.object(releases_service, "get_asset_data_versions", wraps=releases_service.get_asset_data_versions)
@@ -1574,9 +1578,48 @@ class ClientTest(ClientTestBase):
                     "data_version_hits": 4,
                     "data_version_misses": 12,
                 },
+                {
+                    # After an update if data_version is expired but the blob is not we forcibly update the blob
+                    "time": 25,
+                    "lookups": 20,
+                    "hits": 12,
+                    "misses": 8,
+                    "data_version_lookups": 20,
+                    "data_version_hits": 4,
+                    "data_version_misses": 16,
+                    "update": True,
+                },
+                {
+                    # Fresh query with expired caches
+                    "time": 30,
+                    "lookups": 24,
+                    "hits": 12,
+                    "misses": 12,
+                    "data_version_lookups": 24,
+                    "data_version_hits": 4,
+                    "data_version_misses": 20,
+                },
+                {
+                    # And now check the blob is updated after assets update
+                    "time": 35,
+                    "lookups": 28,
+                    "hits": 16,
+                    "misses": 12,
+                    "data_version_lookups": 28,
+                    "data_version_hits": 4,
+                    "data_version_misses": 24,
+                    "update_assets": True,
+                },
             ]
             for arg in args:
                 t.return_value = arg["time"]
+
+                if arg.get("update"):
+                    dbo.releases_json.update(where={"name": "Firefox-54.0.1-build1"}, what={}, old_data_version=1)
+                if arg.get("update_assets"):
+                    dbo.release_assets.update(
+                        where={"name": "Firefox-54.0.1-build1", "path": ".platforms.Darwin_x86_64-gcc3-u-i386-x86_64.locales.af"}, what={}, old_data_version=1
+                    )
 
                 ret = self.client.get(
                     "/update/6/Firefox/54.0.1/20170628075643/WINNT_x86_64-msvc-x64/en-US/release"
@@ -1603,7 +1646,15 @@ class ClientTest(ClientTestBase):
                 # In addition to validating cache hits and misses, we need to make
                 # sure that we didn't call the database layer more than we expected
                 # to without going through the cache layer.
-                assert mocked_get_asset_rows.call_count == arg["misses"]
+                call_count = arg["misses"]
+                if t.return_value >= 25:
+                    call_count += 1
+                assert mocked_get_base_row.call_count == call_count
+                call_count = arg["misses"]
+                if t.return_value >= 35:
+                    call_count += 1
+                assert mocked_get_asset_rows.call_count == call_count
+                assert mocked_get_base_data_version.call_count == arg["data_version_misses"]
                 assert mocked_get_asset_data_versions.call_count == arg["data_version_misses"]
 
             assert mocked_releases_json_scheduled_changes.select.call_count == 0
