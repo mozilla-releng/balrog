@@ -280,8 +280,6 @@ def get_releases(trans):
             release = [r for r in releases if r["name"] == sc["base_name"]]
             if release:
                 release = release[0]
-                if "scheduled_changes" not in release:
-                    release["scheduled_changes"] = []
             else:
                 release = {
                     "name": sc["base_name"],
