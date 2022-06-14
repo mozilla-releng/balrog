@@ -14,7 +14,9 @@ module.exports = {
     reactLint({
       rules: {
         'react/jsx-props-no-spreading': 'off',
+        'react/jsx-no-bind': 'off',
         'react-hooks/exhaustive-deps': 'off',
+        'import/no-cycle': 'off',
       }
     }),
     react({

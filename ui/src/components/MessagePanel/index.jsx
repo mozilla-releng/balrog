@@ -5,7 +5,7 @@ import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from 'mdi-react/CloseIcon';
-import WarningIcon from 'mdi-react/WarningIcon';
+import AlertIcon from 'mdi-react/AlertIcon';
 import InformationIcon from 'mdi-react/InformationIcon';
 
 const useStyles = makeStyles(theme => ({
@@ -48,7 +48,7 @@ function MessagePanel(props) {
   const { variant, message, alwaysOpen } = props;
   const [display, setDisplay] = useState(true);
   const variantIcon = {
-    warning: WarningIcon,
+    warning: AlertIcon,
     info: InformationIcon,
   };
   const Icon = variantIcon[variant];
