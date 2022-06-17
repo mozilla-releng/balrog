@@ -10,6 +10,8 @@ import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormLabel from '@material-ui/core/FormLabel';
+import Switch from '@material-ui/core/Switch';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import { Typography } from '@material-ui/core';
 import Dashboard from '../../../components/Dashboard';
@@ -66,6 +68,18 @@ const useStyles = makeStyles(theme => ({
     padding: theme.spacing(1),
     maxHeight: '80vh',
   },
+  options: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    margin: theme.spacing(1),
+  },
+  formControl: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  formLabel: {
+    transform: 'scale(0.75)',
+  },
 }));
 
 function ListReleases(props) {
@@ -82,6 +96,7 @@ function ListReleases(props) {
   } = elementsHeight(theme);
   const releaseListRef = useRef(null);
   const { hash } = props.location;
+  const [showUnreferencedRules, setShowUnreferencedRules] = useState(false);
   const [releaseNameHash, setReleaseNameHash] = useState(null);
   const [scrollToRow, setScrollToRow] = useState(null);
   const [searchValue, setSearchValue] = useState('');
@@ -135,13 +150,15 @@ function ListReleases(props) {
     }
 
     if (!searchValue) {
-      return releases;
+      return releases.filter(release => showUnreferencedRules ? true : Object.keys(release.rule_info).length > 0);
     }
 
-    return releases.filter(release =>
+    const results = releases.filter(release =>
       release.name.toLowerCase().includes(searchValue.toLowerCase())
     );
-  }, [releases, searchValue]);
+
+    return results.filter(release => showUnreferencedRules ? true : Object.keys(release.rule_info).length > 0);
+  }, [releases, searchValue, showUnreferencedRules]);
   const filteredReleasesCount = filteredReleases.length;
   const handleSignoffRoleChange = ({ target: { value } }) =>
     setSignoffRole(value);
@@ -685,6 +702,10 @@ function ListReleases(props) {
     }
   };
 
+  const handleShowUnreferencedRules = ({ target: { checked } }) => {
+    setShowUnreferencedRules(checked);
+  }
+
   const Row = ({ index, style }) => {
     const release = filteredReleases[index];
     const isSelected = Boolean(hash && hash.replace('#', '') === release.name);
@@ -809,6 +830,17 @@ function ListReleases(props) {
         onChange={handleSearchChange}
         value={searchValue}
       />
+      <div className={classes.options}>
+        <FormControl className={classes.formControl}>
+          <FormLabel className={classes.formLabel}>
+            Show unreferenced rules
+          </FormLabel>
+          <Switch
+            checked={showUnreferencedRules}
+            onChange={handleShowUnreferencedRules}
+          />
+        </FormControl>
+      </div>
       {isLoading && <Spinner loading />}
       {error && <ErrorPanel fixed error={error} />}
       {!isLoading && filteredReleases && (
