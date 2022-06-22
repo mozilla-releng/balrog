@@ -10,52 +10,54 @@ const getPermissionScheduledChangeLens = rs =>
   lensPath([rs.product, 'permissions', rs.role, 'sc']);
 
 export default class RequiredSignoffs {
-  #value = {};
+  constructor() {
+    this.val = {};
+  }
 
   value() {
-    return this.#value;
+    return this.val;
   }
 
   setProductRequiredSignoffs(requiredSignoffs) {
     requiredSignoffs.forEach(rs => {
-      this.#value = set(
+      this.val = set(
         getChannelRoleLens(rs),
         {
           signoffs_required: rs.signoffs_required,
           data_version: rs.data_version,
         },
-        this.#value
+        this.val
       );
     });
   }
 
   setPermissionsRequiredSignoffs(requiredSignoffs) {
     requiredSignoffs.forEach(rs => {
-      this.#value = set(
+      this.val = set(
         getPermissionRoleLens(rs),
         {
           signoffs_required: rs.signoffs_required,
           data_version: rs.data_version,
         },
-        this.#value
+        this.val
       );
     });
   }
 
   setProductScheduledChanges(scheduledChanges) {
     scheduledChanges.forEach(rs => {
-      if (!view(getChannelRoleLens(rs), this.#value)) {
-        this.#value = set(
+      if (!view(getChannelRoleLens(rs), this.val)) {
+        this.val = set(
           getChannelRoleLens(rs),
           {
             signoffs_required: 0,
             data_version: null,
           },
-          this.#value
+          this.val
         );
       }
 
-      this.#value = set(
+      this.val = set(
         getChannelScheduledChangeLens(rs),
         {
           required_signoffs: rs.required_signoffs,
@@ -66,25 +68,25 @@ export default class RequiredSignoffs {
           signoffs: rs.signoffs,
           change_type: rs.change_type,
         },
-        this.#value
+        this.val
       );
     });
   }
 
   setPermissionScheduledChanges(scheduledChanges) {
     scheduledChanges.forEach(rs => {
-      if (!view(getPermissionRoleLens(rs), this.#value)) {
-        this.#value = set(
+      if (!view(getPermissionRoleLens(rs), this.val)) {
+        this.val = set(
           getPermissionRoleLens(rs),
           {
             signoffs_required: 0,
             data_version: null,
           },
-          this.#value
+          this.val
         );
       }
 
-      this.#value = set(
+      this.val = set(
         getPermissionScheduledChangeLens(rs),
         {
           required_signoffs: rs.required_signoffs,
@@ -95,7 +97,7 @@ export default class RequiredSignoffs {
           signoffs: rs.signoffs,
           change_type: rs.change_type,
         },
-        this.#value
+        this.val
       );
     });
   }

@@ -6,7 +6,7 @@ import MuiSnackbar from '@material-ui/core/Snackbar';
 import SnackbarContent from '@material-ui/core/SnackbarContent';
 import { amber, green } from '@material-ui/core/colors';
 import CheckCircleIcon from 'mdi-react/CheckCircleIcon';
-import WarningIcon from 'mdi-react/WarningIcon';
+import AlertIcon from 'mdi-react/AlertIcon';
 import AlertCircleIcon from 'mdi-react/AlertCircleIcon';
 import InformationIcon from 'mdi-react/InformationIcon';
 import CloseIcon from 'mdi-react/CloseIcon';
@@ -14,7 +14,7 @@ import { SNACKBAR_AUTO_HIDE_DURATION } from '../../utils/constants';
 
 const variantIcon = {
   success: CheckCircleIcon,
-  warning: WarningIcon,
+  warning: AlertIcon,
   error: AlertCircleIcon,
   info: InformationIcon,
 };
