@@ -1,4 +1,4 @@
-import { createMuiTheme } from '@material-ui/core/styles';
+import { createTheme } from '@material-ui/core/styles';
 import { amber, red, indigo } from '@material-ui/core/colors';
 
 const SPACING = {
@@ -8,7 +8,7 @@ const SPACING = {
   QUAD: 32,
 };
 
-export default createMuiTheme({
+export default createTheme({
   palette: {
     primary: {
       light: '#804cc5',

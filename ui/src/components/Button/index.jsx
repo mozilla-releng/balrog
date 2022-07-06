@@ -1,11 +1,11 @@
 import React from 'react';
 import { oneOf } from 'prop-types';
 import { ThemeProvider } from '@material-ui/styles';
-import { createMuiTheme } from '@material-ui/core/styles';
+import { createTheme } from '@material-ui/core/styles';
 import MuiButton from '@material-ui/core/Button';
 import { red } from '@material-ui/core/colors';
 
-const dangerTheme = createMuiTheme({
+const dangerTheme = createTheme({
   palette: {
     primary: red,
   },
