@@ -440,13 +440,22 @@ definitions:
                 allowlist: null
 
   EmergencyShutOffModel:
-    title: Emergency shut off data.
-    description: Emergency shut off data.
+    title: Emergency shutoff data.
+    description: Emergency shutoff data.
     type: object
     allOf:
       - $ref: '#/definitions/ProductModel'
       - $ref: '#/definitions/ChannelModel'
       - $ref: '#/definitions/DataVersionModel'
+      - type: object
+        properties:
+          comment:
+            description: A string describing the emergency shutoff reason.
+            type: ["string", "null"]
+            format: ascii
+            minLength: 0
+            maxLength: 500
+            example: lorem ipso facto
     required:
       - product
       - channel

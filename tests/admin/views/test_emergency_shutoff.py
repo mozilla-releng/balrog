@@ -9,7 +9,7 @@ class TestEmergencyShutoff(ViewTest):
     def setUp(self):
         super(TestEmergencyShutoff, self).setUp()
         dbo.emergencyShutoffs.t.insert().execute(product="Firefox", channel="nightly", data_version=1)
-        dbo.emergencyShutoffs.t.insert().execute(product="Fennec", channel="beta", data_version=1)
+        dbo.emergencyShutoffs.t.insert().execute(product="Fennec", channel="beta", comment="Fennec panic!()", data_version=1)
         dbo.emergencyShutoffs.t.insert().execute(product="Thunderbird", channel="nightly", data_version=1)
         dbo.emergencyShutoffs.scheduled_changes.t.insert().execute(
             sc_id=1, scheduled_by="bill", change_type="delete", data_version=1, base_product="Firefox", base_channel="nightly", base_data_version=1
@@ -38,19 +38,23 @@ class TestEmergencyShutoff(ViewTest):
         self.assertEqual(data["product"], "Fennec")
         self.assertIn("channel", data)
         self.assertEqual(data["channel"], "beta")
+        self.assertIn("comment", data)
+        self.assertEqual(data["comment"], "Fennec panic!()")
 
     def test_get_notfound(self):
         resp = self._get("/emergency_shutoff/foo/bar")
         self.assertStatusCode(resp, 404)
 
     def test_create(self):
-        data = {"product": "Thunderbird", "channel": "release"}
+        data = {"product": "Thunderbird", "channel": "release", "comment": "Thunderbird panic!()"}
         resp = self._post("/emergency_shutoff", data=data.copy())
         self.assertStatusCode(resp, 201)
-        shutoffs = dbo.emergencyShutoffs.select(where=data)
-        self.assertTrue(shutoffs)
-        for key in data.keys():
-            self.assertEqual(data[key], shutoffs[0][key])
+        emergency_shutoff_tables = [dbo.emergencyShutoffs, dbo.emergencyShutoffs.history]
+        for shutoff_table in emergency_shutoff_tables:
+            shutoffs = shutoff_table.select(where=data)
+            self.assertTrue(shutoffs)
+            for key in data.keys():
+                self.assertEqual(data[key], shutoffs[0][key])
 
     def test_create_no_permission(self):
         data = {"product": "Thunderbird", "channel": "release"}

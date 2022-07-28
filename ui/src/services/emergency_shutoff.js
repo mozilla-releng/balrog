@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const getEmergencyShutoffs = () => axios.get('/emergency_shutoff');
-const createEmergencyShutoff = (product, channel) =>
-  axios.post('/emergency_shutoff', { product, channel });
+const createEmergencyShutoff = (product, channel, comment) =>
+  axios.post('/emergency_shutoff', { product, channel, comment });
 const deleteEmergencyShutoff = (product, channel, dataVersion) =>
   axios.delete(`/emergency_shutoff/${product}/${channel}`, {
     params: { data_version: dataVersion },

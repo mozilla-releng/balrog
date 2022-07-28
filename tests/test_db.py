@@ -6154,6 +6154,29 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             for table in shutoff_tables:
                 self.assertNotIn(table, metadata.tables)
 
+    def _add_emergency_shutoff_comments(self, db, upgrade=True):
+        metadata = self._get_reflected_metadata(db)
+        emergency_shutoff_tables = [
+            "emergency_shutoffs",
+            "emergency_shutoffs_history",
+        ]
+
+        emergency_shutoff_sc_tables = [
+            "emergency_shutoffs_scheduled_changes",
+            "emergency_shutoffs_scheduled_changes_history",
+        ]
+
+        if upgrade:
+            for table_name in emergency_shutoff_tables:
+                self.assertIn("comment", metadata.tables[table_name].c)
+            for table_name in emergency_shutoff_sc_tables:
+                self.assertIn("base_comment", metadata.tables[table_name].c)
+        else:
+            for table_name in emergency_shutoff_tables:
+                self.assertNotIn("comment", metadata.tables[table_name].c)
+            for table_name in emergency_shutoff_sc_tables:
+                self.assertNotIn("base_comment", metadata.tables[table_name].c)
+
     def _add_release_json_tables(self, db, upgrade=True):
         metadata = self._get_reflected_metadata(db)
         releases_tables = [
@@ -6263,6 +6286,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             pass
 
         versions_migrate_tests_dict = {
+            35: self._add_emergency_shutoff_comments,
             34: self._add_pinnable_releases_tables,
             33: self._add_release_json_tables,
             # This version removes the releases_history table, which is verified by other tests

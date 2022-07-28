@@ -150,6 +150,10 @@ function ListRules(props) {
   const [scrollToRow, setScrollToRow] = useState(null);
   const [roles, setRoles] = useState([]);
   const [emergencyShutoffs, setEmergencyShutoffs] = useState([]);
+  const [
+    emergencyShutoffReasonComment,
+    setEmergencyShutoffReasonComment,
+  ] = useState('');
   const [signoffRole, setSignoffRole] = useState('');
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
   const [drawerReleaseName, setDrawerReleaseName] = useState(null);
@@ -724,9 +728,26 @@ function ListRules(props) {
     });
   };
 
-  const handleDisableUpdates = async () => {
+  const disableUpdatesBody = (
+    <FormControl component="fieldset">
+      <TextField
+        fullWidth
+        multiline
+        label="Reason comment"
+        onChange={({ target: { value } }) => {
+          setEmergencyShutoffReasonComment(value);
+        }}
+        value={emergencyShutoffReasonComment}
+      />
+    </FormControl>
+  );
+  const handleDisableUpdatesSubmit = async () => {
     const [product, channel] = productChannelQueries;
-    const { error, data } = await disableUpdates(product, channel);
+    const { error, data } = await disableUpdates(
+      product,
+      channel,
+      emergencyShutoffReasonComment
+    );
 
     if (!error) {
       const result = clone(emergencyShutoffs);
@@ -736,7 +757,24 @@ function ListRules(props) {
       handleSnackbarOpen({
         message: `Updates for the ${product} ${channel} channel have been disabled`,
       });
+      setEmergencyShutoffReasonComment('');
     }
+
+    handleDialogClose();
+  };
+
+  const handleDisableUpdates = async () => {
+    const [product, channel] = productChannelQueries;
+
+    setDialogState({
+      ...dialogState,
+      open: true,
+      title: `Disable updates for ${product} : ${channel} ?`,
+      confirmText: 'Yes',
+      destructive: false,
+      mode: 'disableUpdates',
+      handleSubmit: handleDisableUpdatesSubmit,
+    });
   };
 
   const handleEnableUpdates = async () => {
@@ -1001,15 +1039,24 @@ function ListRules(props) {
   };
 
   const getDialogSubmit = () => {
-    if (dialogState.mode === 'delete') {
-      return handleDeleteDialogSubmit;
-    }
+    const dialogSubmits = {
+      delete: handleDeleteDialogSubmit,
+      signoff: handleSignoffDialogSubmit,
+      disableUpdates: handleDisableUpdatesSubmit,
+      signoffEnableUpdates: handleSignoffEnableUpdatesDialogSubmit,
+    };
 
-    if (dialogState.mode === 'signoff') {
-      return handleSignoffDialogSubmit;
-    }
+    return dialogSubmits[dialogState.mode];
+  };
 
-    return handleSignoffEnableUpdatesDialogSubmit;
+  const getDialogBody = () => {
+    const dialogStates = {
+      delete: deleteDialogBody,
+      signoff: signoffDialogBody,
+      disableUpdates: disableUpdatesBody,
+    };
+
+    return dialogStates[dialogState.mode];
   };
 
   const getRowHeight = ({ index }) => {
@@ -1278,9 +1325,7 @@ function ListRules(props) {
         open={dialogState.open}
         title={dialogState.title}
         destructive={dialogState.destructive}
-        body={
-          dialogState.mode === 'delete' ? deleteDialogBody : signoffDialogBody
-        }
+        body={getDialogBody()}
         confirmText={dialogState.confirmText}
         onSubmit={getDialogSubmit()}
         onError={handleDialogError}

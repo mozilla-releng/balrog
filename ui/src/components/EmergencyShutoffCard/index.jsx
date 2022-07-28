@@ -30,6 +30,14 @@ const useStyles = makeStyles(theme => ({
   cardActions: {
     justifyContent: 'flex-end',
   },
+  reason: {
+    alignSelf: 'center',
+    width: '100%',
+    color: theme.palette.text.secondary,
+  },
+  actionButton: {
+    minWidth: 'max-content',
+  },
 }));
 
 function EmergencyShutoffCard({
@@ -75,8 +83,15 @@ function EmergencyShutoffCard({
         )}
       </CardContent>
       <CardActions className={classes.cardActions}>
+        {emergencyShutoff.comment && (
+          <Typography component="p" className={classes.reason}>
+            Reason: {emergencyShutoff.comment}
+          </Typography>
+        )}
+
         {emergencyShutoff.scheduledChange ? (
           <Button
+            className={classes.actionButton}
             color="secondary"
             disabled={!user}
             onClick={() => onCancelEnable(emergencyShutoff)}>
@@ -84,6 +99,7 @@ function EmergencyShutoffCard({
           </Button>
         ) : (
           <Button
+            className={classes.actionButton}
             color="secondary"
             disabled={!user}
             onClick={() => onEnableUpdates(emergencyShutoff)}>
@@ -92,11 +108,19 @@ function EmergencyShutoffCard({
         )}
         {requiresSignoff &&
           (user && user.email in emergencyShutoff.scheduledChange.signoffs ? (
-            <Button color="secondary" disabled={!user} onClick={onRevoke}>
+            <Button
+              color="secondary"
+              disabled={!user}
+              onClick={onRevoke}
+              className={classes.actionButton}>
               Revoke Signoff
             </Button>
           ) : (
-            <Button color="secondary" disabled={!user} onClick={onSignoff}>
+            <Button
+              color="secondary"
+              disabled={!user}
+              onClick={onSignoff}
+              className={classes.actionButton}>
               Signoff
             </Button>
           ))}

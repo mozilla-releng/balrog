@@ -2912,6 +2912,7 @@ class EmergencyShutoffs(AUSTable):
             metadata,
             Column("product", String(15), nullable=False, primary_key=True),
             Column("channel", String(75), nullable=False, primary_key=True),
+            Column("comment", String(500), nullable=True),
         )
         AUSTable.__init__(self, db, dialect, scheduled_changes=True, scheduled_changes_kwargs={"conditions": ["time"]}, historyClass=HistoryTable)
 
