@@ -1,4 +1,4 @@
-FROM mysql:5.7
+FROM mysql:5.7-debian
 
 # netcat is used to listen to the ports.
 

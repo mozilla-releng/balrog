@@ -76,8 +76,6 @@ services:
       - "9010:9010"
     volumes:
       - .:/app
-    links:
-      - autograph
     environment:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
       - AUTOGRAPH_URL=http://autograph:8000
@@ -89,6 +87,7 @@ services:
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
     links:
+      - autograph
       - balrogdb
 
 
