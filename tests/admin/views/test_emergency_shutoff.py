@@ -46,7 +46,18 @@ class TestEmergencyShutoff(ViewTest):
         self.assertStatusCode(resp, 404)
 
     def test_create(self):
-        data = {"product": "Thunderbird", "channel": "release", "comment": "Thunderbird panic!()"}
+        data = {"product": "Thunderbird", "channel": "release"}
+        resp = self._post("/emergency_shutoff", data=data.copy())
+        self.assertStatusCode(resp, 201)
+        emergency_shutoff_tables = [dbo.emergencyShutoffs, dbo.emergencyShutoffs.history]
+        for shutoff_table in emergency_shutoff_tables:
+            shutoffs = shutoff_table.select(where=data)
+            self.assertTrue(shutoffs)
+            for key in data.keys():
+                self.assertEqual(data[key], shutoffs[0][key])
+
+    def test_create_with_comment(self):
+        data = {"product": "Fennec", "channel": "release", "comment": "Fennec panic!()"}
         resp = self._post("/emergency_shutoff", data=data.copy())
         self.assertStatusCode(resp, 201)
         emergency_shutoff_tables = [dbo.emergencyShutoffs, dbo.emergencyShutoffs.history]
