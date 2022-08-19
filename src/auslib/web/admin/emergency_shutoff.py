@@ -25,7 +25,11 @@ def post(emergency_shutoff, changed_by, transaction):
     if shutoff_exists(emergency_shutoff["product"], emergency_shutoff["channel"]):
         return problem(400, "Bad Request", "Invalid Emergency shutoff data", ext={"exception": "Emergency shutoff for product/channel already exists."})
     inserted_shutoff = dbo.emergencyShutoffs.insert(
-        changed_by=changed_by, transaction=transaction, product=emergency_shutoff["product"], channel=emergency_shutoff["channel"]
+        changed_by=changed_by,
+        transaction=transaction,
+        product=emergency_shutoff["product"],
+        channel=emergency_shutoff["channel"],
+        comment=emergency_shutoff.get("comment"),
     )
     return Response(status=201, content_type="application/json", response=json.dumps(inserted_shutoff))
 

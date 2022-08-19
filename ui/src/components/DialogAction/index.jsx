@@ -95,10 +95,7 @@ function DialogAction(props) {
         {body && <DialogContentText component="div">{body}</DialogContentText>}
       </DialogContent>
       <DialogActions>
-        <Button
-          disabled={actionExecuting}
-          onClick={onClose}
-          action={actions => actions && actions.focusVisible()}>
+        <Button disabled={actionExecuting} onClick={onClose}>
           Cancel
         </Button>
         <div className={classes.executingActionWrapper}>
