@@ -104,6 +104,7 @@ class AUS:
         if not rule["mapping"]:
             self.log.debug("Matching rule points at null mapping.")
             return None, None, eval_metadata
+        mapping = rule["mapping"]
 
         # 2) For background checks (force=1 missing from query), we might not
         # serve every request an update
@@ -113,22 +114,12 @@ class AUS:
             self.log.debug("backgroundRate < 100, rolling the dice")
             if updateQuery["force"] == FORCE_FALLBACK_MAPPING or self.rand() >= rule["backgroundRate"]:
                 fallbackReleaseName = rule["fallbackMapping"]
-                if fallbackReleaseName:
-                    release = releases.get_release(fallbackReleaseName, transaction, include_sc=False)
-                    blob = None
-                    if release:
-                        blob = createBlob(release["blob"])
-                    # TODO: remove me when old releases table dies
-                    else:
-                        release = dbo.releases.getReleases(name=fallbackReleaseName, limit=1, transaction=transaction)[0]
-                        blob = release["data"]
-                    if not blob or not blob.shouldServeUpdate(updateQuery):
-                        return None, None, eval_metadata
-                    self.log.debug("Returning fallback release %s", fallbackReleaseName)
-                    return blob, rule["update_type"], eval_metadata
+                if not fallbackReleaseName:
+                    self.log.debug("No fallback releases. Request was dropped")
+                    return None, None, eval_metadata
 
-                self.log.debug("No fallback releases. Request was dropped")
-                return None, None, eval_metadata
+                self.log.debug("Using fallback release %s", fallbackReleaseName)
+                mapping = fallbackReleaseName
 
         # 3) Incoming release is older than the one in the mapping, defined as one of:
         #    * version decreases
@@ -144,7 +135,6 @@ class AUS:
                 blob = release["data"]
             return blob
 
-        mapping = rule["mapping"]
         blob = get_blob(mapping)
         if not blob or not blob.shouldServeUpdate(updateQuery):
             return None, None, eval_metadata
