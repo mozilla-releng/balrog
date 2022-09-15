@@ -469,3 +469,34 @@ paths:
           description: Client error
         '403':
           description: Permission denied
+
+  /pins/{product}/{channel}/{version}:
+    get:
+      summary: Get a JSON object representing the specified pin
+      operationId: auslib.web.admin.views.pins_v2.get_pin
+      responses:
+        '200':
+          description: Data for specified pin
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - channel
+                  - data_version
+                  - mapping
+                  - product
+                  - version
+                properties:
+                  channel:
+                    type: string
+                  data_version:
+                    type: number
+                  mapping:
+                    type: string
+                  product:
+                    type: string
+                  version:
+                    type: string
+        '404':
+          description: Pin not found

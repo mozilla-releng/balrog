@@ -2993,7 +2993,7 @@ class PinnableReleasesTable(AUSTable):
 
         super(PinnableReleasesTable, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
-    def getPinRow(self, product, channel, version, transaction):
+    def getPinRow(self, product, channel, version, transaction=None):
         rows = self.select(
             where=[self.product == product, self.channel == channel, self.version == version],
             columns=[self.mapping, self.data_version],
