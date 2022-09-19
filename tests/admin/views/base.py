@@ -44,6 +44,7 @@ class ViewTest(unittest.TestCase):
         self.version_fd, self.version_file = mkstemp()
         cache.reset()
         cache.make_copies = True
+        saved_config = app.config.copy()
         app.config["SECRET_KEY"] = "abc123"
         app.config["DEBUG"] = True
         app.config["ALLOWLISTED_DOMAINS"] = {"good.com": ("a", "b", "c", "d")}
@@ -420,6 +421,7 @@ class ViewTest(unittest.TestCase):
         os.remove(self.version_file)
         self.view_base.verified_userinfo = self.orig_base_verified_userinfo
         dbo.releases.history = self.orig_releases_history
+        app.config = saved_config
 
     def _get(self, url, qs={}, username=None):
         headers = {"Accept-Encoding": "application/json", "Accept": "application/json"}
