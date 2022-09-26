@@ -16,7 +16,7 @@ WORKDIR /app
 # ... really speeds up building new containers
 COPY requirements/ /app/requirements/
 RUN apt-get install -q --yes gcc && \
-    pip install -r requirements/base.txt && \
+    pip install --no-deps -r requirements/base.txt && \
     apt-get -q --yes remove gcc && \
     apt-get -q --yes autoremove && \
     apt-get clean && \

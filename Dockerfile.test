@@ -21,7 +21,7 @@ WORKDIR /app
 # The general app requirements and packages required to run Tox are installed into the system.
 # We copy them in early to avoid re-installing them unless absolutely necessary.
 COPY requirements/ /app/requirements/
-RUN pip install -r requirements/local.txt
+RUN pip install --no-deps -r requirements/local.txt
 
 COPY src/ /app/src/
 COPY tests/ /app/tests/
