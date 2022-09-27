@@ -269,3 +269,27 @@ paths:
               minimum: 1
         '404':
           $ref: '#/responses/resourceNotFound'
+
+  /api/v1/pins/{product}/{channel}/{version}:
+    get:
+      summary: "Returns a JSON object representing the specified pin."
+      description: >
+        Returns a JSON object representing the specified pin. Note that the version should be a valid pin version format including the trailing dot. If 'pretty' is present in the query string and set to true, it will be pretty formatted.)
+      tags:
+        - Pins
+      operationId: auslib.web.common.pins.get_pin
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: Version pinning data.
+          schema:
+            $ref: "#/definitions/PinnableReleaseModel"
+          headers:
+            X-Data-Version:
+              description: data version of the pin
+              type: integer
+              format: int32
+              minimum: 1
+        '404':
+          $ref: '#/responses/resourceNotFound'

@@ -4535,39 +4535,5 @@ definitions:
         enum: [ "major", "minor", null]
         example: minor
 
-  PinnableReleaseModel:
-    title: Release Pin
-    description: Release Pin JSON Field Model
-    type: object
-    properties:
-      channel:
-        description: Release channel name
-        type: string
-        format: ascii
-        minLength: 1
-        maxLength: 75
-        example: beta
-      mapping:
-        description: The name of the release that the pin maps to
-        type: string
-        format: ascii
-        minLength: 1
-        maxLength: 100
-        example: Firefox-102.0.1-build1
-      product:
-        description: The product name that the pin applies to
-        type: string
-        format: ascii
-        minLength: 1
-        maxLength: 15
-        example: Firefox
-      version:
-        description: The version pin that the release corresponds to
-        type: string
-        format: ascii
-        minLength: 1
-        maxLength: 75
-        example: "102.0."
-
     #Warning: Do NOT add an example object here. Interferes with Example Value during
     # request generation in Swagger-UI
