@@ -15,3 +15,8 @@ ARGS="-g base -g docs -g test -g local"
 pip-compile-multi -o "$SUFFIX" $ARGS $EXTRA_PCM_ARGS
 sed -i 's/^repoze-lru/repoze.lru/' requirements/*.txt
 chmod 644 requirements/*.txt
+
+cd agent
+ARGS="-g base -g test -g local"
+pip-compile-multi -o "$SUFFIX" $ARGS $EXTRA_PCM_ARGS
+chmod 644 requirements/*.txt
