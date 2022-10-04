@@ -73,6 +73,16 @@ def extract_releases(release_names, url, dump_file, source_tables="releases_json
             run(cmd, stdout=dump_file, check=True)
 
 
+def extract_pins(release_names, url, dump_file):
+    if release_names:
+        batch_generator = chunk_list(list(release_names), 30)
+        for batched_release_list in batch_generator:
+            query = ", ".join(f"'{name}'" for name in batched_release_list)
+            cmd = mysql_data_only_command(url.host, url.username, url.password, url.database, "pinnable_releases").split()
+            cmd.append(f"--where=mapping IN ({query})")
+            run(cmd, stdout=dump_file, check=True)
+
+
 def get_active_release_names(trans, source_table="releases_json"):
     # Because Releases are so massive, we only want the actively used ones. Specifically:
     #   - All releases referenced by a Rule or a Active Scheduled Rule Change
@@ -128,6 +138,7 @@ def extract_active_data(trans, url, dump_location="dump.sql"):
 
         release_names = get_active_release_names(trans)
         extract_releases(release_names, url, dump_file)
+        extract_pins(release_names, url, dump_file)
 
         release_names = get_active_release_names(trans, "releases")
         extract_releases(release_names, url, dump_file, "releases")
