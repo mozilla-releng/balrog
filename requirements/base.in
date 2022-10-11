@@ -11,7 +11,7 @@ gcloud-aio-storage
 google-api-core
 google-auth
 google-cloud-storage
-jsonschema
+jsonschema>=4.5.0
 mysqlclient
 python-jose
 sentry-sdk[flask]
