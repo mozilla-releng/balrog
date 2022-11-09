@@ -66,7 +66,7 @@ tasks:
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: releng-t
-            workerType: linux
+            workerType: linux-gcp
             scopes:
               - secrets:get:repo:github.com/mozilla-releng/balrog:coveralls
             routes: []
@@ -100,7 +100,7 @@ tasks:
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: releng-t
-            workerType: linux
+            workerType: linux-gcp
             scopes: []
             routes: []
             payload:
@@ -122,7 +122,7 @@ tasks:
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: releng-t
-            workerType: linux
+            workerType: linux-gcp
             scopes: []
             routes: []
             payload:
@@ -144,7 +144,7 @@ tasks:
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: releng-t
-            workerType: linux
+            workerType: linux-gcp
             routes: []
             payload:
               maxRunTime: 3600
@@ -165,7 +165,7 @@ tasks:
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: releng-t
-            workerType: linux
+            workerType: linux-gcp
             routes: []
             payload:
               maxRunTime: 3600
@@ -186,7 +186,7 @@ tasks:
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: releng-t
-            workerType: linux
+            workerType: linux-gcp
             scopes: []
             routes: []
             payload:
@@ -206,7 +206,7 @@ tasks:
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: releng-t
-            workerType: linux
+            workerType: linux-gcp
             scopes: []
             routes: []
             payload:
@@ -228,7 +228,7 @@ tasks:
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: releng-3
-            workerType: linux
+            workerType: linux-gcp
             scopes:
               - secrets:get:repo:github.com/mozilla-releng/balrog:dockerhub
             routes: []
@@ -252,7 +252,7 @@ tasks:
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: releng-3
-            workerType: linux
+            workerType: linux-gcp
             scopes:
               - secrets:get:repo:github.com/mozilla-releng/balrog:dockerhub
             routes: []
@@ -279,7 +279,7 @@ tasks:
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: releng-3
-            workerType: linux
+            workerType: linux-gcp
             scopes:
               - secrets:get:repo:github.com/mozilla-releng/balrog:s3-stage-aws-creds
               - secrets:get:repo:github.com/mozilla-releng/balrog:s3-stage-app-config
@@ -310,7 +310,7 @@ tasks:
             created: {$fromNow: ''}
             deadline: {$fromNow: '2 hours'}
             provisionerId: releng-3
-            workerType: linux
+            workerType: linux-gcp
             scopes:
               - secrets:get:repo:github.com/mozilla-releng/balrog:s3-prod-aws-creds
               - secrets:get:repo:github.com/mozilla-releng/balrog:s3-prod-app-config
