@@ -1,0 +1,24 @@
+---
+trust-domain: releng
+
+task-priority: low
+
+taskgraph:
+    register: balrog_taskgraph:register
+    repositories:
+        balrog:
+            name: "Balrog"
+    decision-parameters: 'balrog_taskgraph:get_decision_parameters'
+
+workers:
+    aliases:
+        test:
+            provisioner: releng-t
+            implementation: docker-worker
+            os: linux
+            worker-type: linux-gcp
+        images:
+            provisioner: releng-{level}
+            implementation: docker-worker
+            os: linux
+            worker-type: linux-gcp

@@ -1,0 +1,49 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+---
+loader: taskgraph.loader.transform:loader
+
+transforms:
+    - balrog_taskgraph.transforms.tox:transforms
+    - taskgraph.transforms.job:transforms
+    - taskgraph.transforms.task:transforms
+
+task-defaults:
+        run-on-tasks-for: [github-pull-request, github-push]
+        worker-type: test
+        worker:
+            docker-image: {in-tree: 'python3.9'}
+            max-run-time: 1200
+        run:
+            using: run-task
+            checkout:
+                balrog: {}
+            command: ['tox']
+
+tasks:
+    backend:
+        description: balrog backend tests
+        run:
+            cwd: '{checkout}'
+            command: 'taskcluster/scripts/get-coveralls-token tox'
+        env:
+            TOXENV: 'check,py39,coveralls'
+        scopes:
+            - secrets:get:repo:github.com/mozilla-releng/balrog:coveralls
+
+    agent:
+        description: balrog agent tests
+        run:
+            cwd: '{checkout}/agent'
+        worker:
+            env:
+                TOXENV: 'check,py39'
+
+    client:
+        description: balrog client tests
+        run:
+            cwd: '{checkout}/client'
+        worker:
+            env:
+                TOXENV: 'check,py39'

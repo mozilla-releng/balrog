@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+import json
+import os
+import sys
+import urllib.request
+
+SECRET_BASEURL_TPL = "http://taskcluster/secrets/v1/secret/{}"
+
+
+def fetch_secret(secret_name):
+    """Retrieves the given taskcluster secret"""
+    secret_url = SECRET_BASEURL_TPL.format(secret_name)
+    with urllib.request.urlopen(secret_url) as r:
+        return json.load(r)["secret"]
+
+
+token = fetch_secret("repo:github.com/mozilla-releng/balrog:coveralls")["repo_token"]
+env = os.environ.copy()
+env["COVERALLS_REPO_TOKEN"] = token
+os.execvpe(sys.argv[1], sys.argv[1:], env)
