@@ -8,6 +8,20 @@ from taskgraph.util.attributes import match_run_on_git_branches as match_run_on_
 _GIT_REFS_TAGS_PREFIX = "refs/tags/"
 
 
+def sanity_check_release(parameters):
+    if parameters["tasks_for"] != "github-release":
+        return
+    tag = parameters["head_tag"]
+    if tag.startswith(_GIT_REFS_TAGS_PREFIX):
+        tag = tag[len(_GIT_REFS_TAGS_PREFIX) :]
+    if not tag.startswith("v"):
+        return
+    in_tree_version = parameters["version"]
+    tag_version = tag[1:]
+    if in_tree_version != tag_version:
+        raise Exception(f"Version numbers in version.txt ({in_tree_version}) and release tag ({tag_version}) don't match")
+
+
 def filter_for_github_release_name(task, parameters):
     if parameters["tasks_for"] != "github-release":
         return True
@@ -20,6 +34,8 @@ def filter_for_github_release_name(task, parameters):
 
 @_target_task("release")
 def target_tasks_release(full_task_graph, parameters, graph_config):
+    sanity_check_release(parameters)
+
     default_tasks = frozenset(get_method("default")(full_task_graph, parameters, graph_config))
 
     return [label for label, t in full_task_graph.tasks.items() if label in default_tasks and filter_for_github_release_name(t, parameters)]

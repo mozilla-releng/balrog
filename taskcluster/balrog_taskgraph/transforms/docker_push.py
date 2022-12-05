@@ -26,7 +26,6 @@ def set_push_environment(config, jobs):
             {
                 "VCS_HEAD_REPOSITORY": config.params["head_repository"],
                 "VCS_HEAD_REV": config.params["head_rev"],
-                # TODO: Figure out if we still need to add the version
                 "APP_VERSION": version,
             }
         )
