@@ -32,8 +32,8 @@ def filter_for_github_release_name(task, parameters):
     return match_run_on_git_tags(head_tag, run_on_release_tags)
 
 
-@_target_task("release")
-def target_tasks_release(full_task_graph, parameters, graph_config):
+@_target_task("balrog")
+def target_tasks_balrog(full_task_graph, parameters, graph_config):
     sanity_check_release(parameters)
 
     default_tasks = frozenset(get_method("default")(full_task_graph, parameters, graph_config))

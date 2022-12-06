@@ -129,7 +129,7 @@ tasks:
                       - $let:
                             extraArgs:
                                 $if: 'tasks_for == "github-release"'
-                                then: '--target-tasks-method=release --head-tag="${event.release.tag_name}"'
+                                then: '--head-tag="${event.release.tag_name}"'
                                 else: ''
                         in:
                             ln -s /builds/worker/artifacts artifacts &&
@@ -146,6 +146,7 @@ tasks:
                             --head-rev="$BALROG_HEAD_REV"
                             --repository-type="$BALROG_REPOSITORY_TYPE"
                             --tasks-for='${tasks_for}'
+                            --target-tasks-method=balrog
                             ${extraArgs}
     
                   artifacts:
