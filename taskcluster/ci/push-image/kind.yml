@@ -1,0 +1,59 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+---
+
+loader: taskgraph.loader.transform:loader
+
+kind-dependencies:
+    - docker-image
+
+transforms:
+    - balrog_taskgraph.transforms.docker_push:transforms
+    - balrog_taskgraph.transforms.run_on_releases:transforms
+    - taskgraph.transforms.job:transforms
+    - taskgraph.transforms.task:transforms
+
+task-defaults:
+    worker-type: images
+    worker:
+        taskcluster-proxy: true
+        docker-image: {in-tree: skopeo}
+        max-run-time: 3600
+    dependencies:
+          tests-js: ui-tests
+          build-js: ui-build
+          tests-backend: test-backend
+          tests-agent: test-agent
+    run-on-tasks-for: [github-release]
+    run-on-releases: [v]
+    run:
+        using: run-task
+        checkout: false
+        cache-dotcache: false
+        command:
+            - /usr/local/bin/push_image.sh
+    fetches:
+        docker-image:
+            - artifact: image.tar.zst
+              extract: false
+    scopes:
+        - secrets:get:repo:github.com/mozilla-releng/balrog:dockerhub
+
+tasks:
+    balrog-backend:
+        description: "Push balrog backend docker image"
+        dependencies:
+              docker-image: build-docker-image-balrog-backend
+        worker:
+            env:
+                DOCKER_REPO: docker.io/mozilla/balrog
+                APP: backend
+    balrog-agent:
+        description: "Push balrogagent docker image"
+        dependencies:
+              docker-image: build-docker-image-balrog-agent
+        worker:
+            env:
+                DOCKER_REPO: docker.io/mozilla/balrogagent
+                APP: agent

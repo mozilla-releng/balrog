@@ -23,6 +23,7 @@ exclude docker-compose.yml
 exclude docker-compose.arm.yml
 exclude requirements
 exclude scripts
+exclude taskcluster
 exclude tests
 exclude ui
 exclude version.json
@@ -33,6 +34,7 @@ recursive-exclude docs *
 recursive-exclude maintenance *
 recursive-exclude requirements *
 recursive-exclude scripts *
+recursive-exclude taskcluster *
 recursive-exclude tests *
 recursive-exclude ui *
 recursive-exclude * *.py[co]

@@ -1,335 +1,167 @@
+---
 version: 1
 reporting: checks-v1
 policy:
-  pullRequests: public
+    pullRequests: public
 tasks:
-  $let:
-    # Dependabot, and possibly other things creating pull requests
-    # can set `user` to something that can't be used in an e-mail
-    # address, so we simply make this static to workaround.
-    owner_email: 'release+balrog-ci@mozilla.com'
-    # Github events have this stuff in different places...
-    repo_url: {
-      $if: 'tasks_for == "github-push"',
-      then: '${event.repository.clone_url}',
-      else: {
-        $if: 'tasks_for == "github-pull-request"',
-        then: '${event.pull_request.head.repo.clone_url}',
-        # Assume release event
-        else: '${event.repository.clone_url}',
-      }
-    }
-    head_sha: {
-      $if: 'tasks_for == "github-push"',
-      then: '${event.after}',
-      else: {
-        $if: 'tasks_for == "github-pull-request"',
-        then: '${event.pull_request.head.sha}',
-        # Assume release event
-        else: '${event.release.tag_name}',
-      }
-    }
-    docker_tags: {
-      $if: 'tasks_for == "github-push"',
-      then: 'latest ${event.after}',
-      else: {
-        $if: 'tasks_for == "github-release"',
-        then: '${event.release.tag_name}',
-        # Unused
-        else: ''
-      }
-    }
-    # jsone doesn't support shortcircuiting evaluation, and we need to use
-    # ${event.release.tag_name} as part of a conditional for release event
-    # tasks, so we need to create this variable to make sure it always
-    # has a value instead of using ${event.release.tag_name} directly.
-    release_tag: {
-      $if: 'tasks_for == "github-release"',
-      then: '${event.release.tag_name}',
-      else: 'null',
-    }
-    branch: {
-      $if: 'tasks_for == "github-push"',
-      then: '${event.ref}',
-      else: 'null',
-    }
-    pull_request_number: {
-      $if: 'tasks_for == "github-pull-request"',
-      then: '${event.number}',
-      else: '',
-    }
-  in:
-    $flattenDeep:
-      - $if: '(tasks_for == "github-pull-request" && event["action"] in ["opened", "reopened", "synchronize"]) || (tasks_for == "github-push" && branch == "refs/heads/main")'
-        then:
-          - taskId: {$eval: as_slugid("backend-tests")}
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '2 hours'}
-            provisionerId: releng-t
-            workerType: linux-gcp
-            scopes:
-              - secrets:get:repo:github.com/mozilla-releng/balrog:coveralls
-            routes: []
-            payload:
-              maxRunTime: 1200
-              image: "python:3.9"
-              env:
-                # For Coveralls to function properly CIRCLECI and CI_PULL_REQUEST need to be set
-                CIRCLECI: "1"
-                CI_PULL_REQUEST: "${pull_request_number}"
-                TOXENV: "check,py39,coveralls"
-              command:
-                - "/bin/bash"
-                - "-c"
-                - >-
-                  export COVERALLS_REPO_TOKEN=$(curl 'taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:coveralls' | python -c 'import json, sys; a = json.load(sys.stdin); print(a["secret"]["repo_token"])') &&
-                  git clone ${repo_url} balrog &&
-                  cd balrog &&
-                  git checkout ${head_sha} &&
-                  pip install tox &&
-                  tox
-              features:
-                taskclusterProxy: true
-            metadata:
-              name: Balrog back-end tests
-              description: Balrog Python tests
-              owner: ${owner_email}
-              source: ${repo_url}
-
-          - taskId: {$eval: as_slugid("agent-tests")}
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '2 hours'}
-            provisionerId: releng-t
-            workerType: linux-gcp
-            scopes: []
-            routes: []
-            payload:
-              maxRunTime: 1200
-              image: "python:3.9"
-              env:
-                TOXENV: "check,py39"
-              command:
-                - "/bin/bash"
-                - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && pip install tox && tox"
-            metadata:
-              name: Balrog agent tests
-              description: Balrog agent tests
-              owner: ${owner_email}
-              source: ${repo_url}
-
-          - taskId: {$eval: as_slugid("client-tests-py39")}
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '2 hours'}
-            provisionerId: releng-t
-            workerType: linux-gcp
-            scopes: []
-            routes: []
-            payload:
-              maxRunTime: 1200
-              image: "python:3.9"
-              env:
-                TOXENV: "check,py39"
-              command:
-                - "/bin/bash"
-                - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd client && pip install tox && tox"
-            metadata:
-              name: Balrog client tests
-              description: Balrog client tests
-              owner: ${owner_email}
-              source: ${repo_url}
-
-          - taskId: {$eval: as_slugid("agent-docker-build")}
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '2 hours'}
-            provisionerId: releng-t
-            workerType: linux-gcp
-            routes: []
-            payload:
-              maxRunTime: 3600
-              image: "taskcluster/image_builder:0.1.3"
-              command:
-                - "/bin/bash"
-                - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && docker build ."
-              features:
-                dind: true
-            metadata:
-              name: Balrog agent docker build
-              description: Balrog agent docker build
-              owner: ${owner_email}
-              source: ${repo_url}
-
-          - taskId: {$eval: as_slugid("backend-docker-build")}
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '2 hours'}
-            provisionerId: releng-t
-            workerType: linux-gcp
-            routes: []
-            payload:
-              maxRunTime: 3600
-              image: "taskcluster/image_builder:0.1.3"
-              command:
-                - "/bin/bash"
-                - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && docker build ."
-              features:
-                dind: true
-            metadata:
-              name: Balrog backend docker build
-              description: Balrog backend docker build
-              owner: ${owner_email}
-              source: ${repo_url}
-
-          - taskId: {$eval: as_slugid("ui-tests")}
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '2 hours'}
-            provisionerId: releng-t
-            workerType: linux-gcp
-            scopes: []
-            routes: []
-            payload:
-              maxRunTime: 1200
-              image: "node:16"
-              command:
-                - "/bin/bash"
-                - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd ui && yarn install && yarn lint && yarn test"
-            metadata:
-              name: Balrog frontend tests
-              description: Balrog frontend tests
-              owner: ${owner_email}
-              source: ${repo_url}
-
-          - taskId: {$eval: as_slugid("ui-build")}
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '2 hours'}
-            provisionerId: releng-t
-            workerType: linux-gcp
-            scopes: []
-            routes: []
-            payload:
-              maxRunTime: 1200
-              image: "node:16"
-              command:
-                - "/bin/bash"
-                - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd ui && yarn install && yarn build"
-            metadata:
-              name: Balrog frontend build
-              description: Balrog frontend build
-              owner: ${owner_email}
-              source: ${repo_url}
-
-      - $if: 'tasks_for == "github-release"'
-        then:
-          - taskId: {$eval: as_slugid("agent-docker-image")}
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '2 hours'}
-            provisionerId: releng-3
-            workerType: linux-gcp
-            scopes:
-              - secrets:get:repo:github.com/mozilla-releng/balrog:dockerhub
-            routes: []
-            payload:
-              maxRunTime: 3600
-              image: "taskcluster/image_builder:0.1.3"
-              command:
-                - "/bin/bash"
-                - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd agent && scripts/push-dockerimage.sh ${docker_tags}"
-              features:
-                dind: true
-                taskclusterProxy: true
-            metadata:
-              name: Balrog agent docker build
-              description: Balrog agent docker build
-              owner: ${owner_email}
-              source: ${repo_url}
-
-          - taskId: {$eval: as_slugid("backend-docker-image")}
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '2 hours'}
-            provisionerId: releng-3
-            workerType: linux-gcp
-            scopes:
-              - secrets:get:repo:github.com/mozilla-releng/balrog:dockerhub
-            routes: []
-            payload:
-              maxRunTime: 3600
-              image: "taskcluster/image_builder:0.1.3"
-              command:
-                - "/bin/bash"
-                - "-c"
-                - "git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && scripts/push-dockerimage.sh Dockerfile ${docker_tags}"
-              features:
-                dind: true
-                taskclusterProxy: true
-            metadata:
-              name: Balrog backend docker build
-              description: Balrog backend docker build
-              owner: ${owner_email}
-              source: ${repo_url}
-
-      # Deploy the UI to stage whenever we create a versioned release tag
-      - $if: 'tasks_for == "github-release" && release_tag[0] == "v"'
-        then:
-          - taskId: {$eval: as_slugid("stage-ui-deploy")}
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '2 hours'}
-            provisionerId: releng-3
-            workerType: linux-gcp
-            scopes:
-              - secrets:get:repo:github.com/mozilla-releng/balrog:s3-stage-aws-creds
-              - secrets:get:repo:github.com/mozilla-releng/balrog:s3-stage-app-config
-            routes: []
-            payload:
-              env:
-                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-stage-aws-creds
-                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-stage-app-config
-                WEBSITE_BUCKET: balrog-stage-balrog-static-admin-stage-static-website
-              maxRunTime: 3600
-              image: "node:16"
-              command:
-                - "/bin/bash"
-                - "-c"
-                - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd ui && yarn install && bash ./scripts/deploy"
-              features:
-                taskclusterProxy: true
-            metadata:
-              name: Balrog stage ui deploy
-              description: Balrog stage ui deploy
-              owner: ${owner_email}
-              source: ${repo_url}
-
-      # Deploy to production only for a specific tag
-      - $if: 'tasks_for == "github-release" && release_tag == "production-ui"'
-        then:
-          - taskId: {$eval: as_slugid("prod-ui-deploy")}
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '2 hours'}
-            provisionerId: releng-3
-            workerType: linux-gcp
-            scopes:
-              - secrets:get:repo:github.com/mozilla-releng/balrog:s3-prod-aws-creds
-              - secrets:get:repo:github.com/mozilla-releng/balrog:s3-prod-app-config
-            routes: []
-            payload:
-              env:
-                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-prod-aws-creds
-                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-prod-app-config
-                WEBSITE_BUCKET: balrog-prod-balrog-static-admin-prod-static-website
-              maxRunTime: 3600
-              image: "node:16"
-              command:
-                - "/bin/bash"
-                - "-c"
-                - "apt-get -q --yes update && apt-get -q --yes install awscli && git clone ${repo_url} balrog && cd balrog && git checkout ${head_sha} && cd ui && yarn install && bash ./scripts/deploy"
-              features:
-                taskclusterProxy: true
-            metadata:
-              name: Balrog prod ui deploy
-              description: Balrog prod ui deploy
-              owner: ${owner_email}
-              source: ${repo_url}
+    - $let:
+          project: balrog
+          # Dependabot, and possibly other things creating pull requests
+          # can set `user` to something that can't be used in an e-mail
+          # address, so we simply make this static to workaround.
+          ownerEmail: 'release+balrog-ci@mozilla.com'
+          # Github events have this stuff in different places...
+          baseRepoUrl:
+              $if: 'tasks_for == "github-pull-request"'
+              then: '${event.pull_request.base.repo.html_url}'
+              else: '${event.repository.html_url}'
+          repoUrl:
+              $if: 'tasks_for == "github-pull-request"'
+              then: '${event.pull_request.head.repo.html_url}'
+              else: '${event.repository.html_url}'
+          head_branch:
+              $if: 'tasks_for == "github-pull-request"'
+              then: ${event.pull_request.head.ref}
+              else:
+                  $if: 'tasks_for == "github-push"'
+                  then: ${event.ref}
+                  else: ${event.release.target_commitish}
+          head_sha:
+              $if: 'tasks_for == "github-push"'
+              then: '${event.after}'
+              else:
+                  $if: 'tasks_for == "github-pull-request"'
+                  then: '${event.pull_request.head.sha}'
+                  else: '${event.release.tag_name}'
+          ownTaskId: {$eval: as_slugid("decision_task")}
+          level:
+              $if: >
+                  tasks_for in ["github-push", "github-release"]
+              then: '3'
+              else: '1'
+          trustDomain: releng
+      in:
+          $if: >
+              (tasks_for == "github-push" && head_branch == "refs/heads/main")
+              || (tasks_for == "github-pull-request" && event.action in ["opened", "reopened", "synchronize"])
+              || (tasks_for == "github-release")
+          then:
+              taskId: '${ownTaskId}'
+              taskGroupId: '${ownTaskId}'  # same as taskId; this is how automation identifies a decision task
+              schedulerId: '${trustDomain}-level-${level}'
+              created: {$fromNow: ''}
+              deadline: {$fromNow: '1 day'}
+              expires: {$fromNow: '1 year 1 second'}
+              metadata:
+                  owner: "${ownerEmail}"
+                  source: '${repoUrl}/raw/${head_sha}/.taskcluster.yml'
+                  name: "Decision Task"
+                  description: 'The task that creates all of the other tasks in the task graph'
+              provisionerId: "${trustDomain}-${level}"
+              workerType: "decision-gcp"
+              tags:
+                  kind: decision-task
+              routes:
+                  $flatten:
+                      - checks
+                      - $if: 'tasks_for == "github-push"'
+                        then:
+                            - "index.${trustDomain}.v2.${project}.revision.${head_sha}.taskgraph.decision"
+                        else: []
+              scopes:
+                  # `https://` is 8 characters so, ${repoUrl[8:]} is the repository without the protocol.
+                  $if: 'tasks_for == "github-push"'
+                  then:
+                      $let:
+                          short_head_branch:
+                              $if: 'head_branch[:10] == "refs/tags/"'
+                              then: {$eval: 'head_branch[10:]'}
+                              else:
+                                  $if: 'head_branch[:11] == "refs/heads/"'
+                                  then: {$eval: 'head_branch[11:]'}
+                                  else: ${head_branch}
+                      in:
+                          - 'assume:repo:${repoUrl[8:]}:branch:${short_head_branch}'
+    
+                  else:
+                      $if: 'tasks_for == "github-pull-request"'
+                      then:
+                          - 'assume:repo:github.com/${event.pull_request.base.repo.full_name}:pull-request'
+                      else:
+                          $if: 'tasks_for == "github-release"'
+                          then:
+                              - 'assume:repo:${repoUrl[8:]}:release'
+    
+              requires: all-completed
+              priority: lowest
+              retries: 5
+    
+              payload:
+                  env:
+                      # run-task uses these to check out the source; the inputs
+                      # to `mach taskgraph decision` are all on the command line.
+                      $merge:
+                          - BALROG_BASE_REPOSITORY: '${baseRepoUrl}'
+                            BALROG_HEAD_REPOSITORY: '${repoUrl}'
+                            BALROG_HEAD_REF: '${head_branch}'
+                            BALROG_HEAD_REV: '${head_sha}'
+                            BALROG_REPOSITORY_TYPE: git
+                            BALROG_PIP_REQUIREMENTS: taskcluster/requirements.txt
+                            REPOSITORIES: {$json: {balrog: "Balrog"}}
+                          - $if: 'tasks_for in ["github-pull-request"]'
+                            then:
+                                BALROG_PULL_REQUEST_NUMBER: '${event.pull_request.number}'
+                  features:
+                      taskclusterProxy: true
+                      chainOfTrust: true
+                  # Note: This task is built server side without the context or tooling that
+                  # exist in tree so we must hard code the hash
+                  image: mozillareleases/taskgraph:decision-d1ddb5593679cec9d7d2cdd8e9b8e2228b14ebe9b844411276cc3cfe37d189aa@sha256:b236321d98367f9cdbbd28c47bad7c0df34884897b75d266185d2e9e569ac0fa
+                  maxRunTime: 1800
+    
+                  command:
+                      - /usr/local/bin/run-task
+                      - '--balrog-checkout=/builds/worker/checkouts/src'
+                      - '--task-cwd=/builds/worker/checkouts/src'
+                      - '--'
+                      - bash
+                      - -cx
+                      - $let:
+                            extraArgs:
+                                $if: 'tasks_for == "github-release"'
+                                then: '--head-tag="${event.release.tag_name}"'
+                                else: ''
+                        in:
+                            ln -s /builds/worker/artifacts artifacts &&
+                            ~/.local/bin/taskgraph decision
+                            --pushlog-id='0'
+                            --pushdate='0'
+                            --project='${project}'
+                            --message=""
+                            --owner='${ownerEmail}'
+                            --level='${level}'
+                            --base-repository="$BALROG_BASE_REPOSITORY"
+                            --head-repository="$BALROG_HEAD_REPOSITORY"
+                            --head-ref="$BALROG_HEAD_REF"
+                            --head-rev="$BALROG_HEAD_REV"
+                            --repository-type="$BALROG_REPOSITORY_TYPE"
+                            --tasks-for='${tasks_for}'
+                            --target-tasks-method=balrog
+                            ${extraArgs}
+    
+                  artifacts:
+                      'public':
+                          type: 'directory'
+                          path: '/builds/worker/artifacts'
+                          expires: {$fromNow: '1 year'}
+                      'public/docker-contexts':
+                          type: 'directory'
+                          path: '/builds/worker/checkouts/src/docker-contexts'
+                          # This needs to be at least the deadline of the
+                          # decision task + the docker-image task deadlines.
+                          # It is set to a week to allow for some time for
+                          # debugging, but they are not useful long-term.
+                          expires: {$fromNow: '7 day'}
+    
+              extra:
+                  tasks_for: '${tasks_for}'

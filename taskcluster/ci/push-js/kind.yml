@@ -1,0 +1,58 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+---
+
+loader: taskgraph.loader.transform:loader
+
+kind-dependencies:
+  - ui
+
+transforms:
+    - balrog_taskgraph.transforms.run_on_releases:transforms
+    - taskgraph.transforms.job:transforms
+    - taskgraph.transforms.task:transforms
+
+task-defaults:
+    worker-type: images
+    run-on-tasks-for: [github-release]
+    run:
+        using: run-task
+        cache-dotcache: false
+        checkout:
+            balrog: {}
+        cwd: '{checkout}/ui'
+        command: "yarn install && ./scripts/deploy"
+    worker:
+        docker-image: {in-tree: node}
+        max-run-time: 3600
+    dependencies:
+          tests-js: ui-tests
+          build-ui: ui-build
+
+tasks:
+    stage:
+        description: "Staging UI deploy"
+        scopes:
+            - secrets:get:repo:github.com/mozilla-releng/balrog:s3-stage-aws-creds
+            - secrets:get:repo:github.com/mozilla-releng/balrog:s3-stage-app-config
+        worker:
+            env:
+                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-stage-aws-creds
+                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-stage-app-config
+                WEBSITE_BUCKET: balrog-stage-balrog-static-admin-stage-static-website
+        run-on-releases:
+            - v
+
+    prod:
+        description: "Production UI deploy"
+        scopes:
+            - secrets:get:repo:github.com/mozilla-releng/balrog:s3-prod-aws-creds
+            - secrets:get:repo:github.com/mozilla-releng/balrog:s3-prod-app-config
+        worker:
+            env:
+                AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-prod-aws-creds
+                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-prod-app-config
+                WEBSITE_BUCKET: balrog-prod-balrog-static-admin-prod-static-website
+        run-on-releases:
+            - production-ui$
