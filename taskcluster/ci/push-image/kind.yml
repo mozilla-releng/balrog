@@ -20,11 +20,6 @@ task-defaults:
         taskcluster-proxy: true
         docker-image: {in-tree: skopeo}
         max-run-time: 3600
-    dependencies:
-          tests-js: ui-tests
-          build-js: ui-build
-          tests-backend: test-backend
-          tests-agent: test-agent
     run-on-tasks-for: [github-release]
     run-on-releases: [v]
     run:
