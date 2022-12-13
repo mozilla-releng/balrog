@@ -25,11 +25,11 @@ def sanity_check_release(parameters):
 def filter_for_github_release_name(task, parameters):
     if parameters["tasks_for"] != "github-release":
         return True
-    run_on_release_tags = set(task.attributes.get("run_on_release_tags", ["all"]))
+    run_on_releases = set(task.attributes.get("run_on_releases", ["all"]))
     head_tag = parameters["head_tag"]
     if head_tag.startswith(_GIT_REFS_TAGS_PREFIX):
         head_tag = head_tag[len(_GIT_REFS_TAGS_PREFIX) :]
-    return match_run_on_git_tags(head_tag, run_on_release_tags)
+    return match_run_on_git_tags(head_tag, run_on_releases)
 
 
 @_target_task("balrog")
