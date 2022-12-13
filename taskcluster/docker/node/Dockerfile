@@ -11,6 +11,12 @@ RUN mkdir /builds && \
     mkdir /builds/worker/artifacts && \
     chown worker:worker /builds/worker/artifacts
 
+# the push-js task uses aws cli to sync to s3
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -qq \
+    && apt-get install -y awscli \
+    && apt-get clean
+
 # %include-run-task
 
 ENV SHELL=/bin/bash \
