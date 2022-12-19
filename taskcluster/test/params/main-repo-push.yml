@@ -1,0 +1,27 @@
+base_ref: origin/main
+base_repository: https://github.com/mozilla-releng/balrog
+base_rev: f33ef437c4b9fcf05d229ad0e42d885379e962d0
+build_date: 1670945016
+build_number: 1
+do_not_optimize: []
+enable_always_target: true
+existing_tasks: {}
+filters:
+- target_tasks_method
+head_ref: refs/heads/main
+head_repository: https://github.com/mozilla-releng/balrog
+head_rev: f33ef437c4b9fcf05d229ad0e42d885379e962d0
+head_tag: ''
+level: '3'
+moz_build_date: '20221213152336'
+next_version: null
+optimize_strategies: null
+optimize_target_tasks: true
+owner: release+balrog-ci@mozilla.com
+project: balrog
+pushdate: 0
+pushlog_id: '0'
+repository_type: git
+target_tasks_method: balrog
+tasks_for: github-push
+version: '3.21'
