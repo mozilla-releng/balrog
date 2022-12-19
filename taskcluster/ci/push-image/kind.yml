@@ -29,7 +29,7 @@ task-defaults:
         command:
             - /usr/local/bin/push_image.sh
     fetches:
-        docker-image:
+        image:
             - artifact: image.tar.zst
               extract: false
     scopes:
@@ -39,7 +39,7 @@ tasks:
     balrog-backend:
         description: "Push balrog backend docker image"
         dependencies:
-              docker-image: build-docker-image-balrog-backend
+              image: build-docker-image-balrog-backend
         worker:
             env:
                 DOCKER_REPO: docker.io/mozilla/balrog
@@ -47,7 +47,7 @@ tasks:
     balrog-agent:
         description: "Push balrogagent docker image"
         dependencies:
-              docker-image: build-docker-image-balrog-agent
+              image: build-docker-image-balrog-agent
         worker:
             env:
                 DOCKER_REPO: docker.io/mozilla/balrogagent
