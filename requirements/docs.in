@@ -15,5 +15,6 @@ spec-synthase
 sqlalchemy
 sqlalchemy-migrate
 
-sphinx
+# TODO: update to sphinx 6 once sphinx-rtd-theme 1.2.0 is out
+sphinx<6
 sphinx_rtd_theme
