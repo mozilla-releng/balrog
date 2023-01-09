@@ -6,7 +6,7 @@ from .problem import problem
 
 
 def get_releases():
-    return releases.get_releases(request.transaction), 200
+    return releases.get_releases(request.transaction, request.args), 200
 
 
 def get_release(name):

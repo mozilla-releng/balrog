@@ -22,8 +22,7 @@ const setReadOnlyV2 = (name, readOnly, oldDataVersion) =>
 const getReleases = () => axios.get('/releases');
 const getRelease = name => axios.get(`/releases/${encodeURIComponent(name)}`);
 const getReleaseNames = () => axios.get('/releases?names_only=1');
-const getReleaseNamesV2 = () =>
-  getReleasesV2().then(result => result.data.releases.map(r => r.name));
+const getReleaseNamesV2 = () => axios.get('/v2/releases?names_only=1');
 const makeSignoffV2 = (name, role) =>
   axios.put(`/v2/releases/${encodeURIComponent(name)}/signoff`, { role });
 const revokeSignoffV2 = name =>
