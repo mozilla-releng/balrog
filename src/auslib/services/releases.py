@@ -255,7 +255,13 @@ def get_release_names(trans, product=None):
     return sorted([r["name"] for r in dbo.releases_json.select(columns=[dbo.releases_json.name], where=where, transaction=trans)])
 
 
-def get_releases(trans):
+def get_releases(trans, args=None):
+    if args is None:
+        args = {}
+
+    if args.get("names_only"):
+        return get_release_names(trans)
+
     releases = dbo.releases_json.select(
         columns=[dbo.releases_json.name, dbo.releases_json.product, dbo.releases_json.data_version, dbo.releases_json.read_only], transaction=trans
     )

@@ -170,7 +170,9 @@ function Rule({ isNewRule, user, ...props }) {
     Promise.all([fetchReleaseNames(), fetchReleaseNamesV2()]).then(
       ([names, namesV2]) => {
         if (names.data.data && namesV2.data) {
-          setReleaseNames(names.data.data.names.concat(namesV2.data).sort());
+          setReleaseNames(
+            names.data.data.names.concat(namesV2.data.data).sort()
+          );
         }
       }
     );
