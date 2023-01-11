@@ -478,8 +478,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReleaseModifyResponse'
-                $ref: '#/components/schemas/ReleasePinNotSetResponse'
+                anyOf:
+                  - $ref: '#/components/schemas/ReleaseModifyResponse'
+                  - $ref: '#/components/schemas/ReleasePinNotSetResponse'
         '400':
           description: Client error
         '403':
@@ -487,6 +488,22 @@ paths:
 
   /pins/{product}/{channel}/{version}:
     get:
+      parameters:
+        - in: path
+          name: product
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: channel
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: version
+          schema:
+            type: string
+          required: true
       summary: Get a JSON object representing the specified pin
       operationId: auslib.web.admin.views.pins_v2.get_pin
       responses:
