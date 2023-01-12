@@ -1,5 +1,6 @@
 #!/bin/bash
 # This runs in docker to pin our requirements files.
+set -x
 set -e
 SUFFIX=${SUFFIX:-txt}
 if [ $# -gt 0 ]; then

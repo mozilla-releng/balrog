@@ -1,5 +1,5 @@
 import logging
-from typing import AnyStr, Union  # to satisfy flake8 with the type hinting
+from typing import AnyStr, Union
 
 import jsonschema
 from connexion.decorators.validation import RequestBodyValidator
@@ -15,10 +15,9 @@ logger = logging.getLogger(__name__)
 
 
 class BalrogRequestBodyValidator(RequestBodyValidator):
-    def validate_schema(self, data, url):
+    def validate_schema(self, data: dict, url: AnyStr) -> Union[ConnexionResponse, None]:
         """This function is largely based on https://github.com/zalando/connexion/blob/master/connexion/decorators/validation.py
         and should largely be kept in line with it."""
-        # type: (dict, AnyStr) -> Union[ConnexionResponse, None]
         if self.is_null_value_valid and is_null(data):
             return None
         try:
