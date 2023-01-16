@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 from repoze.lru import ExpiringLRUCache
+from statsd import StatsClient
 
 uncached_sentinel = object()
 
@@ -24,6 +25,7 @@ class MaybeCacher(object):
     def __init__(self):
         self.caches = {}
         self._make_copies = False
+        self.stats_client = StatsClient(prefix="balrog.cache")
 
     @property
     def make_copies(self):
@@ -60,11 +62,13 @@ class MaybeCacher(object):
         # If we got something other than a sentinel value, the key was in the cache, and we should return it
         if cached_value != uncached_sentinel:
             value = cached_value
+            self.stats_client.incr(f"{name}.hits")
         else:
             # If we know how to look up the value, go do it, cache it, and return it
             if callable(value_getter):
                 value = value_getter()
                 self.put(name, key, value)
+            self.stats_client.incr(f"{name}.misses")
 
         if self.make_copies:
             return deepcopy(value)
