@@ -23,5 +23,6 @@ swagger-spec-validator
 setuptools
 sqlalchemy
 sqlalchemy-migrate
+statsd
 uwsgi
 pyjwt==2.4.0
