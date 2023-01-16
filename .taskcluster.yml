@@ -48,7 +48,7 @@ tasks:
           $if: >
               (tasks_for == "github-push" && head_branch == "refs/heads/main")
               || (tasks_for == "github-pull-request" && event.action in ["opened", "reopened", "synchronize"])
-              || (tasks_for == "github-release")
+              || (tasks_for == "github-release" && releaseAction == "published")
           then:
               taskId: '${ownTaskId}'
               taskGroupId: '${ownTaskId}'  # same as taskId; this is how automation identifies a decision task
