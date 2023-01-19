@@ -5,6 +5,8 @@ import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
+import statsd.defaults
+
 from auslib.log import configure_logging
 
 STAGING = bool(int(os.environ.get("STAGING", 0)))
@@ -46,6 +48,9 @@ logging_kwargs = {"level": os.environ.get("LOG_LEVEL", logging.INFO)}
 if os.environ.get("LOG_FORMAT") == "plain":
     logging_kwargs["formatter"] = logging.Formatter
 configure_logging(**logging_kwargs)
+
+# statsd environment also needs to be set up before importing the application
+statsd.defaults.PREFIX = "balrog.public.cache"
 
 from auslib.global_state import cache, dbo  # noqa
 from auslib.web.public.base import app as application  # noqa
