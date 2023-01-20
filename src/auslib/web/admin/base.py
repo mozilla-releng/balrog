@@ -15,12 +15,6 @@ from auslib.util.auth import verified_userinfo
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import BalrogRequestBodyValidator
 
-try:
-    from urllib import unquote
-except ImportError:  # pragma: no cover
-    from urllib.parse import unquote
-
-
 log = logging.getLogger(__name__)
 
 current_dir = path.dirname(__file__)
@@ -42,21 +36,6 @@ connexion_app.add_api(path.join(current_dir, "swagger", "api_v2.yml"), base_path
 app = connexion_app.app
 
 create_dockerflow_endpoints(app)
-
-
-# When running under uwsgi, paths will not get decoded before hitting the app.
-# We need to handle this ourselves in certain fields, and adding converters
-# for them is the best way to do this.
-class UnquotingMiddleware(object):
-    def __init__(self, app):
-        self.app = app
-
-    def __call__(self, environ, start_response):
-        environ["PATH_INFO"] = unquote(environ["PATH_INFO"])
-        return self.app(environ, start_response)
-
-
-app.wsgi_app = UnquotingMiddleware(app.wsgi_app)
 
 
 @app.before_request
