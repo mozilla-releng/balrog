@@ -4,6 +4,8 @@ import re
 from auslib.util.comparison import int_compare, string_compare, version_compare
 from auslib.util.versions import MozillaVersion
 
+log = logging.getLogger(__name__)
+
 
 def matchRegex(foo, bar):
     # Expand wildcards and use ^/$ to make sure we don't succeed on partial
@@ -98,7 +100,7 @@ def matchVersion(ruleVersion, queryVersion, versionClass=MozillaVersion):
     """Decides whether a version from the rules matches an incoming version.
     If the ruleVersion is null, we match any queryVersion. If it's not
     null, we must either match exactly, or match a comparison operator."""
-    logging.debug("ruleVersion: %s, queryVersion: %s", ruleVersion, queryVersion)
+    log.debug("ruleVersion: %s, queryVersion: %s", ruleVersion, queryVersion)
     if ruleVersion is None:
         return True
     rulesVersionList = ruleVersion.split(",")
