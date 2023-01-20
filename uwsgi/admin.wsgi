@@ -6,6 +6,7 @@ import sys
 
 import aiohttp
 import sentry_sdk
+import statsd.defaults
 from gcloud.aio.storage import Storage
 from google.api_core.exceptions import Forbidden
 from google.cloud import storage
@@ -50,6 +51,9 @@ if os.environ.get("LOG_FORMAT") == "plain":
 configure_logging(**logging_kwargs)
 
 log = logging.getLogger(__file__)
+
+# statsd environment also needs to be set up before importing the application
+statsd.defaults.PREFIX = "balrog.admin.cache"
 
 from auslib.global_state import cache, dbo  # noqa
 from auslib.web.admin.base import app as application  # noqa

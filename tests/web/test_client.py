@@ -27,18 +27,22 @@ def setUpModule():
     logging.getLogger("migrate").setLevel(logging.CRITICAL)
 
 
-def validate_cache_stats(lookups, hits, misses, data_version_lookups, data_version_hits, data_version_misses):
+def validate_cache_stats(lookups, hits, misses, data_version_lookups, data_version_hits, data_version_misses, mocked_incr):
     for cache_name in ("releases", "release_assets"):
         c = cache.caches[cache_name]
         assert c.lookups == lookups, cache_name
         assert c.hits == hits, cache_name
         assert c.misses == misses, cache_name
+        mocked_incr.assert_has_calls([mock.call(f"{cache_name}.hits")] * hits, any_order=True)
+        mocked_incr.assert_has_calls([mock.call(f"{cache_name}.misses")] * misses, any_order=True)
 
     for cache_name in ("releases_data_version", "release_assets_data_versions"):
         c = cache.caches[cache_name]
         assert c.lookups == data_version_lookups, cache_name
         assert c.hits == data_version_hits, cache_name
         assert c.misses == data_version_misses, cache_name
+        mocked_incr.assert_has_calls([mock.call(f"{cache_name}.hits")] * data_version_hits, any_order=True)
+        mocked_incr.assert_has_calls([mock.call(f"{cache_name}.misses")] * data_version_misses, any_order=True)
 
 
 class TestGetSystemCapabilities(unittest.TestCase):
@@ -1534,6 +1538,7 @@ class ClientTest(ClientTestBase):
                 mock.patch.object(releases_service, "get_asset_data_versions", wraps=releases_service.get_asset_data_versions)
             )
             t = stack.enter_context(mock.patch("time.time"))
+            mocked_incr = stack.enter_context(mock.patch("statsd.StatsClient.incr"))
             # The lookups/hits/misses here come in multiples of 4 because we have:
             #  - a release that the rule is pointing to
             #  - 3 potential partials, all of which get looked at
@@ -1641,7 +1646,7 @@ class ClientTest(ClientTestBase):
 </updates>""",
                 )
                 validate_cache_stats(
-                    arg["lookups"], arg["hits"], arg["misses"], arg["data_version_lookups"], arg["data_version_hits"], arg["data_version_misses"]
+                    arg["lookups"], arg["hits"], arg["misses"], arg["data_version_lookups"], arg["data_version_hits"], arg["data_version_misses"], mocked_incr
                 )
                 # In addition to validating cache hits and misses, we need to make
                 # sure that we didn't call the database layer more than we expected
