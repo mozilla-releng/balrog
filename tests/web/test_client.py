@@ -1115,6 +1115,19 @@ class ClientTest(ClientTestBase):
 """,
         )
 
+    def testVersion6GetWithLessThanEqualToMemoryEncoded(self):
+        ret = self.client.get("/update/6/f/1.0/1/p/l/a/a/ISET%3aSSE3%2cMEM%3a8000/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="35">
+        <patch type="complete" URL="http://a.com/f" hashFunction="sha512" hashValue="34" size="33"/>
+    </update>
+</updates>
+""",
+        )
+
     def testVersion6GetWithExactMemory(self):
         ret = self.client.get("/update/6/f/1.0/1/p/l/b/a/ISET:SSE3,MEM:9000/a/a/update.xml")
         self.assertUpdateEqual(
@@ -1128,8 +1141,34 @@ class ClientTest(ClientTestBase):
 """,
         )
 
+    def testVersion6GetWithExactMemoryEncoded(self):
+        ret = self.client.get("/update/6/f/1.0/1/p/l/b/a/ISET%3aSSE3%2cMEM%3a9000/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="35">
+        <patch type="complete" URL="http://a.com/f" hashFunction="sha512" hashValue="34" size="33"/>
+    </update>
+</updates>
+""",
+        )
+
     def testVersion6GetWithGreaterThanMemory(self):
         ret = self.client.get("/update/6/f/1.0/1/p/l/c/a/ISET:SSE3,MEM:11000/a/a/update.xml")
+        self.assertUpdateEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="1.0" extensionVersion="1.0" buildID="35">
+        <patch type="complete" URL="http://a.com/f" hashFunction="sha512" hashValue="34" size="33"/>
+    </update>
+</updates>
+""",
+        )
+
+    def testVersion6GetWithGreaterThanMemoryEncoded(self):
+        ret = self.client.get("/update/6/f/1.0/1/p/l/c/a/ISET%3aSSE3%2cMEM%3a11000/a/a/update.xml")
         self.assertUpdateEqual(
             ret,
             """<?xml version="1.0"?>
