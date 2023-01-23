@@ -22,9 +22,9 @@ black==22.12.0 \
     # via
     #   -r requirements/test.in
     #   flake8-black
-build==0.9.0 \
-    --hash=sha256:1a07724e891cbd898923145eb7752ee7653674c511378eb9c7691aab1612bc3c \
-    --hash=sha256:38a7a2b7a0bdc61a42a0a67509d88c71ecfc37b393baba770fae34e20929ff69
+build==0.10.0 \
+    --hash=sha256:af266720050a66c893a6096a2f410989eeac74ff9a68ba194b3f6473e8e26171 \
+    --hash=sha256:d5b71264afdb5951d6704482aac78de887c80691c52b88a9ad195983ca2c9269
     # via
     #   check-manifest
     #   pip-tools
@@ -114,13 +114,13 @@ flake8-black==0.3.6 \
     --hash=sha256:0dfbca3274777792a5bcb2af887a4cad72c72d0e86c94e08e3a3de151bb41c34 \
     --hash=sha256:fe8ea2eca98d8a504f22040d9117347f6b367458366952862ac3586e7d4eeaca
     # via -r requirements/test.in
-hypothesis==6.61.0 \
-    --hash=sha256:7bb22d22e35db99d5724bbf5bdc686b46add94a0f228bf1be249c47ec46b9c7f \
-    --hash=sha256:fbf7da30aea839d88898f74bcc027f0f997060498a8a7605880688c8a2166215
+hypothesis==6.65.0 \
+    --hash=sha256:24e3219b0b181414c06bb7a62649a6edb471f148d25c9c9687f47505b0f50b1c \
+    --hash=sha256:d25914dd4008b0292d116ac315f01f6691c5460c494a0291c01d96f4bc17fe68
     # via -r requirements/test.in
-iniconfig==1.1.1 \
-    --hash=sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3 \
-    --hash=sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32
+iniconfig==2.0.0 \
+    --hash=sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3 \
+    --hash=sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374
     # via pytest
 isort==5.11.4 \
     --hash=sha256:6db30c5ded9815d813932c04c2f85a360bcdd35fed496f4d8f35495ef0a261b6 \
@@ -130,9 +130,9 @@ mccabe==0.7.0 \
     --hash=sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325 \
     --hash=sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e
     # via flake8
-mock==5.0.0 \
-    --hash=sha256:335ef0bf9bcd27505c0c1720d4eac2783f18d07d6f45ac49542b57885a1996dd \
-    --hash=sha256:fd552787228eb2ab8352f270470fa93c9ad8b9cbc565c5558ee3faed8edb3853
+mock==5.0.1 \
+    --hash=sha256:c41cfb1e99ba5d341fbcc5308836e7d7c9786d302f995b2c271ce2144dece9eb \
+    --hash=sha256:e3ea505c03babf7977fd21674a69ad328053d414f05e6433c30d8fa14a534a6b
     # via -r requirements/test.in
 mypy-extensions==0.4.3 \
     --hash=sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d \
@@ -142,10 +142,12 @@ pathspec==0.10.3 \
     --hash=sha256:3c95343af8b756205e2aba76e843ba9520a24dd84f68c22b9f93251507509dd6 \
     --hash=sha256:56200de4077d9d0791465aa9095a01d421861e405b5096955051deefd697d6f6
     # via black
-pep517==0.13.0 \
-    --hash=sha256:4ba4446d80aed5b5eac6509ade100bff3e7943a8489de249654a5ae9b33ee35b \
-    --hash=sha256:ae69927c5c172be1add9203726d4b84cf3ebad1edcd5f71fcdc746e66e829f59
-    # via build
+pip==22.3.1 \
+    --hash=sha256:65fd48317359f3af8e593943e6ae1506b66325085ea64b706a998c6e83eeaf38 \
+    --hash=sha256:908c78e6bc29b676ede1c4d57981d490cb892eb45cd8c214ab6298125119e077
+    # via
+    #   -r requirements/test.in
+    #   pip-tools
 pip-compile-multi==2.6.1 \
     --hash=sha256:902d2a3534ba6eb848010087cebbf823491cbcef20fd9924dc526c97aaec53a6 \
     --hash=sha256:e4408087c47c170b0812eaf7eaea12a526751eb3cd0acad2b00e199120060b44
@@ -170,9 +172,13 @@ pyflakes==3.0.1 \
     --hash=sha256:ec55bf7fe21fff7f1ad2f7da62363d749e2a470500eab1b555334b67aa1ef8cf \
     --hash=sha256:ec8b276a6b60bd80defed25add7e439881c19e64850afd9b346283d4165fd0fd
     # via flake8
-pytest==7.2.0 \
-    --hash=sha256:892f933d339f068883b6fd5a459f03d85bfcb355e4981e146d2c7616c21fef71 \
-    --hash=sha256:c4014eb40e10f11f355ad4e3c2fb2c6c6d1919c73f3b5a433de4708202cade59
+pyproject-hooks==1.0.0 \
+    --hash=sha256:283c11acd6b928d2f6a7c73fa0d01cb2bdc5f07c57a2eeb6e83d5e56b97976f8 \
+    --hash=sha256:f271b298b97f5955d53fb12b72c1fb1948c22c1a6b70b315c54cedaca0264ef5
+    # via build
+pytest==7.2.1 \
+    --hash=sha256:c7c6ca206e93355074ae32f7403e8ea12163b1163c976fee7d4d84027c162be5 \
+    --hash=sha256:d45e0952f3727241918b8fd0f376f5ff6b301cc0777c6f9a556935c92d8a7d42
     # via
     #   -r requirements/test.in
     #   pytest-asyncio
@@ -203,18 +209,13 @@ tomli==2.0.1 \
     #   check-manifest
     #   coverage
     #   flake8-black
-    #   pep517
+    #   pyproject-hooks
     #   pytest
-toposort==1.7 \
-    --hash=sha256:8ed8e109e96ae30bf66da2d2155e4eb9989d9c5c743c837e37d9774a4eddd804 \
-    --hash=sha256:ddc2182c42912a440511bd7ff5d3e6a1cabc3accbc674a3258c8c41cbfbb2125
+toposort==1.9 \
+    --hash=sha256:9f434c815e1bd2f9ad05152b6b0071b1f56e288c107869708f2463ec932e2637 \
+    --hash=sha256:f41a34490d44934b533a7bdaff979ee8a47203fd2d8a746db83f2d5ab12458b9
     # via pip-compile-multi
 wheel==0.38.4 \
     --hash=sha256:965f5259b566725405b05e7cf774052044b1ed30119b5d586b2703aafe8719ac \
     --hash=sha256:b60533f3f5d530e971d6737ca6d58681ee434818fab630c83a734bb10c083ce8
     # via pip-tools
-
-# WARNING: The following packages were not pinned, but pip requires them to be
-# pinned when the requirements file includes hashes. Consider using the --allow-unsafe flag.
-# pip
-# setuptools

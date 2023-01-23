@@ -6,9 +6,9 @@
 #    pip-compile-multi
 #
 -r test.txt
-cachetools==5.2.0 \
-    --hash=sha256:6a94c6402995a99c3970cc7e4884bb60b4a8639938157eeed436098bf9831757 \
-    --hash=sha256:f9f17d2aec496a9aa6b76f53e3b614c965223c061982d434d160f930c698a9db
+cachetools==5.3.0 \
+    --hash=sha256:13dfddc7b8df938c21a940dfa6557ce6e94a2f1cdfa58eb90c805721d58f2c14 \
+    --hash=sha256:429e1a1e845c008ea6c85aa35d4b98b65d6a9763eeef3e37e92728a12d1de9d4
     # via tox
 chardet==5.1.0 \
     --hash=sha256:0d62712b956bc154f85fb0a266e2a3c5913c2967e00348701b32411d6def31e5 \
@@ -28,20 +28,15 @@ filelock==3.9.0 \
     # via
     #   tox
     #   virtualenv
-pyproject-api==1.2.1 \
-    --hash=sha256:093c047d192ceadcab7afd6b501276bf2ce44adf41cb9c313234518cddd20818 \
-    --hash=sha256:155d5623453173b7b4e9379a3146ccef2d52335234eb2d03d6ba730e7dad179c
+pyproject-api==1.5.0 \
+    --hash=sha256:0962df21f3e633b8ddb9567c011e6c1b3dcdfc31b7860c0ede7e24c5a1200fbe \
+    --hash=sha256:4c111277dfb96bcd562c6245428f27250b794bfe3e210b8714c4f893952f2c17
     # via tox
-tox==4.1.3 \
-    --hash=sha256:9976b41def48a5a2dce477de2c90c8231a5166829aaca916d0952ec4d7429f43 \
-    --hash=sha256:f1840b1698e5187d4c3bae4fe41332c2f3fedde3b6773474899f9e0b329a41dd
+tox==4.3.5 \
+    --hash=sha256:307993257d792a12a63ff86a0b67a71a5ab2d4a2cc12bbae947115224d4ac3fb \
+    --hash=sha256:6dddc4c69718b65aacbef0921ffa8af065b0f63ff0b24ffc403477975853c918
     # via -r requirements/local.in
 virtualenv==20.17.1 \
     --hash=sha256:ce3b1684d6e1a20a3e5ed36795a97dfc6af29bc3970ca8dab93e11ac6094b3c4 \
     --hash=sha256:f8b927684efc6f1cc206c9db297a570ab9ad0e51c16fa9e45487d36d1905c058
     # via tox
-
-# WARNING: The following packages were not pinned, but pip requires them to be
-# pinned when the requirements file includes hashes. Consider using the --allow-unsafe flag.
-# pip
-# setuptools
