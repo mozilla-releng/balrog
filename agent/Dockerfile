@@ -14,7 +14,7 @@ COPY tests/ /app/tests/
 COPY scripts/ /app/scripts/
 COPY run.sh MANIFEST.in pyproject.toml setup.py version.json /app/
 # test-only stuff
-COPY tox.ini version.txt /app/
+COPY version.txt /app/
 
 RUN python setup.py install
 

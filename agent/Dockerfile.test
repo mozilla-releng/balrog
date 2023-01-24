@@ -1,0 +1,21 @@
+# WARNING: keep this file in sync with taskcluster/docker/balrog-agent/Dockerfile
+
+FROM python:3.9-slim
+
+MAINTAINER jcristau@mozilla.com
+
+WORKDIR /app
+
+COPY requirements/ /app/requirements/
+RUN pip install -r requirements/local.txt
+
+COPY src/ /app/src/
+COPY tests/ /app/tests/
+COPY scripts/ /app/scripts/
+COPY run.sh MANIFEST.in pyproject.toml setup.py version.json /app/
+# test-only stuff
+COPY tox.ini version.txt /app/
+
+RUN python setup.py develop
+
+ENTRYPOINT ["tox"]
