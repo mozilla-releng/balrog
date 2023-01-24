@@ -1,7 +1,7 @@
 import json
+from unittest import IsolatedAsyncioTestCase, mock
 
 import aiohttp
-import asynctest
 from yarl import URL
 
 from balrogagent import client
@@ -24,7 +24,7 @@ class fake_request:
         return resp
 
 
-class TestBalrogClient(asynctest.TestCase):
+class TestBalrogClient(IsolatedAsyncioTestCase):
     async def testGET(self):
         mocked_resp = {
             "count": 2,
@@ -33,14 +33,14 @@ class TestBalrogClient(asynctest.TestCase):
                 {"sc_id": 2, "telemetry_product": "Firefox", "telemetry_channel": "release", "telemetry_uptake": 3000},
             ],
         }
-        with asynctest.patch("aiohttp.request", fake_request(mocked_resp, 200)) as r:
+        with mock.patch("aiohttp.request", fake_request(mocked_resp, 200)) as r:
             resp = await client.request("http://balrog.fake", "/api/scheduled_changes", loop=self.loop)
             self.assertEqual(json.loads(r.request_data), {})
             self.assertEqual(mocked_resp, await resp.json())
 
     async def testPOST(self):
         mocked_resp = {"new_data_version": 2}
-        with asynctest.patch("aiohttp.request", fake_request(mocked_resp, 200)) as r:
+        with mock.patch("aiohttp.request", fake_request(mocked_resp, 200)) as r:
             resp = await client.request("http://balrog.fake", "/api/scheduled_changes/1", method="POST", data={"when": 987654321}, loop=self.loop)
             self.assertEqual(json.loads(r.request_data), {"when": 987654321})
             self.assertEqual(mocked_resp, await resp.json())
