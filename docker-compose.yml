@@ -45,14 +45,6 @@ services:
       - NIGHTLY_HISTORY_BUCKET=balrog-prod-nightly-history-v1
       - GOOGLE_APPLICATION_CREDENTIALS=google.json
       - CORS_ORIGINS=*
-      # Grab mail information from the local environment
-      - SMTP_HOST
-      - SMTP_PORT
-      - SMTP_USERNAME
-      - SMTP_PASSWORD
-      - SMTP_TLS
-      - NOTIFY_TO_ADDR
-      - NOTIFY_FROM_ADDR
       - STAGING
       - LOCAL_ADMIN
     healthcheck:

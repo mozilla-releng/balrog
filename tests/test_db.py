@@ -5,7 +5,6 @@ import re
 import sys
 import unittest
 from copy import deepcopy
-from itertools import chain
 from os import path
 from tempfile import mkstemp
 
@@ -39,7 +38,6 @@ from auslib.db import (
 from auslib.errors import BlobValidationError, ReadOnlyError
 from auslib.global_state import cache, dbo
 from auslib.services import releases
-from auslib.util.compat import query_params, whereclause
 
 from .fakes import FakeGCSHistory, FakeGCSHistoryAsync
 
@@ -317,18 +315,6 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
                 pass
             self.assertTrue(close.called, "Connection.close() never called by insert()")
 
-    def testInsertWithChangeCallback(self):
-        shared = []
-        self.test.onInsert = lambda *x, **y: shared.extend(x)
-        what = {"id": 5, "foo": 1}
-        self.test.insert(changed_by="bob", **what)
-        # insert adds data_version to the query, so we need to add that before comparing
-        what["data_version"] = 1
-        self.assertEqual(shared[0], self.test)
-        self.assertEqual(shared[1], "INSERT")
-        self.assertEqual(shared[2], "bob")
-        self.assertEqual(query_params(shared[3]), what)
-
     def testDelete(self):
         ret = self.test.delete(changed_by="bill", where=[self.test.id == 1, self.test.foo == 33], old_data_version=4)
         self.assertEqual(ret.rowcount, 1)
@@ -342,19 +328,6 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
             self.test.delete(changed_by="bill", where=[self.test.id == 1], old_data_version=4)
             self.assertTrue(close.called, "Connection.close() never called by delete()")
 
-    def testDeleteWithChangeCallback(self):
-        shared = []
-        self.test.onDelete = lambda *x: shared.extend(x)
-        where = [self.test.id == 1]
-        self.test.delete(changed_by="bob", where=where, old_data_version=4)
-        # update adds data_version and id to the query, so we need to add that before comparing
-        self.assertEqual(shared[0], self.test)
-        self.assertEqual(shared[1], "DELETE")
-        self.assertEqual(shared[2], "bob")
-        # There should be two WHERE clauses, because AUSTable adds a data_version one in addition
-        # to the id condition above.
-        self.assertEqual(len(whereclause(shared[3])), 2)
-
     def testUpdate(self):
         ret = self.test.update(changed_by="bob", where=[self.test.id == 1], what=dict(foo=123), old_data_version=4)
         self.assertEqual(ret.rowcount, 1)
@@ -367,32 +340,6 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         with mock.patch("sqlalchemy.engine.base.Connection.close") as close:
             self.test.update(changed_by="bob", where=[self.test.id == 1], what=dict(foo=432), old_data_version=4)
             self.assertTrue(close.called, "Connection.close() never called by update()")
-
-    def testUpdateWithChangeCallback(self):
-        shared = []
-
-        def onUpdate(*args, **kwargs):
-            shared.extend(args)
-            for _, v in kwargs.items():
-                shared.append(v)
-
-        self.test.onUpdate = onUpdate
-        where = [self.test.id == 1]
-        what = dict(foo=123)
-        additional_columns = dict(bar=42)
-        self.test.update(changed_by="bob", where=where, what=dict(chain(what.items(), additional_columns.items())), old_data_version=4)
-        # update adds data_version and id to the query, so we need to add that before comparing
-        what["data_version"] = 5
-        what["id"] = 1
-        self.assertEqual(shared[0], self.test)
-        self.assertEqual(shared[1], "UPDATE")
-        self.assertEqual(shared[2], "bob")
-        self.assertEqual(query_params(shared[3]), what)
-        self.assertIsInstance(shared[4], AUSTransaction)
-        self.assertEqual(shared[5], additional_columns)
-        # There should be two WHERE clauses, because AUSTable adds a data_version one in addition
-        # to the id condition above.
-        self.assertEqual(len(whereclause(shared[3])), 2)
 
     def test_count(self):
         count = self.test.count()
@@ -5643,170 +5590,6 @@ class TestDB(unittest.TestCase):
         db.create()
         insp = Inspector.from_engine(db.engine)
         self.assertNotEqual(insp.get_table_names(), [])
-
-
-class PartialString(str):
-    """Super hacky way to do partial string matches in mock's assert_called_with, because
-    it doesn't provide a way to access individual arguments of a call."""
-
-    def __eq__(self, other):
-        return self in other
-
-    def __repr__(self):
-        return "Partial string of: '%s'" % self
-
-
-class RegexPartialString(object):
-    """In Python2 some strings is printed with u'' (unicode) prefix and in python3 b''(bytes)."""
-
-    def __init__(self, pattern):
-        self.pattern = pattern
-
-    def __eq__(self, other):
-        return bool(re.findall(self.pattern, other))
-
-    def __repr__(self):
-        return "RegexPartialString %s" % self.pattern
-
-
-@pytest.mark.usefixtures("current_db_schema")
-class TestChangeNotifiers(unittest.TestCase):
-    def setUp(self):
-        self.db = AUSDatabase("sqlite:///:memory:")
-        self.metadata.create_all(self.db.engine)
-        self.db.rules.t.insert().execute(rule_id=2, priority=100, channel="release", backgroundRate=100, update_type="z", data_version=1)
-        self.db.rules.t.insert().execute(rule_id=3, priority=100, channel="release", backgroundRate=100, update_type="y", data_version=1)
-        self.db.rules.scheduled_changes.t.insert().execute(
-            sc_id=1,
-            complete=0,
-            scheduled_by="bob",
-            base_rule_id=2,
-            base_priority=100,
-            base_channel="release",
-            base_backgroundRate=10,
-            base_update_type="z",
-            base_data_version=1,
-            data_version=1,
-            change_type="update",
-        )
-        self.db.rules.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=10000000000000000, data_version=1)
-        self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
-        self.db.releases.t.insert().execute(
-            name="a", product="a", read_only=True, data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), data_version=1
-        )
-        self.db.releases.t.insert().execute(
-            name="b", product="b", read_only=False, data=createBlob(dict(name="b", schema_version=1, hashFunction="sha512")), data_version=1
-        )
-
-    def _runTest(self, changer):
-        with mock.patch("smtplib.SMTP") as smtp:
-            mock_conn = mock.Mock()
-            smtp.return_value = mock_conn
-            self.db.setupChangeMonitors("fake", 25, "fake", "fake", "fake@to.com", "fake@from.com")
-            changer()
-            return mock_conn
-
-    def testOnInsertRule(self):
-        def doit():
-            self.db.rules.insert("bob", product="foo", channel="bar", backgroundRate=100, priority=50, update_type="minor")
-
-        mock_conn = self._runTest(doit)
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("INSERT"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row to be inserted:"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'channel':\s[b|u]?'bar'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'rule_id':"))
-
-    def testOnInsertPermission(self):
-        def doit():
-            self.db.permissions.insert("bob", permission="admin", username="charlie", data_version=1)
-
-        mock_conn = self._runTest(doit)
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("INSERT"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row to be inserted:"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'permission': 'admin'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'username': 'charlie'"))
-
-    def testOnUpdate(self):
-        def doit():
-            self.db.rules.update({"rule_id": 2}, {"product": "blah"}, "bob", 1)
-
-        mock_conn = self._runTest(doit)
-        # Updating a Rule causes its Scheduled Change to be updated as well, so we have to check both of those calls.
-        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("UPDATE to rules"))
-        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
-        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", PartialString("'product': None ---> 'blah'"))
-        mock_conn.sendmail.assert_any_call("fake@from.com", "fake@to.com", RegexPartialString(r"'channel':\s[b|u]?\"?'release'\"?"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE to rules_scheduled_changes"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'base_product':\s[b|u]?\"?None ---> 'blah'\"?"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'base_channel':\s[u|b]?\"?'release'\"?,"))
-
-    def testOnDelete(self):
-        def doit():
-            self.db.rules.delete({"rule_id": 3}, changed_by="bob", old_data_version=1)
-
-        mock_conn = self._runTest(doit)
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("DELETE"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be removed:"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'rule_id': 3"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'channel':\s[b|u]?'release'"))
-
-    def testOnInsertRuleSC(self):
-        def doit():
-            self.db.rules.scheduled_changes.insert(
-                "bob", when=2000000000000000, product="foo", channel="bar", backgroundRate=100, priority=50, update_type="minor", change_type="insert"
-            )
-
-        mock_conn = self._runTest(doit)
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("INSERT"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row to be inserted:"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'scheduled_by':\s[u|b]?'bob'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'base_channel':\s[u|b]?'bar'"))
-
-    def testOnUpdateRuleSC(self):
-        def doit():
-            self.db.rules.scheduled_changes.update({"sc_id": 1}, {"product": "blah"}, "bob", 1)
-
-        mock_conn = self._runTest(doit)
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("UPDATE"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be updated as follows:"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'base_product': None ---> 'blah'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'base_channel':\s[b|u]?\"?'release'\"?"))
-
-    def testOnDeleteRuleSC(self):
-        def doit():
-            self.db.rules.scheduled_changes.delete({"sc_id": 1}, changed_by="bob", old_data_version=1)
-
-        mock_conn = self._runTest(doit)
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("DELETE"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("Row(s) to be removed:"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'sc_id': 1"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'base_channel':\s[b|u]?'release'"))
-
-    def testOnChangeReadOnly(self):
-        def doit():
-            self.db.releases.update({"name": "a"}, {"read_only": False}, changed_by="bob", old_data_version=1)
-
-        mock_conn = self._runTest(doit)
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString("Read only release" r"\s[b|u]?'a' changed to modifiable"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'name':\s[b|u]?'a'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", RegexPartialString(r"'product':\s[b|u]?'a'"))
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("'read_only': True" " ---> False"))
-
-    def testOnChangeReadOnlySetUnmodifiable(self):
-        def doit():
-            self.db.releases.update({"name": "b"}, {"read_only": False}, changed_by="bob", old_data_version=1)
-
-        mock_conn = self._runTest(doit)
-        mock_conn.sendmail.assert_not_called()
-
-    @mock.patch("auslib.db.generate_random_string", mock.MagicMock(return_value="ABCDEF"))
-    def testUniqueSubject(self):
-        def doit():
-            self.db.rules.scheduled_changes.delete({"sc_id": 1}, changed_by="bob", old_data_version=1)
-
-        mock_conn = self._runTest(doit)
-        mock_conn.sendmail.assert_called_with("fake@from.com", "fake@to.com", PartialString("ABCDEF"))
 
 
 class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):

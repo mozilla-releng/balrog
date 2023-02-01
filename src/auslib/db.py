@@ -1,7 +1,6 @@
 import itertools
 import json
 import logging
-import pprint
 import re
 import time
 from collections import defaultdict
@@ -21,7 +20,6 @@ from sqlalchemy.sql.functions import max as sql_max
 from auslib.blobs.base import createBlob, merge_dicts
 from auslib.errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
 from auslib.global_state import cache
-from auslib.util.compat import query_param, query_params, whereclause
 from auslib.util.rulematching import (
     matchBoolean,
     matchBuildID,
@@ -262,22 +260,6 @@ class AUSTable(object):
                               tracks the history of a scheduled change.
 
     :type scheduled_changes: bool
-    :param onInsert: A callback that will be called whenever an insert is
-                     made to the table. It must accept the following 4
-                     parameters:
-
-                      * The table object the query is being performed on
-                      * The type of query being performed (eg: INSERT)
-                      * The name of the user making the change
-                      * The query object that will be execeuted
-
-                     If the callback raises an exception the change will
-                     be aborted.
-    :type onInsert: callable
-    :param onDelete: See onInsert
-    :type onDelete: callable
-    :param onUpdate: See onInsert
-    :type onUpdate: callable
     """
 
     def __init__(
@@ -289,9 +271,6 @@ class AUSTable(object):
         versioned=True,
         scheduled_changes=False,
         scheduled_changes_kwargs={},
-        onInsert=None,
-        onUpdate=None,
-        onDelete=None,
     ):
         self.db = db
         self.t = self.table
@@ -299,9 +278,6 @@ class AUSTable(object):
         if versioned:
             self.t.append_column(Column("data_version", Integer, nullable=False))
         self.versioned = versioned
-        self.onInsert = onInsert
-        self.onUpdate = onUpdate
-        self.onDelete = onDelete
         # Mirror the columns as attributes for easy access
         self.primary_key = []
         for col in self.table.columns:
@@ -413,11 +389,6 @@ class AUSTable(object):
             data["data_version"] = 1
         query, unconsumed_columns = self._insertStatement(**data)
         ret = trans.execute(query)
-        if self.onInsert:
-            pk_columns = self.t.primary_key.columns.keys()
-            pk_values = ret.inserted_primary_key
-            pk_args = dict(zip(pk_columns, pk_values))
-            self.onInsert(self, "INSERT", changed_by, query, trans, additional_columns=unconsumed_columns, pk_args=pk_args)
         return data, ret
 
     def _prepareInsert(self, trans, changed_by, **columns):
@@ -520,9 +491,6 @@ class AUSTable(object):
             where.append(self.data_version == old_data_version)
 
         query = self._deleteStatement(where)
-
-        if self.onDelete:
-            self.onDelete(self, "DELETE", changed_by, query, trans)
 
         ret = trans.execute(query)
         if ret.rowcount != 1:
@@ -680,9 +648,6 @@ class AUSTable(object):
             new_row[col] = what[col]
 
         query, unconsumed_columns = self._updateStatement(where, new_row)
-
-        if self.onUpdate:
-            self.onUpdate(self, "UPDATE", changed_by, query, trans, additional_columns=unconsumed_columns)
 
         ret = trans.execute(query)
         # It's important that OutdatedDataError is raised as early as possible
@@ -3013,112 +2978,6 @@ class PinnableReleasesTable(AUSTable):
         return rows[0]["mapping"]
 
 
-class UnquotedStr(str):
-    def __repr__(self):
-        return self.__str__()
-
-
-def send_email(relayhost, port, username, password, to_addr, from_addr, table, subj, body, use_tls):
-    from email.mime.text import MIMEText
-    from smtplib import SMTP
-
-    msg = MIMEText("\n".join(body), "plain")
-    msg["Subject"] = subj
-    msg["from"] = from_addr
-
-    try:
-        conn = SMTP(relayhost)
-        conn.connect(relayhost, port)
-        conn.ehlo()
-        if use_tls:
-            conn.starttls()
-            conn.ehlo()
-    except Exception:
-        table.log.exception("Failed to connect to SMTP server:")
-        return
-    try:
-        if username and password:
-            conn.login(username, password)
-        conn.sendmail(from_addr, to_addr, msg.as_string())
-    except Exception:
-        table.log.exception("Failed to send change notification:")
-    finally:
-        conn.quit()
-
-
-def make_change_notifier(relayhost, port, username, password, to_addr, from_addr, use_tls):
-    def bleet(table, type_, changed_by, query, transaction, additional_columns=None, pk_args=None):
-        body = ["Changed by: %s" % changed_by]
-        if type_ == "UPDATE":
-            body.append("Row(s) to be updated as follows:")
-            where = [c for c in whereclause(query).get_children()]
-            changed = {}
-            unchanged = {}
-            for row in table.select(where=where, transaction=transaction):
-                for k in row:
-                    parameters = query_params(query)
-                    if additional_columns:
-                        parameters.update(additional_columns)
-                    if parameters[k] != row[k]:
-                        changed[k] = UnquotedStr("%s ---> %s" % (repr(row[k]), repr(parameters[k])))
-                    else:
-                        unchanged[k] = UnquotedStr("%s" % repr(row[k]))
-                body.append("Changed values:")
-                body.append(pprint.pformat(changed))
-                body.append("\nUnchanged:")
-                body.append(pprint.pformat(unchanged))
-            body.append("\n\n")
-        elif type_ == "DELETE":
-            body.append("Row(s) to be removed:")
-            where = [c for c in whereclause(query).get_children()]
-            for row in table.select(where=where, transaction=transaction):
-                body.append(pprint.pformat(row))
-        elif type_ == "INSERT":
-            body.append("Row to be inserted:")
-            parameters = query_params(query)
-            parameters.update(pk_args)
-            if additional_columns:
-                parameters.update(additional_columns)
-            body.append(pprint.pformat(parameters))
-
-        subj = "%s to %s detected %s" % (type_, table.t.name, generate_random_string(6))
-        send_email(relayhost, port, username, password, to_addr, from_addr, table, subj, body, use_tls)
-        table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
-
-    return bleet
-
-
-def generate_random_string(length):
-    import random
-    import string
-
-    return "".join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(length))
-
-
-def make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr, use_tls):
-    def bleet(table, type_, changed_by, query, transaction, additional_columns=None):
-        body = ["Changed by: %s" % changed_by]
-        where = [c for c in whereclause(query).get_children()]
-        # TODO: How are we sometimes (always?) getting no rows for this. It shouldn't be possible...
-        # It's possible that the where clause is not getting extracted properly.
-        rows = table.select(where=where, transaction=transaction)
-        if rows:
-            row = rows[0]
-            if not query_param(query, "read_only") and row["read_only"]:
-                body.append("Row(s) to be updated as follows:")
-                data = {}
-                data["name"] = UnquotedStr(repr(row["name"]))
-                data["product"] = UnquotedStr(repr(row["product"]))
-                data["read_only"] = UnquotedStr("%s ---> %s" % (repr(row["read_only"]), repr(query_param(query, "read_only"))))
-                body.append(pprint.pformat(data))
-
-                subj = "Read only release %s changed to modifiable" % data["name"]
-                send_email(relayhost, port, username, password, to_addr, from_addr, table, subj, body, use_tls)
-                table.log.debug("Sending change notification mail for %s to %s", table.t.name, to_addr)
-
-    return bleet
-
-
 # A helper that sets sql_mode. This should only be used with MySQL, and
 # lets us put the database in a stricter mode that will disallow things like
 # automatic data truncation.
@@ -3182,35 +3041,6 @@ class AUSDatabase(object):
 
     def setDomainAllowlist(self, domainAllowlist):
         self.releasesTable.setDomainAllowlist(domainAllowlist)
-
-    def setupChangeMonitors(self, relayhost, port, username, password, to_addr, from_addr, use_tls=False, notify_tables=None):
-        bleeter = make_change_notifier(relayhost, port, username, password, to_addr, from_addr, use_tls)
-        if notify_tables is None:
-            notify_tables = (
-                self.rules,
-                self.rules.scheduled_changes,
-                self.rules.scheduled_changes.signoffs,
-                self.permissions,
-                self.permissions.user_roles,
-                self.permissions.scheduled_changes,
-                self.permissions.scheduled_changes.signoffs,
-                self.productRequiredSignoffs,
-                self.productRequiredSignoffs.scheduled_changes,
-                self.productRequiredSignoffs.scheduled_changes.signoffs,
-                self.permissionsRequiredSignoffs,
-                self.permissionsRequiredSignoffs.scheduled_changes,
-                self.permissionsRequiredSignoffs.scheduled_changes.signoffs,
-                self.releases.scheduled_changes,
-                self.releases.scheduled_changes.signoffs,
-            )
-
-        for t in notify_tables:
-            t.onInsert = bleeter
-            t.onUpdate = bleeter
-            t.onDelete = bleeter
-
-        read_only_bleeter = make_change_notifier_for_read_only(relayhost, port, username, password, to_addr, from_addr, use_tls)
-        self.releases.onUpdate = read_only_bleeter
 
     def isKnownUser(self, username):
         return self.permissions.isKnownUser(username)

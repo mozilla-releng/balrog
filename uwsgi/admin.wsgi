@@ -142,19 +142,6 @@ else:
         asyncio.run(wrapper())
 
 dbo.setDb(os.environ["DBURI"], buckets)
-if os.environ.get("NOTIFY_TO_ADDR"):
-    use_tls = False
-    if os.environ.get("SMTP_TLS"):
-        use_tls = True
-    dbo.setupChangeMonitors(
-        os.environ["SMTP_HOST"],
-        os.environ["SMTP_PORT"],
-        os.environ.get("SMTP_USERNAME"),
-        os.environ.get("SMTP_PASSWORD"),
-        os.environ["NOTIFY_TO_ADDR"],
-        os.environ["NOTIFY_FROM_ADDR"],
-        use_tls,
-    )
 dbo.setSystemAccounts(SYSTEM_ACCOUNTS)
 dbo.setDomainAllowlist(DOMAIN_ALLOWLIST)
 application.config["ALLOWLISTED_DOMAINS"] = DOMAIN_ALLOWLIST
