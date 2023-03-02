@@ -196,8 +196,22 @@ application.config["AUTH_DOMAIN"] = os.environ["AUTH0_DOMAIN"]
 application.config["AUTH_AUDIENCE"] = os.environ["AUTH0_AUDIENCE"]
 
 application.config["M2M_ACCOUNT_MAPPING"] = {
-    # Local dev
+    # Local dev - managed by RelEng
     "41U6XJQdSa6CL8oGa6CXvO4aZWlnq5xg": "balrogagent",
+    # Other environments - managed by IT
+    # Dev
+    "XvPN9fQDqIEuQ05tImVHtcjqjZ6fZ360": "balrogagent",
+    # Stage
+    "LJWEpDTYRIsnddSwa7rgeGZdczaNaIKd": "balrogagent",
+    "UH57Bj8yfUyQjRehPCQlHbRjyZ38k526": "balrog-stage-ffxbld",
+    "zPmNwPov86PcswvnjEfsoocmQrMMPnS3": "balrog-stage-tbirdbld",
+    "A8hmiRzpGYo6N3VzOzsBHzijZQRrNlZb": "balrog-stage-xpibld",
+    # Prod
+    "8MQB51S7XgaswbpyprqcQjfOweiGm3h5": "balrogagent",
+    "GaX7R2sfI38tlsOos6Z4f5OrZu8EjBUX": "balrog-ffxbld",
+    "Oz9caB7d57xutcNf9CwaczYnDTvXPIIX": "balrog-tbirdbld",
+    "Z8vYcCTtOjPRCHaQNCfoXSU5PzNQKmr5": "balrog-xpibld",
+    # Old client ids, to be removed shortly after March 2nd, 2023
     # Dev
     "R6Tpyx7clqQFmR6bvkAUJodV4J8V8LdQ": "balrogagent",
     "EwqLzlkJUg6CLrmGdP4xfu9ytc8HpMzU": "balrogagent",
