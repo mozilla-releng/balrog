@@ -211,19 +211,4 @@ application.config["M2M_ACCOUNT_MAPPING"] = {
     "GaX7R2sfI38tlsOos6Z4f5OrZu8EjBUX": "balrog-ffxbld",
     "Oz9caB7d57xutcNf9CwaczYnDTvXPIIX": "balrog-tbirdbld",
     "Z8vYcCTtOjPRCHaQNCfoXSU5PzNQKmr5": "balrog-xpibld",
-    # Old client ids, to be removed shortly after March 2nd, 2023
-    # Dev
-    "R6Tpyx7clqQFmR6bvkAUJodV4J8V8LdQ": "balrogagent",
-    "EwqLzlkJUg6CLrmGdP4xfu9ytc8HpMzU": "balrogagent",
-    # Stage
-    "tKirJIJUQ5D5wU1oxPoA1qxEzmMHnB4h": "balrogagent",
-    "tKO6KT7I8vAga0tVG5kPyaZzjhf0OYGF": "balrogagent",
-    "tGbG2QUboAQpF35j1p40dpD2XYiC4AB7": "balrog-stage-ffxbld",
-    "nyfi9KOMJZXAq3xjkF57wSwkJS2gUkHO": "balrog-stage-tbirdbld",
-    "HSJNWzTxhz7aI9e27TtOs4O4gdlTwQ0V": "balrog-stage-xpibld",
-    # Prod
-    "6TpOQiDH9UhSUouLrxlLP7PbWyJ8epsa": "balrogagent",
-    "DqmXymgjiz6XuRXIewDnuR7oB8bOxkf0": "balrog-ffxbld",
-    "ztM3MdGFNjbPYOq7R4br2EukKhuL6qlY": "balrog-tbirdbld",
-    "C30mPrbld4nT02uc3UIm2bNb1a9ybSb6": "balrog-xpibld",
 }
