@@ -47,6 +47,8 @@ class AdhocBalrogTester:
         resp = self.session.request(method, url, *args, **kwargs)
         try:
             resp.raise_for_status()
+            if "content-signature" in resp.headers:
+                log.info("  found content-signature: " + resp.headers["content-signature"])
             if resp.content:
                 try:
                     resp_data = resp.json()
