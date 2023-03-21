@@ -1,8 +1,6 @@
-FROM openresty/openresty:centos
+# Should match the version used in production
+FROM nginx:1.20
 
-RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-Linux-* &&\
-    sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*
-
-# netcat is used to listen to the ports.
-
-RUN yum install -y nmap-ncat
+RUN apt-get -q update \
+    && apt-get -q --yes install ncat \
+    && apt-get clean
