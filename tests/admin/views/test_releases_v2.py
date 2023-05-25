@@ -1264,7 +1264,7 @@ def test_put_add_scheduled_change_fails_without_permission(api, firefox_56_0_bui
 
     ret = api.put(
         "/v2/releases/Firefox-56.0-build1",
-        json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
+        json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
     assert ret.status_code == 403, ret.data
 
@@ -1276,11 +1276,11 @@ def test_put_add_scheduled_change_base_only(api, firefox_56_0_build1):
 
     old_data_versions = versions_dict()
     old_data_versions["."] = 1
-    new_data_versions = {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
+    new_data_versions = {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1991639932000}}
 
     ret = api.put(
         "/v2/releases/Firefox-56.0-build1",
-        json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
+        json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
     assert ret.status_code == 200, ret.data
     assert ret.json == new_data_versions, ret.json
@@ -1308,7 +1308,7 @@ def test_put_add_scheduled_change_base_only(api, firefox_56_0_build1):
     assert "locales" not in base_sc["base_data"]["platforms"]["Linux_x86_64-gcc3"]
     assert base_sc["base_product"] == "Firefox"
     assert base_sc["base_data_version"] == 1
-    assert base_sc_cond["when"] == 1681639932000
+    assert base_sc_cond["when"] == 1991639932000
     assert len(base_sc_signoffs) == 1
     assert base_sc_signoffs[0]["username"] == "bob"
     assert base_sc_signoffs[0]["role"] == "releng"
@@ -1329,14 +1329,14 @@ def test_put_add_scheduled_change_locale_only(api, firefox_56_0_build1):
     new_data_versions = {
         "platforms": {
             "Linux_x86_64-gcc3": {
-                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
+                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1991639932000}}
             }
         }
     }
 
     ret = api.put(
         "/v2/releases/Firefox-56.0-build1",
-        json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
+        json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
     assert ret.status_code == 200, ret.data
     assert ret.json == new_data_versions, ret.json
@@ -1368,7 +1368,7 @@ def test_put_add_scheduled_change_locale_only(api, firefox_56_0_build1):
     assert locale_sc["data_version"] == 1
     assert locale_sc["base_data"] == firefox_56_0_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
     assert locale_sc["base_data_version"] == 1
-    assert locale_sc_cond["when"] == 1681639932000
+    assert locale_sc_cond["when"] == 1991639932000
     assert len(locale_sc_signoffs) == 1
     assert locale_sc_signoffs[0]["username"] == "bob"
     assert locale_sc_signoffs[0]["role"] == "releng"
@@ -1384,17 +1384,17 @@ def test_put_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
     new_data_versions = {
-        ".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000},
+        ".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1991639932000},
         "platforms": {
             "Linux_x86_64-gcc3": {
-                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
+                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1991639932000}}
             }
         },
     }
 
     ret = api.put(
         "/v2/releases/Firefox-56.0-build1",
-        json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
+        json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
     assert ret.status_code == 200, ret.data
     assert ret.json == new_data_versions, ret.json
@@ -1422,7 +1422,7 @@ def test_put_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     assert "locales" not in base_sc["base_data"]["platforms"]["Linux_x86_64-gcc3"]
     assert base_sc["base_product"] == "Firefox"
     assert base_sc["base_data_version"] == 1
-    assert base_sc_cond["when"] == 1681639932000
+    assert base_sc_cond["when"] == 1991639932000
     assert len(base_sc_signoffs) == 1
     assert base_sc_signoffs[0]["username"] == "bob"
     assert base_sc_signoffs[0]["role"] == "releng"
@@ -1445,7 +1445,7 @@ def test_put_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     assert locale_sc["data_version"] == 1
     assert locale_sc["base_data"] == firefox_56_0_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
     assert locale_sc["base_data_version"] == 1
-    assert locale_sc_cond["when"] == 1681639932000
+    assert locale_sc_cond["when"] == 1991639932000
     assert len(locale_sc_signoffs) == 1
     assert locale_sc_signoffs[0]["username"] == "bob"
     assert locale_sc_signoffs[0]["role"] == "releng"
@@ -1462,7 +1462,7 @@ def test_post_add_scheduled_change_fails_without_permission(api, firefox_56_0_bu
 
     ret = api.post(
         "/v2/releases/Firefox-56.0-build1",
-        json={"blob": {"displayVersion": "fifty six dot oh"}, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
+        json={"blob": {"displayVersion": "fifty six dot oh"}, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
     assert ret.status_code == 403, ret.data
 
@@ -1474,11 +1474,11 @@ def test_post_add_scheduled_change_base_only(api, firefox_56_0_build1):
 
     old_data_versions = versions_dict()
     old_data_versions["."] = 1
-    new_data_versions = {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
+    new_data_versions = {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1991639932000}}
 
     ret = api.post(
         "/v2/releases/Firefox-56.0-build1",
-        json={"blob": {"displayVersion": "fifty six dot oh"}, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
+        json={"blob": {"displayVersion": "fifty six dot oh"}, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
     assert ret.status_code == 200, ret.data
     assert ret.json == new_data_versions, ret.json
@@ -1506,7 +1506,7 @@ def test_post_add_scheduled_change_base_only(api, firefox_56_0_build1):
     assert "locales" not in base_sc["base_data"]["platforms"]["Linux_x86_64-gcc3"]
     assert base_sc["base_product"] == "Firefox"
     assert base_sc["base_data_version"] == 1
-    assert base_sc_cond["when"] == 1681639932000
+    assert base_sc_cond["when"] == 1991639932000
     assert len(base_sc_signoffs) == 1
     assert base_sc_signoffs[0]["username"] == "bob"
     assert base_sc_signoffs[0]["role"] == "releng"
@@ -1528,14 +1528,14 @@ def test_post_add_scheduled_change_locale_only(api, firefox_56_0_build1):
     new_data_versions = {
         "platforms": {
             "Linux_x86_64-gcc3": {
-                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
+                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1991639932000}}
             }
         }
     }
 
     ret = api.post(
         "/v2/releases/Firefox-56.0-build1",
-        json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
+        json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
     assert ret.status_code == 200, ret.data
     assert ret.json == new_data_versions, ret.json
@@ -1567,7 +1567,7 @@ def test_post_add_scheduled_change_locale_only(api, firefox_56_0_build1):
     assert locale_sc["data_version"] == 1
     assert locale_sc["base_data"] == firefox_56_0_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
     assert locale_sc["base_data_version"] == 1
-    assert locale_sc_cond["when"] == 1681639932000
+    assert locale_sc_cond["when"] == 1991639932000
     assert len(locale_sc_signoffs) == 1
     assert locale_sc_signoffs[0]["username"] == "bob"
     assert locale_sc_signoffs[0]["role"] == "releng"
@@ -1583,17 +1583,17 @@ def test_post_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     old_data_versions["."] = 1
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
     new_data_versions = {
-        ".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000},
+        ".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1991639932000},
         "platforms": {
             "Linux_x86_64-gcc3": {
-                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1681639932000}}
+                "locales": {"en-US": {"sc_id": 18, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 1991639932000}}
             }
         },
     }
 
     ret = api.post(
         "/v2/releases/Firefox-56.0-build1",
-        json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1681639932000},
+        json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
     assert ret.status_code == 200, ret.data
     assert ret.json == new_data_versions, ret.json
@@ -1621,7 +1621,7 @@ def test_post_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     assert "locales" not in base_sc["base_data"]["platforms"]["Linux_x86_64-gcc3"]
     assert base_sc["base_product"] == "Firefox"
     assert base_sc["base_data_version"] == 1
-    assert base_sc_cond["when"] == 1681639932000
+    assert base_sc_cond["when"] == 1991639932000
     assert len(base_sc_signoffs) == 1
     assert base_sc_signoffs[0]["username"] == "bob"
     assert base_sc_signoffs[0]["role"] == "releng"
@@ -1650,7 +1650,7 @@ def test_post_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
     assert locale_sc["data_version"] == 1
     assert locale_sc["base_data"] == firefox_56_0_build1["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
     assert locale_sc["base_data_version"] == 1
-    assert locale_sc_cond["when"] == 1681639932000
+    assert locale_sc_cond["when"] == 1991639932000
     assert len(locale_sc_signoffs) == 1
     assert locale_sc_signoffs[0]["username"] == "bob"
     assert locale_sc_signoffs[0]["role"] == "releng"
@@ -2054,7 +2054,7 @@ def test_schedule_pin_insert(api):
     product = "Firefox"
     channel = "release"
     version = "66."
-    ret = api.put("v2/releases/Firefox-56.0-build1/pinnable", json={"product": product, "channel": channel, "version": version, "when": 1681639932000})
+    ret = api.put("v2/releases/Firefox-56.0-build1/pinnable", json={"product": product, "channel": channel, "version": version, "when": 1991639932000})
     assert ret.status_code == 200
     assert ret.json["."]["change_type"] == "insert"
 
@@ -2072,7 +2072,7 @@ def test_schedule_pin_insert(api):
     assert base_sc["base_version"] == version
     assert base_sc["base_mapping"] == "Firefox-56.0-build1"
     assert base_sc["change_type"] == "insert"
-    assert base_sc_cond["when"] == 1681639932000
+    assert base_sc_cond["when"] == 1991639932000
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -2083,7 +2083,7 @@ def test_schedule_pin_update(api):
     ret = api.put("v2/releases/Firefox-56.0-build1/pinnable", json={"product": product, "channel": channel, "version": version})
     assert ret.status_code == 200
 
-    ret = api.put("v2/releases/Firefox-66.0-build1/pinnable", json={"product": product, "channel": channel, "version": version, "when": 1681639932000})
+    ret = api.put("v2/releases/Firefox-66.0-build1/pinnable", json={"product": product, "channel": channel, "version": version, "when": 1991639932000})
     assert ret.status_code == 200
     assert ret.json["."]["change_type"] == "update"
 
@@ -2101,7 +2101,7 @@ def test_schedule_pin_update(api):
     assert base_sc["base_version"] == version
     assert base_sc["base_mapping"] == "Firefox-66.0-build1"
     assert base_sc["change_type"] == "update"
-    assert base_sc_cond["when"] == 1681639932000
+    assert base_sc_cond["when"] == 1991639932000
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
