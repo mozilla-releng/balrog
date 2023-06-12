@@ -21,7 +21,7 @@ repoze.lru
 spec-synthase
 swagger-spec-validator
 setuptools
-sqlalchemy
+sqlalchemy<2
 sqlalchemy-migrate
 statsd
 uwsgi
