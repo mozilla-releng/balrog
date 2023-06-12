@@ -253,7 +253,6 @@ class TestSchema1Blob(unittest.TestCase):
         self.assertFalse(blob.containsForbiddenDomain("gg", self.allowlistedDomains))
 
     def testAddonLayoutEmptyAddons(self):
-
         # Correct layout with empty addons
 
         blob = SystemAddonsBlob()
@@ -270,7 +269,6 @@ class TestSchema1Blob(unittest.TestCase):
         blob.validate("gg", self.allowlistedDomains)
 
     def testAddonLayoutWithUninstall(self):
-
         # Correct layout with no addons, and with uninstall
 
         blob = SystemAddonsBlob()
@@ -287,7 +285,6 @@ class TestSchema1Blob(unittest.TestCase):
         blob.validate("gg", self.allowlistedDomains)
 
     def testAddonLayoutNoAddonsNoUninstall(self):
-
         # Incorrect layout with no addons and no uninstall
 
         blob = SystemAddonsBlob()
@@ -303,7 +300,6 @@ class TestSchema1Blob(unittest.TestCase):
         self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testAddonLayoutTwoPlatforms(self):
-
         # Correct layout with one addon and two platforms
 
         blob = SystemAddonsBlob()
@@ -334,7 +330,6 @@ class TestSchema1Blob(unittest.TestCase):
         blob.validate("gg", self.allowlistedDomains)
 
     def testAddonLayoutNoVersion(self):
-
         # Incorrect layout with missing version for an addon name
 
         blob = SystemAddonsBlob()
@@ -364,7 +359,6 @@ class TestSchema1Blob(unittest.TestCase):
         self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testAddonLayoutEmptyPlatforms(self):
-
         # Correct layout with empty platforms
 
         blob = SystemAddonsBlob()
@@ -386,7 +380,6 @@ class TestSchema1Blob(unittest.TestCase):
         blob.validate("gg", self.allowlistedDomains)
 
     def testAddonLayoutEmptyPlatformName(self):
-
         # Incorrect layout with empty platform name
 
         blob = SystemAddonsBlob()
@@ -415,7 +408,6 @@ class TestSchema1Blob(unittest.TestCase):
         self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testAddonLayoutNoFilesize(self):
-
         # Incorrect layout with missing filesize
 
         blob = SystemAddonsBlob()

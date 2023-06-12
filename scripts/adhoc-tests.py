@@ -15,7 +15,6 @@ log = logging.getLogger(__name__)
 
 
 class AdhocBalrogTester:
-
     BASE_URLS = {
         "local-admin": "https://localhost:8010",
         "local-public": "https://localhost:9010",

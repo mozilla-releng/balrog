@@ -1043,7 +1043,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
         conflicts = []
         conflicting_values = set()
 
-        for (group1, group2) in itertools.product(self.get("updateLine", []), self.get("updateLine", [])):
+        for group1, group2 in itertools.product(self.get("updateLine", []), self.get("updateLine", [])):
             # Skip over groups that are identical - they can't conflict
             if group1 == group2:
                 continue
@@ -1061,7 +1061,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                     continue
 
                 if cond == "channels":
-                    for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
+                    for value1, value2 in itertools.product(group1["for"][cond], group2["for"][cond]):
                         # Exact match of concrete channel or two globs
                         if value1 == value2:
                             matches = True
@@ -1078,7 +1078,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                     if set(group1["for"][cond]).intersection(set(group2["for"][cond])):
                         matches = True
                 elif cond == "versions":
-                    for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
+                    for value1, value2 in itertools.product(group1["for"][cond], group2["for"][cond]):
                         # Any exact match between two concrete versions or two
                         # comparisons means we have version overlap.
                         if value1 == value2:
@@ -1118,7 +1118,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                                 matches = True
                                 break
                 elif cond == "buildIDs":
-                    for (value1, value2) in itertools.product(group1["for"][cond], group2["for"][cond]):
+                    for value1, value2 in itertools.product(group1["for"][cond], group2["for"][cond]):
                         # Any exact match between two concrete versions or two
                         # comparisons means we have version overlap.
                         if value1 == value2:
