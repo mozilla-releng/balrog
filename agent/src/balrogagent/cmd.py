@@ -75,7 +75,6 @@ async def process_v2_scheduled_changes(loop, balrog_api_root, auth0_secrets):
 
 
 async def run_agent(loop, balrog_api_root, telemetry_api_root, auth0_secrets, sleeptime=30, once=False, raise_exceptions=False):
-
     while True:
         try:
             await process_v1_scheduled_changes(loop, balrog_api_root, auth0_secrets)

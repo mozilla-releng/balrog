@@ -5736,7 +5736,6 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
         """
         failures = []
         for reflected_table, table_model_instance in tables:
-
             for col_name in table_model_instance.c.keys():
                 db_py_col = table_model_instance.c[col_name]
                 reflected_db_col = reflected_table.c[col_name]

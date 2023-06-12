@@ -1080,7 +1080,6 @@ class TestSchema2Blob(unittest.TestCase):
 
 @pytest.mark.usefixtures("current_db_schema")
 class TestSchema2BlobNightlyStyle(unittest.TestCase):
-
     maxDiff = 2000
 
     def setUp(self):

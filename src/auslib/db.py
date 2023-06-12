@@ -1667,7 +1667,6 @@ class RequiredSignoffsTable(AUSTable):
 
 
 class ProductRequiredSignoffsTable(RequiredSignoffsTable):
-
     decisionColumns = ["product", "channel"]
 
     def __init__(self, db, metadata, dialect):
@@ -1676,7 +1675,6 @@ class ProductRequiredSignoffsTable(RequiredSignoffsTable):
 
 
 class PermissionsRequiredSignoffsTable(RequiredSignoffsTable):
-
     decisionColumns = ["product"]
 
     def __init__(self, db, metadata, dialect):

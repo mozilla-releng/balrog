@@ -194,7 +194,6 @@ class PermissionScheduledChangeView(ScheduledChangeView):
         # Only required fields must be passed to DB layer
         what = {}
         for field in connexion.request.get_json():
-
             # When editing an existing Scheduled Change for an for an existing Permission only options may be
             # provided. Because edits are identified by sc_id (in the URL), permission and username
             # are not required (nor allowed, because they are PK fields).

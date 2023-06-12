@@ -325,7 +325,6 @@ class TestSchema1Blob(unittest.TestCase):
         self.assertFalse(blob.containsForbiddenDomain("gg", self.allowlistedDomains))
 
     def testGMPLayoutEmptyVendor(self):
-
         # Correct layout with empty vendors
 
         blob = GMPBlobV1()
@@ -342,7 +341,6 @@ class TestSchema1Blob(unittest.TestCase):
         blob.validate("gg", self.allowlistedDomains)
 
     def testGMPLayoutNoVendor(self):
-
         # Incorrect layout with no vendors
 
         blob = GMPBlobV1()
@@ -358,7 +356,6 @@ class TestSchema1Blob(unittest.TestCase):
         self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testGMPLayoutTwoPlatforms(self):
-
         # Correct layout with one vendor and two platforms
 
         blob = GMPBlobV1()
@@ -390,7 +387,6 @@ bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcda
         blob.validate("gg", self.allowlistedDomains)
 
     def testGMPLayoutMissingVersion(self):
-
         # Incorrect layout with missing version for an vendor name
 
         blob = GMPBlobV1()
@@ -421,7 +417,6 @@ bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcda
         self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testGMPLayoutEmptyPlatforms(self):
-
         # Correct layout with empty platforms
 
         blob = GMPBlobV1()
@@ -443,7 +438,6 @@ bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcda
         blob.validate("gg", self.allowlistedDomains)
 
     def testGMPLayoutEmptyPlatformName(self):
-
         # Incorrect layout with empty platform name
 
         blob = GMPBlobV1()
@@ -473,7 +467,6 @@ bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcda
         self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testGMPLayoutNoFilesize(self):
-
         # Incorrect layout with missing filesize
 
         blob = GMPBlobV1()

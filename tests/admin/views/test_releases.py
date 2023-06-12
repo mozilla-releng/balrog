@@ -1105,7 +1105,6 @@ class TestReleasesAPI_JSON(ViewTest):
         )
 
     def testGMPReleasePut(self):
-
         ret = self._put(
             "/releases/gmprel",
             data=dict(
