@@ -63,6 +63,17 @@ def guardian_db(db_schema):
         mapping="Guardian-Evil-1.0.0.0",
         update_type="minor",
         product="Guardian",
+        channel="release",
+        osVersion="EvilOS",
+        data_version=1,
+        comment="Bogus rule with osVersion set",
+    )
+    dbo.rules.t.insert().execute(
+        priority=150,
+        backgroundRate=100,
+        mapping="Guardian-Evil-1.0.0.0",
+        update_type="minor",
+        product="Guardian",
         channel="evilrelease",
         data_version=1,
     )

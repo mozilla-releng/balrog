@@ -1880,7 +1880,7 @@ class Rules(AUSTable):
                 self.log.debug("%s doesn't match %s", rule["version"], updateQuery["version"])
                 continue
             if not matchBuildID(rule["buildID"], updateQuery.get("buildID", "")):
-                self.log.debug("%s doesn't match %s", rule["buildID"], updateQuery["buildID"])
+                self.log.debug("%s doesn't match %s", rule["buildID"], updateQuery.get("buildID"))
                 continue
             if not matchMemory(rule["memory"], updateQuery.get("memory")):
                 self.log.debug("%s doesn't match %s", rule["memory"], updateQuery.get("memory"))
@@ -1889,7 +1889,7 @@ class Rules(AUSTable):
             # specified in a single rule. They are comma delimited, so we need to
             # break them out and create clauses for each one.
             if not matchSimpleExpression(rule["osVersion"], updateQuery.get("osVersion", "")):
-                self.log.debug("%s doesn't match %s", rule["osVersion"], updateQuery["osVersion"])
+                self.log.debug("%s doesn't match %s", rule["osVersion"], updateQuery.get("osVersion"))
                 continue
             if not matchCsv(rule["instructionSet"], updateQuery.get("instructionSet", ""), substring=False):
                 self.log.debug("%s doesn't match %s", rule["instructionSet"], updateQuery.get("instructionSet"))
