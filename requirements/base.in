@@ -25,4 +25,4 @@ sqlalchemy<2
 sqlalchemy-migrate
 statsd
 uwsgi
-pyjwt==2.4.0
+pyjwt==2.7.0
