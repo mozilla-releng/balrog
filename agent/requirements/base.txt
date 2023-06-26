@@ -93,7 +93,7 @@ aiohttp==3.8.4 \
     --hash=sha256:fabb87dd8850ef0f7fe2b366d44b77d7e6fa2ea87861ab3844da99291e81e60f \
     --hash=sha256:fe11310ae1e4cd560035598c3f29d86cef39a83d244c7466f95c27ae04850f10 \
     --hash=sha256:fe7ba4a51f33ab275515f66b0a236bcde4fb5561498fe8f898d4e549b2e4509f
-    # via -r requirements/base.in
+    # via -r base.in
 aiosignal==1.3.1 \
     --hash=sha256:54cd96e15e1649b75d6c87526a6ff0b6c1b0dd3459f43d9ca11d48c339b68cfc \
     --hash=sha256:f8376fb07dd1e86a584e4fcdec80b36b7f81aac666ebc724e2c090300dd83b17
@@ -347,10 +347,10 @@ multidict==6.0.4 \
     # via
     #   aiohttp
     #   yarl
-sentry-sdk==1.25.1 \
-    --hash=sha256:79afb7c896014038e358401ad1d36889f97a129dfa8031c49b3f238cd1aa3935 \
-    --hash=sha256:aa796423eb6a2f4a8cd7a5b02ba6558cb10aab4ccdc0537f63a47b038c520c38
-    # via -r requirements/base.in
+sentry-sdk==1.26.0 \
+    --hash=sha256:0c9f858337ec3781cf4851972ef42bba8c9828aea116b0dbed8f38c5f9a1896c \
+    --hash=sha256:760e4fb6d01c994110507133e08ecd4bdf4d75ee4be77f296a3579796cf73134
+    # via -r base.in
 urllib3==2.0.3 \
     --hash=sha256:48e7fafa40319d358848e1bc6809b208340fafe2096f1725d05d67443d0483d1 \
     --hash=sha256:bee28b5e56addb8226c96f7f13ac28cb4c301dd5ea8a6ca179c0b9835e032825
