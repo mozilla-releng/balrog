@@ -12,12 +12,6 @@ from auslib.global_state import dbo
 from auslib.services import releases
 from auslib.web.public.helpers import AUS, get_aus_metadata_headers, get_content_signature_headers, with_transaction
 
-try:
-    from urllib import unquote
-except ImportError:  # pragma: no cover
-    from urllib.parse import unquote
-
-
 LOG = logging.getLogger(__name__)
 
 
@@ -110,7 +104,6 @@ def getQueryFromURL(url):
     if "systemCapabilities" in query:
         query.update(getSystemCapabilities(url["systemCapabilities"]))
         del query["systemCapabilities"]
-    query["osVersion"] = unquote(query["osVersion"])
     ua = request.headers.get("User-Agent")
     query["headerArchitecture"] = getHeaderArchitecture(query["buildTarget"], ua)
     force = query.get("force")
