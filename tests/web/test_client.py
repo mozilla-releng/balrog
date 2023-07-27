@@ -86,10 +86,16 @@ class ClientTestCommon(unittest.TestCase):
         self.assertEqual(http_response.status_code, 200, http_response.get_data())
         self.assertEqual(http_response.mimetype, "text/xml")
 
+    def getUpdatesString(self, http_reponse):
+        return minidom.parseString(http_reponse.get_data()).getElementsByTagName("updates")[0].firstChild.nodeValue
+
+    def isUpdateEmpty(self, http_reponse):
+        return self.getUpdatesString(http_reponse) == "\n"
+
     def assertUpdatesAreEmpty(self, http_reponse):
         self.assertHttpResponse(http_reponse)
         # An empty update contains an <updates> tag with a newline, which is what we're expecting here
-        self.assertEqual(minidom.parseString(http_reponse.get_data()).getElementsByTagName("updates")[0].firstChild.nodeValue, "\n")
+        self.assertEqual(self.getUpdatesString(http_reponse), "\n")
 
     def assertUpdateEqual(self, http_reponse, expected_xml_string):
         self.assertHttpResponse(http_reponse)
@@ -671,6 +677,45 @@ class ClientTestBase(ClientTestCommon):
                 """
 {
     "name": "product_that_should_not_be_updated-1.1",
+    "schema_version": 1,
+    "appv": "1.1",
+    "extv": "1.1",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "2",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/z"
+                    }
+                }
+            }
+        }
+    }
+}
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(
+            priority=1000,
+            backgroundRate=1,
+            mapping="product_that_should_be_delivered_one_percent_of_the_time-1.1",
+            update_type="minor",
+            product="product_that_should_be_delivered_one_percent_of_the_time",
+            data_version=1,
+        )
+        dbo.releases.t.insert().execute(
+            name="product_that_should_be_delivered_one_percent_of_the_time-1.1",
+            product="product_that_should_be_delivered_one_percent_of_the_time",
+            data_version=1,
+            data=createBlob(
+                """
+{
+    "name": "product_that_should_be_delivered_one_percent_of_the_time-1.1",
     "schema_version": 1,
     "appv": "1.1",
     "extv": "1.1",
@@ -1487,6 +1532,16 @@ class ClientTest(ClientTestBase):
     def testUpdateBackgroundRateSetTo0(self):
         ret = self.client.get("/update/3/product_that_should_not_be_updated/1.0/1/p/l/a/a/a/a/update.xml")
         self.assertUpdatesAreEmpty(ret)
+
+    def testUpdateBackgroundRateSetToOnePercent(self):
+        numberOfEmptyResponses = 0
+        for i in range(1000):
+            ret = self.client.get("/update/3/product_that_should_be_delivered_one_percent_of_the_time/1.0/1/p/l/a/a/a/a/update.xml")
+            if self.isUpdateEmpty(ret):
+                numberOfEmptyResponses += 1
+
+        self.assertGreaterEqual(numberOfEmptyResponses, 983)
+        self.assertLessEqual(numberOfEmptyResponses, 997)
 
     @given(just("x"))
     @example(invalid_version="1x")
