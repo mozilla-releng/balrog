@@ -37,6 +37,7 @@ if STAGING or LOCALDEV:
         {
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird", "Pinebuild", "SystemAddons"),
             "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird", "Pinebuild"),
+            "dev.bouncer.nonprod.webservices.mozgcp.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird", "Pinebuild"),
             "stage.guardian.nonprod.cloudops.mozgcp.net": ("FirefoxVPN", "Guardian"),
             "stage-vpn.guardian.nonprod.cloudops.mozgcp.net": ("FirefoxVPN", "Guardian"),
         }
