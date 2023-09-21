@@ -8,7 +8,7 @@ MAINTAINER jcristau@mozilla.com
 # default-libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 # xz-utils is needed to compress production database dumps
 RUN apt-get -q update \
-    && apt-get -q --yes install libpcre3 libpcre3-dev default-libmysqlclient-dev mariadb-client xz-utils \
+    && apt-get -q --yes install libpcre3 libpcre3-dev default-libmysqlclient-dev mariadb-client xz-utils pkg-config \
     && apt-get clean
 
 WORKDIR /app
