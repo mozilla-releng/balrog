@@ -41,20 +41,14 @@ Metrics from deployment environments are available in `Grafana <https://earthang
 We aggregate exceptions from both the Admin & Public apps to `Sentry <https://sentry.io/organizations/mozilla/projects/>`_.
 
 --------
-ELB Logs
+Application & HTTP Logs
 --------
 
-Balrog publishes logs to S3 buckets which are `available for querying on Redash <https://sql.telemetry.mozilla.org>`_. The relevant tables are:
+Balrog publishes logs to BigQuery which are `available for querying on Google Cloud <https://console.cloud.google.com/bigquery?project=moz-fx-balrog-prod-3fa2>`_. The relevant tables are:
 
-* balrog_elb_logs_aus{3,4,5} - These tables contain update request records sourced from the ELB logs of the named domain (eg: aus5). If you're looking to do ad-hoc queries of update request (eg: estimate how many users are on a particular version or channel), the balrog_elb_logs_aus5 is probably what you want to query.
-* balrog_elb_logs_aus_api - This table contains request logs for the aus-api.mozilla.org domain
-* log_balrog_admin_nginx_access - This table contains access logs for the admin app sourced from nginx access logs.
-* log_balrog_admin_nginx_error - This table contains error logs for the admin app sourced from nginx error logs.
-* log_balrog_admin_syslog_admin_fixed - This table contains syslog output from the admin app's Docker container.
-* log_balrog_admin_syslog_agent - This table contains syslog output from the agent's Docker container.
-* log_balrog_web_syslog_web_fixed - This table contains syslog output from the public app's Docker containers.
-
-Redash should show you the table schemas in the pane on the left. If not, you can inspect with them with "describe $table".
+* requests - This table contains HTTP load balancer logs
+* stdout - This table contains application logs sent to stdout
+* stderr - This table contains application logs sent to stderr
 
 -------
 Backups
