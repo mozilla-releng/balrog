@@ -11,8 +11,8 @@ We have stage and production deployments of Balrog. Here's a quick summary:
 +-------------+-----------+---------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
 | Environment | App       | URL                                                     | Deploys                                 | Purpose                                                                       |
 +=============+===========+=========================================================+=========================================+===============================================================================+
-| Production  | Admin API | https://aus4-admin.mozilla.org/                         | Manually by CloudOps                    | Manage and serve production updates                                           |
-+             +-----------+---------------------------------------------------------+                                         +                                                                               +
+| Production  | Admin API | https://aus4-admin.mozilla.org/                         | Manually, after someone clicks a button | Manage and serve production updates                                           |
++             +-----------+---------------------------------------------------------+ in Jenkins (details below)              +                                                                               +
 |             | Admin UI  | https://balrog.services.mozilla.com/                    |                                         |                                                                               |
 +             +-----------+---------------------------------------------------------+                                         +                                                                               +
 |             | Public    | https://aus5.mozilla.org/                               |                                         |                                                                               |
@@ -28,9 +28,9 @@ We have stage and production deployments of Balrog. Here's a quick summary:
 Support & Escalation
 --------------------
 
-RelEng is the first point of contact for issues. To contact them, follow `the standard RelEng escalation path <https://wiki.mozilla.org/ReleaseEngineering#Contacting_Release_Engineering>`_.
+RelEng is the first point of contact for issues. To contact them, follow `the standard RelEng escalation path <https://mozilla-hub.atlassian.net/wiki/spaces/RelEng/overview#%F0%9F%93%B2-Contact-Us>`_.
 
-If RelEng is unable to correct the issue, they may `escalate to CloudOps <https://mana.mozilla.org/wiki/display/SVCOPS/Contacting+Services+SRE>`_.
+If RelEng is unable to correct the issue, or unavailable, it can be escalated to the `Services SRE (Purple) team <https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/27920178/Services+SRE+-+Purple+Team>`_
 
 --------------------
 Monitoring & Metrics
@@ -60,28 +60,23 @@ Redash should show you the table schemas in the pane on the left. If not, you ca
 Backups
 -------
 
-Balrog uses the built-in RDS backups. The database in snapshotted nightly, and incremental backups are done throughout the day. If necessary, we have the ability to recover to within a 5 minute window. Database restoration is done by CloudOps, and they should be contacted immediately if needed.
+Balrog uses the built-in GCP backups. The database in snapshotted nightly, and incremental backups are done throughout the day. If necessary, we have the ability to recover to within a 5 minute window. Database restoration is done by the Services SRE (Purple) team, and they should be contacted immediately if needed.
 
 -----------------
 Deploying Changes
 -----------------
-Balrog's `stage and production infrastructure <https://github.com/mozilla-services/cloudops-docs/tree/master/Services/Balrog>`_ are managed by `CloudOps <https://mana.mozilla.org/wiki/display/SVCOPS/Contacting+Services+SRE>`_.
-
-This section describes how to go from a reviewed patch to deploying it in production.
+Balrog's `stage and production infrastructure <https://github.com/mozilla-services/cloudops-docs/tree/master/Services/Balrog>`_ are managed by `Services SRE (Purple) team <https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/27920178/Services+SRE+-+Purple+Team>`_. Generally, Balrog is deployed on a regular schedule - every 2 weeks, being staged on a Tuesday and deployed to production on a Thursday.
 
 ~~~~~~~~~~~~~~~~~~~
 Is now a good time?
 ~~~~~~~~~~~~~~~~~~~
-Before you deploy, consider whether or not it's an appropriate time to. Some factors to consider:
 
-* Are we in the middle of an important release such as a chemspill? If so, it's probably not a good time to deploy.
-* Is it Friday? You probably don't want to deploy on a Friday except in extreme circumstances.
-* Do you have enough time to safely do a push? Most pushes take at most 30 minutes to complete once the production push has begun.
+Although we deploy on a regular schedule it is still important to check to make sure no urgent releases are ongoing before deploying. Post a message in `the #releaseduty channel <https://chat.mozilla.org/#/room/#releaseduty:mozilla.org>`_ and wait for confirmation before proceeding with a production deploy.
 
 ~~~~~~~~~~~~~~~
 Schema Upgrades
 ~~~~~~~~~~~~~~~
-If you need to do a schema change you must ensure that either the current production code can run with your schema change applied, or that your new code can run with the old schema. Code and schema changes cannot be done at the same instant, so you must be able to support one of these scenarios. Generally, additive changes (column or table additions) should do the schema change first, while destructive changes (column or table deletions) should do the schema change second. You can simulate the upgrade with your local Docker containers to verify which is right for you.  In staging and production, the schema upgrade is done automatically as part of the `balrog-admin` deployment.
+If you need to do a schema change you must ensure that either the current production code can run with your schema change applied, or that your new code can run with the old schema. Code and schema changes cannot be done at the same instant, so you must be able to support one of these scenarios. Generally, additive changes (column or table additions) should do the schema change first, while destructive changes (column or table deletions) should do the schema change second. You can simulate the upgrade with your local Docker containers to verify which is right for you.  In staging and production, the schema upgrade is done automatically as part of the ``balrog-admin-production`` deployment.
 
 A quick way to find out if you have a schema change is to diff the current tip of the main branch against the currently deployed tag, eg:
 ::
@@ -89,13 +84,7 @@ A quick way to find out if you have a schema change is to diff the current tip o
  tag=REPLACEME
  git diff $tag
 
-
-When you file the deployment bug (see below), include a note about the schema change in it. Something like:
-::
-
- This push requires a schema change, so admin should be deployed first to do the migration.
-
-`Bug 1772799 <https://bugzilla.mozilla.org/show_bug.cgi?id=1772799>`_ is an example of a push with a schema change.
+When deploying a change with schema upgrades it is important to deploy the services in the correct order. Generally, this means that ``balrog-admin-production`` should be finished deploying before ``balrog-production`` for additive changes, and ``balrog-production`` should be finished deploying before ``balrog-admin-production`` for destructive changes.
 
 ~~~~~~~~~~~~~~~~~~
 Deploying to Stage
@@ -117,27 +106,47 @@ Once the changes are deployed to stage, you should do some testing to make sure 
 Pushing to Production
 ~~~~~~~~~~~~~~~~~~~~~
 
-Pushing live requires CloudOps. For non-urgent pushes, you should begin this procedure a few hours in advance to give CloudOps time to notice and respond. For urgent pushes, file the bug immediately and escalate if no action is taken quickly. Either way, you must follow this procedure to push:
+Pushing the backends live requires some button clicking in Jenkins. For each of ``balrog-admin-production``, ``balrog-production``, and ``balrog-agent-production`` in Jenkins do the following. (If there are no schema changes, these may be done in parallel. If there are schema changes, see ``Schema Upgrades``):
 
-1. `File a bug <https://bugzilla.mozilla.org/enter_bug.cgi?assigned_to=dlactin%40mozilla.com&bug_file_loc=http%3A%2F%2F&bug_ignored=0&bug_severity=normal&bug_status=NEW&bug_type=task&cc=dlactin%40mozilla.com&cc=jbuckley%40mozilla.com&cc=jcristau%40mozilla.com&cc=gbrown%40mozilla.com&cf_fx_iteration=---&cf_fx_points=---&cf_status_firefox77=---&cf_status_firefox78=---&cf_status_firefox79=---&cf_status_firefox80=---&cf_status_firefox_esr68=---&cf_status_firefox_esr78=---&cf_tracking_firefox77=---&cf_tracking_firefox78=---&cf_tracking_firefox79=---&cf_tracking_firefox80=---&cf_tracking_firefox_esr68=---&cf_tracking_firefox_esr78=---&cf_tracking_firefox_relnote=---&cf_tracking_firefox_sumo=---&comment=Balrog%20version%20X.Y%20is%20ready%20to%20be%20pushed%20to%20prod.%20Please%20deploy%20the%20new%20Docker%20images%20%28vX.Y%29%20for%20admin%2C%20public%2C%20and%20the%20agent.%0D%0A%0D%0AWe%27d%20like%20the%20production%20push%20for%20this%20to%20happen%20today.&component=Operations%3A%20Balrog&contenttypemethod=list&contenttypeselection=text%2Fplain&defined_groups=1&filed_via=standard_form&flag_type-37=X&flag_type-607=X&flag_type-708=X&flag_type-721=X&flag_type-737=X&flag_type-748=X&flag_type-787=X&flag_type-800=X&flag_type-803=X&flag_type-846=X&flag_type-864=X&flag_type-936=X&flag_type-941=X&flag_type-945=X&form_name=enter_bug&maketemplate=Remember%20values%20as%20bookmarkable%20template&op_sys=Unspecified&priority=--&product=Cloud%20Services&rep_platform=Unspecified&short_desc=please%20deploy%20balrog%20X.Y%20to%20prod&target_milestone=---&version=unspecified>`_ to have the new version pushed to production
+  * Find the ``PROD: DEPLOY`` or ``PROD: PROCEED`` step
+  * Click the cell for this step in the topmost row. This should bring up a confirmation dialog as shown below.
+  * Click ``Proceed``
 
-  * Make sure you substitute the version number and choose the correct options from the bug template.
+.. image:: proceed.png
 
-2. Before SRE start the deploy, notify `#releaseduty:mozilla.org` and `#sheriffs:mozilla.org` on matrix so they can both confirm no release activity is ongoing, and know to quickly escalate any fallout.
-3. Once the push has happened, verify that the code was pushed to production by checking the __version__ endpoints on `the Admin <https://aus4-admin.mozilla.org/__version__>`_ and `Public <https://aus5.mozilla.org/__version__>`_ apps.
-4. Manually delete and recreate the "production-ui" tag & release on Github to push the new UI to production:
+After this, there is nothing else to do for ``balrog-admin-production`` nor ``balrog-agent-production``. However, the public app (``balrog-production``) will first deploy a canary (meaning the new code will only be used for a small fraction of requests).
+
+Before proceeding, you should monitor for changes in load or exceptions for at least a few minutes. Specifically:
+- Watch Sentry to see if any new exceptions show up for any of the backend services
+- Watch the Grafana graphs for spikes or dips in any of the charts
+
+If anything notable comes up you should seek an explanation for it before proceeding. If you are unable to explain the issue, consult with someone else and consider rolling back in the meantime.
+
+When you are ready, find the ``PROD: PROMOTE`` cell in Jenkins and click ``Proceed`` to finish with this deployment.
+
+To push new UI to production you must delete and recreate the "production-ui" tag & release on Github to push the new UI to production:
 
   * On https://github.com/mozilla-releng/balrog/releases/tag/production-ui, click "Delete" (this deletes the Github Release).
   * On https://github.com/mozilla-releng/balrog/releases/tag/production-ui, click "Delete" (this deletes the Git tag, even though it's the same URL).
   * On https://github.com/mozilla-releng/balrog/releases/new, create a new `production-ui` Release. This will trigger automation to deploy the new UI.
 
-5. Bump the `in-repo version <https://github.com/mozilla-releng/balrog/blob/main/version.txt>`_ to the next available one to ensure the next push gets a new version.
+Finally, bump the `in-repo version <https://github.com/mozilla-releng/balrog/blob/main/version.txt>`_ to the next available one to ensure the next push gets a new version.
 
 ~~~~~~~~~
 Rollbacks
 ~~~~~~~~~
 
-If something goes wrong, CloudOps can rollback to an earlier version on request.
+To rollback the admin, public, and agent backends, do the following for each of ``balrog-admin-production``, ``balrog-production``, and ``balrog-agent-production`` in Jenkins:
+
+  * Click "Build with Parameters" in the menu on the left.
+  * Put the version you want to redeploy in the ``ImageTag`` field. This should be in the form of ``vX.Y``, eg: ``v3.20``.
+  * Click ``Build``
+
+As in this screenshot:
+
+.. image:: redeploy.png
+
+This will begin a deployment as described above. See the ``Pushing to Production`` section above for how to proceed with the production deployment from here.
 
 If the UI needs a rollback, after deleting the previous production-ui release and tag as above, update the "production-ui" tag to point to the earlier version. Something like (to point to v3.08):
 ::
