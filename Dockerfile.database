@@ -3,7 +3,7 @@ FROM mysql:8.0-debian
 # netcat is used to listen to the ports.
 
 RUN apt-get -q update \
-    && apt-get -q --yes install netcat  \
+    && apt-get -q --yes install netcat-traditional  \
     && apt-get clean
 
 # Lower error logging to get rid of health check spam
