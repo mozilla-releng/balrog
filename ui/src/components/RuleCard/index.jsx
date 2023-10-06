@@ -565,9 +565,6 @@ function RuleCard({
                         component: 'div',
                         className: classes.primaryText,
                       }}
-                      secondaryTypographyProps={{
-                        className: classes.textEllipsis,
-                      }}
                       primary={
                         <Fragment>
                           OS Version
