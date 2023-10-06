@@ -24,7 +24,7 @@ function SearchBar(props) {
   const classes = useStyles();
 
   return (
-      <Paper className={classes.root}>
+    <Paper className={classes.root}>
       <InputBase
         className={classes.input}
         placeholder="Search..."
@@ -32,7 +32,7 @@ function SearchBar(props) {
         inputProps={{ 'aria-label': 'Search' }}
         {...rest}
       />
-      </Paper>
+    </Paper>
   );
 }
 
