@@ -16,6 +16,12 @@ const useStyles = makeStyles(theme => ({
   appbar: {
     height: APP_BAR_HEIGHT,
   },
+  staging: {
+    backgroundColor: theme.palette.info.main
+  },
+  local: {
+    backgroundColor: theme.palette.warning.main
+  },
   title: {
     textDecoration: 'none',
   },
@@ -54,7 +60,13 @@ export default function Dashboard(props) {
       <Helmet>
         <title>{title} - Balrog Admin</title>
       </Helmet>
-      <AppBar className={classes.appbar}>
+      <AppBar className={`${classes.appbar} ${process.env.NODE_ENV === 'development' ? (
+      classes.local
+    ) : (
+      process.env.NODE_ENV === 'staging' ? (
+        classes.staging
+      ) : null
+    )}`}>
         <Toolbar>
           <Typography
             className={classes.title}
