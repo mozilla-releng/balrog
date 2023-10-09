@@ -23,4 +23,4 @@ fi
 python scripts/manage-db.py -d mysql://balrogadmin:balrogadmin@$DB_HOST/balrog upgrade
 
 # run the command passed from docker
-/app/scripts/run.sh $@
+/bin/bash /app/scripts/run.sh $@
