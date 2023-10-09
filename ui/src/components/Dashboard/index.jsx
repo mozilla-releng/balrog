@@ -1,18 +1,18 @@
-import React, { Fragment } from "react";
-import { string, node, bool } from "prop-types";
-import { Helmet } from "react-helmet";
-import { makeStyles } from "@material-ui/styles";
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
-import Typography from "@material-ui/core/Typography";
-import menuItems from "./menuItems";
-import Link from "../../utils/Link";
-import UserMenu from "./UserMenu";
-import Button from "../Button";
-import SettingsMenu from "./SettingsMenu";
-import { CONTENT_MAX_WIDTH, APP_BAR_HEIGHT } from "../../utils/constants";
+import React, { Fragment } from 'react';
+import { string, node, bool } from 'prop-types';
+import { Helmet } from 'react-helmet';
+import { makeStyles } from '@material-ui/styles';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
+import Typography from '@material-ui/core/Typography';
+import menuItems from './menuItems';
+import Link from '../../utils/Link';
+import UserMenu from './UserMenu';
+import Button from '../Button';
+import SettingsMenu from './SettingsMenu';
+import { CONTENT_MAX_WIDTH, APP_BAR_HEIGHT } from '../../utils/constants';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(theme => ({
   appbar: {
     height: APP_BAR_HEIGHT,
   },
@@ -23,28 +23,28 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.palette.warning.main,
   },
   title: {
-    textDecoration: "none",
+    textDecoration: 'none',
   },
   main: {
     maxWidth: CONTENT_MAX_WIDTH,
-    height: "100%",
-    margin: "0 auto",
+    height: '100%',
+    margin: '0 auto',
     padding: `${theme.spacing(12)}px ${APP_BAR_HEIGHT}px`,
   },
   nav: {
-    display: "flex",
+    display: 'flex',
     flex: 1,
-    justifyContent: "flex-end",
-    alignItems: "center",
+    justifyContent: 'flex-end',
+    alignItems: 'center',
   },
   link: {
-    textDecoration: "none",
-    color: "inherit",
+    textDecoration: 'none',
+    color: 'inherit',
   },
   disabledLink: {
-    textDecoration: "none",
+    textDecoration: 'none',
     color: theme.palette.grey[500],
-    pointerEvents: "none",
+    pointerEvents: 'none',
   },
   buttonWithIcon: {
     paddingLeft: theme.spacing(2),
@@ -62,11 +62,10 @@ export default function Dashboard(props) {
       </Helmet>
       <AppBar
         className={`${classes.appbar} ${
-          process.env.NODE_ENV === "development" ? classes.local : null
+          process.env.NODE_ENV === 'development' ? classes.local : null
         } 
-      ${process.env.NODE_ENV === "staging" ? classes.staging : null}
-      )}`}
-      >
+      ${process.env.NODE_ENV === 'staging' ? classes.staging : null}
+      )}`}>
         <Toolbar>
           <Typography
             className={classes.title}
@@ -74,18 +73,16 @@ export default function Dashboard(props) {
             variant="h6"
             noWrap
             component={Link}
-            to="/"
-          >
+            to="/">
             Balrog Admin ┃ {title}
           </Typography>
           <nav className={classes.nav}>
-            {menuItems.main.map((menuItem) => (
+            {menuItems.main.map(menuItem => (
               <Link
                 key={menuItem.value}
                 className={disabled ? classes.disabledLink : classes.link}
                 nav
-                to={menuItem.path}
-              >
+                to={menuItem.path}>
                 <Button color="inherit">{menuItem.value}</Button>
               </Link>
             ))}
