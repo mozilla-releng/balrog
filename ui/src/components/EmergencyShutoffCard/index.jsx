@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { func, object } from 'prop-types';
 import { makeStyles } from '@material-ui/styles';
 import Card from '@material-ui/core/Card';
@@ -10,6 +10,8 @@ import AlertIcon from 'mdi-react/AlertIcon';
 import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
 import { withUser } from '../../utils/AuthContext';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -51,6 +53,7 @@ function EmergencyShutoffCard({
   onUnauthorize,
   ...props
 }) {
+  const [selectedRole, setSelectedRole] = useState('');
   const classes = useStyles();
   const { product, channel } = emergencyShutoff;
   const requiresSignoff =
@@ -73,13 +76,20 @@ function EmergencyShutoffCard({
       />
       <CardContent classes={{ root: classes.cardContentRoot }}>
         {requiresSignoff && (
-          <SignoffSummary
-            requiredSignoffs={
-              emergencyShutoff.scheduledChange.required_signoffs
-            }
-            signoffs={emergencyShutoff.scheduledChange.signoffs}
-            className={classes.space}
-          />
+          <><div className={classes.space}>
+            <Typography variant="body1">Select your role:</Typography>
+            <Select
+              value={selectedRole}
+              onChange={(event) => setSelectedRole(event.target.value)}
+            >
+              <MenuItem value="role1">Role 1</MenuItem>
+              <MenuItem value="role2">Role 2</MenuItem>
+              {/* Add more role options as needed */}
+            </Select>
+          </div><SignoffSummary
+              requiredSignoffs={emergencyShutoff.scheduledChange.required_signoffs}
+              signoffs={emergencyShutoff.scheduledChange.signoffs}
+              className={classes.space} /></>
         )}
       </CardContent>
       <CardActions className={classes.cardActions}>
@@ -119,7 +129,7 @@ function EmergencyShutoffCard({
             <Button
               color="secondary"
               disabled={!user}
-              onClick={onSignoff}
+              onClick={() => onSignoff(selectedRole, emergencyShutoff)}
               className={classes.actionButton}>
               Signoff
             </Button>
@@ -133,6 +143,7 @@ EmergencyShutoffCard.propTypes = {
   emergencyShutoff: object,
   onSignoff: func.isRequired,
   onRevoke: func.isRequired,
+  selectedRole: string, 
 };
 
 export default withUser(EmergencyShutoffCard);
