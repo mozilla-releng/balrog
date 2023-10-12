@@ -142,13 +142,13 @@ function ListReleases(props) {
     }
 
     const searchTerms = searchValue.toLowerCase().split(' ');
-    
-    const filteredResults = releases.filter((release) => {
-    const releaseName = release.name.toLowerCase();
-     // Check if all search terms are found in the release name
-      return searchTerms.every((term) => releaseName.includes(term));
-      
+    const filteredResults = releases.filter(release => {
+      const releaseName = release.name.toLowerCase();
+
+      // Check if all search terms are found in the release name
+      return searchTerms.every(term => releaseName.includes(term));
     });
+
     return filteredResults;
   }, [releases, searchValue]);
    
