@@ -1,49 +1,49 @@
-import React, { Fragment } from 'react';
-import { bool, func } from 'prop-types';
-import classNames from 'classnames';
-import { makeStyles } from '@material-ui/styles';
-import Card from '@material-ui/core/Card';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import Tooltip from '@material-ui/core/Tooltip';
-import IconButton from '@material-ui/core/IconButton';
-import CardHeader from '@material-ui/core/CardHeader';
-import CardContent from '@material-ui/core/CardContent';
-import CardActions from '@material-ui/core/CardActions';
-import Grid from '@material-ui/core/Grid';
-import Avatar from '@material-ui/core/Avatar';
-import Divider from '@material-ui/core/Divider';
-import Typography from '@material-ui/core/Typography';
-import Chip from '@material-ui/core/Chip';
-import DeleteIcon from 'mdi-react/DeleteIcon';
-import UpdateIcon from 'mdi-react/UpdateIcon';
-import PlusCircleIcon from 'mdi-react/PlusCircleIcon';
-import HistoryIcon from 'mdi-react/HistoryIcon';
-import { formatDistanceStrict } from 'date-fns';
-import Button from '../Button';
-import DiffRule from '../DiffRule';
-import SignoffSummary from '../SignoffSummary';
-import { withUser } from '../../utils/AuthContext';
-import Link from '../../utils/Link';
-import { RULE_DIFF_PROPERTIES } from '../../utils/constants';
-import { rule } from '../../utils/prop-types';
-import getDiffedProperties from '../../utils/getDiffedProperties';
+import React, { Fragment } from "react";
+import { bool, func } from "prop-types";
+import classNames from "classnames";
+import { makeStyles } from "@material-ui/styles";
+import Card from "@material-ui/core/Card";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemText from "@material-ui/core/ListItemText";
+import Tooltip from "@material-ui/core/Tooltip";
+import IconButton from "@material-ui/core/IconButton";
+import CardHeader from "@material-ui/core/CardHeader";
+import CardContent from "@material-ui/core/CardContent";
+import CardActions from "@material-ui/core/CardActions";
+import Grid from "@material-ui/core/Grid";
+import Avatar from "@material-ui/core/Avatar";
+import Divider from "@material-ui/core/Divider";
+import Typography from "@material-ui/core/Typography";
+import Chip from "@material-ui/core/Chip";
+import DeleteIcon from "mdi-react/DeleteIcon";
+import UpdateIcon from "mdi-react/UpdateIcon";
+import PlusCircleIcon from "mdi-react/PlusCircleIcon";
+import HistoryIcon from "mdi-react/HistoryIcon";
+import { formatDistanceStrict } from "date-fns";
+import Button from "../Button";
+import DiffRule from "../DiffRule";
+import SignoffSummary from "../SignoffSummary";
+import { withUser } from "../../utils/AuthContext";
+import Link from "../../utils/Link";
+import { RULE_DIFF_PROPERTIES } from "../../utils/constants";
+import { rule } from "../../utils/prop-types";
+import getDiffedProperties from "../../utils/getDiffedProperties";
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   root: {
-    '& h2, & h4': {
-      '& .anchor-link-style': {
-        textDecoration: 'none',
+    "& h2, & h4": {
+      "& .anchor-link-style": {
+        textDecoration: "none",
         opacity: 0,
         // To prevent the link to get the focus.
-        display: 'none',
+        display: "none",
       },
-      '&:hover .anchor-link-style': {
-        display: 'inline-block',
+      "&:hover .anchor-link-style": {
+        display: "inline-block",
         opacity: 1,
         color: theme.palette.text.hint,
-        '&:hover': {
+        "&:hover": {
           color: theme.palette.text.secondary,
         },
       },
@@ -57,7 +57,7 @@ const useStyles = makeStyles(theme => ({
     paddingTop: theme.spacing(1),
   },
   cardHeaderAvatar: {
-    display: 'flex',
+    display: "flex",
   },
   cardHeaderAction: {
     marginTop: 0,
@@ -76,7 +76,7 @@ const useStyles = makeStyles(theme => ({
     ...theme.mixins.textEllipsis,
   },
   cardActions: {
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   scheduledChangesTitle: {
     padding: `0 ${theme.spacing(1)}px`,
@@ -95,7 +95,7 @@ const useStyles = makeStyles(theme => ({
   deleteChip: {
     background: theme.palette.error.main,
     color: theme.palette.error.contrastText,
-    '& svg': {
+    "& svg": {
       fill: theme.palette.error.contrastText,
     },
   },
@@ -104,17 +104,17 @@ const useStyles = makeStyles(theme => ({
     backgroundColor: theme.palette.grey[200],
   },
   scheduledChangesHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
+    display: "flex",
+    justifyContent: "space-between",
   },
   inline: {
-    display: 'inline',
+    display: "inline",
   },
   avatar: {
     height: theme.spacing(4),
     padding: theme.spacing(1),
-    width: 'auto',
-    background: 'unset',
+    width: "auto",
+    background: "unset",
     color: theme.palette.text.primary,
     border: `1px solid ${theme.palette.primary.light}`,
   },
@@ -129,17 +129,17 @@ const useStyles = makeStyles(theme => ({
     zIndex: 1,
   },
   primaryText: {
-    display: 'flex',
-    alignItems: 'baseline',
+    display: "flex",
+    alignItems: "baseline",
   },
   primaryTextWithButton: {
-    whiteSpace: 'nowrap',
+    whiteSpace: "nowrap",
   },
   link: {
     ...theme.mixins.link,
   },
   schedPriorityChange: {
-    backgroundColor: '#c0dc91',
+    backgroundColor: "#c0dc91",
   },
   viewReleaseBtn: {
     paddingTop: 0,
@@ -168,17 +168,17 @@ function RuleCard({
   const requiresSignoff =
     rule.scheduledChange &&
     Object.keys(rule.scheduledChange.required_signoffs).length > 0;
-  const getChipIcon = changeType => {
+  const getChipIcon = (changeType) => {
     switch (changeType) {
-      case 'delete': {
+      case "delete": {
         return DeleteIcon;
       }
 
-      case 'update': {
+      case "update": {
         return UpdateIcon;
       }
 
-      case 'insert': {
+      case "insert": {
         return PlusCircleIcon;
       }
 
@@ -202,14 +202,14 @@ function RuleCard({
   // show.
   const isScheduledPriorityUpdate =
     rule.scheduledChange &&
-    rule.scheduledChange.change_type === 'update' &&
+    rule.scheduledChange.change_type === "update" &&
     rule.priority !== rule.scheduledChange.priority;
   const headerPriority = isScheduledPriorityUpdate
     ? rule.scheduledChange.priority
     : rule.priority;
   const priorityTitle = isScheduledPriorityUpdate
-    ? 'Scheduled Priority'
-    : 'Priority';
+    ? "Scheduled Priority"
+    : "Priority";
 
   return (
     <Card classes={{ root: classes.root }} spacing={4} {...props}>
@@ -228,7 +228,8 @@ function RuleCard({
                   aria-label={priorityTitle}
                   className={classNames(classes.avatar, {
                     [classes.schedPriorityChange]: isScheduledPriorityUpdate,
-                  })}>
+                  })}
+                >
                   <Typography className={classes.avatarText}>
                     {headerPriority}
                   </Typography>
@@ -240,11 +241,12 @@ function RuleCard({
             <Typography component="h2" variant="h6">
               {rule.channel
                 ? `${rule.product} : ${rule.channel}`
-                : rule.product}{' '}
+                : rule.product}{" "}
               <a
                 href={`#ruleId=${rule.rule_id}`}
                 aria-label="Anchor"
-                className="anchor-link-style">
+                className="anchor-link-style"
+              >
                 #
               </a>
             </Typography>
@@ -255,7 +257,8 @@ function RuleCard({
                 to={{
                   pathname: `/rules/${rule.rule_id}/revisions`,
                   state: { rulesFilter },
-                }}>
+                }}
+              >
                 <Tooltip title="Revisions">
                   <IconButton>
                     <HistoryIcon />
@@ -268,7 +271,7 @@ function RuleCard({
       )}
       <CardContent classes={{ root: classes.cardContentRoot }}>
         {(!rule.scheduledChange ||
-          rule.scheduledChange.change_type !== 'insert') && (
+          rule.scheduledChange.change_type !== "insert") && (
           <Grid container>
             <Grid item xs={4}>
               <List>
@@ -277,7 +280,7 @@ function RuleCard({
                     <ListItemText
                       title={rule.mapping}
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classNames(
                           classes.primaryText,
                           classes.primaryTextWithButton
@@ -289,8 +292,8 @@ function RuleCard({
                       primary={
                         <Fragment>
                           Mapping
-                          {diffedProperties.includes('mapping') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("mapping") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -302,7 +305,8 @@ function RuleCard({
                               name={rule.mapping}
                               onClick={onViewReleaseClick}
                               variant="outlined"
-                              className={classes.viewReleaseBtn}>
+                              className={classes.viewReleaseBtn}
+                            >
                               View Release
                             </Button>
                           )}
@@ -317,7 +321,7 @@ function RuleCard({
                     <ListItemText
                       title={rule.fallbackMapping}
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classNames(
                           classes.primaryText,
                           classes.primaryTextWithButton
@@ -329,8 +333,8 @@ function RuleCard({
                       primary={
                         <Fragment>
                           Fallback Mapping
-                          {diffedProperties.includes('fallbackMapping') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("fallbackMapping") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -342,7 +346,8 @@ function RuleCard({
                               name={rule.fallbackMapping}
                               onClick={onViewReleaseClick}
                               variant="outlined"
-                              className={classes.viewReleaseBtn}>
+                              className={classes.viewReleaseBtn}
+                            >
                               View Release
                             </Button>
                           )}
@@ -356,14 +361,14 @@ function RuleCard({
                   <ListItem className={classes.listItem}>
                     <ListItemText
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       primary={
                         <Fragment>
                           Background Rate
-                          {diffedProperties.includes('backgroundRate') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("backgroundRate") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -382,14 +387,14 @@ function RuleCard({
                   <ListItem className={classes.listItem}>
                     <ListItemText
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       primary={
                         <Fragment>
                           Data Version
-                          {diffedProperties.includes('data_version') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("data_version") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -410,7 +415,8 @@ function RuleCard({
                             component="span"
                             variant="body2"
                             className={classes.inline}
-                            color="textSecondary">
+                            color="textSecondary"
+                          >
                             {rule.rule_id}
                           </Typography>
                           <strong>
@@ -429,14 +435,14 @@ function RuleCard({
                   <ListItem className={classes.listItem}>
                     <ListItemText
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       primary={
                         <Fragment>
                           Version
-                          {diffedProperties.includes('version') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("version") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -451,14 +457,14 @@ function RuleCard({
                   <ListItem className={classes.listItem}>
                     <ListItemText
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       primary={
                         <Fragment>
                           Build ID
-                          {diffedProperties.includes('buildID') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("buildID") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -473,14 +479,14 @@ function RuleCard({
                   <ListItem className={classes.listItem}>
                     <ListItemText
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       primary={
                         <Fragment>
                           Build Target
-                          {diffedProperties.includes('buildTarget') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("buildTarget") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -495,14 +501,14 @@ function RuleCard({
                   <ListItem className={classes.listItem}>
                     <ListItemText
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       primary={
                         <Fragment>
                           Locale
-                          {diffedProperties.includes('locale') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("locale") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -517,14 +523,14 @@ function RuleCard({
                   <ListItem className={classes.listItem}>
                     <ListItemText
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       primary={
                         <Fragment>
                           Distribution
-                          {diffedProperties.includes('distribution') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("distribution") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -539,14 +545,14 @@ function RuleCard({
                   <ListItem className={classes.listItem}>
                     <ListItemText
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       primary={
                         <Fragment>
                           Distribution Version
-                          {diffedProperties.includes('distVersion') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("distVersion") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -560,16 +566,16 @@ function RuleCard({
                 {rule.osVersion && (
                   <ListItem className={classes.listItem}>
                     <ListItemText
-                      title={rule.osVersion.split(',').join('\n')}
+                      title={rule.osVersion.split(",").join("\n")}
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       primary={
                         <Fragment>
                           OS Version
-                          {diffedProperties.includes('osVersion') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("osVersion") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -584,14 +590,14 @@ function RuleCard({
                   <ListItem className={classes.listItem}>
                     <ListItemText
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       primary={
                         <Fragment>
                           Instruction Set
-                          {diffedProperties.includes('instructionSet') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("instructionSet") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -606,14 +612,14 @@ function RuleCard({
                   <ListItem className={classes.listItem}>
                     <ListItemText
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       primary={
                         <Fragment>
                           Memory
-                          {diffedProperties.includes('memory') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("memory") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -628,14 +634,14 @@ function RuleCard({
                   <ListItem className={classes.listItem}>
                     <ListItemText
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       primary={
                         <Fragment>
                           64-bit Migration Opt-in
-                          {diffedProperties.includes('mig64') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("mig64") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -650,14 +656,14 @@ function RuleCard({
                   <ListItem className={classes.listItem}>
                     <ListItemText
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       primary={
                         <Fragment>
                           Incompatible JAWS Screen Reader
-                          {diffedProperties.includes('jaws') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("jaws") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -672,14 +678,14 @@ function RuleCard({
                   <ListItem className={classes.listItem}>
                     <ListItemText
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       primary={
                         <Fragment>
                           Header Architecture
-                          {diffedProperties.includes('headerArchitecture') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("headerArchitecture") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -699,7 +705,7 @@ function RuleCard({
                     <ListItemText
                       title={rule.comment}
                       primaryTypographyProps={{
-                        component: 'div',
+                        component: "div",
                         className: classes.primaryText,
                       }}
                       secondaryTypographyProps={{
@@ -708,8 +714,8 @@ function RuleCard({
                       primary={
                         <Fragment>
                           Comment
-                          {diffedProperties.includes('comment') &&
-                            rule.scheduledChange.change_type === 'update' && (
+                          {diffedProperties.includes("comment") &&
+                            rule.scheduledChange.change_type === "update" && (
                               <span
                                 className={classes.propertyWithScheduledChange}
                               />
@@ -726,26 +732,28 @@ function RuleCard({
         )}
         {rule.scheduledChange && (
           <Fragment>
-            {rule.scheduledChange.change_type !== 'insert' && (
+            {rule.scheduledChange.change_type !== "insert" && (
               <Divider className={classes.divider} />
             )}
             <div className={classes.scheduledChangesHeader}>
               <Typography
                 className={classes.scheduledChangesTitle}
                 component="h4"
-                variant="subtitle1">
-                Scheduled Changes{' '}
+                variant="subtitle1"
+              >
+                Scheduled Changes{" "}
                 <a
                   href={`#scId=${rule.scheduledChange.sc_id}`}
                   aria-label="Anchor"
-                  className="anchor-link-style">
+                  className="anchor-link-style"
+                >
                   #
                 </a>
               </Typography>
               <Chip
                 className={classNames(classes.chip, {
                   [classes.deleteChip]:
-                    rule.scheduledChange.change_type === 'delete',
+                    rule.scheduledChange.change_type === "delete",
                 })}
                 icon={<ChipIcon className={classes.chipIcon} size={16} />}
                 label={`${formatDistanceStrict(
@@ -755,11 +763,12 @@ function RuleCard({
                 )} (${rule.scheduledChange.change_type})`}
               />
             </div>
-            {rule.scheduledChange.change_type === 'delete' ? (
+            {rule.scheduledChange.change_type === "delete" ? (
               <Typography
                 className={classes.deletedText}
                 variant="body2"
-                color="textSecondary">
+                color="textSecondary"
+              >
                 All properties will be deleted
               </Typography>
             ) : (
@@ -787,7 +796,8 @@ function RuleCard({
                 state: {
                   rulesFilter,
                 },
-              }}>
+              }}
+            >
               <Button color="secondary">Duplicate</Button>
             </Link>
           ) : (
@@ -805,7 +815,8 @@ function RuleCard({
                 state: {
                   rulesFilter,
                 },
-              }}>
+              }}
+            >
               <Button color="secondary">Update</Button>
             </Link>
           ) : (
@@ -816,7 +827,8 @@ function RuleCard({
           <Button
             color="secondary"
             disabled={!user || actionLoading}
-            onClick={() => onRuleDelete(rule)}>
+            onClick={() => onRuleDelete(rule)}
+          >
             Delete
           </Button>
           {requiresSignoff &&
@@ -824,14 +836,16 @@ function RuleCard({
               <Button
                 color="secondary"
                 disabled={!user || actionLoading}
-                onClick={onRevoke}>
+                onClick={onRevoke}
+              >
                 Revoke Signoff
               </Button>
             ) : (
               <Button
                 color="secondary"
                 disabled={!user || actionLoading}
-                onClick={onSignoff}>
+                onClick={onSignoff}
+              >
                 Signoff
               </Button>
             ))}

@@ -395,12 +395,41 @@ function Rule({ isNewRule, user, ...props }) {
     return `Update Rule ${ruleId}${rule.alias ? ` (${rule.alias})` : ''}`;
   };
 
+  const signoffStyle = {
+    div : {
+      "display" : "flex",
+      "width" : "100%",
+      "margin" : "0 8px 0 8px",
+      "align-items" : "center"
+    },
+    p1 : {
+      "margin-right" : "8px",
+      "color" : "darkgray"
+    },
+    p2 : {
+      "color" : "gray"
+    }
+  }
+
   return (
     <Dashboard title={getTitle()}>
       {isLoading && <Spinner loading />}
       {error && <ErrorPanel fixed error={error} />}
       {!isLoading && (
+        /*
+        THE SIGN OFF DETAIL SHOULD GO JUST UNDERNEATH THE OPENING FRAGMENT
+        It should be in the form : 
+        "SignOffs Required : 1 signoff from a releng user" 
+        */
         <Fragment>
+          {/* SHOWS REQUIRED SIGNOFFS */}
+          <div style={signoffStyle.div}>
+            <p style={signoffStyle.p1}>Required Signoff(s) :</p>
+            <p style={signoffStyle.p2}>
+              {`this is the required signoff`}
+            </p>
+            {/* END OF SIGNOFF INFO */}
+          </div>
           <div className={classes.scheduleDiv}>
             <DateTimePicker
               todayLabel="ASAP"
