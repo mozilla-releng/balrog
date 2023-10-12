@@ -27,6 +27,7 @@ import SignoffSummary from '../SignoffSummary';
 import { withUser } from '../../utils/AuthContext';
 import Link from '../../utils/Link';
 import { release } from '../../utils/prop-types';
+import {  highlightText } from '../../utils/highlightText';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -132,6 +133,7 @@ function ReleaseCard(props) {
     onAccessChange,
     onReleaseDelete,
     onViewScheduledChangeDiff,
+    searchValue,
     // We don't actually use these, but we need to avoid passing them onto
     // `Card` like the rest of the props.
     onAuthorize: _,
@@ -172,18 +174,20 @@ function ReleaseCard(props) {
         className={classes.cardHeader}
         classes={{ content: classes.cardHeaderContent }}
         title={
-          <Typography
-            className={classes.releaseName}
-            component="h2"
-            variant="h6">
-            {release.name}{' '}
-            <a
-              href={`#${release.name}`}
-              aria-label="Anchor"
-              className="anchor-link-style">
-              #
-            </a>
-          </Typography>
+          
+         
+           <Typography
+        className={classes.releaseName}
+        component="h2"
+        variant="h6">
+            {highlightText(release.name, searchValue)}{' '}
+        <a
+          href={`#${release.name}`}
+          aria-label="Anchor"
+          className="anchor-link-style">
+          #
+        </a>
+      </Typography>
         }
         subheader={release.product}
         action={

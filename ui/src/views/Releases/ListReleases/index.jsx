@@ -129,6 +129,9 @@ function ListReleases(props) {
     revokeV2Action.error ||
     (roles.length === 1 && signoffAction.error) ||
     (roles.length === 1 && signoffV2Action.error);
+  
+  
+
   const filteredReleases = useMemo(() => {
     if (!releases) {
       return [];
@@ -138,10 +141,17 @@ function ListReleases(props) {
       return releases;
     }
 
-    return releases.filter(release =>
-      release.name.toLowerCase().includes(searchValue.toLowerCase())
-    );
+    const searchTerms = searchValue.toLowerCase().split(' ');
+    
+    const filteredResults = releases.filter((release) => {
+    const releaseName = release.name.toLowerCase();
+     // Check if all search terms are found in the release name
+      return searchTerms.every((term) => releaseName.includes(term));
+      
+    });
+    return filteredResults;
   }, [releases, searchValue]);
+   
   const filteredReleasesCount = filteredReleases.length;
   const handleSignoffRoleChange = ({ target: { value } }) =>
     setSignoffRole(value);
@@ -701,6 +711,7 @@ function ListReleases(props) {
           onViewScheduledChangeDiff={handleViewScheduledChangeDiff}
           onSignoff={() => handleSignoff(release)}
           onRevoke={() => handleRevoke(release)}
+          searchValue={searchValue}
         />
       </div>
     );
@@ -820,6 +831,8 @@ function ListReleases(props) {
           rowCount={filteredReleasesCount}
         />
       )}
+     
+     
       <DialogAction
         open={dialogState.open}
         title={dialogState.title}
