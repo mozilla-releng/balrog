@@ -103,7 +103,7 @@ function Rule({ isNewRule, user, ...props }) {
   const [releaseNamesV2Action, fetchReleaseNamesV2] = useAction(
     getReleaseNamesV2
   );
-  // 30 seconds - to make sure the helper text 'Scheduled for ASAP' shows up
+  // 30 seconds - to make sure the helper text "Scheduled for ASAP" shows up
   const [scheduleDate, setScheduleDate] = useState(new Date());
   const [dateTimePickerError, setDateTimePickerError] = useState(null);
   const [fetchRuleAction, fetchRule] = useAction(getRule);
@@ -382,7 +382,7 @@ function Rule({ isNewRule, user, ...props }) {
   const today = new Date();
 
   // This will make sure the helperText
-  // will always be displayed for a 'today' date
+  // will always be displayed for a "today" date
   today.setHours(0, 0, 0, 0);
 
   // To avoid nested ternary
@@ -415,18 +415,18 @@ function Rule({ isNewRule, user, ...props }) {
   // SignOff style
   const signoffStyle = {
     div: {
-      display: 'flex',
-      flexFlow: 'row wrap',
-      width: '100%',
-      margin: '8px 0 8px 0',
-      alignItems: 'center',
+      display: "flex",
+      flexFlow: "row wrap",
+      width: "100%",
+      margin: "8px 0 8px 0",
+      alignItems: "center",
     },
     p1: {
-      marginRight: '8px',
-      color: 'gray',
+      marginRight: "8px",
+      color: "gray",
     },
     p2: {
-      color: 'black',
+      color: "black",
     },
   };
 
@@ -438,27 +438,27 @@ function Rule({ isNewRule, user, ...props }) {
       /*
       THE SIGN OFF DETAIL SHOULD GO JUST UNDERNEATH THE OPENING FRAGMENT
       It should be in the form : 
-      'SignOffs Required : 1 signoff from a releng user' 
+      "SignOffs Required : 1 signoff from a releng user" 
       */
       <Fragment>
         {/* SHOWS REQUIRED SIGNOFFS */}
         <div style={signoffStyle.div}>
-          <Typography component='p' variant='body2' style={signoffStyle.p1}>Required Signoff(s) :</Typography>
+          <Typography component="p" variant="body2" style={signoffStyle.p1}>Required Signoff(s) :</Typography>
           {allRequiredSignOffs.map((reqSignOff, index, all) => {
             if (
               rule.product === reqSignOff.product &&
               rule.channel === `${reqSignOff.channel}*`
             ) {
               return (
-                <Typography component='p' variant='body2' key={index} style={signoffStyle.p2}>{`${
+                <Typography component="p" variant="body2" key={index} style={signoffStyle.p2}>{`${
                   reqSignOff.signoffs_required
-                } member${reqSignOff.count > 1 ? 's' : ''} of ${
+                } member${reqSignOff.count > 1 ? "s" : ""} of ${
                   reqSignOff.role
-                }${all[index + 1] ? ',' : ''}`}</Typography>
+                }${all[index + 1] ? "," : ""}`}</Typography>
               );
             } else {
               return (
-                <Typography component='p' variant='body2' key={index} style={signoffStyle.p2}>
+                <Typography component="p" variant="body2" key={index} style={signoffStyle.p2}>
                   No signoffs provided for this product in local development
                 </Typography>
               );
@@ -468,11 +468,11 @@ function Rule({ isNewRule, user, ...props }) {
         </div>
         <div className={classes.scheduleDiv}>
             <DateTimePicker
-              todayLabel='ASAP'
+              todayLabel="ASAP"
               disablePast
-              inputVariant='outlined'
+              inputVariant="outlined"
               fullWidth
-              label='When'
+              label="When"
               onError={handleDateTimePickerError}
               helperText={
                 dateTimePickerError ||
@@ -493,7 +493,7 @@ function Rule({ isNewRule, user, ...props }) {
                   products.data &&
                   getSuggestions(products.data.data.product.sort())
                 }
-                label='Product'
+                label="Product"
                 required
                 inputProps={{
                   autoFocus: true,
@@ -510,7 +510,7 @@ function Rule({ isNewRule, user, ...props }) {
                     channels.data &&
                     getSuggestions(channels.data.data.channel.sort())
                   }
-                  label='Channel'
+                  label="Channel"
                   required
                   inputProps={{
                     fullWidth: true,
@@ -524,7 +524,7 @@ function Rule({ isNewRule, user, ...props }) {
                   value={defaultToEmptyString(rule.mapping)}
                   onValueChange={handleMappingChange}
                   getSuggestions={getSuggestions(releaseNames)}
-                  label='Mapping'
+                  label="Mapping"
                   required
                   inputProps={{
                     fullWidth: true,
@@ -538,7 +538,7 @@ function Rule({ isNewRule, user, ...props }) {
                   value={defaultToEmptyString(rule.fallbackMapping)}
                   onValueChange={handleFallbackMappingChange}
                   getSuggestions={getSuggestions(releaseNames)}
-                  label='Fallback Mapping'
+                  label="Fallback Mapping"
                   inputProps={{
                     fullWidth: true,
                   }}
@@ -549,7 +549,7 @@ function Rule({ isNewRule, user, ...props }) {
               <Grid item xs={12} sm={6}>
                 <NumberFormat
                   allowNegative={false}
-                  label='Background Rate'
+                  label="Background Rate"
                   fullWidth
                   value={rule.backgroundRate}
                   customInput={TextField}
@@ -562,7 +562,7 @@ function Rule({ isNewRule, user, ...props }) {
               <Grid item xs={12} sm={6}>
                 <NumberFormat
                   allowNegative={false}
-                  label='Priority'
+                  label="Priority"
                   fullWidth
                   value={defaultToEmptyString(rule.priority)}
                   customInput={TextField}
@@ -575,9 +575,9 @@ function Rule({ isNewRule, user, ...props }) {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label='Version'
+                  label="Version"
                   value={defaultToEmptyString(rule.version)}
-                  name='version'
+                  name="version"
                   onChange={handleInputChange}
                 />
               </Grid>
@@ -586,9 +586,9 @@ function Rule({ isNewRule, user, ...props }) {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label='Build ID'
+                  label="Build ID"
                   value={defaultToEmptyString(rule.buildID)}
-                  name='buildID'
+                  name="buildID"
                   onChange={handleInputChange}
                 />
               </Grid>
@@ -596,13 +596,13 @@ function Rule({ isNewRule, user, ...props }) {
             {productSupportsField('locale') && (
               <Grid item xs={12} md={6}>
                 <TextField
-                  helperText='Enter each locale on its own line'
+                  helperText="Enter each locale on its own line"
                   multiline
                   rows={4}
                   fullWidth
-                  label='Locale'
+                  label="Locale"
                   value={localeTextValue}
-                  name='locale'
+                  name="locale"
                   onChange={handleTextFieldWithNewLinesChange}
                 />
               </Grid>
@@ -610,13 +610,13 @@ function Rule({ isNewRule, user, ...props }) {
             {productSupportsField('osVersion') && (
               <Grid item xs={12} md={6}>
                 <TextField
-                  helperText='Enter each OS version on its own line'
+                  helperText="Enter each OS version on its own line"
                   multiline
                   rows={4}
                   fullWidth
-                  label='OS Version'
+                  label="OS Version"
                   value={osVersionTextValue}
-                  name='osVersion'
+                  name="osVersion"
                   onChange={handleTextFieldWithNewLinesChange}
                 />
               </Grid>
@@ -625,9 +625,9 @@ function Rule({ isNewRule, user, ...props }) {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label='Build Target'
+                  label="Build Target"
                   value={defaultToEmptyString(rule.buildTarget)}
-                  name='buildTarget'
+                  name="buildTarget"
                   onChange={handleInputChange}
                 />
               </Grid>
@@ -636,9 +636,9 @@ function Rule({ isNewRule, user, ...props }) {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label='Instruction Set'
+                  label="Instruction Set"
                   value={defaultToEmptyString(rule.instructionSet)}
-                  name='instructionSet'
+                  name="instructionSet"
                   onChange={handleInputChange}
                 />
               </Grid>
@@ -647,9 +647,9 @@ function Rule({ isNewRule, user, ...props }) {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label='Memory'
+                  label="Memory"
                   value={defaultToEmptyString(rule.memory)}
-                  name='memory'
+                  name="memory"
                   onChange={handleInputChange}
                 />
               </Grid>
@@ -658,16 +658,16 @@ function Rule({ isNewRule, user, ...props }) {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label='Incompatible JAWS Screen Reader'
+                  label="Incompatible JAWS Screen Reader"
                   select
                   value={rule.jaws || EMPTY_MENU_ITEM_CHAR}
-                  name='jaws'
+                  name="jaws"
                   onChange={handleInputChange}>
                   <MenuItem value={EMPTY_MENU_ITEM_CHAR}>
                     {EMPTY_MENU_ITEM_CHAR}
                   </MenuItem>
-                  <MenuItem value='true'>Yes</MenuItem>
-                  <MenuItem value='false'>No</MenuItem>
+                  <MenuItem value="true">Yes</MenuItem>
+                  <MenuItem value="false">No</MenuItem>
                 </TextField>
               </Grid>
             )}
@@ -675,9 +675,9 @@ function Rule({ isNewRule, user, ...props }) {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label='Distribution'
+                  label="Distribution"
                   value={defaultToEmptyString(rule.distribution)}
-                  name='distribution'
+                  name="distribution"
                   onChange={handleInputChange}
                 />
               </Grid>
@@ -686,9 +686,9 @@ function Rule({ isNewRule, user, ...props }) {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label='Distribution Version'
+                  label="Distribution Version"
                   value={defaultToEmptyString(rule.distVersion)}
-                  name='distVersion'
+                  name="distVersion"
                   onChange={handleInputChange}
                 />
               </Grid>
@@ -697,9 +697,9 @@ function Rule({ isNewRule, user, ...props }) {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label='Header Architecture'
+                  label="Header Architecture"
                   value={defaultToEmptyString(rule.headerArchitecture)}
-                  name='headerArchitecture'
+                  name="headerArchitecture"
                   onChange={handleInputChange}
                 />
               </Grid>
@@ -708,16 +708,16 @@ function Rule({ isNewRule, user, ...props }) {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label='64-bit Migration Opt-in'
+                  label="64-bit Migration Opt-in"
                   select
                   value={rule.mig64 || EMPTY_MENU_ITEM_CHAR}
-                  name='mig64'
+                  name="mig64"
                   onChange={handleInputChange}>
                   <MenuItem value={EMPTY_MENU_ITEM_CHAR}>
                     {EMPTY_MENU_ITEM_CHAR}
                   </MenuItem>
-                  <MenuItem value='true'>Yes</MenuItem>
-                  <MenuItem value='false'>No</MenuItem>
+                  <MenuItem value="true">Yes</MenuItem>
+                  <MenuItem value="false">No</MenuItem>
                 </TextField>
               </Grid>
             )}
@@ -725,9 +725,9 @@ function Rule({ isNewRule, user, ...props }) {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label='Alias'
+                  label="Alias"
                   value={defaultToEmptyString(rule.alias)}
-                  name='alias'
+                  name="alias"
                   onChange={handleInputChange}
                 />
               </Grid>
@@ -738,12 +738,12 @@ function Rule({ isNewRule, user, ...props }) {
                   fullWidth
                   select
                   required
-                  label='Update Type'
+                  label="Update Type"
                   value={rule.update_type || 'minor'}
-                  name='update_type'
+                  name="update_type"
                   onChange={handleInputChange}>
-                  <MenuItem value='minor'>minor</MenuItem>
-                  <MenuItem value='major'>major</MenuItem>
+                  <MenuItem value="minor">minor</MenuItem>
+                  <MenuItem value="major">major</MenuItem>
                 </TextField>
               </Grid>
             )}
@@ -753,9 +753,9 @@ function Rule({ isNewRule, user, ...props }) {
                   fullWidth
                   multiline
                   rows={4}
-                  label='Comment'
+                  label="Comment"
                   value={defaultToEmptyString(rule.comment)}
-                  name='comment'
+                  name="comment"
                   onChange={handleInputChange}
                 />
               </Grid>
@@ -766,8 +766,8 @@ function Rule({ isNewRule, user, ...props }) {
       {!isLoading && (
         <Fragment>
           <Tooltip title={isNewRule && !scId ? 'Create Rule' : 'Update Rule'}>
-            {/* Add <div /> to avoid material-ui error 'you are providing
-              a disabled `button` child to the Tooltip component.' */}
+            {/* Add <div /> to avoid material-ui error "you are providing
+              a disabled `button` child to the Tooltip component." */}
             <div
               className={classNames(classes.fabWithTooltip, {
                 [classes.secondFab]: hasScheduledChange,
@@ -778,7 +778,7 @@ function Rule({ isNewRule, user, ...props }) {
                 onClick={
                   isNewRule && !scId ? handleCreateRule : handleUpdateRule
                 }
-                color='primary'>
+                color="primary">
                 <ContentSaveIcon />
               </Fab>
             </div>
@@ -786,12 +786,12 @@ function Rule({ isNewRule, user, ...props }) {
           {hasScheduledChange && (
             <SpeedDial
               FabProps={{ disabled: !user || actionLoading }}
-              ariaLabel='Secondary Actions'>
+              ariaLabel="Secondary Actions">
               <SpeedDialAction
                 FabProps={{ disabled: actionLoading }}
                 icon={<DeleteIcon />}
                 tooltipOpen
-                tooltipTitle='Cancel Pending Change'
+                tooltipTitle="Cancel Pending Change"
                 onClick={handleScheduleChangeDelete}
               />
             </SpeedDial>
