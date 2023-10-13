@@ -14,6 +14,7 @@ import Fab from '@material-ui/core/Fab';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
 import DeleteIcon from 'mdi-react/DeleteIcon';
+import Typography from '@material-ui/core/Typography';
 import Dashboard from '../../../components/Dashboard';
 import ErrorPanel from '../../../components/ErrorPanel';
 import AutoCompleteText from '../../../components/AutoCompleteText';
@@ -34,14 +35,13 @@ import {
 import { getReleaseNames, getReleaseNamesV2 } from '../../../services/releases';
 import { withUser } from '../../../utils/AuthContext';
 import {
+  OBJECT_NAMES,
   EMPTY_MENU_ITEM_CHAR,
   SPLIT_WITH_NEWLINES_AND_COMMA_REGEX,
   RULE_PRODUCT_UNSUPPORTED_PROPERTIES,
 } from '../../../utils/constants';
 // ALL IMPORTS TO FETCH REQUIRED SIGNOFFS BELOW:
-import { OBJECT_NAMES } from '../../../utils/constants';
 import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
-import Typography from '@material-ui/core/Typography';
 
 const initialRule = {
   alias: '',
@@ -400,14 +400,17 @@ function Rule({ isNewRule, user, ...props }) {
     return `Update Rule ${ruleId}${rule.alias ? ` (${rule.alias})` : ''}`;
   };
 
-  const [requiredSignoffs, fetchRequiredSignoffs] =
-  useAction(getRequiredSignoffs);
+  // eslint-disable-next-line no-unused-vars
+  const [requiredSignoffs, fetchRequiredSignoffs] = useAction(
+    getRequiredSignoffs
+  );
 
   useEffect(() => {
-    let myPromise = new Promise((res) => {
+    const myPromise = new Promise(res => {
       res(fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF));
     });
-    myPromise.then((rs) => {
+
+    myPromise.then(rs => {
       setAllrequiredSignoffs(rs.data.data.required_signoffs);
     });
   }, []);
@@ -415,51 +418,67 @@ function Rule({ isNewRule, user, ...props }) {
   // SignOff style
   const signoffStyle = {
     div: {
-      display: "flex",
-      flexFlow: "row wrap",
-      width: "100%",
-      margin: "8px 0 8px 0",
-      alignItems: "center",
+      display: 'flex',
+      flexFlow: 'row wrap',
+      width: '100%',
+      margin: '8px 0 8px 0',
+      alignItems: 'center',
     },
     p1: {
-      marginRight: "8px",
-      color: "gray",
+      marginRight: '8px',
+      color: 'gray',
     },
     p2: {
-      color: "black",
+      color: 'black',
     },
   };
 
   return (
     <Dashboard title={getTitle()}>
-    {isLoading && <Spinner loading />}
-    {error && <ErrorPanel fixed error={error} />}
-    {!isLoading && (
-      /*
+      {isLoading && <Spinner loading />}
+      {error && <ErrorPanel fixed error={error} />}
+      {!isLoading && (
+        /*
       THE SIGN OFF DETAIL SHOULD GO JUST UNDERNEATH THE OPENING FRAGMENT
       It should be in the form : 
       "SignOffs Required : 1 signoff from a releng user" 
       */
-      <Fragment>
-        {/* SHOWS REQUIRED SIGNOFFS */}
-        <div style={signoffStyle.div}>
-          <Typography component="p" variant="body2" style={signoffStyle.p1}>Required Signoff(s) :</Typography>
-            {allRequiredSignOffs.map((reqSignOff, inx, all) => {
-              if (rule.product === reqSignOff.product && rule.channel === `${reqSignOff.channel}*`) {
+        <Fragment>
+          {/* SHOWS REQUIRED SIGNOFFS */}
+          <div style={signoffStyle.div}>
+            <Typography component="p" variant="body2" style={signoffStyle.p1}>
+              Required Signoff(s) :
+            </Typography>
+            {allRequiredSignOffs.map((reqSignOff, index, all) => {
+              const no = index;
+
+              if (
+                rule.product === reqSignOff.product &&
+                rule.channel === `${reqSignOff.channel}*`
+              ) {
                 return (
-                  <Typography component="p" variant="body2" key={inx} style={signoffStyle.p2}>
-                    {`${reqSignOff.signoffs_required} member${reqSignOff.count > 1 ? 's' : ''} of ${reqSignOff.role}${all[inx + 1] ? ',' : ''}`}
+                  <Typography
+                    component="p"
+                    variant="body2"
+                    key={no}
+                    style={signoffStyle.p2}>
+                    {`${reqSignOff.signoffs_required} member${
+                      reqSignOff.signoffs_required > 1 ? 's' : ''
+                    } of ${reqSignOff.role}${all[index + 1] ? ',' : ''}`}
                   </Typography>
                 );
-              } 
-              else {
-                return (
-                    <Typography component="p" variant="body2" key={inx} style={signoffStyle.p2}>
-                      None
-                    </Typography>
-                  );
-                }
-              })}
+              }
+
+              return (
+                <Typography
+                  component="p"
+                  variant="body2"
+                  key={no}
+                  style={signoffStyle.p2}>
+                  None
+                </Typography>
+              );
+            })}
             {/* END OF REQUIRED SIGNOFFS INFO */}
           </div>
           <div className={classes.scheduleDiv}>
