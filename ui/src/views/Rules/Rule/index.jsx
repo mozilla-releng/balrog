@@ -455,7 +455,7 @@ function Rule({ isNewRule, user, ...props }) {
               else {
                 return (
                     <Typography component="p" variant="body2" key={inx} style={signoffStyle.p2}>
-                      No signoffs provided for this product in local development
+                      None
                     </Typography>
                   );
                 }
