@@ -404,7 +404,7 @@ function Rule({ isNewRule, user, ...props }) {
     useAction(getRequiredSignoffs);
 
   useEffect(() => {
-    let myPromise = new Promise((res, rej) => {
+    let myPromise = new Promise((res) => {
       res(fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF));
     });
     myPromise.then((rs) => {
@@ -418,7 +418,7 @@ function Rule({ isNewRule, user, ...props }) {
       display: "flex",
       flexFlow: "row wrap",
       width: "100%",
-      margin: "0 8px 0 8px",
+      margin: "4px 0 4px 0",
       alignItems: "center",
     },
     p1: {
