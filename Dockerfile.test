@@ -13,7 +13,7 @@ MAINTAINER jcristau@mozilla.com
 # xz-utils is needed to unpack sampled ata
 # git is needed to send coverage reports
 RUN apt-get -q update \
-    && apt-get -q --yes install g++ netcat libpcre3 libpcre3-dev default-libmysqlclient-dev mariadb-client curl gcc xz-utils git \
+    && apt-get -q --yes install g++ netcat-traditional libpcre3 libpcre3-dev default-libmysqlclient-dev mariadb-client curl gcc xz-utils git pkg-config \
     && apt-get clean
 
 WORKDIR /app

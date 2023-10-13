@@ -60,7 +60,7 @@ def mysql_command(host, user, password, db, cmd):
 
 
 def mysql_data_only_command(host, user, password, db, cmd):
-    return mysql_command(host, user, password, db, "--skip-add-drop-table --no-create-info {}".format(cmd))
+    return mysql_command(host, user, password, db, "--complete-insert --skip-add-drop-table --no-create-info {}".format(cmd))
 
 
 def extract_releases(release_names, url, dump_file, source_tables="releases_json release_assets"):
