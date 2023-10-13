@@ -6,12 +6,12 @@ import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
 import CardActions from '@material-ui/core/CardActions';
 import Typography from '@material-ui/core/Typography';
+import MenuItem from '@material-ui/core/MenuItem';
+import Select from '@material-ui/core/Select';
 import AlertIcon from 'mdi-react/AlertIcon';
 import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
 import { withUser } from '../../utils/AuthContext';
-import Select from '@material-ui/core/Select';
-import MenuItem from '@material-ui/core/MenuItem';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -75,22 +75,25 @@ function EmergencyShutoffCard({
         }
       />
       <CardContent classes={{ root: classes.cardContentRoot }}>
-        {requiresSignoff && (
-          <><div className={classes.space}>
-            <Typography variant="body1">Select your role:</Typography>
-            <Select
-              value={selectedRole}
-              onChange={(event) => setSelectedRole(event.target.value)}
-            >
-              <MenuItem value="role1">Role 1</MenuItem>
-              <MenuItem value="role2">Role 2</MenuItem>
-              {/* Add more role options as needed */}
-            </Select>
-          </div><SignoffSummary
-              requiredSignoffs={emergencyShutoff.scheduledChange.required_signoffs}
-              signoffs={emergencyShutoff.scheduledChange.signoffs}
-              className={classes.space} /></>
-        )}
+      {requiresSignoff && (
+  <React.Fragment>
+    <div className={classes.space}>
+       <Typography variant="body1">Select your role:</Typography>
+        <Select
+          value={selectedRole}
+          onChange={(event) => setSelectedRole(event.target.value)}>
+        <MenuItem value="role1">Role 1</MenuItem>
+          <MenuItem value="role2">Role 2</MenuItem>
+          {/* Add more role options as needed */}
+        </Select>
+    </div>
+    <SignoffSummary
+      requiredSignoffs={emergencyShutoff.scheduledChange.required_signoffs}
+      signoffs={emergencyShutoff.scheduledChange.signoffs}
+      className={classes.space}
+    />
+  </React.Fragment>
+)}
       </CardContent>
       <CardActions className={classes.cardActions}>
         {emergencyShutoff.comment && (
@@ -143,7 +146,7 @@ EmergencyShutoffCard.propTypes = {
   emergencyShutoff: object,
   onSignoff: func.isRequired,
   onRevoke: func.isRequired,
-  selectedRole: string, 
+  selectedRole: PropTypes.string, 
 };
 
 export default withUser(EmergencyShutoffCard);
