@@ -38,6 +38,10 @@ import {
   SPLIT_WITH_NEWLINES_AND_COMMA_REGEX,
   RULE_PRODUCT_UNSUPPORTED_PROPERTIES,
 } from '../../../utils/constants';
+// ALL IMPORTS TO FETCH REQUIRED SIGNOFFS BELOW:
+import { OBJECT_NAMES } from "../../../utils/constants";
+import { getRequiredSignoffs } from "../../../services/requiredSignoffs";
+import Typography from '@material-ui/core/Typography';
 
 const initialRule = {
   alias: '',
@@ -91,6 +95,7 @@ function Rule({ isNewRule, user, ...props }) {
       ? props.location.state.rulesFilter
       : [];
   const [rule, setRule] = useState(initialRule);
+  const [allRequiredSignOffs, setAllrequiredSignoffs] = useState([]);
   const [releaseNames, setReleaseNames] = useState([]);
   const [products, fetchProducts] = useAction(getProducts);
   const [channels, fetchChannels] = useAction(getChannels);
@@ -395,13 +400,73 @@ function Rule({ isNewRule, user, ...props }) {
     return `Update Rule ${ruleId}${rule.alias ? ` (${rule.alias})` : ''}`;
   };
 
+  const [requiredSignoffs, fetchRequiredSignoffs] =
+  useAction(getRequiredSignoffs);
+
+  useEffect(() => {
+    let myPromise = new Promise((res) => {
+      res(fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF));
+    });
+    myPromise.then((rs) => {
+      setAllrequiredSignoffs(rs.data.data.required_signoffs);
+    });
+  }, []);
+
+  // SignOff style
+  const signoffStyle = {
+    div: {
+      display: "flex",
+      flexFlow: "row wrap",
+      width: "100%",
+      margin: "8px 0 8px 0",
+      alignItems: "center",
+    },
+    p1: {
+      marginRight: "8px",
+      color: "gray",
+    },
+    p2: {
+      color: "black",
+    },
+  };
+
   return (
     <Dashboard title={getTitle()}>
-      {isLoading && <Spinner loading />}
-      {error && <ErrorPanel fixed error={error} />}
-      {!isLoading && (
-        <Fragment>
-          <div className={classes.scheduleDiv}>
+    {isLoading && <Spinner loading />}
+    {error && <ErrorPanel fixed error={error} />}
+    {!isLoading && (
+      /*
+      THE SIGN OFF DETAIL SHOULD GO JUST UNDERNEATH THE OPENING FRAGMENT
+      It should be in the form : 
+      "SignOffs Required : 1 signoff from a releng user" 
+      */
+      <Fragment>
+        {/* SHOWS REQUIRED SIGNOFFS */}
+        <div style={signoffStyle.div}>
+          <Typography component="p" variant="body2" style={signoffStyle.p1}>Required Signoff(s) :</Typography>
+          {allRequiredSignOffs.map((reqSignOff, index, all) => {
+            if (
+              rule.product === reqSignOff.product &&
+              rule.channel === `${reqSignOff.channel}*`
+            ) {
+              return (
+                <Typography component="p" variant="body2" key={index} style={signoffStyle.p2}>{`${
+                  reqSignOff.signoffs_required
+                } member${reqSignOff.count > 1 ? "s" : ""} of ${
+                  reqSignOff.role
+                }${all[index + 1] ? "," : ""}`}</Typography>
+              );
+            } else {
+              return (
+                <Typography component="p" variant="body2" key={index} style={signoffStyle.p2}>
+                  No signoffs provided for this product in local development
+                </Typography>
+              );
+            }
+          })}
+          {/* END OF REQUIRED SIGNOFFS INFO */}
+        </div>
+        <div className={classes.scheduleDiv}>
             <DateTimePicker
               todayLabel="ASAP"
               disablePast
