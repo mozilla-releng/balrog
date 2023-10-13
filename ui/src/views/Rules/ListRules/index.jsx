@@ -475,6 +475,7 @@ function ListRules(props) {
     rulesWithScheduledChanges,
     query.onlyScheduledChanges,
   ]);
+
   const handleDateTimePickerError = error => {
     setDateTimePickerError(error);
   };

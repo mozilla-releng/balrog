@@ -35,6 +35,7 @@ const useStyles = makeStyles(theme => ({
 function SignoffSummary(props) {
   const classes = useStyles();
   const { requiredSignoffs, signoffs, className } = props;
+
   const listOfSignoffs = Object.entries(signoffs);
 
   return (
