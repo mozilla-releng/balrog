@@ -444,29 +444,25 @@ function Rule({ isNewRule, user, ...props }) {
         {/* SHOWS REQUIRED SIGNOFFS */}
         <div style={signoffStyle.div}>
           <Typography component="p" variant="body2" style={signoffStyle.p1}>Required Signoff(s) :</Typography>
-          {allRequiredSignOffs.map((reqSignOff, index, all) => {
-            if (
-              rule.product === reqSignOff.product &&
-              rule.channel === `${reqSignOff.channel}*`
-            ) {
-              return (
-                <Typography component="p" variant="body2" key={index} style={signoffStyle.p2}>{`${
-                  reqSignOff.signoffs_required
-                } member${reqSignOff.count > 1 ? "s" : ""} of ${
-                  reqSignOff.role
-                }${all[index + 1] ? "," : ""}`}</Typography>
-              );
-            } else {
-              return (
-                <Typography component="p" variant="body2" key={index} style={signoffStyle.p2}>
-                  No signoffs provided for this product in local development
-                </Typography>
-              );
-            }
-          })}
-          {/* END OF REQUIRED SIGNOFFS INFO */}
-        </div>
-        <div className={classes.scheduleDiv}>
+            {allRequiredSignOffs.map((reqSignOff, inx, all) => {
+              if (rule.product === reqSignOff.product && rule.channel === `${reqSignOff.channel}*`) {
+                return (
+                  <Typography component="p" variant="body2" key={inx} style={signoffStyle.p2}>
+                    {`${reqSignOff.signoffs_required} member${reqSignOff.count > 1 ? 's' : ''} of ${reqSignOff.role}${all[inx + 1] ? ',' : ''}`}
+                  </Typography>
+                );
+              } 
+              else {
+                return (
+                    <Typography component="p" variant="body2" key={inx} style={signoffStyle.p2}>
+                      No signoffs provided for this product in local development
+                    </Typography>
+                  );
+                }
+              })}
+            {/* END OF REQUIRED SIGNOFFS INFO */}
+          </div>
+          <div className={classes.scheduleDiv}>
             <DateTimePicker
               todayLabel="ASAP"
               disablePast
