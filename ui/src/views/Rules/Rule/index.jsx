@@ -1,26 +1,26 @@
-import React, { Fragment, useState, useEffect } from 'react';
-import classNames from 'classnames';
-import { bool } from 'prop-types';
-import { defaultTo, assocPath, pick } from 'ramda';
-import { stringify } from 'qs';
-import NumberFormat from 'react-number-format';
-import { makeStyles } from '@material-ui/styles';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
-import Grid from '@material-ui/core/Grid';
-import TextField from '@material-ui/core/TextField';
-import MenuItem from '@material-ui/core/MenuItem';
-import Tooltip from '@material-ui/core/Tooltip';
-import Fab from '@material-ui/core/Fab';
-import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
-import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
-import DeleteIcon from 'mdi-react/DeleteIcon';
-import Dashboard from '../../../components/Dashboard';
-import ErrorPanel from '../../../components/ErrorPanel';
-import AutoCompleteText from '../../../components/AutoCompleteText';
-import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
-import DateTimePicker from '../../../components/DateTimePicker';
-import SpeedDial from '../../../components/SpeedDial';
-import useAction from '../../../hooks/useAction';
+import React, { Fragment, useState, useEffect } from "react";
+import classNames from "classnames";
+import { bool } from "prop-types";
+import { defaultTo, assocPath, pick } from "ramda";
+import { stringify } from "qs";
+import NumberFormat from "react-number-format";
+import { makeStyles } from "@material-ui/styles";
+import Spinner from "@mozilla-frontend-infra/components/Spinner";
+import Grid from "@material-ui/core/Grid";
+import TextField from "@material-ui/core/TextField";
+import MenuItem from "@material-ui/core/MenuItem";
+import Tooltip from "@material-ui/core/Tooltip";
+import Fab from "@material-ui/core/Fab";
+import SpeedDialAction from "@material-ui/lab/SpeedDialAction";
+import ContentSaveIcon from "mdi-react/ContentSaveIcon";
+import DeleteIcon from "mdi-react/DeleteIcon";
+import Dashboard from "../../../components/Dashboard";
+import ErrorPanel from "../../../components/ErrorPanel";
+import AutoCompleteText from "../../../components/AutoCompleteText";
+import getSuggestions from "../../../components/AutoCompleteText/getSuggestions";
+import DateTimePicker from "../../../components/DateTimePicker";
+import SpeedDial from "../../../components/SpeedDial";
+import useAction from "../../../hooks/useAction";
 import {
   getScheduledChangeByRuleId,
   getScheduledChangeByScId,
@@ -30,39 +30,43 @@ import {
   addScheduledChange,
   updateScheduledChange,
   deleteScheduledChange,
-} from '../../../services/rules';
-import { getReleaseNames, getReleaseNamesV2 } from '../../../services/releases';
-import { withUser } from '../../../utils/AuthContext';
+} from "../../../services/rules";
+import { getReleaseNames, getReleaseNamesV2 } from "../../../services/releases";
+import { withUser } from "../../../utils/AuthContext";
 import {
   EMPTY_MENU_ITEM_CHAR,
   SPLIT_WITH_NEWLINES_AND_COMMA_REGEX,
   RULE_PRODUCT_UNSUPPORTED_PROPERTIES,
-} from '../../../utils/constants';
+} from "../../../utils/constants";
+// ALL IMPORTS TO FETCH REQUIRED SIGNOFFS BELOW:
+import { OBJECT_NAMES } from "../../../utils/constants";
+import { getRequiredSignoffs } from "../../../services/requiredSignoffs";
+import Typography from '@material-ui/core/Typography';
 
 const initialRule = {
-  alias: '',
+  alias: "",
   backgroundRate: 0,
-  buildID: '',
-  buildTarget: '',
-  channel: '',
-  comment: '',
-  distVersion: '',
-  distribution: '',
-  fallbackMapping: '',
-  headerArchitecture: '',
-  instructionSet: '',
+  buildID: "",
+  buildTarget: "",
+  channel: "",
+  comment: "",
+  distVersion: "",
+  distribution: "",
+  fallbackMapping: "",
+  headerArchitecture: "",
+  instructionSet: "",
   jaws: EMPTY_MENU_ITEM_CHAR,
-  locale: '',
-  mapping: '',
-  memory: '',
+  locale: "",
+  mapping: "",
+  memory: "",
   mig64: EMPTY_MENU_ITEM_CHAR,
-  osVersion: '',
+  osVersion: "",
   priority: 0,
-  product: '',
-  update_type: 'minor',
-  version: '',
+  product: "",
+  update_type: "minor",
+  version: "",
 };
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   fab: {
     ...theme.mixins.fab,
   },
@@ -75,8 +79,8 @@ const useStyles = makeStyles(theme => ({
     width: theme.spacing(7),
   },
   scheduleDiv: {
-    display: 'flex',
-    alignItems: 'center',
+    display: "flex",
+    alignItems: "center",
     marginBottom: theme.spacing(4),
   },
   scheduleIcon: {
@@ -91,13 +95,13 @@ function Rule({ isNewRule, user, ...props }) {
       ? props.location.state.rulesFilter
       : [];
   const [rule, setRule] = useState(initialRule);
+  const [allRequiredSignOffs, setAllrequiredSignoffs] = useState([]);
   const [releaseNames, setReleaseNames] = useState([]);
   const [products, fetchProducts] = useAction(getProducts);
   const [channels, fetchChannels] = useAction(getChannels);
   const [releaseNamesAction, fetchReleaseNames] = useAction(getReleaseNames);
-  const [releaseNamesV2Action, fetchReleaseNamesV2] = useAction(
-    getReleaseNamesV2
-  );
+  const [releaseNamesV2Action, fetchReleaseNamesV2] =
+    useAction(getReleaseNamesV2);
   // 30 seconds - to make sure the helper text "Scheduled for ASAP" shows up
   const [scheduleDate, setScheduleDate] = useState(new Date());
   const [dateTimePickerError, setDateTimePickerError] = useState(null);
@@ -132,34 +136,36 @@ function Rule({ isNewRule, user, ...props }) {
     deleteSCAction.error;
   const { ruleId, scId } = props.match.params;
   const hasScheduledChange = !!rule.sc_id;
-  const defaultToEmptyString = defaultTo('');
+  const defaultToEmptyString = defaultTo("");
   const osVersionTextValue = defaultToEmptyString(rule.osVersion)
     .split(SPLIT_WITH_NEWLINES_AND_COMMA_REGEX)
-    .join('\n');
+    .join("\n");
   const localeTextValue = defaultToEmptyString(rule.locale)
     .split(SPLIT_WITH_NEWLINES_AND_COMMA_REGEX)
-    .join('\n');
+    .join("\n");
   const handleInputChange = ({ target: { name, value } }) => {
     setRule(assocPath([name], value, rule));
   };
 
   const handleTextFieldWithNewLinesChange = ({ target: { name, value } }) => {
-    setRule(assocPath([name], value.split('\n').join(','), rule));
+    setRule(assocPath([name], value.split("\n").join(","), rule));
   };
 
-  const handleProductChange = value =>
-    setRule(assocPath(['product'], value, rule));
-  const handleChannelChange = value =>
-    setRule(assocPath(['channel'], value, rule));
-  const handleMappingChange = value =>
-    setRule(assocPath(['mapping'], value, rule));
-  const handleFallbackMappingChange = value =>
-    setRule(assocPath(['fallbackMapping'], value, rule));
-  const handleNumberChange = name => ({ floatValue: value }) => {
-    setRule(assocPath([name], value, rule));
-  };
+  const handleProductChange = (value) =>
+    setRule(assocPath(["product"], value, rule));
+  const handleChannelChange = (value) =>
+    setRule(assocPath(["channel"], value, rule));
+  const handleMappingChange = (value) =>
+    setRule(assocPath(["mapping"], value, rule));
+  const handleFallbackMappingChange = (value) =>
+    setRule(assocPath(["fallbackMapping"], value, rule));
+  const handleNumberChange =
+    (name) =>
+    ({ floatValue: value }) => {
+      setRule(assocPath([name], value, rule));
+    };
 
-  const redirectWithRulesFilter = hashFilter => {
+  const redirectWithRulesFilter = (hashFilter) => {
     const [product, channel] = rulesFilter;
     const query = stringify({ product, channel }, { addQueryPrefix: true });
 
@@ -178,12 +184,12 @@ function Rule({ isNewRule, user, ...props }) {
     );
   }, []);
 
-  const handleDateTimeChange = date => {
+  const handleDateTimeChange = (date) => {
     setScheduleDate(date);
     setDateTimePickerError(null);
   };
 
-  const handleDateTimePickerError = error => {
+  const handleDateTimePickerError = (error) => {
     setDateTimePickerError(error);
   };
 
@@ -198,12 +204,12 @@ function Rule({ isNewRule, user, ...props }) {
     }
   };
 
-  const productSupportsField = field =>
+  const productSupportsField = (field) =>
     !(
       rule.product in RULE_PRODUCT_UNSUPPORTED_PROPERTIES &&
       RULE_PRODUCT_UNSUPPORTED_PROPERTIES[rule.product].includes(field)
     );
-  const filterProductData = data =>
+  const filterProductData = (data) =>
     pick(Object.keys(data).filter(productSupportsField), data);
   const handleCreateRule = async () => {
     const now = new Date();
@@ -221,11 +227,11 @@ function Rule({ isNewRule, user, ...props }) {
       fallbackMapping: rule.fallbackMapping,
       headerArchitecture: rule.headerArchitecture,
       instructionSet: rule.instructionSet,
-      jaws: rule.jaws === EMPTY_MENU_ITEM_CHAR ? null : rule.jaws === 'true',
+      jaws: rule.jaws === EMPTY_MENU_ITEM_CHAR ? null : rule.jaws === "true",
       locale: rule.locale,
       mapping: rule.mapping,
       memory: rule.memory,
-      mig64: rule.mig64 === EMPTY_MENU_ITEM_CHAR ? null : rule.mig64 === 'true',
+      mig64: rule.mig64 === EMPTY_MENU_ITEM_CHAR ? null : rule.mig64 === "true",
       osVersion: rule.osVersion,
       priority: rule.priority,
       product: rule.product,
@@ -233,7 +239,7 @@ function Rule({ isNewRule, user, ...props }) {
       version: rule.version,
     };
     const { data: response, error } = await addSC({
-      change_type: 'insert',
+      change_type: "insert",
       when,
       ...filterProductData(data),
     });
@@ -259,11 +265,11 @@ function Rule({ isNewRule, user, ...props }) {
       fallbackMapping: rule.fallbackMapping,
       headerArchitecture: rule.headerArchitecture,
       instructionSet: rule.instructionSet,
-      jaws: rule.jaws === EMPTY_MENU_ITEM_CHAR ? null : rule.jaws === 'true',
+      jaws: rule.jaws === EMPTY_MENU_ITEM_CHAR ? null : rule.jaws === "true",
       locale: rule.locale,
       mapping: rule.mapping,
       memory: rule.memory,
-      mig64: rule.mig64 === EMPTY_MENU_ITEM_CHAR ? null : rule.mig64 === 'true',
+      mig64: rule.mig64 === EMPTY_MENU_ITEM_CHAR ? null : rule.mig64 === "true",
       osVersion: rule.osVersion,
       priority: rule.priority,
       product: rule.product,
@@ -287,7 +293,7 @@ function Rule({ isNewRule, user, ...props }) {
       const { data: response, error } = await addSC({
         rule_id: rule.rule_id,
         data_version: rule.data_version,
-        change_type: 'update',
+        change_type: "update",
         when,
         ...filterProductData(data),
       });
@@ -308,7 +314,7 @@ function Rule({ isNewRule, user, ...props }) {
     // values, they get stored as EMPTY_MENU_ITEM_CHAR or a string
     // true/false when they change in the UI. In order to keep things
     // consistent, we do the same to the data fetched from the server.
-    const getOptionalBooleanValue = current =>
+    const getOptionalBooleanValue = (current) =>
       current === null ? EMPTY_MENU_ITEM_CHAR : String(current);
 
     if (!isNewRule) {
@@ -385,14 +391,44 @@ function Rule({ isNewRule, user, ...props }) {
     if (isNewRule) {
       if (scId) {
         return `Update Scheduled Rule ${scId}${
-          rule.alias ? ` (${rule.alias})` : ''
+          rule.alias ? ` (${rule.alias})` : ""
         }`;
       }
 
-      return 'Create Rule';
+      return "Create Rule";
     }
 
-    return `Update Rule ${ruleId}${rule.alias ? ` (${rule.alias})` : ''}`;
+    return `Update Rule ${ruleId}${rule.alias ? ` (${rule.alias})` : ""}`;
+  };
+
+  const [requiredSignoffs, fetchRequiredSignoffs] =
+    useAction(getRequiredSignoffs);
+
+  useEffect(() => {
+    let myPromise = new Promise((res) => {
+      res(fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF));
+    });
+    myPromise.then((rs) => {
+      setAllrequiredSignoffs(rs.data.data.required_signoffs);
+    });
+  }, []);
+
+  // SignOff style
+  const signoffStyle = {
+    div: {
+      display: "flex",
+      flexFlow: "row wrap",
+      width: "100%",
+      margin: "8px 0 8px 0",
+      alignItems: "center",
+    },
+    p1: {
+      marginRight: "8px",
+      color: "gray",
+    },
+    p2: {
+      color: "black",
+    },
   };
 
   return (
@@ -400,7 +436,37 @@ function Rule({ isNewRule, user, ...props }) {
       {isLoading && <Spinner loading />}
       {error && <ErrorPanel fixed error={error} />}
       {!isLoading && (
+        /*
+        THE SIGN OFF DETAIL SHOULD GO JUST UNDERNEATH THE OPENING FRAGMENT
+        It should be in the form : 
+        "SignOffs Required : 1 signoff from a releng user" 
+        */
         <Fragment>
+          {/* SHOWS REQUIRED SIGNOFFS */}
+          <div style={signoffStyle.div}>
+            <Typography component="p" variant="body2" style={signoffStyle.p1}>Required Signoff(s) :</Typography>
+            {allRequiredSignOffs.map((reqSignOff, index, all) => {
+              if (
+                rule.product === reqSignOff.product &&
+                rule.channel === `${reqSignOff.channel}*`
+              ) {
+                return (
+                  <Typography component="p" variant="body2" key={index} style={signoffStyle.p2}>{`${
+                    reqSignOff.signoffs_required
+                  } member${reqSignOff.count > 1 ? "s" : ""} of ${
+                    reqSignOff.role
+                  }${all[index + 1] ? "," : ""}`}</Typography>
+                );
+              } else {
+                return (
+                  <Typography component="p" variant="body2" key={index} style={signoffStyle.p2}>
+                    No signoffs provided for this product in local development
+                  </Typography>
+                );
+              }
+            })}
+            {/* END OF REQUIRED SIGNOFFS INFO */}
+          </div>
           <div className={classes.scheduleDiv}>
             <DateTimePicker
               todayLabel="ASAP"
@@ -412,7 +478,7 @@ function Rule({ isNewRule, user, ...props }) {
               helperText={
                 dateTimePickerError ||
                 (scheduleDate < new Date()
-                  ? 'This will be scheduled for ASAP'
+                  ? "This will be scheduled for ASAP"
                   : undefined)
               }
               onDateTimeChange={handleDateTimeChange}
@@ -436,7 +502,7 @@ function Rule({ isNewRule, user, ...props }) {
                 }}
               />
             </Grid>
-            {productSupportsField('channel') && (
+            {productSupportsField("channel") && (
               <Grid item xs={12} sm={6}>
                 <AutoCompleteText
                   value={defaultToEmptyString(rule.channel)}
@@ -453,7 +519,7 @@ function Rule({ isNewRule, user, ...props }) {
                 />
               </Grid>
             )}
-            {productSupportsField('mapping') && (
+            {productSupportsField("mapping") && (
               <Grid item xs={12} sm={6}>
                 <AutoCompleteText
                   value={defaultToEmptyString(rule.mapping)}
@@ -467,7 +533,7 @@ function Rule({ isNewRule, user, ...props }) {
                 />
               </Grid>
             )}
-            {productSupportsField('fallbackMapping') && (
+            {productSupportsField("fallbackMapping") && (
               <Grid item xs={12} sm={6}>
                 <AutoCompleteText
                   value={defaultToEmptyString(rule.fallbackMapping)}
@@ -480,7 +546,7 @@ function Rule({ isNewRule, user, ...props }) {
                 />
               </Grid>
             )}
-            {productSupportsField('backgroundRate') && (
+            {productSupportsField("backgroundRate") && (
               <Grid item xs={12} sm={6}>
                 <NumberFormat
                   allowNegative={false}
@@ -488,12 +554,12 @@ function Rule({ isNewRule, user, ...props }) {
                   fullWidth
                   value={rule.backgroundRate}
                   customInput={TextField}
-                  onValueChange={handleNumberChange('backgroundRate')}
+                  onValueChange={handleNumberChange("backgroundRate")}
                   decimalScale={0}
                 />
               </Grid>
             )}
-            {productSupportsField('priority') && (
+            {productSupportsField("priority") && (
               <Grid item xs={12} sm={6}>
                 <NumberFormat
                   allowNegative={false}
@@ -501,12 +567,12 @@ function Rule({ isNewRule, user, ...props }) {
                   fullWidth
                   value={defaultToEmptyString(rule.priority)}
                   customInput={TextField}
-                  onValueChange={handleNumberChange('priority')}
+                  onValueChange={handleNumberChange("priority")}
                   decimalScale={0}
                 />
               </Grid>
             )}
-            {productSupportsField('version') && (
+            {productSupportsField("version") && (
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -517,7 +583,7 @@ function Rule({ isNewRule, user, ...props }) {
                 />
               </Grid>
             )}
-            {productSupportsField('buildID') && (
+            {productSupportsField("buildID") && (
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -528,12 +594,12 @@ function Rule({ isNewRule, user, ...props }) {
                 />
               </Grid>
             )}
-            {productSupportsField('locale') && (
+            {productSupportsField("locale") && (
               <Grid item xs={12} md={6}>
                 <TextField
                   helperText="Enter each locale on its own line"
                   multiline
-                  rows={4}
+                  minRows={4}
                   fullWidth
                   label="Locale"
                   value={localeTextValue}
@@ -542,12 +608,12 @@ function Rule({ isNewRule, user, ...props }) {
                 />
               </Grid>
             )}
-            {productSupportsField('osVersion') && (
+            {productSupportsField("osVersion") && (
               <Grid item xs={12} md={6}>
                 <TextField
                   helperText="Enter each OS version on its own line"
                   multiline
-                  rows={4}
+                  minRows={4}
                   fullWidth
                   label="OS Version"
                   value={osVersionTextValue}
@@ -556,7 +622,7 @@ function Rule({ isNewRule, user, ...props }) {
                 />
               </Grid>
             )}
-            {productSupportsField('buildTarget') && (
+            {productSupportsField("buildTarget") && (
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -567,7 +633,7 @@ function Rule({ isNewRule, user, ...props }) {
                 />
               </Grid>
             )}
-            {productSupportsField('instructionSet') && (
+            {productSupportsField("instructionSet") && (
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -578,7 +644,7 @@ function Rule({ isNewRule, user, ...props }) {
                 />
               </Grid>
             )}
-            {productSupportsField('memory') && (
+            {productSupportsField("memory") && (
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -589,7 +655,7 @@ function Rule({ isNewRule, user, ...props }) {
                 />
               </Grid>
             )}
-            {productSupportsField('jaws') && (
+            {productSupportsField("jaws") && (
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -597,7 +663,8 @@ function Rule({ isNewRule, user, ...props }) {
                   select
                   value={rule.jaws || EMPTY_MENU_ITEM_CHAR}
                   name="jaws"
-                  onChange={handleInputChange}>
+                  onChange={handleInputChange}
+                >
                   <MenuItem value={EMPTY_MENU_ITEM_CHAR}>
                     {EMPTY_MENU_ITEM_CHAR}
                   </MenuItem>
@@ -606,7 +673,7 @@ function Rule({ isNewRule, user, ...props }) {
                 </TextField>
               </Grid>
             )}
-            {productSupportsField('distribution') && (
+            {productSupportsField("distribution") && (
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -617,7 +684,7 @@ function Rule({ isNewRule, user, ...props }) {
                 />
               </Grid>
             )}
-            {productSupportsField('distVersion') && (
+            {productSupportsField("distVersion") && (
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -628,7 +695,7 @@ function Rule({ isNewRule, user, ...props }) {
                 />
               </Grid>
             )}
-            {productSupportsField('headerArchitecture') && (
+            {productSupportsField("headerArchitecture") && (
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -639,7 +706,7 @@ function Rule({ isNewRule, user, ...props }) {
                 />
               </Grid>
             )}
-            {productSupportsField('mig64') && (
+            {productSupportsField("mig64") && (
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -647,7 +714,8 @@ function Rule({ isNewRule, user, ...props }) {
                   select
                   value={rule.mig64 || EMPTY_MENU_ITEM_CHAR}
                   name="mig64"
-                  onChange={handleInputChange}>
+                  onChange={handleInputChange}
+                >
                   <MenuItem value={EMPTY_MENU_ITEM_CHAR}>
                     {EMPTY_MENU_ITEM_CHAR}
                   </MenuItem>
@@ -656,7 +724,7 @@ function Rule({ isNewRule, user, ...props }) {
                 </TextField>
               </Grid>
             )}
-            {productSupportsField('alias') && (
+            {productSupportsField("alias") && (
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -667,27 +735,28 @@ function Rule({ isNewRule, user, ...props }) {
                 />
               </Grid>
             )}
-            {productSupportsField('update_type') && (
+            {productSupportsField("update_type") && (
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   select
                   required
                   label="Update Type"
-                  value={rule.update_type || 'minor'}
+                  value={rule.update_type || "minor"}
                   name="update_type"
-                  onChange={handleInputChange}>
+                  onChange={handleInputChange}
+                >
                   <MenuItem value="minor">minor</MenuItem>
                   <MenuItem value="major">major</MenuItem>
                 </TextField>
               </Grid>
             )}
-            {productSupportsField('comment') && (
+            {productSupportsField("comment") && (
               <Grid item xs={12}>
                 <TextField
                   fullWidth
                   multiline
-                  rows={4}
+                  minRows={4}
                   label="Comment"
                   value={defaultToEmptyString(rule.comment)}
                   name="comment"
@@ -700,20 +769,22 @@ function Rule({ isNewRule, user, ...props }) {
       )}
       {!isLoading && (
         <Fragment>
-          <Tooltip title={isNewRule && !scId ? 'Create Rule' : 'Update Rule'}>
+          <Tooltip title={isNewRule && !scId ? "Create Rule" : "Update Rule"}>
             {/* Add <div /> to avoid material-ui error "you are providing
               a disabled `button` child to the Tooltip component." */}
             <div
               className={classNames(classes.fabWithTooltip, {
                 [classes.secondFab]: hasScheduledChange,
                 [classes.fab]: !hasScheduledChange,
-              })}>
+              })}
+            >
               <Fab
                 disabled={!user || actionLoading}
                 onClick={
                   isNewRule && !scId ? handleCreateRule : handleUpdateRule
                 }
-                color="primary">
+                color="primary"
+              >
                 <ContentSaveIcon />
               </Fab>
             </div>
@@ -721,7 +792,8 @@ function Rule({ isNewRule, user, ...props }) {
           {hasScheduledChange && (
             <SpeedDial
               FabProps={{ disabled: !user || actionLoading }}
-              ariaLabel="Secondary Actions">
+              ariaLabel="Secondary Actions"
+            >
               <SpeedDialAction
                 FabProps={{ disabled: actionLoading }}
                 icon={<DeleteIcon />}
