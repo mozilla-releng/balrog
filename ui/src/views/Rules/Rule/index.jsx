@@ -41,6 +41,7 @@ import {
 // ALL IMPORTS TO FETCH REQUIRED SIGNOFFS BELOW:
 import { OBJECT_NAMES } from "../../../utils/constants";
 import { getRequiredSignoffs } from "../../../services/requiredSignoffs";
+import Typography from '@material-ui/core/Typography';
 
 const initialRule = {
   alias: "",
@@ -418,7 +419,7 @@ function Rule({ isNewRule, user, ...props }) {
       display: "flex",
       flexFlow: "row wrap",
       width: "100%",
-      margin: "4px 0 4px 0",
+      margin: "8px 0 8px 0",
       alignItems: "center",
     },
     p1: {
@@ -443,24 +444,24 @@ function Rule({ isNewRule, user, ...props }) {
         <Fragment>
           {/* SHOWS REQUIRED SIGNOFFS */}
           <div style={signoffStyle.div}>
-            <p style={signoffStyle.p1}>Required Signoff(s) :</p>
+            <Typography component="p" variant="body2" style={signoffStyle.p1}>Required Signoff(s) :</Typography>
             {allRequiredSignOffs.map((reqSignOff, index, all) => {
               if (
                 rule.product === reqSignOff.product &&
                 rule.channel === `${reqSignOff.channel}*`
               ) {
                 return (
-                  <p key={index} style={signoffStyle.p2}>{`${
+                  <Typography component="p" variant="body2" key={index} style={signoffStyle.p2}>{`${
                     reqSignOff.signoffs_required
                   } member${reqSignOff.count > 1 ? "s" : ""} of ${
                     reqSignOff.role
-                  }${all[index + 1] ? "," : ""}`}</p>
+                  }${all[index + 1] ? "," : ""}`}</Typography>
                 );
               } else {
                 return (
-                  <p key={index} style={signoffStyle.p2}>
+                  <Typography component="p" variant="body2" key={index} style={signoffStyle.p2}>
                     No signoffs provided for this product in local development
-                  </p>
+                  </Typography>
                 );
               }
             })}
