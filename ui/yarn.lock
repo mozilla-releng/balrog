@@ -1425,6 +1425,11 @@
     eslint-plugin-react "^7.14.3"
     eslint-plugin-react-hooks "^2.0.0"
 
+"@mozilla-protocol/core@^17.0.1":
+  version "17.0.1"
+  resolved "https://registry.yarnpkg.com/@mozilla-protocol/core/-/core-17.0.1.tgz#8ae34ffbba9e686b80465d9304b207da95ea272e"
+  integrity sha512-xN6DNJ1P93lqrzhEHhx6J8HvIVpWDBLNOO4cqlHWH6HNPOoD/vsfygCwg6UJ+pkWBAwQLbS10xgB3Y2+kCP82Q==
+
 "@neutrinojs/clean@9.5.0":
   version "9.5.0"
   resolved "https://registry.yarnpkg.com/@neutrinojs/clean/-/clean-9.5.0.tgz#77cfb0add1584741c7501f5e12ad206b67f216bf"
