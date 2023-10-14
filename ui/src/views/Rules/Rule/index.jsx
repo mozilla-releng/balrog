@@ -454,7 +454,7 @@ function Rule({ isNewRule, user, ...props }) {
 
               if (
                 rule.product === reqSignOff.product &&
-                rule.channel === `${reqSignOff.channel}*`
+                rule.channel === `${reqSignOff.channel}`
               ) {
                 return (
                   <Typography
