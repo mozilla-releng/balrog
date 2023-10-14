@@ -1,5 +1,6 @@
 import { createTheme } from '@material-ui/core/styles';
 import { amber, red, indigo } from '@material-ui/core/colors';
+import '../node_modules/@mozilla-protocol/core/protocol/css/protocol-components.css';
 
 const SPACING = {
   UNIT: 8,
@@ -35,7 +36,25 @@ export default createTheme({
     },
   },
   typography: {
-    useNextVariants: true,
+    fontDisplay: 'swap',
+    fontFamily: "'Zilla Slab', 'Inter', sans-serif",
+    fontStyle: 'normal',
+    fontWeight: 'normal',
+    body1: {
+      fontFamily: "'Inter', sans-serif",
+    },
+    body2: {
+      fontFamily: "'Inter', sans-serif",
+    },
+    caption: {
+      fontFamily: "'Inter', sans-serif",
+    },
+    button: {
+      fontFamily: "'Inter', sans-serif",
+    },
+    overline: {
+      fontFamily: "'Inter', sans-serif",
+    },
   },
   mixins: {
     link: {

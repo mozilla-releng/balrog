@@ -5,6 +5,8 @@ import { makeStyles } from '@material-ui/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
+import ExtensionIcon from '@material-ui/icons/Extension';
 import menuItems from './menuItems';
 import Link from '../../utils/Link';
 import UserMenu from './UserMenu';
@@ -43,7 +45,40 @@ const useStyles = makeStyles(theme => ({
   buttonWithIcon: {
     paddingLeft: theme.spacing(2),
   },
+  protocolLogo: {
+    margin: '0px',
+    marginRight: '.7%',
+  },
+  extensionIcon: {
+    margin: '0px',
+    marginRight: '.5%',
+  },
 }));
+
+function Logo(props) {
+  const { group } = props;
+  const classes = useStyles();
+
+  if (group && group.toLowerCase().includes('firefox')) {
+    return (
+      <Box
+        component="div"
+        className={`mzp-c-logo mzp-t-logo-sm mzp-t-product-firefox ${classes.protocolLogo}`}
+      />
+    );
+  }
+
+  if (group && group.toLowerCase().includes('extensions')) {
+    return <ExtensionIcon className={classes.extensionIcon} />;
+  }
+
+  return (
+    <Box
+      component="div"
+      className={`mzp-c-logo mzp-t-logo-sm mzp-t-product-mozilla ${classes.protocolLogo}`}
+    />
+  );
+}
 
 export default function Dashboard(props) {
   const classes = useStyles();
@@ -56,15 +91,7 @@ export default function Dashboard(props) {
       </Helmet>
       <AppBar className={classes.appbar}>
         <Toolbar>
-          <Typography
-            className={classes.title}
-            color="inherit"
-            variant="h6"
-            noWrap
-            component={Link}
-            to="/">
-            Balrog Admin ┃ {title}
-          </Typography>
+          <Logo group={group} />
           <nav className={classes.nav}>
             {menuItems.main.map(menuItem => (
               <Link
