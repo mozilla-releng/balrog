@@ -19,21 +19,21 @@ sys.path.append(path.join(path.dirname(__file__), ".."))
 sys.path.append(path.join(path.dirname(__file__), path.join("..", "vendor", "lib", "python")))
 
 
+RELEASES_CLEANUP_CONDITION = """
+LEFT JOIN rules rules_mapping ON (name=rules_mapping.mapping)
+WHERE name LIKE '%%nightly%%'
+AND name NOT LIKE '%%latest'
+AND rules_mapping.mapping IS NULL
+AND (STR_TO_DATE(RIGHT(name, 14), "%%Y%%m%%d%%H%%i%%S") < NOW() - INTERVAL {nightly_age} DAY);
+"""
+
+
 def cleanup_releases(trans, nightly_age, dryrun=True):
     # This and the subsequent queries use "%%%%%" because we end up going
     # through two levels of Python string formatting. The first is here,
     # and the second happens at a low level of SQLAlchemy when the transaction
     # is being executed.
-    query = (
-        """
-LEFT JOIN rules rules_mapping ON (name=rules_mapping.mapping)
-WHERE name LIKE '%%%%nightly%%%%'
-AND name NOT LIKE '%%%%latest'
-AND rules_mapping.mapping IS NULL
-AND (STR_TO_DATE(RIGHT(name, 14), "%%%%Y%%%%m%%%%d%%%%H%%%%i%%%%S") < NOW() - INTERVAL %s DAY);
-"""
-        % nightly_age
-    )
+    query = RELEASES_CLEANUP_CONDITION.format(nightly_age=nightly_age)
     if dryrun:
         todelete = trans.execute("SELECT name FROM releases" + query).fetchall()
         print("Releases rows to be deleted:")
@@ -43,6 +43,20 @@ AND (STR_TO_DATE(RIGHT(name, 14), "%%%%Y%%%%m%%%%d%%%%H%%%%i%%%%S") < NOW() - IN
             print("  - None")
     else:
         trans.execute("DELETE releases FROM releases" + query)
+
+
+def cleanup_releases_json(trans, nightly_age, dryrun=True):
+    query = RELEASES_CLEANUP_CONDITION.format(nightly_age=nightly_age)
+    if dryrun:
+        todelete = trans.execute("SELECT name FROM releases_json" + query).fetchall()
+        print("Releases JSON rows to be deleted:")
+        if todelete:
+            print("\n".join(itertools.chain(*todelete)))
+        else:
+            print("  - None")
+    else:
+        trans.execute("DELETE releases_json FROM releases_json" + query)
+        trans.execute("DELETE release_assets FROM release_assets" + query)
 
 
 def chunk_list(list_object, n):
@@ -203,5 +217,7 @@ if __name__ == "__main__":
         with db.begin() as trans:
             if action == "cleanup":
                 cleanup_releases(trans, nightly_age, dryrun=False)
+                cleanup_releases_json(trans, nightly_age, dryrun=False)
             else:
                 cleanup_releases(trans, nightly_age, dryrun=True)
+                cleanup_releases_json(trans, nightly_age, dryrun=True)
