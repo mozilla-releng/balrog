@@ -4,7 +4,6 @@ import { Helmet } from 'react-helmet';
 import { makeStyles } from '@material-ui/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 import ExtensionIcon from '@material-ui/icons/Extension';
 import menuItems from './menuItems';
