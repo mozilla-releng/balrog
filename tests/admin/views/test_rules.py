@@ -2834,3 +2834,15 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._delete("/scheduled_changes/rules/3/signoffs", username="julie", qs={"username": "mary"})
         self.assertEqual(ret.status_code, 403, ret.get_data())
         self.assertEqual(ret.mimetype, "application/json")
+
+
+    def testScheduledChangeWithDuplicateAlias(self):
+        ret = self._post(
+            "/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly", alias="test")
+        )
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+
+        ret = self._post(
+            "/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly", alias="test")
+        )
+        self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
