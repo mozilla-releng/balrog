@@ -77,9 +77,7 @@ function SignoffSummary(props) {
             const leftarr = [];
             const allleft = count - AllSigned.length;
 
-            // Disabled eslint because "i+1" runs loop till eternity
-            // eslint-disable-next-line no-plusplus
-            for (let i = 0; i < allleft; i++) {
+            for (let i in allleft) {
               leftarr.push([]);
             }
 
