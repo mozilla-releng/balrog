@@ -156,6 +156,7 @@ function ListRules(props) {
   ] = useState('');
   const [signoffRole, setSignoffRole] = useState('');
   const [requiredRolesFromUser, setRequiredRolesFromUser] = useState([]);
+  const [canUserSign, setCanUserSign] = useState(false);
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
   const [drawerReleaseName, setDrawerReleaseName] = useState(null);
   const ruleListRef = useRef(null);
@@ -431,7 +432,6 @@ function ListRules(props) {
       fetchRoles(username).then(userInfo => {
         const roleList =
           (userInfo.data && Object.keys(userInfo.data.data.roles)) || [];
-
         setRoles(roleList);
 
         if (roleList.length === 0) {
@@ -647,8 +647,7 @@ function ListRules(props) {
     const requiredSignoffRoles = Object.keys(rule.required_signoffs);
     let tempRequiredRolesFromUser = [];
 
-    // eslint-disable-next-line no-plusplus
-    for (let i = 0; i < requiredSignoffRoles.length; i++) {
+    for (let i in requiredSignoffRoles) {
       tempRequiredRolesFromUser = tempRequiredRolesFromUser.concat(
         roles.filter(eachUserRole => {
           return eachUserRole === requiredSignoffRoles[i];
@@ -1218,6 +1217,17 @@ function ListRules(props) {
   const Row = ({ index, style }) => {
     const rule = filteredRulesWithScheduledChanges[index];
     const isSelected = isRuleSelected(rule);
+    let RS = Object.keys(rule.required_signoffs)
+    // check if any user roles matches any required roles signoff
+    for(let x in roles){
+      for(let y in RS){
+        if(roles[x] === RS[y]){
+          // As soon as a match is found, sign in button is enabled
+          setCanUserSign(true);
+          break;
+        }
+      }
+    }
 
     return (
       <div
@@ -1239,6 +1249,7 @@ function ListRules(props) {
           onRevoke={() => handleRevoke(rule)}
           onViewReleaseClick={handleViewRelease}
           actionLoading={isActionLoading}
+          canUserSign={canUserSign}
         />
       </div>
     );
