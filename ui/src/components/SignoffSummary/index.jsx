@@ -75,9 +75,12 @@ function SignoffSummary(props) {
           // AllNotSigned() Gets and returns all that haven't signed
           const AllNotSigned = () => {
             const leftarr = [];
-            const allleft = count - AllSigned.length;
+            const allLeft = count - AllSigned.length;
 
-            for (let i in allleft) {
+            // Disabled eslint because "i+1" runs loop till eternity
+            // and for in loop only works on arrays
+            // eslint-disable-next-line no-plusplus
+            for (let i = 0; i < allLeft; i++) {
               leftarr.push([]);
             }
 
