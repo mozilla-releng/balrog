@@ -2835,7 +2835,6 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEqual(ret.status_code, 403, ret.get_data())
         self.assertEqual(ret.mimetype, "application/json")
 
-
     def testScheduledChangeWithDuplicateAlias(self):
         ret = self._post(
             "/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly", alias="test")
