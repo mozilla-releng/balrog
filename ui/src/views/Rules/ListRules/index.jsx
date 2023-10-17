@@ -155,6 +155,7 @@ function ListRules(props) {
     setEmergencyShutoffReasonComment,
   ] = useState('');
   const [signoffRole, setSignoffRole] = useState('');
+  const [requiredRolesFromUser, setRequiredRolesFromUser] = useState([])
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
   const [drawerReleaseName, setDrawerReleaseName] = useState(null);
   const ruleListRef = useRef(null);
@@ -286,8 +287,9 @@ function ListRules(props) {
     props.history.push(`/rules${stringify(qs, { addQueryPrefix: true })}`);
   };
 
-  const handleSignoffRoleChange = ({ target: { value } }) =>
+  const handleSignoffRoleChange = ({ target: { value } }) => 
     setSignoffRole(value);
+  
   const handleSnackbarOpen = ({ message, variant = 'success' }) => {
     setSnackbarState({ message, variant, open: true });
   };
@@ -433,7 +435,7 @@ function ListRules(props) {
 
         setRoles(roleList);
 
-        if (roleList.length > 0) {
+        if (roleList.length === 0) {
           setSignoffRole(roleList[0]);
         }
       });
@@ -592,7 +594,7 @@ function ListRules(props) {
         name="role"
         value={signoffRole}
         onChange={handleSignoffRoleChange}>
-        {roles.map(r => (
+        {requiredRolesFromUser.map(r => (
           <FormControlLabel key={r} value={r} label={r} control={<Radio />} />
         ))}
       </RadioGroup>
@@ -643,6 +645,16 @@ function ListRules(props) {
   };
 
   const handleSignoff = async rule => {
+    const requiredSignoffRoles = Object.keys(rule.required_signoffs)
+    let tempRequiredRolesFromUser =  [];
+    // eslint-disable-next-line no-plusplus
+    for(let i = 0; i < requiredSignoffRoles.length; i++){
+      tempRequiredRolesFromUser = tempRequiredRolesFromUser.concat(roles.filter((eachUserRole)=>{
+        return eachUserRole === requiredSignoffRoles[i]
+      }))
+    }
+    setRequiredRolesFromUser(tempRequiredRolesFromUser);
+
     if (roles.length === 1) {
       const { error, result } = await doSignoff(roles[0], rule);
 
