@@ -155,7 +155,7 @@ function ListRules(props) {
     setEmergencyShutoffReasonComment,
   ] = useState('');
   const [signoffRole, setSignoffRole] = useState('');
-  const [requiredRolesFromUser, setRequiredRolesFromUser] = useState([])
+  const [requiredRolesFromUser, setRequiredRolesFromUser] = useState([]);
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
   const [drawerReleaseName, setDrawerReleaseName] = useState(null);
   const ruleListRef = useRef(null);
@@ -287,9 +287,8 @@ function ListRules(props) {
     props.history.push(`/rules${stringify(qs, { addQueryPrefix: true })}`);
   };
 
-  const handleSignoffRoleChange = ({ target: { value } }) => 
+  const handleSignoffRoleChange = ({ target: { value } }) =>
     setSignoffRole(value);
-  
   const handleSnackbarOpen = ({ message, variant = 'success' }) => {
     setSnackbarState({ message, variant, open: true });
   };
@@ -645,14 +644,18 @@ function ListRules(props) {
   };
 
   const handleSignoff = async rule => {
-    const requiredSignoffRoles = Object.keys(rule.required_signoffs)
-    let tempRequiredRolesFromUser =  [];
+    const requiredSignoffRoles = Object.keys(rule.required_signoffs);
+    let tempRequiredRolesFromUser = [];
+
     // eslint-disable-next-line no-plusplus
-    for(let i = 0; i < requiredSignoffRoles.length; i++){
-      tempRequiredRolesFromUser = tempRequiredRolesFromUser.concat(roles.filter((eachUserRole)=>{
-        return eachUserRole === requiredSignoffRoles[i]
-      }))
+    for (let i = 0; i < requiredSignoffRoles.length; i++) {
+      tempRequiredRolesFromUser = tempRequiredRolesFromUser.concat(
+        roles.filter(eachUserRole => {
+          return eachUserRole === requiredSignoffRoles[i];
+        })
+      );
     }
+
     setRequiredRolesFromUser(tempRequiredRolesFromUser);
 
     if (roles.length === 1) {
