@@ -1,26 +1,30 @@
 import React from "react";
 
-// // highlighted search text
 export const highlightText = (text, searchTerm) => {
   if (!searchTerm) {
-    return text;
+    return <span>{text}</span>;
   }
+
   const searchTerms = searchTerm.toLowerCase().split(" ");
-  return text.split("\n").map((line, index) => {
-    const highlightedLine = searchTerms.reduce((acc, term) => {
-      if (term) {
-        const regex = new RegExp(term, "gi");
-        return acc.replace(
-          regex,
-          (match) =>
-            `<span style="background-color: #804cc5; color: white;">${match}</span>`
+
+  const parts = text.split(new RegExp(`(${searchTerms.join("|")})`, "gi"));
+  return (
+    <span>
+      {parts.map((part, index) => {
+        const isTextHighlighted = searchTerms.some(
+          (term) => part.toLowerCase() === term
         );
-      } else {
-        return acc;
-      }
-    }, line);
-    return (
-      <div key={index} dangerouslySetInnerHTML={{ __html: highlightedLine }} />
-    );
-  });
+        return isTextHighlighted ? (
+          <span
+            key={index}
+            style={{ backgroundColor: "#804cc5", color: "white" }}
+          >
+            {part}
+          </span>
+        ) : (
+          <span key={index}>{part}</span>
+        );
+      })}
+    </span>
+  );
 };
