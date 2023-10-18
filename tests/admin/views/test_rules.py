@@ -2238,6 +2238,30 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._post("scheduled_changes/rules", data=data)
         self.assertEqual(ret.status_code, 400)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeRuleWithDuplicateAlias(self):
+        data = {"when": 1234567, "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah", "mapping": "a", "change_type": "insert", "scheduled_by": "test"}
+        ret = self._post("/scheduled_changes/rules", data=data)
+        self.assertEqual(ret.status_code, 400, ret.get_data())
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeWithAliasAlreadyPresent(self):
+        data = {
+            "when": 2000000,
+            "data_version": 1,
+            "rule_id": 1,
+            "priority": 100,
+            "version": "3.5",
+            "buildTarget": "d",
+            "backgroundRate": 100,
+            "mapping": "c",
+            "update_type": "minor",
+            "sc_data_version": 1,
+            "scheduled_by": "test",
+        }
+        ret = self._post("/scheduled_changes/rules/4", data=data)
+        self.assertEqual(ret.status_code, 400, ret.get_data())
+
     def testAddScheduledChangeMissingRequiredTelemetryFields(self):
         data = {"telemetry_product": "foo", "priority": 120, "backgroundRate": 100, "update_type": "minor", "change_type": "insert"}
         ret = self._post("scheduled_changes/rules", data=data)
@@ -2834,14 +2858,3 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._delete("/scheduled_changes/rules/3/signoffs", username="julie", qs={"username": "mary"})
         self.assertEqual(ret.status_code, 403, ret.get_data())
         self.assertEqual(ret.mimetype, "application/json")
-
-    def testScheduledChangeWithDuplicateAlias(self):
-        ret = self._post(
-            "/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly", alias="test")
-        )
-        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
-
-        ret = self._post(
-            "/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly", alias="test")
-        )
-        self.assertEqual(ret.status_code, 400, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))

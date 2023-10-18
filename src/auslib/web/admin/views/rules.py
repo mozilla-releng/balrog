@@ -263,6 +263,12 @@ class RuleScheduledChangesView(ScheduledChangesView):
             alias = what.get("alias", None)
             if alias is not None and dbo.rules.getRule(alias):
                 return problem(400, "Bad Request", "Rule with alias exists.")
+            
+            scheduled_rule_with_alias = []
+            scheduled_rule_with_alias = dbo.rule_scheduled_change.select([alias], None)
+            
+            if alias is not None and scheduled_rule_with_alias[0]:
+                return problem(400, "Bad Request", "rule is scheduled with the given alias.")
 
         return super(RuleScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
 
