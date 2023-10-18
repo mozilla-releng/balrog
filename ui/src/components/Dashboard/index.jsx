@@ -20,7 +20,7 @@ const useStyles = makeStyles(theme => ({
     backgroundColor: theme.palette.info.main,
   },
   local: {
-    backgroundColor: theme.palette.warning.main,
+    backgroundColor: theme.palette.info.light,
   },
   title: {
     textDecoration: 'none',
@@ -63,8 +63,8 @@ export default function Dashboard(props) {
       <AppBar
         className={`${classes.appbar} ${
           process.env.NODE_ENV === 'development' ? classes.local : null
-        } 
-      ${process.env.NODE_ENV === 'staging' ? classes.staging : null}
+        }
+        ${process.env.NODE_ENV === 'staging' ? classes.staging : null}
       )}`}>
         <Toolbar>
           <Typography
