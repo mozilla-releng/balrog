@@ -63,24 +63,23 @@ function SignoffSummary(props) {
         }>
         {theRequiredSignoffs.map(([role, count], index) => {
           const key = `${role}-${index}`;
-          // AllSigned Returns all that have signed
-          let AllSigned = [];
+          // allSigned Returns all that have signed
+          let allSigned = [];
 
           if (listOfSignoffs) {
-            AllSigned = listOfSignoffs.filter(arr => {
+            allSigned = listOfSignoffs.filter(arr => {
               return role === arr[1];
             });
           }
 
-          // AllNotSigned() Gets and returns all that haven't signed
-          const AllNotSigned = () => {
+          // allNotSigned() Gets and returns all that haven't signed
+          const allNotSigned = () => {
             const leftarr = [];
-            const allLeft = count - AllSigned.length;
+            const allleft = count - allSigned.length;
 
             // Disabled eslint because "i+1" runs loop till eternity
-            // and for in loop only works on arrays
             // eslint-disable-next-line no-plusplus
-            for (let i = 0; i < allLeft; i++) {
+            for (let i = 0; i < allleft; i++) {
               leftarr.push([]);
             }
 
@@ -100,7 +99,7 @@ function SignoffSummary(props) {
                 />
                 {listOfSignoffs && (
                   <React.Fragment>
-                    {AllSigned.map((arr, index) => {
+                    {allSigned.map((arr, index) => {
                       const no = index;
 
                       return (
@@ -115,7 +114,7 @@ function SignoffSummary(props) {
                         </div>
                       );
                     })}
-                    {AllNotSigned().map(arr => {
+                    {allNotSigned().map(arr => {
                       const no = arr;
 
                       return (
@@ -137,39 +136,6 @@ function SignoffSummary(props) {
           );
         })}
       </List>
-      {/* {listOfSignoffs && Boolean(listOfSignoffs.length) && (
-        <List
-          dense
-          subheader={
-            <ListSubheader className={classes.listSubheader}>
-              Signed By
-            </ListSubheader>
-          }>
-          {listOfSignoffs.map(([username, signoffRole]) => (
-            <ListItem key={username} className={classes.signoffsList}>
-              <ListItemText
-                disableTypography
-                primary={
-                  <Typography
-                    component="p"
-                    className={classes.signedBy}
-                    variant="body2">
-                    {username}
-                    &nbsp; - &nbsp;
-                    <Typography
-                      component="span"
-                      color="textSecondary"
-                      variant="caption">
-                      {signoffRole}
-                    </Typography>
-                  </Typography>
-                }
-                className={classes.listItemText}
-              />
-            </ListItem>
-          ))}
-        </List>
-      )} */}
     </div>
   );
 }
