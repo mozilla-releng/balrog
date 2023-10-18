@@ -95,7 +95,7 @@ function Rule({ isNewRule, user, ...props }) {
       ? props.location.state.rulesFilter
       : [];
   const [rule, setRule] = useState(initialRule);
-  const [allRequiredSignOffs, setAllrequiredSignoffs] = useState([]);
+  const [allRequiredSignOffs, setAllRequiredSignoffs] = useState([]);
   const [releaseNames, setReleaseNames] = useState([]);
   const [products, fetchProducts] = useAction(getProducts);
   const [channels, fetchChannels] = useAction(getChannels);
@@ -406,13 +406,20 @@ function Rule({ isNewRule, user, ...props }) {
   );
 
   useEffect(() => {
-    const myPromise = new Promise(res => {
-      res(fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF));
-    });
+    const fetchData = async () => {
+      try {
+        const response = await fetchRequiredSignoffs(
+          OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF
+        );
 
-    myPromise.then(rs => {
-      setAllrequiredSignoffs(rs.data.data.required_signoffs);
-    });
+        setAllRequiredSignoffs(response.data.data.required_signoffs);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error fetching required signoffs:', error);
+      }
+    };
+
+    fetchData();
   }, []);
 
   // SignOff style
@@ -432,54 +439,61 @@ function Rule({ isNewRule, user, ...props }) {
       color: 'black',
     },
   };
+  const isSignOffRequired = () => {
+    let required = false;
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const x in allRequiredSignOffs) {
+      if (
+        rule.product === allRequiredSignOffs[x].product &&
+        rule.channel === allRequiredSignOffs[x].channel
+      ) {
+        required = true;
+        break;
+      }
+    }
+
+    return required;
+  };
 
   return (
     <Dashboard title={getTitle()}>
       {isLoading && <Spinner loading />}
       {error && <ErrorPanel fixed error={error} />}
       {!isLoading && (
-        /*
-      THE SIGN OFF DETAIL SHOULD GO JUST UNDERNEATH THE OPENING FRAGMENT
-      It should be in the form : 
-      "SignOffs Required : 1 signoff from a releng user" 
-      */
         <Fragment>
-          {/* SHOWS REQUIRED SIGNOFFS */}
           <div style={signoffStyle.div}>
             <Typography component="p" variant="body2" style={signoffStyle.p1}>
               Required Signoff(s) :
             </Typography>
-            {allRequiredSignOffs.map((reqSignOff, index, all) => {
-              const no = index;
+            {isSignOffRequired() ? (
+              allRequiredSignOffs.map((reqSignOff, index, all) => {
+                const no = index;
 
-              if (
-                rule.product === reqSignOff.product &&
-                rule.channel === `${reqSignOff.channel}`
-              ) {
-                return (
-                  <Typography
-                    component="p"
-                    variant="body2"
-                    key={no}
-                    style={signoffStyle.p2}>
-                    {`${reqSignOff.signoffs_required} member${
-                      reqSignOff.signoffs_required > 1 ? 's' : ''
-                    } of ${reqSignOff.role}${all[index + 1] ? ',' : ''}`}
-                  </Typography>
-                );
-              }
+                if (
+                  rule.product === reqSignOff.product &&
+                  rule.channel === reqSignOff.channel
+                ) {
+                  return (
+                    <Typography
+                      component="p"
+                      variant="body2"
+                      key={no}
+                      style={signoffStyle.p2}>
+                      {`${reqSignOff.signoffs_required} member${
+                        reqSignOff.signoffs_required > 1 ? 's' : ''
+                      } of ${reqSignOff.role}${all[index + 1] ? ',' : ''}`}
+                    </Typography>
+                  );
+                }
 
-              return (
-                <Typography
-                  component="p"
-                  variant="body2"
-                  key={no}
-                  style={signoffStyle.p2}>
-                  None
-                </Typography>
-              );
-            })}
-            {/* END OF REQUIRED SIGNOFFS INFO */}
+                return null;
+              })
+            ) : (
+              <Typography component="p" variant="body2" style={signoffStyle.p2}>
+                None
+              </Typography>
+            )}
           </div>
           <div className={classes.scheduleDiv}>
             <DateTimePicker
