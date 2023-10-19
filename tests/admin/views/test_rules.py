@@ -2240,7 +2240,12 @@ class TestRuleScheduledChanges(ViewTest):
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeRuleWithDuplicateAlias(self):
-        data = {"when": 1234567, "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah", "mapping": "a", "change_type": "insert", "scheduled_by": "test"}
+        ret = self._post(
+            "/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly", alias="test")
+        )
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+
+        data = {"when": 1234567, "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah", "mapping": "a", "change_type": "insert", "alias": "test"}
         ret = self._post("/scheduled_changes/rules", data=data)
         self.assertEqual(ret.status_code, 400, ret.get_data())
 
