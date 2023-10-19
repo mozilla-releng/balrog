@@ -2245,7 +2245,16 @@ class TestRuleScheduledChanges(ViewTest):
         )
         self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
 
-        data1 = {"when": 1234567, "priority": 120, "backgroundRate": 100, "product": "blah", "channel": "blah", "mapping": "a", "change_type": "insert", "alias": "test"}
+        data1 = {
+            "when": 1234567,
+            "priority": 120,
+            "backgroundRate": 100,
+            "product": "blah",
+            "channel": "blah",
+            "mapping": "a",
+            "change_type": "insert",
+            "alias": "test",
+        }
         ret1 = self._post("/scheduled_changes/rules", data=data1)
         self.assertEqual(ret1.status_code, 400, ret1.get_data())
 
