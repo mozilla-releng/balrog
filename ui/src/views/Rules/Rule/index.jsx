@@ -37,7 +37,10 @@ import {
   EMPTY_MENU_ITEM_CHAR,
   SPLIT_WITH_NEWLINES_AND_COMMA_REGEX,
   RULE_PRODUCT_UNSUPPORTED_PROPERTIES,
+  OBJECT_NAMES,
 } from '../../../utils/constants';
+import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
+import { ruleMatchesRequiredSignoff } from '../../../utils/requiredSignoffs';
 
 const initialRule = {
   alias: '',
@@ -92,8 +95,13 @@ function Rule({ isNewRule, user, ...props }) {
       : [];
   const [rule, setRule] = useState(initialRule);
   const [releaseNames, setReleaseNames] = useState([]);
+  const [ruleRequiredSignoffs, setRuleRequiredSignoffs] = useState([]);
+  const [signoffSummary, setSignoffSummary] = useState('');
   const [products, fetchProducts] = useAction(getProducts);
   const [channels, fetchChannels] = useAction(getChannels);
+  const [requiredSignoffs, fetchRequiredSignoffs] = useAction(
+    getRequiredSignoffs
+  );
   const [releaseNamesAction, fetchReleaseNames] = useAction(getReleaseNames);
   const [releaseNamesV2Action, fetchReleaseNamesV2] = useAction(
     getReleaseNamesV2
