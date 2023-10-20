@@ -85,6 +85,12 @@ const useStyles = makeStyles(theme => ({
   scheduleIcon: {
     marginRight: theme.spacing(3),
   },
+  signoffLabel: {
+    color: 'rgba(0, 0, 0, 0.54)',
+  },
+  signoffs: {
+    color: 'rgba(0, 0, 0, 0.87)',
+  },
 }));
 
 function Rule({ isNewRule, user, ...props }) {
@@ -442,6 +448,19 @@ function Rule({ isNewRule, user, ...props }) {
       {error && <ErrorPanel fixed error={error} />}
       {!isLoading && (
         <Fragment>
+          <div>
+            <p className={classes.signoffLabel}>
+              Required Signoff(s):
+              <span
+                className={
+                  requiredSignoffs.data &&
+                  ruleRequiredSignoffs.length &&
+                  classes.signoffs
+                }>
+                {signoffSummary}
+              </span>
+            </p>
+          </div>
           <div className={classes.scheduleDiv}>
             <DateTimePicker
               todayLabel="ASAP"
