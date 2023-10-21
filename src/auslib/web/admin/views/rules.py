@@ -332,6 +332,20 @@ class RuleScheduledChangeView(ScheduledChangeView):
             if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
                 return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
 
+            alias = what.get("alias", None)
+            if alias is not None and dbo.rules.getRule(alias):
+                return problem(400, "Bad Request", "Rule with alias exists.")
+
+            if alias is not None:
+                scheduled_rule_with_alias = (
+                    dbo.rules.scheduled_changes.t.select()
+                    .where(dbo.rules.scheduled_changes.base_alias == alias and dbo.rules.scheduled_changes.complete == False)
+                    .execute()
+                    .fetchall()
+                )
+                if len(scheduled_rule_with_alias > 0):
+                    return problem(400, "Bad Request", "rule is scheduled with the given alias.")
+
         return super(RuleScheduledChangeView, self)._post(sc_id, what, transaction, changed_by, connexion.request.get_json().get("sc_data_version", None))
 
     @requirelogin

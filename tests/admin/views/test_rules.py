@@ -2253,7 +2253,7 @@ class TestRuleScheduledChanges(ViewTest):
             "channel": "blah",
             "mapping": "a",
             "change_type": "insert",
-            "alias": "test",
+            "base_alias": "test",
         }
         ret1 = self._post("/scheduled_changes/rules", data=data1)
         self.assertEqual(ret1.status_code, 400, ret1.get_data())
@@ -2261,6 +2261,26 @@ class TestRuleScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeWithAliasAlreadyPresent(self):
         data = {
+            "rule_id": 5,
+            "telemetry_product": None,
+            "telemetry_channel": None,
+            "telemetry_uptake": None,
+            "priority": 80,
+            "buildTarget": "d",
+            "version": "3.3",
+            "backgroundRate": 100,
+            "mapping": "c",
+            "update_type": "minor",
+            "data_version": 1,
+            "change_type": "update",
+            "when": 1234567,
+            "base_alias": "test",
+            "complete": False,
+        }
+        ret = self._post("/scheduled_changes/rules", data=data)
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+
+        data1 = {
             "when": 2000000,
             "data_version": 1,
             "rule_id": 1,
@@ -2271,10 +2291,11 @@ class TestRuleScheduledChanges(ViewTest):
             "mapping": "c",
             "update_type": "minor",
             "sc_data_version": 1,
-            "scheduled_by": "test",
+            "base_alias": "test",
+            "complete": False,
         }
-        ret = self._post("/scheduled_changes/rules/4", data=data)
-        self.assertEqual(ret.status_code, 400, ret.get_data())
+        ret1 = self._post("/scheduled_changes/rules/4", data=data1)
+        self.assertEqual(ret1.status_code, 400, ret1.get_data())
 
     def testAddScheduledChangeMissingRequiredTelemetryFields(self):
         data = {"telemetry_product": "foo", "priority": 120, "backgroundRate": 100, "update_type": "minor", "change_type": "insert"}
