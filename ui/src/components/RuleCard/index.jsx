@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, { useState, Fragment } from 'react';
 import { bool, func } from 'prop-types';
 import classNames from 'classnames';
 import { makeStyles } from '@material-ui/styles';
@@ -7,6 +7,7 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import Tooltip from '@material-ui/core/Tooltip';
+import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import IconButton from '@material-ui/core/IconButton';
 import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
@@ -165,6 +166,8 @@ function RuleCard({
   onUnauthorize: __,
   ...props
 }) {
+  const [open, setOpen] = useState(false);
+  const [seeMore, setSeeMore] = useState('...see more');
   const classes = useStyles();
   const requiresSignoff =
     rule.scheduledChange &&
@@ -211,6 +214,16 @@ function RuleCard({
   const priorityTitle = isScheduledPriorityUpdate
     ? 'Scheduled Priority'
     : 'Priority';
+  const handleTooltipOpen = () => {
+    setOpen(true);
+    setSeeMore('...see less');
+  };
+
+  const handleTooltipClose = () => {
+    setOpen(false);
+    setSeeMore('...see more');
+  };
+
   const splitAmount = 5;
   const isOsVersionLong = () => {
     if (rule.osVersion) {
@@ -243,20 +256,53 @@ function RuleCard({
   const osVersionLimit = () => {
     const allOsVersions = rule.osVersion;
     const firstIndex = getIndex(allOsVersions, `,`, splitAmount);
+    const osVersionP = (
+      <p
+        style={{
+          display: 'flex',
+          flexFlow: 'column',
+          color: 'white',
+          fontSize: '14px',
+          lineHeight: '16px',
+          margin: '2px 4px',
+        }}>
+        {allOsVersions.split(',').map(item => (
+          <p key={item} style={{ margin: '2px 0' }}>
+            {item}
+          </p>
+        ))}
+      </p>
+    );
 
     return (
-      <p>
+      <React.Fragment>
         {allOsVersions.substring(0, firstIndex)}
-        <p
-          style={{
-            color: 'black',
-            margin: 0,
-            display: 'inline-block',
-            cursor: 'default',
-          }}>
-          ...see more
-        </p>
-      </p>
+        <ClickAwayListener onClickAway={handleTooltipClose}>
+          <Tooltip
+            title={osVersionP}
+            onClose={handleTooltipClose}
+            open={open}
+            disableFocusListener
+            disableHoverListener
+            disableTouchListener
+            arrow>
+            <button
+              type="button"
+              style={{
+                color: 'black',
+                backgroundColor: 'transparent',
+                border: 'none',
+                margin: 0,
+                padding: 0,
+                display: 'inline-block',
+                cursor: 'pointer',
+              }}
+              onClick={open ? handleTooltipClose : handleTooltipOpen}>
+              {seeMore}
+            </button>
+          </Tooltip>
+        </ClickAwayListener>
+      </React.Fragment>
     );
   };
 
@@ -609,7 +655,6 @@ function RuleCard({
                 {rule.osVersion && (
                   <ListItem className={classes.listItem}>
                     <ListItemText
-                      title={rule.osVersion.split(',').join('\n')}
                       primaryTypographyProps={{
                         component: 'div',
                         className: classes.primaryText,
