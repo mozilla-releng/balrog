@@ -267,11 +267,11 @@ class RuleScheduledChangesView(ScheduledChangesView):
             if alias is not None:
                 scheduled_rule_with_alias = (
                     dbo.rules.scheduled_changes.t.select()
-                    .where(dbo.rules.scheduled_changes.base_alias == alias and dbo.rules.scheduled_changes.complete == False)
+                    .where(dbo.rules.scheduled_changes.base_alias == alias)
                     .execute()
                     .fetchall()
                 )
-                if len(scheduled_rule_with_alias > 0):
+                if len(scheduled_rule_with_alias) > 0:
                     return problem(400, "Bad Request", "rule is scheduled with the given alias.")
 
         return super(RuleScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
@@ -339,11 +339,11 @@ class RuleScheduledChangeView(ScheduledChangeView):
             if alias is not None:
                 scheduled_rule_with_alias = (
                     dbo.rules.scheduled_changes.t.select()
-                    .where(dbo.rules.scheduled_changes.base_alias == alias and dbo.rules.scheduled_changes.complete == False)
+                    .where(dbo.rules.scheduled_changes.base_alias == alias)
                     .execute()
                     .fetchall()
                 )
-                if len(scheduled_rule_with_alias > 0):
+                if len(scheduled_rule_with_alias)>0:
                     return problem(400, "Bad Request", "rule is scheduled with the given alias.")
 
         return super(RuleScheduledChangeView, self)._post(sc_id, what, transaction, changed_by, connexion.request.get_json().get("sc_data_version", None))
