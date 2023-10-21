@@ -210,6 +210,54 @@ function RuleCard({
   const priorityTitle = isScheduledPriorityUpdate
     ? 'Scheduled Priority'
     : 'Priority';
+  const splitAmount = 5;
+  const isOsVersionLong = () => {
+    if (rule.osVersion) {
+      const osVersionsLength = rule.osVersion.split(',').length;
+
+      if (osVersionsLength > splitAmount) {
+        return true;
+      }
+
+      return false;
+    }
+  };
+
+  // Function to get index of occurrence of (,)
+  function getIndex(word, substr, occur) {
+    let occurrence = occur;
+    const Len = word.length;
+    let i = -1;
+
+    // eslint-disable-next-line no-plusplus
+    while (occurrence-- && i++ < Len) {
+      i = word.indexOf(substr, i);
+
+      if (i < 0) break;
+    }
+
+    return i;
+  }
+
+  const osVersionLimit = () => {
+    const allOsVersions = rule.osVersion;
+    const firstIndex = getIndex(allOsVersions, `,`, splitAmount);
+
+    return (
+      <p>
+        {allOsVersions.substring(0, firstIndex)}
+        <p
+          style={{
+            color: 'black',
+            margin: 0,
+            display: 'inline-block',
+            cursor: 'default',
+          }}>
+          ...see more
+        </p>
+      </p>
+    );
+  };
 
   return (
     <Card classes={{ root: classes.root }} spacing={4} {...props}>
@@ -576,7 +624,9 @@ function RuleCard({
                             )}
                         </Fragment>
                       }
-                      secondary={rule.osVersion}
+                      secondary={
+                        isOsVersionLong() ? osVersionLimit() : rule.osVersion
+                      }
                     />
                   </ListItem>
                 )}
