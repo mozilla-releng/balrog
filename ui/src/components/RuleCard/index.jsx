@@ -615,7 +615,9 @@ function RuleCard({
                       }}
                       primary={
                         <Fragment>
-                          {`OS Version${rule.osVersion.split(',').length > 1 ? 's' : ''}`}
+                          {`OS Version${
+                            rule.osVersion.split(',').length > 1 ? 's' : ''
+                          }`}
                           {diffedProperties.includes('osVersion') &&
                             rule.scheduledChange.change_type === 'update' && (
                               <span
