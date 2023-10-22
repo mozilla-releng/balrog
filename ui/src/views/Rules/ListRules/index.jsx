@@ -1122,7 +1122,20 @@ function ListRules(props) {
           2 * listPadding;
       }
     }
-
+    const handleDisableUpdates = () => {
+      if (
+        isLoading ||
+        !username ||
+        filteredProductChannelIsShutoff ||
+        !productChannelQueries ||
+        !productChannelQueries[1]
+      ) {
+        return; // Exit the function if the button is disabled
+      }
+    
+      // Code to run when the button is not disabled
+      // ...
+    };
     if (hasScheduledChanges) {
       // row with the chip label
       height += Math.max(subtitle1TextHeight(), theme.spacing(3));
@@ -1368,7 +1381,7 @@ function ListRules(props) {
           icon={<PauseIcon />}
           tooltipOpen
           tooltipTitle="Disable Updates"
-          onClick={handleDisableUpdates}
+          onClick={!isLoading && !!username && !filteredProductChannelIsShutoff && !!productChannelQueries && !!productChannelQueries[1] ? handleDisableUpdates : undefined}
         />
       </SpeedDial>
     </Dashboard>
