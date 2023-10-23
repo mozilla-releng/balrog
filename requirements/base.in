@@ -1,6 +1,7 @@
 aiohttp
 arrow
 auth0-python
+canonicaljson
 connexion<3
 deepmerge
 ecdsa
