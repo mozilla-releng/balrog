@@ -450,7 +450,7 @@ function Rule({ isNewRule, user, ...props }) {
         <Fragment>
           <div>
             <p className={classes.signoffLabel}>
-              Required Signoff(s):
+              Required Signoffs:
               <span
                 className={
                   requiredSignoffs.data &&
