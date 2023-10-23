@@ -267,7 +267,7 @@ class RuleScheduledChangesView(ScheduledChangesView):
             if alias is not None:
                 scheduled_rule_with_alias = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.base_alias == alias).execute().fetchall()
                 if len(scheduled_rule_with_alias) > 0:
-                    return problem(400, "Bad Request", "rule is scheduled with the given alias.")
+                    return problem(400, "Bad Request", "Rule is scheduled with the given alias.")
 
         return super(RuleScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
 

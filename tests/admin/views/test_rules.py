@@ -2239,7 +2239,7 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEqual(ret.status_code, 400)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
-    def testAddScheduledChangeRuleWithDuplicateAlias(self):
+    def testAddScheduledChangesRuleWithDuplicateAliasWithChangeTypeInsert(self):
         ret = self._post(
             "/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly", alias="test")
         )
@@ -2259,7 +2259,66 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEqual(ret1.status_code, 400, ret1.get_data())
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
-    def testAddScheduledChangeWithAliasAlreadyPresent(self):
+    def testAddScheduledChangesRuleWithDuplicateAliasWithChangeTypeUpdate(self):
+        ret = self._post(
+            "/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly", alias="test")
+        )
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+
+        data1 = {
+            "when": 1234567,
+            "priority": 120,
+            "backgroundRate": 100,
+            "product": "blah",
+            "channel": "blah",
+            "mapping": "a",
+            "change_type": "update",
+            "base_alias": "test",
+        }
+        ret1 = self._post("/scheduled_changes/rules", data=data1)
+        self.assertEqual(ret1.status_code, 400, ret1.get_data())
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeWithAliasAlreadyPresentWithChangeTypeInsert(self):
+        data = {
+            "rule_id": 5,
+            "telemetry_product": None,
+            "telemetry_channel": None,
+            "telemetry_uptake": None,
+            "priority": 80,
+            "buildTarget": "d",
+            "version": "3.3",
+            "backgroundRate": 100,
+            "mapping": "c",
+            "update_type": "minor",
+            "data_version": 1,
+            "change_type": "insert",
+            "when": 1234567,
+            "base_alias": "test",
+            "complete": False,
+        }
+        ret = self._post("/scheduled_changes/rules", data=data)
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+
+        data1 = {
+            "when": 2000000,
+            "data_version": 1,
+            "rule_id": 1,
+            "priority": 100,
+            "version": "3.5",
+            "buildTarget": "d",
+            "backgroundRate": 100,
+            "mapping": "c",
+            "update_type": "minor",
+            "sc_data_version": 1,
+            "base_alias": "test",
+            "complete": False,
+        }
+        ret1 = self._post("/scheduled_changes/rules/4", data=data1)
+        self.assertEqual(ret1.status_code, 400, ret1.get_data())
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeWithAliasAlreadyPresentWithChangeTypeUpdate(self):
         data = {
             "rule_id": 5,
             "telemetry_product": None,
