@@ -239,6 +239,10 @@ class RuleScheduledChangesView(ScheduledChangesView):
                         ext={"exception": "%s cannot be set to null/empty " "when scheduling insertion of a new rule" % field},
                     )
 
+            alias = what.get("alias", None)
+            if alias is not None and dbo.rules.getRule(alias):
+                return problem(400, "Bad Request", "Rule with alias exists.")
+
         if change_type in ["update", "insert"]:
             rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
             what = rule_dict
