@@ -91,6 +91,7 @@ function ListReleases(props) {
   const [roles, setRoles] = useState([]);
   const [signoffRole, setSignoffRole] = useState('');
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
+  const [matchHighlight, setMatchHighlight] = useState({});
   const [requiredSignoffsForProduct, setRequiredSignoffsForProduct] = useState(
     null
   );
@@ -145,9 +146,19 @@ function ListReleases(props) {
     );
 
     return releases.filter(release => {
-      const regex = RegExp(regexp, 'i');
+      const regex = new RegExp(regexp, 'dgi');
+      const matches = regex.exec(release.name);
 
-      return regex.test(release.name);
+      if (matches) {
+        const toHighlight = matches.indices;
+
+        setMatchHighlight(prevState => ({
+          ...prevState,
+          [release.name]: toHighlight,
+        }));
+      }
+
+      return matches;
     });
   }, [releases, searchValue]);
   const filteredReleasesCount = filteredReleases.length;
@@ -704,6 +715,7 @@ function ListReleases(props) {
             [classes.releaseCardSelected]: isSelected,
           })}
           release={release}
+          releaseHighlight={matchHighlight && matchHighlight[release.name]}
           onAccessChange={handleAccessChange}
           onReleaseDelete={handleDelete}
           onViewScheduledChangeDiff={handleViewScheduledChangeDiff}
