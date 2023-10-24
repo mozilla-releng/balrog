@@ -152,13 +152,13 @@ function RuleCard({
   rule,
   rulesFilter,
   onRuleDelete,
+  canSignoff,
   onSignoff,
   onRevoke,
   onViewReleaseClick,
   user,
   readOnly,
   actionLoading,
-  canUserSign,
   // We don't actually use these, but we need to avoid passing them onto
   // `Card` like the rest of the props.
   onAuthorize: _,
@@ -824,14 +824,14 @@ function RuleCard({
             (user && user.email in rule.scheduledChange.signoffs ? (
               <Button
                 color="secondary"
-                disabled={!canUserSign || !user || actionLoading}
+                disabled={!user || actionLoading}
                 onClick={onRevoke}>
                 Revoke Signoff
               </Button>
             ) : (
               <Button
                 color="secondary"
-                disabled={!canUserSign || !user || actionLoading}
+                disabled={!user || actionLoading || !canSignoff}
                 onClick={onSignoff}>
                 Signoff
               </Button>
