@@ -138,15 +138,17 @@ function ListReleases(props) {
       return releases;
     }
 
-    const searchTerms = searchValue.toLowerCase().split(' ');
-    const filteredResults = releases.filter(release => {
-      const releaseName = release.name.toLowerCase();
+    const values = searchValue.split(' ');
+    const regexp = values.reduce(
+      (re, value) => `${re}[A-Za-z0-9.-]*(${value})`,
+      ''
+    );
 
-      // Check if all search terms are found in the release name
-      return searchTerms.every(term => releaseName.includes(term));
+    return releases.filter(release => {
+      const regex = RegExp(regexp, 'i');
+
+      return regex.test(release.name);
     });
-
-    return filteredResults;
   }, [releases, searchValue]);
   const filteredReleasesCount = filteredReleases.length;
   const handleSignoffRoleChange = ({ target: { value } }) =>
