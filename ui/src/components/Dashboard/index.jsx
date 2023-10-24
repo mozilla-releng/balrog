@@ -5,7 +5,6 @@ import { makeStyles } from '@material-ui/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Box from '@material-ui/core/Box';
-import ExtensionIcon from '@material-ui/icons/Extension';
 import menuItems from './menuItems';
 import Link from '../../utils/Link';
 import UserMenu from './UserMenu';
@@ -54,27 +53,13 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function Logo(props) {
-  const { group } = props;
+function Logo() {
   const classes = useStyles();
-
-  if (group && group.toLowerCase().includes('firefox')) {
-    return (
-      <Box
-        component="div"
-        className={`mzp-c-logo mzp-t-logo-sm mzp-t-product-firefox ${classes.protocolLogo}`}
-      />
-    );
-  }
-
-  if (group && group.toLowerCase().includes('extensions')) {
-    return <ExtensionIcon className={classes.extensionIcon} />;
-  }
 
   return (
     <Box
       component="div"
-      className={`mzp-c-logo mzp-t-logo-sm mzp-t-product-mozilla ${classes.protocolLogo}`}
+      className={`mzp-c-logo mzp-t-logo-md mzp-t-product-mozilla ${classes.protocolLogo}`}
     />
   );
 }
@@ -90,7 +75,7 @@ export default function Dashboard(props) {
       </Helmet>
       <AppBar className={classes.appbar}>
         <Toolbar>
-          <Logo />
+        <Logo />
           <nav className={classes.nav}>
             {menuItems.main.map(menuItem => (
               <Link
