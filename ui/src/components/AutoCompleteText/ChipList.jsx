@@ -9,7 +9,8 @@ const useStyles = makeStyles(theme => ({
   container: {
     display: 'flex',
     flexWrap: 'wrap',
-    maxWidth: '120rem',
+    width: '200rem',
+    flexGrow: '1',
     gap: '0.25rem',
     padding: '0.5rem 0',
   },
