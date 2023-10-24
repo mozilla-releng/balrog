@@ -34,6 +34,9 @@ const useStyles = makeStyles(theme => ({
   dropdownDisabled: {
     color: theme.palette.action.disabled,
   },
+  endAdornment: {
+    cursor: 'pointer',
+  },
 }));
 
 /**
@@ -128,7 +131,7 @@ function AutoCompleteText({
     return (
       <MenuItem
         {...itemProps}
-        key={suggestion}
+        key={index}
         selected={isHighlighted}
         component="div"
         className={classNames({ [classes.selectedText]: isSelected })}>
@@ -184,7 +187,7 @@ function AutoCompleteText({
                 undefined
               ),
               endAdornment: (
-                <div>
+                <div className={classes.endAdornment}>
                   <ChevronDownIcon
                     {...getToggleButtonProps()}
                     className={classNames({

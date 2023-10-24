@@ -49,6 +49,8 @@ const useStyles = makeStyles(theme => ({
   },
   gridWithIcon: {
     marginTop: theme.spacing(3),
+    display: 'flex',
+    alignItems: 'end',
   },
   gridDelete: {
     display: 'flex',
