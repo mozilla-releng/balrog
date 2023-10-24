@@ -140,18 +140,24 @@ function ListReleases(props) {
     }
 
     const values = searchValue.split(' ');
-    const regexp = values.reduce((re, value) => `${re}[A-Za-z0-9.-]*(${value})`, '');
+    const regexp = values.reduce(
+      (re, value) => `${re}[A-Za-z0-9.-]*(${value})`,
+      ''
+    );
 
     return releases.filter(release => {
       const regex = new RegExp(regexp, 'dgi');
       const matches = regex.exec(release.name);
+
       if (matches) {
-        const toHighlight = matches.indices
+        const toHighlight = matches.indices;
+
         setMatchHighlight(prevState => ({
           ...prevState,
-          [release.name]: toHighlight
+          [release.name]: toHighlight,
         }));
       }
+
       return matches;
     });
   }, [releases, searchValue]);
