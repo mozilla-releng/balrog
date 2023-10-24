@@ -166,6 +166,22 @@ function ReleaseCard(props) {
     return `/rules${qs}#ruleId=${ruleId}`;
   };
 
+  const highlightMatchedRelease = (highlights) => {
+    if (highlights) {
+      let highlightedName = [release.name.slice(0, highlights[1][0])];
+
+      for (let i = 1; i < highlights.length; i++) {
+        highlightedName.push(<mark>{release.name.slice(...highlights[i])}</mark>);
+        if (highlights[i + 1]) {
+          highlightedName.push(release.name.slice(highlights[i][1], highlights[i + 1][0]));
+        } else {
+          highlightedName.push(release.name.slice(highlights[highlights.length - 1][1]));
+        }
+      }
+      return <Fragment>{highlightedName}</Fragment>;
+    }
+  }
+
   return (
     <Card classes={{ root: classes.root }} {...rest}>
       <CardHeader
@@ -176,7 +192,7 @@ function ReleaseCard(props) {
             className={classes.releaseName}
             component="h2"
             variant="h6">
-            {release.name}{' '}
+            {rest.releaseHighlight ? highlightMatchedRelease(rest.releaseHighlight) : release.name}{' '}
             <a
               href={`#${release.name}`}
               aria-label="Anchor"
