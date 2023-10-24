@@ -91,6 +91,7 @@ function ListReleases(props) {
   const [roles, setRoles] = useState([]);
   const [signoffRole, setSignoffRole] = useState('');
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
+  const [matchHighlight, setMatchHighlight] = useState({});
   const [requiredSignoffsForProduct, setRequiredSignoffsForProduct] = useState(
     null
   );
@@ -146,6 +147,10 @@ function ListReleases(props) {
       const matches = regex.exec(release.name);
       if (matches) {
         const toHighlight = matches.indices
+        setMatchHighlight(prevState => ({
+          ...prevState,
+          [release.name]: toHighlight
+        }));
       }
       return matches;
     });
@@ -704,6 +709,7 @@ function ListReleases(props) {
             [classes.releaseCardSelected]: isSelected,
           })}
           release={release}
+          releaseHighlight={matchHighlight && matchHighlight[release.name]}
           onAccessChange={handleAccessChange}
           onReleaseDelete={handleDelete}
           onViewScheduledChangeDiff={handleViewScheduledChangeDiff}
