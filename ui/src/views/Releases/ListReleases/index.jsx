@@ -129,6 +129,9 @@ function ListReleases(props) {
     revokeV2Action.error ||
     (roles.length === 1 && signoffAction.error) ||
     (roles.length === 1 && signoffV2Action.error);
+  
+  
+
   const filteredReleases = useMemo(() => {
     if (!releases) {
       return [];
@@ -150,6 +153,7 @@ function ListReleases(props) {
       return regex.test(release.name);
     });
   }, [releases, searchValue]);
+   
   const filteredReleasesCount = filteredReleases.length;
   const handleSignoffRoleChange = ({ target: { value } }) =>
     setSignoffRole(value);
@@ -709,6 +713,7 @@ function ListReleases(props) {
           onViewScheduledChangeDiff={handleViewScheduledChangeDiff}
           onSignoff={() => handleSignoff(release)}
           onRevoke={() => handleRevoke(release)}
+          searchValue={searchValue}
         />
       </div>
     );
@@ -828,6 +833,8 @@ function ListReleases(props) {
           rowCount={filteredReleasesCount}
         />
       )}
+     
+     
       <DialogAction
         open={dialogState.open}
         title={dialogState.title}
