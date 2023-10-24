@@ -139,10 +139,14 @@ function ListReleases(props) {
     }
 
     const values = searchValue.split(' ');
-    const regexp = values.reduce((re, value) => `${re}[A-Za-z0-9](${value})`, '');
+    const regexp = values.reduce(
+      (re, value) => `${re}[A-Za-z0-9](${value})`,
+      ''
+    );
 
     return releases.filter(release => {
       const regex = RegExp(regexp, 'i');
+
       return regex.test(release.name);
     });
   }, [releases, searchValue]);
