@@ -557,29 +557,7 @@ function RuleCard({
                     />
                   </ListItem>
                 )}
-                {rule.osVersion && (
-                  <ListItem className={classes.listItem}>
-                    <ListItemText
-                      title={rule.osVersion.split(',').join('\n')}
-                      primaryTypographyProps={{
-                        component: 'div',
-                        className: classes.primaryText,
-                      }}
-                      primary={
-                        <Fragment>
-                          OS Version
-                          {diffedProperties.includes('osVersion') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
-                            )}
-                        </Fragment>
-                      }
-                      secondary={rule.osVersion}
-                    />
-                  </ListItem>
-                )}
+
                 {rule.instructionSet && (
                   <ListItem className={classes.listItem}>
                     <ListItemText
@@ -687,6 +665,33 @@ function RuleCard({
                         </Fragment>
                       }
                       secondary={rule.headerArchitecture}
+                    />
+                  </ListItem>
+                )}
+              </List>
+            </Grid>
+            <Grid xs={12}>
+              <List>
+                {rule.osVersion && (
+                  <ListItem className={classes.listItem}>
+                    <ListItemText
+                      title={rule.osVersion.split(',').join('\n')}
+                      primaryTypographyProps={{
+                        component: 'div',
+                        className: classes.primaryText,
+                      }}
+                      primary={
+                        <Fragment>
+                          OS Version
+                          {diffedProperties.includes('osVersion') &&
+                            rule.scheduledChange.change_type === 'update' && (
+                              <span
+                                className={classes.propertyWithScheduledChange}
+                              />
+                            )}
+                        </Fragment>
+                      }
+                      secondary={rule.osVersion}
                     />
                   </ListItem>
                 )}
