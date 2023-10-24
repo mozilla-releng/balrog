@@ -146,6 +146,7 @@ function ListReleases(props) {
 
     return releases.filter(release => {
       const regex = RegExp(regexp, 'i');
+
       return regex.test(release.name);
     });
   }, [releases, searchValue]);
