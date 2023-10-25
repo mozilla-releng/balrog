@@ -2264,7 +2264,7 @@ class TestRuleScheduledChanges(ViewTest):
         }
         ret1 = self._post("/scheduled_changes/rules", data=data1)
         self.assertEqual(ret1.status_code, 400, ret1.get_data())
-        self.assertEqual("rule is scheduled with the given alias", ret1.get_data().get("exception"))
+        self.assertEqual(ret1.response.get("detail"), "Rule is scheduled with the given alias")
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangesRuleWithDuplicateAliasWithChangeTypeUpdate(self):
@@ -2292,7 +2292,7 @@ class TestRuleScheduledChanges(ViewTest):
         }
         ret1 = self._post("/scheduled_changes/rules", data=data1)
         self.assertEqual(ret1.status_code, 400, ret1.get_data())
-        self.assertEqual("rule is scheduled with the given alias", ret1.get_data().get("exception"))
+        self.assertEqual(ret1.response.get("detail") ,"Rule is scheduled with the given alias")
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeWithAliasAlreadyPresentWithChangeTypeInsert(self):
