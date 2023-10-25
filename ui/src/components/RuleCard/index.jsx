@@ -30,6 +30,7 @@ import Link from '../../utils/Link';
 import { RULE_DIFF_PROPERTIES } from '../../utils/constants';
 import { rule } from '../../utils/prop-types';
 import getDiffedProperties from '../../utils/getDiffedProperties';
+import getIndexOfSubStr from '../../utils/getIndexOfSubStr';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -237,25 +238,9 @@ function RuleCard({
     }
   };
 
-  // Function to get index of occurrence of (,)
-  function getIndex(word, substr, occur) {
-    let occurrence = occur;
-    const Len = word.length;
-    let i = -1;
-
-    // eslint-disable-next-line no-plusplus
-    while (occurrence-- && i++ < Len) {
-      i = word.indexOf(substr, i);
-
-      if (i < 0) break;
-    }
-
-    return i;
-  }
-
   const osVersionLimit = () => {
     const allOsVersions = rule.osVersion;
-    const firstIndex = getIndex(allOsVersions, `,`, splitAmount);
+    const firstIndex = getIndexOfSubStr(allOsVersions, `,`, splitAmount);
     const osVersionP = (
       <p
         style={{
