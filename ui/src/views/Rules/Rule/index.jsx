@@ -113,6 +113,9 @@ function Rule({ isNewRule, user, ...props }) {
   const [scheduledChangeActionScId, fetchScheduledChangeByScId] = useAction(
     getScheduledChangeByScId
   );
+  const [requiredSignoffs, fetchRequiredSignoffs] = useAction(
+    getRequiredSignoffs
+  );
   const [addSCAction, addSC] = useAction(addScheduledChange);
   const [updateSCAction, updateSC] = useAction(updateScheduledChange);
   const [deleteSCAction, deleteSC] = useAction(deleteScheduledChange);
@@ -400,11 +403,6 @@ function Rule({ isNewRule, user, ...props }) {
     return `Update Rule ${ruleId}${rule.alias ? ` (${rule.alias})` : ''}`;
   };
 
-  // eslint-disable-next-line no-unused-vars
-  const [requiredSignoffs, fetchRequiredSignoffs] = useAction(
-    getRequiredSignoffs
-  );
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -412,7 +410,7 @@ function Rule({ isNewRule, user, ...props }) {
           OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF
         );
 
-        setAllRequiredSignoffs(response.data.data.required_signoffs);
+        setAllRequiredSignoffs(response.data.data.required_signoffs || requiredSignoffs.data.data.required_signoffs);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error fetching required signoffs:', error);
