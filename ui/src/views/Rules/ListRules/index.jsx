@@ -155,6 +155,8 @@ function ListRules(props) {
     setEmergencyShutoffReasonComment,
   ] = useState('');
   const [signoffRole, setSignoffRole] = useState('');
+  const [requiredRolesFromUser, setRequiredRolesFromUser] = useState([]);
+  const [canUserSign, setCanUserSign] = useState(false);
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
   const [drawerReleaseName, setDrawerReleaseName] = useState(null);
   const ruleListRef = useRef(null);
@@ -433,7 +435,7 @@ function ListRules(props) {
 
         setRoles(roleList);
 
-        if (roleList.length > 0) {
+        if (roleList.length === 0) {
           setSignoffRole(roleList[0]);
         }
       });
@@ -592,7 +594,7 @@ function ListRules(props) {
         name="role"
         value={signoffRole}
         onChange={handleSignoffRoleChange}>
-        {roles.map(r => (
+        {requiredRolesFromUser.map(r => (
           <FormControlLabel key={r} value={r} label={r} control={<Radio />} />
         ))}
       </RadioGroup>
@@ -643,6 +645,20 @@ function ListRules(props) {
   };
 
   const handleSignoff = async rule => {
+    const requiredSignoffRoles = Object.keys(rule.required_signoffs);
+    let tempRequiredRolesFromUser = [];
+
+    // eslint-disable-next-line no-restricted-syntax,guard-for-in
+    for (const i in requiredSignoffRoles) {
+      tempRequiredRolesFromUser = tempRequiredRolesFromUser.concat(
+        roles.filter(eachUserRole => {
+          return eachUserRole === requiredSignoffRoles[i];
+        })
+      );
+    }
+
+    setRequiredRolesFromUser(tempRequiredRolesFromUser);
+
     if (roles.length === 1) {
       const { error, result } = await doSignoff(roles[0], rule);
 
@@ -1203,6 +1219,20 @@ function ListRules(props) {
   const Row = ({ index, style }) => {
     const rule = filteredRulesWithScheduledChanges[index];
     const isSelected = isRuleSelected(rule);
+    const RS = Object.keys(rule.required_signoffs);
+
+    // check if any user roles matches any required roles signoff
+    // eslint-disable-next-line no-restricted-syntax,guard-for-in
+    for (const x in roles) {
+      // eslint-disable-next-line no-restricted-syntax,guard-for-in
+      for (const y in RS) {
+        if (roles[x] === RS[y]) {
+          // As soon as a match is found, sign in button is enabled
+          setCanUserSign(true);
+          break;
+        }
+      }
+    }
 
     return (
       <div
@@ -1224,6 +1254,7 @@ function ListRules(props) {
           onRevoke={() => handleRevoke(rule)}
           onViewReleaseClick={handleViewRelease}
           actionLoading={isActionLoading}
+          canUserSign={canUserSign}
         />
       </div>
     );
@@ -1368,7 +1399,15 @@ function ListRules(props) {
           icon={<PauseIcon />}
           tooltipOpen
           tooltipTitle="Disable Updates"
-          onClick={handleDisableUpdates}
+          onClick={
+            !isLoading &&
+            !!username &&
+            !filteredProductChannelIsShutoff &&
+            !!productChannelQueries &&
+            !!productChannelQueries[1]
+              ? handleDisableUpdates
+              : undefined
+          }
         />
       </SpeedDial>
     </Dashboard>
