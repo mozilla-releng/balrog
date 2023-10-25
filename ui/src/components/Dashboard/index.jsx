@@ -59,7 +59,7 @@ function Logo() {
   return (
     <Box
       component="div"
-      className={`mzp-c-logo mzp-t-logo-md mzp-t-product-mozilla ${classes.protocolLogo}`}
+      className={`mzp-c-logo mzp-t-logo-md mzp-t-product-firefox ${classes.protocolLogo}`}
     />
   );
 }
@@ -75,7 +75,7 @@ export default function Dashboard(props) {
       </Helmet>
       <AppBar className={classes.appbar}>
         <Toolbar>
-        <Logo />
+          <Logo/>
           <nav className={classes.nav}>
             {menuItems.main.map(menuItem => (
               <Link
