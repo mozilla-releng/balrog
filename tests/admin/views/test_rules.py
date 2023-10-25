@@ -2257,14 +2257,14 @@ class TestRuleScheduledChanges(ViewTest):
             "backgroundRate": 100,
             "mapping": "c",
             "update_type": "minor",
-            "data_version": 1,
             "change_type": "update",
             "when": 1234567,
             "base_alias": "TestDuplicateAlias1",
         }
         ret1 = self._post("/scheduled_changes/rules", data=data1)
         self.assertEqual(ret1.status_code, 400, ret1.get_data())
-        self.assertEqual(ret1.response.get("detail"), "Rule is scheduled with the given alias")
+        load = ret1.get_json()
+        self.assertEqual(load["detail"], "Rule is scheduled with the given alias")
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangesRuleWithDuplicateAliasWithChangeTypeUpdate(self):
@@ -2285,14 +2285,14 @@ class TestRuleScheduledChanges(ViewTest):
             "backgroundRate": 100,
             "mapping": "c",
             "update_type": "minor",
-            "data_version": 1,
             "change_type": "update",
             "when": 1234567,
             "base_alias": "TestDuplicateAlias2",
         }
         ret1 = self._post("/scheduled_changes/rules", data=data1)
         self.assertEqual(ret1.status_code, 400, ret1.get_data())
-        self.assertEqual(ret1.response.get("detail") ,"Rule is scheduled with the given alias")
+        load = ret1.get_json()
+        self.assertEqual(load["detail"], "Rule is scheduled with the given alias")
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeWithAliasAlreadyPresentWithChangeTypeInsert(self):
