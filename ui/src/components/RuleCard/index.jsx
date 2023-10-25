@@ -730,7 +730,7 @@ function RuleCard({
         )}
         {rule.scheduledChange && (
           <Fragment>
-            {rule.scheduledChange.change_type !== 'insert' && (
+            {/* {rule.scheduledChange.change_type !== 'insert' && (
               <Divider className={classes.divider} />
             )}
             <div className={classes.scheduledChangesHeader}>
@@ -768,7 +768,7 @@ function RuleCard({
               </Typography>
             ) : (
               <DiffRule firstRule={rule} secondRule={rule.scheduledChange} />
-            )}
+            )} */}
           </Fragment>
         )}
         {!readOnly && requiresSignoff && (

@@ -1227,7 +1227,7 @@ function ListRules(props) {
       // eslint-disable-next-line no-restricted-syntax,guard-for-in
       for (const y in RS) {
         if (roles[x] === RS[y]) {
-          // As soon as a match is found, sign in button is enabled
+          // As soon as a match is found, sign off button is enabled
           setCanUserSign(true);
           break;
         }
