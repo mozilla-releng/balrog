@@ -1399,7 +1399,15 @@ function ListRules(props) {
           icon={<PauseIcon />}
           tooltipOpen
           tooltipTitle="Disable Updates"
-          onClick={handleDisableUpdates}
+          onClick={
+            !isLoading &&
+            !!username &&
+            !filteredProductChannelIsShutoff &&
+            !!productChannelQueries &&
+            !!productChannelQueries[1]
+              ? handleDisableUpdates
+              : undefined
+          }
         />
       </SpeedDial>
     </Dashboard>
