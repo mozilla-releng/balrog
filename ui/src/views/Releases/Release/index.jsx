@@ -266,6 +266,7 @@ function Release(props) {
       {!isLoading && (
         <Fragment>
           <TextField
+             disabled={!isNewRelease}
             fullWidth
             label="Release"
             onChange={handleReleaseNameChange}
