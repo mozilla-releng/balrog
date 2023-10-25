@@ -446,7 +446,8 @@ function Rule({ isNewRule, user, ...props }) {
     for (const x in allRequiredSignOffs) {
       if (
         rule.product === allRequiredSignOffs[x].product &&
-        rule.channel === allRequiredSignOffs[x].channel
+        (rule.channel === allRequiredSignOffs[x].channel ||
+          rule.channel === `${allRequiredSignOffs[x].channel}*`)
       ) {
         required = true;
         break;
@@ -472,7 +473,8 @@ function Rule({ isNewRule, user, ...props }) {
 
                 if (
                   rule.product === reqSignOff.product &&
-                  rule.channel === reqSignOff.channel
+                  (rule.channel === reqSignOff.channel ||
+                    rule.channel === `${reqSignOff.channel}*`)
                 ) {
                   return (
                     <Typography
