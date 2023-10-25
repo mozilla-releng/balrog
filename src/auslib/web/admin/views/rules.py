@@ -269,7 +269,7 @@ class RuleScheduledChangesView(ScheduledChangesView):
                     dbo.rules.scheduled_changes.t.select()
                     .where(
                         dbo.rules.scheduled_changes.base_alias == alias
-                        and dbo.rules.scheduled_changes.complete == False
+                        and dbo.rules.scheduled_changes.complete is False
                         and (dbo.rules.scheduled_changes.change_type == "insert" or dbo.rules.scheduled_changes.change_type == "update")
                     )
                     .execute()
@@ -345,7 +345,7 @@ class RuleScheduledChangeView(ScheduledChangeView):
                     dbo.rules.scheduled_changes.t.select()
                     .where(
                         dbo.rules.scheduled_changes.base_alias == alias
-                        and dbo.rules.scheduled_changes.complete == False
+                        and dbo.rules.scheduled_changes.complete is False
                         and (dbo.rules.scheduled_changes.change_type == "insert" or dbo.rules.scheduled_changes.change_type == "update")
                     )
                     .execute()
