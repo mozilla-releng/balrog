@@ -2241,42 +2241,58 @@ class TestRuleScheduledChanges(ViewTest):
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangesRuleWithDuplicateAliasWithChangeTypeInsert(self):
         ret = self._post(
-            "/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly", alias="test")
+            "/rules",
+            data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly", alias="TestDuplicateAlias1"),
         )
         self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
 
         data1 = {
-            "when": 1234567,
-            "priority": 120,
+            "rule_id": 10,
+            "telemetry_product": None,
+            "telemetry_channel": None,
+            "telemetry_uptake": None,
+            "priority": 80,
+            "buildTarget": "d",
+            "version": "3.3",
             "backgroundRate": 100,
-            "product": "blah",
-            "channel": "blah",
-            "mapping": "a",
-            "change_type": "insert",
-            "base_alias": "test",
+            "mapping": "c",
+            "update_type": "minor",
+            "data_version": 1,
+            "change_type": "update",
+            "when": 1234567,
+            "base_alias": "TestDuplicateAlias1",
         }
         ret1 = self._post("/scheduled_changes/rules", data=data1)
         self.assertEqual(ret1.status_code, 400, ret1.get_data())
+        self.assertEqual("rule is scheduled with the given alias", ret1.get_data().get("exception"))
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangesRuleWithDuplicateAliasWithChangeTypeUpdate(self):
         ret = self._post(
-            "/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly", alias="test")
+            "/rules",
+            data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly", alias="TestDuplicateAlias2"),
         )
         self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
 
         data1 = {
-            "when": 1234567,
-            "priority": 120,
+            "rule_id": 11,
+            "telemetry_product": None,
+            "telemetry_channel": None,
+            "telemetry_uptake": None,
+            "priority": 80,
+            "buildTarget": "d",
+            "version": "3.3",
             "backgroundRate": 100,
-            "product": "blah",
-            "channel": "blah",
-            "mapping": "a",
+            "mapping": "c",
+            "update_type": "minor",
+            "data_version": 1,
             "change_type": "update",
-            "base_alias": "test",
+            "when": 1234567,
+            "base_alias": "TestDuplicateAlias2",
         }
         ret1 = self._post("/scheduled_changes/rules", data=data1)
         self.assertEqual(ret1.status_code, 400, ret1.get_data())
+        self.assertEqual("rule is scheduled with the given alias", ret1.get_data().get("exception"))
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeWithAliasAlreadyPresentWithChangeTypeInsert(self):
@@ -2294,7 +2310,7 @@ class TestRuleScheduledChanges(ViewTest):
             "data_version": 1,
             "change_type": "insert",
             "when": 1234567,
-            "base_alias": "test",
+            "base_alias": "TestDuplicateAlias3",
             "complete": False,
         }
         ret = self._post("/scheduled_changes/rules", data=data)
@@ -2311,7 +2327,7 @@ class TestRuleScheduledChanges(ViewTest):
             "mapping": "c",
             "update_type": "minor",
             "sc_data_version": 1,
-            "base_alias": "test",
+            "base_alias": "TestDuplicateAlias3",
             "complete": False,
         }
         ret1 = self._post("/scheduled_changes/rules/4", data=data1)
@@ -2333,7 +2349,7 @@ class TestRuleScheduledChanges(ViewTest):
             "data_version": 1,
             "change_type": "update",
             "when": 1234567,
-            "base_alias": "test",
+            "base_alias": "TestDuplicateAlias4",
             "complete": False,
         }
         ret = self._post("/scheduled_changes/rules", data=data)
@@ -2350,7 +2366,7 @@ class TestRuleScheduledChanges(ViewTest):
             "mapping": "c",
             "update_type": "minor",
             "sc_data_version": 1,
-            "base_alias": "test",
+            "base_alias": "TestDuplicateAlias4",
             "complete": False,
         }
         ret1 = self._post("/scheduled_changes/rules/4", data=data1)

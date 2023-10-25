@@ -265,7 +265,16 @@ class RuleScheduledChangesView(ScheduledChangesView):
                 return problem(400, "Bad Request", "Rule with alias exists.")
 
             if alias is not None:
-                scheduled_rule_with_alias = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.base_alias == alias).execute().fetchall()
+                scheduled_rule_with_alias = (
+                    dbo.rules.scheduled_changes.t.select()
+                    .where(
+                        dbo.rules.scheduled_changes.base_alias == alias
+                        and dbo.rules.scheduled_changes.complete == False
+                        and (dbo.rules.scheduled_changes.change_type == "insert" or dbo.rules.scheduled_changes.change_type == "update")
+                    )
+                    .execute()
+                    .fetchall()
+                )
                 if len(scheduled_rule_with_alias) > 0:
                     return problem(400, "Bad Request", "Rule is scheduled with the given alias.")
 
@@ -332,7 +341,16 @@ class RuleScheduledChangeView(ScheduledChangeView):
                 return problem(400, "Bad Request", "Rule with alias exists.")
 
             if alias is not None:
-                scheduled_rule_with_alias = dbo.rules.scheduled_changes.t.select().where(dbo.rules.scheduled_changes.base_alias == alias).execute().fetchall()
+                scheduled_rule_with_alias = (
+                    dbo.rules.scheduled_changes.t.select()
+                    .where(
+                        dbo.rules.scheduled_changes.base_alias == alias
+                        and dbo.rules.scheduled_changes.complete == False
+                        and (dbo.rules.scheduled_changes.change_type == "insert" or dbo.rules.scheduled_changes.change_type == "update")
+                    )
+                    .execute()
+                    .fetchall()
+                )
                 if len(scheduled_rule_with_alias) > 0:
                     return problem(400, "Bad Request", "rule is scheduled with the given alias.")
 
