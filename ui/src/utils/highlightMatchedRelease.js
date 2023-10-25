@@ -3,11 +3,11 @@ import React, { Fragment } from 'react';
 export default (highlights, releaseName) => {
     // The highlights array elements are arrays with pairs of indices representing:
         // 1. the first index of a match
-        // 2. the last index of a match + 1
+        // 2. (the last index of a match) + 1
     if (highlights) {
       // The first array in highlights is ignored because it represents the:
-        // 1. the first index of release.name i.e. the matched string
-        // 2. the last index that matched the searchValue + 1
+        // 1. the first index of releaseName i.e. release.name[0]
+        // 2. (the last index of releaseName that matched the searchValue) + 1
 
       // Add the first part of the release name before the first match
       const highlightedName = [releaseName.slice(0, highlights[1][0])];
