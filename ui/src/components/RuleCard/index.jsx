@@ -6,6 +6,9 @@ import Card from '@material-ui/core/Card';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import Modal from '@material-ui/core/Modal';
+import { Box } from '@material-ui/core';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import CardHeader from '@material-ui/core/CardHeader';
@@ -146,6 +149,21 @@ const useStyles = makeStyles(theme => ({
     paddingBottom: 0,
     marginLeft: theme.spacing(1),
   },
+  modalBox: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '30rem',
+    backgroundColor: 'white',
+    borderRadius: '.5rem',
+    boxShadow: 24,
+    padding: '1rem',
+  },
+  itemSecondaryAction: {
+    cursor: 'pointer',
+    fontWeight: 'bold',
+  },
 }));
 
 function RuleCard({
@@ -189,6 +207,9 @@ function RuleCard({
     }
   };
 
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
   const ChipIcon = getChipIcon(
     rule.scheduledChange && rule.scheduledChange.change_type
   );
@@ -558,32 +579,6 @@ function RuleCard({
                     />
                   </ListItem>
                 )}
-                {rule.osVersion && (
-                  <ListItem className={classes.listItem}>
-                    <ListItemText
-                      title={rule.osVersion.split(',').join('\n')}
-                      primaryTypographyProps={{
-                        component: 'div',
-                        className: classes.primaryText,
-                      }}
-                      secondaryTypographyProps={{
-                        className: classes.textEllipsis,
-                      }}
-                      primary={
-                        <Fragment>
-                          OS Version
-                          {diffedProperties.includes('osVersion') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
-                            )}
-                        </Fragment>
-                      }
-                      secondary={rule.osVersion}
-                    />
-                  </ListItem>
-                )}
                 {rule.instructionSet && (
                   <ListItem className={classes.listItem}>
                     <ListItemText
@@ -692,6 +687,45 @@ function RuleCard({
                       }
                       secondary={rule.headerArchitecture}
                     />
+                  </ListItem>
+                )}
+              </List>
+            </Grid>
+            <Grid xs={12}>
+              <List>
+                {rule.osVersion && (
+                  <ListItem className={classes.listItem}>
+                    <ListItemText
+                      title={rule.osVersion.split(',').join('\n')}
+                      primaryTypographyProps={{
+                        component: 'div',
+                        className: classes.primaryText,
+                      }}
+                      primary={
+                        <Fragment>
+                          OS Version
+                          {diffedProperties.includes('osVersion') &&
+                            rule.scheduledChange.change_type === 'update' && (
+                              <span
+                                className={classes.propertyWithScheduledChange}
+                              />
+                            )}
+                        </Fragment>
+                      }
+                      secondary={`${rule.osVersion &&
+                        rule.osVersion.split(',').slice(0, 8)} ${
+                        rule.osVersion && rule.osVersion.split(',').length > 8
+                          ? '...'
+                          : ''
+                      }`}
+                    />
+                    {rule.osVersion && rule.osVersion.split(',').length > 8 && (
+                      <ListItemSecondaryAction
+                        className={classes.itemSecondaryAction}
+                        onClick={handleOpen}>
+                        See all
+                      </ListItemSecondaryAction>
+                    )}
                   </ListItem>
                 )}
               </List>
@@ -841,6 +875,21 @@ function RuleCard({
             ))}
         </CardActions>
       )}
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description">
+        <Box className={classes.modalBox}>
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            All osVersions
+          </Typography>
+          <br />
+          <Typography id="modal-modal-description">
+            {rule.osVersion && rule.osVersion}
+          </Typography>
+        </Box>
+      </Modal>
     </Card>
   );
 }
