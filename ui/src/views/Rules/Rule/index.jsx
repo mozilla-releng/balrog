@@ -469,11 +469,7 @@ function Rule({ isNewRule, user, ...props }) {
               allRequiredSignOffs.map((reqSignOff, index, all) => {
                 const no = index;
 
-                if (
-                  rule.product === reqSignOff.product &&
-                  (rule.channel === reqSignOff.channel ||
-                    rule.channel === `${reqSignOff.channel}*`)
-                ) {
+                if (ruleMatchesChannel(rule, reqSignOff.channel)) {
                   return (
                     <Typography
                       component="p"
