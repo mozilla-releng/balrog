@@ -2260,7 +2260,7 @@ class TestRuleScheduledChanges(ViewTest):
             "data_version": 1,
             "change_type": "insert",
             "when": 1234567,
-            "base_alias": "TestDuplicateAlias1",
+            "alias": "TestDuplicateAlias1",
         }
         ret1 = self._post("/scheduled_changes/rules", data=data1)
         self.assertEqual(ret1.status_code, 400, ret1.get_data())
@@ -2289,7 +2289,7 @@ class TestRuleScheduledChanges(ViewTest):
             "data_version": 1,
             "change_type": "update",
             "when": 1234567,
-            "base_alias": "TestDuplicateAlias2",
+            "alias": "TestDuplicateAlias2",
         }
         ret1 = self._post("/scheduled_changes/rules", data=data1)
         self.assertEqual(ret1.status_code, 400, ret1.get_data())
@@ -2312,7 +2312,7 @@ class TestRuleScheduledChanges(ViewTest):
             "data_version": 1,
             "change_type": "insert",
             "when": 1234567,
-            "base_alias": "TestDuplicateAlias3",
+            "alias": "TestDuplicateAlias3",
             "complete": False,
         }
         ret = self._post("/scheduled_changes/rules", data=data)
@@ -2329,7 +2329,7 @@ class TestRuleScheduledChanges(ViewTest):
             "mapping": "c",
             "update_type": "minor",
             "sc_data_version": 1,
-            "base_alias": "TestDuplicateAlias3",
+            "alias": "TestDuplicateAlias3",
             "complete": False,
         }
         ret1 = self._post("/scheduled_changes/rules/4", data=data1)
@@ -2353,7 +2353,7 @@ class TestRuleScheduledChanges(ViewTest):
             "data_version": 1,
             "change_type": "update",
             "when": 1234567,
-            "base_alias": "TestDuplicateAlias4",
+            "alias": "TestDuplicateAlias4",
             "complete": False,
         }
         ret = self._post("/scheduled_changes/rules", data=data)
@@ -2370,7 +2370,7 @@ class TestRuleScheduledChanges(ViewTest):
             "mapping": "c",
             "update_type": "minor",
             "sc_data_version": 1,
-            "base_alias": "TestDuplicateAlias4",
+            "alias": "TestDuplicateAlias4",
             "complete": False,
         }
         ret1 = self._post("/scheduled_changes/rules/4", data=data1)
