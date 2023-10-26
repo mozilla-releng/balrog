@@ -446,9 +446,7 @@ function Rule({ isNewRule, user, ...props }) {
 
     // eslint-disable-next-line no-restricted-syntax
     for (const x in allRequiredSignOffs) {
-      if (
-        ruleMatchesChannel(rule,allRequiredSignOffs[x].channel)
-      ) {
+      if (ruleMatchesChannel(rule, allRequiredSignOffs[x].channel)) {
         required = true;
         break;
       }
@@ -456,7 +454,6 @@ function Rule({ isNewRule, user, ...props }) {
 
     return required;
   };
-
 
   return (
     <Dashboard title={getTitle()}>
