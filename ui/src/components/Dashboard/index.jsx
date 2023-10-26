@@ -75,7 +75,7 @@ export default function Dashboard(props) {
       </Helmet>
       <AppBar className={classes.appbar}>
         <Toolbar>
-          <Logo/>
+          <Logo />
           <nav className={classes.nav}>
             {menuItems.main.map(menuItem => (
               <Link
