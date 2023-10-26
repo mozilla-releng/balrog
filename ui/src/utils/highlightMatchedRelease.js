@@ -24,10 +24,12 @@ export default (highlights, releaseName) => {
             releaseName.slice(highlights[i][1], highlights[i + 1][0])
           );
         } else {
-          // If current match is last element in array, add all remaining characters
-          highlightedName.push(
-            releaseName.slice(highlights[highlights.length - 1][1])
-          );
+          // If current match is last element in array and there are remaining characters in releaseName, add all remaining characters
+            if (highlights[i][1] < releaseName.length) {
+              highlightedName.push(
+                releaseName.slice(highlights[i][1])
+              );
+            }
         }
       }
       return <Fragment>{highlightedName}</Fragment>;
