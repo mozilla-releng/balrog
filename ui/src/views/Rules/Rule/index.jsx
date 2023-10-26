@@ -42,6 +42,7 @@ import {
 } from '../../../utils/constants';
 // ALL IMPORTS TO FETCH REQUIRED SIGNOFFS BELOW:
 import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
+import { ruleMatchesChannel } from '../../../utils/rules';
 
 const initialRule = {
   alias: '',
@@ -446,9 +447,7 @@ function Rule({ isNewRule, user, ...props }) {
     // eslint-disable-next-line no-restricted-syntax
     for (const x in allRequiredSignOffs) {
       if (
-        rule.product === allRequiredSignOffs[x].product &&
-        (rule.channel === allRequiredSignOffs[x].channel ||
-          rule.channel === `${allRequiredSignOffs[x].channel}*`)
+        ruleMatchesChannel(rule,allRequiredSignOffs[x].channel)
       ) {
         required = true;
         break;
@@ -457,6 +456,7 @@ function Rule({ isNewRule, user, ...props }) {
 
     return required;
   };
+
 
   return (
     <Dashboard title={getTitle()}>
