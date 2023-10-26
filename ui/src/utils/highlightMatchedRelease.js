@@ -10,7 +10,8 @@ export default (highlights, releaseName) => {
         // 2. (the last index of releaseName that matched the searchValue) + 1
 
       // Add the first part of the release name before the first match
-      const highlightedName = [releaseName.slice(0, highlights[1][0])];
+      const firstSubstring = releaseName.slice(0, highlights[1][0])
+      const highlightedName = firstSubstring ? [firstSubstring] : [];
 
       for (let i = 1; i < highlights.length; i += 1) {
         // Add the highlighted matches with mark to highlight them
