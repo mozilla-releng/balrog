@@ -2,18 +2,6 @@ import React from 'react'
 import highlightMatchedRelease from "../src/utils/highlightMatchedRelease";
 
 describe('highlighting release', () => {
-    test('should return a React Fragment', () => {
-        const result = highlightMatchedRelease(
-            [
-                [0, 17],
-                [2, 4],
-                [6, 8],
-                [16, 17]
-            ],
-            'Widevine-4.10.2557.0-with-aarch'
-        )
-        expect(result.type).toBe(React.Fragment)
-    });
     test('should highlight when only one matching substring', () => {
         const result = highlightMatchedRelease(
             [
@@ -27,9 +15,7 @@ describe('highlighting release', () => {
             <mark key={1}>De</mark>,
             'support'
         ]
-        expect(result.props).toStrictEqual({
-                children: highlighted
-        })
+        expect(result).toStrictEqual(highlighted);
     });
     test('should highlight when two matching substrings', () => {
         const result = highlightMatchedRelease(
@@ -47,9 +33,7 @@ describe('highlighting release', () => {
             <mark key={2}>ne</mark>,
             '-4.10.2710.0'
         ]
-        expect(result.props).toStrictEqual({
-                children: highlighted
-        })
+        expect(result).toStrictEqual(highlighted);
     });
     test('should highlight when release name ends with last matching substring', () => {
         const result = highlightMatchedRelease(
@@ -63,9 +47,7 @@ describe('highlighting release', () => {
             'Firefox-102.15.1esr-build1-No-',
             <mark key={1}>WNP</mark>
         ]
-        expect(result.props).toStrictEqual({
-                children: highlighted
-        })
+        expect(result).toStrictEqual(highlighted);
     });
     test('should highlight when release name starts with last matching substring', () => {
         const result = highlightMatchedRelease(
@@ -79,8 +61,6 @@ describe('highlighting release', () => {
             <mark key={1}>Sy</mark>,
             'stemAddons-shield-recipe-client-1.0.0-Superblob'
         ]
-        expect(result.props).toStrictEqual({
-                children: highlighted
-        })
+        expect(result).toStrictEqual(highlighted);
     });
 })
