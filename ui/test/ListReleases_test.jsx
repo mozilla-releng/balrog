@@ -51,4 +51,20 @@ describe('highlighting release', () => {
                 children: highlighted
         })
     });
+    test('should highlight when release name ends with last matching substring', () => {
+        const result = highlightMatchedRelease(
+            [
+                [0, 33],
+                [30, 33]
+            ],
+            'Firefox-102.15.1esr-build1-No-WNP'
+        );
+        const highlighted = [
+            'Firefox-102.15.1esr-build1-No-',
+            <mark key={1}>WNP</mark>
+        ]
+        expect(result.props).toStrictEqual({
+                children: highlighted
+        })
+    });
 })
