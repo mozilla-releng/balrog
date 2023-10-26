@@ -401,7 +401,7 @@ function Rule({ isNewRule, user, ...props }) {
           setRuleRequiredSignoffs(curr => curr.concat(matchingRs));
 
           if (!requiredSignoffs.length || !matchingRs.length) {
-            setSignoffSummary(' None');
+            setSignoffSummary(' Nobody');
           } else {
             const rsSummary = matchingRs.reduce((summary, rs, idx) => {
               const memberStr = rs.signoffs_required > 1 ? 'members' : 'member';
@@ -450,7 +450,7 @@ function Rule({ isNewRule, user, ...props }) {
         <Fragment>
           <div>
             <p className={classes.signoffLabel}>
-              Required Signoffs:
+              Requires Signoff from:
               <span
                 className={
                   requiredSignoffs.data &&
