@@ -14,4 +14,41 @@ describe('highlighting release', () => {
         )
         expect(result.type).toBe(React.Fragment)
     });
+    test('should highlight when only one matching substring', () => {
+        const result = highlightMatchedRelease(
+            [
+                [0, 17],
+                [15, 17]
+            ],
+            'Windows-7-8-81-Desupport'
+        );
+        const highlighted = [
+            'Windows-7-8-81-',
+            <mark key={1}>De</mark>,
+            'support'
+        ]
+        expect(result.props).toStrictEqual({
+                children: highlighted
+        })
+    });
+    test('should highlight when two matching substrings', () => {
+        const result = highlightMatchedRelease(
+            [
+                [0, 8],
+                [2, 4],
+                [6, 8]
+            ],
+            'Widevine-4.10.2710.0'
+        );
+        const highlighted = [
+            'Wi',
+            <mark key={1}>de</mark>,
+            'vi',
+            <mark key={2}>ne</mark>,
+            '-4.10.2710.0'
+        ]
+        expect(result.props).toStrictEqual({
+                children: highlighted
+        })
+    });
 })
