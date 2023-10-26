@@ -178,7 +178,7 @@ function ReleaseCard(props) {
             component="h2"
             variant="h6">
             {rest.releaseHighlight
-              ? highlightMatchedRelease(rest.releaseHighlight,release.name)
+              ? <Fragment>{highlightMatchedRelease(rest.releaseHighlight,release.name)}</Fragment>
               : release.name}{' '}
             <a
               href={`#${release.name}`}

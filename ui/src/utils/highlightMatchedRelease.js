@@ -33,6 +33,6 @@ export default (highlights, releaseName) => {
             }
         }
       }
-      return <Fragment>{highlightedName}</Fragment>;
+      return highlightedName;
     }
   };
