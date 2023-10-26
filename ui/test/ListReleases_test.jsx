@@ -67,4 +67,20 @@ describe('highlighting release', () => {
                 children: highlighted
         })
     });
+    test('should highlight when release name starts with last matching substring', () => {
+        const result = highlightMatchedRelease(
+            [
+                [0, 2],
+                [0, 2]
+            ],
+            'SystemAddons-shield-recipe-client-1.0.0-Superblob'
+        );
+        const highlighted = [
+            <mark key={1}>Sy</mark>,
+            'stemAddons-shield-recipe-client-1.0.0-Superblob'
+        ]
+        expect(result.props).toStrictEqual({
+                children: highlighted
+        })
+    });
 })
