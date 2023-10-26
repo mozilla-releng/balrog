@@ -1,6 +1,6 @@
 // Function that returns the index of the
-// (noOfOccurrences)th/st appearance of "subStr"
-// inside of "word"
+// nth appearance of a substring
+// inside of a string
 const getIndexOfSubStr = (word, subStr, noOfOccurrences) => {
   let currentIndex = 0;
 
