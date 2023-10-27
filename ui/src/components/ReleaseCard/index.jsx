@@ -254,7 +254,9 @@ function ReleaseCard(props) {
                               clickable
                               size="small"
                               icon={<LinkIcon />}
-                              label={ruleId}
+                              label={`${ruleInfo.product} ${
+                                ruleInfo.channel ? `- ${ruleInfo.channel}` : ''
+                              }`}
                               className={classes.chip}
                             />
                           </Link>

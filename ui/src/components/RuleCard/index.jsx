@@ -245,7 +245,7 @@ function RuleCard({
                 href={`#ruleId=${rule.rule_id}`}
                 aria-label="Anchor"
                 className="anchor-link-style">
-                {rule.alias ? `${rule.alias}` : <span>#</span>}
+                #
               </a>
             </Typography>
           }
