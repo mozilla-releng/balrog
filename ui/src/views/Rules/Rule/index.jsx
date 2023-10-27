@@ -101,7 +101,6 @@ function Rule({ isNewRule, user, ...props }) {
       : [];
   const [rule, setRule] = useState(initialRule);
   const [releaseNames, setReleaseNames] = useState([]);
-  const [ruleRequiredSignoffs, setRuleRequiredSignoffs] = useState([]);
   const [signoffSummary, setSignoffSummary] = useState('');
   const [products, fetchProducts] = useAction(getProducts);
   const [channels, fetchChannels] = useAction(getChannels);
@@ -126,7 +125,10 @@ function Rule({ isNewRule, user, ...props }) {
   const [updateSCAction, updateSC] = useAction(updateScheduledChange);
   const [deleteSCAction, deleteSC] = useAction(deleteScheduledChange);
   const isLoading =
-    fetchRuleAction.loading || products.loading || channels.loading;
+    fetchRuleAction.loading ||
+    products.loading ||
+    channels.loading ||
+    requiredSignoffs.loading;
   const actionLoading =
     releaseNamesAction.loading ||
     releaseNamesV2Action.loading ||
@@ -398,8 +400,6 @@ function Rule({ isNewRule, user, ...props }) {
             ruleMatchesRequiredSignoff(rule, rs)
           );
 
-          setRuleRequiredSignoffs(curr => curr.concat(matchingRs));
-
           if (!requiredSignoffs.length || !matchingRs.length) {
             setSignoffSummary(' Nobody');
           } else {
@@ -451,14 +451,7 @@ function Rule({ isNewRule, user, ...props }) {
           <div>
             <p className={classes.signoffLabel}>
               Requires Signoff from:
-              <span
-                className={
-                  requiredSignoffs.data &&
-                  ruleRequiredSignoffs.length &&
-                  classes.signoffs
-                }>
-                {signoffSummary}
-              </span>
+              <span className={classes.signoffs}>{signoffSummary}</span>
             </p>
           </div>
           <div className={classes.scheduleDiv}>
