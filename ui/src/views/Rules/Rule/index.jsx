@@ -42,6 +42,7 @@ import {
 } from '../../../utils/constants';
 // ALL IMPORTS TO FETCH REQUIRED SIGNOFFS BELOW:
 import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
+import { ruleMatchesChannel } from '../../../utils/rules';
 
 const initialRule = {
   alias: '',
@@ -445,11 +446,7 @@ function Rule({ isNewRule, user, ...props }) {
 
     // eslint-disable-next-line no-restricted-syntax
     for (const x in allRequiredSignOffs) {
-      if (
-        rule.product === allRequiredSignOffs[x].product &&
-        (rule.channel === allRequiredSignOffs[x].channel ||
-          rule.channel === `${allRequiredSignOffs[x].channel}*`)
-      ) {
+      if (ruleMatchesChannel(rule, allRequiredSignOffs[x].channel)) {
         required = true;
         break;
       }
@@ -472,11 +469,7 @@ function Rule({ isNewRule, user, ...props }) {
               allRequiredSignOffs.map((reqSignOff, index, all) => {
                 const no = index;
 
-                if (
-                  rule.product === reqSignOff.product &&
-                  (rule.channel === reqSignOff.channel ||
-                    rule.channel === `${reqSignOff.channel}*`)
-                ) {
+                if (ruleMatchesChannel(rule, reqSignOff.channel)) {
                   return (
                     <Typography
                       component="p"
