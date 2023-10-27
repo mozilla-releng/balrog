@@ -139,7 +139,7 @@ function ListReleases(props) {
       return releases;
     }
 
-    const values = searchValue.split(' ');
+    const values = searchValue.trim().split(' ');
     const regexp = values.reduce(
       (re, value) => `${re}[A-Za-z0-9.-]*(${value})`,
       ''
