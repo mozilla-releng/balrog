@@ -62,13 +62,15 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function ListSignoffs({ user , ...props}) {
+function ListSignoffs({ user, ...props }) {
   const username = user.email;
   const classes = useStyles();
-  const { search} = props.location;
+  const { search } = props.location;
   const query = parse(search.slice(1));
   const [requiredSignoffs, setRequiredSignoffs] = useState(null);
-  const [product, setProduct] = useState(query.product ? query.product : 'Firefox');
+  const [product, setProduct] = useState(
+    query.product ? query.product : 'Firefox'
+  );
   const [roles, setRoles] = useState([]);
   const [signoffRole, setSignoffRole] = useState('');
   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
@@ -86,14 +88,17 @@ function ListSignoffs({ user , ...props}) {
     // If there's more than one role, this error is shown inside of the dialog
     (roles.length === 1 && signoffAction.error);
   const handleFilterChange = ({ target: { value } }) => {
-     const qs = {
-       ...query,
-       product: value
-     };
-    
-    props.history.push(`/required-signoffs${stringify(qs, { addQueryPrefix: true })}`);
-    setProduct(value)
+    const qs = {
+      ...query,
+      product: value,
+    };
+
+    props.history.push(
+      `/required-signoffs${stringify(qs, { addQueryPrefix: true })}`
+    );
+    setProduct(value);
   };
+
   const handleSignoffRoleChange = ({ target: { value } }) =>
     setSignoffRole(value);
   const permissionChanges = view(
