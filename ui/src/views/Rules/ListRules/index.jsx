@@ -149,14 +149,13 @@ function ListRules(props) {
   const [dateTimePickerError, setDateTimePickerError] = useState(null);
   const [scrollToRow, setScrollToRow] = useState(null);
   const [roles, setRoles] = useState([]);
+  const [requiredRoles, setRequiredRoles] = useState([]);
   const [emergencyShutoffs, setEmergencyShutoffs] = useState([]);
   const [
     emergencyShutoffReasonComment,
     setEmergencyShutoffReasonComment,
   ] = useState('');
   const [signoffRole, setSignoffRole] = useState('');
-  const [requiredRolesFromUser, setRequiredRolesFromUser] = useState([]);
-  const [canUserSign, setCanUserSign] = useState(false);
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
   const [drawerReleaseName, setDrawerReleaseName] = useState(null);
   const ruleListRef = useRef(null);
@@ -435,7 +434,7 @@ function ListRules(props) {
 
         setRoles(roleList);
 
-        if (roleList.length === 0) {
+        if (roleList.length > 0) {
           setSignoffRole(roleList[0]);
         }
       });
@@ -594,9 +593,17 @@ function ListRules(props) {
         name="role"
         value={signoffRole}
         onChange={handleSignoffRoleChange}>
-        {requiredRolesFromUser.map(r => (
-          <FormControlLabel key={r} value={r} label={r} control={<Radio />} />
-        ))}
+        {roles.map(r => {
+          return (
+            <FormControlLabel
+              key={r}
+              value={r}
+              label={r}
+              control={<Radio />}
+              disabled={!(requiredRoles && requiredRoles.includes(r))}
+            />
+          );
+        })}
       </RadioGroup>
     </FormControl>
   );
@@ -644,22 +651,14 @@ function ListRules(props) {
   };
 
   const handleSignoff = async rule => {
-    const requiredSignoffRoles = Object.keys(rule.required_signoffs);
-    let tempRequiredRolesFromUser = [];
+    setRequiredRoles(Object.keys(rule.required_signoffs));
 
-    // eslint-disable-next-line no-restricted-syntax,guard-for-in
-    for (const i in requiredSignoffRoles) {
-      tempRequiredRolesFromUser = tempRequiredRolesFromUser.concat(
-        roles.filter(eachUserRole => {
-          return eachUserRole === requiredSignoffRoles[i];
-        })
-      );
-    }
+    const userRequiredRoles = Object.keys(rule.required_signoffs).filter(r =>
+      roles.includes(r)
+    );
 
-    setRequiredRolesFromUser(tempRequiredRolesFromUser);
-
-    if (roles.length === 1) {
-      const { error, result } = await doSignoff(roles[0], rule);
+    if (userRequiredRoles.length === 1) {
+      const { error, result } = await doSignoff(userRequiredRoles[0], rule);
 
       if (!error) {
         updateSignoffs(result);
@@ -1269,11 +1268,14 @@ function ListRules(props) {
           rule={rule}
           rulesFilter={productChannelQueries}
           onRuleDelete={handleRuleDelete}
+          canSignoff={
+            Object.keys(rule.required_signoffs).filter(r => roles.includes(r))
+              .length
+          }
           onSignoff={() => handleSignoff(rule)}
           onRevoke={() => handleRevoke(rule)}
           onViewReleaseClick={handleViewRelease}
           actionLoading={isActionLoading}
-          canUserSign={canUserSign}
         />
       </div>
     );
@@ -1418,7 +1420,15 @@ function ListRules(props) {
           icon={<PauseIcon />}
           tooltipOpen
           tooltipTitle="Disable Updates"
-          onClick={handleDisableUpdates}
+          onClick={
+            !isLoading &&
+            !!username &&
+            !filteredProductChannelIsShutoff &&
+            !!productChannelQueries &&
+            !!productChannelQueries[1]
+              ? handleDisableUpdates
+              : undefined
+          }
         />
       </SpeedDial>
     </Dashboard>
