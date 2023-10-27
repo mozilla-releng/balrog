@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, { useState, Fragment } from 'react';
 import { bool, func } from 'prop-types';
 import classNames from 'classnames';
 import { makeStyles } from '@material-ui/styles';
@@ -10,6 +10,7 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import Modal from '@material-ui/core/Modal';
 import { Box } from '@material-ui/core';
 import Tooltip from '@material-ui/core/Tooltip';
+import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import IconButton from '@material-ui/core/IconButton';
 import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
@@ -32,6 +33,7 @@ import Link from '../../utils/Link';
 import { RULE_DIFF_PROPERTIES } from '../../utils/constants';
 import { rule } from '../../utils/prop-types';
 import getDiffedProperties from '../../utils/getDiffedProperties';
+import getIndexOfSubStr from '../../utils/getIndexOfSubStr';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -170,19 +172,21 @@ function RuleCard({
   rule,
   rulesFilter,
   onRuleDelete,
+  canSignoff,
   onSignoff,
   onRevoke,
   onViewReleaseClick,
   user,
   readOnly,
   actionLoading,
-  canUserSign,
   // We don't actually use these, but we need to avoid passing them onto
   // `Card` like the rest of the props.
   onAuthorize: _,
   onUnauthorize: __,
   ...props
 }) {
+  const [open, setOpen] = useState(false);
+  const [seeMore, setSeeMore] = useState('...see more');
   const classes = useStyles();
   const requiresSignoff =
     rule.scheduledChange &&
@@ -232,6 +236,81 @@ function RuleCard({
   const priorityTitle = isScheduledPriorityUpdate
     ? 'Scheduled Priority'
     : 'Priority';
+  const handleTooltipOpen = () => {
+    setOpen(true);
+    setSeeMore('...see less');
+  };
+
+  const handleTooltipClose = () => {
+    setOpen(false);
+    setSeeMore('...see more');
+  };
+
+  const splitAmount = 5;
+  const isOsVersionLong = () => {
+    if (rule.osVersion) {
+      const osVersionsLength = rule.osVersion.split(',').length;
+
+      if (osVersionsLength > splitAmount) {
+        return true;
+      }
+
+      return false;
+    }
+  };
+
+  const osVersionLimit = () => {
+    const allOsVersions = rule.osVersion;
+    const firstIndex = getIndexOfSubStr(allOsVersions, `,`, splitAmount);
+    const osVersionP = (
+      <p
+        style={{
+          display: 'flex',
+          flexFlow: 'column',
+          color: 'white',
+          fontSize: '14px',
+          lineHeight: '16px',
+          margin: '2px 4px',
+        }}>
+        {allOsVersions.split(',').map(item => (
+          <p key={item} style={{ margin: '2px 0' }}>
+            {item}
+          </p>
+        ))}
+      </p>
+    );
+
+    return (
+      <React.Fragment>
+        {allOsVersions.substring(0, firstIndex)}
+        <ClickAwayListener onClickAway={handleTooltipClose}>
+          <Tooltip
+            title={osVersionP}
+            onClose={handleTooltipClose}
+            open={open}
+            disableFocusListener
+            disableHoverListener
+            disableTouchListener
+            arrow>
+            <button
+              type="button"
+              style={{
+                color: 'black',
+                backgroundColor: 'transparent',
+                border: 'none',
+                margin: 0,
+                padding: 0,
+                display: 'inline-block',
+                cursor: 'pointer',
+              }}
+              onClick={open ? handleTooltipClose : handleTooltipOpen}>
+              {seeMore}
+            </button>
+          </Tooltip>
+        </ClickAwayListener>
+      </React.Fragment>
+    );
+  };
 
   return (
     <Card classes={{ root: classes.root }} spacing={4} {...props}>
@@ -861,14 +940,14 @@ function RuleCard({
             (user && user.email in rule.scheduledChange.signoffs ? (
               <Button
                 color="secondary"
-                disabled={!canUserSign || !user || actionLoading}
+                disabled={!user || actionLoading}
                 onClick={onRevoke}>
                 Revoke Signoff
               </Button>
             ) : (
               <Button
                 color="secondary"
-                disabled={!canUserSign || !user || actionLoading}
+                disabled={!user || actionLoading || !canSignoff}
                 onClick={onSignoff}>
                 Signoff
               </Button>
