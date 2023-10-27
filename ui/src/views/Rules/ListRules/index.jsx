@@ -1237,20 +1237,6 @@ function ListRules(props) {
   const Row = ({ index, style }) => {
     const rule = filteredRulesToMatchSearchFilter()[index];
     const isSelected = isRuleSelected(rule);
-    const RS = Object.keys(rule.required_signoffs);
-
-    // check if any user roles matches any required roles signoff
-    // eslint-disable-next-line no-restricted-syntax,guard-for-in
-    for (const x in roles) {
-      // eslint-disable-next-line no-restricted-syntax,guard-for-in
-      for (const y in RS) {
-        if (roles[x] === RS[y]) {
-          // As soon as a match is found, sign off button is enabled
-          setCanUserSign(true);
-          break;
-        }
-      }
-    }
 
     return (
       <div
