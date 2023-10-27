@@ -27,6 +27,7 @@ import SignoffSummary from '../SignoffSummary';
 import { withUser } from '../../utils/AuthContext';
 import Link from '../../utils/Link';
 import { release } from '../../utils/prop-types';
+import highlightMatchedRelease from '../../utils/highlightMatchedRelease';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -166,30 +167,6 @@ function ReleaseCard(props) {
     return `/rules${qs}#ruleId=${ruleId}`;
   };
 
-  const highlightMatchedRelease = highlights => {
-    if (highlights) {
-      const highlightedName = [release.name.slice(0, highlights[1][0])];
-
-      for (let i = 1; i < highlights.length; i += 1) {
-        highlightedName.push(
-          <mark>{release.name.slice(...highlights[i])}</mark>
-        );
-
-        if (highlights[i + 1]) {
-          highlightedName.push(
-            release.name.slice(highlights[i][1], highlights[i + 1][0])
-          );
-        } else {
-          highlightedName.push(
-            release.name.slice(highlights[highlights.length - 1][1])
-          );
-        }
-      }
-
-      return <Fragment>{highlightedName}</Fragment>;
-    }
-  };
-
   return (
     <Card classes={{ root: classes.root }} {...rest}>
       <CardHeader
@@ -200,9 +177,13 @@ function ReleaseCard(props) {
             className={classes.releaseName}
             component="h2"
             variant="h6">
-            {rest.releaseHighlight
-              ? highlightMatchedRelease(rest.releaseHighlight)
-              : release.name}{' '}
+            {rest.releaseHighlight ? (
+              <Fragment>
+                {highlightMatchedRelease(rest.releaseHighlight, release.name)}
+              </Fragment>
+            ) : (
+              release.name
+            )}{' '}
             <a
               href={`#${release.name}`}
               aria-label="Anchor"

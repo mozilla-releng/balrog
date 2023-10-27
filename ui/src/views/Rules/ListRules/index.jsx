@@ -149,14 +149,13 @@ function ListRules(props) {
   const [dateTimePickerError, setDateTimePickerError] = useState(null);
   const [scrollToRow, setScrollToRow] = useState(null);
   const [roles, setRoles] = useState([]);
+  const [requiredRoles, setRequiredRoles] = useState([]);
   const [emergencyShutoffs, setEmergencyShutoffs] = useState([]);
   const [
     emergencyShutoffReasonComment,
     setEmergencyShutoffReasonComment,
   ] = useState('');
   const [signoffRole, setSignoffRole] = useState('');
-  const [requiredRolesFromUser, setRequiredRolesFromUser] = useState([]);
-  const [canUserSign, setCanUserSign] = useState(false);
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
   const [drawerReleaseName, setDrawerReleaseName] = useState(null);
   const ruleListRef = useRef(null);
@@ -435,7 +434,7 @@ function ListRules(props) {
 
         setRoles(roleList);
 
-        if (roleList.length === 0) {
+        if (roleList.length > 0) {
           setSignoffRole(roleList[0]);
         }
       });
@@ -594,13 +593,20 @@ function ListRules(props) {
         name="role"
         value={signoffRole}
         onChange={handleSignoffRoleChange}>
-        {requiredRolesFromUser.map(r => (
-          <FormControlLabel key={r} value={r} label={r} control={<Radio />} />
-        ))}
+        {roles.map(r => {
+          return (
+            <FormControlLabel
+              key={r}
+              value={r}
+              label={r}
+              control={<Radio />}
+              disabled={!(requiredRoles && requiredRoles.includes(r))}
+            />
+          );
+        })}
       </RadioGroup>
     </FormControl>
   );
-  const filteredRulesCount = filteredRulesWithScheduledChanges.length;
   const updateSignoffs = ({ roleToSignoffWith, rule }) => {
     setRulesWithScheduledChanges(
       rulesWithScheduledChanges.map(r => {
@@ -645,22 +651,14 @@ function ListRules(props) {
   };
 
   const handleSignoff = async rule => {
-    const requiredSignoffRoles = Object.keys(rule.required_signoffs);
-    let tempRequiredRolesFromUser = [];
+    setRequiredRoles(Object.keys(rule.required_signoffs));
 
-    // eslint-disable-next-line no-restricted-syntax,guard-for-in
-    for (const i in requiredSignoffRoles) {
-      tempRequiredRolesFromUser = tempRequiredRolesFromUser.concat(
-        roles.filter(eachUserRole => {
-          return eachUserRole === requiredSignoffRoles[i];
-        })
-      );
-    }
+    const userRequiredRoles = Object.keys(rule.required_signoffs).filter(r =>
+      roles.includes(r)
+    );
 
-    setRequiredRolesFromUser(tempRequiredRolesFromUser);
-
-    if (roles.length === 1) {
-      const { error, result } = await doSignoff(roles[0], rule);
+    if (userRequiredRoles.length === 1) {
+      const { error, result } = await doSignoff(userRequiredRoles[0], rule);
 
       if (!error) {
         updateSignoffs(result);
@@ -1075,8 +1073,28 @@ function ListRules(props) {
     return dialogStates[dialogState.mode];
   };
 
+  const filteredRulesToMatchSearchFilter = () => {
+    if (productChannelQueries && productChannelQueries[1]) {
+      const [product, channel] = productChannelQueries;
+      const filteredSet = filteredRulesWithScheduledChanges.filter(rule => {
+        return (
+          rule.product === product &&
+          (channel.includes(rule.channel) ||
+            channel.includes(
+              rule.channel.substring(0, rule.channel.length - 1)
+            ))
+        );
+      });
+
+      return filteredSet;
+    }
+
+    return filteredRulesWithScheduledChanges;
+  };
+
+  const filteredRulesCount = filteredRulesToMatchSearchFilter().length;
   const getRowHeight = ({ index }) => {
-    const rule = filteredRulesWithScheduledChanges[index];
+    const rule = filteredRulesToMatchSearchFilter()[index];
     const hasScheduledChanges = Boolean(rule.scheduledChange);
     // Padding top and bottom included
     const listPadding = theme.spacing(1);
@@ -1217,7 +1235,7 @@ function ListRules(props) {
   };
 
   const Row = ({ index, style }) => {
-    const rule = filteredRulesWithScheduledChanges[index];
+    const rule = filteredRulesToMatchSearchFilter()[index];
     const isSelected = isRuleSelected(rule);
     const RS = Object.keys(rule.required_signoffs);
 
@@ -1227,7 +1245,7 @@ function ListRules(props) {
       // eslint-disable-next-line no-restricted-syntax,guard-for-in
       for (const y in RS) {
         if (roles[x] === RS[y]) {
-          // As soon as a match is found, sign in button is enabled
+          // As soon as a match is found, sign off button is enabled
           setCanUserSign(true);
           break;
         }
@@ -1250,11 +1268,14 @@ function ListRules(props) {
           rule={rule}
           rulesFilter={productChannelQueries}
           onRuleDelete={handleRuleDelete}
+          canSignoff={
+            Object.keys(rule.required_signoffs).filter(r => roles.includes(r))
+              .length
+          }
           onSignoff={() => handleSignoff(rule)}
           onRevoke={() => handleRevoke(rule)}
           onViewReleaseClick={handleViewRelease}
           actionLoading={isActionLoading}
-          canUserSign={canUserSign}
         />
       </div>
     );
@@ -1339,7 +1360,7 @@ function ListRules(props) {
                 onRevoke={handleRevokeEnableUpdates}
               />
             )}
-          {filteredRulesWithScheduledChanges && (
+          {filteredRulesToMatchSearchFilter() && (
             <Fragment>
               <VariableSizeList
                 ref={ruleListRef}
@@ -1399,7 +1420,15 @@ function ListRules(props) {
           icon={<PauseIcon />}
           tooltipOpen
           tooltipTitle="Disable Updates"
-          onClick={handleDisableUpdates}
+          onClick={
+            !isLoading &&
+            !!username &&
+            !filteredProductChannelIsShutoff &&
+            !!productChannelQueries &&
+            !!productChannelQueries[1]
+              ? handleDisableUpdates
+              : undefined
+          }
         />
       </SpeedDial>
     </Dashboard>
