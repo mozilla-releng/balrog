@@ -39,9 +39,10 @@ import {
   EMPTY_MENU_ITEM_CHAR,
   SPLIT_WITH_NEWLINES_AND_COMMA_REGEX,
   RULE_PRODUCT_UNSUPPORTED_PROPERTIES,
+  OBJECT_NAMES,
 } from '../../../utils/constants';
-// ALL IMPORTS TO FETCH REQUIRED SIGNOFFS BELOW:
 import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
+import { ruleMatchesRequiredSignoff } from '../../../utils/requiredSignoffs';
 
 const initialRule = {
   alias: '',
@@ -86,6 +87,12 @@ const useStyles = makeStyles(theme => ({
   scheduleIcon: {
     marginRight: theme.spacing(3),
   },
+  signoffLabel: {
+    color: 'rgba(0, 0, 0, 0.54)',
+  },
+  signoffs: {
+    color: 'rgba(0, 0, 0, 0.87)',
+  },
 }));
 
 function Rule({ isNewRule, user, ...props }) {
@@ -97,8 +104,12 @@ function Rule({ isNewRule, user, ...props }) {
   const [rule, setRule] = useState(initialRule);
   const [allRequiredSignOffs, setAllRequiredSignoffs] = useState([]);
   const [releaseNames, setReleaseNames] = useState([]);
+  const [signoffSummary, setSignoffSummary] = useState('');
   const [products, fetchProducts] = useAction(getProducts);
   const [channels, fetchChannels] = useAction(getChannels);
+  const [requiredSignoffs, fetchRequiredSignoffs] = useAction(
+    getRequiredSignoffs
+  );
   const [releaseNamesAction, fetchReleaseNames] = useAction(getReleaseNames);
   const [releaseNamesV2Action, fetchReleaseNamesV2] = useAction(
     getReleaseNamesV2
@@ -120,7 +131,10 @@ function Rule({ isNewRule, user, ...props }) {
   const [updateSCAction, updateSC] = useAction(updateScheduledChange);
   const [deleteSCAction, deleteSC] = useAction(deleteScheduledChange);
   const isLoading =
-    fetchRuleAction.loading || products.loading || channels.loading;
+    fetchRuleAction.loading ||
+    products.loading ||
+    channels.loading ||
+    requiredSignoffs.loading;
   const actionLoading =
     releaseNamesAction.loading ||
     releaseNamesV2Action.loading ||
@@ -382,6 +396,37 @@ function Rule({ isNewRule, user, ...props }) {
     }
   }, [ruleId, scId]);
 
+  useEffect(() => {
+    fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF).then(
+      rsResponse => {
+        const requiredSignoffs = rsResponse.data.data.required_signoffs;
+
+        if (rule.product) {
+          const matchingRs = requiredSignoffs.filter(rs =>
+            ruleMatchesRequiredSignoff(rule, rs)
+          );
+
+          if (!requiredSignoffs.length || !matchingRs.length) {
+            setSignoffSummary(' Nobody');
+          } else {
+            const rsSummary = matchingRs.reduce((summary, rs, idx) => {
+              const memberStr = rs.signoffs_required > 1 ? 'members' : 'member';
+              const rsStr = `${rs.signoffs_required} ${memberStr} of ${rs.role}`;
+
+              if (idx !== matchingRs.length - 1) {
+                return `${summary}${rsStr}, `;
+              }
+
+              return summary + rsStr;
+            }, ' ');
+
+            setSignoffSummary(rsSummary);
+          }
+        }
+      }
+    );
+  }, [rule.product, rule.channel]);
+
   const today = new Date();
 
   // This will make sure the helperText
@@ -464,39 +509,11 @@ function Rule({ isNewRule, user, ...props }) {
       {error && <ErrorPanel fixed error={error} />}
       {!isLoading && (
         <Fragment>
-          <div style={signoffStyle.div}>
-            <Typography component="p" variant="body2" style={signoffStyle.p1}>
-              Required Signoff(s) :
-            </Typography>
-            {isSignOffRequired() ? (
-              allRequiredSignOffs.map((reqSignOff, index, all) => {
-                const no = index;
-
-                if (
-                  rule.product === reqSignOff.product &&
-                  (rule.channel === reqSignOff.channel ||
-                    rule.channel === `${reqSignOff.channel}*`)
-                ) {
-                  return (
-                    <Typography
-                      component="p"
-                      variant="body2"
-                      key={no}
-                      style={signoffStyle.p2}>
-                      {`${reqSignOff.signoffs_required} member${
-                        reqSignOff.signoffs_required > 1 ? 's' : ''
-                      } of ${reqSignOff.role}${all[index + 1] ? ',' : ''}`}
-                    </Typography>
-                  );
-                }
-
-                return null;
-              })
-            ) : (
-              <Typography component="p" variant="body2" style={signoffStyle.p2}>
-                None
-              </Typography>
-            )}
+          <div>
+            <p className={classes.signoffLabel}>
+              Requires Signoff from:
+              <span className={classes.signoffs}>{signoffSummary}</span>
+            </p>
           </div>
           <div className={classes.scheduleDiv}>
             <DateTimePicker
