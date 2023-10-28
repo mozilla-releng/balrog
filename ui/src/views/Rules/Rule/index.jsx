@@ -14,7 +14,6 @@ import Fab from '@material-ui/core/Fab';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
 import DeleteIcon from 'mdi-react/DeleteIcon';
-import Typography from '@material-ui/core/Typography';
 import Dashboard from '../../../components/Dashboard';
 import ErrorPanel from '../../../components/ErrorPanel';
 import AutoCompleteText from '../../../components/AutoCompleteText';
@@ -39,7 +38,6 @@ import {
   EMPTY_MENU_ITEM_CHAR,
   SPLIT_WITH_NEWLINES_AND_COMMA_REGEX,
   RULE_PRODUCT_UNSUPPORTED_PROPERTIES,
-  OBJECT_NAMES,
 } from '../../../utils/constants';
 import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
 import { ruleMatchesRequiredSignoff } from '../../../utils/requiredSignoffs';
@@ -102,7 +100,6 @@ function Rule({ isNewRule, user, ...props }) {
       ? props.location.state.rulesFilter
       : [];
   const [rule, setRule] = useState(initialRule);
-  const [allRequiredSignOffs, setAllRequiredSignoffs] = useState([]);
   const [releaseNames, setReleaseNames] = useState([]);
   const [signoffSummary, setSignoffSummary] = useState('');
   const [products, fetchProducts] = useAction(getProducts);
@@ -123,9 +120,6 @@ function Rule({ isNewRule, user, ...props }) {
   );
   const [scheduledChangeActionScId, fetchScheduledChangeByScId] = useAction(
     getScheduledChangeByScId
-  );
-  const [requiredSignoffs, fetchRequiredSignoffs] = useAction(
-    getRequiredSignoffs
   );
   const [addSCAction, addSC] = useAction(addScheduledChange);
   const [updateSCAction, updateSC] = useAction(updateScheduledChange);
@@ -446,61 +440,6 @@ function Rule({ isNewRule, user, ...props }) {
     }
 
     return `Update Rule ${ruleId}${rule.alias ? ` (${rule.alias})` : ''}`;
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetchRequiredSignoffs(
-          OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF
-        );
-
-        setAllRequiredSignoffs(
-          response.data.data.required_signoffs ||
-            requiredSignoffs.data.data.required_signoffs
-        );
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching required signoffs:', error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  // SignOff style
-  const signoffStyle = {
-    div: {
-      display: 'flex',
-      flexFlow: 'row wrap',
-      width: '100%',
-      margin: '8px 0 8px 0',
-      alignItems: 'center',
-    },
-    p1: {
-      marginRight: '8px',
-      color: 'gray',
-    },
-    p2: {
-      color: 'black',
-    },
-  };
-  const isSignOffRequired = () => {
-    let required = false;
-
-    // eslint-disable-next-line no-restricted-syntax
-    for (const x in allRequiredSignOffs) {
-      if (
-        rule.product === allRequiredSignOffs[x].product &&
-        (rule.channel === allRequiredSignOffs[x].channel ||
-          rule.channel === `${allRequiredSignOffs[x].channel}*`)
-      ) {
-        required = true;
-        break;
-      }
-    }
-
-    return required;
   };
 
   return (
