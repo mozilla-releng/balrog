@@ -1,7 +1,7 @@
 import React, { Fragment, useState, useEffect } from 'react';
 import classNames from 'classnames';
 import { bool } from 'prop-types';
-import { defaultTo, assocPath, pick } from 'ramda';
+import { defaultTo, assocPath, pick, match } from 'ramda';
 import { stringify } from 'qs';
 import NumberFormat from 'react-number-format';
 import { makeStyles } from '@material-ui/styles';
@@ -333,6 +333,7 @@ function Rule({ isNewRule, user, ...props }) {
         fetchScheduledChangeByRuleId(ruleId),
         fetchProducts(),
         fetchChannels(),
+        fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
         fetchReleaseNames(),
         fetchReleaseNamesV2(),
       ]).then(([fetchedRuleResponse, fetchedSCResponse]) => {
@@ -390,36 +391,33 @@ function Rule({ isNewRule, user, ...props }) {
     }
   }, [ruleId, scId]);
 
+  // TODO - DONE Updated to prevent re-rendering - uses already fetched requiredSignoffs
   useEffect(() => {
-    fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF).then(
-      rsResponse => {
-        const requiredSignoffs = rsResponse.data.data.required_signoffs;
+    const rs = requiredSignoffs.data && requiredSignoffs.data.data.required_signoffs;
+    if (rs) {
+      const matchingRs = rs.filter(rso =>
+        ruleMatchesRequiredSignoff(rule, rso)
+      );
 
-        if (rule.product) {
-          const matchingRs = requiredSignoffs.filter(rs =>
-            ruleMatchesRequiredSignoff(rule, rs)
-          );
+      if (!rule.product || !matchingRs.length) {
+        setSignoffSummary(' Nobody');
+      } else {
+        const rsSummary = matchingRs.reduce((summary, rs, idx) => {
+          const memberStr = rs.signoffs_required > 1 ? 'members' : 'member';
+          const rsStr = `${rs.signoffs_required} ${memberStr} of ${rs.role}`;
 
-          if (!requiredSignoffs.length || !matchingRs.length) {
-            setSignoffSummary(' Nobody');
-          } else {
-            const rsSummary = matchingRs.reduce((summary, rs, idx) => {
-              const memberStr = rs.signoffs_required > 1 ? 'members' : 'member';
-              const rsStr = `${rs.signoffs_required} ${memberStr} of ${rs.role}`;
-
-              if (idx !== matchingRs.length - 1) {
-                return `${summary}${rsStr}, `;
-              }
-
-              return summary + rsStr;
-            }, ' ');
-
-            setSignoffSummary(rsSummary);
+          if (idx !== matchingRs.length - 1) {
+            return `${summary}${rsStr}, `;
           }
-        }
+
+          return summary + rsStr;
+        }, ' ');
+
+        setSignoffSummary(rsSummary);
       }
-    );
+    }
   }, [rule.product, rule.channel]);
+
 
   const today = new Date();
 
