@@ -19,7 +19,7 @@ const ruleMatchesChannel = (rule, channel) => {
   // we never want this to match, otherwise all rules
   // without scheduled changes will always match any filter
   const scChannelMatches = rule.scheduledChange
-    ? rule.scheduledChange.channel === null ||
+    ? rule.scheduledChange.channel === null && rule.channel === null ||
       rule.scheduledChange.channel === '' ||
       rule.scheduledChange.channel === channel ||
       matchesGlob(rule.scheduledChange.channel, channel)
