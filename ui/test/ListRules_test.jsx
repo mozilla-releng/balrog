@@ -133,4 +133,17 @@ describe('channel matching', () => {
 
     expect(result).toBeFalsy();
   });
+  test('should not match when rule has a different channel and scheduled change channel is null', () => {
+    const result = ruleMatchesChannel(
+      {
+        channel: 'aurora',
+        scheduledChange: {
+          channel: null,
+        },
+      },
+      'release'
+    );
+
+    expect(result).toBeFalsy();
+  });
 });
