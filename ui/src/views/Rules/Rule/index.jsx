@@ -1,7 +1,7 @@
 import React, { Fragment, useState, useEffect } from 'react';
 import classNames from 'classnames';
 import { bool } from 'prop-types';
-import { defaultTo, assocPath, pick, match } from 'ramda';
+import { defaultTo, assocPath, pick } from 'ramda';
 import { stringify } from 'qs';
 import NumberFormat from 'react-number-format';
 import { makeStyles } from '@material-ui/styles';
@@ -393,7 +393,9 @@ function Rule({ isNewRule, user, ...props }) {
   }, [ruleId, scId]);
 
   useEffect(() => {
-    const rs = requiredSignoffs.data && requiredSignoffs.data.data.required_signoffs;
+    const rs =
+      requiredSignoffs.data && requiredSignoffs.data.data.required_signoffs;
+
     if (rs) {
       const matchingRs = rs.filter(rso =>
         ruleMatchesRequiredSignoff(rule, rso)
@@ -402,28 +404,40 @@ function Rule({ isNewRule, user, ...props }) {
       if (!rule.product || !matchingRs.length) {
         setSignoffSummary(' Nobody');
       } else {
-        const rsCount = matchingRs.reduce((count, rs) => {
-          if (rs.role in count) {
-            count[rs.role] += rs.signoffs_required
+        // Count the number of signoffs required from each role
+        const rsCount = [];
+
+        for (let i = 0; i < matchingRs.length; i += 1) {
+          const rs = matchingRs[i];
+          const rsRoleCount = rsCount.find(count => rs.role in count);
+
+          if (rsRoleCount) {
+            rsRoleCount[rs.role] += rs.signoffs_required;
           } else {
-            count[rs.role] = rs.signoffs_required
+            rsCount.push({ [rs.role]: rs.signoffs_required });
           }
-          return count
-        }, {});
+        }
 
-        let rsSummary = ' ';
+        // Create the signoff summary
+        let rsSummary = '';
 
-        for (const rsRole in rsCount) {
-          const rsRoleCount = rsCount[rsRole]
+        for (let i = 0; i < rsCount.length; i += 1) {
+          const rsRole = Object.keys(rsCount[i])[0];
+          const rsRoleCount = Object.values(rsCount[i])[0];
           const memberStr = rsRoleCount > 1 ? 'members' : 'member';
-          rsSummary += `${rsRoleCount} ${memberStr} of ${rsRole}`;
+          const roleSummary = ` ${rsRoleCount} ${memberStr} of ${rsRole}`;
+
+          if (i === rsCount.length - 1) {
+            rsSummary += `${roleSummary}`;
+          } else {
+            rsSummary += `${roleSummary},`;
+          }
         }
 
         setSignoffSummary(rsSummary);
       }
     }
   }, [rule.product, rule.channel]);
-
 
   const today = new Date();
 
