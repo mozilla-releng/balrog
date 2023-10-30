@@ -59,9 +59,22 @@ describe('channel matching', () => {
 
     expect(results).toEqual(expect.not.arrayContaining([false]));
   });
+  test('should match when rule is null and scheduled change has null channel', () => {
+    const result = ruleMatchesChannel(
+      {
+        scheduledChange: {
+          channel: null,
+        },
+      },
+      'nightly'
+    );
+
+    expect(result).toBeTruthy();
+  });
   test('should match when rule and scheduled change have null channel', () => {
     const result = ruleMatchesChannel(
       {
+        channel: null,
         scheduledChange: {
           channel: null,
         },
