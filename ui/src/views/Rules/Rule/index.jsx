@@ -367,6 +367,7 @@ function Rule({ isNewRule, user, ...props }) {
         scId ? fetchScheduledChangeByScId(scId) : null,
         fetchProducts(),
         fetchChannels(),
+        fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
         fetchReleaseNames(),
       ]).then(([ruleResponse, scResponse]) => {
         const r = ruleResponse ? ruleResponse.data.data : {};
@@ -391,7 +392,6 @@ function Rule({ isNewRule, user, ...props }) {
     }
   }, [ruleId, scId]);
 
-  // TODO - DONE Updated to prevent re-rendering - uses already fetched requiredSignoffs
   useEffect(() => {
     const rs = requiredSignoffs.data && requiredSignoffs.data.data.required_signoffs;
     if (rs) {
@@ -402,16 +402,22 @@ function Rule({ isNewRule, user, ...props }) {
       if (!rule.product || !matchingRs.length) {
         setSignoffSummary(' Nobody');
       } else {
-        const rsSummary = matchingRs.reduce((summary, rs, idx) => {
-          const memberStr = rs.signoffs_required > 1 ? 'members' : 'member';
-          const rsStr = `${rs.signoffs_required} ${memberStr} of ${rs.role}`;
-
-          if (idx !== matchingRs.length - 1) {
-            return `${summary}${rsStr}, `;
+        const rsCount = matchingRs.reduce((count, rs) => {
+          if (rs.role in count) {
+            count[rs.role] += rs.signoffs_required
+          } else {
+            count[rs.role] = rs.signoffs_required
           }
+          return count
+        }, {});
 
-          return summary + rsStr;
-        }, ' ');
+        let rsSummary = ' ';
+
+        for (const rsRole in rsCount) {
+          const rsRoleCount = rsCount[rsRole]
+          const memberStr = rsRoleCount > 1 ? 'members' : 'member';
+          rsSummary += `${rsRoleCount} ${memberStr} of ${rsRole}`;
+        }
 
         setSignoffSummary(rsSummary);
       }
