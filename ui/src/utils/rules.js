@@ -18,8 +18,12 @@ const ruleMatchesChannel = (rule, channel) => {
   // if a scheduled change does not exist at all
   // we never want this to match, otherwise all rules
   // without scheduled changes will always match any filter
+  // if a scheduled change is a deletion
+  // we never want scheduled deletions to match any filter
+  // because the scheduled change channel on deletions is null
+  // and the rule channel is a truthy value that might not equal 'channel'
   const scChannelMatches = rule.scheduledChange
-    ? rule.scheduledChange.channel === null && rule.channel === null ||
+    ? (rule.channel && ruleChannelMatches && rule.scheduledChange.channel === null) ||
       rule.scheduledChange.channel === '' ||
       rule.scheduledChange.channel === channel ||
       matchesGlob(rule.scheduledChange.channel, channel)
