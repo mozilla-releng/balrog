@@ -24,6 +24,7 @@ const ruleMatchesChannel = (rule, channel) => {
   // and the rule channel is a truthy value that might not equal 'channel'
   const scChannelMatches = rule.scheduledChange
     ? (rule.channel && ruleChannelMatches && rule.scheduledChange.channel === null) ||
+      (!rule.channel && rule.scheduledChange.channel === null) ||
       rule.scheduledChange.channel === '' ||
       rule.scheduledChange.channel === channel ||
       matchesGlob(rule.scheduledChange.channel, channel)
