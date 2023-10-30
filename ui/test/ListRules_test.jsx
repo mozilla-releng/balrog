@@ -25,7 +25,7 @@ describe('channel matching', () => {
 
     expect(result).toBeTruthy();
   });
-  test('should match when rule is null', () => {
+  test('should match when rule is null and scheduled change matches', () => {
     const result = ruleMatchesChannel(
       {
         scheduledChange: {
@@ -71,7 +71,7 @@ describe('channel matching', () => {
 
     expect(result).toBeTruthy();
   });
-  test('should not match anything when rule is null', () => {
+  test('should not match anything when rule is null and scheduled change is a different channel', () => {
     const result = ruleMatchesChannel(
       {
         scheduledChange: {
