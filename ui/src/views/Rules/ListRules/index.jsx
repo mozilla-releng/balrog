@@ -78,7 +78,7 @@ const useStyles = makeStyles(theme => ({
   },
   options: {
     background: theme.palette.background.default,
-    right: 40,
+    right: 25,
     display: 'flex',
     justifyContent: 'flex-end',
     position: 'fixed',
