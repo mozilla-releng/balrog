@@ -69,6 +69,7 @@ import remToPx from '../../../utils/remToPx';
 import elementsHeight from '../../../utils/elementsHeight';
 import Snackbar from '../../../components/Snackbar';
 import { ruleMatchesChannel } from '../../../utils/rules';
+import getIndexOfSubStr from '../../../utils/getIndexOfSubStr';
 
 const ALL = 'all';
 const useStyles = makeStyles(theme => ({
@@ -1079,10 +1080,12 @@ function ListRules(props) {
       const filteredSet = filteredRulesWithScheduledChanges.filter(rule => {
         return (
           rule.product === product &&
-          (channel.includes(rule.channel) ||
-            channel.includes(
-              rule.channel.substring(0, rule.channel.length - 1)
-            ))
+          (channel === rule.channel ||
+            `${channel}*` === rule.channel ||
+            channel.substring(0, getIndexOfSubStr(channel, '-', 1)) ===
+              rule.channel ||
+            `${channel.substring(0, getIndexOfSubStr(channel, '-', 1))}*` ===
+              rule.channel)
         );
       });
 
