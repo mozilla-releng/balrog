@@ -1,5 +1,3 @@
-import getIndexOfSubStr from './getIndexOfSubStr';
-
 // test me in local dev too!
 const ruleMatchesChannel = (rule, channel) => {
   // we support globs at the end of a channel only, hence
