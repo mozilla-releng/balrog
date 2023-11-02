@@ -25,7 +25,7 @@ describe('channel matching', () => {
 
     expect(result).toBeTruthy();
   });
-  test('should match when rule is null', () => {
+  test('should match when rule is null and scheduled change matches', () => {
     const result = ruleMatchesChannel(
       {
         scheduledChange: {
@@ -59,7 +59,7 @@ describe('channel matching', () => {
 
     expect(results).toEqual(expect.not.arrayContaining([false]));
   });
-  test('should match when rule and scheduled change have null channel', () => {
+  test('should match when rule is null and scheduled change has null channel', () => {
     const result = ruleMatchesChannel(
       {
         scheduledChange: {
@@ -71,7 +71,20 @@ describe('channel matching', () => {
 
     expect(result).toBeTruthy();
   });
-  test('should not match anything when rule is null', () => {
+  test('should match when rule and scheduled change have null channel', () => {
+    const result = ruleMatchesChannel(
+      {
+        channel: null,
+        scheduledChange: {
+          channel: null,
+        },
+      },
+      'nightly'
+    );
+
+    expect(result).toBeTruthy();
+  });
+  test('should not match anything when rule is null and scheduled change is a different channel', () => {
     const result = ruleMatchesChannel(
       {
         scheduledChange: {
@@ -113,6 +126,20 @@ describe('channel matching', () => {
         channel: 'nightly',
         scheduledChange: {
           channel: 'beta',
+        },
+      },
+      'release'
+    );
+
+    expect(result).toBeFalsy();
+  });
+  test('should not match when rule has a different channel and scheduled change type is delete with channel null', () => {
+    const result = ruleMatchesChannel(
+      {
+        channel: 'aurora',
+        scheduledChange: {
+          change_type: 'delete',
+          channel: null,
         },
       },
       'release'

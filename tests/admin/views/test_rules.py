@@ -2238,6 +2238,146 @@ class TestRuleScheduledChanges(ViewTest):
         ret = self._post("scheduled_changes/rules", data=data)
         self.assertEqual(ret.status_code, 400)
 
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangesRuleWithDuplicateAliasWithChangeTypeInsert(self):
+        ret = self._post(
+            "/rules",
+            data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly", alias="TestDuplicateAlias1"),
+        )
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+
+        data1 = {
+            "rule_id": 10,
+            "telemetry_product": None,
+            "telemetry_channel": None,
+            "telemetry_uptake": None,
+            "priority": 80,
+            "buildTarget": "d",
+            "version": "3.3",
+            "backgroundRate": 100,
+            "mapping": "c",
+            "update_type": "minor",
+            "data_version": 1,
+            "change_type": "insert",
+            "when": 1234567,
+            "alias": "TestDuplicateAlias1",
+        }
+        ret1 = self._post("/scheduled_changes/rules", data=data1)
+        self.assertEqual(ret1.status_code, 400, ret1.get_data())
+        load = ret1.get_json()
+        self.assertEqual(load["detail"], "Rule with alias exists")
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangesRuleWithDuplicateAliasWithChangeTypeUpdate(self):
+        ret = self._post(
+            "/rules",
+            data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly", alias="TestDuplicateAlias2"),
+        )
+        self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
+
+        data1 = {
+            "rule_id": 10,
+            "telemetry_product": None,
+            "telemetry_channel": None,
+            "telemetry_uptake": None,
+            "priority": 80,
+            "buildTarget": "d",
+            "version": "3.3",
+            "backgroundRate": 100,
+            "mapping": "c",
+            "update_type": "minor",
+            "data_version": 1,
+            "change_type": "update",
+            "when": 1234567,
+            "alias": "TestDuplicateAlias2",
+        }
+        ret1 = self._post("/scheduled_changes/rules", data=data1)
+        self.assertEqual(ret1.status_code, 400, ret1.get_data())
+        load = ret1.get_json()
+        self.assertEqual(load["detail"], "Rule with alias exists")
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeWithAliasAlreadyPresentWithChangeTypeInsert(self):
+        data = {
+            "rule_id": 5,
+            "telemetry_product": None,
+            "telemetry_channel": None,
+            "telemetry_uptake": None,
+            "priority": 80,
+            "buildTarget": "d",
+            "version": "3.3",
+            "backgroundRate": 100,
+            "mapping": "c",
+            "update_type": "minor",
+            "data_version": 1,
+            "change_type": "insert",
+            "when": 1234567,
+            "alias": "TestDuplicateAlias3",
+            "complete": False,
+        }
+        ret = self._post("/scheduled_changes/rules", data=data)
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+
+        data1 = {
+            "when": 2000000,
+            "data_version": 1,
+            "rule_id": 1,
+            "priority": 100,
+            "version": "3.5",
+            "buildTarget": "d",
+            "backgroundRate": 100,
+            "mapping": "c",
+            "update_type": "minor",
+            "sc_data_version": 1,
+            "alias": "TestDuplicateAlias3",
+            "complete": False,
+        }
+        ret1 = self._post("/scheduled_changes/rules/4", data=data1)
+        self.assertEqual(ret1.status_code, 400, ret1.get_data())
+        load = ret1.get_json()
+        self.assertEqual(load["detail"], "Rule is scheduled with the given alias")
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeWithAliasAlreadyPresentWithChangeTypeUpdate(self):
+        data = {
+            "rule_id": 5,
+            "telemetry_product": None,
+            "telemetry_channel": None,
+            "telemetry_uptake": None,
+            "priority": 80,
+            "buildTarget": "d",
+            "version": "3.3",
+            "backgroundRate": 100,
+            "mapping": "c",
+            "update_type": "minor",
+            "data_version": 1,
+            "change_type": "update",
+            "when": 1234567,
+            "alias": "TestDuplicateAlias4",
+            "complete": False,
+        }
+        ret = self._post("/scheduled_changes/rules", data=data)
+        self.assertEqual(ret.status_code, 200, ret.get_data())
+
+        data1 = {
+            "when": 2000000,
+            "data_version": 1,
+            "rule_id": 1,
+            "priority": 100,
+            "version": "3.5",
+            "buildTarget": "d",
+            "backgroundRate": 100,
+            "mapping": "c",
+            "update_type": "minor",
+            "sc_data_version": 1,
+            "alias": "TestDuplicateAlias4",
+            "complete": False,
+        }
+        ret1 = self._post("/scheduled_changes/rules/4", data=data1)
+        self.assertEqual(ret1.status_code, 400, ret1.get_data())
+        load = ret1.get_json()
+        self.assertEqual(load["detail"], "Rule is scheduled with the given alias")
+
     def testAddScheduledChangeMissingRequiredTelemetryFields(self):
         data = {"telemetry_product": "foo", "priority": 120, "backgroundRate": 100, "update_type": "minor", "change_type": "insert"}
         ret = self._post("scheduled_changes/rules", data=data)
