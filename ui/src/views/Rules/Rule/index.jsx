@@ -333,6 +333,7 @@ function Rule({ isNewRule, user, ...props }) {
         fetchScheduledChangeByRuleId(ruleId),
         fetchProducts(),
         fetchChannels(),
+        fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
         fetchReleaseNames(),
         fetchReleaseNamesV2(),
       ]).then(([fetchedRuleResponse, fetchedSCResponse]) => {
@@ -366,6 +367,7 @@ function Rule({ isNewRule, user, ...props }) {
         scId ? fetchScheduledChangeByScId(scId) : null,
         fetchProducts(),
         fetchChannels(),
+        fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
         fetchReleaseNames(),
       ]).then(([ruleResponse, scResponse]) => {
         const r = ruleResponse ? ruleResponse.data.data : {};
@@ -391,34 +393,52 @@ function Rule({ isNewRule, user, ...props }) {
   }, [ruleId, scId]);
 
   useEffect(() => {
-    fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF).then(
-      rsResponse => {
-        const requiredSignoffs = rsResponse.data.data.required_signoffs;
+    const rs =
+      requiredSignoffs.data && requiredSignoffs.data.data.required_signoffs;
 
-        if (rule.product) {
-          const matchingRs = requiredSignoffs.filter(rs =>
-            ruleMatchesRequiredSignoff(rule, rs)
-          );
+    if (!rs || !rule.product) {
+      setSignoffSummary(' Nobody');
+    } else {
+      const matchingRs = rs.filter(rso =>
+        ruleMatchesRequiredSignoff(rule, rso)
+      );
 
-          if (!requiredSignoffs.length || !matchingRs.length) {
-            setSignoffSummary(' Nobody');
+      if (!matchingRs.length) {
+        setSignoffSummary(' Nobody');
+      } else {
+        // Count the number of signoffs required from each role
+        const rsCount = [];
+
+        for (let i = 0; i < matchingRs.length; i += 1) {
+          const rs = matchingRs[i];
+          const rsRoleCount = rsCount.find(count => rs.role in count);
+
+          if (rsRoleCount) {
+            rsRoleCount[rs.role] += rs.signoffs_required;
           } else {
-            const rsSummary = matchingRs.reduce((summary, rs, idx) => {
-              const memberStr = rs.signoffs_required > 1 ? 'members' : 'member';
-              const rsStr = `${rs.signoffs_required} ${memberStr} of ${rs.role}`;
-
-              if (idx !== matchingRs.length - 1) {
-                return `${summary}${rsStr}, `;
-              }
-
-              return summary + rsStr;
-            }, ' ');
-
-            setSignoffSummary(rsSummary);
+            rsCount.push({ [rs.role]: rs.signoffs_required });
           }
         }
+
+        // Create the signoff summary
+        let rsSummary = '';
+
+        for (let i = 0; i < rsCount.length; i += 1) {
+          const rsRole = Object.keys(rsCount[i])[0];
+          const rsRoleCount = Object.values(rsCount[i])[0];
+          const memberStr = rsRoleCount > 1 ? 'members' : 'member';
+          const roleSummary = ` ${rsRoleCount} ${memberStr} of ${rsRole}`;
+
+          if (i === rsCount.length - 1) {
+            rsSummary += `${roleSummary}`;
+          } else {
+            rsSummary += `${roleSummary},`;
+          }
+        }
+
+        setSignoffSummary(rsSummary);
       }
-    );
+    }
   }, [rule.product, rule.channel]);
 
   const today = new Date();
