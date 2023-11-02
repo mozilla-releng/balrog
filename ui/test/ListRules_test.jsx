@@ -12,10 +12,10 @@ describe('channel matching', () => {
 
     expect(result).toBeTruthy();
   });
-  test('should match when only scheduled change matches', () => {
+  test('should match when both the channel and scheduled change matches', () => {
     const result = ruleMatchesChannel(
       {
-        channel: 'nightly',
+        channel: 'release',
         scheduledChange: {
           channel: 'release',
         },
@@ -28,6 +28,7 @@ describe('channel matching', () => {
   test('should match when rule is null', () => {
     const result = ruleMatchesChannel(
       {
+        channel: null,
         scheduledChange: {
           channel: 'nightly',
         },
@@ -47,9 +48,9 @@ describe('channel matching', () => {
 
     expect(results).toEqual(expect.not.arrayContaining([false]));
   });
-  test('should match when scheduled change has glob', () => {
+  test('should match when scheduled change and channel has glob', () => {
     const rule = {
-      channel: 'nightly',
+      channel: 'beta*',
       scheduledChange: {
         channel: 'beta*',
       },
@@ -62,6 +63,7 @@ describe('channel matching', () => {
   test('should match when rule and scheduled change have null channel', () => {
     const result = ruleMatchesChannel(
       {
+        channel: null,
         scheduledChange: {
           channel: null,
         },
