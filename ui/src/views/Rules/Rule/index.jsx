@@ -396,12 +396,14 @@ function Rule({ isNewRule, user, ...props }) {
     const rs =
       requiredSignoffs.data && requiredSignoffs.data.data.required_signoffs;
 
-    if (rs) {
+    if (!rs || !rule.product) {
+      setSignoffSummary(' Nobody');
+    } else {
       const matchingRs = rs.filter(rso =>
         ruleMatchesRequiredSignoff(rule, rso)
       );
 
-      if (!rule.product || !matchingRs.length) {
+      if (!matchingRs.length) {
         setSignoffSummary(' Nobody');
       } else {
         // Count the number of signoffs required from each role
