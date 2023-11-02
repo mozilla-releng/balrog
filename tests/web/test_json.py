@@ -233,6 +233,50 @@ def testGuardianResponse(client, version, buildTarget, channel, code, response):
         assert "Rule-Data-Version" in ret.headers
 
 
+@pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler", "mock_autograph")
+@pytest.mark.parametrize(
+    "version,buildTarget,channel,code,response",
+    [
+        (
+            "0.4.0.0",
+            "WINNT_x86_64",
+            "release",
+            200,
+            {"required": True, "url": "https://good.com/0.5.0.0.msi", "version": "0.5.0.0", "hashFunction": "sha512", "hashValue": "abcdef"},
+        ),
+        (
+            "0.6.0.0",
+            "WINNT_x86_64",
+            "release",
+            200,
+            {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0", "hashFunction": "sha512", "hashValue": "mnopqr"},
+        ),
+        (
+            "0.99.99.99",
+            "WINNT_x86_64",
+            "release",
+            200,
+            {"required": True, "url": "https://good.com/1.0.0.0.msi", "version": "1.0.0.0", "hashFunction": "sha512", "hashValue": "mnopqr"},
+        ),
+        ("1.0.0.0", "WINNT_x86_64", "release", 404, {}),
+        ("0.6.0.0", "Linux_x86_64", "release", 404, {}),
+        ("0.6.0.0", "WINNT_x86_64", "beta", 404, {}),
+        # This shouldn't match because the rule on the alpha channel contains fields not used by this type of update query.
+        ("0.6.0.0", "WINNT_x86_64", "alpha", 404, {}),
+        ("0.6.0.0", "Darwin_x86_64", "evilrelease", 200, {}),
+    ],
+)
+def testGuardianResponseWithCanonicalJson(client, version, buildTarget, channel, code, response):
+    ret1 = client.get(f"/json/1/Guardian/{version}/{buildTarget}/{channel}/update.json")
+    ret2 = client.get(f"/json/1/Guardian/{version}/{buildTarget}/{channel}/update.json")
+    assert ret1.status_code == ret2.status_code == code
+    if code == 200:
+        assert ret1.mimetype == ret2.mimetype == "application/json"
+        assert ret1.get_json() == ret2.get_json() == response
+        assert ret1.text == ret2.text
+        assert ret1.headers["Content-Signature"] == ret2.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
+
+
 @pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler")
 @pytest.mark.parametrize(
     "version,buildTarget,channel,code,response",
