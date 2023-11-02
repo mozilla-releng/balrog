@@ -78,7 +78,10 @@ const useStyles = makeStyles(theme => ({
   },
   options: {
     background: theme.palette.background.default,
-    right: 25,
+    top: 64,
+    right: 0,
+    left: 0,
+    padding: `${theme.spacing(4)}px ${theme.spacing(4)}px 0`,
     display: 'flex',
     justifyContent: 'flex-end',
     position: 'fixed',
