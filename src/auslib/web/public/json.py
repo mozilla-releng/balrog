@@ -1,4 +1,3 @@
-import json
 import canonicaljson
 
 from flask import Response
@@ -17,8 +16,6 @@ def get_update(transaction, **parameters):
         return Response(status=404)
 
     headers = get_aus_metadata_headers(eval_metadata)
-
-    canonicaljson.set_json_library(json)
 
     response = canonicaljson.encode_canonical_json(release.getResponse(parameters, app.config["ALLOWLISTED_DOMAINS"]))
 
