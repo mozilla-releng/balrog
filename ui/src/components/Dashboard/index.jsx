@@ -24,7 +24,6 @@ const useStyles = makeStyles(theme => ({
     height: '100%',
     margin: '0 auto',
     padding: `${theme.spacing(12)}px ${APP_BAR_HEIGHT}px`,
-    // padding: `0 ${APP_BAR_HEIGHT}px ${theme.spacing(12)}px`,
   },
   nav: {
     display: 'flex',
