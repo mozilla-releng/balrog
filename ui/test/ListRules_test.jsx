@@ -133,11 +133,12 @@ describe('channel matching', () => {
 
     expect(result).toBeFalsy();
   });
-  test('should not match when rule has a different channel and scheduled change channel is null', () => {
+  test('should not match when rule has a different channel and scheduled change type is delete with channel null', () => {
     const result = ruleMatchesChannel(
       {
         channel: 'aurora',
         scheduledChange: {
+          change_type: 'delete',
           channel: null,
         },
       },
