@@ -69,7 +69,6 @@ import remToPx from '../../../utils/remToPx';
 import elementsHeight from '../../../utils/elementsHeight';
 import Snackbar from '../../../components/Snackbar';
 import { ruleMatchesChannel } from '../../../utils/rules';
-import getIndexOfSubStr from '../../../utils/getIndexOfSubStr';
 
 const ALL = 'all';
 const useStyles = makeStyles(theme => ({
@@ -477,6 +476,7 @@ function ListRules(props) {
     rulesWithScheduledChanges,
     query.onlyScheduledChanges,
   ]);
+  const filteredRulesCount = filteredRulesWithScheduledChanges.length;
   const handleDateTimePickerError = error => {
     setDateTimePickerError(error);
   };
@@ -1074,30 +1074,8 @@ function ListRules(props) {
     return dialogStates[dialogState.mode];
   };
 
-  const filteredRulesToMatchSearchFilter = () => {
-    if (productChannelQueries && productChannelQueries[1]) {
-      const [product, channel] = productChannelQueries;
-      const filteredSet = filteredRulesWithScheduledChanges.filter(rule => {
-        return (
-          rule.product === product &&
-          (channel === rule.channel ||
-            `${channel}*` === rule.channel ||
-            channel.substring(0, getIndexOfSubStr(channel, '-', 1)) ===
-              rule.channel ||
-            `${channel.substring(0, getIndexOfSubStr(channel, '-', 1))}*` ===
-              rule.channel)
-        );
-      });
-
-      return filteredSet;
-    }
-
-    return filteredRulesWithScheduledChanges;
-  };
-
-  const filteredRulesCount = filteredRulesToMatchSearchFilter().length;
   const getRowHeight = ({ index }) => {
-    const rule = filteredRulesToMatchSearchFilter()[index];
+    const rule = filteredRulesWithScheduledChanges[index];
     const hasScheduledChanges = Boolean(rule.scheduledChange);
     // Padding top and bottom included
     const listPadding = theme.spacing(1);
@@ -1238,7 +1216,7 @@ function ListRules(props) {
   };
 
   const Row = ({ index, style }) => {
-    const rule = filteredRulesToMatchSearchFilter()[index];
+    const rule = filteredRulesWithScheduledChanges[index];
     const isSelected = isRuleSelected(rule);
 
     return (
@@ -1349,7 +1327,7 @@ function ListRules(props) {
                 onRevoke={handleRevokeEnableUpdates}
               />
             )}
-          {filteredRulesToMatchSearchFilter() && (
+          {filteredRulesWithScheduledChanges && (
             <Fragment>
               <VariableSizeList
                 ref={ruleListRef}
