@@ -18,6 +18,7 @@ import MessagePanel from '../../../components/MessagePanel';
 import ReleaseCard from '../../../components/ReleaseCard';
 import useAction from '../../../hooks/useAction';
 import Link from '../../../utils/Link';
+import { getRules } from '../../../services/rules';
 import {
   getReleases,
   getReleasesV2,
@@ -94,6 +95,8 @@ function ListReleases(props) {
   const [requiredSignoffsForProduct, setRequiredSignoffsForProduct] = useState(
     null
   );
+  const [rules, fetchRules] = useAction(getRules);
+  const releaseRules = rules.data && rules.data.data;
   const [releasesAction, fetchReleases] = useAction(getReleases);
   const [releasesV2Action, fetchReleasesV2] = useAction(getReleasesV2);
   const [releaseAction, fetchRelease] = useAction(getRelease);
@@ -198,6 +201,7 @@ function ListReleases(props) {
       fetchReleases(),
       fetchScheduledChanges(),
       fetchReleasesV2(),
+      fetchRules(),
     ]).then(([relData, scData, relV2Data]) => {
       setReleases(
         // Releases may only exist in either the old or new API, not both,
@@ -702,6 +706,7 @@ function ListReleases(props) {
             [classes.releaseCardSelected]: isSelected,
           })}
           release={release}
+          rules={releaseRules.rules ? releaseRules.rules : []}
           onAccessChange={handleAccessChange}
           onReleaseDelete={handleDelete}
           onViewScheduledChangeDiff={handleViewScheduledChangeDiff}
