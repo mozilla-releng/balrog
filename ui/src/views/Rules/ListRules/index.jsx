@@ -85,7 +85,7 @@ const useStyles = makeStyles(theme => ({
     display: 'flex',
     justifyContent: 'flex-end',
     position: 'fixed',
-    zIndex: 1,
+    zIndex: 2,
   },
   dropdown: {
     minWidth: 200,
