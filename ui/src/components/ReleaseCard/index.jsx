@@ -244,7 +244,7 @@ function ReleaseCard(props) {
                       Object.entries(release.rule_info).map(
                         ([ruleId, ruleInfo]) => {
                           const rule = rules.find(
-                            rule => rule.rule_id == ruleId 
+                            rule => rule.rule_id === Number(ruleId)
                           );
 
                           return (
