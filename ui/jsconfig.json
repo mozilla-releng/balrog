@@ -1,0 +1,9 @@
+// This jsconfig file helps in activating vscode 
+// intellisense (javascript language service) for 
+// all the ui scripts
+{
+    "compileroptions": {
+      "target": "es6"
+    },
+    "exclude": ["node_modules", "scripts"]
+  }
