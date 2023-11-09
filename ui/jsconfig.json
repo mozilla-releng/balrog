@@ -5,5 +5,5 @@
     "compileroptions": {
       "target": "es6"
     },
-    "exclude": ["node_modules", "scripts"]
+    "include": ["src","test"]
   }
