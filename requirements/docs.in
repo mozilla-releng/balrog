@@ -7,6 +7,7 @@ flask
 flask_compress
 flask_wtf
 jsonschema
+platformdirs<4 # Until https://github.com/pypa/virtualenv/issues/2666 is fixed
 python-jose
 repoze.lru
 requests-hawk
