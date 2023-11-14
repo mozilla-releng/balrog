@@ -149,6 +149,7 @@ function ListRules(props) {
   const [dateTimePickerError, setDateTimePickerError] = useState(null);
   const [scrollToRow, setScrollToRow] = useState(null);
   const [roles, setRoles] = useState([]);
+  const [requiredRoles, setRequiredRoles] = useState([]);
   const [emergencyShutoffs, setEmergencyShutoffs] = useState([]);
   const [
     emergencyShutoffReasonComment,
@@ -592,9 +593,17 @@ function ListRules(props) {
         name="role"
         value={signoffRole}
         onChange={handleSignoffRoleChange}>
-        {roles.map(r => (
-          <FormControlLabel key={r} value={r} label={r} control={<Radio />} />
-        ))}
+        {roles.map(r => {
+          return (
+            <FormControlLabel
+              key={r}
+              value={r}
+              label={r}
+              control={<Radio />}
+              disabled={!(requiredRoles && requiredRoles.includes(r))}
+            />
+          );
+        })}
       </RadioGroup>
     </FormControl>
   );
@@ -643,8 +652,14 @@ function ListRules(props) {
   };
 
   const handleSignoff = async rule => {
-    if (roles.length === 1) {
-      const { error, result } = await doSignoff(roles[0], rule);
+    setRequiredRoles(Object.keys(rule.required_signoffs));
+
+    const userRequiredRoles = Object.keys(rule.required_signoffs).filter(r =>
+      roles.includes(r)
+    );
+
+    if (userRequiredRoles.length === 1) {
+      const { error, result } = await doSignoff(userRequiredRoles[0], rule);
 
       if (!error) {
         updateSignoffs(result);
@@ -1220,6 +1235,10 @@ function ListRules(props) {
           rule={rule}
           rulesFilter={productChannelQueries}
           onRuleDelete={handleRuleDelete}
+          canSignoff={
+            Object.keys(rule.required_signoffs).filter(r => roles.includes(r))
+              .length
+          }
           onSignoff={() => handleSignoff(rule)}
           onRevoke={() => handleRevoke(rule)}
           onViewReleaseClick={handleViewRelease}
@@ -1368,7 +1387,15 @@ function ListRules(props) {
           icon={<PauseIcon />}
           tooltipOpen
           tooltipTitle="Disable Updates"
-          onClick={handleDisableUpdates}
+          onClick={
+            !isLoading &&
+            !!username &&
+            !filteredProductChannelIsShutoff &&
+            !!productChannelQueries &&
+            !!productChannelQueries[1]
+              ? handleDisableUpdates
+              : undefined
+          }
         />
       </SpeedDial>
     </Dashboard>

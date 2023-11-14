@@ -8,6 +8,11 @@ import CloseIcon from 'mdi-react/CloseIcon';
 const useStyles = makeStyles(theme => ({
   container: {
     display: 'flex',
+    flexWrap: 'wrap',
+    width: '200rem',
+    flexGrow: '1',
+    gap: '0.25rem',
+    padding: '0.5rem 0',
   },
   chip: {
     marginRight: theme.spacing(0.5),

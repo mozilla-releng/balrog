@@ -1,7 +1,7 @@
 aiohttp
 arrow
 auth0-python
-connexion
+connexion<3
 deepmerge
 ecdsa
 flask

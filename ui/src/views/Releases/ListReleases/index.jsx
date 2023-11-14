@@ -92,6 +92,7 @@ function ListReleases(props) {
   const [roles, setRoles] = useState([]);
   const [signoffRole, setSignoffRole] = useState('');
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
+  const [matchHighlight, setMatchHighlight] = useState({});
   const [requiredSignoffsForProduct, setRequiredSignoffsForProduct] = useState(
     null
   );
@@ -141,15 +142,27 @@ function ListReleases(props) {
       return releases;
     }
 
-    const searchTerms = searchValue.toLowerCase().split(' ');
-    const filteredResults = releases.filter(release => {
-      const releaseName = release.name.toLowerCase();
+    const values = searchValue.trim().split(' ');
+    const regexp = values.reduce(
+      (re, value) => `${re}[A-Za-z0-9.-]*(${value})`,
+      ''
+    );
 
-      // Check if all search terms are found in the release name
-      return searchTerms.every(term => releaseName.includes(term));
+    return releases.filter(release => {
+      const regex = new RegExp(regexp, 'dgi');
+      const matches = regex.exec(release.name);
+
+      if (matches) {
+        const toHighlight = matches.indices;
+
+        setMatchHighlight(prevState => ({
+          ...prevState,
+          [release.name]: toHighlight,
+        }));
+      }
+
+      return matches;
     });
-
-    return filteredResults;
   }, [releases, searchValue]);
   const filteredReleasesCount = filteredReleases.length;
   const handleSignoffRoleChange = ({ target: { value } }) =>
@@ -707,6 +720,7 @@ function ListReleases(props) {
           })}
           release={release}
           rules={releaseRules.rules ? releaseRules.rules : []}
+          releaseHighlight={matchHighlight && matchHighlight[release.name]}
           onAccessChange={handleAccessChange}
           onReleaseDelete={handleDelete}
           onViewScheduledChangeDiff={handleViewScheduledChangeDiff}

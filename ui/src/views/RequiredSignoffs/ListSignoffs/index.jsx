@@ -1,6 +1,7 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import { capitalCase } from 'change-case';
 import classNames from 'classnames';
+import { stringify, parse } from 'qs';
 import { clone, view, lensPath } from 'ramda';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import { makeStyles } from '@material-ui/styles';
@@ -61,11 +62,15 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function ListSignoffs({ user }) {
+function ListSignoffs({ user, ...props }) {
   const username = user.email;
   const classes = useStyles();
+  const { search } = props.location;
+  const query = parse(search.slice(1));
   const [requiredSignoffs, setRequiredSignoffs] = useState(null);
-  const [product, setProduct] = useState('Firefox');
+  const [product, setProduct] = useState(
+    query.product ? query.product : 'Firefox'
+  );
   const [roles, setRoles] = useState([]);
   const [signoffRole, setSignoffRole] = useState('');
   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
@@ -82,7 +87,18 @@ function ListSignoffs({ user }) {
     rolesAction.error ||
     // If there's more than one role, this error is shown inside of the dialog
     (roles.length === 1 && signoffAction.error);
-  const handleFilterChange = ({ target: { value } }) => setProduct(value);
+  const handleFilterChange = ({ target: { value } }) => {
+    const qs = {
+      ...query,
+      product: value,
+    };
+
+    props.history.push(
+      `/required-signoffs${stringify(qs, { addQueryPrefix: true })}`
+    );
+    setProduct(value);
+  };
+
   const handleSignoffRoleChange = ({ target: { value } }) =>
     setSignoffRole(value);
   const permissionChanges = view(

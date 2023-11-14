@@ -27,6 +27,7 @@ import SignoffSummary from '../SignoffSummary';
 import { withUser } from '../../utils/AuthContext';
 import Link from '../../utils/Link';
 import { release } from '../../utils/prop-types';
+import highlightMatchedRelease from '../../utils/highlightMatchedRelease';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -177,7 +178,13 @@ function ReleaseCard(props) {
             className={classes.releaseName}
             component="h2"
             variant="h6">
-            {release.name}{' '}
+            {rest.releaseHighlight ? (
+              <Fragment>
+                {highlightMatchedRelease(rest.releaseHighlight, release.name)}
+              </Fragment>
+            ) : (
+              release.name
+            )}{' '}
             <a
               href={`#${release.name}`}
               aria-label="Anchor"
