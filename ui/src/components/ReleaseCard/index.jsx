@@ -127,6 +127,7 @@ const useStyles = makeStyles(theme => ({
 function ReleaseCard(props) {
   const {
     release,
+    rules,
     user,
     onSignoff,
     onRevoke,
@@ -248,24 +249,30 @@ function ReleaseCard(props) {
                   secondary={
                     hasRulesPointingAtRevision ? (
                       Object.entries(release.rule_info).map(
-                        ([ruleId, ruleInfo]) => (
-                          <Link
-                            className={classes.link}
-                            key={ruleId}
-                            to={getRuleLink(
-                              ruleId,
-                              ruleInfo.product,
-                              ruleInfo.channel
-                            )}>
-                            <Chip
-                              clickable
-                              size="small"
-                              icon={<LinkIcon />}
-                              label={ruleId}
-                              className={classes.chip}
-                            />
-                          </Link>
-                        )
+                        ([ruleId, ruleInfo]) => {
+                          const rule = rules.find(
+                            rule => rule.rule_id === Number(ruleId)
+                          );
+
+                          return (
+                            <Link
+                              className={classes.link}
+                              key={ruleId}
+                              to={getRuleLink(
+                                ruleId,
+                                ruleInfo.product,
+                                ruleInfo.channel
+                              )}>
+                              <Chip
+                                clickable
+                                size="small"
+                                icon={<LinkIcon />}
+                                label={rule.alias ? rule.alias : ruleId}
+                                className={classes.chip}
+                              />
+                            </Link>
+                          );
+                        }
                       )
                     ) : (
                       <em>n/a</em>
