@@ -635,9 +635,9 @@ jsonschema==4.19.2 \
     #   -r requirements/docs.in
     #   connexion
     #   swagger-spec-validator
-jsonschema-specifications==2023.7.1 \
-    --hash=sha256:05adf340b659828a004220a9613be00fa3f223f2b82002e273dee62fd50524b1 \
-    --hash=sha256:c91a50404e88a1f6ba40636778e2ee08f6e24c5613fe4c53ac24578a5a7f72bb
+jsonschema-specifications==2023.11.1 \
+    --hash=sha256:c9b234904ffe02f079bf91b14d79987faa685fd4b39c377a0996954c0090b9ca \
+    --hash=sha256:f596778ab612b3fd29f72ea0d990393d0540a5aab18bf0407a46632eab540779
     # via jsonschema
 markupsafe==2.1.3 \
     --hash=sha256:05fb21170423db021895e1ea1e1f3ab3adb85d1c2333cbc2310f2a26bc77272e \
