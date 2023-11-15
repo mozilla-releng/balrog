@@ -1,5 +1,4 @@
-import json
-
+import canonicaljson
 from flask import Response
 from flask import current_app as app
 
@@ -17,7 +16,7 @@ def get_update(transaction, **parameters):
 
     headers = get_aus_metadata_headers(eval_metadata)
 
-    response = json.dumps(release.getResponse(parameters, app.config["ALLOWLISTED_DOMAINS"]))
+    response = canonicaljson.encode_canonical_json(release.getResponse(parameters, app.config["ALLOWLISTED_DOMAINS"]))
 
     headers.update(get_content_signature_headers(response, ""))
 
