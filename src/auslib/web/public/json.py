@@ -1,5 +1,4 @@
 import canonicaljson
-
 from flask import Response
 from flask import current_app as app
 
