@@ -242,21 +242,21 @@ def testGuardianResponse(client, version, buildTarget, channel, code, response):
             "WINNT_x86_64",
             "release",
             200,
-            '{"hashFunction":"sha512","hashValue":"abcdef","required":true,"url":"https://good.com/0.5.0.0.msi","version":"0.5.0.0"}'
+            '{"hashFunction":"sha512","hashValue":"abcdef","required":true,"url":"https://good.com/0.5.0.0.msi","version":"0.5.0.0"}',
         ),
         (
             "0.6.0.0",
             "WINNT_x86_64",
             "release",
             200,
-            '{"hashFunction":"sha512","hashValue":"mnopqr","required":true,"url":"https://good.com/1.0.0.0.msi","version":"1.0.0.0"}'
+            '{"hashFunction":"sha512","hashValue":"mnopqr","required":true,"url":"https://good.com/1.0.0.0.msi","version":"1.0.0.0"}',
         ),
         (
             "0.99.99.99",
             "WINNT_x86_64",
             "release",
             200,
-            '{"hashFunction":"sha512","hashValue":"mnopqr","required":true,"url":"https://good.com/1.0.0.0.msi","version":"1.0.0.0"}'
+            '{"hashFunction":"sha512","hashValue":"mnopqr","required":true,"url":"https://good.com/1.0.0.0.msi","version":"1.0.0.0"}',
         ),
         ("1.0.0.0", "WINNT_x86_64", "release", 404, "{}"),
         ("0.6.0.0", "Linux_x86_64", "release", 404, "{}"),
