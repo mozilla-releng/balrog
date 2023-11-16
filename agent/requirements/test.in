@@ -6,6 +6,7 @@ coverage
 flake8
 isort
 pip-compile-multi
+platformdirs<4 # Until https://github.com/pypa/virtualenv/issues/2666 is fixed
 pytest
 pytest-asyncio
 pytest-cov

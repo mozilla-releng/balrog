@@ -1,7 +1,8 @@
 aiohttp
 arrow
 auth0-python
-connexion
+canonicaljson
+connexion<3
 deepmerge
 ecdsa
 flask
@@ -13,6 +14,7 @@ google-auth
 google-cloud-storage
 jsonschema>=4.5.0
 mysqlclient
+platformdirs<4 # Until https://github.com/pypa/virtualenv/issues/2666 is fixed
 python-jose
 sentry-sdk[flask]
 requests
