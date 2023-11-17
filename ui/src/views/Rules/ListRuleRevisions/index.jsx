@@ -1,4 +1,13 @@
 import React, { Fragment, useState, useEffect } from 'react';
+// import Grid from '@material-ui/core/Grid';
+import Paper from '@material-ui/core/Paper';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableContainer from '@material-ui/core/TableContainer';
+import TableHead from '@material-ui/core/TableHead';
+import TablePagination from '@material-ui/core/TablePagination';
+import TableRow from '@material-ui/core/TableRow';
 import { Column } from 'react-virtualized';
 import { clone } from 'ramda';
 import { stringify } from 'qs';
@@ -26,6 +35,9 @@ import {
   DIALOG_ACTION_INITIAL_STATE,
 } from '../../../utils/constants';
 
+const style = {
+  backgroundColor: '#FAFAFA',
+};
 const useStyles = makeStyles({
   radioCell: {
     paddingLeft: 0,
@@ -37,13 +49,30 @@ const useStyles = makeStyles({
     maxWidth: CONTENT_MAX_WIDTH,
     margin: '0 auto',
   },
+  tr: {
+    backgroundColor: '#FAFAFA',
+    '&:hover': {
+      backgroundColor: '#FFFFFF !important',
+    },
+  },
+  signoffsDiv: {
+    backgroundColor: '#FFFFFF',
+    '&:hover': {
+      backgroundColor: '#FAFAFA',
+    },
+  },
+  signoffs: {
+    padding: '2px 5px',
+    borderRadius: '5px',
+  },
 });
 const changesProps = {
   ruleId: 0,
   priority: 0,
   scheduledBy: '',
   allSignOffs: {},
-  dataVersion: 0
+  dataVersion: 0,
+  when: 0,
 };
 
 function ListRuleRevisions(props) {
@@ -56,6 +85,8 @@ function ListRuleRevisions(props) {
   const [leftRadioCheckedIndex, setLeftRadioCheckedIndex] = useState(1);
   const [rightRadioCheckedIndex, setRightRadioCheckedIndex] = useState(0);
   const [rulesWithChangesProps, setRulesWithChangesProps] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(15);
   const [ruleHistory, setRuleHistory] = useState([]);
   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
   const [fetchedRevisions, fetchRevisions] = useAction(getRevisions);
@@ -78,6 +109,23 @@ function ListRuleRevisions(props) {
     props.history.push(`/rules${query}#${hashFilter}`);
   };
 
+  const columns = [
+    { id: 'priority', label: 'Priority', minWidth: 100 },
+    { id: 'scheduledBy', label: 'Scheduled By', minWidth: 170 },
+    { id: 'dataVersion', label: 'Data Version', minWidth: 100 },
+    { id: 'allSignoffs', label: 'Sign Offs', minWidth: 170 },
+    { id: 'scDate', label: 'Scheduled Date', minWidth: 170 },
+  ];
+  const createData = (
+    priority,
+    scheduledBy,
+    dataVersion,
+    allSignoffs,
+    scDate
+  ) => {
+    return { priority, scheduledBy, dataVersion, allSignoffs, scDate };
+  };
+
   useEffect(() => {
     fetchRevisions(ruleId);
     fetchScheduledChanges(true);
@@ -87,7 +135,7 @@ function ListRuleRevisions(props) {
     if (scheduledChanges.data) {
       const tempRulesWithChangesProps = [];
       const sc = scheduledChanges.data.data.scheduled_changes;
-      console.log(sc[0])
+
       for (let i = 0; i < sc.length; i += 1) {
         tempRulesWithChangesProps.push({
           ...changesProps,
@@ -96,7 +144,7 @@ function ListRuleRevisions(props) {
           scheduledBy: sc[i].scheduled_by,
           allSignOffs: sc[i].signoffs,
           dataVersion: sc[i].data_version,
-          when: sc[i].when
+          scDate: sc[i].when,
         });
       }
 
@@ -134,8 +182,6 @@ function ListRuleRevisions(props) {
   };
 
   const handleViewClick = item => () => {
-    // // console.log(item)
-    console.log(ruleHistory)
     setDrawerState({
       ...drawerState,
       item,
@@ -177,6 +223,81 @@ function ListRuleRevisions(props) {
     return data.data.sc_id;
   };
 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = event => {
+    setRowsPerPage(+event.target.value);
+    setPage(0);
+  };
+
+  const makeData = rH => {
+    const allHistory = [];
+    const rHTemp = [
+      ...rH,
+      {
+        priority: 174,
+        scheduledBy: 'gbustamante@mozilla.com',
+        dataVersion: 9,
+        scDate: 1700164761667,
+        allSignOffs: {
+          'jefferson@mozilla.com': 'relman',
+        },
+      },
+      {
+        priority: 174,
+        scheduledBy: 'gbustamante@mozilla.com',
+        dataVersion: 9,
+        scDate: 1700164761667,
+        allSignOffs: {
+          'jefferson@mozilla.com': 'relman',
+        },
+      },
+      {
+        priority: 174,
+        scheduledBy: 'gbustamante@mozilla.com',
+        dataVersion: 9,
+        scDate: 1700164761667,
+        allSignOffs: {
+          'jefferson@mozilla.com': 'relman',
+        },
+      },
+    ];
+
+    for (let i = 0; i < ruleHistory.length + 3; i += 1) {
+      const users = Object.keys({
+        ...rHTemp[i].allSignOffs,
+        'bhearsum@mozilla.com': 'tb-releng',
+      });
+      const roles = Object.values({
+        ...rHTemp[i].allSignOffs,
+        'bhearsum@mozilla.com': 'tb-releng',
+      });
+      const tempSignOffs = [];
+
+      for (let i = 0; i < users.length; i += 1) {
+        tempSignOffs.push({
+          user: users[i],
+          role: roles[i],
+        });
+      }
+
+      allHistory.push(
+        createData(
+          rHTemp[i].priority,
+          rHTemp[i].scheduledBy,
+          rHTemp[i].dataVersion,
+          tempSignOffs,
+          new Date(rHTemp[i].scDate).toDateString()
+        )
+      );
+    }
+
+    return allHistory;
+  };
+
+  const rows = makeData(ruleHistory);
   const handleDialogClose = () => setDialogState(DIALOG_ACTION_INITIAL_STATE);
   const handleDialogActionComplete = scId =>
     redirectWithRulesFilter(`scId=${scId}`);
@@ -268,7 +389,89 @@ function ListRuleRevisions(props) {
               rule={drawerState.item}
             />
           </Drawer>
-          <p>THIS IS A TEST PARAGRAPH</p>
+          <p style={{ fontWeight: 'bold', fontSize: 16 }}>History :</p>
+          <div style={{ marginTop: 20 }}>
+            <Paper style={{ width: 'max-content', overflow: 'hidden' }}>
+              <TableContainer style={{ maxHeight: '350px' }}>
+                <Table stickyHeader aria-label="sticky table">
+                  <TableHead>
+                    <TableRow>
+                      {columns.map(column => (
+                        <TableCell
+                          key={column.id}
+                          align={'center' || column.align}
+                          style={{
+                            minWidth: column.minWidth,
+                            backgroundColor: style.backgroundColor,
+                          }}>
+                          {column.label}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {rows
+                      .slice(
+                        page * rowsPerPage,
+                        page * rowsPerPage + rowsPerPage
+                      )
+                      .map((row, index) => {
+                        const no = index;
+
+                        return (
+                          <TableRow
+                            hover
+                            role="checkbox"
+                            tabIndex={-1}
+                            key={no}
+                            className={classes.tr}>
+                            {columns.map(column => {
+                              const value = row[column.id];
+
+                              return (
+                                <TableCell
+                                  key={column.id}
+                                  align={'center' || column.align}>
+                                  {typeof value === 'object' ? (
+                                    <div className={classes.signoffsDiv}>
+                                      {value.map(user => (
+                                        <div
+                                          key={user.user}
+                                          className={classes.signoffs}>
+                                          <p style={{ margin: '2px 0 0 0' }}>
+                                            {user.user}
+                                          </p>
+                                          <p
+                                            style={{
+                                              margin: '0 0 2px 0',
+                                            }}>{`(${user.role})`}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    value
+                                  )}
+                                </TableCell>
+                              );
+                            })}
+                          </TableRow>
+                        );
+                      })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                style={{ backgroundColor: style.backgroundColor }}
+                rowsPerPageOptions={[10, 20, 100]}
+                component="div"
+                count={rows.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
+            </Paper>
+          </div>
         </Fragment>
       )}
       <DialogAction
