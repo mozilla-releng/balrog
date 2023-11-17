@@ -16,7 +16,11 @@ import Button from '../../../components/Button';
 import DiffRule from '../../../components/DiffRule';
 import RevisionsTable from '../../../components/RevisionsTable';
 import useAction from '../../../hooks/useAction';
-import { getRevisions, addScheduledChange } from '../../../services/rules';
+import {
+  getRevisions,
+  addScheduledChange,
+  getScheduledChanges,
+} from '../../../services/rules';
 import {
   CONTENT_MAX_WIDTH,
   DIALOG_ACTION_INITIAL_STATE,
@@ -34,6 +38,13 @@ const useStyles = makeStyles({
     margin: '0 auto',
   },
 });
+const changesProps = {
+  ruleId: 0,
+  priority: 0,
+  scheduledBy: '',
+  allSignOffs: {},
+  dataVersion: 0
+};
 
 function ListRuleRevisions(props) {
   const classes = useStyles();
@@ -44,8 +55,13 @@ function ListRuleRevisions(props) {
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
   const [leftRadioCheckedIndex, setLeftRadioCheckedIndex] = useState(1);
   const [rightRadioCheckedIndex, setRightRadioCheckedIndex] = useState(0);
+  const [rulesWithChangesProps, setRulesWithChangesProps] = useState([]);
+  const [ruleHistory, setRuleHistory] = useState([]);
   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
   const [fetchedRevisions, fetchRevisions] = useAction(getRevisions);
+  const [scheduledChanges, fetchScheduledChanges] = useAction(
+    getScheduledChanges
+  );
   const addSC = useAction(addScheduledChange)[1];
   const { ruleId } = props.match.params;
   // eslint-disable-next-line prefer-destructuring
@@ -64,7 +80,43 @@ function ListRuleRevisions(props) {
 
   useEffect(() => {
     fetchRevisions(ruleId);
+    fetchScheduledChanges(true);
   }, [ruleId]);
+
+  useEffect(() => {
+    if (scheduledChanges.data) {
+      const tempRulesWithChangesProps = [];
+      const sc = scheduledChanges.data.data.scheduled_changes;
+      console.log(sc[0])
+      for (let i = 0; i < sc.length; i += 1) {
+        tempRulesWithChangesProps.push({
+          ...changesProps,
+          ruleId: sc[i].rule_id,
+          priority: sc[i].priority,
+          scheduledBy: sc[i].scheduled_by,
+          allSignOffs: sc[i].signoffs,
+          dataVersion: sc[i].data_version,
+          when: sc[i].when
+        });
+      }
+
+      setRulesWithChangesProps(tempRulesWithChangesProps);
+    }
+  }, [scheduledChanges.data]);
+
+  useEffect(() => {
+    if (ruleId && rulesWithChangesProps.length > 0) {
+      const tempRuleHistory = [];
+
+      for (let i = 0; i < rulesWithChangesProps.length; i += 1) {
+        if (rulesWithChangesProps[i].ruleId === Number(ruleId)) {
+          tempRuleHistory.push(rulesWithChangesProps[i]);
+        }
+      }
+
+      setRuleHistory(tempRuleHistory);
+    }
+  }, [ruleId, rulesWithChangesProps]);
 
   const handleLeftRadioChange = ({ target: { value } }) => {
     setLeftRadioCheckedIndex(Number(value));
@@ -82,6 +134,8 @@ function ListRuleRevisions(props) {
   };
 
   const handleViewClick = item => () => {
+    // // console.log(item)
+    console.log(ruleHistory)
     setDrawerState({
       ...drawerState,
       item,
@@ -214,6 +268,7 @@ function ListRuleRevisions(props) {
               rule={drawerState.item}
             />
           </Drawer>
+          <p>THIS IS A TEST PARAGRAPH</p>
         </Fragment>
       )}
       <DialogAction
