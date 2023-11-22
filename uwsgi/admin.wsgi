@@ -26,7 +26,10 @@ DOMAIN_ALLOWLIST = {
     "ciscobinary.openh264.org": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),
     "clients2.googleusercontent.com": ("Widevine",),
-    "redirector.gvt1.com": ("Widevine",),
+    "redirector.gvt1.com": (
+        "Widevine",
+        "Widevine-L1",
+    ),
     "ftp.mozilla.org": ("SystemAddons",),
     "fpn.firefox.com": ("FirefoxVPN", "Guardian"),
     "vpn.mozilla.org": ("FirefoxVPN", "Guardian"),
