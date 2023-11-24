@@ -10,6 +10,7 @@ SIGNATURE_PREFIX = "Content-Signature:\x00"
 
 
 def make_hash(content):
+    assert isinstance(content, str)
     templated = f"{SIGNATURE_PREFIX}{content}".encode("ascii")
     return sha384(templated).digest()
 
