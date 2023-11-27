@@ -1,5 +1,6 @@
 import pytest
 
+from auslib.blobs.base import ServeUpdate
 from auslib.blobs.guardian import GuardianBlob
 
 
@@ -37,7 +38,15 @@ def testContainsForbiddenDomain(guardianblob, allowlistedDomains, expected):
 
 
 @pytest.mark.parametrize(
-    "version,expected", [("0.5.0.0", True), ("0.8.0.0", True), ("0.99.99.99", True), ("1.0.0.0", False), ("1.0.5.0", False), ("2.0.0.0", False)]
+    "version,expected",
+    [
+        ("0.5.0.0", ServeUpdate.Yes),
+        ("0.8.0.0", ServeUpdate.Yes),
+        ("0.99.99.99", ServeUpdate.Yes),
+        ("1.0.0.0", ServeUpdate.No),
+        ("1.0.5.0", ServeUpdate.No),
+        ("2.0.0.0", ServeUpdate.No),
+    ],
 )
 def testShouldServeUpdateVariousVersions(guardianblob, version, expected):
     updateQuery = {"product": "Guardian", "version": version, "buildTarget": "WINNT_x86_64", "channel": "release"}
