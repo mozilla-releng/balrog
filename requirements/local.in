@@ -1,4 +1,3 @@
 -r test.in
 
-platformdirs<4 # Until https://github.com/pypa/virtualenv/issues/2666 is fixed
 tox<4
