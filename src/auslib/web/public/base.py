@@ -1,3 +1,4 @@
+import html
 import logging
 import re
 from os import path
@@ -11,12 +12,6 @@ from specsynthase.specbuilder import SpecBuilder
 import auslib.web
 from auslib.errors import BadDataError
 from auslib.web.admin.views.problem import problem
-
-try:
-    import html
-except ImportError:  # pragma: no cover
-    import cgi as html
-
 
 log = logging.getLogger(__name__)
 

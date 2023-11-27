@@ -7,13 +7,8 @@ from calendar import timegm
 from datetime import datetime
 from http.client import HTTPSConnection
 from socket import gaierror
-
-try:
-    from urllib2 import HTTPError, URLError, urlopen
-except ImportError:  # pragma: no cover
-    from urllib.error import HTTPError, URLError
-    from urllib.request import urlopen
-
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
 
 HOST = "https://storage.googleapis.com"
 PATH = "/balrog-prod-dbdump-v1/dump.sql.txt.xz"
