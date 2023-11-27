@@ -1,3 +1,2 @@
 aiohttp
-platformdirs<4 # Until https://github.com/pypa/virtualenv/issues/2666 is fixed
 sentry-sdk
