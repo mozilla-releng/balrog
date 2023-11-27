@@ -1,11 +1,6 @@
-try:
-    from collections import OrderedDict
-except ImportError:
-    # so you're in python <2.7
-    from ordereddict import OrderedDict
-
 import logging
 import unittest
+from collections import OrderedDict
 
 import mock
 import pytest

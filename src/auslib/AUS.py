@@ -1,17 +1,13 @@
 import functools
 import logging
 from random import randint
+from urllib.parse import urlparse
 
 from auslib.blobs.base import createBlob
 from auslib.errors import BadDataError
 from auslib.global_state import cache, dbo
 from auslib.services import releases
 from auslib.util.versions import MozillaVersion, PinVersion
-
-try:
-    from urlparse import urlparse
-except ImportError:  # pragma: no cover
-    from urllib.parse import urlparse
 
 
 class ForceResult(object):
