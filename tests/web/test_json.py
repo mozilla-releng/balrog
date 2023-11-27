@@ -1,5 +1,8 @@
+from unittest.mock import MagicMock
+
 import pytest
 
+import auslib.web.public.helpers
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
@@ -21,9 +24,8 @@ def mock_autograph(monkeypatch):
     def mockreturn(*args):
         return ("abcdef", "https://this.is/a.x5u")
 
-    import auslib.web.public.helpers
-
     monkeypatch.setattr(auslib.web.public.helpers, "sign_hash", mockreturn)
+    monkeypatch.setattr(auslib.web.public.helpers, "make_hash", MagicMock())
 
 
 @pytest.fixture(scope="module")
@@ -229,6 +231,7 @@ def testGuardianResponse(client, version, buildTarget, channel, code, response):
         assert ret.mimetype == "application/json"
         assert ret.get_json() == response
         assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
+        auslib.web.public.helpers.make_hash.assert_called_once_with(ret.text)
         assert "Rule-ID" in ret.headers
         assert "Rule-Data-Version" in ret.headers
 
@@ -290,3 +293,4 @@ def testGuardianResponseWithGradualRollout(client, forceValue, response):
     assert ret.mimetype == "application/json"
     assert ret.get_json() == response
     assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
+    auslib.web.public.helpers.make_hash.assert_called_once_with(ret.text)
