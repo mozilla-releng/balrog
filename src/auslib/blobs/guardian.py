@@ -1,7 +1,6 @@
-from distutils.version import LooseVersion
-
 from auslib.AUS import isForbiddenUrl
 from auslib.blobs.base import GenericBlob
+from auslib.util.versions import LooseVersion
 
 
 class GuardianBlob(GenericBlob):
