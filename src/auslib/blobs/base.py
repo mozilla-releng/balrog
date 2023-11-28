@@ -148,7 +148,7 @@ class Blob(dict):
     def validate(self, product, allowlistedDomains):
         """Raises a BlobValidationError if the blob is invalid."""
         self.log.debug("Validating blob %s" % self)
-        validator = jsonschema.Draft4Validator(self.getSchema(), format_checker=jsonschema.draft4_format_checker)
+        validator = jsonschema.Draft4Validator(self.getSchema(), format_checker=jsonschema.Draft4Validator.FORMAT_CHECKER)
         # Normal usage is to use .validate(), but errors raised by it return
         # a massive error message that includes the entire blob, which is way
         # too big to be useful in the UI. Instead, we iterate over the
