@@ -100,3 +100,18 @@ def test_no_message(caplog):
 
     o = json.loads(stream.getvalue())
     assert "message" not in o["Fields"]
+
+
+def test_not_serializable(caplog):
+    stream = StringIO()
+    configure_logging(stream=stream)
+
+    logging.info("", extra={"type": bytes, "data": b""})
+
+    assert len(caplog.records) == 1
+    r = caplog.records[0]
+
+    assert r.levelno == 20
+
+    o = json.loads(stream.getvalue())
+    assert set(o["Fields"]) == {"type", "data"}
