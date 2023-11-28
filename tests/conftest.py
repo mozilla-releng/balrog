@@ -133,83 +133,83 @@ def insert_release_sc():
 
 @pytest.fixture(scope="session")
 def firefox_54_0_1_build1():
-    blob = json.load(open(Path(__file__).parent / "data/Firefox-54.0.1-build1.json"))
-    return blob
+    with open(Path(__file__).parent / "data/Firefox-54.0.1-build1.json") as f:
+        return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def firefox_56_0_build1():
-    blob = json.load(open(Path(__file__).parent / "data/Firefox-56.0-build1.json"))
-    return blob
+    with open(Path(__file__).parent / "data/Firefox-56.0-build1.json") as f:
+        return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def firefox_60_0b3_build1():
-    blob = json.load(open(Path(__file__).parent / "data/Firefox-60.0b3-build1.json"))
-    return blob
+    with open(Path(__file__).parent / "data/Firefox-60.0b3-build1.json") as f:
+        return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def firefox_62_0_build1():
-    blob = json.load(open(Path(__file__).parent / "data/Firefox-62.0-build1.json"))
-    return blob
+    with open(Path(__file__).parent / "data/Firefox-62.0-build1.json") as f:
+        return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def firefox_64_0_build1():
-    blob = json.load(open(Path(__file__).parent / "data/Firefox-64.0-build1.json"))
-    return blob
+    with open(Path(__file__).parent / "data/Firefox-64.0-build1.json") as f:
+        return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def firefox_65_0_build1():
-    blob = json.load(open(Path(__file__).parent / "data/Firefox-65.0-build1.json"))
-    return blob
+    with open(Path(__file__).parent / "data/Firefox-65.0-build1.json") as f:
+        return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def firefox_66_0_build1():
-    blob = json.load(open(Path(__file__).parent / "data/Firefox-66.0-build1.json"))
-    return blob
+    with open(Path(__file__).parent / "data/Firefox-66.0-build1.json") as f:
+        return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def firefox_67_0_build1():
-    blob = json.load(open(Path(__file__).parent / "data/Firefox-67.0-build1.json"))
-    return blob
+    with open(Path(__file__).parent / "data/Firefox-67.0-build1.json") as f:
+        return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def firefox_100_0_build1():
-    blob = json.load(open(Path(__file__).parent / "data/Firefox-100.0-build1.json"))
-    return blob
+    with open(Path(__file__).parent / "data/Firefox-100.0-build1.json") as f:
+        return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def cdm_16():
-    blob = json.load(open(Path(__file__).parent / "data/CDM-16.json"))
-    return blob
+    with open(Path(__file__).parent / "data/CDM-16.json") as f:
+        return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def cdm_17():
-    blob = json.load(open(Path(__file__).parent / "data/CDM-17.json"))
-    return blob
+    with open(Path(__file__).parent / "data/CDM-17.json") as f:
+        return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def superblob_e8f4a19():
-    blob = json.load(open(Path(__file__).parent / "data/Superblob-e8f4a19cfd695bf0eb66a2115313c31cc23a2369c0dc7b736d2f66d9075d7c66.json"))
-    return blob
+    with open(Path(__file__).parent / "data/Superblob-e8f4a19cfd695bf0eb66a2115313c31cc23a2369c0dc7b736d2f66d9075d7c66.json") as f:
+        return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def hotfix_bug_1548973_1_1_4():
-    blob = json.load(open(Path(__file__).parent / "data/hotfix-bug-1548973@mozilla.org-1.1.4.json"))
-    return blob
+    with open(Path(__file__).parent / "data/hotfix-bug-1548973@mozilla.org-1.1.4.json") as f:
+        return json.load(f)
 
 
 @pytest.fixture(scope="session")
 def timecop_1_0():
-    blob = json.load(open(Path(__file__).parent / "data/timecop@mozilla.com-1.0.json"))
-    return blob
+    with open(Path(__file__).parent / "data/timecop@mozilla.com-1.0.json") as f:
+        return json.load(f)
