@@ -102,7 +102,7 @@ class JsonLogFormatter(logging.Formatter):
 
         out["Fields"] = fields
 
-        return json.dumps(out)
+        return json.dumps(out, default=str)
 
 
 def safer_format_traceback(exc_typ, exc_val, exc_tb):
