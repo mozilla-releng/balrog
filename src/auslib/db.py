@@ -935,7 +935,7 @@ class HistoryTable(AUSTable):
             self.table.append_column(Column("timestamp", BigInteger, nullable=False))
         self.base_primary_key = [pk.name for pk in baseTable.primary_key]
         for col in baseTable.t.columns:
-            newcol = col.copy()
+            newcol = col._copy()
             if col.primary_key:
                 newcol.primary_key = False
             else:
@@ -1171,7 +1171,7 @@ class ScheduledChangeTable(AUSTable):
         for col in baseTable.t.columns:
             if col.primary_key:
                 self.base_primary_key.append(col.name)
-            newcol = col.copy()
+            newcol = col._copy()
             # 1) Columns are prefixed with "base_", to make them easy to
             # identify and avoid conflicts.
             # Renaming a column requires to change both the key and the name

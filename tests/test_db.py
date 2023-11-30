@@ -5309,7 +5309,7 @@ class TestPinnableReleases(unittest.TestCase, MemoryDatabaseMixin):
             self.assertRaises(ValueError, releases.delete_release, name="Firefox-60.0-build1", changed_by="bob", trans=trans)
         self.assertEqual(dbo.releases_json.count(where=[dbo.releases_json.name == "Firefox-60.0-build1"]), 1)
         self.pinnable_releases.delete(changed_by="bob", where=[self.pinnable_releases.mapping == "Firefox-60.0-build1"], old_data_version=row["data_version"])
-        dbo.releases_json.delete(where=[dbo.releases_json.name == "Firefox-60.0-build1"], changed_by="bob", old_data_version=1)
+        dbo.releases_json.t.delete().where(dbo.releases_json.name == "Firefox-60.0-build1").execute()
         self.assertEqual(dbo.releases_json.count(where=[dbo.releases_json.name == "Firefox-60.0-build1"]), 0)
 
 
