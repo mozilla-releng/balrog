@@ -1,5 +1,5 @@
 from auslib.AUS import isForbiddenUrl
-from auslib.blobs.base import GenericBlob
+from auslib.blobs.base import GenericBlob, ServeUpdate
 from auslib.util.versions import LooseVersion
 
 
@@ -12,11 +12,11 @@ class GuardianBlob(GenericBlob):
 
     def shouldServeUpdate(self, updateQuery):
         if updateQuery["buildTarget"] not in self.get("platforms", {}):
-            return False
+            return ServeUpdate.No
         if LooseVersion(updateQuery["version"]) >= LooseVersion(self["version"]):
-            return False
+            return ServeUpdate.No
 
-        return True
+        return ServeUpdate.Yes
 
     def getResponse(self, updateQuery, allowlistedDomains):
         url = self.get("platforms", {}).get(updateQuery["buildTarget"], {}).get("fileUrl")

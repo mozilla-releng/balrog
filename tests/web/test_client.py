@@ -2729,6 +2729,24 @@ class ClientTestPinning(ClientTestCommon):
 """
             ),
         )
+        dbo.releases.t.insert().execute(
+            name="desupport",
+            product="b",
+            data_version=1,
+            data=createBlob(
+                """
+{
+    "name": "desupport",
+    "schema_version": 50,
+    "detailsUrl": "http://example.com/desupport",
+    "displayVersion": "1"
+}
+"""
+            ),
+        )
+        dbo.rules.t.insert().execute(
+            priority=100, backgroundRate=100, mapping="desupport", update_type="minor", product="b", data_version=1, osVersion="obsolete"
+        )
 
     def testUnpinnedRecent(self):
         ret = self.client.get("/update/6/b/3.0/30000101000030/p/l/c/a/a/a/a/update.xml")
@@ -2859,3 +2877,16 @@ class ClientTestPinning(ClientTestCommon):
         self.assertEqual(ret.status_code, 400)
         error_message = ret.get_data(as_text=True)
         self.assertEqual(error_message, "Version Pin String '2' is invalid.")
+
+    def testPinWithDesupport(self):
+        ret = self.client.get("/update/6/b/3.0/30000101000020/p/l/c/obsolete/a/a/a/update.xml?pin=4.")
+        self.assertEqual(ret.status_code, 200)
+        self.assertUpdateTextEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+
+    <update type="minor" unsupported="true" detailsURL="http://example.com/desupport" displayVersion="1">
+</update>
+</updates>""",
+        )

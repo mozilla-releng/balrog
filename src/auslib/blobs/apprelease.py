@@ -1,13 +1,13 @@
 import itertools
 
 from auslib.AUS import getFallbackChannel, isForbiddenUrl, isSpecialURL
-from auslib.blobs.base import XMLBlob, createBlob
+from auslib.blobs.base import ServeUpdate, XMLBlob, createBlob
 from auslib.errors import BadDataError, BlobValidationError
 from auslib.global_state import dbo
 from auslib.services import releases
 from auslib.util.comparison import has_operator, strip_operator
 from auslib.util.rulematching import matchBuildID, matchChannel, matchVersion
-from auslib.util.versions import MozillaVersion, decrement_version, increment_version
+from auslib.util.versions import MozillaVersion, PinVersion, decrement_version, increment_version
 
 
 class ReleaseBlobBase(XMLBlob):
@@ -218,20 +218,29 @@ class ReleaseBlobBase(XMLBlob):
         releaseVersion = self.getApplicationVersion(buildTarget, locale)
         if not releaseVersion:
             self.log.debug("Matching rule has no application version, will not serve update.")
-            return False
+            return ServeUpdate.No
         releaseVersion = MozillaVersion(releaseVersion)
         queryVersion = MozillaVersion(updateQuery["version"])
         if queryVersion > releaseVersion:
             self.log.debug("Matching rule has older version than request, will not serve update.")
-            return False
+            return ServeUpdate.No
         elif releaseVersion == queryVersion:
             if updateQuery["buildID"] >= self.getBuildID(updateQuery["buildTarget"], updateQuery["locale"]):
                 self.log.debug("Matching rule has older buildid than request, will not serve update.")
-                return False
+                return ServeUpdate.No
         if updateQuery["buildTarget"] not in self["platforms"].keys():
-            return False
+            return ServeUpdate.No
 
-        return True
+        version_pin = updateQuery.get("pin")
+        if version_pin is not None:
+            try:
+                version_pin = PinVersion(version_pin)
+            except ValueError:
+                raise BadDataError(f"Version Pin String '{version_pin}' is invalid.")
+            if releaseVersion > version_pin:
+                return ServeUpdate.Maybe
+
+        return ServeUpdate.Yes
 
     def containsForbiddenDomain(self, product, allowlistedDomains):
         """Returns True if the blob contains any file URLs that contain a
@@ -1201,7 +1210,7 @@ class DesupportBlob(XMLBlob):
 
     def shouldServeUpdate(self, updateQuery):
         # desupport messages should always be returned
-        return True
+        return ServeUpdate.Yes
 
     def getInnerHeaderXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         return ""

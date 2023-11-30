@@ -1,5 +1,5 @@
 from auslib.AUS import isForbiddenUrl
-from auslib.blobs.base import XMLBlob
+from auslib.blobs.base import ServeUpdate, XMLBlob
 from auslib.errors import BadDataError
 
 
@@ -33,7 +33,7 @@ class SystemAddonsBlob(XMLBlob):
         # SystemAddon updates should always be returned. It is the responsibility
         # of the client to decide whether or not any action needs to be taken,
         # similar to GMP
-        return True
+        return ServeUpdate.Yes
 
     # If there are are no updates, we have a special response for SystemAddons
     # blobs. We return <updates></updates>, without the addons tags.

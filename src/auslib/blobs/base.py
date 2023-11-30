@@ -1,3 +1,4 @@
+import enum
 import json
 import logging
 from os import path
@@ -132,6 +133,15 @@ def merge_dicts(ancestor, left, right):
     return result
 
 
+class ServeUpdate(enum.Enum):
+    No = 0
+    Maybe = enum.auto()
+    Yes = enum.auto()
+
+    def __bool__(self):
+        return bool(self.value)
+
+
 class Blob(dict):
     jsonschema = None
 
@@ -180,9 +190,9 @@ class Blob(dict):
 
     def shouldServeUpdate(self, updateQuery):
         """Should be implemented by subclasses. In the event that it's not,
-        False is the safest thing to return (it will fail closed instead of
+        No is the safest thing to return (it will fail closed instead of
         failing open)."""
-        return False
+        return ServeUpdate.No
 
     def containsForbiddenDomain(self, product, allowlistedDomains):
         raise NotImplementedError()

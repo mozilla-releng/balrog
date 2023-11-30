@@ -1,5 +1,5 @@
 from auslib.AUS import isForbiddenUrl
-from auslib.blobs.base import XMLBlob
+from auslib.blobs.base import ServeUpdate, XMLBlob
 from auslib.errors import BadDataError
 from auslib.util.hashes import getHashLen
 
@@ -48,7 +48,7 @@ class GMPBlobV1(XMLBlob):
     def shouldServeUpdate(self, updateQuery):
         # GMP updates should always be returned. It is the responsibility
         # of the client to decide whether or not any action needs to be taken.
-        return True
+        return ServeUpdate.Yes
 
     def getInnerHeaderXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         return "    <addons>"

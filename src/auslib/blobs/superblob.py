@@ -1,4 +1,4 @@
-from auslib.blobs.base import XMLBlob
+from auslib.blobs.base import ServeUpdate, XMLBlob
 
 
 class SuperBlob(XMLBlob):
@@ -23,7 +23,7 @@ class SuperBlob(XMLBlob):
 
     def shouldServeUpdate(self, updateQuery):
         # Since a superblob update will always be returned.
-        return True
+        return ServeUpdate.Yes
 
     def containsForbiddenDomain(self, product, allowlistedDomains):
         # Since SuperBlobs don't have any URLs
