@@ -48,3 +48,11 @@ tasks:
             docker-image: {in-tree: 'python3.9'}
             env:
                 TOXENV: 'check,py39'
+
+    client-py311:
+        description: balrog client tests (python 3.11)
+        run:
+            cwd: '{checkout}/client'
+        worker:
+            env:
+                TOXENV: 'py311'
