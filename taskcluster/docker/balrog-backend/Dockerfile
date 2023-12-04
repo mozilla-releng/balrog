@@ -1,12 +1,12 @@
 # WARNING: keep this file in sync with the main balrog Dockerfile
 
-FROM python:3.9-slim
+FROM python:3.11-slim
 
-# Some versions of the python:3.8 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
+# uwsgi needs libpcre3 for routing support to be enabled.
 # default-libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 # xz-utils is needed to compress production database dumps
 RUN apt-get -q update \
-    && apt-get -q --yes install libpcre3 libpcre3-dev default-libmysqlclient-dev mariadb-client xz-utils pkg-config \
+    && apt-get -q --yes install libpcre3-dev default-libmysqlclient-dev mariadb-client xz-utils pkg-config \
     && apt-get clean
 
 WORKDIR /app

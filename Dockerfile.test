@@ -17,6 +17,7 @@ RUN apt-get -q update \
     && apt-get clean
 
 WORKDIR /app
+RUN git config --global --add safe.directory /app
 
 # The general app requirements and packages required to run Tox are installed into the system.
 # We copy them in early to avoid re-installing them unless absolutely necessary.
