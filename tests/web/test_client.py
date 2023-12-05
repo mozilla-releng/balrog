@@ -1,6 +1,7 @@
 # coding: latin-1
 import logging
 import os
+import time
 import unittest
 from contextlib import ExitStack
 from tempfile import mkstemp
@@ -923,6 +924,8 @@ def mock_autograph(monkeypatch):
     import auslib.util.autograph
 
     monkeypatch.setattr(auslib.util.autograph, "_sign_hash", mockreturn)
+    # speed up tests by not actually sleeping
+    monkeypatch.setattr(time, "sleep", lambda _: None)
 
 
 class ClientTest(ClientTestBase):
