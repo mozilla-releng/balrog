@@ -77,8 +77,15 @@ const useStyles = makeStyles(theme => ({
     right: theme.spacing(12),
   },
   options: {
+    background: theme.palette.background.default,
+    top: 64,
+    right: 0,
+    left: 0,
+    padding: `${theme.spacing(4)}px ${theme.spacing(4)}px 0`,
     display: 'flex',
     justifyContent: 'flex-end',
+    position: 'fixed',
+    zIndex: 2,
   },
   dropdown: {
     minWidth: 200,
@@ -133,6 +140,7 @@ function ListRules(props) {
   const [rulesWithScheduledChanges, setRulesWithScheduledChanges] = useState(
     []
   );
+  const searchFieldRef = useRef();
   const [productChannelOptions, setProductChannelOptions] = useState([]);
   const productChannelQueries = query.product
     ? [query.product, query.channel]
@@ -1282,7 +1290,7 @@ function ListRules(props) {
       {error && <ErrorPanel fixed error={error} />}
       {!isLoading && productChannelOptions && (
         <Fragment>
-          <div className={classes.options}>
+          <div ref={searchFieldRef} className={classes.options}>
             <FormControl className={classes.pendingSignoffFormControl}>
               <FormLabel className={classes.pendingSignoffFormLabel}>
                 Filter by rules with scheduled changes
@@ -1306,38 +1314,45 @@ function ListRules(props) {
               ))}
             </TextField>
           </div>
-          {productChannelFilter !== ALL &&
-            productChannelQueries &&
-            productChannelQueries.length === 2 &&
-            emergencyShutoffs.find(
-              es =>
-                es.product === productChannelQueries[0] &&
-                es.channel === productChannelQueries[1]
-            ) && (
-              <EmergencyShutoffCard
-                className={classes.card}
-                emergencyShutoff={emergencyShutoffs.find(
-                  es =>
-                    es.product === productChannelQueries[0] &&
-                    es.channel === productChannelQueries[1]
-                )}
-                onEnableUpdates={handleEnableUpdates}
-                onCancelEnable={handleCancelEnableUpdates}
-                onSignoff={handleSignoffEnableUpdates}
-                onRevoke={handleRevokeEnableUpdates}
-              />
+          <div
+            style={{
+              marginTop: searchFieldRef.current
+                ? searchFieldRef.current.clientHeight
+                : '',
+            }}>
+            {productChannelFilter !== ALL &&
+              productChannelQueries &&
+              productChannelQueries.length === 2 &&
+              emergencyShutoffs.find(
+                es =>
+                  es.product === productChannelQueries[0] &&
+                  es.channel === productChannelQueries[1]
+              ) && (
+                <EmergencyShutoffCard
+                  className={classes.card}
+                  emergencyShutoff={emergencyShutoffs.find(
+                    es =>
+                      es.product === productChannelQueries[0] &&
+                      es.channel === productChannelQueries[1]
+                  )}
+                  onEnableUpdates={handleEnableUpdates}
+                  onCancelEnable={handleCancelEnableUpdates}
+                  onSignoff={handleSignoffEnableUpdates}
+                  onRevoke={handleRevokeEnableUpdates}
+                />
+              )}
+            {filteredRulesWithScheduledChanges && (
+              <Fragment>
+                <VariableSizeList
+                  ref={ruleListRef}
+                  rowRenderer={Row}
+                  scrollToRow={scrollToRow}
+                  rowHeight={getRowHeight}
+                  rowCount={filteredRulesCount}
+                />
+              </Fragment>
             )}
-          {filteredRulesWithScheduledChanges && (
-            <Fragment>
-              <VariableSizeList
-                ref={ruleListRef}
-                rowRenderer={Row}
-                scrollToRow={scrollToRow}
-                rowHeight={getRowHeight}
-                rowCount={filteredRulesCount}
-              />
-            </Fragment>
-          )}
+          </div>
         </Fragment>
       )}
       <DialogAction
