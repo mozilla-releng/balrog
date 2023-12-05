@@ -1,6 +1,7 @@
 # coding: latin-1
 import logging
 import os
+import time
 import unittest
 from contextlib import ExitStack
 from tempfile import mkstemp
@@ -923,6 +924,8 @@ def mock_autograph(monkeypatch):
     import auslib.util.autograph
 
     monkeypatch.setattr(auslib.util.autograph, "_sign_hash", mockreturn)
+    # speed up tests by not actually sleeping
+    monkeypatch.setattr(time, "sleep", lambda _: None)
 
 
 class ClientTest(ClientTestBase):
@@ -1344,16 +1347,20 @@ class ClientTest(ClientTestBase):
         assert "Content-Signature" not in ret.headers
 
     @pytest.mark.usefixtures("mock_autograph")
-    def testGMPResponseWithSigning(self):
+    @unittest.mock.patch("auslib.web.public.helpers.make_hash")
+    def testGMPResponseWithSigning(self, mocked_make_hash):
         ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
         assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
+        mocked_make_hash.assert_called_once_with(ret.text)
 
     @pytest.mark.usefixtures("mock_autograph")
-    def testGMPResponseWithSigningAutographTempFailure(self):
+    @unittest.mock.patch("auslib.web.public.helpers.make_hash")
+    def testGMPResponseWithSigningAutographTempFailure(self, mocked_make_hash):
         global mock_autograph_exception_count
         mock_autograph_exception_count = 1
         ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
         assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
+        mocked_make_hash.assert_called_once_with(ret.text)
 
     @pytest.mark.usefixtures("mock_autograph")
     def testGMPResponseWithSigningAutographPermanentFailure(self):
