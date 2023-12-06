@@ -10,7 +10,7 @@ kind-dependencies:
 
 transforms:
     - balrog_taskgraph.transforms.run_on_releases:transforms
-    - taskgraph.transforms.job:transforms
+    - taskgraph.transforms.run:transforms
     - taskgraph.transforms.task:transforms
 
 task-defaults:

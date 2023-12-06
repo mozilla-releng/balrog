@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from taskgraph.target_tasks import _target_task, get_method
+from taskgraph.target_tasks import get_method, register_target_task
 from taskgraph.util.attributes import match_run_on_git_branches as match_run_on_git_tags
 
 _GIT_REFS_TAGS_PREFIX = "refs/tags/"
@@ -32,7 +32,7 @@ def filter_for_github_release_name(task, parameters):
     return match_run_on_git_tags(head_tag, run_on_releases)
 
 
-@_target_task("balrog")
+@register_target_task("balrog")
 def target_tasks_balrog(full_task_graph, parameters, graph_config):
     sanity_check_release(parameters)
 
