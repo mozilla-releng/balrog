@@ -14,6 +14,7 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormLabel from '@material-ui/core/FormLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 import Switch from '@material-ui/core/Switch';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import Drawer from '@material-ui/core/Drawer';
@@ -155,6 +156,8 @@ function ListRules(props) {
     addSeconds(new Date(), -30)
   );
   const [dateTimePickerError, setDateTimePickerError] = useState(null);
+  const [rewindDate, setRewindDate] = useState(null);
+  const [rewindDateError, setRewindDateError] = useState(null);
   const [scrollToRow, setScrollToRow] = useState(null);
   const [roles, setRoles] = useState([]);
   const [requiredRoles, setRequiredRoles] = useState([]);
@@ -340,24 +343,17 @@ function ListRules(props) {
   }, [products.data, channels.data, rules.data]);
 
   useEffect(() => {
-    Promise.all([
-      fetchScheduledChanges(),
-      fetchRules(),
-      fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
-      fetchEmergencyShutoffs(),
-      fetchScheduledEmergencyShutoffs(),
-      fetchProducts(),
-      fetchChannels(),
-    ]).then(([sc, r, rs, es, scheduledEs]) => {
-      if (!sc.data || !r.data || !rs.data) {
-        return;
-      }
+    if (!rules.data || !scheduledChanges.data || !requiredSignoffs.data) {
+      return;
+    }
 
-      const scheduledChanges = sc.data.data.scheduled_changes;
-      const requiredSignoffs = rs.data.data.required_signoffs;
-      const { rules } = r.data.data;
-      const rulesWithScheduledChanges = rules.map(rule => {
-        const sc = scheduledChanges.find(sc => rule.rule_id === sc.rule_id);
+    if (rewindDate) {
+      setRulesWithScheduledChanges(rules.data.data.rules);
+    } else {
+      const rulesWithScheduledChanges = rules.data.data.rules.map(rule => {
+        const sc = scheduledChanges.data.data.scheduled_changes.find(
+          sc => rule.rule_id === sc.rule_id
+        );
         const returnedRule = { ...rule };
 
         if (sc) {
@@ -368,7 +364,7 @@ function ListRules(props) {
         }
 
         returnedRule.required_signoffs = {};
-        requiredSignoffs.forEach(rs => {
+        requiredSignoffs.data.data.required_signoffs.forEach(rs => {
           if (ruleMatchesRequiredSignoff(rule, rs)) {
             returnedRule.required_signoffs[rs.role] = rs.signoffs_required;
           }
@@ -377,7 +373,7 @@ function ListRules(props) {
         return returnedRule;
       });
 
-      scheduledChanges.forEach(sc => {
+      scheduledChanges.data.data.scheduled_changes.forEach(sc => {
         if (sc.change_type === 'insert') {
           const rule = { scheduledChange: sc };
 
@@ -414,24 +410,52 @@ function ListRules(props) {
 
       setRulesWithScheduledChanges(sortedRules);
 
-      if (es.data && scheduledEs.data) {
-        const shutoffs = es.data.data.shutoffs.map(shutoff => {
-          const returnedShutoff = clone(shutoff);
-          const sc = scheduledEs.data.data.scheduled_changes.find(
-            ses =>
-              ses.product === shutoff.product && ses.channel === shutoff.channel
-          );
+      if (
+        emergencyShutoffsAction.data &&
+        scheduledEmergencyShutoffsAction.data
+      ) {
+        const shutoffs = emergencyShutoffsAction.data.data.shutoffs.map(
+          shutoff => {
+            const returnedShutoff = clone(shutoff);
+            const sc = scheduledEmergencyShutoffsAction.data.data.scheduled_changes.find(
+              ses =>
+                ses.product === shutoff.product &&
+                ses.channel === shutoff.channel
+            );
 
-          if (sc) {
-            returnedShutoff.scheduledChange = sc;
+            if (sc) {
+              returnedShutoff.scheduledChange = sc;
+            }
+
+            return returnedShutoff;
           }
-
-          return returnedShutoff;
-        });
+        );
 
         setEmergencyShutoffs(shutoffs);
       }
-    });
+    }
+  }, [
+    rules.data,
+    scheduledChanges.data,
+    requiredSignoffs.data,
+    emergencyShutoffsAction.data,
+    scheduledEmergencyShutoffsAction.data,
+  ]);
+
+  useEffect(() => {
+    fetchRules(rewindDate ? rewindDate.getTime() : null);
+  }, [rewindDate]);
+
+  useEffect(() => {
+    Promise.all([
+      fetchScheduledChanges(),
+      fetchRules(),
+      fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
+      fetchEmergencyShutoffs(),
+      fetchScheduledEmergencyShutoffs(),
+      fetchProducts(),
+      fetchChannels(),
+    ]);
   }, []);
 
   useEffect(() => {
@@ -491,6 +515,15 @@ function ListRules(props) {
   const handleDateTimeChange = date => {
     setScheduleDeleteDate(date);
     setDateTimePickerError(null);
+  };
+
+  const handleRewindDateTimePickerError = error => {
+    setRewindDateError(error);
+  };
+
+  const handleRewindDateTimeChange = date => {
+    setRewindDate(date);
+    setRewindDateError(null);
   };
 
   const handleDialogError = error => {
@@ -1235,6 +1268,7 @@ function ListRules(props) {
             : Object.values(rule.scheduledChange).join('-')
         }
         style={style}>
+        {/* should we go read only mode if rewindDate is set instead? */}
         <RuleCard
           className={classNames(classes.card, {
             [classes.ruleCardSelected]: isSelected,
@@ -1244,12 +1278,14 @@ function ListRules(props) {
           rulesFilter={productChannelQueries}
           onRuleDelete={handleRuleDelete}
           canSignoff={
+            !rewindDate &&
             Object.keys(rule.required_signoffs).filter(r => roles.includes(r))
               .length
           }
           onSignoff={() => handleSignoff(rule)}
           onRevoke={() => handleRevoke(rule)}
           onViewReleaseClick={handleViewRelease}
+          disableActions={Boolean(rewindDate)}
           actionLoading={isActionLoading}
         />
       </div>
@@ -1291,6 +1327,19 @@ function ListRules(props) {
       {!isLoading && productChannelOptions && (
         <Fragment>
           <div ref={searchFieldRef} className={classes.options}>
+            <DateTimePicker
+              disableFuture
+              inputVariant="outlined"
+              label="Rewind to..."
+              onError={handleRewindDateTimePickerError}
+              helperText={rewindDateError}
+              onDateTimeChange={handleRewindDateTimeChange}
+              value={rewindDate}
+            />
+            <FormControl>
+              <FormLabel>Diff?</FormLabel>
+              <Checkbox disabled={!rewindDate} />
+            </FormControl>
             <FormControl className={classes.pendingSignoffFormControl}>
               <FormLabel className={classes.pendingSignoffFormLabel}>
                 Filter by rules with scheduled changes

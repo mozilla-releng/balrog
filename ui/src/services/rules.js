@@ -1,7 +1,8 @@
 import { stringify } from 'qs';
 import axios from 'axios';
 
-const getRules = () => axios.get('/rules');
+const getRules = (timestamp = null) =>
+  timestamp ? axios.get(`/rules?timestamp=${timestamp}`) : axios.get('/rules');
 const getRule = id => axios.get(`/rules/${id}`);
 const getChannels = () => axios.get('/rules/columns/channel');
 const getProducts = () => axios.get('/rules/columns/product');
