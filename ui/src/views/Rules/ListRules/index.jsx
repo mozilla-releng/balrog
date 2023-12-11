@@ -417,6 +417,7 @@ function ListRules(props) {
         const shutoffs = emergencyShutoffsAction.data.data.shutoffs.map(
           shutoff => {
             const returnedShutoff = clone(shutoff);
+            /* eslint-disable-next-line max-len */
             const sc = scheduledEmergencyShutoffsAction.data.data.scheduled_changes.find(
               ses =>
                 ses.product === shutoff.product &&
