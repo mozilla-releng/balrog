@@ -27,7 +27,6 @@ import RuleCard from '../../../components/RuleCard';
 import DialogAction from '../../../components/DialogAction';
 import DateTimePicker from '../../../components/DateTimePicker';
 import VariableSizeList from '../../../components/VariableSizeList';
-import DiffRule from '../../../components/DiffRule';
 import SpeedDial from '../../../components/SpeedDial';
 import Link from '../../../utils/Link';
 import getDiffedProperties from '../../../utils/getDiffedProperties';
@@ -1274,10 +1273,6 @@ function ListRules(props) {
   const Row = ({ index, style }) => {
     // if we're in rewind mode, rule is a historical rule, not the current one
     const rule = filteredRulesWithScheduledChanges[index];
-    // this is always the current version
-    const currentRule = rulesWithScheduledChanges.filter(
-      r => r.rule_id === rule.rule_id
-    );
     const isSelected = isRuleSelected(rule);
 
     return (
@@ -1289,30 +1284,25 @@ function ListRules(props) {
         }
         style={style}>
         {/* should we go read only mode if rewindDate is set instead? */}
-        {rewoundRules.length === 0 ? (
-          <RuleCard
-            className={classNames(classes.card, {
-              [classes.ruleCardSelected]: isSelected,
-            })}
-            key={rule.rule_id}
-            rule={rule}
-            rulesFilter={productChannelQueries}
-            onRuleDelete={handleRuleDelete}
-            canSignoff={
-              !rewindDate &&
-              Object.keys(rule.required_signoffs).filter(r => roles.includes(r))
-                .length
-            }
-            onSignoff={() => handleSignoff(rule)}
-            onRevoke={() => handleRevoke(rule)}
-            onViewReleaseClick={handleViewRelease}
-            disableActions={Boolean(rewindDate)}
-            actionLoading={isActionLoading}
-          />
-        ) : (
-          // TODO: Why is the current version of the rule on the left side?
-          <DiffRule firstRule={rule} secondRule={currentRule} />
-        )}
+        <RuleCard
+          className={classNames(classes.card, {
+            [classes.ruleCardSelected]: isSelected,
+          })}
+          key={rule.rule_id}
+          rule={rule}
+          rulesFilter={productChannelQueries}
+          onRuleDelete={handleRuleDelete}
+          canSignoff={
+            !rewindDate &&
+            Object.keys(rule.required_signoffs).filter(r => roles.includes(r))
+              .length
+          }
+          onSignoff={() => handleSignoff(rule)}
+          onRevoke={() => handleRevoke(rule)}
+          onViewReleaseClick={handleViewRelease}
+          disableActions={Boolean(rewindDate)}
+          actionLoading={isActionLoading}
+        />
       </div>
     );
   };
