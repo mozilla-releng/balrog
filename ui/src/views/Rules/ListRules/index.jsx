@@ -27,6 +27,7 @@ import RuleCard from '../../../components/RuleCard';
 import DialogAction from '../../../components/DialogAction';
 import DateTimePicker from '../../../components/DateTimePicker';
 import VariableSizeList from '../../../components/VariableSizeList';
+import DiffRule from '../../../components/DiffRule';
 import SpeedDial from '../../../components/SpeedDial';
 import Link from '../../../utils/Link';
 import getDiffedProperties from '../../../utils/getDiffedProperties';
@@ -141,6 +142,7 @@ function ListRules(props) {
   const [rulesWithScheduledChanges, setRulesWithScheduledChanges] = useState(
     []
   );
+  const [rewoundRules, setRewoundRules] = useState([]);
   const searchFieldRef = useRef();
   const [productChannelOptions, setProductChannelOptions] = useState([]);
   const productChannelQueries = query.product
@@ -348,7 +350,7 @@ function ListRules(props) {
     }
 
     if (rewindDate) {
-      setRulesWithScheduledChanges(rules.data.data.rules);
+      setRewoundRules(rules.data.data.rules);
     } else {
       const rulesWithScheduledChanges = rules.data.data.rules.map(rule => {
         const sc = scheduledChanges.data.data.scheduled_changes.find(
@@ -409,6 +411,7 @@ function ListRules(props) {
       });
 
       setRulesWithScheduledChanges(sortedRules);
+      setRewoundRules([]);
 
       if (
         emergencyShutoffsAction.data &&
@@ -487,7 +490,17 @@ function ListRules(props) {
     }
 
     // Product channel dropdown filter
-    filteredRules = filteredRules.filter(rule => {
+    // should be rulesWithScheduledChanges if rewoundRules.length is 0,
+    // or we're diffing rewound rules against current rules
+    // TODO: make this work without hardcodes :)
+    // use this line for non-diff mode
+    // let rulesToShow = rewoundRules.length === 0 ?
+    // filteredRules :
+    // rewoundRules;
+    // use this line for diff mode
+    let rulesToShow = filteredRules;
+
+    rulesToShow = rulesToShow.filter(rule => {
       const [productFilter, channelFilter] = productChannelQueries;
       const ruleProduct =
         rule.product || (rule.scheduledChange && rule.scheduledChange.product);
@@ -503,11 +516,12 @@ function ListRules(props) {
       return true;
     });
 
-    return filteredRules;
+    return rulesToShow;
   }, [
     productChannelQueries,
     rulesWithScheduledChanges,
     query.onlyScheduledChanges,
+    rewoundRules,
   ]);
   const handleDateTimePickerError = error => {
     setDateTimePickerError(error);
@@ -1258,7 +1272,12 @@ function ListRules(props) {
   };
 
   const Row = ({ index, style }) => {
+    // if we're in rewind mode, rule is a historical rule, not the current one
     const rule = filteredRulesWithScheduledChanges[index];
+    // this is always the current version
+    const currentRule = rulesWithScheduledChanges.filter(
+      r => r.rule_id === rule.rule_id
+    );
     const isSelected = isRuleSelected(rule);
 
     return (
@@ -1270,25 +1289,30 @@ function ListRules(props) {
         }
         style={style}>
         {/* should we go read only mode if rewindDate is set instead? */}
-        <RuleCard
-          className={classNames(classes.card, {
-            [classes.ruleCardSelected]: isSelected,
-          })}
-          key={rule.rule_id}
-          rule={rule}
-          rulesFilter={productChannelQueries}
-          onRuleDelete={handleRuleDelete}
-          canSignoff={
-            !rewindDate &&
-            Object.keys(rule.required_signoffs).filter(r => roles.includes(r))
-              .length
-          }
-          onSignoff={() => handleSignoff(rule)}
-          onRevoke={() => handleRevoke(rule)}
-          onViewReleaseClick={handleViewRelease}
-          disableActions={Boolean(rewindDate)}
-          actionLoading={isActionLoading}
-        />
+        {rewoundRules.length === 0 ? (
+          <RuleCard
+            className={classNames(classes.card, {
+              [classes.ruleCardSelected]: isSelected,
+            })}
+            key={rule.rule_id}
+            rule={rule}
+            rulesFilter={productChannelQueries}
+            onRuleDelete={handleRuleDelete}
+            canSignoff={
+              !rewindDate &&
+              Object.keys(rule.required_signoffs).filter(r => roles.includes(r))
+                .length
+            }
+            onSignoff={() => handleSignoff(rule)}
+            onRevoke={() => handleRevoke(rule)}
+            onViewReleaseClick={handleViewRelease}
+            disableActions={Boolean(rewindDate)}
+            actionLoading={isActionLoading}
+          />
+        ) : (
+          // TODO: Why is the current version of the rule on the left side?
+          <DiffRule firstRule={rule} secondRule={currentRule} />
+        )}
       </div>
     );
   };
