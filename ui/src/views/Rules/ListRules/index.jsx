@@ -84,9 +84,12 @@ const useStyles = makeStyles(theme => ({
     left: 0,
     padding: `${theme.spacing(4)}px ${theme.spacing(4)}px 0`,
     display: 'flex',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     position: 'fixed',
     zIndex: 2,
+  },
+  checkbox: {
+    padding: `${theme.spacing(2)}px ${theme.spacing(1)}px`,
   },
   dropdown: {
     minWidth: 200,
@@ -1366,7 +1369,7 @@ function ListRules(props) {
               onDateTimeChange={handleRewindDateTimeChange}
               value={rewindDate}
             />
-            <FormControl>
+            <FormControl className={classes.checkbox}>
               <FormLabel>Diff?</FormLabel>
               <Checkbox
                 disabled={!rewindDate}
