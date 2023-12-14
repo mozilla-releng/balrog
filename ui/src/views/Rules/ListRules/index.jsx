@@ -1271,19 +1271,16 @@ function ListRules(props) {
     // if we're in rewind mode, rule is a historical rule, not the current one
     const rule = filteredRulesWithScheduledChanges[index];
     const isSelected = isRuleSelected(rule);
-    const currentRule = rulesWithScheduledChanges.filter(
-      // eslint-disable-next-line eqeqeq
-      r => r.rule_id == rule.rule_id
+    const currentRule = rulesWithScheduledChanges.find(
+      r => r.rule_id === rule.rule_id
     );
 
     if (rewoundRules.length !== 0) {
       // TODO: horrible hack, need to fix this
       // maybe add diffAgainst argument to RuleCard
       // to control whether or not DiffRule is shown
-      if (showRewindDiff && currentRule.length !== 0) {
-        const [currRule] = currentRule;
-
-        rule.scheduledChange = currRule;
+      if (showRewindDiff && currentRule) {
+        rule.scheduledChange = currentRule;
         rule.scheduledChange.change_type = 'update';
         rule.scheduledChange.required_signoffs = {};
         rule.scheduledChange.signoffs = {};
