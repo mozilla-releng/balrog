@@ -1323,7 +1323,7 @@ function ListRules(props) {
           onSignoff={() => handleSignoff(rule)}
           onRevoke={() => handleRevoke(rule)}
           onViewReleaseClick={handleViewRelease}
-          disableActions={Boolean(rewindDate)}
+          isRewound={Boolean(rewindDate)}
           actionLoading={isActionLoading}
         />
       </div>
