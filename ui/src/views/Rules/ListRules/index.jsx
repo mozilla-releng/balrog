@@ -145,7 +145,8 @@ function ListRules(props) {
     []
   );
   const [rewoundRules, setRewoundRules] = useState([]);
-  const searchFieldRef = useRef();
+  const searchFieldRef = useRef(null);
+  const [searchFieldHeight, setSearchFieldHeight] = useState(0);
   const [productChannelOptions, setProductChannelOptions] = useState([]);
   const productChannelQueries = query.product
     ? [query.product, query.channel]
@@ -465,6 +466,10 @@ function ListRules(props) {
       fetchProducts(),
       fetchChannels(),
     ]);
+  }, []);
+
+  useEffect(() => {
+    setSearchFieldHeight(searchFieldRef.current.clientHeight);
   }, []);
 
   useEffect(() => {
@@ -1400,12 +1405,7 @@ function ListRules(props) {
               ))}
             </TextField>
           </div>
-          <div
-            style={{
-              marginTop: searchFieldRef.current
-                ? searchFieldRef.current.clientHeight
-                : '',
-            }}>
+          <div style={{ marginTop: searchFieldHeight }}>
             {productChannelFilter !== ALL &&
               productChannelQueries &&
               productChannelQueries.length === 2 &&
