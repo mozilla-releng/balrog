@@ -1304,7 +1304,7 @@ function ListRules(props) {
               className={classes.dropdown}
               select
               label={`Product${productChannelSeparator}Channel`}
-              value={productChannelFilter}
+              value={productChannelOptions.length ? productChannelFilter : ''}
               onChange={handleFilterChange}>
               <MenuItem value="all">All Rules</MenuItem>
               {productChannelOptions.map(option => (
