@@ -161,7 +161,9 @@ function ListRules(props) {
     addSeconds(new Date(), -30)
   );
   const [dateTimePickerError, setDateTimePickerError] = useState(null);
-  const [rewindDate, setRewindDate] = useState(null);
+  const [rewindDate, setRewindDate] = useState(
+    query.timestamp ? new Date(parseInt(query.timestamp, 10)) : null
+  );
   const [rewindDateError, setRewindDateError] = useState(null);
   // const [showRewindDiff, setShowRewindDiff] = useState(false);
   const [scrollToRow, setScrollToRow] = useState(null);
@@ -544,6 +546,13 @@ function ListRules(props) {
   const handleRewindDateTimeChange = date => {
     setRewindDate(date);
     setRewindDateError(null);
+
+    const qs = {
+      ...query,
+      timestamp: date ? date.getTime() : undefined,
+    };
+
+    props.history.push(`/rules${stringify(qs, { addQueryPrefix: true })}`);
   };
 
   const handleDialogError = error => {
@@ -1360,7 +1369,12 @@ function ListRules(props) {
   }, [hashQuery, filteredRulesCount]);
 
   return (
-    <Dashboard title="Rules">
+    <Dashboard
+      title={
+        rewindDate
+          ? `Rules @ ${rewindDate.toString().split('(')[0]}`
+          : 'Rules'
+      }>
       {isLoading && <Spinner loading />}
       {error && <ErrorPanel fixed error={error} />}
       {!isLoading && productChannelOptions && (
