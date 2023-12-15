@@ -1371,9 +1371,7 @@ function ListRules(props) {
   return (
     <Dashboard
       title={
-        rewindDate
-          ? `Rules @ ${rewindDate.toString().split('(')[0]}`
-          : 'Rules'
+        rewindDate ? `Rules @ ${rewindDate.toString().split('(')[0]}` : 'Rules'
       }>
       {isLoading && <Spinner loading />}
       {error && <ErrorPanel fixed error={error} />}
