@@ -495,15 +495,16 @@ function ListRules(props) {
       filteredRules = filteredRules.filter(rule => rule.scheduledChange);
     }
 
+    const rewoundFilteredRules = clone(rewoundRules);
+    // use this line for non-diff mode on rewound rules
+    let rulesToShow =
+      rewoundRules.length === 0 ? filteredRules : rewoundFilteredRules;
+
     if (!productChannelQueries) {
-      return filteredRules;
+      return rulesToShow;
     }
 
     // Product channel dropdown filter
-
-    // use this line for non-diff mode on rewound rules
-    let rulesToShow = rewoundRules.length === 0 ? filteredRules : rewoundRules;
-
     rulesToShow = rulesToShow.filter(rule => {
       const [productFilter, channelFilter] = productChannelQueries;
       const ruleProduct =
