@@ -1327,6 +1327,7 @@ function ListRules(props) {
           onRuleDelete={handleRuleDelete}
           canSignoff={
             !rewindDate &&
+            rule.required_signoffs &&
             Object.keys(rule.required_signoffs).filter(r => roles.includes(r))
               .length
           }
@@ -1380,6 +1381,7 @@ function ListRules(props) {
           <div ref={searchFieldRef} className={classes.options}>
             <DateTimePicker
               disableFuture
+              clearable
               inputVariant="outlined"
               label="Rewind to..."
               onError={handleRewindDateTimePickerError}
