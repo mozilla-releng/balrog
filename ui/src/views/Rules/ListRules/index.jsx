@@ -143,7 +143,6 @@ function ListRules(props) {
   const [rulesWithScheduledChanges, setRulesWithScheduledChanges] = useState(
     []
   );
-  const [rewoundRules, setRewoundRules] = useState([]);
   const searchFieldRef = useRef(null);
   const [searchFieldHeight, setSearchFieldHeight] = useState(0);
   const [productChannelOptions, setProductChannelOptions] = useState([]);
@@ -160,6 +159,7 @@ function ListRules(props) {
     addSeconds(new Date(), -30)
   );
   const [dateTimePickerError, setDateTimePickerError] = useState(null);
+  const [rewoundRules, setRewoundRules] = useState([]);
   const [rewindDate, setRewindDate] = useState(
     query.timestamp ? new Date(parseInt(query.timestamp, 10)) : null
   );
