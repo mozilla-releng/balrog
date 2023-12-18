@@ -461,7 +461,6 @@ function ListRules(props) {
   useEffect(() => {
     Promise.all([
       fetchScheduledChanges(),
-      fetchRules(),
       fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
       fetchEmergencyShutoffs(),
       fetchScheduledEmergencyShutoffs(),
