@@ -1315,7 +1315,6 @@ function ListRules(props) {
             : Object.values(rule.scheduledChange).join('-')
         }
         style={style}>
-        {/* should we go read only mode if rewindDate is set instead? */}
         <RuleCard
           className={classNames(classes.card, {
             [classes.ruleCardSelected]: isSelected,
