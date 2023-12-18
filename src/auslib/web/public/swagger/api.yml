@@ -198,7 +198,7 @@ paths:
 
   /json/1/{product}/{version}/{buildTarget}/{channel}/update.json:
     get:
-      operationId: 'auslib.web.public.json.get_update'
+      operationId: 'auslib.web.public.json.get_update_1'
       description: Return the appropriate update for the given parameters
       produces:
         - application/json
@@ -207,6 +207,23 @@ paths:
         - $ref: '#/parameters/version'
         - $ref: '#/parameters/buildTarget'
         - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/force'
+      responses:
+        200:
+          description: Update response in JSON format
+
+  /json/2/{product}/{version}/{buildTarget}/{channel}/{osVersion}/update.json:
+    get:
+      operationId: 'auslib.web.public.json.get_update_2'
+      description: Return the appropriate update for the given parameters
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/product'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/buildTarget'
+        - $ref: '#/parameters/channel'
+        - $ref: '#/parameters/osVersion'
         - $ref: '#/parameters/force'
       responses:
         200:

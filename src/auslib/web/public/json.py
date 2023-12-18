@@ -22,3 +22,7 @@ def get_update(transaction, **parameters):
     headers.update(get_content_signature_headers(response, ""))
 
     return Response(response=response, status=200, headers=headers, mimetype="application/json")
+
+
+get_update_1 = get_update
+get_update_2 = get_update
