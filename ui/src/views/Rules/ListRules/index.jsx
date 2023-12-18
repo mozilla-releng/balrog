@@ -1458,7 +1458,7 @@ function ListRules(props) {
           state: { rulesFilter: productChannelQueries },
         }}>
         <Tooltip title="Add Rule">
-          <Fab color="primary" className={classes.fab}>
+          <Fab color="primary" className={classes.fab} disabled={rewindDate}>
             <PlusIcon />
           </Fab>
         </Tooltip>
