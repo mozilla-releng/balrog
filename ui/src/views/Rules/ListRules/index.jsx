@@ -466,6 +466,9 @@ function ListRules(props) {
   }, []);
 
   useEffect(() => {
+    // Except for initialization, reading ref.current during rendering
+    // results in unpredictable behaviour. So, we read ref.current
+    // on initialization and save the value to state.
     setSearchFieldHeight(searchFieldRef.current.clientHeight);
   }, []);
 
