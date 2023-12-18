@@ -1404,6 +1404,7 @@ function ListRules(props) {
                 Filter by rules with scheduled changes
               </FormLabel>
               <Switch
+                disabled={rewindDate}
                 checked={Boolean(query.onlyScheduledChanges)}
                 onChange={handleShowOnlyScheduledChangesChange}
               />
