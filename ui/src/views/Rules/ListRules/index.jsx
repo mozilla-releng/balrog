@@ -120,6 +120,9 @@ const useStyles = makeStyles(theme => ({
   pendingSignoffFormLabel: {
     transform: 'scale(0.75)',
   },
+  rewindPicker: {
+    marginTop: theme.spacing(0.5),
+  },
 }));
 
 function ListRules(props) {
@@ -1378,6 +1381,7 @@ function ListRules(props) {
         <Fragment>
           <div ref={searchFieldRef} className={classes.options}>
             <DateTimePicker
+              className={classes.rewindPicker}
               disableFuture
               clearable
               inputVariant="outlined"
