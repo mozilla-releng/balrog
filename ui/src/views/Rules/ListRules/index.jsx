@@ -14,7 +14,6 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormLabel from '@material-ui/core/FormLabel';
-// import Checkbox from '@material-ui/core/Checkbox';
 import Switch from '@material-ui/core/Switch';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import Drawer from '@material-ui/core/Drawer';
@@ -87,9 +86,6 @@ const useStyles = makeStyles(theme => ({
     justifyContent: 'center',
     position: 'fixed',
     zIndex: 2,
-  },
-  checkbox: {
-    padding: `${theme.spacing(2)}px ${theme.spacing(1)}px`,
   },
   dropdown: {
     minWidth: 200,
@@ -168,7 +164,6 @@ function ListRules(props) {
     query.timestamp ? new Date(parseInt(query.timestamp, 10)) : null
   );
   const [rewindDateError, setRewindDateError] = useState(null);
-  // const [showRewindDiff, setShowRewindDiff] = useState(false);
   const [scrollToRow, setScrollToRow] = useState(null);
   const [roles, setRoles] = useState([]);
   const [requiredRoles, setRequiredRoles] = useState([]);
@@ -315,8 +310,6 @@ function ListRules(props) {
     setSnackbarState({ message, variant, open: true });
   };
 
-  // const handleRewindDiffChange = ({ target: { checked: value } }) =>
-  //   setShowRewindDiff(value);
   const handleSnackbarClose = (event, reason) => {
     if (reason === 'clickaway') {
       return;
@@ -1291,24 +1284,6 @@ function ListRules(props) {
     // if we're in rewind mode, rule is a historical rule, not the current one
     const rule = filteredRulesWithScheduledChanges[index];
     const isSelected = isRuleSelected(rule);
-    // const currentRule = rulesWithScheduledChanges.find(
-    //   r => r.rule_id === rule.rule_id
-    // );
-
-    // if (rewoundRules.length !== 0) {
-    //   // TODO: horrible hack, need to fix this
-    //   // maybe add diffAgainst argument to RuleCard
-    //   // to control whether or not DiffRule is shown
-    //   if (showRewindDiff && currentRule) {
-    //     rule.scheduledChange = currentRule;
-    //     rule.scheduledChange.change_type = 'update';
-    //     rule.scheduledChange.required_signoffs = {};
-    //     rule.scheduledChange.signoffs = {};
-    //     rule.scheduledChange.when = new Date();
-    //   } else if (rule.scheduledChange) {
-    //     delete rule.scheduledChange;
-    //   }
-    // }
 
     return (
       <div
@@ -1391,14 +1366,6 @@ function ListRules(props) {
               onDateTimeChange={handleRewindDateTimeChange}
               value={rewindDate}
             />
-            {/* <FormControl className={classes.checkbox}>
-              <FormLabel>Diff?</FormLabel>
-              <Checkbox
-                disabled={!rewindDate}
-                checked={showRewindDiff}
-                onChange={handleRewindDiffChange}
-              />
-            </FormControl> */}
             <FormControl className={classes.pendingSignoffFormControl}>
               <FormLabel className={classes.pendingSignoffFormLabel}>
                 Filter by rules with scheduled changes
