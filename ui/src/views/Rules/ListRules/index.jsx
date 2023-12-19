@@ -17,8 +17,10 @@ import FormLabel from '@material-ui/core/FormLabel';
 import Switch from '@material-ui/core/Switch';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import Drawer from '@material-ui/core/Drawer';
+import IconButton from '@material-ui/core/IconButton';
 import PlusIcon from 'mdi-react/PlusIcon';
 import PauseIcon from 'mdi-react/PauseIcon';
+import CloseIcon from 'mdi-react/CloseIcon';
 import Dashboard from '../../../components/Dashboard';
 import ErrorPanel from '../../../components/ErrorPanel';
 import EmergencyShutoffCard from '../../../components/EmergencyShutoffCard';
@@ -1361,13 +1363,27 @@ function ListRules(props) {
             <DateTimePicker
               className={classes.rewindPicker}
               disableFuture
-              clearable
               inputVariant="outlined"
               label="Rewind to..."
               onError={handleRewindDateTimePickerError}
               helperText={rewindDateError}
               onDateTimeChange={handleRewindDateTimeChange}
               value={rewindDate}
+              InputProps={{
+                endAdornment: (
+                  <IconButton
+                    onClick={() => handleRewindDateTimeChange(null)}
+                    disabled={!rewindDate}
+                    style={{ order: 1 }}
+                    color="disabled">
+                    <CloseIcon />
+                  </IconButton>
+                ),
+              }}
+              InputAdornmentProps={{
+                position: 'start',
+                style: { order: 2, marginLeft: 0 },
+              }}
             />
             <FormControl className={classes.pendingSignoffFormControl}>
               <FormLabel className={classes.pendingSignoffFormLabel}>
