@@ -327,6 +327,28 @@ function ListRules(props) {
     rules.data.data.rules.some(
       rule => rule.product === product && rule.channel === channel
     );
+  const sortRules = rules => {
+    // Rules are sorted by priority. Rules that are
+    // pending (ie: still just a Scheduled Change) will be inserted based
+    // on the priority in the Scheduled Change. Rules that have Scheduled
+    // updates or deletes will remain sorted on their current priority
+    // because it's more important to make it easy to assess current state
+    // than future state.
+    const sortedRules = rules.sort((ruleA, ruleB) => {
+      const priorityA =
+        ruleA.scheduledChange && ruleA.scheduledChange.priority
+          ? ruleA.scheduledChange.priority
+          : ruleA.priority;
+      const priorityB =
+        ruleB.scheduledChange && ruleB.scheduledChange.priority
+          ? ruleB.scheduledChange.priority
+          : ruleB.priority;
+
+      return priorityB - priorityA;
+    });
+
+    return sortedRules;
+  };
 
   useEffect(() => {
     if (!products.data || !channels.data || !rules.data) {
@@ -356,7 +378,9 @@ function ListRules(props) {
     }
 
     if (rewindDate) {
-      setRewoundRules(rules.data.data.rules);
+      const sortedRewoundRules = sortRules(rules.data.data.rules);
+
+      setRewoundRules(sortedRewoundRules);
     } else {
       const rulesWithScheduledChanges = rules.data.data.rules.map(rule => {
         const sc = scheduledChanges.data.data.scheduled_changes.find(
@@ -397,24 +421,7 @@ function ListRules(props) {
         }
       });
 
-      // Rules are sorted by priority. Rules that are
-      // pending (ie: still just a Scheduled Change) will be inserted based
-      // on the priority in the Scheduled Change. Rules that have Scheduled
-      // updates or deletes will remain sorted on their current priority
-      // because it's more important to make it easy to assess current state
-      // than future state.
-      const sortedRules = rulesWithScheduledChanges.sort((ruleA, ruleB) => {
-        const priorityA =
-          ruleA.scheduledChange && ruleA.scheduledChange.priority
-            ? ruleA.scheduledChange.priority
-            : ruleA.priority;
-        const priorityB =
-          ruleB.scheduledChange && ruleB.scheduledChange.priority
-            ? ruleB.scheduledChange.priority
-            : ruleB.priority;
-
-        return priorityB - priorityA;
-      });
+      const sortedRules = sortRules(rulesWithScheduledChanges);
 
       setRulesWithScheduledChanges(sortedRules);
       setRewoundRules([]);
