@@ -7,7 +7,8 @@ from flask import current_app as app
 from flask import make_response
 
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
-from auslib.blobs.base import createBlob
+from auslib.blobs.base import XMLBlob, createBlob
+from auslib.errors import BadDataError
 from auslib.global_state import dbo
 from auslib.services import releases
 from auslib.web.public.helpers import AUS, get_aus_metadata_headers, get_content_signature_headers, with_transaction
@@ -147,6 +148,8 @@ def get_update_blob(transaction, **url):
 
     # passing {},None returns empty xml
     if release:
+        if not isinstance(release, XMLBlob):
+            raise BadDataError("Wrong blob type")
         response_products = release.getResponseProducts()
         response_blobs = []
         response_blob_names = release.getResponseBlobs()

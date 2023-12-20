@@ -457,3 +457,9 @@ def testGuardianResponseV2WithGradualRollout(client, forceValue, response):
     assert ret.get_json() == response
     assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
     auslib.web.public.helpers.make_hash.assert_called_once_with(ret.text)
+
+
+@pytest.mark.usefixtures("guardian_db")
+def testXMLForGuardianBlob(client):
+    ret = client.get("/update/1/Guardian/0.4.0.0/default/WINNT_x86_64/en-US/release/update.xml")
+    assert ret.status_code == 400
