@@ -17,6 +17,8 @@ import FormLabel from '@material-ui/core/FormLabel';
 import Switch from '@material-ui/core/Switch';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import Drawer from '@material-ui/core/Drawer';
+import Alert from '@material-ui/lab/Alert';
+import AlertTitle from '@material-ui/lab/AlertTitle';
 import IconButton from '@material-ui/core/IconButton';
 import PlusIcon from 'mdi-react/PlusIcon';
 import PauseIcon from 'mdi-react/PauseIcon';
@@ -506,8 +508,7 @@ function ListRules(props) {
 
     const rewoundFilteredRules = clone(rewoundRules);
     // use this line for non-diff mode on rewound rules
-    let rulesToShow =
-      rewoundRules.length === 0 ? filteredRules : rewoundFilteredRules;
+    let rulesToShow = rewindDate ? rewoundFilteredRules : filteredRules;
 
     if (!productChannelQueries) {
       return rulesToShow;
@@ -537,6 +538,21 @@ function ListRules(props) {
     query.onlyScheduledChanges,
     rewoundRules,
   ]);
+  const getFilteredRulesInfo = () => {
+    const [product, channel] = productChannelQueries;
+    let info;
+
+    if (!productChannelQueries) {
+      info = `No rules found on ${rewindDate}.`;
+    } else if (channel) {
+      info = `No rules found for the ${product} ${channel} channel on ${rewindDate}.`;
+    } else {
+      info = `No rules found for the ${product} channel on ${rewindDate}.`;
+    }
+
+    return info;
+  };
+
   const handleDateTimePickerError = error => {
     setDateTimePickerError(error);
   };
@@ -1438,7 +1454,7 @@ function ListRules(props) {
                   onRevoke={handleRevokeEnableUpdates}
                 />
               )}
-            {filteredRulesWithScheduledChanges && (
+            {filteredRulesWithScheduledChanges.length !== 0 ? (
               <Fragment>
                 <VariableSizeList
                   ref={ruleListRef}
@@ -1448,6 +1464,22 @@ function ListRules(props) {
                   rowCount={filteredRulesCount}
                 />
               </Fragment>
+            ) : (
+              <Alert
+                severity="info"
+                variant="filled"
+                action={
+                  <IconButton
+                    onClick={() => handleRewindDateTimeChange(null)}
+                    color="inherit"
+                    size="small">
+                    <CloseIcon />
+                  </IconButton>
+                }
+                {...props}>
+                <AlertTitle>Info</AlertTitle>
+                {getFilteredRulesInfo()}
+              </Alert>
             )}
           </div>
         </Fragment>
