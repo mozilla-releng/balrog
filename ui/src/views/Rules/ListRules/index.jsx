@@ -1498,17 +1498,19 @@ function ListRules(props) {
         </pre>
       </Drawer>
       <Snackbar onClose={handleSnackbarClose} {...snackbarState} />
-      <Link
-        to={{
-          pathname: '/rules/create',
-          state: { rulesFilter: productChannelQueries },
-        }}>
-        <Tooltip title="Add Rule">
-          <Fab color="primary" className={classes.fab} disabled={rewindDate}>
-            <PlusIcon />
-          </Fab>
-        </Tooltip>
-      </Link>
+      {!rewindDate && (
+        <Link
+          to={{
+            pathname: '/rules/create',
+            state: { rulesFilter: productChannelQueries },
+          }}>
+          <Tooltip title="Add Rule">
+            <Fab color="primary" className={classes.fab} disabled={rewindDate}>
+              <PlusIcon />
+            </Fab>
+          </Tooltip>
+        </Link>
+      )}
       <SpeedDial ariaLabel="Secondary Actions">
         <SpeedDialAction
           FabProps={{
