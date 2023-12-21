@@ -161,7 +161,7 @@ function RuleCard({
   user,
   readOnly,
   actionLoading,
-  isRewound,
+  disableActions,
   // We don't actually use these, but we need to avoid passing them onto
   // `Card` like the rest of the props.
   onAuthorize: _,
@@ -861,7 +861,11 @@ function RuleCard({
       </CardContent>
       {!readOnly && (
         <CardActions className={classes.cardActions}>
-          {user && !isRewound ? (
+          {disableActions ? (
+            <Button color="secondary" disabled={disableActions}>
+              Duplicate
+            </Button>
+          ) : (
             <Link
               className={classes.link}
               to={{
@@ -872,16 +876,14 @@ function RuleCard({
                   rulesFilter,
                 },
               }}>
-              <Button color="secondary" disabled={isRewound}>
-                Duplicate
-              </Button>
+              <Button color="secondary">Duplicate</Button>
             </Link>
-          ) : (
-            <Button color="secondary" disabled={isRewound}>
-              Duplicate
-            </Button>
           )}
-          {user && !isRewound ? (
+          {disableActions ? (
+            <Button color="secondary" disabled={disableActions}>
+              Update
+            </Button>
+          ) : (
             <Link
               className={classes.link}
               to={{
@@ -892,18 +894,12 @@ function RuleCard({
                   rulesFilter,
                 },
               }}>
-              <Button color="secondary" disabled={isRewound}>
-                Update
-              </Button>
+              <Button color="secondary">Update</Button>
             </Link>
-          ) : (
-            <Button color="secondary" disabled={isRewound}>
-              Update
-            </Button>
           )}
           <Button
             color="secondary"
-            disabled={!user || actionLoading || isRewound}
+            disabled={disableActions || actionLoading}
             onClick={() => onRuleDelete(rule)}>
             Delete
           </Button>
@@ -911,14 +907,14 @@ function RuleCard({
             (user && user.email in rule.scheduledChange.signoffs ? (
               <Button
                 color="secondary"
-                disabled={!user || actionLoading || isRewound}
+                disabled={disableActions || actionLoading}
                 onClick={onRevoke}>
                 Revoke Signoff
               </Button>
             ) : (
               <Button
                 color="secondary"
-                disabled={!user || actionLoading || isRewound || !canSignoff}
+                disabled={disableActions || actionLoading || !canSignoff}
                 onClick={onSignoff}>
                 Signoff
               </Button>
@@ -941,14 +937,14 @@ RuleCard.propTypes = {
   // navigating to a different view will be disabled
   actionLoading: bool,
   // If true, the card will disable all buttons
-  isRewound: bool,
+  disableActions: bool,
 };
 
 RuleCard.defaultProps = {
   onRuleDelete: Function.prototype,
   readOnly: false,
   actionLoading: false,
-  isRewound: false,
+  disableActions: false,
 };
 
 export default withUser(RuleCard);
