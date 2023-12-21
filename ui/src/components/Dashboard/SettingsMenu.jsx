@@ -59,7 +59,13 @@ function SettingsMenu({ user, disabled }) {
         onClose={handleMenuClose}>
         {menuItems.settings.map(navItem => (
           <MenuItem dense key={navItem.value} title={navItem.value}>
-            <Link className={classes.link} to={navItem.path}>
+            <Link
+              className={classes.link}
+              to={
+                window.location.pathname === navItem.path
+                  ? `${window.location.pathname}${window.location.search}`
+                  : navItem.path
+              }>
               {navItem.value.toUpperCase()}
             </Link>
           </MenuItem>

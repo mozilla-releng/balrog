@@ -71,7 +71,11 @@ export default function Dashboard(props) {
                 key={menuItem.value}
                 className={disabled ? classes.disabledLink : classes.link}
                 nav
-                to={menuItem.path}>
+                to={
+                  window.location.pathname === menuItem.path
+                    ? `${window.location.pathname}${window.location.search}`
+                    : menuItem.path
+                }>
                 <Button color="inherit">{menuItem.value}</Button>
               </Link>
             ))}
