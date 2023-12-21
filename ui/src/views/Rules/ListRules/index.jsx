@@ -539,15 +539,16 @@ function ListRules(props) {
     rewoundRules,
   ]);
   const getFilteredRulesInfo = () => {
-    const [product, channel] = productChannelQueries;
     let info;
 
-    if (!productChannelQueries) {
-      info = `No rules found on ${rewindDate}.`;
-    } else if (channel) {
-      info = `No rules found for the ${product} ${channel} channel on ${rewindDate}.`;
-    } else {
-      info = `No rules found for the ${product} channel on ${rewindDate}.`;
+    if (rewindDate) {
+      if (!productChannelQueries) {
+        info = `No rules found on ${rewindDate}.`;
+      } else if (productChannelQueries[1]) {
+        info = `No rules found for the ${productChannelQueries[0]} ${productChannelQueries[1]} channel on ${rewindDate}.`;
+      } else {
+        info = `No rules found for the ${productChannelQueries[0]} channel on ${rewindDate}.`;
+      }
     }
 
     return info;
