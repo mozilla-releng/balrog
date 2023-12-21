@@ -549,6 +549,8 @@ function ListRules(props) {
       } else {
         info = `No rules found for the ${productChannelQueries[0]} channel on ${rewindDate}.`;
       }
+    } else if (query.onlyScheduledChanges) {
+      info = `No rules found with scheduled changes.`;
     }
 
     return info;
@@ -574,6 +576,7 @@ function ListRules(props) {
     const qs = {
       ...query,
       timestamp: date ? date.getTime() : undefined,
+      onlyScheduledChanges: undefined,
     };
 
     props.history.push(`/rules${stringify(qs, { addQueryPrefix: true })}`);
