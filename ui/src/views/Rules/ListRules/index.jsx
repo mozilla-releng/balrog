@@ -73,6 +73,7 @@ import remToPx from '../../../utils/remToPx';
 import elementsHeight from '../../../utils/elementsHeight';
 import Snackbar from '../../../components/Snackbar';
 import { ruleMatchesChannel } from '../../../utils/rules';
+import getFilteredRulesInfo from '../../../utils/getFilteredRulesInfo';
 
 const ALL = 'all';
 const useStyles = makeStyles(theme => ({
@@ -538,24 +539,6 @@ function ListRules(props) {
     query.onlyScheduledChanges,
     rewoundRules,
   ]);
-  const getFilteredRulesInfo = () => {
-    let info;
-
-    if (rewindDate) {
-      if (!productChannelQueries) {
-        info = `No rules found on ${rewindDate}.`;
-      } else if (productChannelQueries[1]) {
-        info = `No rules found for the ${productChannelQueries[0]} ${productChannelQueries[1]} channel on ${rewindDate}.`;
-      } else {
-        info = `No rules found for the ${productChannelQueries[0]} channel on ${rewindDate}.`;
-      }
-    } else if (query.onlyScheduledChanges) {
-      info = `No rules found with scheduled changes.`;
-    }
-
-    return info;
-  };
-
   const handleDateTimePickerError = error => {
     setDateTimePickerError(error);
   };
@@ -1482,7 +1465,11 @@ function ListRules(props) {
                 }
                 {...props}>
                 <AlertTitle>Info</AlertTitle>
-                {getFilteredRulesInfo()}
+                {getFilteredRulesInfo(
+                  productChannelQueries,
+                  rewindDate,
+                  query.onlyScheduledChanges
+                )}
               </Alert>
             )}
           </div>
