@@ -1,4 +1,5 @@
 import React, { Fragment, useState, useEffect, useMemo } from 'react';
+import { stringify, parse } from 'qs';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import { makeStyles } from '@material-ui/styles';
 import List from '@material-ui/core/List';
@@ -33,8 +34,10 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function ListRoles() {
+function ListRoles(props) {
   const classes = useStyles();
+  const { search } = props.location;
+  const query = parse(search.slice(1));
   const [usersAction, fetchUsers] = useAction(getUsers);
   const [roleFilter, setRoleFilter] = useState(ALL);
   const isLoading = usersAction.loading;
@@ -75,6 +78,13 @@ function ListRoles() {
 
   const handleFilterChange = ({ target: { value } }) => {
     setRoleFilter(value);
+
+    const qs = {
+      ...query,
+      role: value !== 'all' ? value : undefined,
+    };
+
+    props.history.push(`/roles${stringify(qs, { addQueryPrefix: true })}`);
   };
 
   return (
