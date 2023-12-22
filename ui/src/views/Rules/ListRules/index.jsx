@@ -1379,17 +1379,19 @@ function ListRules(props) {
               helperText={rewindDateError}
               onDateTimeChange={handleRewindDateTimeChange}
               value={rewindDate}
-              InputProps={{
-                endAdornment: (
-                  <IconButton
-                    onClick={() => handleRewindDateTimeChange(null)}
-                    disabled={!rewindDate}
-                    style={{ order: 1 }}
-                    color="disabled">
-                    <CloseIcon />
-                  </IconButton>
-                ),
-              }}
+              InputProps={
+                rewindDate && {
+                  endAdornment: (
+                    <IconButton
+                      onClick={() => handleRewindDateTimeChange(null)}
+                      disabled={!rewindDate}
+                      style={{ order: 1 }}
+                      color="disabled">
+                      <CloseIcon />
+                    </IconButton>
+                  ),
+                }
+              }
               InputAdornmentProps={{
                 position: 'start',
                 style: { order: 2, marginLeft: 0 },
