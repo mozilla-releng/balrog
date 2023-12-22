@@ -9,13 +9,19 @@ import { AutoSizer, WindowScroller, List } from 'react-virtualized';
 import { APP_BAR_HEIGHT } from '../../utils/constants';
 
 const VariableSizeList = forwardRef((props, ref) => {
-  const { scrollToRow, ...rest } = props;
+  const { scrollToRow, pathname, ...rest } = props;
   const listRef = useRef(null);
 
   useEffect(() => {
     const rowOffset = listRef.current.getOffsetForRow({ index: scrollToRow });
 
-    listRef.current.scrollToPosition(rowOffset - APP_BAR_HEIGHT);
+    if (pathname === '/rules') {
+      listRef.current.scrollToPosition(
+        rowOffset - APP_BAR_HEIGHT - rest.searchFieldHeight
+      );
+    } else {
+      listRef.current.scrollToPosition(rowOffset - APP_BAR_HEIGHT);
+    }
   }, [scrollToRow]);
 
   useImperativeHandle(ref, () => ({

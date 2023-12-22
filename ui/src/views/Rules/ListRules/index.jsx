@@ -1449,6 +1449,8 @@ function ListRules(props) {
                   scrollToRow={scrollToRow}
                   rowHeight={getRowHeight}
                   rowCount={filteredRulesCount}
+                  searchFieldHeight={searchFieldHeight}
+                  pathname={props.location.pathname}
                 />
               </Fragment>
             ) : (
