@@ -428,31 +428,27 @@ function ListRules(props) {
 
       setRulesWithScheduledChanges(sortedRules);
       setRewoundRules([]);
+    }
 
-      if (
-        emergencyShutoffsAction.data &&
-        scheduledEmergencyShutoffsAction.data
-      ) {
-        const shutoffs = emergencyShutoffsAction.data.data.shutoffs.map(
-          shutoff => {
-            const returnedShutoff = clone(shutoff);
-            /* eslint-disable-next-line max-len */
-            const sc = scheduledEmergencyShutoffsAction.data.data.scheduled_changes.find(
-              ses =>
-                ses.product === shutoff.product &&
-                ses.channel === shutoff.channel
-            );
+    if (emergencyShutoffsAction.data && scheduledEmergencyShutoffsAction.data) {
+      const shutoffs = emergencyShutoffsAction.data.data.shutoffs.map(
+        shutoff => {
+          const returnedShutoff = clone(shutoff);
+          /* eslint-disable-next-line max-len */
+          const sc = scheduledEmergencyShutoffsAction.data.data.scheduled_changes.find(
+            ses =>
+              ses.product === shutoff.product && ses.channel === shutoff.channel
+          );
 
-            if (sc) {
-              returnedShutoff.scheduledChange = sc;
-            }
-
-            return returnedShutoff;
+          if (sc) {
+            returnedShutoff.scheduledChange = sc;
           }
-        );
 
-        setEmergencyShutoffs(shutoffs);
-      }
+          return returnedShutoff;
+        }
+      );
+
+      setEmergencyShutoffs(shutoffs);
     }
   }, [
     rules.data,
