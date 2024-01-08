@@ -340,11 +340,11 @@ function ReleaseCard(props) {
               : `/releases/${release.name}/v2`
           }>
           <Button color="secondary">
-            {release.read_only ? 'View' : 'Update'}
+            {!user || release.read_only ? 'View' : 'Update'}
           </Button>
         </Link>
         <Button
-          disabled={release.read_only || hasRulesPointingAtRevision}
+          disabled={!user || release.read_only || hasRulesPointingAtRevision}
           color="secondary"
           onClick={() => onReleaseDelete(release)}>
           Delete
