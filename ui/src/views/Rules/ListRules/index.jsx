@@ -940,6 +940,9 @@ function ListRules(props) {
   };
 
   const handleSignoffEnableUpdates = async () => {
+    setRequiredRoles(
+      Object.keys(filteredRulesWithScheduledChanges[0].required_signoffs)
+    );
     const [product, channel] = productChannelQueries;
     const esDetails = emergencyShutoffs.find(
       es => es.product === product && es.channel === channel
@@ -1076,6 +1079,7 @@ function ListRules(props) {
     const dialogStates = {
       delete: deleteDialogBody,
       signoff: signoffDialogBody,
+      signoffEnableUpdates: signoffDialogBody,
       disableUpdates: disableUpdatesBody,
     };
 
