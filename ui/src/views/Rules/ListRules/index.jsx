@@ -429,7 +429,9 @@ function ListRules(props) {
       setRulesWithScheduledChanges(sortedRules);
       setRewoundRules([]);
     }
+  }, [rules.data, scheduledChanges.data, requiredSignoffs.data]);
 
+  useEffect(() => {
     if (emergencyShutoffsAction.data && scheduledEmergencyShutoffsAction.data) {
       const shutoffs = emergencyShutoffsAction.data.data.shutoffs.map(
         shutoff => {
@@ -450,13 +452,7 @@ function ListRules(props) {
 
       setEmergencyShutoffs(shutoffs);
     }
-  }, [
-    rules.data,
-    scheduledChanges.data,
-    requiredSignoffs.data,
-    emergencyShutoffsAction.data,
-    scheduledEmergencyShutoffsAction.data,
-  ]);
+  }, [emergencyShutoffsAction.data, scheduledEmergencyShutoffsAction.data]);
 
   useEffect(() => {
     fetchRules(rewindDate ? rewindDate.getTime() : null);
