@@ -161,6 +161,7 @@ function RuleCard({
   user,
   readOnly,
   actionLoading,
+  disableActions,
   // We don't actually use these, but we need to avoid passing them onto
   // `Card` like the rest of the props.
   onAuthorize: _,
@@ -860,7 +861,11 @@ function RuleCard({
       </CardContent>
       {!readOnly && (
         <CardActions className={classes.cardActions}>
-          {user ? (
+          {disableActions ? (
+            <Button color="secondary" disabled={disableActions}>
+              Duplicate
+            </Button>
+          ) : (
             <Link
               className={classes.link}
               to={{
@@ -873,12 +878,12 @@ function RuleCard({
               }}>
               <Button color="secondary">Duplicate</Button>
             </Link>
-          ) : (
-            <Button color="secondary" disabled>
-              Duplicate
-            </Button>
           )}
-          {user ? (
+          {disableActions ? (
+            <Button color="secondary" disabled={disableActions}>
+              Update
+            </Button>
+          ) : (
             <Link
               className={classes.link}
               to={{
@@ -891,14 +896,10 @@ function RuleCard({
               }}>
               <Button color="secondary">Update</Button>
             </Link>
-          ) : (
-            <Button color="secondary" disabled>
-              Update
-            </Button>
           )}
           <Button
             color="secondary"
-            disabled={!user || actionLoading}
+            disabled={disableActions || actionLoading}
             onClick={() => onRuleDelete(rule)}>
             Delete
           </Button>
@@ -906,14 +907,14 @@ function RuleCard({
             (user && user.email in rule.scheduledChange.signoffs ? (
               <Button
                 color="secondary"
-                disabled={!user || actionLoading}
+                disabled={disableActions || actionLoading}
                 onClick={onRevoke}>
                 Revoke Signoff
               </Button>
             ) : (
               <Button
                 color="secondary"
-                disabled={!user || actionLoading || !canSignoff}
+                disabled={disableActions || actionLoading || !canSignoff}
                 onClick={onSignoff}>
                 Signoff
               </Button>
@@ -935,12 +936,15 @@ RuleCard.propTypes = {
   // If true, card buttons that trigger a request
   // navigating to a different view will be disabled
   actionLoading: bool,
+  // If true, the card will disable all buttons
+  disableActions: bool,
 };
 
 RuleCard.defaultProps = {
   onRuleDelete: Function.prototype,
   readOnly: false,
   actionLoading: false,
+  disableActions: false,
 };
 
 export default withUser(RuleCard);

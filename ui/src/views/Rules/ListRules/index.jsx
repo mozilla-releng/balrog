@@ -17,8 +17,12 @@ import FormLabel from '@material-ui/core/FormLabel';
 import Switch from '@material-ui/core/Switch';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import Drawer from '@material-ui/core/Drawer';
+import Alert from '@material-ui/lab/Alert';
+import AlertTitle from '@material-ui/lab/AlertTitle';
+import IconButton from '@material-ui/core/IconButton';
 import PlusIcon from 'mdi-react/PlusIcon';
 import PauseIcon from 'mdi-react/PauseIcon';
+import CloseIcon from 'mdi-react/CloseIcon';
 import Dashboard from '../../../components/Dashboard';
 import ErrorPanel from '../../../components/ErrorPanel';
 import EmergencyShutoffCard from '../../../components/EmergencyShutoffCard';
@@ -69,6 +73,7 @@ import remToPx from '../../../utils/remToPx';
 import elementsHeight from '../../../utils/elementsHeight';
 import Snackbar from '../../../components/Snackbar';
 import { ruleMatchesChannel } from '../../../utils/rules';
+import getFilteredRulesInfo from '../../../utils/getFilteredRulesInfo';
 
 const ALL = 'all';
 const useStyles = makeStyles(theme => ({
@@ -83,7 +88,7 @@ const useStyles = makeStyles(theme => ({
     left: 0,
     padding: `${theme.spacing(4)}px ${theme.spacing(4)}px 0`,
     display: 'flex',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     position: 'fixed',
     zIndex: 2,
   },
@@ -116,6 +121,9 @@ const useStyles = makeStyles(theme => ({
   pendingSignoffFormLabel: {
     transform: 'scale(0.75)',
   },
+  rewindPicker: {
+    marginTop: theme.spacing(0.5),
+  },
 }));
 
 function ListRules(props) {
@@ -140,7 +148,8 @@ function ListRules(props) {
   const [rulesWithScheduledChanges, setRulesWithScheduledChanges] = useState(
     []
   );
-  const searchFieldRef = useRef();
+  const searchFieldRef = useRef(null);
+  const [searchFieldHeight, setSearchFieldHeight] = useState(0);
   const [productChannelOptions, setProductChannelOptions] = useState([]);
   const productChannelQueries = query.product
     ? [query.product, query.channel]
@@ -155,6 +164,11 @@ function ListRules(props) {
     addSeconds(new Date(), -30)
   );
   const [dateTimePickerError, setDateTimePickerError] = useState(null);
+  const [rewoundRules, setRewoundRules] = useState([]);
+  const [rewindDate, setRewindDate] = useState(
+    query.timestamp ? new Date(parseInt(query.timestamp, 10)) : null
+  );
+  const [rewindDateError, setRewindDateError] = useState(null);
   const [scrollToRow, setScrollToRow] = useState(null);
   const [roles, setRoles] = useState([]);
   const [requiredRoles, setRequiredRoles] = useState([]);
@@ -316,6 +330,28 @@ function ListRules(props) {
     rules.data.data.rules.some(
       rule => rule.product === product && rule.channel === channel
     );
+  const sortRules = rules => {
+    // Rules are sorted by priority. Rules that are
+    // pending (ie: still just a Scheduled Change) will be inserted based
+    // on the priority in the Scheduled Change. Rules that have Scheduled
+    // updates or deletes will remain sorted on their current priority
+    // because it's more important to make it easy to assess current state
+    // than future state.
+    const sortedRules = rules.sort((ruleA, ruleB) => {
+      const priorityA =
+        ruleA.scheduledChange && ruleA.scheduledChange.priority
+          ? ruleA.scheduledChange.priority
+          : ruleA.priority;
+      const priorityB =
+        ruleB.scheduledChange && ruleB.scheduledChange.priority
+          ? ruleB.scheduledChange.priority
+          : ruleB.priority;
+
+      return priorityB - priorityA;
+    });
+
+    return sortedRules;
+  };
 
   useEffect(() => {
     if (!products.data || !channels.data || !rules.data) {
@@ -340,24 +376,19 @@ function ListRules(props) {
   }, [products.data, channels.data, rules.data]);
 
   useEffect(() => {
-    Promise.all([
-      fetchScheduledChanges(),
-      fetchRules(),
-      fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
-      fetchEmergencyShutoffs(),
-      fetchScheduledEmergencyShutoffs(),
-      fetchProducts(),
-      fetchChannels(),
-    ]).then(([sc, r, rs, es, scheduledEs]) => {
-      if (!sc.data || !r.data || !rs.data) {
-        return;
-      }
+    if (!rules.data || !scheduledChanges.data || !requiredSignoffs.data) {
+      return;
+    }
 
-      const scheduledChanges = sc.data.data.scheduled_changes;
-      const requiredSignoffs = rs.data.data.required_signoffs;
-      const { rules } = r.data.data;
-      const rulesWithScheduledChanges = rules.map(rule => {
-        const sc = scheduledChanges.find(sc => rule.rule_id === sc.rule_id);
+    if (rewindDate) {
+      const sortedRewoundRules = sortRules(rules.data.data.rules);
+
+      setRewoundRules(sortedRewoundRules);
+    } else {
+      const rulesWithScheduledChanges = rules.data.data.rules.map(rule => {
+        const sc = scheduledChanges.data.data.scheduled_changes.find(
+          sc => rule.rule_id === sc.rule_id
+        );
         const returnedRule = { ...rule };
 
         if (sc) {
@@ -368,7 +399,7 @@ function ListRules(props) {
         }
 
         returnedRule.required_signoffs = {};
-        requiredSignoffs.forEach(rs => {
+        requiredSignoffs.data.data.required_signoffs.forEach(rs => {
           if (ruleMatchesRequiredSignoff(rule, rs)) {
             returnedRule.required_signoffs[rs.role] = rs.signoffs_required;
           }
@@ -377,7 +408,7 @@ function ListRules(props) {
         return returnedRule;
       });
 
-      scheduledChanges.forEach(sc => {
+      scheduledChanges.data.data.scheduled_changes.forEach(sc => {
         if (sc.change_type === 'insert') {
           const rule = { scheduledChange: sc };
 
@@ -393,31 +424,20 @@ function ListRules(props) {
         }
       });
 
-      // Rules are sorted by priority. Rules that are
-      // pending (ie: still just a Scheduled Change) will be inserted based
-      // on the priority in the Scheduled Change. Rules that have Scheduled
-      // updates or deletes will remain sorted on their current priority
-      // because it's more important to make it easy to assess current state
-      // than future state.
-      const sortedRules = rulesWithScheduledChanges.sort((ruleA, ruleB) => {
-        const priorityA =
-          ruleA.scheduledChange && ruleA.scheduledChange.priority
-            ? ruleA.scheduledChange.priority
-            : ruleA.priority;
-        const priorityB =
-          ruleB.scheduledChange && ruleB.scheduledChange.priority
-            ? ruleB.scheduledChange.priority
-            : ruleB.priority;
-
-        return priorityB - priorityA;
-      });
+      const sortedRules = sortRules(rulesWithScheduledChanges);
 
       setRulesWithScheduledChanges(sortedRules);
+      setRewoundRules([]);
+    }
+  }, [rules.data, scheduledChanges.data, requiredSignoffs.data]);
 
-      if (es.data && scheduledEs.data) {
-        const shutoffs = es.data.data.shutoffs.map(shutoff => {
+  useEffect(() => {
+    if (emergencyShutoffsAction.data && scheduledEmergencyShutoffsAction.data) {
+      const shutoffs = emergencyShutoffsAction.data.data.shutoffs.map(
+        shutoff => {
           const returnedShutoff = clone(shutoff);
-          const sc = scheduledEs.data.data.scheduled_changes.find(
+          /* eslint-disable-next-line max-len */
+          const sc = scheduledEmergencyShutoffsAction.data.data.scheduled_changes.find(
             ses =>
               ses.product === shutoff.product && ses.channel === shutoff.channel
           );
@@ -427,11 +447,33 @@ function ListRules(props) {
           }
 
           return returnedShutoff;
-        });
+        }
+      );
 
-        setEmergencyShutoffs(shutoffs);
-      }
-    });
+      setEmergencyShutoffs(shutoffs);
+    }
+  }, [emergencyShutoffsAction.data, scheduledEmergencyShutoffsAction.data]);
+
+  useEffect(() => {
+    fetchRules(rewindDate ? rewindDate.getTime() : null);
+  }, [rewindDate]);
+
+  useEffect(() => {
+    Promise.all([
+      fetchScheduledChanges(),
+      fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
+      fetchEmergencyShutoffs(),
+      fetchScheduledEmergencyShutoffs(),
+      fetchProducts(),
+      fetchChannels(),
+    ]);
+  }, []);
+
+  useEffect(() => {
+    // Except for initialization, reading ref.current during rendering
+    // results in unpredictable behaviour. So, we read ref.current
+    // on initialization and save the value to state.
+    setSearchFieldHeight(searchFieldRef.current.clientHeight);
   }, []);
 
   useEffect(() => {
@@ -457,12 +499,16 @@ function ListRules(props) {
       filteredRules = filteredRules.filter(rule => rule.scheduledChange);
     }
 
+    const rewoundFilteredRules = clone(rewoundRules);
+    // use this line for non-diff mode on rewound rules
+    let rulesToShow = rewindDate ? rewoundFilteredRules : filteredRules;
+
     if (!productChannelQueries) {
-      return filteredRules;
+      return rulesToShow;
     }
 
     // Product channel dropdown filter
-    filteredRules = filteredRules.filter(rule => {
+    rulesToShow = rulesToShow.filter(rule => {
       const [productFilter, channelFilter] = productChannelQueries;
       const ruleProduct =
         rule.product || (rule.scheduledChange && rule.scheduledChange.product);
@@ -478,11 +524,12 @@ function ListRules(props) {
       return true;
     });
 
-    return filteredRules;
+    return rulesToShow;
   }, [
     productChannelQueries,
     rulesWithScheduledChanges,
     query.onlyScheduledChanges,
+    rewoundRules,
   ]);
   const handleDateTimePickerError = error => {
     setDateTimePickerError(error);
@@ -491,6 +538,23 @@ function ListRules(props) {
   const handleDateTimeChange = date => {
     setScheduleDeleteDate(date);
     setDateTimePickerError(null);
+  };
+
+  const handleRewindDateTimePickerError = error => {
+    setRewindDateError(error);
+  };
+
+  const handleRewindDateTimeChange = date => {
+    setRewindDate(date);
+    setRewindDateError(null);
+
+    const qs = {
+      ...query,
+      timestamp: date ? date.getTime() : undefined,
+      onlyScheduledChanges: undefined,
+    };
+
+    props.history.push(`/rules${stringify(qs, { addQueryPrefix: true })}`);
   };
 
   const handleDialogError = error => {
@@ -1228,6 +1292,7 @@ function ListRules(props) {
   };
 
   const Row = ({ index, style }) => {
+    // if we're in rewind mode, rule is a historical rule, not the current one
     const rule = filteredRulesWithScheduledChanges[index];
     const isSelected = isRuleSelected(rule);
 
@@ -1248,12 +1313,15 @@ function ListRules(props) {
           rulesFilter={productChannelQueries}
           onRuleDelete={handleRuleDelete}
           canSignoff={
+            !rewindDate &&
+            rule.required_signoffs &&
             Object.keys(rule.required_signoffs).filter(r => roles.includes(r))
               .length
           }
           onSignoff={() => handleSignoff(rule)}
           onRevoke={() => handleRevoke(rule)}
           onViewReleaseClick={handleViewRelease}
+          disableActions={!props.user || Boolean(rewindDate)}
           actionLoading={isActionLoading}
         />
       </div>
@@ -1289,17 +1357,48 @@ function ListRules(props) {
   }, [hashQuery, filteredRulesCount]);
 
   return (
-    <Dashboard title="Rules">
+    <Dashboard
+      title={
+        rewindDate ? `Rules @ ${rewindDate.toString().split('(')[0]}` : 'Rules'
+      }>
       {isLoading && <Spinner loading />}
       {error && <ErrorPanel fixed error={error} />}
       {!isLoading && productChannelOptions && (
         <Fragment>
           <div ref={searchFieldRef} className={classes.options}>
+            <DateTimePicker
+              className={classes.rewindPicker}
+              disableFuture
+              inputVariant="outlined"
+              label="Rewind to..."
+              onError={handleRewindDateTimePickerError}
+              helperText={rewindDateError}
+              onDateTimeChange={handleRewindDateTimeChange}
+              value={rewindDate}
+              InputProps={
+                rewindDate && {
+                  endAdornment: (
+                    <IconButton
+                      onClick={() => handleRewindDateTimeChange(null)}
+                      disabled={!rewindDate}
+                      style={{ order: 1 }}
+                      color="disabled">
+                      <CloseIcon />
+                    </IconButton>
+                  ),
+                }
+              }
+              InputAdornmentProps={{
+                position: 'start',
+                style: { order: 2, marginLeft: 0 },
+              }}
+            />
             <FormControl className={classes.pendingSignoffFormControl}>
               <FormLabel className={classes.pendingSignoffFormLabel}>
                 Filter by rules with scheduled changes
               </FormLabel>
               <Switch
+                disabled={rewindDate}
                 checked={Boolean(query.onlyScheduledChanges)}
                 onChange={handleShowOnlyScheduledChangesChange}
               />
@@ -1318,12 +1417,7 @@ function ListRules(props) {
               ))}
             </TextField>
           </div>
-          <div
-            style={{
-              marginTop: searchFieldRef.current
-                ? searchFieldRef.current.clientHeight
-                : '',
-            }}>
+          <div style={{ marginTop: searchFieldHeight }}>
             {productChannelFilter !== ALL &&
               productChannelQueries &&
               productChannelQueries.length === 2 &&
@@ -1345,7 +1439,7 @@ function ListRules(props) {
                   onRevoke={handleRevokeEnableUpdates}
                 />
               )}
-            {filteredRulesWithScheduledChanges && (
+            {filteredRulesWithScheduledChanges.length !== 0 ? (
               <Fragment>
                 <VariableSizeList
                   ref={ruleListRef}
@@ -1353,8 +1447,30 @@ function ListRules(props) {
                   scrollToRow={scrollToRow}
                   rowHeight={getRowHeight}
                   rowCount={filteredRulesCount}
+                  searchFieldHeight={searchFieldHeight}
+                  pathname={props.location.pathname}
                 />
               </Fragment>
+            ) : (
+              <Alert
+                severity="info"
+                variant="filled"
+                action={
+                  <IconButton
+                    onClick={() => handleRewindDateTimeChange(null)}
+                    color="inherit"
+                    size="small">
+                    <CloseIcon />
+                  </IconButton>
+                }
+                {...props}>
+                <AlertTitle>Info</AlertTitle>
+                {getFilteredRulesInfo(
+                  productChannelQueries,
+                  rewindDate,
+                  query.onlyScheduledChanges
+                )}
+              </Alert>
             )}
           </div>
         </Fragment>
@@ -1382,17 +1498,19 @@ function ListRules(props) {
         </pre>
       </Drawer>
       <Snackbar onClose={handleSnackbarClose} {...snackbarState} />
-      <Link
-        to={{
-          pathname: '/rules/create',
-          state: { rulesFilter: productChannelQueries },
-        }}>
-        <Tooltip title="Add Rule">
-          <Fab color="primary" className={classes.fab}>
-            <PlusIcon />
-          </Fab>
-        </Tooltip>
-      </Link>
+      {!rewindDate && (
+        <Link
+          to={{
+            pathname: '/rules/create',
+            state: { rulesFilter: productChannelQueries },
+          }}>
+          <Tooltip title="Add Rule">
+            <Fab color="primary" className={classes.fab} disabled={rewindDate}>
+              <PlusIcon />
+            </Fab>
+          </Tooltip>
+        </Link>
+      )}
       <SpeedDial ariaLabel="Secondary Actions">
         <SpeedDialAction
           FabProps={{
