@@ -846,7 +846,7 @@ function RuleCard({
                 className={classes.noDiffedPropertiesText}
                 variant="body2"
                 color="textSecondary">
-                {currentRule ? 'No changes made' : 'Deleted rule'}
+                {currentRule ? 'No changes made yet' : 'Rule was deleted'}
               </Typography>
             ) : (
               <DiffRule firstRule={rule} secondRule={currentRule} />
