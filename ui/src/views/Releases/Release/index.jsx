@@ -293,7 +293,7 @@ function Release(props) {
           <div className={classes.uploadReleaseDiv}>
             <label htmlFor="upload-release-file">
               <input
-                disabled={isReadOnly}
+                disabled={!user || isReadOnly}
                 accept=".json"
                 className={classes.inputOfTypeFile}
                 id="upload-release-file"
@@ -301,7 +301,7 @@ function Release(props) {
                 onChange={handleUploadRelease}
               />
               <Button
-                disabled={isReadOnly}
+                disabled={!user || isReadOnly}
                 size="small"
                 variant="outlined"
                 component="span"
