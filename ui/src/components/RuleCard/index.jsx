@@ -123,7 +123,7 @@ const useStyles = makeStyles(theme => ({
   avatarText: {
     fontSize: theme.typography.body2.fontSize,
   },
-  propertyWithScheduledChange: {
+  propertyWithChange: {
     ...theme.mixins.redDot,
   },
   priorityScheduledChange: {
@@ -204,6 +204,9 @@ function RuleCard({
     rule && diffCause
       ? getDiffedProperties(RULE_DIFF_PROPERTIES, rule, diffCause)
       : [];
+  const markChangedProperties =
+    (diffRules && currentRule) ||
+    (rule.scheduledChange && rule.scheduledChange.change_type === 'update');
   // If there's a scheduled change that may be updating the priority, we want
   // to display it in the header rather than the current priority.
   // For other types of scheduled changes (inserts and deletes) we either
@@ -374,10 +377,8 @@ function RuleCard({
                         <Fragment>
                           Mapping
                           {diffedProperties.includes('mapping') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                           {!readOnly && (
                             <Button
@@ -414,10 +415,8 @@ function RuleCard({
                         <Fragment>
                           Fallback Mapping
                           {diffedProperties.includes('fallbackMapping') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                           {!readOnly && (
                             <Button
@@ -447,10 +446,8 @@ function RuleCard({
                         <Fragment>
                           Background Rate
                           {diffedProperties.includes('backgroundRate') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
@@ -473,10 +470,8 @@ function RuleCard({
                         <Fragment>
                           Data Version
                           {diffedProperties.includes('data_version') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
@@ -520,10 +515,8 @@ function RuleCard({
                         <Fragment>
                           Version
                           {diffedProperties.includes('version') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
@@ -542,10 +535,8 @@ function RuleCard({
                         <Fragment>
                           Build ID
                           {diffedProperties.includes('buildID') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
@@ -564,10 +555,8 @@ function RuleCard({
                         <Fragment>
                           Build Target
                           {diffedProperties.includes('buildTarget') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
@@ -586,10 +575,8 @@ function RuleCard({
                         <Fragment>
                           Locale
                           {diffedProperties.includes('locale') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
@@ -608,10 +595,8 @@ function RuleCard({
                         <Fragment>
                           Distribution
                           {diffedProperties.includes('distribution') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
@@ -630,10 +615,8 @@ function RuleCard({
                         <Fragment>
                           Distribution Version
                           {diffedProperties.includes('distVersion') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
@@ -654,10 +637,8 @@ function RuleCard({
                             rule.osVersion.split(',').length > 1 ? 's' : ''
                           }`}
                           {diffedProperties.includes('osVersion') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
@@ -678,10 +659,8 @@ function RuleCard({
                         <Fragment>
                           Instruction Set
                           {diffedProperties.includes('instructionSet') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
@@ -700,10 +679,8 @@ function RuleCard({
                         <Fragment>
                           Memory
                           {diffedProperties.includes('memory') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
@@ -722,10 +699,8 @@ function RuleCard({
                         <Fragment>
                           64-bit Migration Opt-in
                           {diffedProperties.includes('mig64') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
@@ -744,10 +719,8 @@ function RuleCard({
                         <Fragment>
                           Incompatible JAWS Screen Reader
                           {diffedProperties.includes('jaws') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
@@ -766,10 +739,8 @@ function RuleCard({
                         <Fragment>
                           Header Architecture
                           {diffedProperties.includes('headerArchitecture') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
@@ -796,10 +767,8 @@ function RuleCard({
                         <Fragment>
                           Comment
                           {diffedProperties.includes('comment') &&
-                            rule.scheduledChange.change_type === 'update' && (
-                              <span
-                                className={classes.propertyWithScheduledChange}
-                              />
+                            markChangedProperties && (
+                              <span className={classes.propertyWithChange} />
                             )}
                         </Fragment>
                       }
