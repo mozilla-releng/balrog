@@ -387,19 +387,39 @@ function ListRules(props) {
   }, [products.data, channels.data, rules.data]);
 
   useEffect(() => {
-    if (!rules.data || !scheduledChanges.data || !requiredSignoffs.data) {
-      return;
-    }
-
     if (rewindDate) {
-      const sortedRewoundRules = sortRules(rules.data.data.rules);
+      fetchRules(rewindDate.getTime()).then(r => {
+        if (!r.data) {
+          return;
+        }
 
-      setRewoundRules(sortedRewoundRules);
-    } else {
-      const rulesWithScheduledChanges = rules.data.data.rules.map(rule => {
-        const sc = scheduledChanges.data.data.scheduled_changes.find(
-          sc => rule.rule_id === sc.rule_id
-        );
+        const { rules } = r.data.data;
+        const sortedRewoundRules = sortRules(rules);
+
+        setRewoundRules(sortedRewoundRules);
+      });
+    }
+  }, [rewindDate]);
+
+  useEffect(() => {
+    Promise.all([
+      fetchScheduledChanges(),
+      fetchRules(),
+      fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
+      fetchEmergencyShutoffs(),
+      fetchScheduledEmergencyShutoffs(),
+      fetchProducts(),
+      fetchChannels(),
+    ]).then(([sc, r, rs, es, scheduledEs]) => {
+      if (!sc.data || !r.data || !rs.data) {
+        return;
+      }
+
+      const scheduledChanges = sc.data.data.scheduled_changes;
+      const requiredSignoffs = rs.data.data.required_signoffs;
+      const { rules } = r.data.data;
+      const rulesWithScheduledChanges = rules.map(rule => {
+        const sc = scheduledChanges.find(sc => rule.rule_id === sc.rule_id);
         const returnedRule = { ...rule };
 
         if (sc) {
@@ -410,7 +430,7 @@ function ListRules(props) {
         }
 
         returnedRule.required_signoffs = {};
-        requiredSignoffs.data.data.required_signoffs.forEach(rs => {
+        requiredSignoffs.forEach(rs => {
           if (ruleMatchesRequiredSignoff(rule, rs)) {
             returnedRule.required_signoffs[rs.role] = rs.signoffs_required;
           }
@@ -419,7 +439,7 @@ function ListRules(props) {
         return returnedRule;
       });
 
-      scheduledChanges.data.data.scheduled_changes.forEach(sc => {
+      scheduledChanges.forEach(sc => {
         if (sc.change_type === 'insert') {
           const rule = { scheduledChange: sc };
 
@@ -438,17 +458,12 @@ function ListRules(props) {
       const sortedRules = sortRules(rulesWithScheduledChanges);
 
       setRulesWithScheduledChanges(sortedRules);
-      setRewoundRules([]);
-    }
-  }, [rules.data, scheduledChanges.data, requiredSignoffs.data]);
 
-  useEffect(() => {
-    if (emergencyShutoffsAction.data && scheduledEmergencyShutoffsAction.data) {
-      const shutoffs = emergencyShutoffsAction.data.data.shutoffs.map(
-        shutoff => {
+      if (es.data && scheduledEs.data) {
+        const shutoffs = es.data.data.shutoffs.map(shutoff => {
           const returnedShutoff = clone(shutoff);
           /* eslint-disable-next-line max-len */
-          const sc = scheduledEmergencyShutoffsAction.data.data.scheduled_changes.find(
+          const sc = scheduledEs.data.data.scheduled_changes.find(
             ses =>
               ses.product === shutoff.product && ses.channel === shutoff.channel
           );
@@ -458,26 +473,11 @@ function ListRules(props) {
           }
 
           return returnedShutoff;
-        }
-      );
+        });
 
-      setEmergencyShutoffs(shutoffs);
-    }
-  }, [emergencyShutoffsAction.data, scheduledEmergencyShutoffsAction.data]);
-
-  useEffect(() => {
-    fetchRules(rewindDate ? rewindDate.getTime() : null);
-  }, [rewindDate]);
-
-  useEffect(() => {
-    Promise.all([
-      fetchScheduledChanges(),
-      fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
-      fetchEmergencyShutoffs(),
-      fetchScheduledEmergencyShutoffs(),
-      fetchProducts(),
-      fetchChannels(),
-    ]);
+        setEmergencyShutoffs(shutoffs);
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -558,6 +558,10 @@ function ListRules(props) {
   const handleRewindDateTimeChange = date => {
     setRewindDate(date);
     setRewindDateError(null);
+
+    if (date === null) {
+      setRewoundRules([]);
+    }
 
     const qs = {
       ...query,
