@@ -14,6 +14,7 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormLabel from '@material-ui/core/FormLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 import Switch from '@material-ui/core/Switch';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import Drawer from '@material-ui/core/Drawer';
@@ -92,6 +93,13 @@ const useStyles = makeStyles(theme => ({
     position: 'fixed',
     zIndex: 2,
   },
+  checkbox: {
+    padding: `0 ${theme.spacing(1)}px`,
+  },
+  checkboxLabel: {
+    textAlign: 'center',
+    transform: 'scale(0.75)',
+  },
   dropdown: {
     minWidth: 200,
     marginBottom: theme.spacing(2),
@@ -169,6 +177,7 @@ function ListRules(props) {
     query.timestamp ? new Date(parseInt(query.timestamp, 10)) : null
   );
   const [rewindDateError, setRewindDateError] = useState(null);
+  const [showRewindDiff, setShowRewindDiff] = useState(false);
   const [scrollToRow, setScrollToRow] = useState(null);
   const [roles, setRoles] = useState([]);
   const [requiredRoles, setRequiredRoles] = useState([]);
@@ -315,6 +324,8 @@ function ListRules(props) {
     setSnackbarState({ message, variant, open: true });
   };
 
+  const handleRewindDiffChange = ({ target: { checked: value } }) =>
+    setShowRewindDiff(value);
   const handleSnackbarClose = (event, reason) => {
     if (reason === 'clickaway') {
       return;
@@ -1393,6 +1404,16 @@ function ListRules(props) {
                 style: { order: 2, marginLeft: 0 },
               }}
             />
+            <FormControl className={classes.checkbox}>
+              <FormLabel className={classes.checkboxLabel}>
+                Diff rules?
+              </FormLabel>
+              <Checkbox
+                disabled={!rewindDate}
+                checked={showRewindDiff}
+                onChange={handleRewindDiffChange}
+              />
+            </FormControl>
             <FormControl className={classes.pendingSignoffFormControl}>
               <FormLabel className={classes.pendingSignoffFormLabel}>
                 Filter by rules with scheduled changes
