@@ -67,7 +67,7 @@ const useStyles = makeStyles(theme => ({
   cardContentRoot: {
     padding: theme.spacing(1),
   },
-  deletedText: {
+  noDiffedPropertiesText: {
     padding: `0 ${theme.spacing(1)}px`,
   },
   listItem: {
@@ -80,7 +80,7 @@ const useStyles = makeStyles(theme => ({
   cardActions: {
     justifyContent: 'flex-end',
   },
-  scheduledChangesTitle: {
+  changesTitle: {
     padding: `0 ${theme.spacing(1)}px`,
   },
   diff: {
@@ -105,7 +105,7 @@ const useStyles = makeStyles(theme => ({
     margin: `${theme.spacing(1)}px`,
     backgroundColor: theme.palette.grey[200],
   },
-  scheduledChangesHeader: {
+  changesHeader: {
     display: 'flex',
     justifyContent: 'space-between',
   },
@@ -152,6 +152,7 @@ const useStyles = makeStyles(theme => ({
 
 function RuleCard({
   rule,
+  currentRule,
   rulesFilter,
   onRuleDelete,
   canSignoff,
@@ -162,6 +163,7 @@ function RuleCard({
   readOnly,
   actionLoading,
   disableActions,
+  diffRules,
   // We don't actually use these, but we need to avoid passing them onto
   // `Card` like the rest of the props.
   onAuthorize: _,
@@ -197,9 +199,10 @@ function RuleCard({
   const ChipIcon = getChipIcon(
     rule.scheduledChange && rule.scheduledChange.change_type
   );
+  const diffCause = currentRule || rule.scheduledChange;
   const diffedProperties =
-    rule && rule.scheduledChange
-      ? getDiffedProperties(RULE_DIFF_PROPERTIES, rule, rule.scheduledChange)
+    rule && diffCause
+      ? getDiffedProperties(RULE_DIFF_PROPERTIES, rule, diffCause)
       : [];
   // If there's a scheduled change that may be updating the priority, we want
   // to display it in the header rather than the current priority.
@@ -813,9 +816,9 @@ function RuleCard({
             {rule.scheduledChange.change_type !== 'insert' && (
               <Divider className={classes.divider} />
             )}
-            <div className={classes.scheduledChangesHeader}>
+            <div className={classes.changesHeader}>
               <Typography
-                className={classes.scheduledChangesTitle}
+                className={classes.changesTitle}
                 component="h4"
                 variant="subtitle1">
                 Scheduled Changes{' '}
@@ -841,7 +844,7 @@ function RuleCard({
             </div>
             {rule.scheduledChange.change_type === 'delete' ? (
               <Typography
-                className={classes.deletedText}
+                className={classes.noDiffedPropertiesText}
                 variant="body2"
                 color="textSecondary">
                 All properties will be deleted
@@ -857,6 +860,29 @@ function RuleCard({
             signoffs={rule.scheduledChange.signoffs}
             className={classes.space}
           />
+        )}
+        {diffRules && (
+          <Fragment>
+            <Divider className={classes.divider} />
+            <div className={classes.changesHeader}>
+              <Typography
+                className={classes.changesTitle}
+                component="h4"
+                variant="subtitle1">
+                Historical Changes{' '}
+              </Typography>
+            </div>
+            {diffedProperties.length === 0 ? (
+              <Typography
+                className={classes.noDiffedPropertiesText}
+                variant="body2"
+                color="textSecondary">
+                {currentRule ? 'No changes made' : 'Deleted rule'}
+              </Typography>
+            ) : (
+              <DiffRule firstRule={rule} secondRule={currentRule} />
+            )}
+          </Fragment>
         )}
       </CardContent>
       {!readOnly && (

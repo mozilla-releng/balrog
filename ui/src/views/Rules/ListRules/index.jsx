@@ -1306,6 +1306,9 @@ function ListRules(props) {
     // if we're in rewind mode, rule is a historical rule, not the current one
     const rule = filteredRulesWithScheduledChanges[index];
     const isSelected = isRuleSelected(rule);
+    const currentRule = rulesWithScheduledChanges.find(
+      r => r.rule_id === rule.rule_id
+    );
 
     return (
       <div
@@ -1321,6 +1324,7 @@ function ListRules(props) {
           })}
           key={rule.rule_id}
           rule={rule}
+          currentRule={Boolean(rewindDate) && currentRule}
           rulesFilter={productChannelQueries}
           onRuleDelete={handleRuleDelete}
           canSignoff={
@@ -1332,6 +1336,7 @@ function ListRules(props) {
           onSignoff={() => handleSignoff(rule)}
           onRevoke={() => handleRevoke(rule)}
           onViewReleaseClick={handleViewRelease}
+          diffRules={showRewindDiff}
           disableActions={!props.user || Boolean(rewindDate)}
           actionLoading={isActionLoading}
         />
