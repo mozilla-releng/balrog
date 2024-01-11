@@ -1166,6 +1166,9 @@ function ListRules(props) {
 
   const getRowHeight = ({ index }) => {
     const rule = filteredRulesWithScheduledChanges[index];
+    const currentRule = rulesWithScheduledChanges.find(
+      r => r.rule_id === rule.rule_id
+    );
     const hasScheduledChanges = Boolean(rule.scheduledChange);
     // Padding top and bottom included
     const listPadding = theme.spacing(1);
@@ -1177,7 +1180,11 @@ function ListRules(props) {
     // actions row
     height += buttonHeight + theme.spacing(2);
 
-    if (!hasScheduledChanges || rule.scheduledChange.change_type !== 'insert') {
+    if (
+      showRewindDiff ||
+      !hasScheduledChanges ||
+      rule.scheduledChange.change_type !== 'insert'
+    ) {
       height +=
         Math.max(
           // avatar height
@@ -1280,6 +1287,36 @@ function ListRules(props) {
         // Space for however many rows exist.
         height += signoffRows * body2TextHeight();
       }
+    } else if (showRewindDiff) {
+      // row with the historical changes title
+      height += Math.max(subtitle1TextHeight(), theme.spacing(3));
+
+      if (!currentRule) {
+        // row with "rule was deleted"
+        height += body2TextHeight();
+      } else {
+        const diffedProperties = getDiffedProperties(
+          RULE_DIFF_PROPERTIES,
+          rule,
+          currentRule
+        );
+
+        if (diffedProperties.length === 0) {
+          // row with "no changes made yet"
+          height += body2TextHeight();
+        } else {
+          // diff viewer + marginTop + height of the
+          // horizontal scroller (rough estimate;
+          // sometimes there are no scroller as well)
+          height +=
+            diffedProperties.length * diffRowHeight +
+            theme.spacing(1) +
+            theme.spacing(2);
+        }
+      }
+
+      // divider
+      height += theme.spacing(2) + 1;
     }
 
     // space below the card (margin)
