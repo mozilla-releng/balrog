@@ -19,11 +19,13 @@ sys.path.append(path.join(path.dirname(__file__), ".."))
 sys.path.append(path.join(path.dirname(__file__), path.join("..", "vendor", "lib", "python")))
 
 
+# TODO: filter out things that don't end in 14 digits
 RELEASES_CLEANUP_CONDITION = """
 LEFT JOIN rules rules_mapping ON (name=rules_mapping.mapping)
 WHERE name LIKE '%%nightly%%'
 AND name NOT LIKE '%%latest'
 AND rules_mapping.mapping IS NULL
+AND RIGHT(name, 14) REGEXP '^[[:digit:]]*$'
 AND (STR_TO_DATE(RIGHT(name, 14), "%%Y%%m%%d%%H%%i%%S") < NOW() - INTERVAL {nightly_age} DAY);
 """
 
