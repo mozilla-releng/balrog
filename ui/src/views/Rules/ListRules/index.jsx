@@ -324,8 +324,11 @@ function ListRules(props) {
     setSnackbarState({ message, variant, open: true });
   };
 
-  const handleRewindDiffChange = ({ target: { checked: value } }) =>
+  const handleRewindDiffChange = ({ target: { checked: value } }) => {
     setShowRewindDiff(value);
+    ruleListRef.current.recomputeRowHeights();
+  };
+
   const handleSnackbarClose = (event, reason) => {
     if (reason === 'clickaway') {
       return;
@@ -399,7 +402,6 @@ function ListRules(props) {
         setRewoundRules(sortedRewoundRules);
       });
     } else {
-      setShowRewindDiff(false);
       setRewoundRules([]);
     }
   }, [rewindDate]);
@@ -561,6 +563,10 @@ function ListRules(props) {
   const handleRewindDateTimeChange = date => {
     setRewindDate(date);
     setRewindDateError(null);
+
+    if (date === null) {
+      handleRewindDiffChange({ target: { checked: false } });
+    }
 
     const qs = {
       ...query,
@@ -1180,11 +1186,7 @@ function ListRules(props) {
     // actions row
     height += buttonHeight + theme.spacing(2);
 
-    if (
-      showRewindDiff ||
-      !hasScheduledChanges ||
-      rule.scheduledChange.change_type !== 'insert'
-    ) {
+    if (!hasScheduledChanges || rule.scheduledChange.change_type !== 'insert') {
       height +=
         Math.max(
           // avatar height
