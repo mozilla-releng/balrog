@@ -398,6 +398,9 @@ function ListRules(props) {
 
         setRewoundRules(sortedRewoundRules);
       });
+    } else {
+      setShowRewindDiff(false);
+      setRewoundRules([]);
     }
   }, [rewindDate]);
 
@@ -558,10 +561,6 @@ function ListRules(props) {
   const handleRewindDateTimeChange = date => {
     setRewindDate(date);
     setRewindDateError(null);
-
-    if (date === null) {
-      setRewoundRules([]);
-    }
 
     const qs = {
       ...query,
