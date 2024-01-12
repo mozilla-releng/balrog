@@ -2,6 +2,7 @@
 
 import itertools
 import logging
+import os
 import sys
 from os import path
 from subprocess import run
@@ -195,6 +196,11 @@ if __name__ == "__main__":
         parser.error("need an action to perform")
 
     action = args[0]
+
+    if os.environ.get("SENTRY_DSN"):
+        import sentry_sdk
+
+        sentry_sdk.init(os.environ["SENTRY_DSN"])
 
     db = AUSDatabase(options.db, mysql_traditional_mode=True)
     if action == "create":
