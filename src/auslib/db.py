@@ -2629,14 +2629,8 @@ class Permissions(AUSTable):
         for row in affected_rows:
             if not row:
                 continue
-            # XXX: This kindof sucks because it means that we don't have great control
-            # over the signoffs required permissions that don't specify products, or
-            # don't support them.
-            if "products" in self.allPermissions[row["permission"]] and row.get("options") and row["options"].get("products"):
-                for product in row["options"]["products"]:
-                    potential_required_signoffs["rs"].extend(self.db.permissionsRequiredSignoffs.select(where={"product": product}, transaction=transaction))
             else:
-                potential_required_signoffs["rs"].extend(self.db.permissionsRequiredSignoffs.select(transaction=transaction))
+                potential_required_signoffs["rs"].extend([dict(permission='admin', signoffs_required=2)])
         return potential_required_signoffs
 
     def assertPermissionExists(self, permission):
