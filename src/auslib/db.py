@@ -2639,7 +2639,7 @@ class Permissions(AUSTable):
             if not row:
                 continue
             else:
-                potential_required_signoffs["rs"].extend([dict(permission='admin', signoffs_required=2)])
+                potential_required_signoffs["rs"].extend([dict(permission="admin", signoffs_required=2)])
         return potential_required_signoffs
 
     def assertPermissionExists(self, permission):
