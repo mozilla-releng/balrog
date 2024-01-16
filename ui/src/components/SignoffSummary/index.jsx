@@ -92,8 +92,13 @@ function SignoffSummary(props) {
                 <ListItemText
                   primary={
                     <Typography component="p" variant="body2">
-                      {role === "admin" ? `${count} member${count > 1 ? 's' : ''} with full fledged ${role} permissions - `
-                      :`${count} member${count > 1 ? 's' : ''} of ${role} - `}
+                      {role === 'admin'
+                        ? `${count} member${
+                            count > 1 ? 's' : ''
+                          } with full fledged ${role} permissions - `
+                        : `${count} member${
+                            count > 1 ? 's' : ''
+                          } of ${role} - `}
                     </Typography>
                   }
                   className={classes.listItemText}
