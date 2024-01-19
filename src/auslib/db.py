@@ -1315,22 +1315,26 @@ class ScheduledChangeTable(AUSTable):
         #   manually in these cases.
         user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
         user_permissions = self.db.getUserPermissions(username=changed_by, retrieving_as=changed_by, transaction=transaction)
-        if len(user_roles):
-            required_roles = set()
-            required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
-            if required_signoffs:
-                required_roles.update([rs["role"] for rs in [obj for v in required_signoffs.values() for obj in v] if "role" in rs])
-            possible_signoffs = list(filter(lambda role: role["role"] in required_roles, user_roles))
-            if len(possible_signoffs) == 1:
-                self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, sc_id=sc_id, role=possible_signoffs[0].get("role"))
-        elif len(user_permissions):
-            required_permissions = set()
-            required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
-            if required_signoffs:
-                required_roles.update([rs["permission"] for rs in [obj for v in required_signoffs.values() for obj in v] if "permission" in rs])
-            possible_signoffs = list(filter(lambda permission: permission["permission"] in required_permissions, user_permissions))
-            if len(possible_signoffs) == 1:
-                self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, sc_id=sc_id, role=possible_signoffs[0].get("permission"))
+        required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
+        required_verifications = None
+        if required_signoffs:
+            required_verifications = [rs["role"] if "role" in rs else rs["permission"] for rs in [obj for v in required_signoffs.values() for obj in v]]
+
+        if "admin" in required_verifications and "admin" in user_permissions:
+            if not user_permissions["admin"]["options"]:
+                required_permissions = set()
+                required_permissions.update(required_verifications)
+                possible_signoffs = list(filter(lambda permission: permission[0] in required_permissions, user_permissions.items()))
+                if len(possible_signoffs) == 1:
+                    self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, sc_id=sc_id, role=possible_signoffs[0][0])
+        else:
+            if len(user_roles):
+                required_roles = set()
+                if required_signoffs:
+                    required_roles.update(required_verifications)
+                possible_signoffs = list(filter(lambda role: role["role"] in required_roles, user_roles))
+                if len(possible_signoffs) == 1:
+                    self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, sc_id=sc_id, role=possible_signoffs[0].get("role"))
 
     def select(self, where=None, transaction=None, **kwargs):
         ret = []
@@ -1705,14 +1709,18 @@ class SignoffsTable(AUSTable):
         super(SignoffsTable, self).__init__(db, dialect, versioned=False, historyClass=HistoryTable)
 
     def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
-        if "sc_id" not in columns or "role" not in columns:
+        if "sc_id" not in columns and "role" not in columns:
             raise ValueError("sc_id and role must be provided when signing off")
         if "username" in columns and columns["username"] != changed_by:
             raise PermissionDeniedError("Cannot signoff on behalf of another user")
         if changed_by in self.db.systemAccounts:
             raise PermissionDeniedError("System account cannot signoff")
-        if not self.db.hasRole(changed_by, columns["role"], transaction=transaction):
-            raise PermissionDeniedError("{} cannot signoff with role '{}'".format(changed_by, columns["role"]))
+        if columns["role"] == "admin":
+            if not self.db.hasPermission(changed_by, columns["role"], action=None, transaction=transaction):
+                raise PermissionDeniedError("{} cannot signoff with permission '{}'".format(changed_by, columns["role"]))
+        else:
+            if not self.db.hasRole(changed_by, columns["role"], transaction=transaction):
+                raise PermissionDeniedError("{} cannot signoff with role '{}'".format(changed_by, columns["role"]))
 
         existing_signoff = self.select({"sc_id": columns["sc_id"], "username": changed_by}, transaction)
         if existing_signoff:
