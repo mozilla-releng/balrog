@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { makeStyles } from '@material-ui/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
 import menuItems from './menuItems';
 import Link from '../../utils/Link';
 import UserMenu from './UserMenu';
@@ -43,7 +43,26 @@ const useStyles = makeStyles(theme => ({
   buttonWithIcon: {
     paddingLeft: theme.spacing(2),
   },
+  protocolLogo: {
+    margin: '0px',
+    marginRight: '.7%',
+  },
+  extensionIcon: {
+    margin: '0px',
+    marginRight: '.5%',
+  },
 }));
+
+function Logo() {
+  const classes = useStyles();
+
+  return (
+    <Box
+      component="div"
+      className={`mzp-c-logo mzp-t-logo-md mzp-t-product-firefox ${classes.protocolLogo}`}
+    />
+  );
+}
 
 export default function Dashboard(props) {
   const classes = useStyles();
@@ -56,15 +75,7 @@ export default function Dashboard(props) {
       </Helmet>
       <AppBar className={classes.appbar}>
         <Toolbar>
-          <Typography
-            className={classes.title}
-            color="inherit"
-            variant="h6"
-            noWrap
-            component={Link}
-            to="/">
-            Balrog Admin ┃ {title}
-          </Typography>
+          <Logo />
           <nav className={classes.nav}>
             {menuItems.main.map(menuItem => (
               <Link
