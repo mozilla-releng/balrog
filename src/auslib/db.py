@@ -1313,28 +1313,29 @@ class ScheduledChangeTable(AUSTable):
         # - If the User scheduling a change holds more than one of the required Roles/Permissions, we cannot a Signoff, because
         #   we don't know which Role/Permission we'd want to signoff with. The user will need to signoff
         #   manually in these cases.
-        user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
-        user_permissions = self.db.getUserPermissions(username=changed_by, retrieving_as=changed_by, transaction=transaction)
-        required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
-        required_verifications = None
-        if required_signoffs:
-            required_verifications = [rs["role"] if "role" in rs else rs["permission"] for rs in [obj for v in required_signoffs.values() for obj in v]]
 
-        if "admin" in required_verifications and "admin" in user_permissions:
-            if not user_permissions["admin"]["options"]:
-                required_permissions = set()
-                required_permissions.update(required_verifications)
-                possible_signoffs = list(filter(lambda permission: permission[0] in required_permissions, user_permissions.items()))
-                if len(possible_signoffs) == 1:
-                    self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, sc_id=sc_id, role=possible_signoffs[0][0])
-        else:
-            if len(user_roles):
-                required_roles = set()
-                if required_signoffs:
-                    required_roles.update(required_verifications)
-                possible_signoffs = list(filter(lambda role: role["role"] in required_roles, user_roles))
-                if len(possible_signoffs) == 1:
-                    self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, sc_id=sc_id, role=possible_signoffs[0].get("role"))
+        user_permissions = self.db.getUserPermissions(username=changed_by, retrieving_as=changed_by, transaction=transaction)
+
+        if len(user_permissions):
+            required_permissions = set()
+            required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            if required_signoffs and required_signoffs.get("rs") and required_signoffs["rs"][0].get("permission"):
+                required_permissions.update([rs["permission"] for rs in [obj for v in required_signoffs.values() for obj in v] if "permission" in rs])
+            permissions_without_restrictions = list(filter(lambda permission: permission[1] or all(not v for v in permission[1]), user_permissions.items()))
+            possible_signoffs = list(filter(lambda permission: permission[0] in required_permissions, permissions_without_restrictions))
+            if len(possible_signoffs) == 1:
+                self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, sc_id=sc_id, role=possible_signoffs[0][0])
+
+        user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
+
+        if len(user_roles):
+            required_roles = set()
+            required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            if required_signoffs:
+                required_roles.update([rs["role"] for rs in [obj for v in required_signoffs.values() for obj in v] if "role" in rs])
+            possible_signoffs = list(filter(lambda role: role["role"] in required_roles, user_roles))
+            if len(possible_signoffs) == 1:
+                self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, sc_id=sc_id, role=possible_signoffs[0].get("role"))
 
     def select(self, where=None, transaction=None, **kwargs):
         ret = []
