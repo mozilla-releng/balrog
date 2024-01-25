@@ -22,6 +22,7 @@ class TestUsersAPI_JSON(ViewTest):
                     "bob": {"roles": [{"role": "relman", "data_version": 1}]},
                     "julie": {"roles": [{"role": "releng", "data_version": 1}]},
                     "mary": {"roles": [{"role": "relman", "data_version": 1}]},
+                    "zawadi": {"roles": []},
                 }
             ),
         )
@@ -1154,9 +1155,9 @@ class TestPermissionsScheduledChanges(ViewTest):
 
         # Signoffs, which require signoff from role in permissionsRequiredSignoffs
         # regardless of product (because a full fledged admin can mange all products).
-        ret = self._post("/scheduled_changes/permissions/7/signoffs", data=dict(role="relman"), username="bob")
+        ret = self._post("/scheduled_changes/permissions/7/signoffs", data=dict(role="admin"), username="zawadi")
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        ret = self._post("/scheduled_changes/permissions/7/signoffs", data=dict(role="releng"), username="bill")
+        ret = self._post("/scheduled_changes/permissions/7/signoffs", data=dict(role="admin"), username="bill")
         self.assertEqual(ret.status_code, 200, ret.get_data())
 
         # Enacting!
