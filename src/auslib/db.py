@@ -168,7 +168,8 @@ def verify_signoffs(potential_required_signoffs, signoffs):
     for signoff in signoffs:
         signoffs_given[signoff["role"]] += 1
     for rs in potential_required_signoffs:
-        required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
+        signoff_verifier = "role" if "role" in rs else "permission"
+        required_signoffs[rs[signoff_verifier]] = max(required_signoffs.get(rs[signoff_verifier], 0), rs["signoffs_required"])
     for role, signoffs_required in required_signoffs.items():
         if signoffs_given[role] < signoffs_required:
             raise SignoffRequiredError("Not enough signoffs for role '{}'".format(role))
