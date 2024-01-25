@@ -587,7 +587,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         data = {"when": 400000000, "permission": "rule", "username": "bob", "options": None, "data_version": 1, "change_type": "update"}
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        self.assertEqual(ret.get_json(), {"sc_id": 7, "signoffs": {"bill": "releng"}})
+        self.assertEqual(ret.get_json(), {"sc_id": 7, "signoffs": {"bill": "admin"}})
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEqual(len(r), 1)
         db_data = dict(r[0])
@@ -613,7 +613,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         data = {"when": 400000000, "permission": "release", "username": "jill", "options": '{"products": ["a"]}', "change_type": "insert"}
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        self.assertEqual(ret.get_json(), {"sc_id": 7, "signoffs": {}})
+        self.assertEqual(ret.get_json(), {"sc_id": 7, "signoffs": {"bill": "admin"}})
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEqual(len(r), 1)
         db_data = dict(r[0])
@@ -639,7 +639,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         data = {"when": 400000000, "permission": "release", "username": "ashanti", "change_type": "delete", "data_version": 1}
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        self.assertEqual(ret.get_json(), {"sc_id": 7, "signoffs": {"bill": "releng"}})
+        self.assertEqual(ret.get_json(), {"sc_id": 7, "signoffs": {"bill": "admin"}})
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEqual(len(r), 1)
         db_data = dict(r[0])
@@ -665,7 +665,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         data = {"when": 400000000, "permission": "release", "username": "jill", "options": "{}", "change_type": "insert"}
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        self.assertEqual(ret.get_json(), {"sc_id": 7, "signoffs": {"bill": "releng"}})
+        self.assertEqual(ret.get_json(), {"sc_id": 7, "signoffs": {"bill": "admin"}})
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEqual(len(r), 1)
         db_data = dict(r[0])
@@ -1131,7 +1131,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         data = {"when": 400000000, "permission": "admin", "username": "jill", "options": None, "change_type": "insert"}
         ret = self._post("/scheduled_changes/permissions", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        self.assertEqual(ret.get_json(), {"sc_id": 7, "signoffs": {"bill": "releng"}})
+        self.assertEqual(ret.get_json(), {"sc_id": 7, "signoffs": {"bill": "admin"}})
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 7).execute().fetchall()
         self.assertEqual(len(r), 1)
         db_data = dict(r[0])
