@@ -699,7 +699,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         data = {"options": '{"products": ["Thunderbird"]}', "data_version": 1, "sc_data_version": 1, "when": 200000000}
         ret = self._post("/scheduled_changes/permissions/2", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {"bill": "releng"}})
+        self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {"bill": "admin"}})
 
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEqual(len(r), 1)
@@ -728,7 +728,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEqual(len(rows), 2)
         ret = self._post("/scheduled_changes/permissions/2", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {"bill": "releng"}})
+        self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {"bill": "admin"}})
 
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEqual(len(r), 1)
@@ -786,7 +786,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         data = {"options": '{"products": ["Firefox"]}', "sc_data_version": 1, "when": 450000000}
         ret = self._post("/scheduled_changes/permissions/1", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {"bill": "releng"}})
+        self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {"bill": "admin"}})
 
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 1).execute().fetchall()
         self.assertEqual(len(r), 1)
