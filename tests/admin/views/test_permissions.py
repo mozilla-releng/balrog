@@ -248,17 +248,18 @@ class TestPermissionsScheduledChanges(ViewTest):
             base_username="janet",
             base_options={"products": ["foo"]},
         )
-        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
+        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="admin")
 
         dbo.permissions.scheduled_changes.signoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=30, sc_id=1, username="bill")
         dbo.permissions.scheduled_changes.signoffs.history.t.insert().execute(
-            change_id=2, changed_by="bill", timestamp=31, sc_id=1, username="bill", role="releng"
+            change_id=2, changed_by="bill", timestamp=31, sc_id=1, username="bill", role="admin"
         )
         dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=10000000, data_version=1)
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
             change_id=2, changed_by="bill", timestamp=21, sc_id=1, when=10000000, data_version=1
         )
+        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="zawadi", role="admin")
 
         dbo.permissions.scheduled_changes.t.insert().execute(
             sc_id=2,
@@ -289,8 +290,8 @@ class TestPermissionsScheduledChanges(ViewTest):
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
             change_id=4, changed_by="bill", timestamp=41, sc_id=2, when=20000000, data_version=1
         )
-        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="bill", role="releng")
-        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="mary", role="relman")
+        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="bill", role="admin")
+        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="zawadi", role="admin")
 
         dbo.permissions.scheduled_changes.t.insert().execute(
             sc_id=3, scheduled_by="bill", change_type="insert", data_version=2, base_permission="permission", base_username="bob", complete=True
@@ -356,8 +357,8 @@ class TestPermissionsScheduledChanges(ViewTest):
         dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
             change_id=9, changed_by="bill", timestamp=201, sc_id=4, when=76000000, data_version=1
         )
-        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="bill", role="releng")
-        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="mary", role="relman")
+        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="bill", role="admin")
+        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="zawadi", role="admin")
 
         dbo.permissions.scheduled_changes.t.insert().execute(
             sc_id=5, scheduled_by="bill", change_type="insert", data_version=1, base_permission="rule", base_username="joe", base_options={"products": ["fake"]}
