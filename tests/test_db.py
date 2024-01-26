@@ -5362,7 +5362,13 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(set(history_columns), set(expected))
 
     def testGrantPermissions(self):
-        self.permissions.insert("bob", username="cathy", permission="release", options=dict(products=["SeaMonkey"]))
+        self.permissions.insert(
+            "bob",
+            signoffs=[{"sc_id": 1, "username": "bill", "role": "admin"}, {"sc_id": 1, "username": "zawadi", "role": "admin"}],
+            username="cathy",
+            permission="release",
+            options=dict(products=["SeaMonkey"]),
+        )
         query = self.permissions.t.select().where(self.permissions.username == "cathy")
         query = query.where(self.permissions.permission == "release")
         self.assertEqual(query.execute().fetchall(), [("release", "cathy", dict(products=["SeaMonkey"]), 1)])
@@ -5405,7 +5411,12 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         )
 
     def testRevokePermission(self):
-        self.permissions.delete({"username": "bob", "permission": "release"}, changed_by="bill", old_data_version=1)
+        self.permissions.delete(
+            {"username": "bob", "permission": "release"},
+            changed_by="bill",
+            old_data_version=1,
+            signoffs=[{"sc_id": 5, "username": "bill", "role": "admin"}, {"sc_id": 5, "username": "zawadi", "role": "admin"}],
+        )
         query = self.permissions.t.select().where(self.permissions.username == "bob")
         query = query.where(self.permissions.permission == "release")
         self.assertEqual(len(query.execute().fetchall()), 0)
@@ -5425,7 +5436,12 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertRaises(PermissionDeniedError, self.permissions.revokeRole, username="bob", role="releng", changed_by="kirk", old_data_version=1)
 
     def testRevokingPermissionAlsoRevokeRoles(self):
-        self.permissions.delete({"username": "janet", "permission": "release"}, changed_by="bill", old_data_version=1)
+        self.permissions.delete(
+            {"username": "janet", "permission": "release"},
+            changed_by="bill",
+            old_data_version=1,
+            signoffs=[{"sc_id": 3, "username": "bill", "role": "admin"}, {"sc_id": 3, "username": "zawadi", "role": "admin"}],
+        )
         got = self.db.permissions.t.select().where(self.db.permissions.username == "janet").execute().fetchall()
         self.assertEqual(len(got), 0)
         got = self.user_roles.t.select().where(self.user_roles.username == "janet").execute().fetchall()
