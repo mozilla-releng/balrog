@@ -428,8 +428,8 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "username": "janet",
                     "options": {"products": ["foo"]},
                     "data_version": None,
-                    "signoffs": {"bill": "releng"},
-                    "required_signoffs": {},
+                    "signoffs": {"bill": "admin", "zawadi": "admin"},
+                    "required_signoffs": {"admin": 2},
                 },
                 {
                     "sc_id": 2,
@@ -442,8 +442,8 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "username": "ashanti",
                     "options": None,
                     "data_version": 1,
-                    "signoffs": {"bill": "releng", "mary": "relman"},
-                    "required_signoffs": {"releng": 1, "relman": 1},
+                    "signoffs": {"bill": "admin", "zawadi": "admin"},
+                    "required_signoffs": {"admin": 2},
                 },
                 {
                     "sc_id": 4,
@@ -456,8 +456,8 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "username": "mary",
                     "options": None,
                     "data_version": 1,
-                    "signoffs": {"bill": "releng", "mary": "relman"},
-                    "required_signoffs": {"releng": 1, "relman": 1},
+                    "signoffs": {"bill": "admin", "zawadi": "admin"},
+                    "required_signoffs": {"admin": 2},
                 },
                 {
                     "sc_id": 5,
@@ -471,7 +471,7 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "options": {"products": ["fake"]},
                     "data_version": None,
                     "signoffs": {},
-                    "required_signoffs": {"releng": 1},
+                    "required_signoffs": {"admin": 2},
                 },
                 {
                     "sc_id": 6,
@@ -485,7 +485,7 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "options": {"products": ["a", "b"]},
                     "data_version": 1,
                     "signoffs": {},
-                    "required_signoffs": {"releng": 1},
+                    "required_signoffs": {"admin": 2},
                 },
             ],
         }
@@ -507,8 +507,8 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "username": "janet",
                     "options": {"products": ["foo"]},
                     "data_version": None,
-                    "signoffs": {"bill": "releng"},
-                    "required_signoffs": {},
+                    "signoffs": {"bill": "admin", "zawadi": "admin"},
+                    "required_signoffs": {"admin": 2},
                 },
                 {
                     "sc_id": 2,
@@ -521,8 +521,8 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "username": "ashanti",
                     "options": None,
                     "data_version": 1,
-                    "signoffs": {"bill": "releng", "mary": "relman"},
-                    "required_signoffs": {"releng": 1, "relman": 1},
+                    "signoffs": {"bill": "admin", "zawadi": "admin"},
+                    "required_signoffs": {"admin": 2},
                 },
                 {
                     "sc_id": 3,
@@ -536,7 +536,7 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "options": None,
                     "data_version": None,
                     "signoffs": {},
-                    "required_signoffs": {},
+                    "required_signoffs": {"admin": 2},
                 },
                 {
                     "sc_id": 4,
@@ -549,8 +549,8 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "username": "mary",
                     "options": None,
                     "data_version": 1,
-                    "signoffs": {"bill": "releng", "mary": "relman"},
-                    "required_signoffs": {"releng": 1, "relman": 1},
+                    "signoffs": {"bill": "admin", "zawadi": "admin"},
+                    "required_signoffs": {"admin": 2},
                 },
                 {
                     "sc_id": 5,
@@ -564,7 +564,7 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "options": {"products": ["fake"]},
                     "data_version": None,
                     "signoffs": {},
-                    "required_signoffs": {"releng": 1},
+                    "required_signoffs": {"admin": 2},
                 },
                 {
                     "sc_id": 6,
@@ -578,7 +578,7 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "options": {"products": ["a", "b"]},
                     "data_version": 1,
                     "signoffs": {},
-                    "required_signoffs": {"releng": 1},
+                    "required_signoffs": {"admin": 2},
                 },
             ],
         }
