@@ -551,7 +551,7 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "options": None,
                     "data_version": None,
                     "signoffs": {},
-                    "required_signoffs": {"admin": 2},
+                    "required_signoffs": {},
                 },
                 {
                     "sc_id": 4,
