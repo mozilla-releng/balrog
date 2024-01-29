@@ -1138,7 +1138,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.mimetype, "application/json")
         r = dbo.permissions.scheduled_changes.signoffs.t.select().where(dbo.permissions.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
-        self.assertEqual(len(r), 0)
+        self.assertEqual(len(r), 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddNewFullAdminPermission(self):
