@@ -467,7 +467,7 @@ class TestPermissionsScheduledChanges(ViewTest):
     def testGetScheduledChanges(self):
         ret = self._get("/scheduled_changes/permissions")
         expected = {
-            "count": 5,
+            "count": 6,
             "scheduled_changes": [
                 {
                     "sc_id": 1,
@@ -539,6 +539,20 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "signoffs": {},
                     "required_signoffs": {"admin": 2},
                 },
+                {
+                    "sc_id": 7,
+                    "when": 59000000,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "complete": False,
+                    "sc_data_version": 1,
+                    "permission": "emergency_shutoff",
+                    "username": "billy",
+                    "options": None,
+                    "data_version": 1,
+                    "signoffs": {"bill": "admin"},
+                    "required_signoffs": {"admin": 2},
+                },
             ],
         }
         self.assertEqual(ret.get_json(), expected)
@@ -546,7 +560,7 @@ class TestPermissionsScheduledChanges(ViewTest):
     def testGetScheduledChangesWithCompleted(self):
         ret = self._get("/scheduled_changes/permissions", qs={"all": 1})
         expected = {
-            "count": 6,
+            "count": 7,
             "scheduled_changes": [
                 {
                     "sc_id": 1,
@@ -630,6 +644,20 @@ class TestPermissionsScheduledChanges(ViewTest):
                     "options": {"products": ["a", "b"]},
                     "data_version": 1,
                     "signoffs": {},
+                    "required_signoffs": {"admin": 2},
+                },
+                {
+                    "sc_id": 7,
+                    "when": 59000000,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "complete": False,
+                    "sc_data_version": 1,
+                    "permission": "emergency_shutoff",
+                    "username": "billy",
+                    "options": None,
+                    "data_version": 1,
+                    "signoffs": {"bill": "admin"},
                     "required_signoffs": {"admin": 2},
                 },
             ],
@@ -1004,8 +1032,23 @@ class TestPermissionsScheduledChanges(ViewTest):
         expected = {
             "Permissions": {"count": 0, "revisions": []},
             "Permissions Scheduled Change": {
-                "count": 7,
+                "count": 8,
                 "revisions": [
+                    {
+                        "change_id": 15,
+                        "change_type": "insert",
+                        "changed_by": "bill",
+                        "complete": False,
+                        "data_version": 1,
+                        "options": None,
+                        "permission": "emergency_shutoff",
+                        "sc_data_version": 1,
+                        "sc_id": 7,
+                        "scheduled_by": "bill",
+                        "timestamp": 616,
+                        "username": "billy",
+                        "when": 59000000,
+                    },
                     {
                         "change_id": 13,
                         "change_type": "update",
