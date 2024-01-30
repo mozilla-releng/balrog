@@ -774,9 +774,9 @@ class TestPermissionsScheduledChanges(ViewTest):
         data = {"options": '{"products": ["superfake"]}', "data_version": 1, "sc_data_version": 1, "when": 200000000}
         rows = dbo.permissions.scheduled_changes.signoffs.t.select().where(dbo.permissions.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
         self.assertEqual(len(rows), 2)
-        ret = self._post("/scheduled_changes/permissions/2", data=data, username="bob")
+        ret = self._post("/scheduled_changes/permissions/2", data=data, username="zawadi")
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {"bob": "relman"}})
+        self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {"zawadi": "admin"}})
 
         r = dbo.permissions.scheduled_changes.t.select().where(dbo.permissions.scheduled_changes.sc_id == 2).execute().fetchall()
         self.assertEqual(len(r), 1)
@@ -785,7 +785,7 @@ class TestPermissionsScheduledChanges(ViewTest):
             "sc_id": 2,
             "complete": False,
             "data_version": 2,
-            "scheduled_by": "bob",
+            "scheduled_by": "zawadi",
             "change_type": "update",
             "base_permission": "release_locale",
             "base_username": "ashanti",
