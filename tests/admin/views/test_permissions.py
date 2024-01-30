@@ -433,6 +433,37 @@ class TestPermissionsScheduledChanges(ViewTest):
             change_id=13, changed_by="bill", timestamp=405, sc_id=6, when=38000000, data_version=1
         )
 
+        dbo.permissions.scheduled_changes.t.insert().execute(
+            sc_id=7,
+            scheduled_by="bill",
+            change_type="insert",
+            data_version=1,
+            base_permission="emergency_shutoff",
+            base_username="billy",
+            base_options=None,
+            base_data_version=1,
+        )
+        dbo.permissions.scheduled_changes.history.t.insert().execute(change_id=14, changed_by="bill", timestamp=615, sc_id=7)
+        dbo.permissions.scheduled_changes.history.t.insert().execute(
+            change_id=15,
+            changed_by="bill",
+            timestamp=616,
+            sc_id=7,
+            scheduled_by="bill",
+            change_type="insert",
+            data_version=1,
+            base_permission="emergency_shutoff",
+            base_username="billy",
+            base_options=None,
+            base_data_version=1,
+        )
+        dbo.permissions.scheduled_changes.conditions.t.insert().execute(sc_id=7, when=59000000, data_version=1)
+        dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(change_id=14, changed_by="bill", timestamp=615, sc_id=7)
+        dbo.permissions.scheduled_changes.conditions.history.t.insert().execute(
+            change_id=15, changed_by="bill", timestamp=616, sc_id=7, when=59000000, data_version=1
+        )
+        dbo.permissions.scheduled_changes.signoffs.t.insert().execute(sc_id=7, username="bill", role="admin")
+
     def testGetScheduledChanges(self):
         ret = self._get("/scheduled_changes/permissions")
         expected = {
@@ -1110,24 +1141,23 @@ class TestPermissionsScheduledChanges(ViewTest):
 
     @mock.patch("time.time", mock.MagicMock(return_value=100))
     def testSignoffWithPermission(self):
-        ret = self._post("/scheduled_changes/permissions/2/signoffs", data=dict(role="relman"), username="bob")
+        ret = self._post("/scheduled_changes/permissions/7/signoffs", data=dict(role="admin"), username="zawadi")
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.mimetype, "application/json")
-        r = dbo.permissions.scheduled_changes.signoffs.t.select().where(dbo.permissions.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
+        r = dbo.permissions.scheduled_changes.signoffs.t.select().where(dbo.permissions.scheduled_changes.signoffs.sc_id == 7).execute().fetchall()
         r = [dict(rs) for rs in r]
-        self.assertEqual(len(r), 3)
-        self.assertIn({"sc_id": 2, "username": "bill", "role": "releng"}, r)
-        self.assertIn({"sc_id": 2, "username": "mary", "role": "relman"}, r)
-        self.assertIn({"sc_id": 2, "username": "bob", "role": "relman"}, r)
+        self.assertEqual(len(r), 2)
+        self.assertIn({"sc_id": 7, "username": "bill", "role": "admin"}, r)
+        self.assertIn({"sc_id": 7, "username": "zawadi", "role": "admin"}, r)
         r = (
             dbo.permissions.scheduled_changes.signoffs.history.t.select()
-            .where(dbo.permissions.scheduled_changes.signoffs.history.sc_id == 2)
+            .where(dbo.permissions.scheduled_changes.signoffs.history.sc_id == 7)
             .execute()
             .fetchall()
         )
         self.assertEqual(len(r), 2)
-        self.assertEqual(dict(r[0]), {"change_id": 3, "changed_by": "bob", "timestamp": 99999, "sc_id": 2, "username": "bob", "role": None})
-        self.assertEqual(dict(r[1]), {"change_id": 4, "changed_by": "bob", "timestamp": 100000, "sc_id": 2, "username": "bob", "role": "relman"})
+        self.assertEqual(dict(r[0]), {"change_id": 3, "changed_by": "zawadi", "timestamp": 99999, "sc_id": 7, "username": "zawadi", "role": None})
+        self.assertEqual(dict(r[1]), {"change_id": 4, "changed_by": "zawadi", "timestamp": 100000, "sc_id": 7, "username": "zawadi", "role": "admin"})
 
     def testSignoffWithoutPermission(self):
         ret = self._post("/scheduled_changes/permissions/2/signoffs", data=dict(role="relman"), username="bill")
