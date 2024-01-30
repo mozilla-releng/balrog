@@ -88,7 +88,7 @@ class TestPermissionsAPI_JSON(ViewTest):
         self.assertEqual(ret.status_code, 404)
 
     def testPermissionPut(self):
-        with mock.patch('auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs') as rs:
+        with mock.patch("auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs") as rs:
             rs.return_value = {"rs": []}
             ret = self._put("/users/bob/permissions/admin", data=dict(options=json.dumps(dict(products=["a"]))))
             self.assertStatusCode(ret, 201)
@@ -98,11 +98,11 @@ class TestPermissionsAPI_JSON(ViewTest):
             query = query.where(dbo.permissions.permission == "admin")
             self.assertEqual(query.execute().fetchone(), ("admin", "bob", {"products": ["a"]}, 1))
 
-    # TODO: find something that doesn't require signoff. and fix the damn ui
+    # TODO: Everything now requires signoff. and fix the damn ui
     def testPermissionPutEmptyDictOptions(self):
         # The default fixtures prevent us from creating permissions like this
         # due to signoff requirements
-        with mock.patch('auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs') as rs:
+        with mock.patch("auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs") as rs:
             rs.return_value = {"rs": []}
             ret = self._put("/users/bob/permissions/admin", data=dict(options="{}"))
             self.assertStatusCode(ret, 201)
@@ -113,7 +113,7 @@ class TestPermissionsAPI_JSON(ViewTest):
             self.assertEqual(query.execute().fetchone(), ("admin", "bob", None, 1))
 
     def testPermissionPutWithEmail(self):
-        with mock.patch('auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs') as rs:
+        with mock.patch("auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs") as rs:
             rs.return_value = {"rs": []}
             ret = self._put("/users/bob@bobsworld.com/permissions/admin", data=dict(options=json.dumps(dict(products=["a"]))))
             self.assertStatusCode(ret, 201)
@@ -128,7 +128,7 @@ class TestPermissionsAPI_JSON(ViewTest):
     # Unfortunately, Werkzeug's test Client will unquote URL parts before
     # the app sees them, so this test doesn't actually verify that case...
     def testPermissionPutWithQuotedEmail(self):
-        with mock.patch('auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs') as rs:
+        with mock.patch("auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs") as rs:
             rs.return_value = {"rs": []}
             ret = self._put("/users/bob%40bobsworld.com/permissions/admin", data=dict(options=json.dumps(dict(products=["a"]))))
             self.assertStatusCode(ret, 201)
@@ -139,12 +139,18 @@ class TestPermissionsAPI_JSON(ViewTest):
             self.assertEqual(query.execute().fetchone(), ("admin", "bob@bobsworld.com", {"products": ["a"]}, 1))
 
     def testPermissionsPost(self):
-        with mock.patch('auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs') as rs:
+        with mock.patch("auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs") as rs:
             rs.return_value = {"rs": []}
             ret = self._post("/users/bob/permissions/release_read_only", data=dict(options=json.dumps(dict(products=["a", "b"])), data_version=1))
             self.assertEqual(ret.status_code, 200, ret.get_data())
             self.assertEqual(ret.get_json(), dict(new_data_version=2))
-            r = dbo.permissions.t.select().where(dbo.permissions.username == "bob").where(dbo.permissions.permission == "release_read_only").execute().fetchall()
+            r = (
+                dbo.permissions.t.select()
+                .where(dbo.permissions.username == "bob")
+                .where(dbo.permissions.permission == "release_read_only")
+                .execute()
+                .fetchall()
+            )
             self.assertEqual(len(r), 1)
             self.assertEqual(r[0], ("release_read_only", "bob", {"products": ["a", "b"]}, 2))
 
@@ -161,7 +167,7 @@ class TestPermissionsAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 403)
 
     def testPermissionPutWithOption(self):
-        with mock.patch('auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs') as rs:
+        with mock.patch("auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs") as rs:
             rs.return_value = {"rs": []}
             ret = self._put("/users/bob/permissions/release_locale", data=dict(options=json.dumps(dict(products=["a"]))))
             self.assertStatusCode(ret, 201)
@@ -177,7 +183,7 @@ class TestPermissionsAPI_JSON(ViewTest):
         self.assertIn("No Signoffs given", ret.get_data(as_text=True))
 
     def testPermissionModify(self):
-        with mock.patch('auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs') as rs:
+        with mock.patch("auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs") as rs:
             rs.return_value = {"rs": []}
             ret = self._put("/users/bob/permissions/rule", data=dict(options=json.dumps(dict(products=["a", "b"])), data_version=1))
             self.assertStatusCode(ret, 200)
@@ -209,7 +215,7 @@ class TestPermissionsAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 403)
 
     def testPermissionDelete(self):
-        with mock.patch('auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs') as rs:
+        with mock.patch("auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs") as rs:
             rs.return_value = {"rs": []}
             ret = self._delete("/users/bob/permissions/release_read_only", qs=dict(data_version=1))
             self.assertStatusCode(ret, 200)
