@@ -73,6 +73,7 @@ class TestPermissionsAPI_JSON(ViewTest):
             with mock.patch("auslib.global_state.dbo.permissions.getPotentialRequiredSignoffs") as rs:
                 rs.return_value = {"rs": []}
                 return test(*args, **kwargs)
+
         return wrapper
 
     def testPermissionsCollection(self):
@@ -147,13 +148,7 @@ class TestPermissionsAPI_JSON(ViewTest):
         ret = self._post("/users/bob/permissions/release_read_only", data=dict(options=json.dumps(dict(products=["a", "b"])), data_version=1))
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.get_json(), dict(new_data_version=2))
-        r = (
-            dbo.permissions.t.select()
-            .where(dbo.permissions.username == "bob")
-            .where(dbo.permissions.permission == "release_read_only")
-            .execute()
-            .fetchall()
-        )
+        r = dbo.permissions.t.select().where(dbo.permissions.username == "bob").where(dbo.permissions.permission == "release_read_only").execute().fetchall()
         self.assertEqual(len(r), 1)
         self.assertEqual(r[0], ("release_read_only", "bob", {"products": ["a", "b"]}, 2))
 
