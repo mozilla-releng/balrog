@@ -1203,7 +1203,7 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEqual(dict(r[1]), {"change_id": 4, "changed_by": "zawadi", "timestamp": 100000, "sc_id": 7, "username": "zawadi", "role": "admin"})
 
     def testSignoffWithoutPermission(self):
-        ret = self._post("/scheduled_changes/permissions/2/signoffs", data=dict(role="relman"), username="bill")
+        ret = self._post("/scheduled_changes/permissions/7/signoffs", data=dict(role="admin"), username="billy")
         self.assertEqual(ret.status_code, 403, ret.get_data())
         self.assertEqual(ret.mimetype, "application/json")
 
