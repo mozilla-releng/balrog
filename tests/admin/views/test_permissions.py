@@ -76,6 +76,10 @@ class TestPermissionsAPI_JSON(ViewTest):
 
         return wrapper
 
+    def setUp(self):
+        super(TestPermissionsAPI_JSON, self).setUp()
+        dbo.setAdminRequiredSignoffs([{"permission": "admin", "signoffs_required": 2}])
+
     def testPermissionsCollection(self):
         ret = self._get("/users/bill/permissions", username="bill")
         self.assertEqual(ret.status_code, 200)
@@ -242,6 +246,7 @@ class TestPermissionsScheduledChanges(ViewTest):
 
     def setUp(self):
         super(TestPermissionsScheduledChanges, self).setUp()
+        dbo.setAdminRequiredSignoffs([{"permission": "admin", "signoffs_required": 2}])
         dbo.permissions.scheduled_changes.t.insert().execute(
             sc_id=1,
             scheduled_by="bill",

@@ -5321,6 +5321,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.metadata.create_all(self.db.engine)
         self.permissions = self.db.permissions
         self.user_roles = self.db.permissions.user_roles
+        self.db.setAdminRequiredSignoffs([{"permission": "admin", "signoffs_required": 2}])
         self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.permissions.t.insert().execute(permission="permission", username="bob", data_version=1)
         self.permissions.t.insert().execute(permission="permission", username="sean", data_version=1)
