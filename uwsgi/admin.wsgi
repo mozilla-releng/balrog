@@ -46,6 +46,10 @@ if STAGING or LOCALDEV:
         }
     )
 
+if LOCALDEV:
+    ADMIN_REQUIRED_SIGNOFFS = [{"permission": "admin", "signoffs_required": 1}]
+else:
+    ADMIN_REQUIRED_SIGNOFFS = [{"permission": "admin", "signoffs_required": 2}]
 
 # Logging needs to be set-up before importing the application to make sure that
 # logging done from other modules uses our Logger.
@@ -148,6 +152,7 @@ else:
 dbo.setDb(os.environ["DBURI"], buckets)
 dbo.setSystemAccounts(SYSTEM_ACCOUNTS)
 dbo.setDomainAllowlist(DOMAIN_ALLOWLIST)
+dbo.setAdminRequiredSignoffs(ADMIN_REQUIRED_SIGNOFFS)
 application.config["ALLOWLISTED_DOMAINS"] = DOMAIN_ALLOWLIST
 application.config["PAGE_TITLE"] = "Balrog Administration"
 application.config["SECRET_KEY"] = os.environ["SECRET_KEY"]

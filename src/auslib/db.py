@@ -2651,7 +2651,7 @@ class Permissions(AUSTable):
             if not row:
                 continue
             else:
-                potential_required_signoffs["rs"].extend([dict(permission="admin", signoffs_required=2)])
+                potential_required_signoffs["rs"].extend(self.db.adminRequiredSignoffs)
         return potential_required_signoffs
 
     def assertPermissionExists(self, permission):
@@ -3018,6 +3018,7 @@ class AUSDatabase(object):
             self.setDburi(dburi, mysql_traditional_mode, releases_history_buckets, releases_history_class, async_releases_history_class)
         self.log = logging.getLogger(self.__class__.__name__)
         self.systemAccounts = []
+        self.adminRequiredSignoffs = []
 
     def setDburi(
         self,
@@ -3051,6 +3052,9 @@ class AUSDatabase(object):
 
     def setSystemAccounts(self, systemAccounts):
         self.systemAccounts = systemAccounts
+
+    def setAdminRequiredSignoffs(self, adminRequiredSignoffs):
+        self.adminRequiredSignoffs = adminRequiredSignoffs
 
     def setDomainAllowlist(self, domainAllowlist):
         self.releasesTable.setDomainAllowlist(domainAllowlist)
