@@ -303,12 +303,6 @@ function ViewSignoff({ isNewSignoff, ...props }) {
                       control={<Radio />}
                       label="Channel"
                     />
-                    <FormControlLabel
-                      disabled={!isNewSignoff}
-                      value="permission"
-                      control={<Radio />}
-                      label="Permission"
-                    />
                   </RadioGroup>
                 </FormControl>
               </Grid>
