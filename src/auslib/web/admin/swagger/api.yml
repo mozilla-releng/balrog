@@ -1275,7 +1275,7 @@ paths:
         Returns all of the usernames present in Balrog. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id20)
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.users_get
+      operationId: auslib.web.admin.views.permissions.get_users
       consumes: []
       produces:
         - application/json
@@ -1305,7 +1305,7 @@ paths:
         Returns all of the details about the user's roles and permissions [Docs](http://mozilla-balrog.readthedocs.io/en/latest/database.html#permissions).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.specific_user_get
+      operationId: auslib.web.admin.views.permissions.get_specific_user
       consumes: []
       produces:
         - application/json
@@ -1368,7 +1368,7 @@ paths:
         Returns all of the details about the user's permissions [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.user_permissions_get
+      operationId: auslib.web.admin.views.permissions.get_user_permissions
       consumes: []
       produces:
         - application/json
@@ -1396,7 +1396,7 @@ paths:
         Grants the given username the given role. If the user already holds that role, this is a no-op. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-roles-role).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.user_role_put
+      operationId: auslib.web.admin.views.permissions.put_user_role
       consumes: []
       produces:
         - application/json
@@ -1423,7 +1423,7 @@ paths:
         Revokes the given role from the given username. The 'data_version' parameter must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-roles-role).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.user_role_delete
+      operationId: auslib.web.admin.views.permissions.delete_user_role
       consumes: []
       produces:
         - application/json
@@ -1452,7 +1452,7 @@ paths:
         Returns the details of the named permission for the username given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions-permission).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.user_specific_permission_get
+      operationId: auslib.web.admin.views.permissions.get_specific_user_permission
       consumes: []
       produces:
         - application/json
@@ -1483,7 +1483,7 @@ paths:
         Overwrites the details of named permission for the username given. If the permission does not exist, it is created. The following parameters are supported , data_version (required if the permission already exists) and options, a JSON string field [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions-permission).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.user_specific_permission_put
+      operationId: auslib.web.admin.views.permissions.put_specific_user_permission
       consumes:
         - application/json
       produces:
@@ -1514,7 +1514,7 @@ paths:
         Overwrites the details of named permission for the username given. The following parameters are supported , data_version(required) and options, a JSON string field [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions-permission).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.user_specific_permission_post
+      operationId: auslib.web.admin.views.permissions.post_specific_user_permission
       consumes:
         - application/json
       produces:
@@ -1545,7 +1545,7 @@ paths:
         Deletes the named permission for the username given. data_version is required. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions-permission).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.user_specific_permission_delete
+      operationId: auslib.web.admin.views.permissions.delete_specific_user_permission
       consumes: []
       produces:
         - application/json

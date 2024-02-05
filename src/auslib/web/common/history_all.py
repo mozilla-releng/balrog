@@ -5,7 +5,7 @@ from connexion import problem, request
 from sqlalchemy.sql.expression import null
 
 from auslib.global_state import dbo
-from auslib.web.admin.views.permissions import PermissionScheduledChangeHistoryView, UsersView
+from auslib.web.admin.views.permissions import PermissionScheduledChangeHistoryView, get_users
 from auslib.web.admin.views.required_signoffs import (
     PermissionsRequiredSignoffScheduledChangeHistoryView,
     PermissionsRequiredSignoffsHistoryAPIView,
@@ -69,7 +69,7 @@ def rules_history():
 def permissions_history():
     """GET /permissions/history"""
     history_table = dbo.permissions.history
-    get_permissions = UsersView().get()
+    get_permissions = get_users()
     permissions = _get_histories(history_table, get_permissions)
     permissions_history = {"permissions": permissions, "sc_permissions": PermissionScheduledChangeHistoryView().get_all()}
     histories = {

@@ -4,11 +4,6 @@ from auslib.web.admin.views.permissions import (
     PermissionScheduledChangeSignoffsView,
     PermissionScheduledChangesView,
     PermissionScheduledChangeView,
-    PermissionsView,
-    SpecificPermissionView,
-    SpecificUserView,
-    UserRoleView,
-    UsersView,
 )
 from auslib.web.admin.views.pinnable_releases import EnactPinnableReleaseScheduledChangeView, PinnableReleaseScheduledChangesView
 from auslib.web.admin.views.releases import (
@@ -82,51 +77,6 @@ def single_rule_column_get(column):
 def rules_revisions_post(rule_id):
     """POST /rules/:id/revisions"""
     return RuleHistoryAPIView().post(rule_id)
-
-
-def users_get():
-    """GET /users"""
-    return UsersView().get()
-
-
-def specific_user_get(username):
-    """GET /users/:username"""
-    return SpecificUserView().get(username)
-
-
-def user_permissions_get(username):
-    """GET /users/:username/permissions"""
-    return PermissionsView().get(username)
-
-
-def user_role_put(username, role):
-    """PUT /users/:username/roles/:role"""
-    return UserRoleView().put(username, role)
-
-
-def user_role_delete(username, role):
-    """DELETE /users/:username/roles/:role"""
-    return UserRoleView().delete(username, role)
-
-
-def user_specific_permission_get(username, permission):
-    """GET /users/:username/permissions/:permission"""
-    return SpecificPermissionView().get(username, permission)
-
-
-def user_specific_permission_put(username, permission):
-    """PUT /users/:username/permissions/:permission"""
-    return SpecificPermissionView().put(username, permission)
-
-
-def user_specific_permission_post(username, permission):
-    """POST /users/:username/permissions/:permission"""
-    return SpecificPermissionView().post(username, permission)
-
-
-def user_specific_permission_delete(username, permission):
-    """DELETE /users/:username/permissions/:permission"""
-    return SpecificPermissionView().delete(username, permission)
 
 
 def scheduled_release_diff_get(sc_id):
