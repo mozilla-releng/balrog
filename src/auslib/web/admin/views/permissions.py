@@ -4,7 +4,7 @@ import connexion
 from flask import Response, jsonify
 
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import handleGeneralExceptions, log, requirelogin, transactionHandler
+from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, log, requirelogin, transactionHandler
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,
@@ -64,6 +64,7 @@ def get_specific_user_permission(username, permission, changed_by):
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("PUT")
+@debugPath
 def put_specific_user_permission(username, permission, user_permission_request_body, changed_by, transaction):
     try:
         if dbo.permissions.getUserPermissions(username, changed_by, transaction).get(permission):
@@ -103,6 +104,7 @@ def put_specific_user_permission(username, permission, user_permission_request_b
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("POST")
+@debugPath
 def post_specific_user_permission(username, permission, user_permission_request_body, changed_by, transaction):
     if not dbo.permissions.getUserPermissions(username, changed_by, transaction=transaction).get(permission):
         return problem(status=404, title="Not Found", detail="Requested user permission" " %s not found for %s" % (permission, username))
@@ -133,6 +135,7 @@ def post_specific_user_permission(username, permission, user_permission_request_
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("DELETE")
+@debugPath
 def delete_specific_user_permission(username, permission, data_version, changed_by, transaction):
     if not dbo.permissions.getUserPermissions(username, changed_by, transaction=transaction).get(permission):
         return problem(404, "Not Found", "Requested user permission" " %s not found for %s" % (permission, username))
@@ -257,6 +260,7 @@ class PermissionScheduledChangeHistoryView(ScheduledChangeHistoryView):
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("PUT")
+@debugPath
 def put_user_role(username, role, changed_by, transaction):
     """/users/:username/roles/:role"""
 
@@ -274,6 +278,7 @@ def put_user_role(username, role, changed_by, transaction):
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("DELETE")
+@debugPath
 def delete_user_role(username, role, data_version, changed_by, transaction):
     roles = [r["role"] for r in dbo.permissions.getUserRoles(username)]
     if role not in roles:

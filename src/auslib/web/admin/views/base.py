@@ -94,6 +94,14 @@ def transactionHandler(request_handler):
     return decorated
 
 
+def debugPath(f):
+    def decorated(*args, **kwargs):
+        log.debug("processing %s request to %s" % (request.method, request.path))
+        return f(*args, **kwargs)
+
+    return decorated
+
+
 class AdminView(MethodView):
     def __init__(self, *args, **kwargs):
         self.log = logging.getLogger(self.__class__.__name__)
