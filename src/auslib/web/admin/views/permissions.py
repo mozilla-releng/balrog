@@ -14,8 +14,6 @@ from auslib.web.admin.views.scheduled_changes import (
     SignoffsView,
 )
 
-__all__ = ["PermissionsView"]
-
 
 def get_users():
     """/users"""
