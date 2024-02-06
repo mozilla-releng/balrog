@@ -6,7 +6,7 @@ from sqlalchemy.sql.expression import null
 
 from auslib.db import SignoffRequiredError
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import AdminView, requirelogin
+from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, log, requirelogin, transactionHandler
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
@@ -19,30 +19,26 @@ from auslib.web.admin.views.scheduled_changes import (
 from auslib.web.common.history import get_input_dict
 
 
-class RequiredSignoffsView(AdminView):
-    def __init__(self, table, decisionFields):
-        self.table = table
-        self.decisionFields = decisionFields
-        super(RequiredSignoffsView, self).__init__()
+def get_required_signoffs(required_signoffs, where=None):
+    rows = required_signoffs.select(where=where)
+    return jsonify({"count": len(rows), "required_signoffs": [dict(rs) for rs in rows]})
 
-    def get(self, where=None):
-        rows = self.table.select(where=where)
-        return jsonify({"count": len(rows), "required_signoffs": [dict(rs) for rs in rows]})
 
-    def _post(self, what, transaction, changed_by):
-        where = {f: what.get(f) for f in self.decisionFields}
-        if self.table.select(where=where, transaction=transaction):
-            raise SignoffRequiredError("Required Signoffs cannot be directly modified")
-        else:
-            try:
-                self.table.insert(changed_by=changed_by, transaction=transaction, **what)
-                return Response(status=201, response=json.dumps({"new_data_version": 1}))
-            except ValueError as e:
-                self.log.warning("Bad input: %s", e.args)
-                return problem(400, "Bad Request", str(e.args))
+def post_required_signoffs(required_signoffs, decisionFields, what, transaction, changed_by):
+    where = {f: what.get(f) for f in decisionFields}
+    if required_signoffs.select(where=where, transaction=transaction):
+        raise SignoffRequiredError("Required Signoffs cannot be directly modified")
+    else:
+        try:
+            required_signoffs.insert(changed_by=changed_by, transaction=transaction, **what)
+            return Response(status=201, response=json.dumps({"new_data_version": 1}))
+        except ValueError as e:
+            log.warning("Bad input: %s", e.args)
+            return problem(400, "Bad Request", str(e.args))
 
-    def _delete(self, *args, **kwargs):
-        raise SignoffRequiredError("Required Signoffs cannot be directly deleted.")
+
+def delete_required_signoffs(*args, **kwargs):
+    raise SignoffRequiredError("Required Signoffs cannot be directly deleted.")
 
 
 class RequiredSignoffsHistoryAPIView(HistoryView):
@@ -107,25 +103,33 @@ class RequiredSignoffsHistoryAPIView(HistoryView):
         return jsonify(count=total_count, required_signoffs=revisions)
 
 
-class ProductRequiredSignoffsView(RequiredSignoffsView):
+def get_product_required_signoffs():
     """/required_signoffs/product"""
 
-    def __init__(self):
-        super(ProductRequiredSignoffsView, self).__init__(dbo.productRequiredSignoffs, ["product", "channel", "role"])
+    where = {param: request.args[param] for param in ("product", "channel") if param in request.args}
+    return get_required_signoffs(required_signoffs=dbo.productRequiredSignoffs, where=where)
 
-    def get(self):
-        where = {param: request.args[param] for param in ("product", "channel") if param in request.args}
-        return super(ProductRequiredSignoffsView, self).get(where=where)
 
-    @requirelogin
-    def _post(self, transaction, changed_by):
-        what = {
-            "product": connexion.request.get_json().get("product"),
-            "channel": connexion.request.get_json().get("channel"),
-            "role": connexion.request.get_json().get("role"),
-            "signoffs_required": int(connexion.request.get_json().get("signoffs_required")),
-        }
-        return super(ProductRequiredSignoffsView, self)._post(what, transaction, changed_by)
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_product_required_signoffs(signoff, transaction, changed_by):
+    what = {
+        "product": signoff.get("product"),
+        "channel": signoff.get("channel"),
+        "role": signoff.get("role"),
+        "signoffs_required": int(signoff.get("signoffs_required")),
+    }
+    return post_required_signoffs(
+        required_signoffs=dbo.productRequiredSignoffs, decisionFields=["product", "channel", "role"], what=what, transaction=transaction, changed_by=changed_by
+    )
+
+
+@handleGeneralExceptions("DELETE")
+@debugPath
+def delete_product_required_signoffs():
+    return delete_required_signoffs()
 
 
 class ProductRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):
@@ -256,24 +260,32 @@ class ProductRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryVie
         return super(ProductRequiredSignoffScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
 
 
-class PermissionsRequiredSignoffsView(RequiredSignoffsView):
+def get_permissions_required_signoffs():
     """/required_signoffs/permissions"""
 
-    def __init__(self):
-        super(PermissionsRequiredSignoffsView, self).__init__(dbo.permissionsRequiredSignoffs, ["product", "role"])
+    where = {param: request.args[param] for param in ("product",) if param in request.args}
+    return get_required_signoffs(required_signoffs=dbo.permissionsRequiredSignoffs, where=where)
 
-    def get(self):
-        where = {param: request.args[param] for param in ("product",) if param in request.args}
-        return super(PermissionsRequiredSignoffsView, self).get(where=where)
 
-    @requirelogin
-    def _post(self, transaction, changed_by):
-        what = {
-            "product": connexion.request.get_json().get("product"),
-            "role": connexion.request.get_json().get("role"),
-            "signoffs_required": int(connexion.request.get_json().get("signoffs_required")),
-        }
-        return super(PermissionsRequiredSignoffsView, self)._post(what, transaction, changed_by)
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_permissions_required_signoffs(signoff, transaction, changed_by):
+    what = {
+        "product": signoff.get("product"),
+        "role": signoff.get("role"),
+        "signoffs_required": int(signoff.get("signoffs_required")),
+    }
+    return post_required_signoffs(
+        required_signoffs=dbo.permissionsRequiredSignoffs, decisionFields=["product", "role"], what=what, transaction=transaction, changed_by=changed_by
+    )
+
+
+@handleGeneralExceptions("DELETE")
+@debugPath
+def delete_permissions_required_signoffs():
+    return delete_required_signoffs()
 
 
 class PermissionsRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):

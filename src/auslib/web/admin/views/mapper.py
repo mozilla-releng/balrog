@@ -28,13 +28,11 @@ from auslib.web.admin.views.required_signoffs import (
     PermissionsRequiredSignoffScheduledChangeView,
     PermissionsRequiredSignoffsHistoryAPIView,
     PermissionsRequiredSignoffsScheduledChangesView,
-    PermissionsRequiredSignoffsView,
     ProductRequiredSignoffScheduledChangeHistoryView,
     ProductRequiredSignoffScheduledChangeSignoffsView,
     ProductRequiredSignoffScheduledChangeView,
     ProductRequiredSignoffsHistoryAPIView,
     ProductRequiredSignoffsScheduledChangesView,
-    ProductRequiredSignoffsView,
 )
 from auslib.web.admin.views.rules import (
     EnactRuleScheduledChangeView,
@@ -142,36 +140,6 @@ def required_signoffs_product_revisions_get():
 def required_signoffs_permissions_revisions_get():
     """GET /required_signoffs/permissions/revisions"""
     return PermissionsRequiredSignoffsHistoryAPIView().get()
-
-
-def required_signoffs_product_get():
-    """GET /required_signoffs/product"""
-    return ProductRequiredSignoffsView().get()
-
-
-def required_signoffs_product_post():
-    """POST /required_signoffs/product"""
-    return ProductRequiredSignoffsView().post()
-
-
-def required_signoffs_product_delete():
-    """DELETE /required_signoffs/product"""
-    return ProductRequiredSignoffsView().delete()
-
-
-def required_signoffs_permissions_get():
-    """GET /required_signoffs/permissions"""
-    return PermissionsRequiredSignoffsView().get()
-
-
-def required_signoffs_permissions_post():
-    """POST /required_signoffs/permissions"""
-    return PermissionsRequiredSignoffsView().post()
-
-
-def required_signoffs_permissions_delete():
-    """DELETE /required_signoffs/permissions"""
-    return PermissionsRequiredSignoffsView().delete()
 
 
 def scheduled_changes_rules_get():

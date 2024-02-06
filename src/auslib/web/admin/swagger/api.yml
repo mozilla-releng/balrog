@@ -961,7 +961,7 @@ paths:
         Endpoint to view all Product Required Signoffs. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#product-required-signoffs)
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_product_get
+      operationId: auslib.web.admin.views.required_signoffs.get_product_required_signoffs
       consumes: []
       produces:
         - application/json
@@ -1007,7 +1007,7 @@ paths:
         Create a new Product Required Signoff. If the product and channel provided already require signoff, a 400 will be returned (you must use a Scheduled Change and meet the existing signoff requirements to modify Required Signoffs for things that already require it). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#required-signoffs-product)
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_product_post
+      operationId: auslib.web.admin.views.required_signoffs.post_product_required_signoffs
       consumes:
         - application/json
       produces:
@@ -1048,7 +1048,7 @@ paths:
         Endpoint defined only to throw error when user attempts to delete product required signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#product-required-signoffs).
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_product_delete
+      operationId: auslib.web.admin.views.required_signoffs.delete_product_required_signoffs
       consumes: []
       produces:
         - application/json
@@ -1122,7 +1122,7 @@ paths:
         Endpoint to view all Permissions Required Signoffs. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs)
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_permissions_get
+      operationId: auslib.web.admin.views.required_signoffs.get_permissions_required_signoffs
       consumes: []
       produces:
         - application/json
@@ -1165,7 +1165,7 @@ paths:
         Create a new Permission Required Signoff. If the product provided already require signoff, a 400 will be returned (you must use a Scheduled Change and meet the existing signoff requirements to modify Required Signoffs for things that already require it). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs)
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_permissions_post
+      operationId: auslib.web.admin.views.required_signoffs.post_permissions_required_signoffs
       consumes:
         - application/json
       produces:
@@ -1204,7 +1204,7 @@ paths:
         Endpoint defined only to throw error when user attempts to delete permissions required signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs).
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_permissions_delete
+      operationId: auslib.web.admin.views.required_signoffs.delete_permissions_required_signoffs
       consumes: []
       produces:
         - application/json
