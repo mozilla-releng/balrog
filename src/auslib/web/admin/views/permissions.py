@@ -26,7 +26,6 @@ def get_users():
     return jsonify(users)
 
 
-
 @requirelogin
 @handleGeneralExceptions("GET")
 def get_specific_user(username, changed_by):
@@ -41,7 +40,6 @@ def get_specific_user(username, changed_by):
     return jsonify({"username": username, "permissions": permissions, "roles": roles})
 
 
-
 @requirelogin
 @handleGeneralExceptions("GET")
 def get_user_permissions(username, changed_by):
@@ -49,7 +47,6 @@ def get_user_permissions(username, changed_by):
 
     permissions = dbo.permissions.getUserPermissions(username, changed_by)
     return jsonify(permissions)
-
 
 
 @requirelogin
