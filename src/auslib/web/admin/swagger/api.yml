@@ -1598,7 +1598,7 @@ paths:
         Creates a new Rule in Balrog's database. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#post)
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.rules_post
+      operationId: auslib.web.admin.views.rules.post_rules
       consumes:
         - application/json
       produces:
@@ -1673,7 +1673,7 @@ paths:
         Updates the rule identified by the id or alias. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id3)
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.rules_id_or_alias_post
+      operationId: auslib.web.admin.views.rules.post_rules_id_or_alias
       consumes: []
       produces:
         - application/json
@@ -1712,7 +1712,7 @@ paths:
         Updates the rule identified by the id or alias. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id3)
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.rules_id_or_alias_put
+      operationId: auslib.web.admin.views.rules.put_rules_id_or_alias
       consumes: []
       produces:
         - application/json
@@ -1750,7 +1750,7 @@ paths:
         Deletes the entire rule entry in DB identified by the rule_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#delete)
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.rules_id_or_alias_delete
+      operationId: auslib.web.admin.views.rules.delete_rules_id_or_alias
       consumes: []
       produces:
         - application/json
@@ -1874,7 +1874,7 @@ paths:
         Returns a JSON Object containing the unique values for the given Rule column. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#rules-columns-column)
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.single_rule_column_get
+      operationId: auslib.web.admin.views.rules.get_single_rule_column
       consumes: []
       produces:
         - application/json

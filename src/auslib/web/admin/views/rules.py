@@ -2,7 +2,7 @@ import connexion
 from flask import Response, jsonify
 
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import AdminView, requirelogin
+from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, requirelogin, transactionHandler
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
@@ -51,77 +51,85 @@ def process_rule_form(form_data):
     return rule_form_dict, mapping_values, fallback_mapping_values
 
 
-class RulesAPIView(AdminView):
+# changed_by is available via the requirelogin decorator
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_rules(rule, transaction, changed_by):
     """/rules"""
 
-    # changed_by is available via the requirelogin decorator
-    @requirelogin
-    def _post(self, transaction, changed_by):
-        # a Post here creates a new rule
-        what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.get_json())
+    # a Post here creates a new rule
+    what, mapping_values, fallback_mapping_values = process_rule_form(rule)
 
-        if what.get("mapping", None) is None:
-            return problem(400, "Bad Request", "mapping value cannot be set to null/empty")
+    if what.get("mapping", None) is None:
+        return problem(400, "Bad Request", "mapping value cannot be set to null/empty")
 
-        if what.get("mapping", None) is not None and len(mapping_values) != 1:
-            return problem(400, "Bad Request", "Invalid mapping value. No release name found in DB")
+    if what.get("mapping", None) is not None and len(mapping_values) != 1:
+        return problem(400, "Bad Request", "Invalid mapping value. No release name found in DB")
 
-        if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
-            return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
+    if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
+        return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
 
-        alias = what.get("alias", None)
-        if alias is not None and dbo.rules.getRule(alias):
-            return problem(400, "Bad Request", "Rule with alias exists.")
+    alias = what.get("alias", None)
+    if alias is not None and dbo.rules.getRule(alias):
+        return problem(400, "Bad Request", "Rule with alias exists.")
 
-        rule_id = dbo.rules.insert(changed_by=changed_by, transaction=transaction, **what)
-        return Response(status=200, response=str(rule_id))
+    rule_id = dbo.rules.insert(changed_by=changed_by, transaction=transaction, **what)
+    return Response(status=200, response=str(rule_id))
 
 
-class SingleRuleView(AdminView):
+# changed_by is available via the requirelogin decorator
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
     """/rules/:id"""
 
-    # changed_by is available via the requirelogin decorator
-    @requirelogin
-    def _post(self, id_or_alias, transaction, changed_by):
-        # Verify that the rule_id or alias exists.
-        rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
-        if not rule:
-            return problem(status=404, title="Not Found", detail="Requested rule wasn't found", ext={"exception": "Requested rule does not exist"})
+    # Verify that the rule_id or alias exists.
+    existing_rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
+    if not existing_rule:
+        return problem(status=404, title="Not Found", detail="Requested rule wasn't found", ext={"exception": "Requested rule does not exist"})
 
-        what, mapping_values, fallback_mapping_values = process_rule_form(connexion.request.get_json())
+    what, mapping_values, fallback_mapping_values = process_rule_form(rule)
 
-        # If 'mapping' key is present in request body but is either blank/null
-        if "mapping" in what and what.get("mapping", None) is None:
-            return problem(400, "Bad Request", "mapping value cannot be set to null/empty")
+    # If 'mapping' key is present in request body but is either blank/null
+    if "mapping" in what and what.get("mapping", None) is None:
+        return problem(400, "Bad Request", "mapping value cannot be set to null/empty")
 
-        if what.get("mapping", None) is not None and len(mapping_values) != 1:
-            return problem(400, "Bad Request", "Invalid mapping value. No release name found in DB")
+    if what.get("mapping", None) is not None and len(mapping_values) != 1:
+        return problem(400, "Bad Request", "Invalid mapping value. No release name found in DB")
 
-        if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
-            return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
+    if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
+        return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
 
-        data_version = what.pop("data_version", None)
+    data_version = what.pop("data_version", None)
 
-        dbo.rules.update(changed_by=changed_by, where={"rule_id": id_or_alias}, what=what, old_data_version=data_version, transaction=transaction)
+    dbo.rules.update(changed_by=changed_by, where={"rule_id": id_or_alias}, what=what, old_data_version=data_version, transaction=transaction)
 
-        # find out what the next data version is
-        rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
-        return jsonify(new_data_version=rule["data_version"])
+    # find out what the next data version is
+    existing_rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
+    return jsonify(new_data_version=existing_rule["data_version"])
 
-    _put = _post
 
-    @requirelogin
-    def _delete(self, id_or_alias, transaction, changed_by):
-        # Verify that the rule_id or alias exists.
-        rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
-        if not rule:
-            return problem(status=404, title="Not Found", detail="Requested rule wasn't found", ext={"exception": "Requested rule does not exist"})
+put_rules_id_or_alias = post_rules_id_or_alias
 
-        # Bodies are ignored for DELETE requests, so we need to look at the request arguments instead.
-        old_data_version = int(connexion.request.args.get("data_version"))
-        dbo.rules.delete(where={"rule_id": id_or_alias}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
 
-        return Response(status=200)
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("DELETE")
+@debugPath
+def delete_rules_id_or_alias(id_or_alias, data_version, transaction, changed_by):
+    # Verify that the rule_id or alias exists.
+    rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
+    if not rule:
+        return problem(status=404, title="Not Found", detail="Requested rule wasn't found", ext={"exception": "Requested rule does not exist"})
+
+    # Bodies are ignored for DELETE requests, so we need to look at the request arguments instead.
+    dbo.rules.delete(where={"rule_id": id_or_alias}, changed_by=changed_by, old_data_version=data_version, transaction=transaction)
+
+    return Response(status=200)
 
 
 class RuleHistoryAPIView(HistoryView):
@@ -167,22 +175,21 @@ class RuleHistoryAPIView(HistoryView):
         )
 
 
-class SingleRuleColumnView(AdminView):
+def get_single_rule_column(column):
     """/rules/columns/:column"""
 
-    def get(self, column):
-        rules = dbo.rules.getOrderedRules()
-        column_values = []
-        if column not in rules[0].keys():
-            return problem(status=404, title="Not Found", detail="Rule column was not found", ext={"exception": "Requested column does not exist"})
+    rules = dbo.rules.getOrderedRules()
+    column_values = []
+    if column not in rules[0].keys():
+        return problem(status=404, title="Not Found", detail="Rule column was not found", ext={"exception": "Requested column does not exist"})
 
-        for rule in rules:
-            for key, value in rule.items():
-                if key == column and value is not None:
-                    column_values.append(value)
-        column_values = list(set(column_values))
-        ret = {"count": len(column_values), column: column_values}
-        return jsonify(ret)
+    for rule in rules:
+        for key, value in rule.items():
+            if key == column and value is not None:
+                column_values.append(value)
+    column_values = list(set(column_values))
+    ret = {"count": len(column_values), column: column_values}
+    return jsonify(ret)
 
 
 class RuleScheduledChangesView(ScheduledChangesView):

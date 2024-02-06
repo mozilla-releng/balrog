@@ -37,39 +37,11 @@ from auslib.web.admin.views.required_signoffs import (
 from auslib.web.admin.views.rules import (
     EnactRuleScheduledChangeView,
     RuleHistoryAPIView,
-    RulesAPIView,
     RuleScheduledChangeHistoryView,
     RuleScheduledChangeSignoffsView,
     RuleScheduledChangesView,
     RuleScheduledChangeView,
-    SingleRuleColumnView,
-    SingleRuleView,
 )
-
-
-def rules_post():
-    """POST /rules"""
-    return RulesAPIView().post()
-
-
-def rules_id_or_alias_post(id_or_alias):
-    """POST /rules/:id"""
-    return SingleRuleView().post(id_or_alias)
-
-
-def rules_id_or_alias_put(id_or_alias):
-    """PUT /rules/:id"""
-    return SingleRuleView().put(id_or_alias)
-
-
-def rules_id_or_alias_delete(id_or_alias):
-    """DELETE /rules/:id"""
-    return SingleRuleView().delete(id_or_alias)
-
-
-def single_rule_column_get(column):
-    """GET /rules/columns/:column"""
-    return SingleRuleColumnView().get(column)
 
 
 def rules_revisions_post(rule_id):
