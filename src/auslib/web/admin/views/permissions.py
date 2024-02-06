@@ -4,7 +4,7 @@ import connexion
 from flask import Response, jsonify
 
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import handleGeneralExceptions, requirelogin, transactionHandler, log
+from auslib.web.admin.views.base import handleGeneralExceptions, log, requirelogin, transactionHandler
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,
