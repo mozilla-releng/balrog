@@ -64,16 +64,16 @@ def get_specific_user_permission(username, permission, changed_by):
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("PUT")
-
+def put_specific_user_permission(username, permission, user_permission_request_body, changed_by, transaction):
     try:
         if dbo.permissions.getUserPermissions(username, changed_by, transaction).get(permission):
             # Existing Permission
-            if not connexion.request.get_json().get("data_version"):
+            if not user_permission_request_body.get("data_version"):
                 return problem(400, "Bad Request", "'data_version' is missing from request body")
 
             options_dict = None
-            if connexion.request.get_json().get("options"):
-                options_dict = json.loads(connexion.request.get_json().get("options"))
+            if user_permission_request_body.get("options"):
+                options_dict = json.loads(user_permission_request_body.get("options"))
                 if len(options_dict) == 0:
                     options_dict = None
 
@@ -81,7 +81,7 @@ def get_specific_user_permission(username, permission, changed_by):
                 where={"username": username, "permission": permission},
                 what={"options": options_dict},
                 changed_by=changed_by,
-                old_data_version=connexion.request.get_json().get("data_version"),
+                old_data_version=user_permission_request_body.get("data_version"),
                 transaction=transaction,
             )
             new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)["data_version"]
@@ -89,8 +89,8 @@ def get_specific_user_permission(username, permission, changed_by):
         else:
             # New Permission
             options_dict = None
-            if connexion.request.get_json().get("options"):
-                options_dict = json.loads(connexion.request.get_json().get("options"))
+            if user_permission_request_body.get("options"):
+                options_dict = json.loads(user_permission_request_body.get("options"))
                 if len(options_dict) == 0:
                     options_dict = None
             dbo.permissions.insert(changed_by, transaction=transaction, username=username, permission=permission, options=options_dict)
@@ -103,16 +103,16 @@ def get_specific_user_permission(username, permission, changed_by):
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("POST")
-
+def post_specific_user_permission(username, permission, user_permission_request_body, changed_by, transaction):
     if not dbo.permissions.getUserPermissions(username, changed_by, transaction=transaction).get(permission):
         return problem(status=404, title="Not Found", detail="Requested user permission" " %s not found for %s" % (permission, username))
     try:
         # Existing Permission
-        if not connexion.request.get_json().get("data_version"):
+        if not user_permission_request_body.get("data_version"):
             return problem(400, "Bad Request", "'data_version' is missing from request body")
         options_dict = None
-        if connexion.request.get_json().get("options"):
-            options_dict = json.loads(connexion.request.get_json().get("options"))
+        if user_permission_request_body.get("options"):
+            options_dict = json.loads(user_permission_request_body.get("options"))
             if len(options_dict) == 0:
                 options_dict = None
 
@@ -120,7 +120,7 @@ def get_specific_user_permission(username, permission, changed_by):
             where={"username": username, "permission": permission},
             what={"options": options_dict},
             changed_by=changed_by,
-            old_data_version=connexion.request.get_json().get("data_version"),
+            old_data_version=user_permission_request_body.get("data_version"),
             transaction=transaction,
         )
         new_data_version = dbo.permissions.getPermission(username=username, permission=permission, transaction=transaction)["data_version"]
@@ -133,7 +133,7 @@ def get_specific_user_permission(username, permission, changed_by):
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("DELETE")
-
+def delete_specific_user_permission(username, permission, data_version, changed_by, transaction):
     if not dbo.permissions.getUserPermissions(username, changed_by, transaction=transaction).get(permission):
         return problem(404, "Not Found", "Requested user permission" " %s not found for %s" % (permission, username))
     try:
@@ -141,9 +141,8 @@ def get_specific_user_permission(username, permission, changed_by):
         # won't find data where it's expecting it. Instead, we have to tell it to look at
         # the query string, which Flask puts in request.args.
 
-        old_data_version = int(connexion.request.args.get("data_version"))
         dbo.permissions.delete(
-            where={"username": username, "permission": permission}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction
+            where={"username": username, "permission": permission}, changed_by=changed_by, old_data_version=data_version, transaction=transaction
         )
         return Response(status=200)
     except ValueError as e:
