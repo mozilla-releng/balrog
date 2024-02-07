@@ -9,7 +9,7 @@ from auslib.db import OutdatedDataError
 from auslib.errors import BlobValidationError, ReadOnlyError
 from auslib.global_state import dbo
 from auslib.util.signoffs import serialize_signoff_requirements
-from auslib.web.admin.views.base import AdminView, requirelogin
+from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, log, requirelogin, transactionHandler
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,
@@ -20,7 +20,7 @@ from auslib.web.admin.views.scheduled_changes import (
 )
 from auslib.web.common.releases import serialize_releases
 
-__all__ = ["SingleReleaseView", "SingleLocaleView"]
+__all__ = ["put_single_release", "post_single_release", "delete_single_release", "put_release_single_locale"]
 
 
 def createRelease(release, product, changed_by, transaction, releaseData):
@@ -186,121 +186,134 @@ def set_required_signoffs_for_product(sc):
         sc["required_signoffs"] = serialize_signoff_requirements(potential_rs["rs"])
 
 
-class SingleLocaleView(AdminView):
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("PUT")
+@debugPath
+def put_release_single_locale(release, platform, locale, partial_release_body, changed_by, transaction):
+    """Something important to note about this method is that using the
+    "copyTo" field of the form, updates can be made to more than just
+    the release named in the URL. However, the release in the URL is
+    still considered the primary one, and used to make decisions about
+    what to set the status code to, and what data_version applies to.
+    In an ideal world we would probably require a data_version for the
+    releases named in copyTo as well."""
+
     """/releases/[release]/builds/[platform]/[locale]"""
 
-    @requirelogin
-    def _put(self, release, platform, locale, changed_by, transaction):
-        """Something important to note about this method is that using the
-        "copyTo" field of the form, updates can be made to more than just
-        the release named in the URL. However, the release in the URL is
-        still considered the primary one, and used to make decisions about
-        what to set the status code to, and what data_version applies to.
-        In an ideal world we would probably require a data_version for the
-        releases named in copyTo as well."""
+    def exists(rel, product):
+        if rel == release:
+            return dbo.releases.localeExists(name=rel, platform=platform, locale=locale, transaction=transaction)
+        return False
 
-        def exists(rel, product):
-            if rel == release:
-                return dbo.releases.localeExists(name=rel, platform=platform, locale=locale, transaction=transaction)
-            return False
+    def commit(rel, product, localeData, releaseData, old_data_version, extraArgs):
+        return dbo.releases.addLocaleToRelease(
+            name=rel,
+            product=product,
+            platform=platform,
+            locale=locale,
+            data=localeData,
+            alias=extraArgs.get("alias"),
+            old_data_version=old_data_version,
+            changed_by=changed_by,
+            transaction=transaction,
+        )
 
-        def commit(rel, product, localeData, releaseData, old_data_version, extraArgs):
-            return dbo.releases.addLocaleToRelease(
-                name=rel,
-                product=product,
-                platform=platform,
-                locale=locale,
-                data=localeData,
-                alias=extraArgs.get("alias"),
-                old_data_version=old_data_version,
+    return changeRelease(release, changed_by, transaction, exists, commit, log)
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("PUT")
+@debugPath
+def put_single_release(release, release_body, changed_by, transaction):
+    if dbo.releases.getReleases(name=release, limit=1):
+        if not release_body.get("data_version"):
+            return problem(400, "Bad Request", "data_version field is missing")
+        try:
+            blob = createBlob(release_body.get("blob"))
+            dbo.releases.update(
+                where={"name": release},
+                what={"data": blob, "product": release_body.get("product")},
                 changed_by=changed_by,
+                old_data_version=release_body.get("data_version"),
                 transaction=transaction,
             )
-
-        return changeRelease(release, changed_by, transaction, exists, commit, self.log)
-
-
-class SingleReleaseView(AdminView):
-    @requirelogin
-    def _put(self, release, changed_by, transaction):
-        if dbo.releases.getReleases(name=release, limit=1):
-            if not connexion.request.get_json().get("data_version"):
-                return problem(400, "Bad Request", "data_version field is missing")
-            try:
-                blob = createBlob(connexion.request.get_json().get("blob"))
-                dbo.releases.update(
-                    where={"name": release},
-                    what={"data": blob, "product": connexion.request.get_json().get("product")},
-                    changed_by=changed_by,
-                    old_data_version=connexion.request.get_json().get("data_version"),
-                    transaction=transaction,
-                )
-            except BlobValidationError as e:
-                msg = "Couldn't update release: %s" % e
-                self.log.warning("Bad input: %s", msg)
-                return problem(400, "Bad Request", "Couldn't update release", ext={"exception": e.errors})
-            except ReadOnlyError as e:
-                msg = "Couldn't update release: %s" % e
-                self.log.warning("Bad input: %s", msg)
-                return problem(403, "Forbidden", "Couldn't update release. Release is marked read only", ext={"exception": e.args})
-            except ValueError as e:
-                msg = "Couldn't update release: %s" % e
-                self.log.warning("Bad input: %s", msg)
-                return problem(400, "Bad Request", "Couldn't update release", ext={"exception": e.args})
-            # the data_version might jump by more than 1 if outdated blobs are
-            # merged
-            data_version = dbo.releases.getReleases(name=release, transaction=transaction)[0]["data_version"]
-            return jsonify(new_data_version=data_version)
-        else:
-            try:
-                blob = createBlob(connexion.request.get_json().get("blob"))
-                dbo.releases.insert(
-                    changed_by=changed_by, transaction=transaction, name=release, product=connexion.request.get_json().get("product"), data=blob
-                )
-            except BlobValidationError as e:
-                msg = "Couldn't update release: %s" % e
-                self.log.warning("Bad input: %s", msg)
-                return problem(400, "Bad Request", "Couldn't update release", ext={"exception": e.errors})
-            except ValueError as e:
-                msg = "Couldn't update release: %s" % e
-                self.log.warning("Bad input: %s", msg)
-                return problem(400, "Bad Request", "Couldn't update release", ext={"exception": e.args})
-            return Response(status=201)
-
-    @requirelogin
-    def _post(self, release, changed_by, transaction):
-        def exists(rel, product):
-            if rel == release:
-                return True
-            return False
-
-        def commit(rel, product, newReleaseData, releaseData, old_data_version, extraArgs):
-            releaseData.update(newReleaseData)
-            blob = createBlob(releaseData)
-            return dbo.releases.update(
-                where={"name": rel}, what={"data": blob, "product": product}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction
-            )
-
-        return changeRelease(release, changed_by, transaction, exists, commit, self.log)
-
-    @requirelogin
-    def _delete(self, release, changed_by, transaction):
-        releases = dbo.releases.getReleaseInfo(names=[release], nameOnly=True, limit=1)
-        if not releases:
-            return problem(404, "Not Found", "Release: %s not found" % release)
-        release = releases[0]
-
-        # query argument i.e. data_version  is also required.
-        # All input value validations already defined in swagger specification and carried out by connexion.
-        try:
-            old_data_version = int(connexion.request.args.get("data_version"))
-            dbo.releases.delete(where={"name": release["name"]}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction)
+        except BlobValidationError as e:
+            msg = "Couldn't update release: %s" % e
+            log.warning("Bad input: %s", msg)
+            return problem(400, "Bad Request", "Couldn't update release", ext={"exception": e.errors})
         except ReadOnlyError as e:
-            msg = "Couldn't delete release: %s" % e
-            self.log.warning("Bad input: %s", msg)
-            return problem(403, "Forbidden", "Couldn't delete %s. Release is marked read only" % release["name"], ext={"exception": e.args})
+            msg = "Couldn't update release: %s" % e
+            log.warning("Bad input: %s", msg)
+            return problem(403, "Forbidden", "Couldn't update release. Release is marked read only", ext={"exception": e.args})
+        except ValueError as e:
+            msg = "Couldn't update release: %s" % e
+            log.warning("Bad input: %s", msg)
+            return problem(400, "Bad Request", "Couldn't update release", ext={"exception": e.args})
+        # the data_version might jump by more than 1 if outdated blobs are
+        # merged
+        data_version = dbo.releases.getReleases(name=release, transaction=transaction)[0]["data_version"]
+        return jsonify(new_data_version=data_version)
+    else:
+        try:
+            blob = createBlob(release_body.get("blob"))
+            dbo.releases.insert(
+                changed_by=changed_by, transaction=transaction, name=release, product=release_body.get("product"), data=blob
+            )
+        except BlobValidationError as e:
+            msg = "Couldn't update release: %s" % e
+            log.warning("Bad input: %s", msg)
+            return problem(400, "Bad Request", "Couldn't update release", ext={"exception": e.errors})
+        except ValueError as e:
+            msg = "Couldn't update release: %s" % e
+            log.warning("Bad input: %s", msg)
+            return problem(400, "Bad Request", "Couldn't update release", ext={"exception": e.args})
+        return Response(status=201)
 
-        return Response(status=200)
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_single_release(release, partial_release_body, changed_by, transaction):
+    def exists(rel, product):
+        if rel == release:
+            return True
+        return False
+
+    def commit(rel, product, newReleaseData, releaseData, old_data_version, extraArgs):
+        releaseData.update(newReleaseData)
+        blob = createBlob(releaseData)
+        return dbo.releases.update(
+            where={"name": rel}, what={"data": blob, "product": product}, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction
+        )
+
+    return changeRelease(release, changed_by, transaction, exists, commit, log)
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("DELETE")
+@debugPath
+def delete_single_release(release, data_version, changed_by, transaction):
+    releases = dbo.releases.getReleaseInfo(names=[release], nameOnly=True, limit=1)
+    if not releases:
+        return problem(404, "Not Found", "Release: %s not found" % release)
+    release = releases[0]
+
+    # query argument i.e. data_version  is also required.
+    # All input value validations already defined in swagger specification and carried out by connexion.
+    try:
+        dbo.releases.delete(where={"name": release["name"]}, changed_by=changed_by, old_data_version=data_version, transaction=transaction)
+    except ReadOnlyError as e:
+        msg = "Couldn't delete release: %s" % e
+        log.warning("Bad input: %s", msg)
+        return problem(403, "Forbidden", "Couldn't delete %s. Release is marked read only" % release["name"], ext={"exception": e.args})
+
+    return Response(status=200)
+
+
 
 
 class ReleaseReadOnlyView(AdminView):

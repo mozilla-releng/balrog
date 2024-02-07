@@ -670,7 +670,7 @@ paths:
         Overwrites the named Release with the data given. The 'blob' field is completely overridden with the new one, not updated. If the Release does not exist, it is created. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.single_release_put
+      operationId: auslib.web.admin.views.releases.put_single_release
       consumes:
         - application/json
       produces:
@@ -705,7 +705,7 @@ paths:
         Updates the named Release with the data given. The 'blob' field is updated with the new one instead of being completely overridden. If the Release does not exist, it is created. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id11)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.single_release_post
+      operationId: auslib.web.admin.views.releases.post_single_release
       consumes:
         - application/json
       produces:
@@ -740,7 +740,7 @@ paths:
         Deletes the named Release. The 'data_version' parameter must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id12).
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.single_release_delete
+      operationId: auslib.web.admin.views.releases.delete_single_release
       consumes: []
       produces:
         - application/json
@@ -923,7 +923,7 @@ paths:
         Updates the named Release with the data given. The 'blob' field is updated with the new one instead of being completely overridden. If the Release does not exist, it is created. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id11)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_single_locale_view_put
+      operationId: auslib.web.admin.views.releases.put_release_single_locale
       consumes:
         - application/json
       produces:

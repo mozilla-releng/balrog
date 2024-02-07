@@ -16,9 +16,7 @@ from auslib.web.admin.views.releases import (
     ReleaseScheduledChangesView,
     ReleaseScheduledChangeView,
     ScheduledReleaseDiffView,
-    SingleLocaleView,
     SingleReleaseColumnView,
-    SingleReleaseView,
 )
 from auslib.web.admin.views.required_signoffs import (
     EnactPermissionsRequiredSignoffScheduledChangeView,
@@ -64,21 +62,6 @@ def release_post():
     return ReleasesAPIView().post()
 
 
-def single_release_post(release):
-    """POST /releases/:release"""
-    return SingleReleaseView().post(release)
-
-
-def single_release_put(release):
-    """PUT /releases/:release"""
-    return SingleReleaseView().put(release)
-
-
-def single_release_delete(release):
-    """DELETE /releases/:release"""
-    return SingleReleaseView().delete(release)
-
-
 def release_read_only_get(release):
     """GET /releases/:release/read_only"""
     return ReleaseReadOnlyView().get(release)
@@ -97,11 +80,6 @@ def release_read_only_product_required_signoffs_get(release):
 def release_single_column_get(column):
     """GET /releases/columns/:column"""
     return SingleReleaseColumnView().get(column)
-
-
-def release_single_locale_view_put(release, platform, locale):
-    """PUT /releases/[release]/builds/[platform]/[locale]"""
-    return SingleLocaleView().put(release, platform, locale)
 
 
 def required_signoffs_product_revisions_get():
