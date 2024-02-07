@@ -258,9 +258,7 @@ def put_single_release(release, release_body, changed_by, transaction):
     else:
         try:
             blob = createBlob(release_body.get("blob"))
-            dbo.releases.insert(
-                changed_by=changed_by, transaction=transaction, name=release, product=release_body.get("product"), data=blob
-            )
+            dbo.releases.insert(changed_by=changed_by, transaction=transaction, name=release, product=release_body.get("product"), data=blob)
         except BlobValidationError as e:
             msg = "Couldn't update release: %s" % e
             log.warning("Bad input: %s", msg)
