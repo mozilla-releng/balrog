@@ -360,71 +360,73 @@ def get_release_read_only_product_required_signoffs(release):
     return jsonify(rs)
 
 
-class ReleasesAPIView(AdminView):
+def get_releases(**kwargs):
     """/releases"""
 
-    def get(self, **kwargs):
-        opts = {}
-        if connexion.request.args.get("product"):
-            opts["product"] = connexion.request.args.get("product")
-        if connexion.request.args.get("name_prefix"):
-            opts["name_prefix"] = connexion.request.args.get("name_prefix")
-        if connexion.request.args.get("names_only"):
-            opts["nameOnly"] = True
-        releases = dbo.releases.getReleaseInfo(**opts)
-        if not opts.get("names_only"):
-            requirements = dbo.releases.getPotentialRequiredSignoffs(releases)
-            for release in releases:
-                release["required_signoffs"] = serialize_signoff_requirements(requirements[release["name"]])
-        return serialize_releases(connexion.request, releases)
-
-    @requirelogin
-    def _post(self, changed_by, transaction):
-        if dbo.releases.getReleaseInfo(names=[connexion.request.get_json().get("name")], transaction=transaction, nameOnly=True, limit=1):
-            return problem(
-                400,
-                "Bad Request",
-                "Release: %s already exists" % connexion.request.get_json().get("name"),
-                ext={"exception": "Database already contains the release"},
-            )
-        try:
-            blob = createBlob(connexion.request.get_json().get("blob"))
-            name = dbo.releases.insert(
-                changed_by=changed_by,
-                transaction=transaction,
-                name=connexion.request.get_json().get("name"),
-                product=connexion.request.get_json().get("product"),
-                data=blob,
-            )
-        except BlobValidationError as e:
-            msg = "Couldn't create release: %s" % e
-            self.log.warning("Bad input: %s", msg)
-            return problem(400, "Bad Request", "Couldn't create release", ext={"exception": e.errors})
-        except ValueError as e:
-            msg = "Couldn't create release: %s" % e
-            self.log.warning("Bad input: %s", msg)
-            return problem(400, "Bad Request", "Couldn't create release", ext={"exception": e.args})
-
-        release = dbo.releases.getReleases(name=name, transaction=transaction, limit=1)[0]
-        return Response(status=201, response=json.dumps(dict(new_data_version=release["data_version"])))
+    opts = {}
+    if connexion.request.args.get("product"):
+        opts["product"] = connexion.request.args.get("product")
+    if connexion.request.args.get("name_prefix"):
+        opts["name_prefix"] = connexion.request.args.get("name_prefix")
+    if connexion.request.args.get("names_only"):
+        opts["nameOnly"] = True
+    releases = dbo.releases.getReleaseInfo(**opts)
+    if not opts.get("names_only"):
+        requirements = dbo.releases.getPotentialRequiredSignoffs(releases)
+        for release in releases:
+            release["required_signoffs"] = serialize_signoff_requirements(requirements[release["name"]])
+    return serialize_releases(connexion.request, releases)
 
 
-class SingleReleaseColumnView(AdminView):
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_release(release_body, changed_by, transaction):
+    if dbo.releases.getReleaseInfo(names=[release_body.get("name")], transaction=transaction, nameOnly=True, limit=1):
+        return problem(
+            400,
+            "Bad Request",
+            "Release: %s already exists" % release_body.get("name"),
+            ext={"exception": "Database already contains the release"},
+        )
+    try:
+        blob = createBlob(release_body.get("blob"))
+        name = dbo.releases.insert(
+            changed_by=changed_by,
+            transaction=transaction,
+            name=release_body.get("name"),
+            product=release_body.get("product"),
+            data=blob,
+        )
+    except BlobValidationError as e:
+        msg = "Couldn't create release: %s" % e
+        log.warning("Bad input: %s", msg)
+        return problem(400, "Bad Request", "Couldn't create release", ext={"exception": e.errors})
+    except ValueError as e:
+        msg = "Couldn't create release: %s" % e
+        log.warning("Bad input: %s", msg)
+        return problem(400, "Bad Request", "Couldn't create release", ext={"exception": e.args})
+
+    release = dbo.releases.getReleases(name=name, transaction=transaction, limit=1)[0]
+    return Response(status=201, response=json.dumps(dict(new_data_version=release["data_version"])))
+
+
+def get_release_single_column(column):
     """/releases/columns/:column"""
 
-    def get(self, column):
-        releases = dbo.releases.getReleaseInfo()
-        column_values = []
-        if column not in releases[0].keys():
-            return problem(404, "Not Found", "Requested column does not exist")
+    releases = dbo.releases.getReleaseInfo()
+    column_values = []
+    if column not in releases[0].keys():
+        return problem(404, "Not Found", "Requested column does not exist")
 
-        for release in releases:
-            for key, value in release.items():
-                if key == column and value is not None:
-                    column_values.append(value)
-        column_values = list(set(column_values))
-        ret = {"count": len(column_values), column: column_values}
-        return jsonify(ret)
+    for release in releases:
+        for key, value in release.items():
+            if key == column and value is not None:
+                column_values.append(value)
+    column_values = list(set(column_values))
+    ret = {"count": len(column_values), column: column_values}
+    return jsonify(ret)
 
 
 class ReleaseScheduledChangesView(ScheduledChangesView):

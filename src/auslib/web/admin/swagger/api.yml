@@ -548,7 +548,7 @@ paths:
         Returns a JSON object containing metadata about Releases in Balrog's database. Due to its size, the actual Release 'blob' is never returned from this endpoint. There are a few query arguments that affect its response. If no arguments are provided, it returns all information about all of the Releases in the database. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_get
+      operationId: auslib.web.admin.views.releases.get_releases
       consumes: []
       produces:
         - application/json
@@ -615,7 +615,7 @@ paths:
         Creates a new Release with the provided values. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id9)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_post
+      operationId: auslib.web.admin.views.releases.post_release
       consumes:
         - application/json
       produces:
@@ -878,7 +878,7 @@ paths:
         Returns a JSON Object containing the unique values for the given column. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-columns-column)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_single_column_get
+      operationId: auslib.web.admin.views.releases.get_release_single_column
       consumes: []
       produces:
         - application/json

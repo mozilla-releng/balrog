@@ -8,13 +8,11 @@ from auslib.web.admin.views.permissions import (
 from auslib.web.admin.views.pinnable_releases import EnactPinnableReleaseScheduledChangeView, PinnableReleaseScheduledChangesView
 from auslib.web.admin.views.releases import (
     EnactReleaseScheduledChangeView,
-    ReleasesAPIView,
     ReleaseScheduledChangeHistoryView,
     ReleaseScheduledChangeSignoffsView,
     ReleaseScheduledChangesView,
     ReleaseScheduledChangeView,
     ScheduledReleaseDiffView,
-    SingleReleaseColumnView,
 )
 from auslib.web.admin.views.required_signoffs import (
     EnactPermissionsRequiredSignoffScheduledChangeView,
@@ -48,21 +46,6 @@ def rules_revisions_post(rule_id):
 def scheduled_release_diff_get(sc_id):
     """GET /scheduled_changes/diff/release/:sc_id"""
     return ScheduledReleaseDiffView().get(sc_id)
-
-
-def release_get():
-    """GET /releases"""
-    return ReleasesAPIView().get()
-
-
-def release_post():
-    """POST /releases"""
-    return ReleasesAPIView().post()
-
-
-def release_single_column_get(column):
-    """GET /releases/columns/:column"""
-    return SingleReleaseColumnView().get(column)
 
 
 def required_signoffs_product_revisions_get():
