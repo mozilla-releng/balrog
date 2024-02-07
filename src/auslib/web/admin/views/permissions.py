@@ -14,6 +14,15 @@ from auslib.web.admin.views.scheduled_changes import (
     SignoffsView,
 )
 
+__all__ = [
+    "get_users",
+    "get_user_permissions",
+    "get_specific_user_permission",
+    "put_specific_user_permission",
+    "post_specific_user_permission",
+    "delete_specific_user_permission",
+]
+
 
 def get_users():
     """/users"""
