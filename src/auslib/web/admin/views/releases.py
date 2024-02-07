@@ -569,45 +569,41 @@ class ReleaseScheduledChangeHistoryView(ScheduledChangeHistoryView):
         return super(ReleaseScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
 
 
-class ScheduledReleaseFieldView(AdminView):
-    def __init__(self):
-        self.table = dbo.releases.scheduled_changes
-
-    def get_value(self, sc_id, field=None):
-        data = self.table.select(where={"sc_id": sc_id}, transaction=None)[0]
-        if not data:
-            abort(400, "Bad sc_id")
-        if not field:
-            return data
-        if field not in data:
-            raise KeyError("Bad field")
-        return data[field]
+def get_scheduled_release_field_value(sc_id, field=None):
+    data = dbo.releases.scheduled_changes.select(where={"sc_id": sc_id}, transaction=None)[0]
+    if not data:
+        abort(400, "Bad sc_id")
+    if not field:
+        return data
+    if field not in data:
+        raise KeyError("Bad field")
+    return data[field]
 
 
-class ScheduledReleaseDiffView(ScheduledReleaseFieldView):
+def get_release(sc):
+    data = dbo.releases.select(where={"name": sc["base_name"], "product": sc["base_product"]}, limit=1)[0]
+    if not data:
+        abort(400, "Bad sc_id")
+    return data
+
+
+def get_scheduled_release_diff(sc_id):
     """/diff/:sc_id"""
 
-    def get_release(self, sc):
-        data = dbo.releases.select(where={"name": sc["base_name"], "product": sc["base_product"]}, limit=1)[0]
-        if not data:
-            abort(400, "Bad sc_id")
-        return data
+    sc = get_scheduled_release_field_value(sc_id)
+    release = get_release(sc)
 
-    def get(self, sc_id):
-        sc = self.get_value(sc_id)
-        release = self.get_release(sc)
+    if "data" not in release:
+        return problem(400, "Bad Request", "Bad field")
 
-        if "data" not in release:
-            return problem(400, "Bad Request", "Bad field")
+    previous = json.dumps(release["data"], indent=2, sort_keys=True)
+    value = json.dumps(sc["base_{}".format("data")], indent=2, sort_keys=True)
+    result = difflib.unified_diff(
+        previous.splitlines(),
+        value.splitlines(),
+        fromfile="Current Version (Data Version {})".format(release["data_version"]),
+        tofile="Scheduled Update (sc_id {})".format(sc["sc_id"]),
+        lineterm="",
+    )
 
-        previous = json.dumps(release["data"], indent=2, sort_keys=True)
-        value = json.dumps(sc["base_{}".format("data")], indent=2, sort_keys=True)
-        result = difflib.unified_diff(
-            previous.splitlines(),
-            value.splitlines(),
-            fromfile="Current Version (Data Version {})".format(release["data_version"]),
-            tofile="Scheduled Update (sc_id {})".format(sc["sc_id"]),
-            lineterm="",
-        )
-
-        return Response("\n".join(result), content_type="text/plain")
+    return Response("\n".join(result), content_type="text/plain")

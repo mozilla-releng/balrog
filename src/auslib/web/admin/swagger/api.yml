@@ -523,7 +523,7 @@ paths:
         Returns a diff of the value of the named field from the named object at the specified sc_id vs the current version of that object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#sc-view-object-change-id)
       tags:
         - History
-      operationId: auslib.web.admin.views.mapper.scheduled_release_diff_get
+      operationId: auslib.web.admin.views.releases.get_scheduled_release_diff
       consumes: []
       produces:
         - application/json

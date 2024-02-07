@@ -12,7 +12,6 @@ from auslib.web.admin.views.releases import (
     ReleaseScheduledChangeSignoffsView,
     ReleaseScheduledChangesView,
     ReleaseScheduledChangeView,
-    ScheduledReleaseDiffView,
 )
 from auslib.web.admin.views.required_signoffs import (
     EnactPermissionsRequiredSignoffScheduledChangeView,
@@ -41,11 +40,6 @@ from auslib.web.admin.views.rules import (
 def rules_revisions_post(rule_id):
     """POST /rules/:id/revisions"""
     return RuleHistoryAPIView().post(rule_id)
-
-
-def scheduled_release_diff_get(sc_id):
-    """GET /scheduled_changes/diff/release/:sc_id"""
-    return ScheduledReleaseDiffView().get(sc_id)
 
 
 def required_signoffs_product_revisions_get():
