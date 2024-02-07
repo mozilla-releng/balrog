@@ -1,7 +1,6 @@
 import logging
 
-from flask import current_app as app
-from flask import request
+from flask import current_app as app, request
 from flask.views import MethodView
 
 from auslib.db import ChangeScheduledError, OutdatedDataError, PermissionDeniedError, UpdateMergeError
