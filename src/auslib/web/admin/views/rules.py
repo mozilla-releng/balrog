@@ -79,14 +79,7 @@ def post_rules(rule, transaction, changed_by):
     return Response(status=200, response=str(rule_id))
 
 
-# changed_by is available via the requirelogin decorator
-@requirelogin
-@transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
-def post_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
-    """/rules/:id"""
-
+def update_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
     # Verify that the rule_id or alias exists.
     existing_rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
     if not existing_rule:
@@ -113,7 +106,23 @@ def post_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
     return jsonify(new_data_version=existing_rule["data_version"])
 
 
-put_rules_id_or_alias = post_rules_id_or_alias
+# changed_by is available via the requirelogin decorator
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
+    """/rules/:id"""
+
+    return update_rules_id_or_alias(rule, id_or_alias, transaction, changed_by)
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("PUT")
+@debugPath
+def put_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
+    return update_rules_id_or_alias(rule, id_or_alias, transaction, changed_by)
 
 
 @requirelogin
