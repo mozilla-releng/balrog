@@ -314,50 +314,50 @@ def delete_single_release(release, data_version, changed_by, transaction):
     return Response(status=200)
 
 
-
-
-class ReleaseReadOnlyView(AdminView):
+def get_release_read_only(release):
     """/releases/:release/read_only"""
 
-    def get(self, release):
-        try:
-            is_release_read_only = dbo.releases.isReadOnly(name=release, limit=1)
-        except KeyError as e:
-            return problem(404, "Not Found", json.dumps(e.args))
+    try:
+        is_release_read_only = dbo.releases.isReadOnly(name=release, limit=1)
+    except KeyError as e:
+        return problem(404, "Not Found", json.dumps(e.args))
 
-        return jsonify(read_only=is_release_read_only)
+    return jsonify(read_only=is_release_read_only)
 
-    @requirelogin
-    def _put(self, release, changed_by, transaction):
-        releases = dbo.releases.getReleaseInfo(names=[release], nameOnly=True, limit=1)
-        if not releases:
-            return problem(404, "Not Found", "Release: %s not found" % release)
 
-        data_version = connexion.request.get_json().get("data_version")
-        is_release_read_only = dbo.releases.isReadOnly(release)
-        where = {"name": release}
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("PUT")
+@debugPath
+def put_release_read_only(release, release_read_only_body, changed_by, transaction):
+    releases = dbo.releases.getReleaseInfo(names=[release], nameOnly=True, limit=1)
+    if not releases:
+        return problem(404, "Not Found", "Release: %s not found" % release)
 
-        if connexion.request.get_json().get("read_only"):
-            if not is_release_read_only:
-                dbo.releases.change_readonly(where, True, changed_by, old_data_version=data_version, transaction=transaction)
-                data_version += 1
-        else:
-            dbo.releases.change_readonly(where, False, changed_by, old_data_version=data_version, transaction=transaction)
+    data_version = release_read_only_body.get("data_version")
+    is_release_read_only = dbo.releases.isReadOnly(release)
+    where = {"name": release}
+
+    if release_read_only_body.get("read_only"):
+        if not is_release_read_only:
+            dbo.releases.change_readonly(where, True, changed_by, old_data_version=data_version, transaction=transaction)
             data_version += 1
-        return Response(status=201, response=json.dumps(dict(new_data_version=data_version)))
+    else:
+        dbo.releases.change_readonly(where, False, changed_by, old_data_version=data_version, transaction=transaction)
+        data_version += 1
+    return Response(status=201, response=json.dumps(dict(new_data_version=data_version)))
 
 
-class ReleaseReadOnlyProductRequiredSignoffsView(AdminView):
+def get_release_read_only_product_required_signoffs(release):
     """/releases/:release/read_only/product/required_signoffs"""
 
-    def get(self, release):
-        releases = dbo.releases.getReleases(name=release, limit=1)
-        if not releases:
-            return problem(404, "Not Found", f"Release: {release} not found")
-        release = releases[0]
-        potential_rs = dbo.releases.getPotentialRequiredSignoffsForProduct(release["product"])
-        rs = {"required_signoffs": serialize_signoff_requirements(potential_rs["rs"])}
-        return jsonify(rs)
+    releases = dbo.releases.getReleases(name=release, limit=1)
+    if not releases:
+        return problem(404, "Not Found", f"Release: {release} not found")
+    release = releases[0]
+    potential_rs = dbo.releases.getPotentialRequiredSignoffsForProduct(release["product"])
+    rs = {"required_signoffs": serialize_signoff_requirements(potential_rs["rs"])}
+    return jsonify(rs)
 
 
 class ReleasesAPIView(AdminView):

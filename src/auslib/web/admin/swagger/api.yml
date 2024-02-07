@@ -768,7 +768,7 @@ paths:
         Returns whether or not the named Release is marked as read_only. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-read-only)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_read_only_get
+      operationId: auslib.web.admin.views.releases.get_release_read_only
       consumes: []
       produces:
         - application/json
@@ -798,7 +798,7 @@ paths:
         Sets or unsets the read_only flag of the named Release. Requires release name, data_version and read_only values. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id15)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_read_only_put
+      operationId: auslib.web.admin.views.releases.put_release_read_only
       consumes:
         - application/json
       produces:
@@ -852,7 +852,7 @@ paths:
       tags:
         - Releases
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.release_read_only_product_required_signoffs_get
+      operationId: auslib.web.admin.views.releases.get_release_read_only_product_required_signoffs
       produces:
         - application/json
       parameters:
