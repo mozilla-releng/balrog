@@ -2166,7 +2166,7 @@ paths:
         Endpoint to get Scheduled Changes for Permissions. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_permissions_get
+      operationId: auslib.web.admin.views.permissions.get_permissions_scheduled_changes
       consumes: []
       produces:
         - application/json
@@ -2215,7 +2215,7 @@ paths:
         Create scheduled change for a permission(existing or new). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_permissions_post
+      operationId: auslib.web.admin.views.permissions.post_permissions_scheduled_changes
       consumes:
         - application/json
       produces:

@@ -9,9 +9,10 @@ from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,
     ScheduledChangeHistoryView,
-    ScheduledChangesView,
     ScheduledChangeView,
     SignoffsView,
+    get_scheduled_changes,
+    post_scheduled_changes,
 )
 
 __all__ = [
@@ -162,31 +163,37 @@ def delete_specific_user_permission(username, permission, data_version, changed_
         return problem(400, "Bad Request", str(e.args))
 
 
-class PermissionScheduledChangesView(ScheduledChangesView):
+def get_permissions_scheduled_changes():
     """/scheduled_changes/permissions"""
 
-    def __init__(self):
-        super(PermissionScheduledChangesView, self).__init__("permissions", dbo.permissions)
+    return get_scheduled_changes(table=dbo.permissions)
 
-    @requirelogin
-    def _post(self, transaction, changed_by):
-        if connexion.request.get_json().get("when", None) is None:
-            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permission")
-        change_type = connexion.request.get_json().get("change_type")
 
-        what = connexion.request.get_json()
-        if what.get("options", None):
-            what["options"] = json.loads(what.get("options"))
-            if len(what["options"]) == 0:
-                what["options"] = None
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_permissions_scheduled_changes(sc_permission_body, transaction, changed_by):
+    if sc_permission_body.get("when", None) is None:
+        return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permission")
+    change_type = sc_permission_body.get("change_type")
 
-        if change_type in ["update", "delete"]:
-            if not what.get("data_version", None):
-                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
-            else:
-                what["data_version"] = int(what["data_version"])
+    what = sc_permission_body
+    print(what, flush=True)
+    if what.get("options", None):
+        what["options"] = json.loads(what.get("options"))
+        if len(what["options"]) == 0:
+            what["options"] = None
 
-        return super(PermissionScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
+    if change_type in ["update", "delete"]:
+        if not what.get("data_version", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+        else:
+            what["data_version"] = int(what["data_version"])
+
+    return post_scheduled_changes(
+        sc_table=dbo.permissions.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type
+    )
 
 
 class PermissionScheduledChangeView(ScheduledChangeView):

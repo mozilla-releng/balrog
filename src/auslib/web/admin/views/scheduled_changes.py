@@ -48,42 +48,37 @@ def add_signoff_information(row, table, sc_table):
     return scheduled_change
 
 
-class ScheduledChangesView(AdminView):
+def get_scheduled_changes(table, where=None):
     """/scheduled_changes/:namespace"""
 
-    def __init__(self, namespace, table):
-        self.namespace = namespace
-        self.path = "/scheduled_changes/%s" % namespace
-        self.table = table
-        self.sc_table = table.scheduled_changes
-        super(ScheduledChangesView, self).__init__()
+    sc_table = table.scheduled_changes
 
-    def get(self, where=None):
-        if where is None:
-            where = {}
+    if where is None:
+        where = {}
 
-        if connexion.request.args.get("all") is None:
-            where["complete"] = False
+    if connexion.request.args.get("all") is None:
+        where["complete"] = False
 
-        rows = self.sc_table.select(where=where)
-        ret = {"count": len(rows), "scheduled_changes": []}
-        for row in rows:
-            ret["scheduled_changes"].append(add_signoff_information(row, self.table, self.sc_table))
+    rows = sc_table.select(where=where)
+    ret = {"count": len(rows), "scheduled_changes": []}
+    for row in rows:
+        ret["scheduled_changes"].append(add_signoff_information(row, table, sc_table))
 
-        return jsonify(ret)
+    return jsonify(ret)
 
-    def _post(self, what, transaction, changed_by, change_type):
-        if change_type not in ["insert", "update", "delete"]:
-            return problem(400, "Bad Request", "Invalid or missing change_type")
 
-        if is_when_present_and_in_past_validator(what):
-            return problem(400, "Bad Request", "Changes may not be scheduled in the past")
+def post_scheduled_changes(sc_table, what, transaction, changed_by, change_type):
+    if change_type not in ["insert", "update", "delete"]:
+        return problem(400, "Bad Request", "Invalid or missing change_type")
 
-        sc_id = self.sc_table.insert(changed_by, transaction, **what)
-        signoffs = {}
-        for signoff in self.sc_table.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
-            signoffs[signoff["username"]] = signoff["role"]
-        return jsonify(sc_id=sc_id, signoffs=signoffs)
+    if is_when_present_and_in_past_validator(what):
+        return problem(400, "Bad Request", "Changes may not be scheduled in the past")
+
+    sc_id = sc_table.insert(changed_by, transaction, **what)
+    signoffs = {}
+    for signoff in sc_table.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
+        signoffs[signoff["username"]] = signoff["role"]
+    return jsonify(sc_id=sc_id, signoffs=signoffs)
 
 
 class ScheduledChangeView(AdminView):
@@ -275,7 +270,7 @@ class ScheduledChangeHistoryView(HistoryView):
     def get_all(self):
         try:
             return self.get_revisions(
-                get_object_callback=lambda: ScheduledChangesView.get,
+                get_object_callback=lambda: get_scheduled_changes,
                 history_filters_callback=self._get_filters_all,
                 process_revisions_callback=self._process_revisions,
                 revisions_order_by=[self.history_table.timestamp.desc()],
