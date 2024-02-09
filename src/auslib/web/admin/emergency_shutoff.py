@@ -5,7 +5,7 @@ from flask import Response
 
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import handleGeneralExceptions, requirelogin, transactionHandler
-from auslib.web.admin.views.scheduled_changes import EnactScheduledChangeView, ScheduledChangesView, ScheduledChangeView, SignoffsView
+from auslib.web.admin.views.scheduled_changes import EnactScheduledChangeView, ScheduledChangeView, SignoffsView, get_scheduled_changes, post_scheduled_changes
 
 
 def get_emergency_shutoff(product, channel):
@@ -46,19 +46,20 @@ def delete(product, channel, data_version, changed_by, transaction, **kwargs):
 
 
 def scheduled_changes():
-    view = ScheduledChangesView("emergency_shutoff", dbo.emergencyShutoffs)
-    return view.get()
+    return get_scheduled_changes(table=dbo.emergencyShutoffs)
 
 
 @requirelogin
 @transactionHandler
+@handleGeneralExceptions("POST")
 def schedule_deletion(sc_emergency_shutoff, changed_by, transaction):
     change_type = sc_emergency_shutoff.get("change_type")
     if change_type != "delete":
         return problem(400, "Bad Request", "Invalid or missing change_type")
 
-    view = ScheduledChangesView("emergency_shutoff", dbo.emergencyShutoffs)
-    return view._post(sc_emergency_shutoff, transaction, changed_by, change_type)
+    return post_scheduled_changes(
+        sc_table=dbo.emergencyShutoffs.scheduled_changes, what=sc_emergency_shutoff, transaction=transaction, changed_by=changed_by, change_type=change_type
+    )
 
 
 @requirelogin
