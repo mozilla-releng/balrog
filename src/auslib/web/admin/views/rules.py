@@ -8,9 +8,10 @@ from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,
     ScheduledChangeHistoryView,
-    ScheduledChangesView,
     ScheduledChangeView,
     SignoffsView,
+    get_scheduled_changes,
+    post_scheduled_changes,
 )
 
 
@@ -201,82 +202,82 @@ def get_single_rule_column(column):
     return jsonify(ret)
 
 
-class RuleScheduledChangesView(ScheduledChangesView):
+def get_rules_scheduled_changes():
     """/scheduled_changes/rules"""
 
-    def __init__(self):
-        super(RuleScheduledChangesView, self).__init__("rules", dbo.rules)
+    where = {}
+    rule_id = connexion.request.args.get("rule_id")
+    if rule_id:
+        where["base_rule_id"] = rule_id
 
-    def get(self):
-        where = {}
-        rule_id = connexion.request.args.get("rule_id")
-        if rule_id:
-            where["base_rule_id"] = rule_id
+    return get_scheduled_changes(table=dbo.rules, where=where)
 
-        return super(RuleScheduledChangesView, self).get(where)
 
-    @requirelogin
-    def _post(self, transaction, changed_by):
-        if connexion.request.get_json().get("when", None) is None:
-            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Rule")
-        if connexion.request.get_json():
-            change_type = connexion.request.get_json().get("change_type")
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_rules_scheduled_changes(transaction, changed_by):
+    if connexion.request.get_json().get("when", None) is None:
+        return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Rule")
+    if connexion.request.get_json():
+        change_type = connexion.request.get_json().get("change_type")
+    else:
+        change_type = connexion.request.values.get("change_type")
+
+    what = {}
+    delete_change_type_allowed_fields = ["telemetry_product", "telemetry_channel", "telemetry_uptake", "when", "rule_id", "data_version", "change_type"]
+    for field in connexion.request.get_json():
+        # TODO: currently UI passes extra rule model fields in change_type == 'delete' request body. Fix it and
+        # TODO: change the below operation from filter/pop to throw Error when extra fields are passed.
+        if (change_type == "insert" and field in ["rule_id", "data_version"]) or (
+            change_type == "delete" and field not in delete_change_type_allowed_fields
+        ):
+            continue
+
+        if field in ["rule_id", "data_version"]:
+            what[field] = int(connexion.request.get_json()[field])
         else:
-            change_type = connexion.request.values.get("change_type")
+            what[field] = connexion.request.get_json()[field]
 
-        what = {}
-        delete_change_type_allowed_fields = ["telemetry_product", "telemetry_channel", "telemetry_uptake", "when", "rule_id", "data_version", "change_type"]
-        for field in connexion.request.get_json():
-            # TODO: currently UI passes extra rule model fields in change_type == 'delete' request body. Fix it and
-            # TODO: change the below operation from filter/pop to throw Error when extra fields are passed.
-            if (change_type == "insert" and field in ["rule_id", "data_version"]) or (
-                change_type == "delete" and field not in delete_change_type_allowed_fields
-            ):
-                continue
+    # Explicit checks for each change_type
+    if change_type in ["update", "delete"]:
+        for field in ["rule_id", "data_version"]:
+            if not what.get(field, None):
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
 
-            if field in ["rule_id", "data_version"]:
-                what[field] = int(connexion.request.get_json()[field])
-            else:
-                what[field] = connexion.request.get_json()[field]
+    elif change_type == "insert":
+        for field in ["update_type", "backgroundRate", "priority"]:
+            if what.get(field, None) is None or isinstance(what.get(field), str) and what.get(field).strip() == "":
+                return problem(
+                    400,
+                    "Bad Request",
+                    "Null/Empty Value",
+                    ext={"exception": "%s cannot be set to null/empty " "when scheduling insertion of a new rule" % field},
+                )
 
-        # Explicit checks for each change_type
-        if change_type in ["update", "delete"]:
-            for field in ["rule_id", "data_version"]:
-                if not what.get(field, None):
-                    return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
+    if change_type in ["update", "insert"]:
+        rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
+        what = rule_dict
 
-        elif change_type == "insert":
-            for field in ["update_type", "backgroundRate", "priority"]:
-                if what.get(field, None) is None or isinstance(what.get(field), str) and what.get(field).strip() == "":
-                    return problem(
-                        400,
-                        "Bad Request",
-                        "Null/Empty Value",
-                        ext={"exception": "%s cannot be set to null/empty " "when scheduling insertion of a new rule" % field},
-                    )
-
-        if change_type in ["update", "insert"]:
-            rule_dict, mapping_values, fallback_mapping_values = process_rule_form(what)
-            what = rule_dict
-
-            # if 'mapping' key is present in request body but is null
-            if "mapping" in what:
-                if what.get("mapping", None) is None:
-                    return problem(400, "Bad Request", "mapping value cannot be set to null/empty")
-
-            # if 'mapping' key-value is null/not-present-in-request-body and change_type == "insert"
+        # if 'mapping' key is present in request body but is null
+        if "mapping" in what:
             if what.get("mapping", None) is None:
-                if change_type == "insert":
-                    return problem(400, "Bad Request", "mapping value cannot be set to null/empty")
+                return problem(400, "Bad Request", "mapping value cannot be set to null/empty")
 
-            # If mapping is present in request body and is non-empty string which does not match any release name
-            if what.get("mapping") is not None and len(mapping_values) != 1:
-                return problem(400, "Bad Request", "Invalid mapping value. No release name found in DB")
+        # if 'mapping' key-value is null/not-present-in-request-body and change_type == "insert"
+        if what.get("mapping", None) is None:
+            if change_type == "insert":
+                return problem(400, "Bad Request", "mapping value cannot be set to null/empty")
 
-            if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
-                return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
+        # If mapping is present in request body and is non-empty string which does not match any release name
+        if what.get("mapping") is not None and len(mapping_values) != 1:
+            return problem(400, "Bad Request", "Invalid mapping value. No release name found in DB")
 
-        return super(RuleScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
+        if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
+            return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
+
+    return post_scheduled_changes(sc_table=dbo.rules.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type)
 
 
 class RuleScheduledChangeView(ScheduledChangeView):

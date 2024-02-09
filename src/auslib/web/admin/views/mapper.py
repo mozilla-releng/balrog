@@ -29,7 +29,6 @@ from auslib.web.admin.views.rules import (
     RuleHistoryAPIView,
     RuleScheduledChangeHistoryView,
     RuleScheduledChangeSignoffsView,
-    RuleScheduledChangesView,
     RuleScheduledChangeView,
 )
 
@@ -47,16 +46,6 @@ def required_signoffs_product_revisions_get():
 def required_signoffs_permissions_revisions_get():
     """GET /required_signoffs/permissions/revisions"""
     return PermissionsRequiredSignoffsHistoryAPIView().get()
-
-
-def scheduled_changes_rules_get():
-    """GET /scheduled_changes/rules"""
-    return RuleScheduledChangesView().get()
-
-
-def scheduled_changes_rules_post():
-    """POST /scheduled_changes/rules"""
-    return RuleScheduledChangesView().post()
 
 
 def scheduled_changes_releases_get():
