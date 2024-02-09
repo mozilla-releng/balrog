@@ -300,7 +300,7 @@ class PermissionsRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):
         return super(PermissionsRequiredSignoffsHistoryAPIView, self).get(input_dict)
 
 
-def get_permission_rs_scheduled_changes():
+def get_permissions_rs_scheduled_changes():
     """/scheduled_changes/required_signoffs/permissions"""
 
     where = {f"base_{param}": request.args[param] for param in ("product",) if param in request.args}
@@ -311,7 +311,7 @@ def get_permission_rs_scheduled_changes():
 @transactionHandler
 @handleGeneralExceptions("POST")
 @debugPath
-def post_permission_rs_scheduled_changes(transaction, changed_by):
+def post_permissions_rs_scheduled_changes(transaction, changed_by):
     if connexion.request.get_json().get("when", None) is None:
         return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permissions Required Signoff")
     change_type = connexion.request.get_json().get("change_type")
