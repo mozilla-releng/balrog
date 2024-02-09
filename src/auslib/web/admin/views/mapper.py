@@ -15,11 +15,9 @@ from auslib.web.admin.views.required_signoffs import (
     EnactProductRequiredSignoffScheduledChangeView,
     PermissionsRequiredSignoffScheduledChangeHistoryView,
     PermissionsRequiredSignoffScheduledChangeSignoffsView,
-    PermissionsRequiredSignoffScheduledChangeView,
     PermissionsRequiredSignoffsHistoryAPIView,
     ProductRequiredSignoffScheduledChangeHistoryView,
     ProductRequiredSignoffScheduledChangeSignoffsView,
-    ProductRequiredSignoffScheduledChangeView,
     ProductRequiredSignoffsHistoryAPIView,
 )
 from auslib.web.admin.views.rules import (
@@ -147,26 +145,6 @@ def scheduled_change_releases_post(sc_id):
 def scheduled_change_releases_delete(sc_id):
     """DELETE /scheduled_changes/releases/<int:sc_id>"""
     return ReleaseScheduledChangeView().delete(sc_id)
-
-
-def scheduled_change_product_rs_post(sc_id):
-    """POST /scheduled_changes/required_signoffs/product/<int:sc_id>"""
-    return ProductRequiredSignoffScheduledChangeView().post(sc_id)
-
-
-def scheduled_change_product_rs_delete(sc_id):
-    """DELETE /scheduled_changes/required_signoffs/product/<int:sc_id>"""
-    return ProductRequiredSignoffScheduledChangeView().delete(sc_id)
-
-
-def scheduled_change_permissions_rs_post(sc_id):
-    """POST /scheduled_changes/required_signoffs/permissions/<int:sc_id>"""
-    return PermissionsRequiredSignoffScheduledChangeView().post(sc_id)
-
-
-def scheduled_change_permissions_rs_delete(sc_id):
-    """DELETE /scheduled_changes/required_signoffs/permissions/<int:sc_id>"""
-    return PermissionsRequiredSignoffScheduledChangeView().delete(sc_id)
 
 
 def scheduled_change_rules_history_get(sc_id):

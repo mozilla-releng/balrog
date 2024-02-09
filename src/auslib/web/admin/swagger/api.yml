@@ -2834,7 +2834,7 @@ paths:
         Modifies existing scheduled change for a Product Required Signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_post
+      operationId: auslib.web.admin.views.required_signoffs.post_product_rs_scheduled_change
       consumes:
         - application/json
       produces:
@@ -2877,7 +2877,7 @@ paths:
         Deletes the given Scheduled Change for the named Product Required Signoff object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_delete
+      operationId: auslib.web.admin.views.required_signoffs.delete_product_rs_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -3098,7 +3098,7 @@ paths:
         Modifies existing scheduled change for a Permission Required Signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_post
+      operationId: auslib.web.admin.views.required_signoffs.post_permissions_rs_scheduled_change
       consumes:
         - application/json
       produces:
@@ -3140,7 +3140,7 @@ paths:
         Deletes the given Scheduled Change for the named Permission Required Signoff object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_delete
+      operationId: auslib.web.admin.views.required_signoffs.delete_permissions_rs_scheduled_change
       consumes: []
       produces:
         - application/json
