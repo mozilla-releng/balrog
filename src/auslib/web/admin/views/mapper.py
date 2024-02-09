@@ -4,7 +4,7 @@ from auslib.web.admin.views.permissions import (
     PermissionScheduledChangeSignoffsView,
     PermissionScheduledChangeView,
 )
-from auslib.web.admin.views.pinnable_releases import EnactPinnableReleaseScheduledChangeView, PinnableReleaseScheduledChangesView
+from auslib.web.admin.views.pinnable_releases import EnactPinnableReleaseScheduledChangeView
 from auslib.web.admin.views.releases import (
     EnactReleaseScheduledChangeView,
     ReleaseScheduledChangeHistoryView,
@@ -228,11 +228,6 @@ def scheduled_change_permissions_rs_history_get(sc_id):
 def scheduled_change_permissions_rs_history_post(sc_id):
     """POST /scheduled_changes/required_signoffs/permissions/<int:sc_id>/revisions"""
     return PermissionsRequiredSignoffScheduledChangeHistoryView().post(sc_id)
-
-
-def scheduled_changes_pinnable_releases_get():
-    """GET /scheduled_changes/pinnable_releases"""
-    return PinnableReleaseScheduledChangesView().get()
 
 
 def enact_scheduled_change_pinnable_releases_post(sc_id):

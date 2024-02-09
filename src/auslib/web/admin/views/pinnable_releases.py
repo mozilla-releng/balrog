@@ -1,16 +1,12 @@
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import requirelogin
-from auslib.web.admin.views.scheduled_changes import EnactScheduledChangeView, ScheduledChangesView
+from auslib.web.admin.views.scheduled_changes import EnactScheduledChangeView, get_scheduled_changes
 
 
-class PinnableReleaseScheduledChangesView(ScheduledChangesView):
+def get_pinnable_releases_scheduled_changes():
     """/scheduled_changes/pinnable_releases"""
 
-    def __init__(self):
-        super(PinnableReleaseScheduledChangesView, self).__init__("pinnable_releases", dbo.pinnable_releases)
-
-    def get(self):
-        return super(PinnableReleaseScheduledChangesView, self).get()
+    return get_scheduled_changes(table=dbo.pinnable_releases)
 
 
 class EnactPinnableReleaseScheduledChangeView(EnactScheduledChangeView):

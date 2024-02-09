@@ -3971,7 +3971,7 @@ paths:
         Endpoint to get Scheduled Changes for Release Pins. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_pinnable_releases_get
+      operationId: auslib.web.admin.views.pinnable_releases.get_pinnable_releases_scheduled_changes
       consumes: []
       produces:
         - application/json
