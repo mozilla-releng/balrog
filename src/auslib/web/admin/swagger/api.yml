@@ -1987,7 +1987,7 @@ paths:
         Endpoint to get a Scheduled Change for a Rule. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_get_by_id
+      operationId: auslib.web.admin.views.rules.get_by_id_rules_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -2018,7 +2018,7 @@ paths:
         Modifies existing scheduled change for a rule. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_post
+      operationId: auslib.web.admin.views.rules.post_rules_scheduled_change
       consumes:
         - application/json
       produces:
@@ -2060,7 +2060,7 @@ paths:
         Deletes the given Scheduled Change for the named Rule object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_delete
+      operationId: auslib.web.admin.views.rules.delete_rules_scheduled_change
       consumes: []
       produces:
         - application/json

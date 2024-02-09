@@ -25,7 +25,6 @@ from auslib.web.admin.views.rules import (
     RuleHistoryAPIView,
     RuleScheduledChangeHistoryView,
     RuleScheduledChangeSignoffsView,
-    RuleScheduledChangeView,
 )
 
 
@@ -117,20 +116,6 @@ def scheduled_change_permissions_rs_signoffs_post(sc_id):
 def scheduled_change_permissions_rs_signoffs_delete(sc_id):
     """DELETE /scheduled_changes/required_signoffs/permissions/<int:sc_id>/signoffs"""
     return PermissionsRequiredSignoffScheduledChangeSignoffsView().delete(sc_id)
-
-
-def scheduled_change_rules_get_by_id(sc_id):
-    return RuleScheduledChangeView().get(sc_id)
-
-
-def scheduled_change_rules_post(sc_id):
-    """POST /scheduled_changes/rules/<int:sc_id>"""
-    return RuleScheduledChangeView().post(sc_id)
-
-
-def scheduled_change_rules_delete(sc_id):
-    """DELETE /scheduled_changes/rules/<int:sc_id>"""
-    return RuleScheduledChangeView().delete(sc_id)
 
 
 def scheduled_change_releases_get_by_id(sc_id):
