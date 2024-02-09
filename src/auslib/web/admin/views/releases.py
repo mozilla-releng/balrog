@@ -17,7 +17,7 @@ from auslib.web.admin.views.scheduled_changes import (
     ScheduledChangeView,
     SignoffsView,
     get_scheduled_changes,
-    post_scheduled_changes
+    post_scheduled_changes,
 )
 from auslib.web.common.releases import serialize_releases
 
@@ -480,7 +480,9 @@ def post_releases_scheduled_changes(transaction, changed_by):
             return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
     try:
-        return post_scheduled_changes(sc_table=dbo.releases.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type)
+        return post_scheduled_changes(
+            sc_table=dbo.releases.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type
+        )
     except ReadOnlyError as e:
         msg = f"Failed to schedule change - {e}"
         return problem(400, "Bad Request", msg, ext={"data": e.args})

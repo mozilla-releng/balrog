@@ -230,9 +230,7 @@ def post_rules_scheduled_changes(transaction, changed_by):
     for field in connexion.request.get_json():
         # TODO: currently UI passes extra rule model fields in change_type == 'delete' request body. Fix it and
         # TODO: change the below operation from filter/pop to throw Error when extra fields are passed.
-        if (change_type == "insert" and field in ["rule_id", "data_version"]) or (
-            change_type == "delete" and field not in delete_change_type_allowed_fields
-        ):
+        if (change_type == "insert" and field in ["rule_id", "data_version"]) or (change_type == "delete" and field not in delete_change_type_allowed_fields):
             continue
 
         if field in ["rule_id", "data_version"]:

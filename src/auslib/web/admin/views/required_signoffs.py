@@ -15,7 +15,7 @@ from auslib.web.admin.views.scheduled_changes import (
     ScheduledChangeView,
     SignoffsView,
     get_scheduled_changes,
-    post_scheduled_changes
+    post_scheduled_changes,
 )
 from auslib.web.common.history import get_input_dict
 
@@ -189,7 +189,9 @@ def post_product_rs_scheduled_changes(self, transaction, changed_by):
         else:
             what["data_version"] = int(what["data_version"])
 
-    return post_scheduled_changes(sc_table=dbo.productRequiredSignoffs.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type)
+    return post_scheduled_changes(
+        sc_table=dbo.productRequiredSignoffs.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type
+    )
 
 
 class ProductRequiredSignoffScheduledChangeView(ScheduledChangeView):
@@ -341,7 +343,9 @@ def post_permissions_rs_scheduled_changes(transaction, changed_by):
         else:
             what["data_version"] = int(what["data_version"])
 
-    return post_scheduled_changes(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type)
+    return post_scheduled_changes(
+        sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type
+    )
 
 
 class PermissionsRequiredSignoffScheduledChangeView(ScheduledChangeView):
