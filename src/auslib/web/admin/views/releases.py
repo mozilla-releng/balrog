@@ -14,10 +14,12 @@ from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,
     ScheduledChangeHistoryView,
-    ScheduledChangeView,
     SignoffsView,
     get_scheduled_changes,
     post_scheduled_changes,
+    get_by_id_scheduled_change,
+    post_scheduled_change,
+    delete_scheduled_change
 )
 from auslib.web.common.releases import serialize_releases
 
@@ -488,57 +490,62 @@ def post_releases_scheduled_changes(sc_release_body, transaction, changed_by):
         return problem(400, "Bad Request", msg, ext={"data": e.args})
 
 
-class ReleaseScheduledChangeView(ScheduledChangeView):
+def get_by_id_releases_scheduled_change(sc_id):
     """/scheduled_changes/releases/<int:sc_id>"""
 
-    def __init__(self):
-        super(ReleaseScheduledChangeView, self).__init__("releases", dbo.releases)
+    ret = get_by_id_scheduled_change(table=dbo.releases, sc_id=sc_id)
+    sc = ret.json["scheduled_change"]
+    set_required_signoffs_for_product(sc)
+    return jsonify({"scheduled_change": sc})
 
-    def get(self, sc_id):
-        ret = super(ReleaseScheduledChangeView, self).get(sc_id)
-        sc = ret.json["scheduled_change"]
-        set_required_signoffs_for_product(sc)
-        return jsonify({"scheduled_change": sc})
 
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        # TODO: modify UI and clients to stop sending 'change_type' in request body
-        sc_release = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
-        if sc_release:
-            change_type = sc_release[0]["change_type"]
-        else:
-            return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for release found for given sc_id"})
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_releases_scheduled_change(sc_id, transaction, changed_by):
+    # TODO: modify UI and clients to stop sending 'change_type' in request body
+    sc_table = dbo.releases.scheduled_changes
+    sc_release = sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
+    if sc_release:
+        change_type = sc_release[0]["change_type"]
+    else:
+        return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for release found for given sc_id"})
 
-        what = {}
-        for field in connexion.request.get_json():
-            # Only data may be changed when editing an existing Scheduled Change for
-            # an existing Release. Name cannot be changed because it is a PK field, and product
-            # cannot be changed because it almost never makes sense to (and can be done
-            # by deleting/recreating instead).
-            # Any Release field may be changed when editing an Scheduled Change for a new Release
-            if (
-                (change_type == "delete" and field not in ["when", "data_version"])
-                or (change_type == "update" and field not in ["when", "data", "data_version"])
-                or (change_type == "insert" and field not in ["when", "name", "product", "data"])
-            ):
-                continue
+    what = {}
+    for field in connexion.request.get_json():
+        # Only data may be changed when editing an existing Scheduled Change for
+        # an existing Release. Name cannot be changed because it is a PK field, and product
+        # cannot be changed because it almost never makes sense to (and can be done
+        # by deleting/recreating instead).
+        # Any Release field may be changed when editing an Scheduled Change for a new Release
+        if (
+            (change_type == "delete" and field not in ["when", "data_version"])
+            or (change_type == "update" and field not in ["when", "data", "data_version"])
+            or (change_type == "insert" and field not in ["when", "name", "product", "data"])
+        ):
+            continue
 
-            what[field] = connexion.request.get_json()[field]
+        what[field] = connexion.request.get_json()[field]
 
-        if change_type in ["update", "delete"] and not what.get("data_version", None):
-            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+    if change_type in ["update", "delete"] and not what.get("data_version", None):
+        return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
-        elif change_type == "insert" and "data" in what and not what.get("data", None):
-            # edit scheduled change for new release
-            return problem(400, "Bad Request", "Null/Empty Value", ext={"exception": "data cannot be set to null when scheduling insertion of a new release"})
-        if what.get("data", None):
-            what["data"] = createBlob(what.get("data"))
+    elif change_type == "insert" and "data" in what and not what.get("data", None):
+        # edit scheduled change for new release
+        return problem(400, "Bad Request", "Null/Empty Value", ext={"exception": "data cannot be set to null when scheduling insertion of a new release"})
+    if what.get("data", None):
+        what["data"] = createBlob(what.get("data"))
 
-        return super(ReleaseScheduledChangeView, self)._post(sc_id, what, transaction, changed_by, connexion.request.get_json().get("sc_data_version", None))
+    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=connexion.request.get_json().get("sc_data_version", None))
 
-    @requirelogin
-    def _delete(self, sc_id, transaction, changed_by):
-        return super(ReleaseScheduledChangeView, self)._delete(sc_id, transaction, changed_by)
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("DELETE")
+@debugPath
+def delete_releases_scheduled_change(sc_id, transaction, changed_by):
+    return delete_scheduled_change(sc_table=dbo.releases.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 class EnactReleaseScheduledChangeView(EnactScheduledChangeView):

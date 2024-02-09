@@ -2519,7 +2519,7 @@ paths:
         Endpoint to get a Scheduled Change for a Release. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_get_by_id
+      operationId: auslib.web.admin.views.releases.get_by_id_releases_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -2567,7 +2567,7 @@ paths:
         Modifies existing scheduled change for a release. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_post
+      operationId: auslib.web.admin.views.releases.post_releases_scheduled_change
       consumes:
         - application/json
       produces:
@@ -2609,7 +2609,7 @@ paths:
         Deletes the given Scheduled Change for the named Release object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_delete
+      operationId: auslib.web.admin.views.releases.delete_releases_scheduled_change
       consumes: []
       produces:
         - application/json
