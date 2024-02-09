@@ -199,7 +199,7 @@ def post_product_rs_scheduled_changes(sc_rs_product_body, transaction, changed_b
 @transactionHandler
 @handleGeneralExceptions("POST")
 @debugPath
-def post_product_rs_scheduled_change(sc_id, transaction, changed_by):
+def post_product_rs_scheduled_change(sc_id, sc_product_rs_body, transaction, changed_by):
     """/scheduled_changes/required_signoffs/product/<int:sc_id>"""
 
     # TODO: modify UI and clients to stop sending 'change_type' in request body
@@ -210,7 +210,7 @@ def post_product_rs_scheduled_change(sc_id, transaction, changed_by):
     else:
         return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for product required signoff found for given sc_id"})
     what = {}
-    for field in connexion.request.get_json():
+    for field in sc_product_rs_body:
         if (
             (change_type == "insert" and field not in ["when", "product", "channel", "role", "signoffs_required"])
             or (change_type == "update" and field not in ["when", "signoffs_required", "data_version"])
@@ -218,7 +218,7 @@ def post_product_rs_scheduled_change(sc_id, transaction, changed_by):
         ):
             continue
 
-        what[field] = connexion.request.get_json()[field]
+        what[field] = sc_product_rs_body[field]
 
     if change_type in ["update", "delete"] and not what.get("data_version", None):
         return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
@@ -226,15 +226,15 @@ def post_product_rs_scheduled_change(sc_id, transaction, changed_by):
     if what.get("signoffs_required", None):
         what["signoffs_required"] = int(what["signoffs_required"])
 
-    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=connexion.request.get_json().get("sc_data_version", None))
+    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=sc_product_rs_body.get("sc_data_version", None))
 
 
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("DELETE")
 @debugPath
-def delete_product_rs_scheduled_change(sc_id, transaction, changed_by):
-    return delete_scheduled_change(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
+def delete_product_rs_scheduled_change(sc_id, data_version, transaction, changed_by):
+    return delete_scheduled_change(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by)
 
 
 class EnactProductRequiredSignoffScheduledChangeView(EnactScheduledChangeView):
@@ -355,7 +355,7 @@ def post_permissions_rs_scheduled_changes(sc_rs_permission_body, transaction, ch
 @transactionHandler
 @handleGeneralExceptions("POST")
 @debugPath
-def post_permissions_rs_scheduled_change(sc_id, transaction, changed_by):
+def post_permissions_rs_scheduled_change(sc_id, sc_permission_rs_body, transaction, changed_by):
     """/scheduled_changes/required_signoffs/permissions/<int:sc_id>"""
 
     # TODO: modify UI and clients to stop sending 'change_type' in request body
@@ -366,14 +366,14 @@ def post_permissions_rs_scheduled_change(sc_id, transaction, changed_by):
     else:
         return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for permission required " "signoff found for given sc_id"})
     what = {}
-    for field in connexion.request.get_json():
+    for field in sc_permission_rs_body:
         if (
             (change_type == "insert" and field not in ["when", "product", "role", "signoffs_required"])
             or (change_type == "update" and field not in ["when", "signoffs_required", "data_version"])
             or (change_type == "delete" and field not in ["when", "data_version"])
         ):
             continue
-        what[field] = connexion.request.get_json()[field]
+        what[field] = sc_permission_rs_body[field]
 
     if change_type in ["update", "delete"] and not what.get("data_version", None):
         return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
@@ -381,15 +381,15 @@ def post_permissions_rs_scheduled_change(sc_id, transaction, changed_by):
     if what.get("signoffs_required", None):
         what["signoffs_required"] = int(what["signoffs_required"])
 
-    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=connexion.request.get_json().get("sc_data_version", None))
+    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=sc_permission_rs_body.get("sc_data_version", None))
 
 
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("DELETE")
 @debugPath
-def delete_permissions_rs_scheduled_change(sc_id, transaction, changed_by):
-    return delete_scheduled_change(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
+def delete_permissions_rs_scheduled_change(sc_id, data_version, transaction, changed_by):
+    return delete_scheduled_change(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by)
 
 
 class EnactPermissionsRequiredSignoffScheduledChangeView(EnactScheduledChangeView):

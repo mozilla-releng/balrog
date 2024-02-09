@@ -503,7 +503,7 @@ def get_by_id_releases_scheduled_change(sc_id):
 @transactionHandler
 @handleGeneralExceptions("POST")
 @debugPath
-def post_releases_scheduled_change(sc_id, transaction, changed_by):
+def post_releases_scheduled_change(sc_id, sc_release_body, transaction, changed_by):
     # TODO: modify UI and clients to stop sending 'change_type' in request body
     sc_table = dbo.releases.scheduled_changes
     sc_release = sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
@@ -513,7 +513,7 @@ def post_releases_scheduled_change(sc_id, transaction, changed_by):
         return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for release found for given sc_id"})
 
     what = {}
-    for field in connexion.request.get_json():
+    for field in sc_release_body:
         # Only data may be changed when editing an existing Scheduled Change for
         # an existing Release. Name cannot be changed because it is a PK field, and product
         # cannot be changed because it almost never makes sense to (and can be done
@@ -526,7 +526,7 @@ def post_releases_scheduled_change(sc_id, transaction, changed_by):
         ):
             continue
 
-        what[field] = connexion.request.get_json()[field]
+        what[field] = sc_release_body[field]
 
     if change_type in ["update", "delete"] and not what.get("data_version", None):
         return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
@@ -537,15 +537,15 @@ def post_releases_scheduled_change(sc_id, transaction, changed_by):
     if what.get("data", None):
         what["data"] = createBlob(what.get("data"))
 
-    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=connexion.request.get_json().get("sc_data_version", None))
+    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=sc_release_body.get("sc_data_version", None))
 
 
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("DELETE")
 @debugPath
-def delete_releases_scheduled_change(sc_id, transaction, changed_by):
-    return delete_scheduled_change(sc_table=dbo.releases.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
+def delete_releases_scheduled_change(sc_id, data_version, transaction, changed_by):
+    return delete_scheduled_change(sc_table=dbo.releases.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by)
 
 
 class EnactReleaseScheduledChangeView(EnactScheduledChangeView):

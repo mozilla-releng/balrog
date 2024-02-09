@@ -109,7 +109,7 @@ def post_scheduled_change(sc_table, sc_id, what, transaction, changed_by, old_sc
     return jsonify(new_data_version=sc["data_version"], signoffs=signoffs)
 
 
-def delete_scheduled_change(sc_table, sc_id, transaction, changed_by):
+def delete_scheduled_change(sc_table, sc_id, data_version, transaction, changed_by):
     where = {"sc_id": sc_id}
     sc = sc_table.select(where, transaction, columns=["sc_id"])
     if not sc:
@@ -118,7 +118,7 @@ def delete_scheduled_change(sc_table, sc_id, transaction, changed_by):
     if not connexion.request.args.get("data_version", None):
         return problem(400, "Bad Request", "data_version is missing")
 
-    sc_table.delete(where, changed_by, int(connexion.request.args.get("data_version")), transaction)
+    sc_table.delete(where, changed_by, data_version, transaction)
     return jsonify({})
 
 

@@ -201,7 +201,7 @@ def post_permissions_scheduled_changes(sc_permission_body, transaction, changed_
 @transactionHandler
 @handleGeneralExceptions("POST")
 @debugPath
-def post_permissions_scheduled_change(sc_id, transaction, changed_by):
+def post_permissions_scheduled_change(sc_id, sc_permission_body, transaction, changed_by):
     """/scheduled_changes/permissions/<int:sc_id>"""
 
     # TODO: modify UI and clients to stop sending 'change_type' in request body
@@ -215,7 +215,7 @@ def post_permissions_scheduled_change(sc_id, transaction, changed_by):
     # TODO: UI passes too many extra non-required fields apart from 'change_type' in request body
     # Only required fields must be passed to DB layer
     what = {}
-    for field in connexion.request.get_json():
+    for field in sc_permission_body:
         # When editing an existing Scheduled Change for an for an existing Permission only options may be
         # provided. Because edits are identified by sc_id (in the URL), permission and username
         # are not required (nor allowed, because they are PK fields).
@@ -228,7 +228,7 @@ def post_permissions_scheduled_change(sc_id, transaction, changed_by):
         ):
             continue
 
-        what[field] = connexion.request.get_json()[field]
+        what[field] = sc_permission_body[field]
 
     if change_type in ["update", "delete"] and not what.get("data_version", None):
         return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
@@ -238,15 +238,15 @@ def post_permissions_scheduled_change(sc_id, transaction, changed_by):
         if len(what["options"]) == 0:
             what["options"] = None
 
-    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=connexion.request.get_json().get("sc_data_version"))
+    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=sc_permission_body.get("sc_data_version"))
 
 
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("DELETE")
 @debugPath
-def delete_permissions_scheduled_change(sc_id, transaction, changed_by):
-    return delete_scheduled_change(sc_table=dbo.permissions.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
+def delete_permissions_scheduled_change(sc_id, data_version, transaction, changed_by):
+    return delete_scheduled_change(sc_table=dbo.permissions.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by)
 
 
 class EnactPermissionScheduledChangeView(EnactScheduledChangeView):

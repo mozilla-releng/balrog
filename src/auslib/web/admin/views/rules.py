@@ -290,7 +290,7 @@ def get_by_id_rules_scheduled_change(sc_id):
 @transactionHandler
 @handleGeneralExceptions("POST")
 @debugPath
-def post_rules_scheduled_change(sc_id, transaction, changed_by):
+def post_rules_scheduled_change(sc_id, sc_rule_body, transaction, changed_by):
     # TODO: modify UI and clients to stop sending 'change_type' in request body
     sc_table = dbo.rules.scheduled_changes
     sc_rule = sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
@@ -300,7 +300,7 @@ def post_rules_scheduled_change(sc_id, transaction, changed_by):
         return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for rule found for given sc_id"})
 
     what = {}
-    for field in connexion.request.get_json():
+    for field in sc_rule_body:
         # Unlike when scheduling a new change to an existing rule, rule_id is not
         # required (or even allowed) when modifying a scheduled change for an
         # existing rule. Allowing it to be modified would be confusing.
@@ -311,7 +311,7 @@ def post_rules_scheduled_change(sc_id, transaction, changed_by):
         ):
             continue
 
-        what[field] = connexion.request.get_json()[field]
+        what[field] = sc_rule_body[field]
 
     if change_type == "update" and not what.get("data_version", None):
         return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
@@ -339,15 +339,15 @@ def post_rules_scheduled_change(sc_id, transaction, changed_by):
         if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
             return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
 
-    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=connexion.request.get_json().get("sc_data_version", None))
+    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=sc_rule_body.get("sc_data_version", None))
 
 
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("DELETE")
 @debugPath
-def delete_rules_scheduled_change(sc_id, transaction, changed_by):
-    return delete_scheduled_change(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
+def delete_rules_scheduled_change(sc_id, data_version, transaction, changed_by):
+    return delete_scheduled_change(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by)
 
 
 class EnactRuleScheduledChangeView(EnactScheduledChangeView):

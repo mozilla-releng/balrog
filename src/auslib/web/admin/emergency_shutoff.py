@@ -72,8 +72,8 @@ def update_scheduled_deletion(sc_id, sc_emergency_shutoff, changed_by, transacti
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("DELETE")
-def delete_scheduled_deletion(sc_id, changed_by, transaction, **kwargs):
-    return delete_scheduled_change(sc_table=dbo.emergencyShutoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
+def delete_scheduled_deletion(sc_id, data_version, changed_by, transaction):
+    return delete_scheduled_change(sc_table=dbo.emergencyShutoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by)
 
 
 def scheduled_changes_signoffs(sc_id):
