@@ -12,9 +12,10 @@ from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,
     ScheduledChangeHistoryView,
-    ScheduledChangesView,
     ScheduledChangeView,
     SignoffsView,
+    get_scheduled_changes,
+    post_scheduled_changes
 )
 from auslib.web.common.history import get_input_dict
 
@@ -147,48 +148,48 @@ class ProductRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):
         return super(ProductRequiredSignoffsHistoryAPIView, self).get(input_dict)
 
 
-class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
+def get_product_rs_scheduled_changes():
     """/scheduled_changes/required_signoffs/product"""
 
-    def __init__(self):
-        super(ProductRequiredSignoffsScheduledChangesView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
+    where = {f"base_{param}": request.args[param] for param in ("product", "channel") if param in request.args}
+    return get_scheduled_changes(table=dbo.productRequiredSignoffs, where=where)
 
-    def get(self):
-        where = {f"base_{param}": request.args[param] for param in ("product", "channel") if param in request.args}
-        return super(ProductRequiredSignoffsScheduledChangesView, self).get(where=where)
 
-    @requirelogin
-    def _post(self, transaction, changed_by):
-        if connexion.request.get_json().get("when", None) is None:
-            return problem(400, "Bad Request", "when cannot be set to null when scheduling a new change " "for a Product Required Signoff")
-        change_type = connexion.request.get_json().get("change_type")
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_product_rs_scheduled_changes(self, transaction, changed_by):
+    if connexion.request.get_json().get("when", None) is None:
+        return problem(400, "Bad Request", "when cannot be set to null when scheduling a new change " "for a Product Required Signoff")
+    change_type = connexion.request.get_json().get("change_type")
 
-        what = {}
-        for field in connexion.request.get_json():
-            if change_type == "insert" and field == "data_version":
-                continue
-            what[field] = connexion.request.get_json()[field]
+    what = {}
+    for field in connexion.request.get_json():
+        if change_type == "insert" and field == "data_version":
+            continue
+        what[field] = connexion.request.get_json()[field]
 
-        if change_type == "update":
-            for field in ["signoffs_required", "data_version"]:
-                if not what.get(field, None):
-                    return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
-                else:
-                    what[field] = int(what[field])
-
-        elif change_type == "insert":
-            if not what.get("signoffs_required", None):
-                return problem(400, "Bad Request", "Missing field", ext={"exception": "signoffs_required is missing"})
+    if change_type == "update":
+        for field in ["signoffs_required", "data_version"]:
+            if not what.get(field, None):
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
             else:
-                what["signoffs_required"] = int(what["signoffs_required"])
+                what[field] = int(what[field])
 
-        elif change_type == "delete":
-            if not what.get("data_version", None):
-                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
-            else:
-                what["data_version"] = int(what["data_version"])
+    elif change_type == "insert":
+        if not what.get("signoffs_required", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "signoffs_required is missing"})
+        else:
+            what["signoffs_required"] = int(what["signoffs_required"])
 
-        return super(ProductRequiredSignoffsScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
+    elif change_type == "delete":
+        if not what.get("data_version", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+        else:
+            what["data_version"] = int(what["data_version"])
+
+    return post_scheduled_changes(sc_table=dbo.productRequiredSignoffs.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type)
 
 
 class ProductRequiredSignoffScheduledChangeView(ScheduledChangeView):
@@ -299,48 +300,48 @@ class PermissionsRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):
         return super(PermissionsRequiredSignoffsHistoryAPIView, self).get(input_dict)
 
 
-class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
+def get_permission_rs_scheduled_changes():
     """/scheduled_changes/required_signoffs/permissions"""
 
-    def __init__(self):
-        super(PermissionsRequiredSignoffsScheduledChangesView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
+    where = {f"base_{param}": request.args[param] for param in ("product",) if param in request.args}
+    return get_scheduled_changes(table=dbo.permissionsRequiredSignoffs, where=where)
 
-    def get(self):
-        where = {f"base_{param}": request.args[param] for param in ("product",) if param in request.args}
-        return super(PermissionsRequiredSignoffsScheduledChangesView, self).get(where=where)
 
-    @requirelogin
-    def _post(self, transaction, changed_by):
-        if connexion.request.get_json().get("when", None) is None:
-            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permissions Required Signoff")
-        change_type = connexion.request.get_json().get("change_type")
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_permission_rs_scheduled_changes(transaction, changed_by):
+    if connexion.request.get_json().get("when", None) is None:
+        return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permissions Required Signoff")
+    change_type = connexion.request.get_json().get("change_type")
 
-        what = {}
-        for field in connexion.request.get_json():
-            if change_type == "insert" and field == "data_version":
-                continue
-            what[field] = connexion.request.get_json()[field]
+    what = {}
+    for field in connexion.request.get_json():
+        if change_type == "insert" and field == "data_version":
+            continue
+        what[field] = connexion.request.get_json()[field]
 
-        if change_type == "update":
-            for field in ["signoffs_required", "data_version"]:
-                if not what.get(field, None):
-                    return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
-                else:
-                    what[field] = int(what[field])
-
-        elif change_type == "insert":
-            if not what.get("signoffs_required", None):
-                return problem(400, "Bad Request", "Missing field", ext={"exception": "signoffs_required is missing"})
+    if change_type == "update":
+        for field in ["signoffs_required", "data_version"]:
+            if not what.get(field, None):
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
             else:
-                what["signoffs_required"] = int(what["signoffs_required"])
+                what[field] = int(what[field])
 
-        elif change_type == "delete":
-            if not what.get("data_version", None):
-                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
-            else:
-                what["data_version"] = int(what["data_version"])
+    elif change_type == "insert":
+        if not what.get("signoffs_required", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "signoffs_required is missing"})
+        else:
+            what["signoffs_required"] = int(what["signoffs_required"])
 
-        return super(PermissionsRequiredSignoffsScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
+    elif change_type == "delete":
+        if not what.get("data_version", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+        else:
+            what["data_version"] = int(what["data_version"])
+
+    return post_scheduled_changes(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type)
 
 
 class PermissionsRequiredSignoffScheduledChangeView(ScheduledChangeView):

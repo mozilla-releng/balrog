@@ -2729,7 +2729,7 @@ paths:
         Endpoint to get Scheduled Changes for required signoffs of products. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_rs_product_get
+      operationId: auslib.web.admin.views.required_signoffs.get_product_rs_scheduled_changes
       consumes: []
       produces:
         - application/json
@@ -2784,7 +2784,7 @@ paths:
         Create scheduled change for required signoffs of product(existing or new). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_rs_product_post
+      operationId: auslib.web.admin.views.required_signoffs.post_product_rs_scheduled_changes
       consumes:
         - application/json
       produces:
@@ -2997,7 +2997,7 @@ paths:
         Endpoint to get Scheduled Changes for required signoffs of permissions. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_rs_permissions_get
+      operationId: auslib.web.admin.views.required_signoffs.get_permissions_rs_scheduled_changes
       consumes: []
       produces:
         - application/json
@@ -3050,7 +3050,7 @@ paths:
         Create scheduled change for required signoffs of product(existing or new). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_rs_permissions_post
+      operationId: auslib.web.admin.views.required_signoffs.post_permissions_rs_scheduled_changes
       consumes:
         - application/json
       produces:

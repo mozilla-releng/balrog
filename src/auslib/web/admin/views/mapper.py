@@ -19,12 +19,10 @@ from auslib.web.admin.views.required_signoffs import (
     PermissionsRequiredSignoffScheduledChangeSignoffsView,
     PermissionsRequiredSignoffScheduledChangeView,
     PermissionsRequiredSignoffsHistoryAPIView,
-    PermissionsRequiredSignoffsScheduledChangesView,
     ProductRequiredSignoffScheduledChangeHistoryView,
     ProductRequiredSignoffScheduledChangeSignoffsView,
     ProductRequiredSignoffScheduledChangeView,
     ProductRequiredSignoffsHistoryAPIView,
-    ProductRequiredSignoffsScheduledChangesView,
 )
 from auslib.web.admin.views.rules import (
     EnactRuleScheduledChangeView,
@@ -69,26 +67,6 @@ def scheduled_changes_releases_get():
 def scheduled_changes_releases_post():
     """POST /scheduled_changes/releases"""
     return ReleaseScheduledChangesView().post()
-
-
-def scheduled_changes_rs_product_get():
-    """GET /scheduled_changes/required_signoffs/product"""
-    return ProductRequiredSignoffsScheduledChangesView().get()
-
-
-def scheduled_changes_rs_product_post():
-    """POST /scheduled_changes/required_signoffs/product"""
-    return ProductRequiredSignoffsScheduledChangesView().post()
-
-
-def scheduled_changes_rs_permissions_get():
-    """GET /scheduled_changes/required_signoffs/permissions"""
-    return PermissionsRequiredSignoffsScheduledChangesView().get()
-
-
-def scheduled_changes_rs_permissions_post():
-    """POST /scheduled_changes/required_signoffs/permissions"""
-    return PermissionsRequiredSignoffsScheduledChangesView().post()
 
 
 def enact_scheduled_change_rules_post(sc_id):
