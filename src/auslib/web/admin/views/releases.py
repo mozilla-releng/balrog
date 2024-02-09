@@ -14,9 +14,10 @@ from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,
     ScheduledChangeHistoryView,
-    ScheduledChangesView,
     ScheduledChangeView,
     SignoffsView,
+    get_scheduled_changes,
+    post_scheduled_changes
 )
 from auslib.web.common.releases import serialize_releases
 
@@ -427,62 +428,62 @@ def get_release_single_column(column):
     return jsonify(ret)
 
 
-class ReleaseScheduledChangesView(ScheduledChangesView):
+def get_releases_scheduled_changes():
     """/scheduled_changes/releases"""
 
-    def __init__(self):
-        super(ReleaseScheduledChangesView, self).__init__("releases", dbo.releases)
+    where = {}
+    name = connexion.request.args.get("name")
+    if name:
+        where["base_name"] = name
 
-    def get(self):
-        where = {}
-        name = connexion.request.args.get("name")
-        if name:
-            where["base_name"] = name
+    ret = get_scheduled_changes(table=dbo.releases, where=where)
+    scheduled_changes = []
+    for sc in ret.json["scheduled_changes"]:
+        set_required_signoffs_for_product(sc)
+        scheduled_changes.append(sc)
+    return jsonify({"count": len(scheduled_changes), "scheduled_changes": scheduled_changes})
 
-        ret = super(ReleaseScheduledChangesView, self).get(where)
-        scheduled_changes = []
-        for sc in ret.json["scheduled_changes"]:
-            set_required_signoffs_for_product(sc)
-            scheduled_changes.append(sc)
-        return jsonify({"count": len(scheduled_changes), "scheduled_changes": scheduled_changes})
 
-    @requirelogin
-    def _post(self, transaction, changed_by):
-        what = connexion.request.get_json()
-        if what.get("when", None) is None:
-            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Release")
-        change_type = what.get("change_type")
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_releases_scheduled_changes(transaction, changed_by):
+    what = connexion.request.get_json()
+    if what.get("when", None) is None:
+        return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Release")
+    change_type = what.get("change_type")
 
-        if change_type == "update":
-            if not what.get("data_version", None):
-                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+    if change_type == "update":
+        if not what.get("data_version", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
-            data = what.get("data", None)
+        data = what.get("data", None)
 
-            if data:
-                what["data"] = createBlob(data)
+        if data:
+            what["data"] = createBlob(data)
 
-            if "read_only" in what and not data:
-                what["data"] = self.table.getReleaseBlob(what["name"])
+        if "read_only" in what and not data:
+            what["data"] = dbo.releases.getReleaseBlob(what["name"])
 
-        elif change_type == "insert":
-            if not what.get("product", None):
-                return problem(400, "Bad Request", "Missing field", ext={"exception": "product is missing"})
+    elif change_type == "insert":
+        if not what.get("product", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "product is missing"})
 
-            if what.get("data", None):
-                what["data"] = createBlob(what.get("data"))
-            else:
-                return problem(400, "Bad Request", "Missing field", ext={"exception": "Missing blob 'data' value"})
+        if what.get("data", None):
+            what["data"] = createBlob(what.get("data"))
+        else:
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "Missing blob 'data' value"})
 
-        elif change_type == "delete":
-            if not what.get("data_version", None):
-                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+    elif change_type == "delete":
+        if not what.get("data_version", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
-        try:
-            return super(ReleaseScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
-        except ReadOnlyError as e:
-            msg = f"Failed to schedule change - {e}"
-            return problem(400, "Bad Request", msg, ext={"data": e.args})
+    try:
+        return post_scheduled_changes(sc_table=dbo.releases.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type)
+    except ReadOnlyError as e:
+        msg = f"Failed to schedule change - {e}"
+        return problem(400, "Bad Request", msg, ext={"data": e.args})
 
 
 class ReleaseScheduledChangeView(ScheduledChangeView):
