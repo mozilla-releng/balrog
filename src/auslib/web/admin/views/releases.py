@@ -448,8 +448,8 @@ def get_releases_scheduled_changes():
 @transactionHandler
 @handleGeneralExceptions("POST")
 @debugPath
-def post_releases_scheduled_changes(transaction, changed_by):
-    what = connexion.request.get_json()
+def post_releases_scheduled_changes(sc_release_body, transaction, changed_by):
+    what = sc_release_body
     if what.get("when", None) is None:
         return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Release")
     change_type = what.get("change_type")

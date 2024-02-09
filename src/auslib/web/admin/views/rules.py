@@ -217,26 +217,26 @@ def get_rules_scheduled_changes():
 @transactionHandler
 @handleGeneralExceptions("POST")
 @debugPath
-def post_rules_scheduled_changes(transaction, changed_by):
-    if connexion.request.get_json().get("when", None) is None:
+def post_rules_scheduled_changes(sc_rule_body, transaction, changed_by):
+    if sc_rule_body.get("when", None) is None:
         return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Rule")
-    if connexion.request.get_json():
-        change_type = connexion.request.get_json().get("change_type")
+    if sc_rule_body:
+        change_type = sc_rule_body.get("change_type")
     else:
         change_type = connexion.request.values.get("change_type")
 
     what = {}
     delete_change_type_allowed_fields = ["telemetry_product", "telemetry_channel", "telemetry_uptake", "when", "rule_id", "data_version", "change_type"]
-    for field in connexion.request.get_json():
+    for field in sc_rule_body:
         # TODO: currently UI passes extra rule model fields in change_type == 'delete' request body. Fix it and
         # TODO: change the below operation from filter/pop to throw Error when extra fields are passed.
         if (change_type == "insert" and field in ["rule_id", "data_version"]) or (change_type == "delete" and field not in delete_change_type_allowed_fields):
             continue
 
         if field in ["rule_id", "data_version"]:
-            what[field] = int(connexion.request.get_json()[field])
+            what[field] = int(sc_rule_body[field])
         else:
-            what[field] = connexion.request.get_json()[field]
+            what[field] = sc_rule_body[field]
 
     # Explicit checks for each change_type
     if change_type in ["update", "delete"]:

@@ -159,16 +159,16 @@ def get_product_rs_scheduled_changes():
 @transactionHandler
 @handleGeneralExceptions("POST")
 @debugPath
-def post_product_rs_scheduled_changes(self, transaction, changed_by):
-    if connexion.request.get_json().get("when", None) is None:
+def post_product_rs_scheduled_changes(sc_rs_product_body, transaction, changed_by):
+    if sc_rs_product_body.get("when", None) is None:
         return problem(400, "Bad Request", "when cannot be set to null when scheduling a new change " "for a Product Required Signoff")
-    change_type = connexion.request.get_json().get("change_type")
+    change_type = sc_rs_product_body.get("change_type")
 
     what = {}
-    for field in connexion.request.get_json():
+    for field in sc_rs_product_body:
         if change_type == "insert" and field == "data_version":
             continue
-        what[field] = connexion.request.get_json()[field]
+        what[field] = sc_rs_product_body[field]
 
     if change_type == "update":
         for field in ["signoffs_required", "data_version"]:
@@ -313,16 +313,16 @@ def get_permissions_rs_scheduled_changes():
 @transactionHandler
 @handleGeneralExceptions("POST")
 @debugPath
-def post_permissions_rs_scheduled_changes(transaction, changed_by):
-    if connexion.request.get_json().get("when", None) is None:
+def post_permissions_rs_scheduled_changes(sc_rs_permission_body, transaction, changed_by):
+    if sc_rs_permission_body.get("when", None) is None:
         return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permissions Required Signoff")
-    change_type = connexion.request.get_json().get("change_type")
+    change_type = sc_rs_permission_body.get("change_type")
 
     what = {}
-    for field in connexion.request.get_json():
+    for field in sc_rs_permission_body:
         if change_type == "insert" and field == "data_version":
             continue
-        what[field] = connexion.request.get_json()[field]
+        what[field] = sc_rs_permission_body[field]
 
     if change_type == "update":
         for field in ["signoffs_required", "data_version"]:
