@@ -15,11 +15,11 @@ from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,
     ScheduledChangeHistoryView,
     SignoffsView,
-    get_scheduled_changes,
-    post_scheduled_changes,
+    delete_scheduled_change,
     get_by_id_scheduled_change,
+    get_scheduled_changes,
     post_scheduled_change,
-    delete_scheduled_change
+    post_scheduled_changes,
 )
 from auslib.web.common.releases import serialize_releases
 
@@ -537,7 +537,14 @@ def post_releases_scheduled_change(sc_id, sc_release_body, transaction, changed_
     if what.get("data", None):
         what["data"] = createBlob(what.get("data"))
 
-    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=sc_release_body.get("sc_data_version", None))
+    return post_scheduled_change(
+        sc_table=sc_table,
+        sc_id=sc_id,
+        what=what,
+        transaction=transaction,
+        changed_by=changed_by,
+        old_sc_data_version=sc_release_body.get("sc_data_version", None),
+    )
 
 
 @requirelogin
@@ -545,7 +552,9 @@ def post_releases_scheduled_change(sc_id, sc_release_body, transaction, changed_
 @handleGeneralExceptions("DELETE")
 @debugPath
 def delete_releases_scheduled_change(sc_id, data_version, transaction, changed_by):
-    return delete_scheduled_change(sc_table=dbo.releases.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by)
+    return delete_scheduled_change(
+        sc_table=dbo.releases.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
+    )
 
 
 class EnactReleaseScheduledChangeView(EnactScheduledChangeView):

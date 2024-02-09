@@ -1,14 +1,6 @@
-from auslib.web.admin.views.permissions import (
-    EnactPermissionScheduledChangeView,
-    PermissionScheduledChangeHistoryView,
-    PermissionScheduledChangeSignoffsView,
-)
+from auslib.web.admin.views.permissions import EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView, PermissionScheduledChangeSignoffsView
 from auslib.web.admin.views.pinnable_releases import EnactPinnableReleaseScheduledChangeView
-from auslib.web.admin.views.releases import (
-    EnactReleaseScheduledChangeView,
-    ReleaseScheduledChangeHistoryView,
-    ReleaseScheduledChangeSignoffsView,
-)
+from auslib.web.admin.views.releases import EnactReleaseScheduledChangeView, ReleaseScheduledChangeHistoryView, ReleaseScheduledChangeSignoffsView
 from auslib.web.admin.views.required_signoffs import (
     EnactPermissionsRequiredSignoffScheduledChangeView,
     EnactProductRequiredSignoffScheduledChangeView,
@@ -19,12 +11,7 @@ from auslib.web.admin.views.required_signoffs import (
     ProductRequiredSignoffScheduledChangeSignoffsView,
     ProductRequiredSignoffsHistoryAPIView,
 )
-from auslib.web.admin.views.rules import (
-    EnactRuleScheduledChangeView,
-    RuleHistoryAPIView,
-    RuleScheduledChangeHistoryView,
-    RuleScheduledChangeSignoffsView,
-)
+from auslib.web.admin.views.rules import EnactRuleScheduledChangeView, RuleHistoryAPIView, RuleScheduledChangeHistoryView, RuleScheduledChangeSignoffsView
 
 
 def rules_revisions_post(rule_id):

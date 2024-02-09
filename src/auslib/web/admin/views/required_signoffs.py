@@ -13,10 +13,10 @@ from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,
     ScheduledChangeHistoryView,
     SignoffsView,
-    get_scheduled_changes,
-    post_scheduled_changes,
-    post_scheduled_change,
     delete_scheduled_change,
+    get_scheduled_changes,
+    post_scheduled_change,
+    post_scheduled_changes,
 )
 from auslib.web.common.history import get_input_dict
 
@@ -226,7 +226,14 @@ def post_product_rs_scheduled_change(sc_id, sc_product_rs_body, transaction, cha
     if what.get("signoffs_required", None):
         what["signoffs_required"] = int(what["signoffs_required"])
 
-    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=sc_product_rs_body.get("sc_data_version", None))
+    return post_scheduled_change(
+        sc_table=sc_table,
+        sc_id=sc_id,
+        what=what,
+        transaction=transaction,
+        changed_by=changed_by,
+        old_sc_data_version=sc_product_rs_body.get("sc_data_version", None),
+    )
 
 
 @requirelogin
@@ -234,7 +241,9 @@ def post_product_rs_scheduled_change(sc_id, sc_product_rs_body, transaction, cha
 @handleGeneralExceptions("DELETE")
 @debugPath
 def delete_product_rs_scheduled_change(sc_id, data_version, transaction, changed_by):
-    return delete_scheduled_change(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by)
+    return delete_scheduled_change(
+        sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
+    )
 
 
 class EnactProductRequiredSignoffScheduledChangeView(EnactScheduledChangeView):
@@ -381,7 +390,14 @@ def post_permissions_rs_scheduled_change(sc_id, sc_permission_rs_body, transacti
     if what.get("signoffs_required", None):
         what["signoffs_required"] = int(what["signoffs_required"])
 
-    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=sc_permission_rs_body.get("sc_data_version", None))
+    return post_scheduled_change(
+        sc_table=sc_table,
+        sc_id=sc_id,
+        what=what,
+        transaction=transaction,
+        changed_by=changed_by,
+        old_sc_data_version=sc_permission_rs_body.get("sc_data_version", None),
+    )
 
 
 @requirelogin
@@ -389,7 +405,9 @@ def post_permissions_rs_scheduled_change(sc_id, sc_permission_rs_body, transacti
 @handleGeneralExceptions("DELETE")
 @debugPath
 def delete_permissions_rs_scheduled_change(sc_id, data_version, transaction, changed_by):
-    return delete_scheduled_change(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by)
+    return delete_scheduled_change(
+        sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
+    )
 
 
 class EnactPermissionsRequiredSignoffScheduledChangeView(EnactScheduledChangeView):

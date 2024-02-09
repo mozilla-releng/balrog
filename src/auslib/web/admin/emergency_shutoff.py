@@ -5,7 +5,14 @@ from flask import Response
 
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import handleGeneralExceptions, requirelogin, transactionHandler
-from auslib.web.admin.views.scheduled_changes import EnactScheduledChangeView, SignoffsView, get_scheduled_changes, post_scheduled_changes, post_scheduled_change, delete_scheduled_change
+from auslib.web.admin.views.scheduled_changes import (
+    EnactScheduledChangeView,
+    SignoffsView,
+    delete_scheduled_change,
+    get_scheduled_changes,
+    post_scheduled_change,
+    post_scheduled_changes,
+)
 
 
 def get_emergency_shutoff(product, channel):
@@ -66,14 +73,23 @@ def schedule_deletion(sc_emergency_shutoff, changed_by, transaction):
 @transactionHandler
 @handleGeneralExceptions("POST")
 def update_scheduled_deletion(sc_id, sc_emergency_shutoff, changed_by, transaction):
-    return post_scheduled_change(sc_table=dbo.emergencyShutoffs.scheduled_changes, sc_id=sc_id, what=sc_emergency_shutoff, transaction=transaction, changed_by=changed_by, old_sc_data_version=sc_emergency_shutoff["sc_data_version"])
+    return post_scheduled_change(
+        sc_table=dbo.emergencyShutoffs.scheduled_changes,
+        sc_id=sc_id,
+        what=sc_emergency_shutoff,
+        transaction=transaction,
+        changed_by=changed_by,
+        old_sc_data_version=sc_emergency_shutoff["sc_data_version"],
+    )
 
 
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions("DELETE")
 def delete_scheduled_deletion(sc_id, data_version, changed_by, transaction):
-    return delete_scheduled_change(sc_table=dbo.emergencyShutoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by)
+    return delete_scheduled_change(
+        sc_table=dbo.emergencyShutoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
+    )
 
 
 def scheduled_changes_signoffs(sc_id):

@@ -1,6 +1,5 @@
 import json
 
-import connexion
 from flask import Response, jsonify
 
 from auslib.global_state import dbo
@@ -10,10 +9,10 @@ from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,
     ScheduledChangeHistoryView,
     SignoffsView,
-    get_scheduled_changes,
-    post_scheduled_changes,
-    post_scheduled_change,
     delete_scheduled_change,
+    get_scheduled_changes,
+    post_scheduled_change,
+    post_scheduled_changes,
 )
 
 __all__ = [
@@ -238,7 +237,9 @@ def post_permissions_scheduled_change(sc_id, sc_permission_body, transaction, ch
         if len(what["options"]) == 0:
             what["options"] = None
 
-    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=sc_permission_body.get("sc_data_version"))
+    return post_scheduled_change(
+        sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=sc_permission_body.get("sc_data_version")
+    )
 
 
 @requirelogin
@@ -246,7 +247,9 @@ def post_permissions_scheduled_change(sc_id, sc_permission_body, transaction, ch
 @handleGeneralExceptions("DELETE")
 @debugPath
 def delete_permissions_scheduled_change(sc_id, data_version, transaction, changed_by):
-    return delete_scheduled_change(sc_table=dbo.permissions.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by)
+    return delete_scheduled_change(
+        sc_table=dbo.permissions.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
+    )
 
 
 class EnactPermissionScheduledChangeView(EnactScheduledChangeView):

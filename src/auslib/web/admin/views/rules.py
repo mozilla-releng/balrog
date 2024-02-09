@@ -9,11 +9,11 @@ from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,
     ScheduledChangeHistoryView,
     SignoffsView,
-    get_scheduled_changes,
-    post_scheduled_changes,
+    delete_scheduled_change,
     get_by_id_scheduled_change,
+    get_scheduled_changes,
     post_scheduled_change,
-    delete_scheduled_change
+    post_scheduled_changes,
 )
 
 
@@ -339,7 +339,9 @@ def post_rules_scheduled_change(sc_id, sc_rule_body, transaction, changed_by):
         if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
             return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
 
-    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=sc_rule_body.get("sc_data_version", None))
+    return post_scheduled_change(
+        sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=sc_rule_body.get("sc_data_version", None)
+    )
 
 
 @requirelogin
