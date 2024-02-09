@@ -81,50 +81,45 @@ def post_scheduled_changes(sc_table, what, transaction, changed_by, change_type)
     return jsonify(sc_id=sc_id, signoffs=signoffs)
 
 
-class ScheduledChangeView(AdminView):
+def get_by_id_scheduled_change(table, sc_id):
     """/scheduled_changes/:namespace/:sc_id"""
 
-    def __init__(self, namespace, table):
-        self.namespace = namespace
-        self.path = "/scheduled_changes/%s/:sc_id" % namespace
-        self.table = table
-        self.sc_table = table.scheduled_changes
-        super(ScheduledChangeView, self).__init__()
+    sc_table = table.scheduled_changes
+    sc = sc_table.select(where={"sc_id": sc_id})
+    if not sc:
+        return problem(404, "Bad Request", "Scheduled change does not exist")
 
-    def get(self, sc_id):
-        sc = self.sc_table.select(where={"sc_id": sc_id})
-        if not sc:
-            return problem(404, "Bad Request", "Scheduled change does not exist")
+    scheduled_change = add_signoff_information(sc[0], table, sc_table)
+    return jsonify({"scheduled_change": scheduled_change})
 
-        scheduled_change = add_signoff_information(sc[0], self.table, self.sc_table)
-        return jsonify({"scheduled_change": scheduled_change})
 
-    def _post(self, sc_id, what, transaction, changed_by, old_sc_data_version):
-        if is_when_present_and_in_past_validator(what):
-            return problem(400, "Bad Request", "Changes may not be scheduled in the past")
+def post_scheduled_change(sc_table, sc_id, what, transaction, changed_by, old_sc_data_version):
+    if is_when_present_and_in_past_validator(what):
+        return problem(400, "Bad Request", "Changes may not be scheduled in the past")
 
-        if what.get("data_version", None):
-            what["data_version"] = int(what["data_version"])
+    if what.get("data_version", None):
+        what["data_version"] = int(what["data_version"])
 
-        where = {"sc_id": sc_id}
-        self.sc_table.update(where, what, changed_by, int(old_sc_data_version), transaction)
-        sc = self.sc_table.select(where=where, transaction=transaction, columns=["data_version"])[0]
-        signoffs = {}
-        for signoff in self.sc_table.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
-            signoffs[signoff["username"]] = signoff["role"]
-        return jsonify(new_data_version=sc["data_version"], signoffs=signoffs)
+    where = {"sc_id": sc_id}
+    sc_table.update(where, what, changed_by, int(old_sc_data_version), transaction)
+    sc = sc_table.select(where=where, transaction=transaction, columns=["data_version"])[0]
+    signoffs = {}
+    for signoff in sc_table.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
+        signoffs[signoff["username"]] = signoff["role"]
+    return jsonify(new_data_version=sc["data_version"], signoffs=signoffs)
 
-    def _delete(self, sc_id, transaction, changed_by):
-        where = {"sc_id": sc_id}
-        sc = self.sc_table.select(where, transaction, columns=["sc_id"])
-        if not sc:
-            return problem(404, "Bad Request", "Scheduled change does not exist")
 
-        if not connexion.request.args.get("data_version", None):
-            return problem(400, "Bad Request", "data_version is missing")
+def delete_scheduled_change(sc_table, sc_id, transaction, changed_by):
+    where = {"sc_id": sc_id}
+    sc = sc_table.select(where, transaction, columns=["sc_id"])
+    if not sc:
+        return problem(404, "Bad Request", "Scheduled change does not exist")
 
-        self.sc_table.delete(where, changed_by, int(connexion.request.args.get("data_version")), transaction)
-        return jsonify({})
+    if not connexion.request.args.get("data_version", None):
+        return problem(400, "Bad Request", "data_version is missing")
+
+    sc_table.delete(where, changed_by, int(connexion.request.args.get("data_version")), transaction)
+    return jsonify({})
 
 
 class EnactScheduledChangeView(AdminView):

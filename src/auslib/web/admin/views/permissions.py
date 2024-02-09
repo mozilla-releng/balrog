@@ -9,10 +9,11 @@ from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     EnactScheduledChangeView,
     ScheduledChangeHistoryView,
-    ScheduledChangeView,
     SignoffsView,
     get_scheduled_changes,
     post_scheduled_changes,
+    post_scheduled_change,
+    delete_scheduled_change,
 )
 
 __all__ = [
@@ -196,52 +197,56 @@ def post_permissions_scheduled_changes(sc_permission_body, transaction, changed_
     )
 
 
-class PermissionScheduledChangeView(ScheduledChangeView):
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_permissions_scheduled_change(sc_id, transaction, changed_by):
     """/scheduled_changes/permissions/<int:sc_id>"""
 
-    def __init__(self):
-        super(PermissionScheduledChangeView, self).__init__("permissions", dbo.permissions)
+    # TODO: modify UI and clients to stop sending 'change_type' in request body
+    sc_table = dbo.permissions.scheduled_changes
+    sc_permission = sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
+    if sc_permission:
+        change_type = sc_permission[0]["change_type"]
+    else:
+        return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for permission found for given sc_id"})
 
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        # TODO: modify UI and clients to stop sending 'change_type' in request body
-        sc_permission = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
-        if sc_permission:
-            change_type = sc_permission[0]["change_type"]
-        else:
-            return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for permission found for given sc_id"})
+    # TODO: UI passes too many extra non-required fields apart from 'change_type' in request body
+    # Only required fields must be passed to DB layer
+    what = {}
+    for field in connexion.request.get_json():
+        # When editing an existing Scheduled Change for an for an existing Permission only options may be
+        # provided. Because edits are identified by sc_id (in the URL), permission and username
+        # are not required (nor allowed, because they are PK fields).
+        # When editing an existing Scheduled Change for a new Permission, any field
+        # may be changed.
+        if (
+            (change_type == "delete" and field not in ["when", "data_version"])
+            or (change_type == "update" and field not in ["when", "options", "data_version"])
+            or (change_type == "insert" and field not in ["when", "options", "permission", "username"])
+        ):
+            continue
 
-        # TODO: UI passes too many extra non-required fields apart from 'change_type' in request body
-        # Only required fields must be passed to DB layer
-        what = {}
-        for field in connexion.request.get_json():
-            # When editing an existing Scheduled Change for an for an existing Permission only options may be
-            # provided. Because edits are identified by sc_id (in the URL), permission and username
-            # are not required (nor allowed, because they are PK fields).
-            # When editing an existing Scheduled Change for a new Permission, any field
-            # may be changed.
-            if (
-                (change_type == "delete" and field not in ["when", "data_version"])
-                or (change_type == "update" and field not in ["when", "options", "data_version"])
-                or (change_type == "insert" and field not in ["when", "options", "permission", "username"])
-            ):
-                continue
+        what[field] = connexion.request.get_json()[field]
 
-            what[field] = connexion.request.get_json()[field]
+    if change_type in ["update", "delete"] and not what.get("data_version", None):
+        return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
 
-        if change_type in ["update", "delete"] and not what.get("data_version", None):
-            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+    if what.get("options", None):
+        what["options"] = json.loads(what["options"])
+        if len(what["options"]) == 0:
+            what["options"] = None
 
-        if what.get("options", None):
-            what["options"] = json.loads(what["options"])
-            if len(what["options"]) == 0:
-                what["options"] = None
+    return post_scheduled_change(sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=connexion.request.get_json().get("sc_data_version"))
 
-        return super(PermissionScheduledChangeView, self)._post(sc_id, what, transaction, changed_by, connexion.request.get_json().get("sc_data_version"))
 
-    @requirelogin
-    def _delete(self, sc_id, transaction, changed_by):
-        return super(PermissionScheduledChangeView, self)._delete(sc_id, transaction, changed_by)
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("DELETE")
+@debugPath
+def delete_permissions_scheduled_change(sc_id, transaction, changed_by):
+    return delete_scheduled_change(sc_table=dbo.permissions.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 class EnactPermissionScheduledChangeView(EnactScheduledChangeView):

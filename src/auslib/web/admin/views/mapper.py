@@ -2,7 +2,6 @@ from auslib.web.admin.views.permissions import (
     EnactPermissionScheduledChangeView,
     PermissionScheduledChangeHistoryView,
     PermissionScheduledChangeSignoffsView,
-    PermissionScheduledChangeView,
 )
 from auslib.web.admin.views.pinnable_releases import EnactPinnableReleaseScheduledChangeView
 from auslib.web.admin.views.releases import (
@@ -134,16 +133,6 @@ def scheduled_change_rules_post(sc_id):
 def scheduled_change_rules_delete(sc_id):
     """DELETE /scheduled_changes/rules/<int:sc_id>"""
     return RuleScheduledChangeView().delete(sc_id)
-
-
-def scheduled_change_permissions_post(sc_id):
-    """POST /scheduled_changes/permissions/<int:sc_id>"""
-    return PermissionScheduledChangeView().post(sc_id)
-
-
-def scheduled_change_permissions_delete(sc_id):
-    """DELETE /scheduled_changes/permissions/<int:sc_id>"""
-    return PermissionScheduledChangeView().delete(sc_id)
 
 
 def scheduled_change_releases_get_by_id(sc_id):

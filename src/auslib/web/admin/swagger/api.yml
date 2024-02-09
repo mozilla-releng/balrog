@@ -2261,7 +2261,7 @@ paths:
         Modifies existing scheduled change for a permission. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_post
+      operationId: auslib.web.admin.views.permissions.post_permissions_scheduled_change
       consumes:
         - application/json
       produces:
@@ -2302,7 +2302,7 @@ paths:
         Deletes the given Scheduled Change for the named Permission object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_delete
+      operationId: auslib.web.admin.views.permissions.delete_permissions_scheduled_change
       consumes: []
       produces:
         - application/json
