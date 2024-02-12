@@ -10,13 +10,13 @@ from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, log,
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
-    EnactScheduledChangeView,
     ScheduledChangeHistoryView,
     SignoffsView,
     delete_scheduled_change,
     get_scheduled_changes,
     post_scheduled_change,
     post_scheduled_changes,
+    post_enact_scheduled_change,
 )
 from auslib.web.common.history import get_input_dict
 
@@ -246,15 +246,14 @@ def delete_product_rs_scheduled_change(sc_id, data_version, transaction, changed
     )
 
 
-class EnactProductRequiredSignoffScheduledChangeView(EnactScheduledChangeView):
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_product_rs_enact_scheduled_change(sc_id, transaction, changed_by):
     """/scheduled_changes/required_signoffs/product/<int:sc_id>/enact"""
 
-    def __init__(self):
-        super(EnactProductRequiredSignoffScheduledChangeView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(EnactProductRequiredSignoffScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+    return post_enact_scheduled_change(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 class ProductRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
@@ -410,15 +409,14 @@ def delete_permissions_rs_scheduled_change(sc_id, data_version, transaction, cha
     )
 
 
-class EnactPermissionsRequiredSignoffScheduledChangeView(EnactScheduledChangeView):
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_permissions_rs_enact_scheduled_change(sc_id, transaction, changed_by):
     """/scheduled_changes/required_signoffs/permissions/<int:sc_id>/enact"""
 
-    def __init__(self):
-        super(EnactPermissionsRequiredSignoffScheduledChangeView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(EnactPermissionsRequiredSignoffScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+    return post_enact_scheduled_change(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 class PermissionsRequiredSignoffScheduledChangeSignoffsView(SignoffsView):

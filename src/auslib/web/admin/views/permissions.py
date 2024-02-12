@@ -6,13 +6,13 @@ from auslib.global_state import dbo
 from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, log, requirelogin, transactionHandler
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
-    EnactScheduledChangeView,
     ScheduledChangeHistoryView,
     SignoffsView,
     delete_scheduled_change,
     get_scheduled_changes,
     post_scheduled_change,
     post_scheduled_changes,
+    post_enact_scheduled_change,
 )
 
 __all__ = [
@@ -252,15 +252,14 @@ def delete_permissions_scheduled_change(sc_id, data_version, transaction, change
     )
 
 
-class EnactPermissionScheduledChangeView(EnactScheduledChangeView):
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_permissions_enact_scheduled_change(sc_id, transaction, changed_by):
     """/scheduled_changes/permissions/<int:sc_id>/enact"""
 
-    def __init__(self):
-        super(EnactPermissionScheduledChangeView, self).__init__("permissions", dbo.permissions)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(EnactPermissionScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+    return post_enact_scheduled_change(sc_table=dbo.permissions.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 class PermissionScheduledChangeSignoffsView(SignoffsView):

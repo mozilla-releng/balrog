@@ -1,9 +1,6 @@
-from auslib.web.admin.views.permissions import EnactPermissionScheduledChangeView, PermissionScheduledChangeHistoryView, PermissionScheduledChangeSignoffsView
-from auslib.web.admin.views.pinnable_releases import EnactPinnableReleaseScheduledChangeView
-from auslib.web.admin.views.releases import EnactReleaseScheduledChangeView, ReleaseScheduledChangeHistoryView, ReleaseScheduledChangeSignoffsView
+from auslib.web.admin.views.permissions import PermissionScheduledChangeHistoryView, PermissionScheduledChangeSignoffsView
+from auslib.web.admin.views.releases import ReleaseScheduledChangeHistoryView, ReleaseScheduledChangeSignoffsView
 from auslib.web.admin.views.required_signoffs import (
-    EnactPermissionsRequiredSignoffScheduledChangeView,
-    EnactProductRequiredSignoffScheduledChangeView,
     PermissionsRequiredSignoffScheduledChangeHistoryView,
     PermissionsRequiredSignoffScheduledChangeSignoffsView,
     PermissionsRequiredSignoffsHistoryAPIView,
@@ -11,7 +8,7 @@ from auslib.web.admin.views.required_signoffs import (
     ProductRequiredSignoffScheduledChangeSignoffsView,
     ProductRequiredSignoffsHistoryAPIView,
 )
-from auslib.web.admin.views.rules import EnactRuleScheduledChangeView, RuleHistoryAPIView, RuleScheduledChangeHistoryView, RuleScheduledChangeSignoffsView
+from auslib.web.admin.views.rules import RuleHistoryAPIView, RuleScheduledChangeHistoryView, RuleScheduledChangeSignoffsView
 
 
 def rules_revisions_post(rule_id):
@@ -27,31 +24,6 @@ def required_signoffs_product_revisions_get():
 def required_signoffs_permissions_revisions_get():
     """GET /required_signoffs/permissions/revisions"""
     return PermissionsRequiredSignoffsHistoryAPIView().get()
-
-
-def enact_scheduled_change_rules_post(sc_id):
-    """POST /scheduled_changes/rules/<int:sc_id>/enact"""
-    return EnactRuleScheduledChangeView().post(sc_id)
-
-
-def enact_scheduled_change_permissions_post(sc_id):
-    """POST /scheduled_changes/permissions/<int:sc_id>/enact"""
-    return EnactPermissionScheduledChangeView().post(sc_id)
-
-
-def enact_scheduled_change_releases_post(sc_id):
-    """POST /scheduled_changes/releases/<int:sc_id>/enact"""
-    return EnactReleaseScheduledChangeView().post(sc_id)
-
-
-def enact_scheduled_change_product_rs_post(sc_id):
-    """POST /scheduled_changes/required_signoffs/product/<int:sc_id>/enact"""
-    return EnactProductRequiredSignoffScheduledChangeView().post(sc_id)
-
-
-def enact_scheduled_change_permissions_rs_post(sc_id):
-    """POST /scheduled_changes/required_signoffs/permissions/<int:sc_id>/enact"""
-    return EnactPermissionsRequiredSignoffScheduledChangeView().post(sc_id)
 
 
 def scheduled_change_rules_signoffs_post(sc_id):
@@ -152,8 +124,3 @@ def scheduled_change_permissions_rs_history_get(sc_id):
 def scheduled_change_permissions_rs_history_post(sc_id):
     """POST /scheduled_changes/required_signoffs/permissions/<int:sc_id>/revisions"""
     return PermissionsRequiredSignoffScheduledChangeHistoryView().post(sc_id)
-
-
-def enact_scheduled_change_pinnable_releases_post(sc_id):
-    """POST /scheduled_changes/rules/<int:sc_id>/enact"""
-    return EnactPinnableReleaseScheduledChangeView().post(sc_id)

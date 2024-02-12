@@ -6,12 +6,12 @@ from flask import Response
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import handleGeneralExceptions, requirelogin, transactionHandler
 from auslib.web.admin.views.scheduled_changes import (
-    EnactScheduledChangeView,
     SignoffsView,
     delete_scheduled_change,
     get_scheduled_changes,
     post_scheduled_change,
     post_scheduled_changes,
+    post_enact_scheduled_change
 )
 
 
@@ -103,6 +103,7 @@ def scheduled_changes_signoffs_delete(sc_id):
 
 
 @requirelogin
-def enact_updates_scheduled_for_reactivation(sc_id, changed_by):
-    view = EnactScheduledChangeView("emergency_shutoff", dbo.emergencyShutoffs)
-    return view.post(sc_id, changed_by=changed_by)
+@transactionHandler
+@handleGeneralExceptions("POST")
+def enact_updates_scheduled_for_reactivation(sc_id, transaction, changed_by):
+    return post_enact_scheduled_change(sc_table=dbo.emergencyShutoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)

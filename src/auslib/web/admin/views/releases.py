@@ -12,7 +12,6 @@ from auslib.util.signoffs import serialize_signoff_requirements
 from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, log, requirelogin, transactionHandler
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
-    EnactScheduledChangeView,
     ScheduledChangeHistoryView,
     SignoffsView,
     delete_scheduled_change,
@@ -20,6 +19,7 @@ from auslib.web.admin.views.scheduled_changes import (
     get_scheduled_changes,
     post_scheduled_change,
     post_scheduled_changes,
+    post_enact_scheduled_change,
 )
 from auslib.web.common.releases import serialize_releases
 
@@ -557,15 +557,14 @@ def delete_releases_scheduled_change(sc_id, data_version, transaction, changed_b
     )
 
 
-class EnactReleaseScheduledChangeView(EnactScheduledChangeView):
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_releases_enact_scheduled_change(sc_id, transaction, changed_by):
     """/scheduled_changes/releases/<int:sc_id>/enact"""
 
-    def __init__(self):
-        super(EnactReleaseScheduledChangeView, self).__init__("releases", dbo.releases)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(EnactReleaseScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+    return post_enact_scheduled_change(sc_table=dbo.releases.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 class ReleaseScheduledChangeSignoffsView(SignoffsView):

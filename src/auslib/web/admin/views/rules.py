@@ -6,7 +6,6 @@ from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, requ
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
-    EnactScheduledChangeView,
     ScheduledChangeHistoryView,
     SignoffsView,
     delete_scheduled_change,
@@ -14,6 +13,7 @@ from auslib.web.admin.views.scheduled_changes import (
     get_scheduled_changes,
     post_scheduled_change,
     post_scheduled_changes,
+    post_enact_scheduled_change,
 )
 
 
@@ -352,15 +352,14 @@ def delete_rules_scheduled_change(sc_id, data_version, transaction, changed_by):
     return delete_scheduled_change(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by)
 
 
-class EnactRuleScheduledChangeView(EnactScheduledChangeView):
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_rules_enact_scheduled_change(sc_id, transaction, changed_by):
     """/scheduled_changes/rules/<int:sc_id>/enact"""
 
-    def __init__(self):
-        super(EnactRuleScheduledChangeView, self).__init__("rules", dbo.rules)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(EnactRuleScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+    return post_enact_scheduled_change(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 class RuleScheduledChangeSignoffsView(SignoffsView):

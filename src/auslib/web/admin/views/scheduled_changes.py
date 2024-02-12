@@ -122,19 +122,11 @@ def delete_scheduled_change(sc_table, sc_id, data_version, transaction, changed_
     return jsonify({})
 
 
-class EnactScheduledChangeView(AdminView):
+def post_enact_scheduled_change(sc_table, sc_id, transaction, changed_by):
     """/scheduled_changes/:namespace/:sc_id/enact"""
 
-    def __init__(self, namespace, table):
-        self.namespace = namespace
-        self.path = "/scheduled_changes/%s/:sc_id/enact" % namespace
-        self.table = table
-        self.sc_table = table.scheduled_changes
-        super(EnactScheduledChangeView, self).__init__()
-
-    def _post(self, sc_id, transaction, changed_by):
-        self.sc_table.enactChange(sc_id, changed_by, transaction)
-        return jsonify({})
+    sc_table.enactChange(sc_id, changed_by, transaction)
+    return jsonify({})
 
 
 class SignoffsView(AdminView):

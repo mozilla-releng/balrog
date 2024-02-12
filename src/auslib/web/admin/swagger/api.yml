@@ -3258,7 +3258,7 @@ paths:
         Execute the scheduled change for the rule identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_rules_post
+      operationId: auslib.web.admin.views.rules.post_rules_enact_scheduled_change
       consumes: []
       produces:
         - text/html
@@ -3283,7 +3283,7 @@ paths:
         Execute the scheduled change for the permission identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_permissions_post
+      operationId: auslib.web.admin.views.permissions.post_permissions_enact_scheduled_change
       consumes: []
       produces:
         - text/html
@@ -3308,7 +3308,7 @@ paths:
         Execute the scheduled change for the release identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_releases_post
+      operationId: auslib.web.admin.views.releases.post_releases_enact_scheduled_change
       consumes: []
       produces:
         - text/html
@@ -3333,7 +3333,7 @@ paths:
         Execute the scheduled change for the required signoffs for product identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_product_rs_post
+      operationId: auslib.web.admin.views.required_signoffs.post_product_rs_enact_scheduled_change
       consumes: []
       produces:
         - text/html
@@ -3358,7 +3358,7 @@ paths:
         Execute the scheduled change for the required signoffs for permission identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_permissions_rs_post
+      operationId: auslib.web.admin.views.required_signoffs.post_permissions_rs_enact_scheduled_change
       consumes: []
       produces:
         - text/html
@@ -4020,7 +4020,7 @@ paths:
         Execute the scheduled change for the release pin identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_pinnable_releases_post
+      operationId: auslib.web.admin.views.pinnable_releases.post_pinnable_releases_enact_scheduled_change
       consumes: []
       produces:
         - text/html
