@@ -17,9 +17,9 @@ from auslib.web.admin.views.scheduled_changes import (
     delete_scheduled_change,
     get_by_id_scheduled_change,
     get_scheduled_changes,
+    post_enact_scheduled_change,
     post_scheduled_change,
     post_scheduled_changes,
-    post_enact_scheduled_change,
 )
 from auslib.web.common.releases import serialize_releases
 

@@ -10,9 +10,9 @@ from auslib.web.admin.views.scheduled_changes import (
     SignoffsView,
     delete_scheduled_change,
     get_scheduled_changes,
+    post_enact_scheduled_change,
     post_scheduled_change,
     post_scheduled_changes,
-    post_enact_scheduled_change,
 )
 
 __all__ = [

@@ -1,5 +1,5 @@
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import requirelogin, transactionHandler, handleGeneralExceptions, debugPath
+from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, requirelogin, transactionHandler
 from auslib.web.admin.views.scheduled_changes import get_scheduled_changes, post_enact_scheduled_change
 
 
@@ -14,6 +14,6 @@ def get_pinnable_releases_scheduled_changes():
 @handleGeneralExceptions("POST")
 @debugPath
 def post_pinnable_releases_enact_scheduled_change(sc_id, transaction, changed_by):
-        """/scheduled_changes/pinnable_releases/<int:sc_id>/enact"""
+    """/scheduled_changes/pinnable_releases/<int:sc_id>/enact"""
 
-        return post_enact_scheduled_change(sc_table=dbo.pinnable_releases.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
+    return post_enact_scheduled_change(sc_table=dbo.pinnable_releases.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
