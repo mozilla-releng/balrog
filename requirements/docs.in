@@ -3,7 +3,7 @@ arrow
 auth0-python
 connexion<3  # Just to be consistent with base.in
 deepmerge
-flask==2.2.5
+flask
 flask_compress
 flask_wtf
 jsonschema
