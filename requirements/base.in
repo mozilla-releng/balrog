@@ -4,7 +4,7 @@ auth0-python
 connexion<3
 deepmerge
 ecdsa
-flask
+flask==2.2.5
 flask_compress
 flask_wtf
 gcloud-aio-storage
@@ -25,4 +25,4 @@ sqlalchemy<2
 sqlalchemy-migrate
 statsd
 uwsgi
-pyjwt==2.4.0
+pyjwt==2.8.0
