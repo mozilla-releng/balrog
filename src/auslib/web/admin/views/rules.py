@@ -3,7 +3,7 @@ from flask import Response, jsonify
 
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, requirelogin, transactionHandler
-from auslib.web.admin.views.history import HistoryView
+from auslib.web.admin.views.history import revert_to_revision
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     ScheduledChangeHistoryView,
@@ -145,47 +145,44 @@ def delete_rules_id_or_alias(id_or_alias, data_version, transaction, changed_by)
     return Response(status=200)
 
 
-class RuleHistoryAPIView(HistoryView):
-    """/rules/:id/revisions"""
+def _get_what_rule_history_api(change):
+    what = dict(
+        backgroundRate=change["backgroundRate"],
+        mapping=change["mapping"],
+        fallbackMapping=change["fallbackMapping"],
+        priority=change["priority"],
+        alias=change["alias"],
+        product=change["product"],
+        version=change["version"],
+        buildID=change["buildID"],
+        channel=change["channel"],
+        locale=change["locale"],
+        distribution=change["distribution"],
+        buildTarget=change["buildTarget"],
+        osVersion=change["osVersion"],
+        instructionSet=change["instructionSet"],
+        memory=change["memory"],
+        distVersion=change["distVersion"],
+        comment=change["comment"],
+        update_type=change["update_type"],
+        headerArchitecture=change["headerArchitecture"],
+    )
+    return what
 
-    def __init__(self):
-        super(RuleHistoryAPIView, self).__init__(dbo.rules)
 
-    def _get_what(self, change):
-        what = dict(
-            backgroundRate=change["backgroundRate"],
-            mapping=change["mapping"],
-            fallbackMapping=change["fallbackMapping"],
-            priority=change["priority"],
-            alias=change["alias"],
-            product=change["product"],
-            version=change["version"],
-            buildID=change["buildID"],
-            channel=change["channel"],
-            locale=change["locale"],
-            distribution=change["distribution"],
-            buildTarget=change["buildTarget"],
-            osVersion=change["osVersion"],
-            instructionSet=change["instructionSet"],
-            memory=change["memory"],
-            distVersion=change["distVersion"],
-            comment=change["comment"],
-            update_type=change["update_type"],
-            headerArchitecture=change["headerArchitecture"],
-        )
-        return what
-
-    @requirelogin
-    def _post(self, rule_id, transaction, changed_by):
-        return self.revert_to_revision(
-            get_object_callback=lambda: self.table.getRule(rule_id),
-            change_field="rule_id",
-            get_what_callback=self._get_what,
-            changed_by=changed_by,
-            response_message="Excellent!",
-            transaction=transaction,
-            obj_not_found_msg="bad rule_id",
-        )
+@requirelogin
+@transactionHandler
+def post_rules_revisions(rule_id, transaction, changed_by):
+    return revert_to_revision(
+        table=dbo.rules,
+        get_object_callback=lambda: dbo.rules.getRule(rule_id),
+        change_field="rule_id",
+        get_what_callback=_get_what_rule_history_api,
+        changed_by=changed_by,
+        response_message="Excellent!",
+        transaction=transaction,
+        obj_not_found_msg="bad rule_id",
+    )
 
 
 def get_single_rule_column(column):

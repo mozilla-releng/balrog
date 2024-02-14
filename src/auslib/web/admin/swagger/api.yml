@@ -1067,7 +1067,7 @@ paths:
         Endpoint to view revisions of Product Required Signoffs.Changes that directly affect updates that clients receive (the Rules and Releases tables) are considered Product changes. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#product-required-signoffs)
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_product_revisions_get
+      operationId: auslib.web.admin.views.required_signoffs.get_product_rs_revisions
       consumes: []
       produces:
         - application/json
@@ -1223,7 +1223,7 @@ paths:
         Endpoint to view revisions of Permissions Required Signoffs. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs)
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_permissions_revisions_get
+      operationId: auslib.web.admin.views.required_signoffs.get_permissions_rs_revisions
       consumes: []
       produces:
         - application/json
@@ -1843,7 +1843,7 @@ paths:
         Updates the rule identified by the rule_id to a previous revision identified by change_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#history-view-object-change-id-field)
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.rules_revisions_post
+      operationId: auslib.web.admin.views.rules.post_rules_revisions
       consumes:
         - application/json
       produces:

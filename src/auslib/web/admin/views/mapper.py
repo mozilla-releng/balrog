@@ -2,26 +2,9 @@ from auslib.web.admin.views.permissions import PermissionScheduledChangeHistoryV
 from auslib.web.admin.views.releases import ReleaseScheduledChangeHistoryView
 from auslib.web.admin.views.required_signoffs import (
     PermissionsRequiredSignoffScheduledChangeHistoryView,
-    PermissionsRequiredSignoffsHistoryAPIView,
     ProductRequiredSignoffScheduledChangeHistoryView,
-    ProductRequiredSignoffsHistoryAPIView,
 )
-from auslib.web.admin.views.rules import RuleHistoryAPIView, RuleScheduledChangeHistoryView
-
-
-def rules_revisions_post(rule_id):
-    """POST /rules/:id/revisions"""
-    return RuleHistoryAPIView().post(rule_id)
-
-
-def required_signoffs_product_revisions_get():
-    """GET /required_signoffs/product/revisions"""
-    return ProductRequiredSignoffsHistoryAPIView().get()
-
-
-def required_signoffs_permissions_revisions_get():
-    """GET /required_signoffs/permissions/revisions"""
-    return PermissionsRequiredSignoffsHistoryAPIView().get()
+from auslib.web.admin.views.rules import RuleScheduledChangeHistoryView
 
 
 def scheduled_change_rules_history_get(sc_id):

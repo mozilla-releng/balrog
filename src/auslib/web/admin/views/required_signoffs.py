@@ -7,7 +7,6 @@ from sqlalchemy.sql.expression import null
 from auslib.db import SignoffRequiredError
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, log, requirelogin, transactionHandler
-from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     ScheduledChangeHistoryView,
@@ -44,66 +43,66 @@ def delete_required_signoffs(*args, **kwargs):
     raise SignoffRequiredError("Required Signoffs cannot be directly deleted.")
 
 
-class RequiredSignoffsHistoryAPIView(HistoryView):
-    def __init__(self, table, decisionFields):
-        self.decisionFields = decisionFields
-        super(RequiredSignoffsHistoryAPIView, self).__init__(table=table)
+def _get_filters_rs_history_api(table, decisionFields):
+    history_table = table.history
+    query = get_input_dict()
+    where = [getattr(history_table, f) == query.get(f) for f in query]
+    where.append(history_table.data_version != null())
+    request = connexion.request
+    if hasattr(history_table, "channel"):
+        if request.args.get("channel"):
+            where.append(history_table.channel == request.args.get("channel"))
+    if hasattr(history_table, "product"):
+        where.append(history_table.product != null())
+        if request.args.get("product"):
+            where.append(history_table.product == request.args.get("product"))
+    if request.args.get("timestamp_from"):
+        where.append(history_table.timestamp >= int(request.args.get("timestamp_from")))
+    if request.args.get("timestamp_to"):
+        where.append(history_table.timestamp <= int(request.args.get("timestamp_to")))
+    return where
 
-    def _get_filters(self):
-        query = get_input_dict()
-        where = [getattr(self.table.history, f) == query.get(f) for f in query]
-        where.append(self.table.history.data_version != null())
-        request = connexion.request
-        if hasattr(self.history_table, "channel"):
-            if request.args.get("channel"):
-                where.append(self.history_table.channel == request.args.get("channel"))
-        if hasattr(self.history_table, "product"):
-            where.append(self.history_table.product != null())
-            if request.args.get("product"):
-                where.append(self.history_table.product == request.args.get("product"))
-        if request.args.get("timestamp_from"):
-            where.append(self.history_table.timestamp >= int(request.args.get("timestamp_from")))
-        if request.args.get("timestamp_to"):
-            where.append(self.history_table.timestamp <= int(request.args.get("timestamp_to")))
-        return where
 
-    def get(self, input_dict):
-        if not self.table.select({f: input_dict.get(f) for f in self.decisionFields}):
-            return problem(404, "Not Found", "Requested Required Signoff does not exist")
+def get_rs_revisions(table, decisionFields, input_dict):
+    if not table.select({f: input_dict.get(f) for f in decisionFields}):
+        return problem(404, "Not Found", "Requested Required Signoff does not exist")
 
-        try:
-            page = int(connexion.request.args.get("page", 1))
-            limit = int(connexion.request.args.get("limit", 100))
-        except ValueError as msg:
-            self.log.warning("Bad input: %s", msg)
-            return problem(400, "Bad Request", str(msg))
-        offset = limit * (page - 1)
+    try:
+        page = int(connexion.request.args.get("page", 1))
+        limit = int(connexion.request.args.get("limit", 100))
+    except ValueError as msg:
+        log.warning("Bad input: %s", msg)
+        return problem(400, "Bad Request", str(msg))
+    offset = limit * (page - 1)
 
-        where_count = [self.table.history.data_version != null()]
-        for field in self.decisionFields:
-            where_count.append(getattr(self.table.history, field) == input_dict.get(field))
-        total_count = self.table.history.count(where=where_count)
+    history_table = table.history
+    where_count = [history_table.data_version != null()]
+    for field in decisionFields:
+        where_count.append(getattr(history_table, field) == input_dict.get(field))
+    total_count = history_table.count(where=where_count)
 
-        where = [getattr(self.table.history, f) == input_dict.get(f) for f in self.decisionFields]
-        where.append(self.table.history.data_version != null())
-        revisions = self.table.history.select(where=where, limit=limit, offset=offset, order_by=[self.table.history.timestamp.desc()])
+    where = [getattr(history_table, f) == input_dict.get(f) for f in decisionFields]
+    where.append(history_table.data_version != null())
+    revisions = history_table.select(where=where, limit=limit, offset=offset, order_by=[history_table.timestamp.desc()])
 
-        return jsonify(count=total_count, required_signoffs=revisions)
+    return jsonify(count=total_count, required_signoffs=revisions)
 
-    def get_all(self):
-        try:
-            page = int(connexion.request.args.get("page", 1))
-            limit = int(connexion.request.args.get("limit", 100))
-        except ValueError as msg:
-            self.log.warning("Bad input: %s", msg)
-            return problem(400, "Bad Request", str(msg))
-        offset = limit * (page - 1)
 
-        where = self._get_filters()
-        total_count = self.table.history.count(where=where)
-        revisions = self.table.history.select(where=where, limit=limit, offset=offset, order_by=[self.table.history.timestamp.desc()])
+def get_all_rs_revisions(table):
+    try:
+        page = int(connexion.request.args.get("page", 1))
+        limit = int(connexion.request.args.get("limit", 100))
+    except ValueError as msg:
+        log.warning("Bad input: %s", msg)
+        return problem(400, "Bad Request", str(msg))
+    offset = limit * (page - 1)
 
-        return jsonify(count=total_count, required_signoffs=revisions)
+    where = _get_filters_rs_history_api()
+    history_table = table.history
+    total_count = history_table.count(where=where)
+    revisions = history_table.select(where=where, limit=limit, offset=offset, order_by=[history_table.timestamp.desc()])
+
+    return jsonify(count=total_count, required_signoffs=revisions)
 
 
 def get_product_required_signoffs():
@@ -135,19 +134,17 @@ def delete_product_required_signoffs():
     return delete_required_signoffs()
 
 
-class ProductRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):
-    """/required_signoffs/product/revisions"""
+def get_product_rs_revisions():
+    input_dict = {
+        "product": connexion.request.args.get("product"),
+        "role": connexion.request.args.get("role"),
+        "channel": connexion.request.args.get("channel"),
+    }
+    return get_rs_revisions(dbo.productRequiredSignoffs, ["product", "channel", "role"], input_dict)
 
-    def __init__(self):
-        super(ProductRequiredSignoffsHistoryAPIView, self).__init__(dbo.productRequiredSignoffs, ["product", "channel", "role"])
 
-    def get(self):
-        input_dict = {
-            "product": connexion.request.args.get("product"),
-            "role": connexion.request.args.get("role"),
-            "channel": connexion.request.args.get("channel"),
-        }
-        return super(ProductRequiredSignoffsHistoryAPIView, self).get(input_dict)
+def get_all_product_rs_revisions():
+    return get_all_rs_revisions(dbo.productRequiredSignoffs)
 
 
 def get_product_rs_scheduled_changes():
@@ -322,15 +319,13 @@ def delete_permissions_required_signoffs():
     return delete_required_signoffs()
 
 
-class PermissionsRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):
-    """/required_signoffs/permissions/revisions"""
+def get_permissions_rs_revisions():
+    input_dict = {"product": connexion.request.args.get("product"), "role": connexion.request.args.get("role")}
+    return get_rs_revisions(dbo.permissionsRequiredSignoffs, ["product", "role"], input_dict)
 
-    def __init__(self):
-        super(PermissionsRequiredSignoffsHistoryAPIView, self).__init__(dbo.permissionsRequiredSignoffs, ["product", "role"])
 
-    def get(self):
-        input_dict = {"product": connexion.request.args.get("product"), "role": connexion.request.args.get("role")}
-        return super(PermissionsRequiredSignoffsHistoryAPIView, self).get(input_dict)
+def get_all_permissions_rs_revisions():
+    return get_all_rs_revisions(dbo.permissionsRequiredSignoffs)
 
 
 def get_permissions_rs_scheduled_changes():

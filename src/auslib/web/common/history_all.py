@@ -8,9 +8,9 @@ from auslib.global_state import dbo
 from auslib.web.admin.views.permissions import PermissionScheduledChangeHistoryView, get_users
 from auslib.web.admin.views.required_signoffs import (
     PermissionsRequiredSignoffScheduledChangeHistoryView,
-    PermissionsRequiredSignoffsHistoryAPIView,
     ProductRequiredSignoffScheduledChangeHistoryView,
-    ProductRequiredSignoffsHistoryAPIView,
+    get_all_permissions_rs_revisions,
+    get_all_product_rs_revisions,
 )
 from auslib.web.admin.views.rules import RuleScheduledChangeHistoryView
 from auslib.web.common.history import HistoryHelper, get_input_dict
@@ -82,8 +82,8 @@ def permissions_history():
 def product_required_signoffs_history():
     """GET /required_signoffs/product/history"""
     product_required_signoffs_history = {
-        "product_required_signoffs": ProductRequiredSignoffsHistoryAPIView().get_all(),
         "sc_product_required_signoffs": ProductRequiredSignoffScheduledChangeHistoryView().get_all(),
+        "product_required_signoffs": get_all_product_rs_revisions(),
     }
     histories = {
         "Product Required Signoffs": json.loads(product_required_signoffs_history["product_required_signoffs"].data),
@@ -95,8 +95,8 @@ def product_required_signoffs_history():
 def permissions_required_signoffs_history():
     """GET /permissions_required_signoffs/history"""
     permissions_required_signoffs_history = {
-        "permissions_required_signoffs": PermissionsRequiredSignoffsHistoryAPIView().get_all(),
         "sc_permissions_required_signoffs": PermissionsRequiredSignoffScheduledChangeHistoryView().get_all(),
+        "permissions_required_signoffs": get_all_permissions_rs_revisions(),
     }
     histories = {
         "Permissions Required Signoffs": json.loads(permissions_required_signoffs_history["permissions_required_signoffs"].data),
