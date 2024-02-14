@@ -3,7 +3,6 @@ from flask import jsonify
 from sqlalchemy.sql.expression import null
 
 from auslib.util.signoffs import serialize_signoff_requirements
-from auslib.web.admin.views.base import AdminView, requirelogin
 from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import is_when_present_and_in_past_validator
@@ -129,31 +128,22 @@ def post_enact_scheduled_change(sc_table, sc_id, transaction, changed_by):
     return jsonify({})
 
 
-class SignoffsView(AdminView):
+def post_signoffs_scheduled_change(signoffs_table, sc_id, what, transaction, changed_by):
     """/scheduled_change/:namespace/:sc_id/signoffs"""
 
-    def __init__(self, namespace, table):
-        self.namespace = namespace
-        self.path = "/scheduled_changes/%s/:sc_id/signoffs" % namespace
-        self.signoffs_table = table.scheduled_changes.signoffs
-        super(SignoffsView, self).__init__()
+    signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **what)
+    return jsonify({})
 
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        what = {"role": connexion.request.get_json().get("role")}
-        self.signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **what)
-        return jsonify({})
 
-    @requirelogin
-    def _delete(self, sc_id, transaction, changed_by):
-        username = connexion.request.args.get("username", changed_by)
-        where = {"sc_id": sc_id, "username": username}
-        signoff = self.signoffs_table.select(where, transaction)
-        if not signoff:
-            return jsonify({"error": "{} has no signoff to revoke".format(changed_by)})
+def delete_signoffs_scheduled_change(sc_id, signoffs_table, transaction, changed_by):
+    username = connexion.request.args.get("username", changed_by)
+    where = {"sc_id": sc_id, "username": username}
+    signoff = signoffs_table.select(where, transaction)
+    if not signoff:
+        return jsonify({"error": "{} has no signoff to revoke".format(changed_by)})
 
-        self.signoffs_table.delete(where, changed_by=changed_by, transaction=transaction)
-        return jsonify({})
+    signoffs_table.delete(where, changed_by=changed_by, transaction=transaction)
+    return jsonify({})
 
 
 class ScheduledChangeHistoryView(HistoryView):

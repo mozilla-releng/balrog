@@ -6,12 +6,13 @@ from flask import Response
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import handleGeneralExceptions, requirelogin, transactionHandler
 from auslib.web.admin.views.scheduled_changes import (
-    SignoffsView,
     delete_scheduled_change,
+    delete_signoffs_scheduled_change,
     get_scheduled_changes,
     post_enact_scheduled_change,
     post_scheduled_change,
     post_scheduled_changes,
+    post_signoffs_scheduled_change,
 )
 
 
@@ -92,14 +93,22 @@ def delete_scheduled_deletion(sc_id, data_version, changed_by, transaction):
     )
 
 
-def scheduled_changes_signoffs(sc_id):
-    view = SignoffsView("emergency_shutoff", dbo.emergencyShutoffs)
-    return view.post(sc_id)
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+def scheduled_changes_signoffs(sc_id, transaction, changed_by):
+    return post_signoffs_scheduled_change(
+        signoffs_table=dbo.emergencyShutoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
+    )
 
 
-def scheduled_changes_signoffs_delete(sc_id):
-    view = SignoffsView("emergency_shutoff", dbo.emergencyShutoffs)
-    return view.delete(sc_id)
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("DELETE")
+def scheduled_changes_signoffs_delete(sc_id, transaction, changed_by):
+    return delete_signoffs_scheduled_change(
+        signoffs_table=dbo.emergencyShutoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
+    )
 
 
 @requirelogin

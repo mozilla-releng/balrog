@@ -3383,7 +3383,7 @@ paths:
         Signs off on the given Scheduled Change for Rule. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_signoffs_post
+      operationId: auslib.web.admin.views.rules.post_rules_signoffs_scheduled_change
       consumes:
         - application/json
       produces:
@@ -3411,7 +3411,7 @@ paths:
         Removes an existing Signoff from the Scheduled Change for the Rule. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_signoffs_delete
+      operationId: auslib.web.admin.views.rules.delete_rules_signoffs_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -3439,7 +3439,7 @@ paths:
         Signs off on the given Scheduled Change for Permission. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_signoffs_post
+      operationId: auslib.web.admin.views.permissions.post_permissions_signoffs_scheduled_change
       consumes:
         - application/json
       produces:
@@ -3467,7 +3467,7 @@ paths:
         Removes an existing Signoff from the Scheduled Change for the Permission. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_signoffs_delete
+      operationId: auslib.web.admin.views.permissions.delete_permissions_signoffs_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -3495,7 +3495,7 @@ paths:
         Signs off on the given Scheduled Change for Release. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_release_signoffs_post
+      operationId: auslib.web.admin.views.releases.post_release_signoffs_scheduled_change
       consumes:
         - application/json
       produces:
@@ -3523,7 +3523,7 @@ paths:
         Removes an existing Signoff from the Scheduled Change for the Release. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_release_signoffs_delete
+      operationId: auslib.web.admin.views.releases.delete_release_signoffs_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -3551,7 +3551,7 @@ paths:
         Signs off on the given Scheduled Change for Product Required Signoff. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_signoffs_post
+      operationId: auslib.web.admin.views.required_signoffs.post_product_rs_signoffs_scheduled_change
       consumes:
         - application/json
       produces:
@@ -3579,7 +3579,7 @@ paths:
         Removes an existing Signoff from the Scheduled Change for the Product Required Signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_signoffs_delete
+      operationId: auslib.web.admin.views.required_signoffs.delete_product_rs_signoffs_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -3607,7 +3607,7 @@ paths:
         Signs off on the given Scheduled Change for Permission Required Signoff. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_signoffs_post
+      operationId: auslib.web.admin.views.required_signoffs.post_permissions_rs_signoffs_scheduled_change
       consumes:
         - application/json
       produces:
@@ -3635,7 +3635,7 @@ paths:
         Removes an existing Signoff from the Scheduled Change for the Permission Required Signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_signoffs_delete
+      operationId: auslib.web.admin.views.required_signoffs.delete_permissions_rs_signoffs_scheduled_change
       consumes: []
       produces:
         - application/json

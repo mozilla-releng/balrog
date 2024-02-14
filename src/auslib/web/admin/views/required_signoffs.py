@@ -11,12 +11,13 @@ from auslib.web.admin.views.history import HistoryView
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     ScheduledChangeHistoryView,
-    SignoffsView,
     delete_scheduled_change,
+    delete_signoffs_scheduled_change,
     get_scheduled_changes,
     post_enact_scheduled_change,
     post_scheduled_change,
     post_scheduled_changes,
+    post_signoffs_scheduled_change,
 )
 from auslib.web.common.history import get_input_dict
 
@@ -256,11 +257,30 @@ def post_product_rs_enact_scheduled_change(sc_id, transaction, changed_by):
     return post_enact_scheduled_change(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
-class ProductRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_product_rs_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
     """/scheduled_changes/required_signoffs/product/<int:sc_id>/signoffs"""
 
-    def __init__(self):
-        super(ProductRequiredSignoffScheduledChangeSignoffsView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
+    return post_signoffs_scheduled_change(
+        signoffs_table=dbo.productRequiredSignoffs.scheduled_changes.signoffs,
+        sc_id=sc_id,
+        what=sc_post_signoffs_body,
+        transaction=transaction,
+        changed_by=changed_by,
+    )
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("DELETE")
+@debugPath
+def delete_product_rs_signoffs_scheduled_change(sc_id, transaction, changed_by):
+    return delete_signoffs_scheduled_change(
+        signoffs_table=dbo.productRequiredSignoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
+    )
 
 
 class ProductRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):
@@ -419,11 +439,30 @@ def post_permissions_rs_enact_scheduled_change(sc_id, transaction, changed_by):
     return post_enact_scheduled_change(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
-class PermissionsRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("POST")
+@debugPath
+def post_permissions_rs_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
     """/scheduled_changes/required_signoffs/permissions/<int:sc_id>/signoffs"""
 
-    def __init__(self):
-        super(PermissionsRequiredSignoffScheduledChangeSignoffsView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
+    return post_signoffs_scheduled_change(
+        signoffs_table=dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs,
+        sc_id=sc_id,
+        what=sc_post_signoffs_body,
+        transaction=transaction,
+        changed_by=changed_by,
+    )
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions("DELETE")
+@debugPath
+def delete_permissions_rs_signoffs_scheduled_change(sc_id, transaction, changed_by):
+    return delete_signoffs_scheduled_change(
+        signoffs_table=dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
+    )
 
 
 class PermissionsRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):
