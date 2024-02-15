@@ -11,14 +11,14 @@ from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     delete_scheduled_change,
     delete_signoffs_scheduled_change,
+    get_all_scheduled_change_history,
+    get_scheduled_change_history,
     get_scheduled_changes,
     post_enact_scheduled_change,
     post_scheduled_change,
+    post_scheduled_change_history,
     post_scheduled_changes,
     post_signoffs_scheduled_change,
-    get_scheduled_change_history,
-    get_all_scheduled_change_history,
-    post_scheduled_change_history,
 )
 from auslib.web.common.history import get_input_dict
 
@@ -476,4 +476,6 @@ def get_all_permissions_rs_scheduled_change_history():
 @requirelogin
 @transactionHandler
 def post_permissions_rs_scheduled_change_history(sc_id, transaction, changed_by):
-    return post_scheduled_change_history(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
+    return post_scheduled_change_history(
+        sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by
+    )

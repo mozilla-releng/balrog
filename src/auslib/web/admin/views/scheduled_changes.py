@@ -202,9 +202,7 @@ def _get_filters_all_scheduled_change_history(sc_history_table, obj):
 def _get_what_scheduled_change_history(sc_table, change, changed_by, transaction):
     # There's a big 'ol assumption here that the primary Scheduled Changes
     # table and the conditions table always keep their data version in sync.
-    cond_change = sc_table.conditions.history.getChange(
-        data_version=change["data_version"], column_values={"sc_id": change["sc_id"]}, transaction=transaction
-    )
+    cond_change = sc_table.conditions.history.getChange(data_version=change["data_version"], column_values={"sc_id": change["sc_id"]}, transaction=transaction)
     what = dict(
         # One could argue that we should restore scheduled_by to its value from the change,
         # but since the person who is reverting could be different, it's probably best to

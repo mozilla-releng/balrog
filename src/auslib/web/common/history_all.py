@@ -7,10 +7,10 @@ from sqlalchemy.sql.expression import null
 from auslib.global_state import dbo
 from auslib.web.admin.views.permissions import get_all_permissions_scheduled_change_history, get_users
 from auslib.web.admin.views.required_signoffs import (
-    get_all_permissions_rs_scheduled_change_history,
     get_all_permissions_rs_revisions,
-    get_all_product_rs_scheduled_change_history,
+    get_all_permissions_rs_scheduled_change_history,
     get_all_product_rs_revisions,
+    get_all_product_rs_scheduled_change_history,
 )
 from auslib.web.admin.views.rules import get_all_rules_scheduled_change_history
 from auslib.web.common.history import HistoryHelper, get_input_dict
