@@ -14,6 +14,7 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormLabel from '@material-ui/core/FormLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 import Switch from '@material-ui/core/Switch';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import Drawer from '@material-ui/core/Drawer';
@@ -92,6 +93,13 @@ const useStyles = makeStyles(theme => ({
     position: 'fixed',
     zIndex: 2,
   },
+  checkbox: {
+    padding: `0 ${theme.spacing(1)}px`,
+  },
+  checkboxLabel: {
+    textAlign: 'center',
+    transform: 'scale(0.75)',
+  },
   dropdown: {
     minWidth: 200,
     marginBottom: theme.spacing(2),
@@ -169,6 +177,7 @@ function ListRules(props) {
     query.timestamp ? new Date(parseInt(query.timestamp, 10)) : null
   );
   const [rewindDateError, setRewindDateError] = useState(null);
+  const [showRewindDiff, setShowRewindDiff] = useState(false);
   const [scrollToRow, setScrollToRow] = useState(null);
   const [roles, setRoles] = useState([]);
   const [requiredRoles, setRequiredRoles] = useState([]);
@@ -315,6 +324,11 @@ function ListRules(props) {
     setSnackbarState({ message, variant, open: true });
   };
 
+  const handleRewindDiffChange = ({ target: { checked: value } }) => {
+    setShowRewindDiff(value);
+    ruleListRef.current.recomputeRowHeights();
+  };
+
   const handleSnackbarClose = (event, reason) => {
     if (reason === 'clickaway') {
       return;
@@ -376,19 +390,41 @@ function ListRules(props) {
   }, [products.data, channels.data, rules.data]);
 
   useEffect(() => {
-    if (!rules.data || !scheduledChanges.data || !requiredSignoffs.data) {
-      return;
-    }
-
     if (rewindDate) {
-      const sortedRewoundRules = sortRules(rules.data.data.rules);
+      fetchRules(rewindDate.getTime()).then(r => {
+        if (!r.data) {
+          return;
+        }
 
-      setRewoundRules(sortedRewoundRules);
+        const { rules } = r.data.data;
+        const sortedRewoundRules = sortRules(rules);
+
+        setRewoundRules(sortedRewoundRules);
+      });
     } else {
-      const rulesWithScheduledChanges = rules.data.data.rules.map(rule => {
-        const sc = scheduledChanges.data.data.scheduled_changes.find(
-          sc => rule.rule_id === sc.rule_id
-        );
+      setRewoundRules([]);
+    }
+  }, [rewindDate]);
+
+  useEffect(() => {
+    Promise.all([
+      fetchScheduledChanges(),
+      fetchRules(),
+      fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
+      fetchEmergencyShutoffs(),
+      fetchScheduledEmergencyShutoffs(),
+      fetchProducts(),
+      fetchChannels(),
+    ]).then(([sc, r, rs, es, scheduledEs]) => {
+      if (!sc.data || !r.data || !rs.data) {
+        return;
+      }
+
+      const scheduledChanges = sc.data.data.scheduled_changes;
+      const requiredSignoffs = rs.data.data.required_signoffs;
+      const { rules } = r.data.data;
+      const rulesWithScheduledChanges = rules.map(rule => {
+        const sc = scheduledChanges.find(sc => rule.rule_id === sc.rule_id);
         const returnedRule = { ...rule };
 
         if (sc) {
@@ -399,7 +435,7 @@ function ListRules(props) {
         }
 
         returnedRule.required_signoffs = {};
-        requiredSignoffs.data.data.required_signoffs.forEach(rs => {
+        requiredSignoffs.forEach(rs => {
           if (ruleMatchesRequiredSignoff(rule, rs)) {
             returnedRule.required_signoffs[rs.role] = rs.signoffs_required;
           }
@@ -408,7 +444,7 @@ function ListRules(props) {
         return returnedRule;
       });
 
-      scheduledChanges.data.data.scheduled_changes.forEach(sc => {
+      scheduledChanges.forEach(sc => {
         if (sc.change_type === 'insert') {
           const rule = { scheduledChange: sc };
 
@@ -427,17 +463,12 @@ function ListRules(props) {
       const sortedRules = sortRules(rulesWithScheduledChanges);
 
       setRulesWithScheduledChanges(sortedRules);
-      setRewoundRules([]);
-    }
-  }, [rules.data, scheduledChanges.data, requiredSignoffs.data]);
 
-  useEffect(() => {
-    if (emergencyShutoffsAction.data && scheduledEmergencyShutoffsAction.data) {
-      const shutoffs = emergencyShutoffsAction.data.data.shutoffs.map(
-        shutoff => {
+      if (es.data && scheduledEs.data) {
+        const shutoffs = es.data.data.shutoffs.map(shutoff => {
           const returnedShutoff = clone(shutoff);
           /* eslint-disable-next-line max-len */
-          const sc = scheduledEmergencyShutoffsAction.data.data.scheduled_changes.find(
+          const sc = scheduledEs.data.data.scheduled_changes.find(
             ses =>
               ses.product === shutoff.product && ses.channel === shutoff.channel
           );
@@ -447,26 +478,11 @@ function ListRules(props) {
           }
 
           return returnedShutoff;
-        }
-      );
+        });
 
-      setEmergencyShutoffs(shutoffs);
-    }
-  }, [emergencyShutoffsAction.data, scheduledEmergencyShutoffsAction.data]);
-
-  useEffect(() => {
-    fetchRules(rewindDate ? rewindDate.getTime() : null);
-  }, [rewindDate]);
-
-  useEffect(() => {
-    Promise.all([
-      fetchScheduledChanges(),
-      fetchRequiredSignoffs(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
-      fetchEmergencyShutoffs(),
-      fetchScheduledEmergencyShutoffs(),
-      fetchProducts(),
-      fetchChannels(),
-    ]);
+        setEmergencyShutoffs(shutoffs);
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -547,6 +563,10 @@ function ListRules(props) {
   const handleRewindDateTimeChange = date => {
     setRewindDate(date);
     setRewindDateError(null);
+
+    if (date === null) {
+      handleRewindDiffChange({ target: { checked: false } });
+    }
 
     const qs = {
       ...query,
@@ -1152,6 +1172,9 @@ function ListRules(props) {
 
   const getRowHeight = ({ index }) => {
     const rule = filteredRulesWithScheduledChanges[index];
+    const currentRule = rulesWithScheduledChanges.find(
+      r => r.rule_id === rule.rule_id
+    );
     const hasScheduledChanges = Boolean(rule.scheduledChange);
     // Padding top and bottom included
     const listPadding = theme.spacing(1);
@@ -1266,6 +1289,36 @@ function ListRules(props) {
         // Space for however many rows exist.
         height += signoffRows * body2TextHeight();
       }
+    } else if (showRewindDiff) {
+      // row with the historical changes title
+      height += Math.max(subtitle1TextHeight(), theme.spacing(3));
+
+      if (!currentRule) {
+        // row with "rule was deleted"
+        height += body2TextHeight();
+      } else {
+        const diffedProperties = getDiffedProperties(
+          RULE_DIFF_PROPERTIES,
+          rule,
+          currentRule
+        );
+
+        if (diffedProperties.length === 0) {
+          // row with "no changes made yet"
+          height += body2TextHeight();
+        } else {
+          // diff viewer + marginTop + height of the
+          // horizontal scroller (rough estimate;
+          // sometimes there are no scroller as well)
+          height +=
+            diffedProperties.length * diffRowHeight +
+            theme.spacing(1) +
+            theme.spacing(2);
+        }
+      }
+
+      // divider
+      height += theme.spacing(2) + 1;
     }
 
     // space below the card (margin)
@@ -1295,6 +1348,9 @@ function ListRules(props) {
     // if we're in rewind mode, rule is a historical rule, not the current one
     const rule = filteredRulesWithScheduledChanges[index];
     const isSelected = isRuleSelected(rule);
+    const currentRule = rulesWithScheduledChanges.find(
+      r => r.rule_id === rule.rule_id
+    );
 
     return (
       <div
@@ -1310,6 +1366,7 @@ function ListRules(props) {
           })}
           key={rule.rule_id}
           rule={rule}
+          currentRule={Boolean(rewindDate) && currentRule}
           rulesFilter={productChannelQueries}
           onRuleDelete={handleRuleDelete}
           canSignoff={
@@ -1321,6 +1378,7 @@ function ListRules(props) {
           onSignoff={() => handleSignoff(rule)}
           onRevoke={() => handleRevoke(rule)}
           onViewReleaseClick={handleViewRelease}
+          diffRules={showRewindDiff}
           disableActions={!props.user || Boolean(rewindDate)}
           actionLoading={isActionLoading}
         />
@@ -1393,6 +1451,16 @@ function ListRules(props) {
                 style: { order: 2, marginLeft: 0 },
               }}
             />
+            <FormControl className={classes.checkbox}>
+              <FormLabel className={classes.checkboxLabel}>
+                Diff rules?
+              </FormLabel>
+              <Checkbox
+                disabled={!rewindDate}
+                checked={showRewindDiff}
+                onChange={handleRewindDiffChange}
+              />
+            </FormControl>
             <FormControl className={classes.pendingSignoffFormControl}>
               <FormLabel className={classes.pendingSignoffFormLabel}>
                 Filter by rules with scheduled changes
