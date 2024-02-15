@@ -12,7 +12,6 @@ from auslib.util.signoffs import serialize_signoff_requirements
 from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, log, requirelogin, transactionHandler
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
-    ScheduledChangeHistoryView,
     delete_scheduled_change,
     delete_signoffs_scheduled_change,
     get_by_id_scheduled_change,
@@ -21,6 +20,8 @@ from auslib.web.admin.views.scheduled_changes import (
     post_scheduled_change,
     post_scheduled_changes,
     post_signoffs_scheduled_change,
+    get_scheduled_change_history,
+    post_scheduled_change_history,
 )
 from auslib.web.common.releases import serialize_releases
 
@@ -588,15 +589,14 @@ def delete_release_signoffs_scheduled_change(sc_id, transaction, changed_by):
     return delete_signoffs_scheduled_change(signoffs_table=dbo.releases.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
-class ReleaseScheduledChangeHistoryView(ScheduledChangeHistoryView):
-    """/scheduled_changes/releases/<int:sc_id>/revisions"""
+def get_releases_scheduled_change_history(sc_id):
+    return get_scheduled_change_history(sc_table=dbo.releases.scheduled_changes, sc_id=sc_id)
 
-    def __init__(self):
-        super(ReleaseScheduledChangeHistoryView, self).__init__("releases", dbo.releases)
 
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(ReleaseScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
+@requirelogin
+@transactionHandler
+def post_releases_scheduled_change_history(sc_id, transaction, changed_by):
+    return post_scheduled_change_history(sc_table=dbo.releases.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 def get_scheduled_release_field_value(sc_id, field=None):

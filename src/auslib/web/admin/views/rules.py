@@ -6,7 +6,6 @@ from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, requ
 from auslib.web.admin.views.history import revert_to_revision
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
-    ScheduledChangeHistoryView,
     delete_scheduled_change,
     delete_signoffs_scheduled_change,
     get_by_id_scheduled_change,
@@ -15,6 +14,9 @@ from auslib.web.admin.views.scheduled_changes import (
     post_scheduled_change,
     post_scheduled_changes,
     post_signoffs_scheduled_change,
+    get_scheduled_change_history,
+    get_all_scheduled_change_history,
+    post_scheduled_change_history,
 )
 
 
@@ -380,12 +382,15 @@ def delete_rules_signoffs_scheduled_change(sc_id, transaction, changed_by, **kwa
     return delete_signoffs_scheduled_change(signoffs_table=dbo.rules.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
-class RuleScheduledChangeHistoryView(ScheduledChangeHistoryView):
-    """/scheduled_changes/rules/<int:sc_id>/revisions"""
+def get_rules_scheduled_change_history(sc_id):
+    return get_scheduled_change_history(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id)
 
-    def __init__(self):
-        super(RuleScheduledChangeHistoryView, self).__init__("rules", dbo.rules)
 
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(RuleScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
+def get_all_rules_scheduled_change_history():
+    return get_all_scheduled_change_history(sc_table=dbo.rules.scheduled_changes)
+
+
+@requirelogin
+@transactionHandler
+def post_rules_scheduled_change_history(sc_id, transaction, changed_by):
+    return post_scheduled_change_history(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)

@@ -5,14 +5,14 @@ from connexion import problem, request
 from sqlalchemy.sql.expression import null
 
 from auslib.global_state import dbo
-from auslib.web.admin.views.permissions import PermissionScheduledChangeHistoryView, get_users
+from auslib.web.admin.views.permissions import get_all_permissions_scheduled_change_history, get_users
 from auslib.web.admin.views.required_signoffs import (
-    PermissionsRequiredSignoffScheduledChangeHistoryView,
-    ProductRequiredSignoffScheduledChangeHistoryView,
+    get_all_permissions_rs_scheduled_change_history,
     get_all_permissions_rs_revisions,
+    get_all_product_rs_scheduled_change_history,
     get_all_product_rs_revisions,
 )
-from auslib.web.admin.views.rules import RuleScheduledChangeHistoryView
+from auslib.web.admin.views.rules import get_all_rules_scheduled_change_history
 from auslib.web.common.history import HistoryHelper, get_input_dict
 from auslib.web.common.rules import get_rules
 
@@ -61,7 +61,7 @@ def rules_history():
     """GET /rules/history"""
     history_table = dbo.rules.history
     rules = _get_histories(history_table, get_rules)
-    history = {"rules": rules, "sc_rules": RuleScheduledChangeHistoryView().get_all()}
+    history = {"rules": rules, "sc_rules": get_all_rules_scheduled_change_history()}
     histories = {"Rules": json.loads(history["rules"].data), "Rules scheduled change": json.loads(history["sc_rules"].data)}
     return histories
 
@@ -71,7 +71,7 @@ def permissions_history():
     history_table = dbo.permissions.history
     get_permissions = get_users()
     permissions = _get_histories(history_table, get_permissions)
-    permissions_history = {"permissions": permissions, "sc_permissions": PermissionScheduledChangeHistoryView().get_all()}
+    permissions_history = {"permissions": permissions, "sc_permissions": get_all_permissions_scheduled_change_history()}
     histories = {
         "Permissions": json.loads(permissions_history["permissions"].data),
         "Permissions Scheduled Change": json.loads(permissions_history["sc_permissions"].data),
@@ -82,8 +82,8 @@ def permissions_history():
 def product_required_signoffs_history():
     """GET /required_signoffs/product/history"""
     product_required_signoffs_history = {
-        "sc_product_required_signoffs": ProductRequiredSignoffScheduledChangeHistoryView().get_all(),
         "product_required_signoffs": get_all_product_rs_revisions(),
+        "sc_product_required_signoffs": get_all_product_rs_scheduled_change_history(),
     }
     histories = {
         "Product Required Signoffs": json.loads(product_required_signoffs_history["product_required_signoffs"].data),
@@ -95,8 +95,8 @@ def product_required_signoffs_history():
 def permissions_required_signoffs_history():
     """GET /permissions_required_signoffs/history"""
     permissions_required_signoffs_history = {
-        "sc_permissions_required_signoffs": PermissionsRequiredSignoffScheduledChangeHistoryView().get_all(),
         "permissions_required_signoffs": get_all_permissions_rs_revisions(),
+        "sc_permissions_required_signoffs": get_all_permissions_rs_scheduled_change_history(),
     }
     histories = {
         "Permissions Required Signoffs": json.loads(permissions_required_signoffs_history["permissions_required_signoffs"].data),

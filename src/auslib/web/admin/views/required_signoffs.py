@@ -9,7 +9,6 @@ from auslib.global_state import dbo
 from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, log, requirelogin, transactionHandler
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
-    ScheduledChangeHistoryView,
     delete_scheduled_change,
     delete_signoffs_scheduled_change,
     get_scheduled_changes,
@@ -17,6 +16,9 @@ from auslib.web.admin.views.scheduled_changes import (
     post_scheduled_change,
     post_scheduled_changes,
     post_signoffs_scheduled_change,
+    get_scheduled_change_history,
+    get_all_scheduled_change_history,
+    post_scheduled_change_history,
 )
 from auslib.web.common.history import get_input_dict
 
@@ -280,15 +282,18 @@ def delete_product_rs_signoffs_scheduled_change(sc_id, transaction, changed_by):
     )
 
 
-class ProductRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):
-    """/scheduled_changes/required_signoffs/product/<int:sc_id>/revisions"""
+def get_product_rs_scheduled_change_history(sc_id):
+    return get_scheduled_change_history(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id)
 
-    def __init__(self):
-        super(ProductRequiredSignoffScheduledChangeHistoryView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
 
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(ProductRequiredSignoffScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
+def get_all_product_rs_scheduled_change_history():
+    return get_all_scheduled_change_history(sc_table=dbo.productRequiredSignoffs.scheduled_changes)
+
+
+@requirelogin
+@transactionHandler
+def post_product_rs_scheduled_change_history(sc_id, transaction, changed_by):
+    return post_scheduled_change_history(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 def get_permissions_required_signoffs():
@@ -460,12 +465,15 @@ def delete_permissions_rs_signoffs_scheduled_change(sc_id, transaction, changed_
     )
 
 
-class PermissionsRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):
-    """/scheduled_changes/required_signoffs/permissions/<int:sc_id>/revisions"""
+def get_permissions_rs_scheduled_change_history(sc_id):
+    return get_scheduled_change_history(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id)
 
-    def __init__(self):
-        super(PermissionsRequiredSignoffScheduledChangeHistoryView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
 
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(PermissionsRequiredSignoffScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
+def get_all_permissions_rs_scheduled_change_history():
+    return get_all_scheduled_change_history(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes)
+
+
+@requirelogin
+@transactionHandler
+def post_permissions_rs_scheduled_change_history(sc_id, transaction, changed_by):
+    return post_scheduled_change_history(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)

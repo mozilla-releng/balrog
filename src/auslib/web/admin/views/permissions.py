@@ -6,7 +6,6 @@ from auslib.global_state import dbo
 from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, log, requirelogin, transactionHandler
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
-    ScheduledChangeHistoryView,
     delete_scheduled_change,
     delete_signoffs_scheduled_change,
     get_scheduled_changes,
@@ -14,6 +13,9 @@ from auslib.web.admin.views.scheduled_changes import (
     post_scheduled_change,
     post_scheduled_changes,
     post_signoffs_scheduled_change,
+    get_scheduled_change_history,
+    get_all_scheduled_change_history,
+    post_scheduled_change_history,
 )
 
 __all__ = [
@@ -285,15 +287,18 @@ def delete_permissions_signoffs_scheduled_change(sc_id, transaction, changed_by)
     )
 
 
-class PermissionScheduledChangeHistoryView(ScheduledChangeHistoryView):
-    """/scheduled_changes/permissions/<int:sc_id>/revisions"""
+def get_permissions_scheduled_change_history(sc_id):
+    return get_scheduled_change_history(sc_table=dbo.permissions.scheduled_changes, sc_id=sc_id)
 
-    def __init__(self):
-        super(PermissionScheduledChangeHistoryView, self).__init__("permissions", dbo.permissions)
 
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(PermissionScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
+def get_all_permissions_scheduled_change_history():
+    return get_all_scheduled_change_history(sc_table=dbo.permissions.scheduled_changes)
+
+
+@requirelogin
+@transactionHandler
+def post_permissions_scheduled_change_history(sc_id, transaction, changed_by):
+    return post_scheduled_change_history(sc_table=dbo.permissions.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 @requirelogin

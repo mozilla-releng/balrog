@@ -2090,7 +2090,7 @@ paths:
         Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_history_get
+      operationId: auslib.web.admin.views.rules.get_rules_scheduled_change_history
       consumes: []
       produces:
         - application/json
@@ -2135,7 +2135,7 @@ paths:
         Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_history_post
+      operationId: auslib.web.admin.views.rules.post_rules_scheduled_change_history
       consumes:
         - application/json
       produces:
@@ -2332,7 +2332,7 @@ paths:
         Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_history_get
+      operationId: auslib.web.admin.views.permissions.get_permissions_scheduled_change_history
       consumes: []
       produces:
         - application/json
@@ -2387,7 +2387,7 @@ paths:
         Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_history_post
+      operationId: auslib.web.admin.views.permissions.post_permissions_scheduled_change_history
       consumes:
         - application/json
       produces:
@@ -2639,7 +2639,7 @@ paths:
         Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_history_get
+      operationId: auslib.web.admin.views.releases.get_releases_scheduled_change_history
       consumes: []
       produces:
         - application/json
@@ -2698,7 +2698,7 @@ paths:
         Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_history_post
+      operationId: auslib.web.admin.views.releases.post_releases_scheduled_change_history
       consumes:
         - application/json
       produces:
@@ -2907,7 +2907,7 @@ paths:
         Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_history_get
+      operationId: auslib.web.admin.views.required_signoffs.get_product_rs_scheduled_change_history
       consumes: []
       produces:
         - application/json
@@ -2966,7 +2966,7 @@ paths:
         Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_history_post
+      operationId: auslib.web.admin.views.required_signoffs.post_product_rs_scheduled_change_history
       consumes:
         - application/json
       produces:
@@ -3170,7 +3170,7 @@ paths:
         Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_history_get
+      operationId: auslib.web.admin.views.required_signoffs.get_permissions_rs_scheduled_change_history
       consumes: []
       produces:
         - application/json
@@ -3227,7 +3227,7 @@ paths:
         Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_history_post
+      operationId: auslib.web.admin.views.required_signoffs.post_permissions_rs_scheduled_change_history
       consumes:
         - application/json
       produces:
