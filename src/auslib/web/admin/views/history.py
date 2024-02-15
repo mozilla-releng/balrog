@@ -6,7 +6,7 @@ from auslib.web.admin.views.problem import problem
 
 
 def get_revisions(
-    history_table,
+    table,
     get_object_callback,
     history_filters_callback,
     revisions_order_by,
@@ -46,13 +46,13 @@ def get_revisions(
 
     offset = limit * (page - 1)
 
-    filters = history_filters_callback(obj)
-    total_count = history_table.count(where=filters)
+    filters = history_filters_callback(table.history, obj)
+    total_count = table.history.count(where=filters)
 
-    revisions = history_table.select(where=filters, limit=limit, offset=offset, order_by=revisions_order_by)
+    revisions = table.history.select(where=filters, limit=limit, offset=offset, order_by=revisions_order_by)
 
     if process_revisions_callback:
-        revisions = process_revisions_callback(revisions)
+        revisions = process_revisions_callback(table, revisions)
 
     ret = dict()
     ret[response_key] = revisions
