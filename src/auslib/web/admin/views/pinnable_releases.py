@@ -4,8 +4,6 @@ from auslib.web.admin.views.scheduled_changes import get_scheduled_changes, post
 
 
 def get_pinnable_releases_scheduled_changes():
-    """/scheduled_changes/pinnable_releases"""
-
     return get_scheduled_changes(table=dbo.pinnable_releases)
 
 
@@ -13,6 +11,4 @@ def get_pinnable_releases_scheduled_changes():
 @transactionHandler
 @handleGeneralExceptions
 def post_pinnable_releases_enact_scheduled_change(sc_id, transaction, changed_by):
-    """/scheduled_changes/pinnable_releases/<int:sc_id>/enact"""
-
     return post_enact_scheduled_change(sc_table=dbo.pinnable_releases.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)

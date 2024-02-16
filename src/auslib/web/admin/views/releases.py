@@ -314,8 +314,6 @@ def delete_single_release(release, data_version, changed_by, transaction):
 
 
 def get_release_read_only(release):
-    """/releases/:release/read_only"""
-
     try:
         is_release_read_only = dbo.releases.isReadOnly(name=release, limit=1)
     except KeyError as e:
@@ -347,8 +345,6 @@ def put_release_read_only(release, release_read_only_body, changed_by, transacti
 
 
 def get_release_read_only_product_required_signoffs(release):
-    """/releases/:release/read_only/product/required_signoffs"""
-
     releases = dbo.releases.getReleases(name=release, limit=1)
     if not releases:
         return problem(404, "Not Found", f"Release: {release} not found")
@@ -359,8 +355,6 @@ def get_release_read_only_product_required_signoffs(release):
 
 
 def get_releases(**kwargs):
-    """/releases"""
-
     opts = {}
     if connexion.request.args.get("product"):
         opts["product"] = connexion.request.args.get("product")
@@ -410,8 +404,6 @@ def post_release(release_body, changed_by, transaction):
 
 
 def get_release_single_column(column):
-    """/releases/columns/:column"""
-
     releases = dbo.releases.getReleaseInfo()
     column_values = []
     if column not in releases[0].keys():
@@ -427,8 +419,6 @@ def get_release_single_column(column):
 
 
 def get_releases_scheduled_changes():
-    """/scheduled_changes/releases"""
-
     where = {}
     name = connexion.request.args.get("name")
     if name:
@@ -486,8 +476,6 @@ def post_releases_scheduled_changes(sc_release_body, transaction, changed_by):
 
 
 def get_by_id_releases_scheduled_change(sc_id):
-    """/scheduled_changes/releases/<int:sc_id>"""
-
     ret = get_by_id_scheduled_change(table=dbo.releases, sc_id=sc_id)
     sc = ret.json["scheduled_change"]
     set_required_signoffs_for_product(sc)
@@ -554,8 +542,6 @@ def delete_releases_scheduled_change(sc_id, data_version, transaction, changed_b
 @transactionHandler
 @handleGeneralExceptions
 def post_releases_enact_scheduled_change(sc_id, transaction, changed_by):
-    """/scheduled_changes/releases/<int:sc_id>/enact"""
-
     return post_enact_scheduled_change(sc_table=dbo.releases.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
@@ -563,8 +549,6 @@ def post_releases_enact_scheduled_change(sc_id, transaction, changed_by):
 @transactionHandler
 @handleGeneralExceptions
 def post_release_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
-    """/scheduled_changes/releases/<int:sc_id>/signoffs"""
-
     return post_signoffs_scheduled_change(
         signoffs_table=dbo.releases.scheduled_changes.signoffs, sc_id=sc_id, what=sc_post_signoffs_body, transaction=transaction, changed_by=changed_by
     )
@@ -606,8 +590,6 @@ def get_release(sc):
 
 
 def get_scheduled_release_diff(sc_id):
-    """/diff/:sc_id"""
-
     sc = get_scheduled_release_field_value(sc_id)
     release = get_release(sc)
 

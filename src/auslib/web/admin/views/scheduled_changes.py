@@ -49,8 +49,6 @@ def add_signoff_information(row, table, sc_table):
 
 
 def get_scheduled_changes(table, where=None):
-    """/scheduled_changes/:namespace"""
-
     sc_table = table.scheduled_changes
 
     if where is None:
@@ -82,8 +80,6 @@ def post_scheduled_changes(sc_table, what, transaction, changed_by, change_type)
 
 
 def get_by_id_scheduled_change(table, sc_id):
-    """/scheduled_changes/:namespace/:sc_id"""
-
     sc_table = table.scheduled_changes
     sc = sc_table.select(where={"sc_id": sc_id})
     if not sc:
@@ -123,15 +119,11 @@ def delete_scheduled_change(sc_table, sc_id, data_version, transaction, changed_
 
 
 def post_enact_scheduled_change(sc_table, sc_id, transaction, changed_by):
-    """/scheduled_changes/:namespace/:sc_id/enact"""
-
     sc_table.enactChange(sc_id, changed_by, transaction)
     return jsonify({})
 
 
 def post_signoffs_scheduled_change(signoffs_table, sc_id, what, transaction, changed_by):
-    """/scheduled_change/:namespace/:sc_id/signoffs"""
-
     signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **what)
     return jsonify({})
 

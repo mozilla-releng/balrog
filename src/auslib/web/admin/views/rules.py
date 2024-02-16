@@ -62,8 +62,6 @@ def process_rule_form(form_data):
 @transactionHandler
 @handleGeneralExceptions
 def post_rules(rule, transaction, changed_by):
-    """/rules"""
-
     # a Post here creates a new rule
     what, mapping_values, fallback_mapping_values = process_rule_form(rule)
 
@@ -116,8 +114,6 @@ def update_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
 @transactionHandler
 @handleGeneralExceptions
 def post_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
-    """/rules/:id"""
-
     return update_rules_id_or_alias(rule, id_or_alias, transaction, changed_by)
 
 
@@ -184,8 +180,6 @@ def post_rules_revisions(rule_id, transaction, changed_by, **kwargs):
 
 
 def get_single_rule_column(column):
-    """/rules/columns/:column"""
-
     rules = dbo.rules.getOrderedRules()
     column_values = []
     if column not in rules[0].keys():
@@ -201,8 +195,6 @@ def get_single_rule_column(column):
 
 
 def get_rules_scheduled_changes():
-    """/scheduled_changes/rules"""
-
     where = {}
     rule_id = connexion.request.args.get("rule_id")
     if rule_id:
@@ -276,8 +268,6 @@ def post_rules_scheduled_changes(sc_rule_body, transaction, changed_by):
 
 
 def get_by_id_rules_scheduled_change(sc_id):
-    """/scheduled_changes/rules/<int:sc_id>"""
-
     return get_by_id_scheduled_change(table=dbo.rules, sc_id=sc_id)
 
 
@@ -349,8 +339,6 @@ def delete_rules_scheduled_change(sc_id, data_version, transaction, changed_by):
 @transactionHandler
 @handleGeneralExceptions
 def post_rules_enact_scheduled_change(sc_id, transaction, changed_by):
-    """/scheduled_changes/rules/<int:sc_id>/enact"""
-
     return post_enact_scheduled_change(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
@@ -358,8 +346,6 @@ def post_rules_enact_scheduled_change(sc_id, transaction, changed_by):
 @transactionHandler
 @handleGeneralExceptions
 def post_rules_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
-    """/scheduled_changes/rules/<int:sc_id>/signoffs"""
-
     return post_signoffs_scheduled_change(
         signoffs_table=dbo.rules.scheduled_changes.signoffs, sc_id=sc_id, what=sc_post_signoffs_body, transaction=transaction, changed_by=changed_by
     )

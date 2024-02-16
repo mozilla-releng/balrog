@@ -29,8 +29,6 @@ __all__ = [
 
 
 def get_users():
-    """/users"""
-
     users = dbo.permissions.getAllUsers()
     log.debug("Found users: %s", users)
     # We don't return a plain jsonify'ed list here because of:
@@ -42,8 +40,7 @@ def get_users():
 @requirelogin
 @handleGeneralExceptions
 def get_specific_user(username, changed_by):
-    """/users/:username
-    Returns all of the details about the named user."""
+    """Returns all of the details about the named user."""
 
     permissions = dbo.permissions.getUserPermissions(username, changed_by)
 
@@ -56,8 +53,6 @@ def get_specific_user(username, changed_by):
 @requirelogin
 @handleGeneralExceptions
 def get_user_permissions(username, changed_by):
-    """/users/:username/permissions"""
-
     permissions = dbo.permissions.getUserPermissions(username, changed_by)
     return jsonify(permissions)
 
@@ -65,8 +60,6 @@ def get_user_permissions(username, changed_by):
 @requirelogin
 @handleGeneralExceptions
 def get_specific_user_permission(username, permission, changed_by):
-    """/users/:username/permissions/:permission"""
-
     try:
         perm = dbo.permissions.getUserPermissions(username, changed_by)[permission]
     except KeyError:
@@ -164,8 +157,6 @@ def delete_specific_user_permission(username, permission, data_version, changed_
 
 
 def get_permissions_scheduled_changes():
-    """/scheduled_changes/permissions"""
-
     return get_scheduled_changes(table=dbo.permissions)
 
 
@@ -199,8 +190,6 @@ def post_permissions_scheduled_changes(sc_permission_body, transaction, changed_
 @transactionHandler
 @handleGeneralExceptions
 def post_permissions_scheduled_change(sc_id, sc_permission_body, transaction, changed_by):
-    """/scheduled_changes/permissions/<int:sc_id>"""
-
     # TODO: modify UI and clients to stop sending 'change_type' in request body
     sc_table = dbo.permissions.scheduled_changes
     sc_permission = sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
@@ -253,8 +242,6 @@ def delete_permissions_scheduled_change(sc_id, data_version, transaction, change
 @transactionHandler
 @handleGeneralExceptions
 def post_permissions_enact_scheduled_change(sc_id, transaction, changed_by):
-    """/scheduled_changes/permissions/<int:sc_id>/enact"""
-
     return post_enact_scheduled_change(sc_table=dbo.permissions.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
@@ -262,8 +249,6 @@ def post_permissions_enact_scheduled_change(sc_id, transaction, changed_by):
 @transactionHandler
 @handleGeneralExceptions
 def post_permissions_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
-    """/scheduled_changes/permissions/<int:sc_id>/signoffs"""
-
     return post_signoffs_scheduled_change(
         signoffs_table=dbo.permissions.scheduled_changes.signoffs, sc_id=sc_id, what=sc_post_signoffs_body, transaction=transaction, changed_by=changed_by
     )
@@ -296,8 +281,6 @@ def post_permissions_scheduled_change_history(sc_id, transaction, changed_by):
 @transactionHandler
 @handleGeneralExceptions
 def put_user_role(username, role, changed_by, transaction):
-    """/users/:username/roles/:role"""
-
     # These requests are idempotent - if the user already has the desired role,
     # no change needs to be made. Because of this there's also no reason to
     # return an error.

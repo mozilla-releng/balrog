@@ -58,7 +58,6 @@ def _get_histories(table, obj, process_revisions_callback=None):
 
 
 def rules_history():
-    """GET /rules/history"""
     history_table = dbo.rules.history
     rules = _get_histories(history_table, get_rules)
     history = {"rules": rules, "sc_rules": get_all_rules_scheduled_change_history()}
@@ -67,7 +66,6 @@ def rules_history():
 
 
 def permissions_history():
-    """GET /permissions/history"""
     history_table = dbo.permissions.history
     get_permissions = get_users()
     permissions = _get_histories(history_table, get_permissions)
@@ -80,7 +78,6 @@ def permissions_history():
 
 
 def product_required_signoffs_history():
-    """GET /required_signoffs/product/history"""
     product_required_signoffs_history = {
         "product_required_signoffs": get_all_product_rs_revisions(),
         "sc_product_required_signoffs": get_all_product_rs_scheduled_change_history(),
@@ -93,7 +90,6 @@ def product_required_signoffs_history():
 
 
 def permissions_required_signoffs_history():
-    """GET /permissions_required_signoffs/history"""
     permissions_required_signoffs_history = {
         "permissions_required_signoffs": get_all_permissions_rs_revisions(),
         "sc_permissions_required_signoffs": get_all_permissions_rs_scheduled_change_history(),

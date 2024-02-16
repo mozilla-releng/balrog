@@ -108,8 +108,6 @@ def get_all_rs_revisions(table):
 
 
 def get_product_required_signoffs():
-    """/required_signoffs/product"""
-
     where = {param: request.args[param] for param in ("product", "channel") if param in request.args}
     return get_required_signoffs(required_signoffs=dbo.productRequiredSignoffs, where=where)
 
@@ -148,8 +146,6 @@ def get_all_product_rs_revisions():
 
 
 def get_product_rs_scheduled_changes():
-    """/scheduled_changes/required_signoffs/product"""
-
     where = {f"base_{param}": request.args[param] for param in ("product", "channel") if param in request.args}
     return get_scheduled_changes(table=dbo.productRequiredSignoffs, where=where)
 
@@ -196,8 +192,6 @@ def post_product_rs_scheduled_changes(sc_rs_product_body, transaction, changed_b
 @transactionHandler
 @handleGeneralExceptions
 def post_product_rs_scheduled_change(sc_id, sc_product_rs_body, transaction, changed_by):
-    """/scheduled_changes/required_signoffs/product/<int:sc_id>"""
-
     # TODO: modify UI and clients to stop sending 'change_type' in request body
     sc_table = dbo.productRequiredSignoffs.scheduled_changes
     sc_rs_product = sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
@@ -245,8 +239,6 @@ def delete_product_rs_scheduled_change(sc_id, data_version, transaction, changed
 @transactionHandler
 @handleGeneralExceptions
 def post_product_rs_enact_scheduled_change(sc_id, transaction, changed_by):
-    """/scheduled_changes/required_signoffs/product/<int:sc_id>/enact"""
-
     return post_enact_scheduled_change(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
@@ -254,8 +246,6 @@ def post_product_rs_enact_scheduled_change(sc_id, transaction, changed_by):
 @transactionHandler
 @handleGeneralExceptions
 def post_product_rs_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
-    """/scheduled_changes/required_signoffs/product/<int:sc_id>/signoffs"""
-
     return post_signoffs_scheduled_change(
         signoffs_table=dbo.productRequiredSignoffs.scheduled_changes.signoffs,
         sc_id=sc_id,
@@ -289,8 +279,6 @@ def post_product_rs_scheduled_change_history(sc_id, transaction, changed_by):
 
 
 def get_permissions_required_signoffs():
-    """/required_signoffs/permissions"""
-
     where = {param: request.args[param] for param in ("product",) if param in request.args}
     return get_required_signoffs(required_signoffs=dbo.permissionsRequiredSignoffs, where=where)
 
@@ -324,8 +312,6 @@ def get_all_permissions_rs_revisions():
 
 
 def get_permissions_rs_scheduled_changes():
-    """/scheduled_changes/required_signoffs/permissions"""
-
     where = {f"base_{param}": request.args[param] for param in ("product",) if param in request.args}
     return get_scheduled_changes(table=dbo.permissionsRequiredSignoffs, where=where)
 
@@ -372,8 +358,6 @@ def post_permissions_rs_scheduled_changes(sc_rs_permission_body, transaction, ch
 @transactionHandler
 @handleGeneralExceptions
 def post_permissions_rs_scheduled_change(sc_id, sc_permission_rs_body, transaction, changed_by):
-    """/scheduled_changes/required_signoffs/permissions/<int:sc_id>"""
-
     # TODO: modify UI and clients to stop sending 'change_type' in request body
     sc_table = dbo.permissionsRequiredSignoffs.scheduled_changes
     sc_rs_permission = sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
@@ -420,8 +404,6 @@ def delete_permissions_rs_scheduled_change(sc_id, data_version, transaction, cha
 @transactionHandler
 @handleGeneralExceptions
 def post_permissions_rs_enact_scheduled_change(sc_id, transaction, changed_by):
-    """/scheduled_changes/required_signoffs/permissions/<int:sc_id>/enact"""
-
     return post_enact_scheduled_change(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
@@ -429,8 +411,6 @@ def post_permissions_rs_enact_scheduled_change(sc_id, transaction, changed_by):
 @transactionHandler
 @handleGeneralExceptions
 def post_permissions_rs_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
-    """/scheduled_changes/required_signoffs/permissions/<int:sc_id>/signoffs"""
-
     return post_signoffs_scheduled_change(
         signoffs_table=dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs,
         sc_id=sc_id,
