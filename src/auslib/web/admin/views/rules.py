@@ -174,7 +174,7 @@ def _get_what_rule_history_api(change):
 
 @requirelogin
 @transactionHandler
-def post_rules_revisions(rule_id, transaction, changed_by):
+def post_rules_revisions(rule_id, transaction, changed_by, **kwargs):
     return revert_to_revision(
         table=dbo.rules,
         get_object_callback=lambda: dbo.rules.getRule(rule_id),
@@ -392,5 +392,5 @@ def get_all_rules_scheduled_change_history():
 
 @requirelogin
 @transactionHandler
-def post_rules_scheduled_change_history(sc_id, transaction, changed_by):
+def post_rules_scheduled_change_history(sc_id, transaction, changed_by, **kwargs):
     return post_scheduled_change_history(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
