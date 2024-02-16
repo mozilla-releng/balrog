@@ -147,7 +147,7 @@ def delete_signoffs_scheduled_change(sc_id, signoffs_table, transaction, changed
     return jsonify({})
 
 
-def _process_revisions_scheduled_change_history(sc_table, revisions):  # TODO - DO I need this?, *args, **kwargs):
+def _process_revisions_scheduled_change_history(sc_table, revisions):
     # Although Scheduled Changes are stored across two tables, we don't
     # expose that through the API. Because of this, we need to look up
     # history in both and return the combined version.
