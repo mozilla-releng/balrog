@@ -28,7 +28,7 @@ def shutoff_exists(product, channel):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
+@handleGeneralExceptions
 def post(emergency_shutoff, changed_by, transaction):
     if shutoff_exists(emergency_shutoff["product"], emergency_shutoff["channel"]):
         return problem(400, "Bad Request", "Invalid Emergency shutoff data", ext={"exception": "Emergency shutoff for product/channel already exists."})
@@ -44,7 +44,7 @@ def post(emergency_shutoff, changed_by, transaction):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("DELETE")
+@handleGeneralExceptions
 def delete(product, channel, data_version, changed_by, transaction, **kwargs):
     if not shutoff_exists(product, channel):
         return problem(status=404, title="Not Found", detail="Shutoff wasn't found", ext={"exception": "Shutoff does not exist"})
@@ -59,7 +59,7 @@ def scheduled_changes():
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
+@handleGeneralExceptions
 def schedule_deletion(sc_emergency_shutoff, changed_by, transaction):
     change_type = sc_emergency_shutoff.get("change_type")
     if change_type != "delete":
@@ -72,7 +72,7 @@ def schedule_deletion(sc_emergency_shutoff, changed_by, transaction):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
+@handleGeneralExceptions
 def update_scheduled_deletion(sc_id, sc_emergency_shutoff, changed_by, transaction):
     return post_scheduled_change(
         sc_table=dbo.emergencyShutoffs.scheduled_changes,
@@ -86,7 +86,7 @@ def update_scheduled_deletion(sc_id, sc_emergency_shutoff, changed_by, transacti
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("DELETE")
+@handleGeneralExceptions
 def delete_scheduled_deletion(sc_id, data_version, changed_by, transaction):
     return delete_scheduled_change(
         sc_table=dbo.emergencyShutoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
@@ -95,7 +95,7 @@ def delete_scheduled_deletion(sc_id, data_version, changed_by, transaction):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
+@handleGeneralExceptions
 def scheduled_changes_signoffs(sc_id, transaction, changed_by):
     return post_signoffs_scheduled_change(
         signoffs_table=dbo.emergencyShutoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
@@ -104,7 +104,7 @@ def scheduled_changes_signoffs(sc_id, transaction, changed_by):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("DELETE")
+@handleGeneralExceptions
 def scheduled_changes_signoffs_delete(sc_id, transaction, changed_by):
     return delete_signoffs_scheduled_change(
         signoffs_table=dbo.emergencyShutoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
@@ -113,6 +113,6 @@ def scheduled_changes_signoffs_delete(sc_id, transaction, changed_by):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
+@handleGeneralExceptions
 def enact_updates_scheduled_for_reactivation(sc_id, transaction, changed_by):
     return post_enact_scheduled_change(sc_table=dbo.emergencyShutoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)

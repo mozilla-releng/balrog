@@ -6,7 +6,7 @@ from sqlalchemy.sql.expression import null
 
 from auslib.db import SignoffRequiredError
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, log, requirelogin, transactionHandler
+from auslib.web.admin.views.base import handleGeneralExceptions, log, requirelogin, transactionHandler
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     delete_scheduled_change,
@@ -116,8 +116,7 @@ def get_product_required_signoffs():
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_product_required_signoffs(signoff, transaction, changed_by):
     what = {
         "product": signoff.get("product"),
@@ -130,8 +129,7 @@ def post_product_required_signoffs(signoff, transaction, changed_by):
     )
 
 
-@handleGeneralExceptions("DELETE")
-@debugPath
+@handleGeneralExceptions
 def delete_product_required_signoffs():
     return delete_required_signoffs()
 
@@ -158,8 +156,7 @@ def get_product_rs_scheduled_changes():
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_product_rs_scheduled_changes(sc_rs_product_body, transaction, changed_by):
     if sc_rs_product_body.get("when", None) is None:
         return problem(400, "Bad Request", "when cannot be set to null when scheduling a new change " "for a Product Required Signoff")
@@ -197,8 +194,7 @@ def post_product_rs_scheduled_changes(sc_rs_product_body, transaction, changed_b
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_product_rs_scheduled_change(sc_id, sc_product_rs_body, transaction, changed_by):
     """/scheduled_changes/required_signoffs/product/<int:sc_id>"""
 
@@ -238,8 +234,7 @@ def post_product_rs_scheduled_change(sc_id, sc_product_rs_body, transaction, cha
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("DELETE")
-@debugPath
+@handleGeneralExceptions
 def delete_product_rs_scheduled_change(sc_id, data_version, transaction, changed_by):
     return delete_scheduled_change(
         sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
@@ -248,8 +243,7 @@ def delete_product_rs_scheduled_change(sc_id, data_version, transaction, changed
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_product_rs_enact_scheduled_change(sc_id, transaction, changed_by):
     """/scheduled_changes/required_signoffs/product/<int:sc_id>/enact"""
 
@@ -258,8 +252,7 @@ def post_product_rs_enact_scheduled_change(sc_id, transaction, changed_by):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_product_rs_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
     """/scheduled_changes/required_signoffs/product/<int:sc_id>/signoffs"""
 
@@ -274,8 +267,7 @@ def post_product_rs_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, tran
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("DELETE")
-@debugPath
+@handleGeneralExceptions
 def delete_product_rs_signoffs_scheduled_change(sc_id, transaction, changed_by):
     return delete_signoffs_scheduled_change(
         signoffs_table=dbo.productRequiredSignoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
@@ -305,8 +297,7 @@ def get_permissions_required_signoffs():
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_permissions_required_signoffs(signoff, transaction, changed_by):
     what = {
         "product": signoff.get("product"),
@@ -318,8 +309,7 @@ def post_permissions_required_signoffs(signoff, transaction, changed_by):
     )
 
 
-@handleGeneralExceptions("DELETE")
-@debugPath
+@handleGeneralExceptions
 def delete_permissions_required_signoffs():
     return delete_required_signoffs()
 
@@ -342,8 +332,7 @@ def get_permissions_rs_scheduled_changes():
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_permissions_rs_scheduled_changes(sc_rs_permission_body, transaction, changed_by):
     if sc_rs_permission_body.get("when", None) is None:
         return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permissions Required Signoff")
@@ -381,8 +370,7 @@ def post_permissions_rs_scheduled_changes(sc_rs_permission_body, transaction, ch
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_permissions_rs_scheduled_change(sc_id, sc_permission_rs_body, transaction, changed_by):
     """/scheduled_changes/required_signoffs/permissions/<int:sc_id>"""
 
@@ -421,8 +409,7 @@ def post_permissions_rs_scheduled_change(sc_id, sc_permission_rs_body, transacti
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("DELETE")
-@debugPath
+@handleGeneralExceptions
 def delete_permissions_rs_scheduled_change(sc_id, data_version, transaction, changed_by):
     return delete_scheduled_change(
         sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
@@ -431,8 +418,7 @@ def delete_permissions_rs_scheduled_change(sc_id, data_version, transaction, cha
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_permissions_rs_enact_scheduled_change(sc_id, transaction, changed_by):
     """/scheduled_changes/required_signoffs/permissions/<int:sc_id>/enact"""
 
@@ -441,8 +427,7 @@ def post_permissions_rs_enact_scheduled_change(sc_id, transaction, changed_by):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_permissions_rs_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
     """/scheduled_changes/required_signoffs/permissions/<int:sc_id>/signoffs"""
 
@@ -457,8 +442,7 @@ def post_permissions_rs_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, 
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("DELETE")
-@debugPath
+@handleGeneralExceptions
 def delete_permissions_rs_signoffs_scheduled_change(sc_id, transaction, changed_by):
     return delete_signoffs_scheduled_change(
         signoffs_table=dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by

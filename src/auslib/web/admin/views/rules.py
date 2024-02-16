@@ -2,7 +2,7 @@ import connexion
 from flask import Response, jsonify
 
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import debugPath, handleGeneralExceptions, requirelogin, transactionHandler
+from auslib.web.admin.views.base import handleGeneralExceptions, requirelogin, transactionHandler
 from auslib.web.admin.views.history import revert_to_revision
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
@@ -60,8 +60,7 @@ def process_rule_form(form_data):
 # changed_by is available via the requirelogin decorator
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_rules(rule, transaction, changed_by):
     """/rules"""
 
@@ -115,8 +114,7 @@ def update_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
 # changed_by is available via the requirelogin decorator
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
     """/rules/:id"""
 
@@ -125,16 +123,14 @@ def post_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("PUT")
-@debugPath
+@handleGeneralExceptions
 def put_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
     return update_rules_id_or_alias(rule, id_or_alias, transaction, changed_by)
 
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("DELETE")
-@debugPath
+@handleGeneralExceptions
 def delete_rules_id_or_alias(id_or_alias, data_version, transaction, changed_by):
     # Verify that the rule_id or alias exists.
     rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
@@ -217,8 +213,7 @@ def get_rules_scheduled_changes():
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_rules_scheduled_changes(sc_rule_body, transaction, changed_by):
     if sc_rule_body.get("when", None) is None:
         return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Rule")
@@ -288,8 +283,7 @@ def get_by_id_rules_scheduled_change(sc_id):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_rules_scheduled_change(sc_id, sc_rule_body, transaction, changed_by):
     # TODO: modify UI and clients to stop sending 'change_type' in request body
     sc_table = dbo.rules.scheduled_changes
@@ -346,16 +340,14 @@ def post_rules_scheduled_change(sc_id, sc_rule_body, transaction, changed_by):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("DELETE")
-@debugPath
+@handleGeneralExceptions
 def delete_rules_scheduled_change(sc_id, data_version, transaction, changed_by):
     return delete_scheduled_change(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by)
 
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_rules_enact_scheduled_change(sc_id, transaction, changed_by):
     """/scheduled_changes/rules/<int:sc_id>/enact"""
 
@@ -364,8 +356,7 @@ def post_rules_enact_scheduled_change(sc_id, transaction, changed_by):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
-@debugPath
+@handleGeneralExceptions
 def post_rules_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
     """/scheduled_changes/rules/<int:sc_id>/signoffs"""
 
@@ -376,8 +367,7 @@ def post_rules_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transacti
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("DELETE")
-@debugPath
+@handleGeneralExceptions
 def delete_rules_signoffs_scheduled_change(sc_id, transaction, changed_by, **kwargs):
     return delete_signoffs_scheduled_change(signoffs_table=dbo.rules.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
