@@ -100,27 +100,3 @@ def debugPath(f):
         return f(*args, **kwargs)
 
     return decorated
-
-
-class AdminView(MethodView):
-    def __init__(self, *args, **kwargs):
-        self.log = logging.getLogger(self.__class__.__name__)
-        MethodView.__init__(self, *args, **kwargs)
-
-    @transactionHandler
-    @handleGeneralExceptions("POST")
-    def post(self, *args, **kwargs):
-        self.log.debug("processing POST request to %s" % request.path)
-        return self._post(*args, **kwargs)
-
-    @transactionHandler
-    @handleGeneralExceptions("PUT")
-    def put(self, *args, **kwargs):
-        self.log.debug("processing PUT request to %s" % request.path)
-        return self._put(*args, **kwargs)
-
-    @transactionHandler
-    @handleGeneralExceptions("DELETE")
-    def delete(self, *args, **kwargs):
-        self.log.debug("processing DELETE request to %s" % request.path)
-        return self._delete(*args, **kwargs)
