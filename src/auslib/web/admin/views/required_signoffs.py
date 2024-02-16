@@ -45,7 +45,7 @@ def delete_required_signoffs(*args, **kwargs):
     raise SignoffRequiredError("Required Signoffs cannot be directly deleted.")
 
 
-def _get_filters_rs_history_api(table, decisionFields):
+def _get_filters_rs_history_api(table):
     history_table = table.history
     query = get_input_dict()
     where = [getattr(history_table, f) == query.get(f) for f in query]
@@ -99,7 +99,7 @@ def get_all_rs_revisions(table):
         return problem(400, "Bad Request", str(msg))
     offset = limit * (page - 1)
 
-    where = _get_filters_rs_history_api()
+    where = _get_filters_rs_history_api(table)
     history_table = table.history
     total_count = history_table.count(where=where)
     revisions = history_table.select(where=where, limit=limit, offset=offset, order_by=[history_table.timestamp.desc()])
