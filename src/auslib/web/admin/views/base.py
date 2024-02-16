@@ -1,6 +1,6 @@
 import logging
-import connexion
 
+import connexion
 from flask import current_app as app
 
 from auslib.db import ChangeScheduledError, OutdatedDataError, PermissionDeniedError, UpdateMergeError
