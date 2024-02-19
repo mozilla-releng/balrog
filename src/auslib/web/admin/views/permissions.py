@@ -273,6 +273,7 @@ def get_all_permissions_scheduled_change_history():
 
 @requirelogin
 @transactionHandler
+@handleGeneralExceptions
 def post_permissions_scheduled_change_history(sc_id, transaction, changed_by):
     return post_scheduled_change_history(sc_table=dbo.permissions.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 

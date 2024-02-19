@@ -567,6 +567,7 @@ def get_releases_scheduled_change_history(sc_id):
 
 @requirelogin
 @transactionHandler
+@handleGeneralExceptions
 def post_releases_scheduled_change_history(sc_id, transaction, changed_by):
     return post_scheduled_change_history(sc_table=dbo.releases.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 

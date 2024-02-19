@@ -166,6 +166,7 @@ def _get_what_rule_history_api(change):
 
 @requirelogin
 @transactionHandler
+@handleGeneralExceptions
 def post_rules_revisions(rule_id, transaction, changed_by, **kwargs):
     return revert_to_revision(
         table=dbo.rules,
@@ -368,5 +369,6 @@ def get_all_rules_scheduled_change_history():
 
 @requirelogin
 @transactionHandler
+@handleGeneralExceptions
 def post_rules_scheduled_change_history(sc_id, transaction, changed_by, **kwargs):
     return post_scheduled_change_history(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)

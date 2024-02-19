@@ -274,6 +274,7 @@ def get_all_product_rs_scheduled_change_history():
 
 @requirelogin
 @transactionHandler
+@handleGeneralExceptions
 def post_product_rs_scheduled_change_history(sc_id, transaction, changed_by):
     return post_scheduled_change_history(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
@@ -439,6 +440,7 @@ def get_all_permissions_rs_scheduled_change_history():
 
 @requirelogin
 @transactionHandler
+@handleGeneralExceptions
 def post_permissions_rs_scheduled_change_history(sc_id, transaction, changed_by):
     return post_scheduled_change_history(
         sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by
