@@ -45,7 +45,7 @@ def post(emergency_shutoff, changed_by, transaction):
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions
-def delete(product, channel, data_version, changed_by, transaction, **kwargs):
+def delete(product, channel, data_version, changed_by, transaction):
     if not shutoff_exists(product, channel):
         return problem(status=404, title="Not Found", detail="Shutoff wasn't found", ext={"exception": "Shutoff does not exist"})
     where = dict(product=product, channel=channel)
