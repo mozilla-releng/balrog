@@ -36,7 +36,7 @@
     "is-absolute-url": "^3.0.3",
     "mdi-react": "^8.2.0",
     "prop-types": "^15",
-    "qs": "^6.10.1",
+    "qs": "^6.11.2",
     "ramda": "^0.27.1",
     "react": "^16.13.1",
     "react-auth0-components": "^1.0.4",
