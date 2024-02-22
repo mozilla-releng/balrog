@@ -68,6 +68,7 @@ module.exports = {
         AUTH0_CLIENT_ID: 'GlZhJQfx52b7MLQ19AjuTJHieiB4oh1j',
         AUTH0_DOMAIN: 'balrog-localdev.auth0.com',
         AUTH0_AUDIENCE: 'balrog-localdev',
+        NODE_ENV: process.env.NODE_ENV,
         AUTH0_RESPONSE_TYPE: 'token id_token',
         AUTH0_SCOPE: 'full-user-credentials openid profile email',
         AUTH0_REDIRECT_URI: `https://localhost:${port}/login`,
@@ -75,10 +76,10 @@ module.exports = {
         GCS_RELEASES_HISTORY_BUCKET: 'https://www.googleapis.com/storage/v1/b/balrog-prod-release-history-v1/o',
       },
     }),
-    (neutrino) => {
+    (neutrino) => {  
       neutrino.config.resolve.alias
         .set('react-dom', '@hot-loader/react-dom');
-
+    
       neutrino.config.output.set('globalObject', 'this');
       neutrino.config.module
         .rule('worker')
