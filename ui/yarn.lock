@@ -1412,6 +1412,11 @@
     eslint-plugin-react "^7.16.0"
     prettier "^1.18.2"
 
+"@mozilla-protocol/core@^18.0.0":
+  version "18.0.0"
+  resolved "https://registry.yarnpkg.com/@mozilla-protocol/core/-/core-18.0.0.tgz#c65592ab949a49cc23c353e1d633068f4aa5a697"
+  integrity sha512-jHZQxmr4Ogqg4avz5tznPvUNZvcFgddOPj+KhH14G9QzOUfbrfErdNtocRaa4H30U4vDbL5LiKmrWcF+RXNS3g==
+
 "@neutrinojs/airbnb@9.0.0-rc.4":
   version "9.0.0-rc.4"
   resolved "https://registry.yarnpkg.com/@neutrinojs/airbnb/-/airbnb-9.0.0-rc.4.tgz#f0917914a3351093d6de9878208efdcd87dde599"
