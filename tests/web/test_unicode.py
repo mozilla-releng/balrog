@@ -3,7 +3,7 @@ import unittest
 import pytest
 
 from auslib.global_state import dbo
-from auslib.web.public.base import app
+from auslib.web.public.base import connexion_app as app
 
 
 @pytest.mark.usefixtures("current_db_schema")

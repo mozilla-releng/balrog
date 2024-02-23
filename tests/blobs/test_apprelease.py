@@ -23,7 +23,7 @@ from auslib.blobs.apprelease import (
 from auslib.blobs.base import createBlob
 from auslib.errors import BadDataError, BlobValidationError
 from auslib.global_state import dbo
-from auslib.web.public.base import app
+from auslib.web.public.base import connexion_app as app
 
 from ..fakes import FakeGCSHistory
 
