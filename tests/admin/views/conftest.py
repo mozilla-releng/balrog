@@ -17,7 +17,7 @@ def mock_verified_userinfo(monkeypatch):
 
 @pytest.fixture(scope="session")
 def api():
-    from auslib.web.admin.base import app
+    from auslib.web.admin.base import connexion_app as app
 
     app.config["SECRET_KEY"] = "notasecret"
     app.config["CORS_ORIGINS"] = "*"

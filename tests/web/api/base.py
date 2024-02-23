@@ -5,7 +5,7 @@ import pytest
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
-from auslib.web.public.base import app
+from auslib.web.public.base import conenxion_app as app
 
 
 def setUpModule():
