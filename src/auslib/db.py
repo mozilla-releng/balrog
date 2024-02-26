@@ -1317,7 +1317,7 @@ class ScheduledChangeTable(AUSTable):
 
         user_permissions = self.db.getUserPermissions(username=changed_by, retrieving_as=changed_by, transaction=transaction)
 
-        if len(user_permissions):
+        if user_permissions:
             required_permissions = set()
             required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
             if required_signoffs and required_signoffs.get("rs") and required_signoffs["rs"][0].get("permission"):
@@ -1711,7 +1711,7 @@ class SignoffsTable(AUSTable):
         super(SignoffsTable, self).__init__(db, dialect, versioned=False, historyClass=HistoryTable)
 
     def insert(self, changed_by=None, transaction=None, dryrun=False, **columns):
-        if "sc_id" not in columns and "role" not in columns:
+        if "sc_id" not in columns or "role" not in columns:
             raise ValueError("sc_id and role must be provided when signing off")
         if "username" in columns and columns["username"] != changed_by:
             raise PermissionDeniedError("Cannot signoff on behalf of another user")
