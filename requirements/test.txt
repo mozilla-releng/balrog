@@ -118,9 +118,9 @@ flake8-black==0.3.6 \
     --hash=sha256:0dfbca3274777792a5bcb2af887a4cad72c72d0e86c94e08e3a3de151bb41c34 \
     --hash=sha256:fe8ea2eca98d8a504f22040d9117347f6b367458366952862ac3586e7d4eeaca
     # via -r requirements/test.in
-hypothesis==6.98.10 \
-    --hash=sha256:149ec797f69f0dbf4e77972900e06f6886c993e4462319d1c31a0895c28d7127 \
-    --hash=sha256:b9ab40b13f8941df6a5266f652e62f2ff41bc15ab4cf89fe4864fa5fd06a9bb1
+hypothesis==6.98.12 \
+    --hash=sha256:584ef03a847464b0d14a63e53fcc3335a75b1f1eb3bcc770a03ff950ee4e279e \
+    --hash=sha256:ecb7326fe0101f42f42eb0b6d4886fec600b2b38c33c22ba99a58e0f6c93c651
     # via -r requirements/test.in
 iniconfig==2.0.0 \
     --hash=sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3 \
@@ -183,9 +183,9 @@ pyproject-hooks==1.0.0 \
     # via
     #   build
     #   pip-tools
-pytest==8.0.1 \
-    --hash=sha256:267f6563751877d772019b13aacbe4e860d73fe8f651f28112e9ac37de7513ae \
-    --hash=sha256:3e4f16fe1c0a9dc9d9389161c127c3edc5d810c38d6793042fb81d9f48a59fca
+pytest==8.0.2 \
+    --hash=sha256:d4051d623a2e0b7e51960ba963193b09ce6daeb9759a451844a21e4ddedfc1bd \
+    --hash=sha256:edfaaef32ce5172d5466b5127b42e0d6d35ebbe4453f0e3505d96afd93f6b096
     # via
     #   -r requirements/test.in
     #   pytest-asyncio
