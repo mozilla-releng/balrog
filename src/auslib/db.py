@@ -1717,13 +1717,17 @@ class SignoffsTable(AUSTable):
             raise PermissionDeniedError("Cannot signoff on behalf of another user")
         if changed_by in self.db.systemAccounts:
             raise PermissionDeniedError("System account cannot signoff")
-        if columns["role"] != "admin" and self.table.name.startswith("permissions_scheduled_changes_"):
-            raise PermissionDeniedError("Cannot signoff with role for permission changes")
+        # Permission-based signoff
         if columns["role"] == "admin":
-            if not self.db.hasPermission(changed_by, columns["role"], action=None, transaction=transaction):
+            if not self.table.name.startswith("permissions_scheduled_changes_"):
+                raise PermissionDeniedError("Can only signoff with permission for permission changes")
+            elif not self.db.hasPermission(changed_by, columns["role"], action=None, transaction=transaction):
                 raise PermissionDeniedError("{} cannot signoff with permission '{}'".format(changed_by, columns["role"]))
+        # Role-based signoff
         else:
-            if not self.db.hasRole(changed_by, columns["role"], transaction=transaction):
+            if self.table.name.startswith("permissions_scheduled_changes_"):
+                raise PermissionDeniedError("Cannot signoff with role for permission changes")
+            elif not self.db.hasRole(changed_by, columns["role"], transaction=transaction):
                 raise PermissionDeniedError("{} cannot signoff with role '{}'".format(changed_by, columns["role"]))
 
         existing_signoff = self.select({"sc_id": columns["sc_id"], "username": changed_by}, transaction)
