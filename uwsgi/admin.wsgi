@@ -46,7 +46,7 @@ if STAGING or LOCALDEV:
         }
     )
 
-if LOCALDEV:
+if STAGING or LOCALDEV:
     ADMIN_REQUIRED_SIGNOFFS = [{"permission": "admin", "signoffs_required": 1}]
 else:
     ADMIN_REQUIRED_SIGNOFFS = [{"permission": "admin", "signoffs_required": 2}]
