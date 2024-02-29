@@ -1759,7 +1759,6 @@ class SignoffsTable(AUSTable):
 
 
 class Rules(AUSTable):
-
     signoff_verifier = "role"
 
     def __init__(self, db, metadata, dialect):
@@ -2009,7 +2008,6 @@ class Rules(AUSTable):
 
 
 class Releases(AUSTable):
-
     signoff_verifier = "role"
 
     def __init__(self, db, metadata, dialect, history_buckets, historyClass):
@@ -2439,7 +2437,6 @@ class Releases(AUSTable):
 
 
 class ReleasesJSON(AUSTable):
-
     signoff_verifier = "role"
 
     def __init__(self, db, metadata, dialect, history_buckets, historyClass):
@@ -2541,7 +2538,6 @@ class ReleasesJSON(AUSTable):
 
 
 class ReleaseAssets(AUSTable):
-
     signoff_verifier = "role"
 
     def __init__(self, db, metadata, dialect, history_buckets, historyClass):
@@ -2902,7 +2898,6 @@ class Dockerflow(AUSTable):
 
 
 class EmergencyShutoffs(AUSTable):
-
     signoff_verifier = "role"
 
     def __init__(self, db, metadata, dialect):
