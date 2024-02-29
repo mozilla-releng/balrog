@@ -83,30 +83,34 @@ class NamedFileDatabaseMixin(object):
 
 class TestVerifySignoffs(unittest.TestCase):
     def testNoRequiredSignoffs(self):
-        verify_signoffs({}, {})
+        verify_signoffs({}, {}, "role")
 
     def testNoRequiredSignoffsWithSignoffs(self):
-        verify_signoffs({}, [{"role": "releng"}, {"role": "relman"}])
+        verify_signoffs({}, [{"role": "releng"}, {"role": "relman"}], "role")
 
     def testNoSignoffsGiven(self):
         required = [{"role": "releng", "signoffs_required": 1}]
         signoffs = []
-        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+        signoff_verifier = "role"
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs, signoff_verifier)
 
     def testMissingSignoffFromOneRole(self):
         required = [{"role": "releng", "signoffs_required": 1}, {"role": "relman", "signoffs_required": 1}]
         signoffs = [{"role": "releng", "username": "joe"}]
-        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+        signoff_verifier = "role"
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs, signoff_verifier)
 
     def testNotEnoughSignoffsFromOneRole(self):
         required = [{"role": "releng", "signoffs_required": 2}, {"role": "relman", "signoffs_required": 1}]
         signoffs = [{"role": "releng", "username": "joe"}, {"role": "relman", "username": "jane"}]
-        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+        signoff_verifier = "role"
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs, signoff_verifier)
 
     def testExactlyEnoughSignoffsGiven(self):
         required = [{"role": "releng", "signoffs_required": 2}, {"role": "relman", "signoffs_required": 1}]
         signoffs = [{"role": "releng", "username": "joe"}, {"role": "releng", "username": "jane"}, {"role": "relman", "username": "nick"}]
-        verify_signoffs(required, signoffs)
+        signoff_verifier = "role"
+        verify_signoffs(required, signoffs, signoff_verifier)
 
     def testMoreThanEnoughSignoffsGiven(self):
         required = [{"role": "releng", "signoffs_required": 2}, {"role": "relman", "signoffs_required": 1}]
@@ -116,17 +120,20 @@ class TestVerifySignoffs(unittest.TestCase):
             {"role": "relman", "username": "nick"},
             {"role": "relman", "username": "matt"},
         ]
-        verify_signoffs(required, signoffs)
+        signoff_verifier = "role"
+        verify_signoffs(required, signoffs, signoff_verifier)
 
     def testMultiplePotentialSignoffsForOneGroupWithoutEnoughSignoffs(self):
         required = [{"role": "releng", "signoffs_required": 2}, {"role": "releng", "signoffs_required": 1}, {"role": "relman", "signoffs_required": 1}]
         signoffs = [{"role": "releng", "username": "joe"}, {"role": "relman", "username": "nick"}]
-        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+        signoff_verifier = "role"
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs, signoff_verifier)
 
     def testMultiplePotentialSignoffsForOneGroupWithEnoughSignoffs(self):
         required = [{"role": "releng", "signoffs_required": 2}, {"role": "releng", "signoffs_required": 1}, {"role": "relman", "signoffs_required": 1}]
         signoffs = [{"role": "releng", "username": "joe"}, {"role": "releng", "username": "jane"}, {"role": "relman", "username": "nick"}]
-        verify_signoffs(required, signoffs)
+        signoff_verifier = "role"
+        verify_signoffs(required, signoffs, signoff_verifier)
 
 
 class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
