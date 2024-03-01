@@ -29,6 +29,8 @@ RUN apt-get install -q --yes gcc && \
 COPY topsrcdir/src/ /app/src/
 # %include uwsgi
 COPY topsrcdir/uwsgi/ /app/uwsgi/
+# %include uvicorn
+COPY topsrcdir/uvicorn/ /app/uvicorn/
 # %include scripts
 COPY topsrcdir/scripts/manage-db.py topsrcdir/scripts/run-batch-deletes.sh topsrcdir/scripts/run.sh topsrcdir/scripts/reset-stage-db.sh topsrcdir/scripts/get-prod-db-dump.py /app/scripts/
 # %include MANIFEST.in

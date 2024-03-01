@@ -47,6 +47,11 @@ services:
       - CORS_ORIGINS=*
       - STAGING
       - LOCAL_ADMIN
+      - HOST=0.0.0.0
+      # Mount the admin app at /api, for historical reasons.
+      # At some point we could consider mounting at
+      # based on admin.wsgi but now for gunicorn
+      - SCRIPT_NAME=/api
     healthcheck:
         test: nc -z -v balrogadmin 7070
         interval: 5s
@@ -78,6 +83,7 @@ services:
       - PORT=9010
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
+      - HOST=0.0.0.0
     links:
       - autograph
       - balrogdb

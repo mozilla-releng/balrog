@@ -6,7 +6,7 @@ import auslib.web.public.helpers
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
-from auslib.web.public.base import app
+from auslib.web.public.base import connexion_app as app
 
 
 @pytest.fixture(scope="function")
