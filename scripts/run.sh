@@ -1,9 +1,9 @@
 #!/bin/bash
 
 if [ $1 == "public" ]; then
-    exec uvicorn public:application --port "${PORT}" --root-path /api --app-dir /app/uvicorn --reload
+    exec gunicorn -k uvicorn.workers.UvicornWorker -b "${HOST}:${PORT}" --chdir /app/uvicorn --reload public:connexion_app
 elif [ $1 == "admin" ]; then
-    exec uvicorn admin:application --port "${PORT}" --root-path /api --app-dir /app/uvicorn --reload
+    exec gunicorn -k uvicorn.workers.UvicornWorker -b "${HOST}:${PORT}" --chdir /app/uvicorn --reload admin:connexion_app
 elif [ $1 == "create-db" ]; then
     if [ -z "${DBURI}" ]; then
         echo "\${DBURI} must be set!"
