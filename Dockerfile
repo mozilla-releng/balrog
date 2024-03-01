@@ -28,6 +28,7 @@ RUN apt-get install -q --yes gcc && \
 # it, and we can bind mount to override it for local development.
 COPY src/ /app/src/
 COPY uwsgi/ /app/uwsgi/
+COPY uvicorn/ /app/uvicorn/
 COPY scripts/manage-db.py scripts/run-batch-deletes.sh scripts/run.sh scripts/reset-stage-db.sh scripts/get-prod-db-dump.py /app/scripts/
 COPY MANIFEST.in pyproject.toml setup.py version.json version.txt /app/
 

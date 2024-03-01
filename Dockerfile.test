@@ -28,6 +28,7 @@ COPY src/ /app/src/
 COPY tests/ /app/tests/
 COPY scripts/ /app/scripts/
 COPY uwsgi/ /app/uwsgi/
+COPY uvicorn/ /app/uvicorn/
 COPY MANIFEST.in setup.py pyproject.toml tox.ini version.json version.txt /app/
 # we need .git to gather information for coverage reports
 COPY .git/ /app/.git/
