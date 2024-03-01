@@ -1,7 +1,7 @@
 aiohttp
 arrow
 auth0-python
-connexion[flask,swagger-ui]
+connexion[flask,swagger-ui,uvicorn]
 deepmerge
 flask
 flask_compress
