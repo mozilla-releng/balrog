@@ -523,7 +523,7 @@ paths:
         Returns a diff of the value of the named field from the named object at the specified sc_id vs the current version of that object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#sc-view-object-change-id)
       tags:
         - History
-      operationId: auslib.web.admin.views.mapper.scheduled_release_diff_get
+      operationId: auslib.web.admin.views.releases.get_scheduled_release_diff
       consumes: []
       produces:
         - application/json
@@ -548,7 +548,7 @@ paths:
         Returns a JSON object containing metadata about Releases in Balrog's database. Due to its size, the actual Release 'blob' is never returned from this endpoint. There are a few query arguments that affect its response. If no arguments are provided, it returns all information about all of the Releases in the database. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_get
+      operationId: auslib.web.admin.views.releases.get_releases
       consumes: []
       produces:
         - application/json
@@ -615,7 +615,7 @@ paths:
         Creates a new Release with the provided values. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id9)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_post
+      operationId: auslib.web.admin.views.releases.post_release
       consumes:
         - application/json
       produces:
@@ -670,7 +670,7 @@ paths:
         Overwrites the named Release with the data given. The 'blob' field is completely overridden with the new one, not updated. If the Release does not exist, it is created. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#put)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.single_release_put
+      operationId: auslib.web.admin.views.releases.put_single_release
       consumes:
         - application/json
       produces:
@@ -705,7 +705,7 @@ paths:
         Updates the named Release with the data given. The 'blob' field is updated with the new one instead of being completely overridden. If the Release does not exist, it is created. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id11)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.single_release_post
+      operationId: auslib.web.admin.views.releases.post_single_release
       consumes:
         - application/json
       produces:
@@ -740,7 +740,7 @@ paths:
         Deletes the named Release. The 'data_version' parameter must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id12).
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.single_release_delete
+      operationId: auslib.web.admin.views.releases.delete_single_release
       consumes: []
       produces:
         - application/json
@@ -768,7 +768,7 @@ paths:
         Returns whether or not the named Release is marked as read_only. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-read-only)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_read_only_get
+      operationId: auslib.web.admin.views.releases.get_release_read_only
       consumes: []
       produces:
         - application/json
@@ -798,7 +798,7 @@ paths:
         Sets or unsets the read_only flag of the named Release. Requires release name, data_version and read_only values. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id15)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_read_only_put
+      operationId: auslib.web.admin.views.releases.put_release_read_only
       consumes:
         - application/json
       produces:
@@ -852,7 +852,7 @@ paths:
       tags:
         - Releases
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.release_read_only_product_required_signoffs_get
+      operationId: auslib.web.admin.views.releases.get_release_read_only_product_required_signoffs
       produces:
         - application/json
       parameters:
@@ -878,7 +878,7 @@ paths:
         Returns a JSON Object containing the unique values for the given column. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-columns-column)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_single_column_get
+      operationId: auslib.web.admin.views.releases.get_release_single_column
       consumes: []
       produces:
         - application/json
@@ -923,7 +923,7 @@ paths:
         Updates the named Release with the data given. The 'blob' field is updated with the new one instead of being completely overridden. If the Release does not exist, it is created. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id11)
       tags:
         - Releases
-      operationId: auslib.web.admin.views.mapper.release_single_locale_view_put
+      operationId: auslib.web.admin.views.releases.put_release_single_locale
       consumes:
         - application/json
       produces:
@@ -961,7 +961,7 @@ paths:
         Endpoint to view all Product Required Signoffs. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#product-required-signoffs)
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_product_get
+      operationId: auslib.web.admin.views.required_signoffs.get_product_required_signoffs
       consumes: []
       produces:
         - application/json
@@ -1007,7 +1007,7 @@ paths:
         Create a new Product Required Signoff. If the product and channel provided already require signoff, a 400 will be returned (you must use a Scheduled Change and meet the existing signoff requirements to modify Required Signoffs for things that already require it). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#required-signoffs-product)
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_product_post
+      operationId: auslib.web.admin.views.required_signoffs.post_product_required_signoffs
       consumes:
         - application/json
       produces:
@@ -1048,7 +1048,7 @@ paths:
         Endpoint defined only to throw error when user attempts to delete product required signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#product-required-signoffs).
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_product_delete
+      operationId: auslib.web.admin.views.required_signoffs.delete_product_required_signoffs
       consumes: []
       produces:
         - application/json
@@ -1067,7 +1067,7 @@ paths:
         Endpoint to view revisions of Product Required Signoffs.Changes that directly affect updates that clients receive (the Rules and Releases tables) are considered Product changes. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#product-required-signoffs)
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_product_revisions_get
+      operationId: auslib.web.admin.views.required_signoffs.get_product_rs_revisions
       consumes: []
       produces:
         - application/json
@@ -1122,7 +1122,7 @@ paths:
         Endpoint to view all Permissions Required Signoffs. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs)
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_permissions_get
+      operationId: auslib.web.admin.views.required_signoffs.get_permissions_required_signoffs
       consumes: []
       produces:
         - application/json
@@ -1165,7 +1165,7 @@ paths:
         Create a new Permission Required Signoff. If the product provided already require signoff, a 400 will be returned (you must use a Scheduled Change and meet the existing signoff requirements to modify Required Signoffs for things that already require it). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs)
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_permissions_post
+      operationId: auslib.web.admin.views.required_signoffs.post_permissions_required_signoffs
       consumes:
         - application/json
       produces:
@@ -1204,7 +1204,7 @@ paths:
         Endpoint defined only to throw error when user attempts to delete permissions required signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs).
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_permissions_delete
+      operationId: auslib.web.admin.views.required_signoffs.delete_permissions_required_signoffs
       consumes: []
       produces:
         - application/json
@@ -1223,7 +1223,7 @@ paths:
         Endpoint to view revisions of Permissions Required Signoffs. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#permissions-required-signoffs)
       tags:
         - Required Signoffs
-      operationId: auslib.web.admin.views.mapper.required_signoffs_permissions_revisions_get
+      operationId: auslib.web.admin.views.required_signoffs.get_permissions_rs_revisions
       consumes: []
       produces:
         - application/json
@@ -1275,7 +1275,7 @@ paths:
         Returns all of the usernames present in Balrog. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id20)
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.users_get
+      operationId: auslib.web.admin.views.permissions.get_users
       consumes: []
       produces:
         - application/json
@@ -1305,7 +1305,7 @@ paths:
         Returns all of the details about the user's roles and permissions [Docs](http://mozilla-balrog.readthedocs.io/en/latest/database.html#permissions).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.specific_user_get
+      operationId: auslib.web.admin.views.permissions.get_specific_user
       consumes: []
       produces:
         - application/json
@@ -1368,7 +1368,7 @@ paths:
         Returns all of the details about the user's permissions [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.user_permissions_get
+      operationId: auslib.web.admin.views.permissions.get_user_permissions
       consumes: []
       produces:
         - application/json
@@ -1396,7 +1396,7 @@ paths:
         Grants the given username the given role. If the user already holds that role, this is a no-op. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-roles-role).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.user_role_put
+      operationId: auslib.web.admin.views.permissions.put_user_role
       consumes: []
       produces:
         - application/json
@@ -1423,7 +1423,7 @@ paths:
         Revokes the given role from the given username. The 'data_version' parameter must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-roles-role).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.user_role_delete
+      operationId: auslib.web.admin.views.permissions.delete_user_role
       consumes: []
       produces:
         - application/json
@@ -1452,7 +1452,7 @@ paths:
         Returns the details of the named permission for the username given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions-permission).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.user_specific_permission_get
+      operationId: auslib.web.admin.views.permissions.get_specific_user_permission
       consumes: []
       produces:
         - application/json
@@ -1483,7 +1483,7 @@ paths:
         Overwrites the details of named permission for the username given. If the permission does not exist, it is created. The following parameters are supported , data_version (required if the permission already exists) and options, a JSON string field [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions-permission).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.user_specific_permission_put
+      operationId: auslib.web.admin.views.permissions.put_specific_user_permission
       consumes:
         - application/json
       produces:
@@ -1514,7 +1514,7 @@ paths:
         Overwrites the details of named permission for the username given. The following parameters are supported , data_version(required) and options, a JSON string field [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions-permission).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.user_specific_permission_post
+      operationId: auslib.web.admin.views.permissions.post_specific_user_permission
       consumes:
         - application/json
       produces:
@@ -1545,7 +1545,7 @@ paths:
         Deletes the named permission for the username given. data_version is required. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#users-username-permissions-permission).
       tags:
         - Users
-      operationId: auslib.web.admin.views.mapper.user_specific_permission_delete
+      operationId: auslib.web.admin.views.permissions.delete_specific_user_permission
       consumes: []
       produces:
         - application/json
@@ -1598,7 +1598,7 @@ paths:
         Creates a new Rule in Balrog's database. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#post)
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.rules_post
+      operationId: auslib.web.admin.views.rules.post_rules
       consumes:
         - application/json
       produces:
@@ -1673,7 +1673,7 @@ paths:
         Updates the rule identified by the id or alias. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id3)
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.rules_id_or_alias_post
+      operationId: auslib.web.admin.views.rules.post_rules_id_or_alias
       consumes: []
       produces:
         - application/json
@@ -1712,7 +1712,7 @@ paths:
         Updates the rule identified by the id or alias. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id3)
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.rules_id_or_alias_put
+      operationId: auslib.web.admin.views.rules.put_rules_id_or_alias
       consumes: []
       produces:
         - application/json
@@ -1750,7 +1750,7 @@ paths:
         Deletes the entire rule entry in DB identified by the rule_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#delete)
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.rules_id_or_alias_delete
+      operationId: auslib.web.admin.views.rules.delete_rules_id_or_alias
       consumes: []
       produces:
         - application/json
@@ -1843,7 +1843,7 @@ paths:
         Updates the rule identified by the rule_id to a previous revision identified by change_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#history-view-object-change-id-field)
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.rules_revisions_post
+      operationId: auslib.web.admin.views.rules.post_rules_revisions
       consumes:
         - application/json
       produces:
@@ -1874,7 +1874,7 @@ paths:
         Returns a JSON Object containing the unique values for the given Rule column. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#rules-columns-column)
       tags:
         - Rules
-      operationId: auslib.web.admin.views.mapper.single_rule_column_get
+      operationId: auslib.web.admin.views.rules.get_single_rule_column
       consumes: []
       produces:
         - application/json
@@ -1896,7 +1896,7 @@ paths:
         Endpoint to get Scheduled Changes for Rules. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_rules_get
+      operationId: auslib.web.admin.views.rules.get_rules_scheduled_changes
       consumes: []
       produces:
         - application/json
@@ -1933,7 +1933,7 @@ paths:
         Create scheduled change for a rule(existing or new). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_rules_post
+      operationId: auslib.web.admin.views.rules.post_rules_scheduled_changes
       consumes:
         - application/json
       produces:
@@ -1987,7 +1987,7 @@ paths:
         Endpoint to get a Scheduled Change for a Rule. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_get_by_id
+      operationId: auslib.web.admin.views.rules.get_by_id_rules_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -2018,7 +2018,7 @@ paths:
         Modifies existing scheduled change for a rule. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_post
+      operationId: auslib.web.admin.views.rules.post_rules_scheduled_change
       consumes:
         - application/json
       produces:
@@ -2060,7 +2060,7 @@ paths:
         Deletes the given Scheduled Change for the named Rule object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_delete
+      operationId: auslib.web.admin.views.rules.delete_rules_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -2090,7 +2090,7 @@ paths:
         Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_history_get
+      operationId: auslib.web.admin.views.rules.get_rules_scheduled_change_history
       consumes: []
       produces:
         - application/json
@@ -2135,7 +2135,7 @@ paths:
         Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_history_post
+      operationId: auslib.web.admin.views.rules.post_rules_scheduled_change_history
       consumes:
         - application/json
       produces:
@@ -2166,7 +2166,7 @@ paths:
         Endpoint to get Scheduled Changes for Permissions. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_permissions_get
+      operationId: auslib.web.admin.views.permissions.get_permissions_scheduled_changes
       consumes: []
       produces:
         - application/json
@@ -2215,7 +2215,7 @@ paths:
         Create scheduled change for a permission(existing or new). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_permissions_post
+      operationId: auslib.web.admin.views.permissions.post_permissions_scheduled_changes
       consumes:
         - application/json
       produces:
@@ -2261,7 +2261,7 @@ paths:
         Modifies existing scheduled change for a permission. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_post
+      operationId: auslib.web.admin.views.permissions.post_permissions_scheduled_change
       consumes:
         - application/json
       produces:
@@ -2302,7 +2302,7 @@ paths:
         Deletes the given Scheduled Change for the named Permission object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_delete
+      operationId: auslib.web.admin.views.permissions.delete_permissions_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -2332,7 +2332,7 @@ paths:
         Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_history_get
+      operationId: auslib.web.admin.views.permissions.get_permissions_scheduled_change_history
       consumes: []
       produces:
         - application/json
@@ -2387,7 +2387,7 @@ paths:
         Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_history_post
+      operationId: auslib.web.admin.views.permissions.post_permissions_scheduled_change_history
       consumes:
         - application/json
       produces:
@@ -2418,7 +2418,7 @@ paths:
         Endpoint to get Scheduled Changes for Releases. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_releases_get
+      operationId: auslib.web.admin.views.releases.get_releases_scheduled_changes
       consumes: []
       produces:
         - application/json
@@ -2472,7 +2472,7 @@ paths:
         Create scheduled change for a release(existing or new). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_releases_post
+      operationId: auslib.web.admin.views.releases.post_releases_scheduled_changes
       consumes:
         - application/json
       produces:
@@ -2519,7 +2519,7 @@ paths:
         Endpoint to get a Scheduled Change for a Release. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_get_by_id
+      operationId: auslib.web.admin.views.releases.get_by_id_releases_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -2567,7 +2567,7 @@ paths:
         Modifies existing scheduled change for a release. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_post
+      operationId: auslib.web.admin.views.releases.post_releases_scheduled_change
       consumes:
         - application/json
       produces:
@@ -2609,7 +2609,7 @@ paths:
         Deletes the given Scheduled Change for the named Release object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_delete
+      operationId: auslib.web.admin.views.releases.delete_releases_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -2639,7 +2639,7 @@ paths:
         Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_history_get
+      operationId: auslib.web.admin.views.releases.get_releases_scheduled_change_history
       consumes: []
       produces:
         - application/json
@@ -2698,7 +2698,7 @@ paths:
         Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_releases_history_post
+      operationId: auslib.web.admin.views.releases.post_releases_scheduled_change_history
       consumes:
         - application/json
       produces:
@@ -2729,7 +2729,7 @@ paths:
         Endpoint to get Scheduled Changes for required signoffs of products. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_rs_product_get
+      operationId: auslib.web.admin.views.required_signoffs.get_product_rs_scheduled_changes
       consumes: []
       produces:
         - application/json
@@ -2784,7 +2784,7 @@ paths:
         Create scheduled change for required signoffs of product(existing or new). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_rs_product_post
+      operationId: auslib.web.admin.views.required_signoffs.post_product_rs_scheduled_changes
       consumes:
         - application/json
       produces:
@@ -2834,7 +2834,7 @@ paths:
         Modifies existing scheduled change for a Product Required Signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_post
+      operationId: auslib.web.admin.views.required_signoffs.post_product_rs_scheduled_change
       consumes:
         - application/json
       produces:
@@ -2877,7 +2877,7 @@ paths:
         Deletes the given Scheduled Change for the named Product Required Signoff object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_delete
+      operationId: auslib.web.admin.views.required_signoffs.delete_product_rs_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -2907,7 +2907,7 @@ paths:
         Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_history_get
+      operationId: auslib.web.admin.views.required_signoffs.get_product_rs_scheduled_change_history
       consumes: []
       produces:
         - application/json
@@ -2966,7 +2966,7 @@ paths:
         Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_history_post
+      operationId: auslib.web.admin.views.required_signoffs.post_product_rs_scheduled_change_history
       consumes:
         - application/json
       produces:
@@ -2997,7 +2997,7 @@ paths:
         Endpoint to get Scheduled Changes for required signoffs of permissions. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_rs_permissions_get
+      operationId: auslib.web.admin.views.required_signoffs.get_permissions_rs_scheduled_changes
       consumes: []
       produces:
         - application/json
@@ -3050,7 +3050,7 @@ paths:
         Create scheduled change for required signoffs of product(existing or new). [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id34)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_rs_permissions_post
+      operationId: auslib.web.admin.views.required_signoffs.post_permissions_rs_scheduled_changes
       consumes:
         - application/json
       produces:
@@ -3098,7 +3098,7 @@ paths:
         Modifies existing scheduled change for a Permission Required Signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_post
+      operationId: auslib.web.admin.views.required_signoffs.post_permissions_rs_scheduled_change
       consumes:
         - application/json
       produces:
@@ -3140,7 +3140,7 @@ paths:
         Deletes the given Scheduled Change for the named Permission Required Signoff object. 'data_version' must be provided. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_delete
+      operationId: auslib.web.admin.views.required_signoffs.delete_permissions_rs_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -3170,7 +3170,7 @@ paths:
         Returns previous versions of the scheduled change identified by the sc_id given in a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_history_get
+      operationId: auslib.web.admin.views.required_signoffs.get_permissions_rs_scheduled_change_history
       consumes: []
       produces:
         - application/json
@@ -3227,7 +3227,7 @@ paths:
         Reverts the scheduled change identified by the given sc_id to the version identified by the change_id given in the request body. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-id-revisions)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_history_post
+      operationId: auslib.web.admin.views.required_signoffs.post_permissions_rs_scheduled_change_history
       consumes:
         - application/json
       produces:
@@ -3258,7 +3258,7 @@ paths:
         Execute the scheduled change for the rule identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_rules_post
+      operationId: auslib.web.admin.views.rules.post_rules_enact_scheduled_change
       consumes: []
       produces:
         - text/html
@@ -3283,7 +3283,7 @@ paths:
         Execute the scheduled change for the permission identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_permissions_post
+      operationId: auslib.web.admin.views.permissions.post_permissions_enact_scheduled_change
       consumes: []
       produces:
         - text/html
@@ -3308,7 +3308,7 @@ paths:
         Execute the scheduled change for the release identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_releases_post
+      operationId: auslib.web.admin.views.releases.post_releases_enact_scheduled_change
       consumes: []
       produces:
         - text/html
@@ -3333,7 +3333,7 @@ paths:
         Execute the scheduled change for the required signoffs for product identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_product_rs_post
+      operationId: auslib.web.admin.views.required_signoffs.post_product_rs_enact_scheduled_change
       consumes: []
       produces:
         - text/html
@@ -3358,7 +3358,7 @@ paths:
         Execute the scheduled change for the required signoffs for permission identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_permissions_rs_post
+      operationId: auslib.web.admin.views.required_signoffs.post_permissions_rs_enact_scheduled_change
       consumes: []
       produces:
         - text/html
@@ -3383,7 +3383,7 @@ paths:
         Signs off on the given Scheduled Change for Rule. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_signoffs_post
+      operationId: auslib.web.admin.views.rules.post_rules_signoffs_scheduled_change
       consumes:
         - application/json
       produces:
@@ -3411,7 +3411,7 @@ paths:
         Removes an existing Signoff from the Scheduled Change for the Rule. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_rules_signoffs_delete
+      operationId: auslib.web.admin.views.rules.delete_rules_signoffs_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -3439,7 +3439,7 @@ paths:
         Signs off on the given Scheduled Change for Permission. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_signoffs_post
+      operationId: auslib.web.admin.views.permissions.post_permissions_signoffs_scheduled_change
       consumes:
         - application/json
       produces:
@@ -3467,7 +3467,7 @@ paths:
         Removes an existing Signoff from the Scheduled Change for the Permission. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_signoffs_delete
+      operationId: auslib.web.admin.views.permissions.delete_permissions_signoffs_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -3495,7 +3495,7 @@ paths:
         Signs off on the given Scheduled Change for Release. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_release_signoffs_post
+      operationId: auslib.web.admin.views.releases.post_release_signoffs_scheduled_change
       consumes:
         - application/json
       produces:
@@ -3523,7 +3523,7 @@ paths:
         Removes an existing Signoff from the Scheduled Change for the Release. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_release_signoffs_delete
+      operationId: auslib.web.admin.views.releases.delete_release_signoffs_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -3551,7 +3551,7 @@ paths:
         Signs off on the given Scheduled Change for Product Required Signoff. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_signoffs_post
+      operationId: auslib.web.admin.views.required_signoffs.post_product_rs_signoffs_scheduled_change
       consumes:
         - application/json
       produces:
@@ -3579,7 +3579,7 @@ paths:
         Removes an existing Signoff from the Scheduled Change for the Product Required Signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_product_rs_signoffs_delete
+      operationId: auslib.web.admin.views.required_signoffs.delete_product_rs_signoffs_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -3607,7 +3607,7 @@ paths:
         Signs off on the given Scheduled Change for Permission Required Signoff. 'role' must be provided in the request body.[Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_signoffs_post
+      operationId: auslib.web.admin.views.required_signoffs.post_permissions_rs_signoffs_scheduled_change
       consumes:
         - application/json
       produces:
@@ -3635,7 +3635,7 @@ paths:
         Removes an existing Signoff from the Scheduled Change for the Permission Required Signoff. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-signoffs)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_change_permissions_rs_signoffs_delete
+      operationId: auslib.web.admin.views.required_signoffs.delete_permissions_rs_signoffs_scheduled_change
       consumes: []
       produces:
         - application/json
@@ -3971,7 +3971,7 @@ paths:
         Endpoint to get Scheduled Changes for Release Pins. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.scheduled_changes_pinnable_releases_get
+      operationId: auslib.web.admin.views.pinnable_releases.get_pinnable_releases_scheduled_changes
       consumes: []
       produces:
         - application/json
@@ -4020,7 +4020,7 @@ paths:
         Execute the scheduled change for the release pin identified by the sc_id. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#scheduled-changes-object-sc-id-enact)
       tags:
         - Scheduled Changes
-      operationId: auslib.web.admin.views.mapper.enact_scheduled_change_pinnable_releases_post
+      operationId: auslib.web.admin.views.pinnable_releases.post_pinnable_releases_enact_scheduled_change
       consumes: []
       produces:
         - text/html

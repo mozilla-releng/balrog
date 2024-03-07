@@ -3,8 +3,8 @@ from flask import jsonify
 from sqlalchemy.sql.expression import null
 
 from auslib.util.signoffs import serialize_signoff_requirements
-from auslib.web.admin.views.base import AdminView, requirelogin
-from auslib.web.admin.views.history import HistoryView
+from auslib.web.admin.views.base import log
+from auslib.web.admin.views.history import get_revisions, revert_to_revision
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import is_when_present_and_in_past_validator
 from auslib.web.common.history import get_input_dict
@@ -48,250 +48,215 @@ def add_signoff_information(row, table, sc_table):
     return scheduled_change
 
 
-class ScheduledChangesView(AdminView):
-    """/scheduled_changes/:namespace"""
+def get_scheduled_changes(table, where=None):
+    sc_table = table.scheduled_changes
 
-    def __init__(self, namespace, table):
-        self.namespace = namespace
-        self.path = "/scheduled_changes/%s" % namespace
-        self.table = table
-        self.sc_table = table.scheduled_changes
-        super(ScheduledChangesView, self).__init__()
+    if where is None:
+        where = {}
 
-    def get(self, where=None):
-        if where is None:
-            where = {}
+    if connexion.request.args.get("all") is None:
+        where["complete"] = False
 
-        if connexion.request.args.get("all") is None:
-            where["complete"] = False
+    rows = sc_table.select(where=where)
+    ret = {"count": len(rows), "scheduled_changes": []}
+    for row in rows:
+        ret["scheduled_changes"].append(add_signoff_information(row, table, sc_table))
 
-        rows = self.sc_table.select(where=where)
-        ret = {"count": len(rows), "scheduled_changes": []}
-        for row in rows:
-            ret["scheduled_changes"].append(add_signoff_information(row, self.table, self.sc_table))
-
-        return jsonify(ret)
-
-    def _post(self, what, transaction, changed_by, change_type):
-        if change_type not in ["insert", "update", "delete"]:
-            return problem(400, "Bad Request", "Invalid or missing change_type")
-
-        if is_when_present_and_in_past_validator(what):
-            return problem(400, "Bad Request", "Changes may not be scheduled in the past")
-
-        sc_id = self.sc_table.insert(changed_by, transaction, **what)
-        signoffs = {}
-        for signoff in self.sc_table.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
-            signoffs[signoff["username"]] = signoff["role"]
-        return jsonify(sc_id=sc_id, signoffs=signoffs)
+    return jsonify(ret)
 
 
-class ScheduledChangeView(AdminView):
-    """/scheduled_changes/:namespace/:sc_id"""
+def post_scheduled_changes(sc_table, what, transaction, changed_by, change_type):
+    if change_type not in ["insert", "update", "delete"]:
+        return problem(400, "Bad Request", "Invalid or missing change_type")
 
-    def __init__(self, namespace, table):
-        self.namespace = namespace
-        self.path = "/scheduled_changes/%s/:sc_id" % namespace
-        self.table = table
-        self.sc_table = table.scheduled_changes
-        super(ScheduledChangeView, self).__init__()
+    if is_when_present_and_in_past_validator(what):
+        return problem(400, "Bad Request", "Changes may not be scheduled in the past")
 
-    def get(self, sc_id):
-        sc = self.sc_table.select(where={"sc_id": sc_id})
-        if not sc:
-            return problem(404, "Bad Request", "Scheduled change does not exist")
-
-        scheduled_change = add_signoff_information(sc[0], self.table, self.sc_table)
-        return jsonify({"scheduled_change": scheduled_change})
-
-    def _post(self, sc_id, what, transaction, changed_by, old_sc_data_version):
-        if is_when_present_and_in_past_validator(what):
-            return problem(400, "Bad Request", "Changes may not be scheduled in the past")
-
-        if what.get("data_version", None):
-            what["data_version"] = int(what["data_version"])
-
-        where = {"sc_id": sc_id}
-        self.sc_table.update(where, what, changed_by, int(old_sc_data_version), transaction)
-        sc = self.sc_table.select(where=where, transaction=transaction, columns=["data_version"])[0]
-        signoffs = {}
-        for signoff in self.sc_table.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
-            signoffs[signoff["username"]] = signoff["role"]
-        return jsonify(new_data_version=sc["data_version"], signoffs=signoffs)
-
-    def _delete(self, sc_id, transaction, changed_by):
-        where = {"sc_id": sc_id}
-        sc = self.sc_table.select(where, transaction, columns=["sc_id"])
-        if not sc:
-            return problem(404, "Bad Request", "Scheduled change does not exist")
-
-        if not connexion.request.args.get("data_version", None):
-            return problem(400, "Bad Request", "data_version is missing")
-
-        self.sc_table.delete(where, changed_by, int(connexion.request.args.get("data_version")), transaction)
-        return jsonify({})
+    sc_id = sc_table.insert(changed_by, transaction, **what)
+    signoffs = {}
+    for signoff in sc_table.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
+        signoffs[signoff["username"]] = signoff["role"]
+    return jsonify(sc_id=sc_id, signoffs=signoffs)
 
 
-class EnactScheduledChangeView(AdminView):
-    """/scheduled_changes/:namespace/:sc_id/enact"""
+def get_by_id_scheduled_change(table, sc_id):
+    sc_table = table.scheduled_changes
+    sc = sc_table.select(where={"sc_id": sc_id})
+    if not sc:
+        return problem(404, "Bad Request", "Scheduled change does not exist")
 
-    def __init__(self, namespace, table):
-        self.namespace = namespace
-        self.path = "/scheduled_changes/%s/:sc_id/enact" % namespace
-        self.table = table
-        self.sc_table = table.scheduled_changes
-        super(EnactScheduledChangeView, self).__init__()
-
-    def _post(self, sc_id, transaction, changed_by):
-        self.sc_table.enactChange(sc_id, changed_by, transaction)
-        return jsonify({})
+    scheduled_change = add_signoff_information(sc[0], table, sc_table)
+    return jsonify({"scheduled_change": scheduled_change})
 
 
-class SignoffsView(AdminView):
-    """/scheduled_change/:namespace/:sc_id/signoffs"""
+def post_scheduled_change(sc_table, sc_id, what, transaction, changed_by, old_sc_data_version):
+    if is_when_present_and_in_past_validator(what):
+        return problem(400, "Bad Request", "Changes may not be scheduled in the past")
 
-    def __init__(self, namespace, table):
-        self.namespace = namespace
-        self.path = "/scheduled_changes/%s/:sc_id/signoffs" % namespace
-        self.signoffs_table = table.scheduled_changes.signoffs
-        super(SignoffsView, self).__init__()
+    if what.get("data_version", None):
+        what["data_version"] = int(what["data_version"])
 
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        what = {"role": connexion.request.get_json().get("role")}
-        self.signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **what)
-        return jsonify({})
-
-    @requirelogin
-    def _delete(self, sc_id, transaction, changed_by):
-        username = connexion.request.args.get("username", changed_by)
-        where = {"sc_id": sc_id, "username": username}
-        signoff = self.signoffs_table.select(where, transaction)
-        if not signoff:
-            return jsonify({"error": "{} has no signoff to revoke".format(changed_by)})
-
-        self.signoffs_table.delete(where, changed_by=changed_by, transaction=transaction)
-        return jsonify({})
+    where = {"sc_id": sc_id}
+    sc_table.update(where, what, changed_by, int(old_sc_data_version), transaction)
+    sc = sc_table.select(where=where, transaction=transaction, columns=["data_version"])[0]
+    signoffs = {}
+    for signoff in sc_table.signoffs.select(where={"sc_id": sc_id}, transaction=transaction):
+        signoffs[signoff["username"]] = signoff["role"]
+    return jsonify(new_data_version=sc["data_version"], signoffs=signoffs)
 
 
-class ScheduledChangeHistoryView(HistoryView):
-    """/scheduled_changes/:namespace/revisions"""
+def delete_scheduled_change(sc_table, sc_id, transaction, changed_by, data_version=None):
+    where = {"sc_id": sc_id}
+    sc = sc_table.select(where, transaction, columns=["sc_id"])
+    if not sc:
+        return problem(404, "Bad Request", "Scheduled change does not exist")
 
-    def __init__(self, namespace, table, *args, **kwargs):
-        self.namespace = namespace
-        self.path = "/scheduled_changes/%s/revisions" % namespace
-        super(ScheduledChangeHistoryView, self).__init__(table.scheduled_changes, *args, **kwargs)
+    if not data_version:
+        return problem(400, "Bad Request", "data_version is missing")
 
-    def _process_revisions(self, revisions):
-        # Although Scheduled Changes are stored across two tables, we don't
-        # expose that through the API. Because of this, we need to look up
-        # history in both and return the combined version.
-        # This is done by the database layer for non-history parts of Scheduled Changes, but
-        # that's not feasible for History due to the inheritance structure of the tables,
-        # so we do it here instead.
+    sc_table.delete(where, changed_by, data_version, transaction)
+    return jsonify({})
 
-        # There's a big 'ol assumption here that the primary Scheduled Changes
-        # table and the conditions table always keep their data version in sync.
-        for r in revisions:
-            cond = self.table.conditions.history.select(
-                where=[self.table.conditions.history.sc_id == r["sc_id"], self.table.conditions.history.data_version == r["data_version"]]
-            )
-            r.update(cond[0])
 
-        _revisions = []
+def post_enact_scheduled_change(sc_table, sc_id, transaction, changed_by):
+    sc_table.enactChange(sc_id, changed_by, transaction)
+    return jsonify({})
 
-        for rev in revisions:
-            r = {}
-            for k, v in rev.items():
-                if k == "data_version":
-                    r["sc_data_version"] = v
-                else:
-                    r[k.replace("base_", "")] = v
-            _revisions.append(r)
 
-        return _revisions
+def post_signoffs_scheduled_change(signoffs_table, sc_id, what, transaction, changed_by):
+    signoffs_table.insert(changed_by, transaction, sc_id=sc_id, **what)
+    return jsonify({})
 
-    def _get_filters(self, sc):
-        return [self.history_table.sc_id == sc["sc_id"], self.history_table.data_version != null()]
 
-    def _get_filters_all(self, obj):
-        query = get_input_dict()
-        where = [False, False]
-        where = [getattr(self.history_table, f) == query.get(f) for f in query]
-        where.append(self.history_table.data_version != null())
-        request = connexion.request
-        if hasattr(self.history_table, "product" or " channel"):
-            if request.args.get("product"):
-                where.append(self.history_table.base_product == request.args.get("product"))
-            if request.args.get("channel"):
-                where.append(self.history_table.base_channel == request.args.get("channel"))
-        if request.args.get("timestamp_from"):
-            where.append(self.history_table.timestamp >= int(request.args.get("timestamp_from")))
-        if request.args.get("timestamp_to"):
-            where.append(self.history_table.timestamp <= int(request.args.get("timestamp_to")))
-        return where
+def delete_signoffs_scheduled_change(sc_id, signoffs_table, transaction, changed_by):
+    username = connexion.request.args.get("username", changed_by)
+    where = {"sc_id": sc_id, "username": username}
+    signoff = signoffs_table.select(where, transaction)
+    if not signoff:
+        return jsonify({"error": "{} has no signoff to revoke".format(changed_by)})
 
-    def _get_what(self, change, changed_by, transaction):
-        # There's a big 'ol assumption here that the primary Scheduled Changes
-        # table and the conditions table always keep their data version in sync.
-        cond_change = self.table.conditions.history.getChange(
-            data_version=change["data_version"], column_values={"sc_id": change["sc_id"]}, transaction=transaction
+    signoffs_table.delete(where, changed_by=changed_by, transaction=transaction)
+    return jsonify({})
+
+
+def _process_revisions_scheduled_change_history(sc_table, revisions):
+    # Although Scheduled Changes are stored across two tables, we don't
+    # expose that through the API. Because of this, we need to look up
+    # history in both and return the combined version.
+    # This is done by the database layer for non-history parts of Scheduled Changes, but
+    # that's not feasible for History due to the inheritance structure of the tables,
+    # so we do it here instead.
+
+    # There's a big 'ol assumption here that the primary Scheduled Changes
+    # table and the conditions table always keep their data version in sync.
+    for r in revisions:
+        cond = sc_table.conditions.history.select(
+            where=[sc_table.conditions.history.sc_id == r["sc_id"], sc_table.conditions.history.data_version == r["data_version"]]
         )
-        what = dict(
-            # One could argue that we should restore scheduled_by to its value from the change,
-            # but since the person who is reverting could be different, it's probably best to
-            # use that instead.
-            scheduled_by=changed_by,
-            complete=change["complete"],
-            when=cond_change["when"],
-            telemetry_product=cond_change["telemetry_product"],
-            telemetry_channel=cond_change["telemetry_channel"],
-            telemetry_uptake=cond_change["telemetry_uptake"],
+        r.update(cond[0])
+
+    _revisions = []
+
+    for rev in revisions:
+        r = {}
+        for k, v in rev.items():
+            if k == "data_version":
+                r["sc_data_version"] = v
+            else:
+                r[k.replace("base_", "")] = v
+        _revisions.append(r)
+
+    return _revisions
+
+
+def _get_filters_scheduled_change_history(sc_history_table, sc):
+    return [sc_history_table.sc_id == sc["sc_id"], sc_history_table.data_version != null()]
+
+
+def _get_filters_all_scheduled_change_history(sc_history_table, obj):
+    query = get_input_dict()
+    where = [False, False]
+    where = [getattr(sc_history_table, f) == query.get(f) for f in query]
+    where.append(sc_history_table.data_version != null())
+    request = connexion.request
+    if hasattr(sc_history_table, "product" or " channel"):
+        if request.args.get("product"):
+            where.append(sc_history_table.base_product == request.args.get("product"))
+        if request.args.get("channel"):
+            where.append(sc_history_table.base_channel == request.args.get("channel"))
+    if request.args.get("timestamp_from"):
+        where.append(sc_history_table.timestamp >= int(request.args.get("timestamp_from")))
+    if request.args.get("timestamp_to"):
+        where.append(sc_history_table.timestamp <= int(request.args.get("timestamp_to")))
+    return where
+
+
+def _get_what_scheduled_change_history(sc_table, change, changed_by, transaction):
+    # There's a big 'ol assumption here that the primary Scheduled Changes
+    # table and the conditions table always keep their data version in sync.
+    cond_change = sc_table.conditions.history.getChange(data_version=change["data_version"], column_values={"sc_id": change["sc_id"]}, transaction=transaction)
+    what = dict(
+        # One could argue that we should restore scheduled_by to its value from the change,
+        # but since the person who is reverting could be different, it's probably best to
+        # use that instead.
+        scheduled_by=changed_by,
+        complete=change["complete"],
+        when=cond_change["when"],
+        telemetry_product=cond_change["telemetry_product"],
+        telemetry_channel=cond_change["telemetry_channel"],
+        telemetry_uptake=cond_change["telemetry_uptake"],
+    )
+    # Copy in all the base table columns, too.
+    for col in sc_table.t.columns:
+        if col.name.startswith("base_"):
+            what[col.name] = change[col.name]
+
+    return what
+
+
+def _get_sc_scheduled_change_history(sc_table, sc_id):
+    sc = sc_table.select(where=[sc_table.sc_id == sc_id])
+    return sc[0] if sc else None
+
+
+def get_scheduled_change_history(sc_table, sc_id):
+    try:
+        return get_revisions(
+            table=sc_table,
+            get_object_callback=lambda: _get_sc_scheduled_change_history(sc_table, sc_id),
+            history_filters_callback=_get_filters_scheduled_change_history,
+            process_revisions_callback=_process_revisions_scheduled_change_history,
+            revisions_order_by=[sc_table.history.timestamp.desc()],
+            obj_not_found_msg="Scheduled change does not exist",
         )
-        # Copy in all the base table columns, too.
-        for col in self.table.t.columns:
-            if col.name.startswith("base_"):
-                what[col.name] = change[col.name]
+    except (ValueError, AssertionError) as msg:
+        log.warning("Bad input: %s", msg)
+        return problem(400, "Bad Request", "Error in fetching revisions", ext={"exception": msg})
 
-        return what
 
-    def _get_sc(self, sc_id):
-        sc = self.table.select(where=[self.table.sc_id == sc_id])
-        return sc[0] if sc else None
-
-    def get(self, sc_id):
-        try:
-            return self.get_revisions(
-                get_object_callback=lambda: self._get_sc(sc_id),
-                history_filters_callback=self._get_filters,
-                process_revisions_callback=self._process_revisions,
-                revisions_order_by=[self.history_table.timestamp.desc()],
-                obj_not_found_msg="Scheduled change does not exist",
-            )
-        except (ValueError, AssertionError) as msg:
-            self.log.warning("Bad input: %s", msg)
-            return problem(400, "Bad Request", "Error in fetching revisions", ext={"exception": msg})
-
-    def get_all(self):
-        try:
-            return self.get_revisions(
-                get_object_callback=lambda: ScheduledChangesView.get,
-                history_filters_callback=self._get_filters_all,
-                process_revisions_callback=self._process_revisions,
-                revisions_order_by=[self.history_table.timestamp.desc()],
-                obj_not_found_msg="Scheduled change does not exist",
-            )
-        except (ValueError, AssertionError) as msg:
-            self.log.warning("Bad input: %s", msg)
-            return problem(400, "Bad Request", "Error in fetching revisions", ext={"exception": msg})
-
-    def _post(self, sc_id, transaction, changed_by):
-        return self.revert_to_revision(
-            get_object_callback=lambda: self._get_sc(sc_id),
-            change_field="sc_id",
-            get_what_callback=lambda change: self._get_what(change, changed_by, transaction),
-            changed_by=changed_by,
-            response_message="Success",
-            transaction=transaction,
-            obj_not_found_msg="given sc_id was not found in the database",
+def get_all_scheduled_change_history(sc_table):
+    try:
+        return get_revisions(
+            table=sc_table,
+            get_object_callback=lambda: get_scheduled_changes,
+            history_filters_callback=_get_filters_all_scheduled_change_history,
+            process_revisions_callback=_process_revisions_scheduled_change_history,
+            revisions_order_by=[sc_table.history.timestamp.desc()],
+            obj_not_found_msg="Scheduled change does not exist",
         )
+    except (ValueError, AssertionError) as msg:
+        log.warning("Bad input: %s", msg)
+        return problem(400, "Bad Request", "Error in fetching revisions", ext={"exception": msg})
+
+
+def post_scheduled_change_history(sc_table, sc_id, transaction, changed_by):
+    return revert_to_revision(
+        table=sc_table,
+        get_object_callback=lambda: _get_sc_scheduled_change_history(sc_table, sc_id),
+        change_field="sc_id",
+        get_what_callback=lambda change: _get_what_scheduled_change_history(sc_table, change, changed_by, transaction),
+        changed_by=changed_by,
+        response_message="Success",
+        transaction=transaction,
+        obj_not_found_msg="given sc_id was not found in the database",
+    )

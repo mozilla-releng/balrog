@@ -1,8 +1,7 @@
 import logging
 
+import connexion
 from flask import current_app as app
-from flask import request
-from flask.views import MethodView
 
 from auslib.db import ChangeScheduledError, OutdatedDataError, PermissionDeniedError, UpdateMergeError
 from auslib.global_state import dbo
@@ -14,7 +13,7 @@ log = logging.getLogger(__name__)
 
 def requirelogin(f):
     def decorated(*args, **kwargs):
-        username = verified_userinfo(request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])["email"]
+        username = verified_userinfo(connexion.request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])["email"]
         if not username:
             log.warning("Login Required")
             return problem(401, "Unauthenticated", "Login Required")
@@ -34,42 +33,40 @@ def requirelogin(f):
     return decorated
 
 
-def handleGeneralExceptions(messages):
-    def wrap(f):
-        def decorated(*args, **kwargs):
-            try:
-                return f(*args, **kwargs)
-            except OutdatedDataError as e:
-                msg = "Couldn't perform the request %s. Outdated Data Version. " "old_data_version doesn't match current data_version" % messages
-                log.warning("Bad input: %s", msg)
-                log.warning(e)
-                # using connexion.problem results in TypeError: 'ConnexionResponse' object is not callable
-                # hence using flask.Response but modifying response's json data into connexion.problem format
-                # for validation purpose
-                return problem(400, "Bad Request", "OutdatedDataError", ext={"exception": msg})
-            except UpdateMergeError as e:
-                msg = "Couldn't perform the request %s due to merge error. " "Is there a scheduled change that conflicts with yours?" % messages
-                log.warning("Bad input: %s", msg)
-                log.warning(e)
-                return problem(400, "Bad Request", "UpdateMergeError", ext={"exception": msg})
-            except ChangeScheduledError as e:
-                msg = "Couldn't perform the request %s due a conflict with a scheduled change. " % messages
-                msg += str(e)
-                log.warning("Bad input: %s", msg)
-                log.warning(e)
-                return problem(400, "Bad Request", "ChangeScheduledError", ext={"exception": msg})
-            except (PermissionDeniedError, AuthError) as e:
-                msg = "Permission denied to perform the request. {}".format(e)
-                log.warning(msg)
-                return problem(403, "Forbidden", "PermissionDeniedError", ext={"exception": msg})
-            except ValueError as e:
-                msg = "Bad input: {}".format(e)
-                log.warning(msg)
-                return problem(400, "Bad Request", "ValueError", ext={"exception": msg})
+def handleGeneralExceptions(f):
+    def decorated(*args, **kwargs):
+        method = connexion.request.method
+        try:
+            return f(*args, **kwargs)
+        except OutdatedDataError as e:
+            msg = "Couldn't perform the request %s. Outdated Data Version. " "old_data_version doesn't match current data_version" % method
+            log.warning("Bad input: %s", msg)
+            log.warning(e)
+            # using connexion.problem results in TypeError: 'ConnexionResponse' object is not callable
+            # hence using flask.Response but modifying response's json data into connexion.problem format
+            # for validation purpose
+            return problem(400, "Bad Request", "OutdatedDataError", ext={"exception": msg})
+        except UpdateMergeError as e:
+            msg = "Couldn't perform the request %s due to merge error. " "Is there a scheduled change that conflicts with yours?" % method
+            log.warning("Bad input: %s", msg)
+            log.warning(e)
+            return problem(400, "Bad Request", "UpdateMergeError", ext={"exception": msg})
+        except ChangeScheduledError as e:
+            msg = "Couldn't perform the request %s due a conflict with a scheduled change. " % method
+            msg += str(e)
+            log.warning("Bad input: %s", msg)
+            log.warning(e)
+            return problem(400, "Bad Request", "ChangeScheduledError", ext={"exception": msg})
+        except (PermissionDeniedError, AuthError) as e:
+            msg = "Permission denied to perform the request. {}".format(e)
+            log.warning(msg)
+            return problem(403, "Forbidden", "PermissionDeniedError", ext={"exception": msg})
+        except ValueError as e:
+            msg = "Bad input: {}".format(e)
+            log.warning(msg)
+            return problem(400, "Bad Request", "ValueError", ext={"exception": msg})
 
-        return decorated
-
-    return wrap
+    return decorated
 
 
 def transactionHandler(request_handler):
@@ -92,27 +89,3 @@ def transactionHandler(request_handler):
             trans.close()
 
     return decorated
-
-
-class AdminView(MethodView):
-    def __init__(self, *args, **kwargs):
-        self.log = logging.getLogger(self.__class__.__name__)
-        MethodView.__init__(self, *args, **kwargs)
-
-    @transactionHandler
-    @handleGeneralExceptions("POST")
-    def post(self, *args, **kwargs):
-        self.log.debug("processing POST request to %s" % request.path)
-        return self._post(*args, **kwargs)
-
-    @transactionHandler
-    @handleGeneralExceptions("PUT")
-    def put(self, *args, **kwargs):
-        self.log.debug("processing PUT request to %s" % request.path)
-        return self._put(*args, **kwargs)
-
-    @transactionHandler
-    @handleGeneralExceptions("DELETE")
-    def delete(self, *args, **kwargs):
-        self.log.debug("processing DELETE request to %s" % request.path)
-        return self._delete(*args, **kwargs)

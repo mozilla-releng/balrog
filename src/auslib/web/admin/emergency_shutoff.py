@@ -5,7 +5,15 @@ from flask import Response
 
 from auslib.global_state import dbo
 from auslib.web.admin.views.base import handleGeneralExceptions, requirelogin, transactionHandler
-from auslib.web.admin.views.scheduled_changes import EnactScheduledChangeView, ScheduledChangesView, ScheduledChangeView, SignoffsView
+from auslib.web.admin.views.scheduled_changes import (
+    delete_scheduled_change,
+    delete_signoffs_scheduled_change,
+    get_scheduled_changes,
+    post_enact_scheduled_change,
+    post_scheduled_change,
+    post_scheduled_changes,
+    post_signoffs_scheduled_change,
+)
 
 
 def get_emergency_shutoff(product, channel):
@@ -20,7 +28,7 @@ def shutoff_exists(product, channel):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("POST")
+@handleGeneralExceptions
 def post(emergency_shutoff, changed_by, transaction):
     if shutoff_exists(emergency_shutoff["product"], emergency_shutoff["channel"]):
         return problem(400, "Bad Request", "Invalid Emergency shutoff data", ext={"exception": "Emergency shutoff for product/channel already exists."})
@@ -36,8 +44,8 @@ def post(emergency_shutoff, changed_by, transaction):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions("DELETE")
-def delete(product, channel, data_version, changed_by, transaction, **kwargs):
+@handleGeneralExceptions
+def delete(product, channel, data_version, changed_by, transaction):
     if not shutoff_exists(product, channel):
         return problem(status=404, title="Not Found", detail="Shutoff wasn't found", ext={"exception": "Shutoff does not exist"})
     where = dict(product=product, channel=channel)
@@ -46,46 +54,65 @@ def delete(product, channel, data_version, changed_by, transaction, **kwargs):
 
 
 def scheduled_changes():
-    view = ScheduledChangesView("emergency_shutoff", dbo.emergencyShutoffs)
-    return view.get()
+    return get_scheduled_changes(table=dbo.emergencyShutoffs)
 
 
 @requirelogin
 @transactionHandler
+@handleGeneralExceptions
 def schedule_deletion(sc_emergency_shutoff, changed_by, transaction):
     change_type = sc_emergency_shutoff.get("change_type")
     if change_type != "delete":
         return problem(400, "Bad Request", "Invalid or missing change_type")
 
-    view = ScheduledChangesView("emergency_shutoff", dbo.emergencyShutoffs)
-    return view._post(sc_emergency_shutoff, transaction, changed_by, change_type)
+    return post_scheduled_changes(
+        sc_table=dbo.emergencyShutoffs.scheduled_changes, what=sc_emergency_shutoff, transaction=transaction, changed_by=changed_by, change_type=change_type
+    )
 
 
 @requirelogin
 @transactionHandler
+@handleGeneralExceptions
 def update_scheduled_deletion(sc_id, sc_emergency_shutoff, changed_by, transaction):
-    view = ScheduledChangeView("emergency_shutoff", dbo.emergencyShutoffs)
-    return view._post(sc_id, sc_emergency_shutoff, transaction, changed_by, sc_emergency_shutoff["sc_data_version"])
+    return post_scheduled_change(
+        sc_table=dbo.emergencyShutoffs.scheduled_changes,
+        sc_id=sc_id,
+        what=sc_emergency_shutoff,
+        transaction=transaction,
+        changed_by=changed_by,
+        old_sc_data_version=sc_emergency_shutoff["sc_data_version"],
+    )
 
 
 @requirelogin
 @transactionHandler
-def delete_scheduled_deletion(sc_id, changed_by, transaction, **kwargs):
-    view = ScheduledChangeView("emergency_shutoff", dbo.emergencyShutoffs)
-    return view._delete(sc_id, transaction, changed_by)
-
-
-def scheduled_changes_signoffs(sc_id):
-    view = SignoffsView("emergency_shutoff", dbo.emergencyShutoffs)
-    return view.post(sc_id)
-
-
-def scheduled_changes_signoffs_delete(sc_id):
-    view = SignoffsView("emergency_shutoff", dbo.emergencyShutoffs)
-    return view.delete(sc_id)
+@handleGeneralExceptions
+def delete_scheduled_deletion(sc_id, data_version, changed_by, transaction):
+    return delete_scheduled_change(
+        sc_table=dbo.emergencyShutoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
+    )
 
 
 @requirelogin
-def enact_updates_scheduled_for_reactivation(sc_id, changed_by):
-    view = EnactScheduledChangeView("emergency_shutoff", dbo.emergencyShutoffs)
-    return view.post(sc_id, changed_by=changed_by)
+@transactionHandler
+@handleGeneralExceptions
+def scheduled_changes_signoffs(sc_id, transaction, changed_by):
+    return post_signoffs_scheduled_change(
+        signoffs_table=dbo.emergencyShutoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
+    )
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def scheduled_changes_signoffs_delete(sc_id, transaction, changed_by):
+    return delete_signoffs_scheduled_change(
+        signoffs_table=dbo.emergencyShutoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
+    )
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def enact_updates_scheduled_for_reactivation(sc_id, transaction, changed_by):
+    return post_enact_scheduled_change(sc_table=dbo.emergencyShutoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)

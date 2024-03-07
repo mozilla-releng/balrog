@@ -1,24 +1,14 @@
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import requirelogin
-from auslib.web.admin.views.scheduled_changes import EnactScheduledChangeView, ScheduledChangesView
+from auslib.web.admin.views.base import handleGeneralExceptions, requirelogin, transactionHandler
+from auslib.web.admin.views.scheduled_changes import get_scheduled_changes, post_enact_scheduled_change
 
 
-class PinnableReleaseScheduledChangesView(ScheduledChangesView):
-    """/scheduled_changes/pinnable_releases"""
-
-    def __init__(self):
-        super(PinnableReleaseScheduledChangesView, self).__init__("pinnable_releases", dbo.pinnable_releases)
-
-    def get(self):
-        return super(PinnableReleaseScheduledChangesView, self).get()
+def get_pinnable_releases_scheduled_changes():
+    return get_scheduled_changes(table=dbo.pinnable_releases)
 
 
-class EnactPinnableReleaseScheduledChangeView(EnactScheduledChangeView):
-    """/scheduled_changes/pinnable_releases/<int:sc_id>/enact"""
-
-    def __init__(self):
-        super(EnactPinnableReleaseScheduledChangeView, self).__init__("pinnable_releases", dbo.pinnable_releases)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(EnactPinnableReleaseScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def post_pinnable_releases_enact_scheduled_change(sc_id, transaction, changed_by):
+    return post_enact_scheduled_change(sc_table=dbo.pinnable_releases.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)

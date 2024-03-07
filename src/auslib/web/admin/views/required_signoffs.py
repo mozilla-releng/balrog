@@ -6,394 +6,442 @@ from sqlalchemy.sql.expression import null
 
 from auslib.db import SignoffRequiredError
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import AdminView, requirelogin
-from auslib.web.admin.views.history import HistoryView
+from auslib.web.admin.views.base import handleGeneralExceptions, log, requirelogin, transactionHandler
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
-    EnactScheduledChangeView,
-    ScheduledChangeHistoryView,
-    ScheduledChangesView,
-    ScheduledChangeView,
-    SignoffsView,
+    delete_scheduled_change,
+    delete_signoffs_scheduled_change,
+    get_all_scheduled_change_history,
+    get_scheduled_change_history,
+    get_scheduled_changes,
+    post_enact_scheduled_change,
+    post_scheduled_change,
+    post_scheduled_change_history,
+    post_scheduled_changes,
+    post_signoffs_scheduled_change,
 )
 from auslib.web.common.history import get_input_dict
 
 
-class RequiredSignoffsView(AdminView):
-    def __init__(self, table, decisionFields):
-        self.table = table
-        self.decisionFields = decisionFields
-        super(RequiredSignoffsView, self).__init__()
-
-    def get(self, where=None):
-        rows = self.table.select(where=where)
-        return jsonify({"count": len(rows), "required_signoffs": [dict(rs) for rs in rows]})
-
-    def _post(self, what, transaction, changed_by):
-        where = {f: what.get(f) for f in self.decisionFields}
-        if self.table.select(where=where, transaction=transaction):
-            raise SignoffRequiredError("Required Signoffs cannot be directly modified")
-        else:
-            try:
-                self.table.insert(changed_by=changed_by, transaction=transaction, **what)
-                return Response(status=201, response=json.dumps({"new_data_version": 1}))
-            except ValueError as e:
-                self.log.warning("Bad input: %s", e.args)
-                return problem(400, "Bad Request", str(e.args))
-
-    def _delete(self, *args, **kwargs):
-        raise SignoffRequiredError("Required Signoffs cannot be directly deleted.")
+def get_required_signoffs(required_signoffs, where=None):
+    rows = required_signoffs.select(where=where)
+    return jsonify({"count": len(rows), "required_signoffs": [dict(rs) for rs in rows]})
 
 
-class RequiredSignoffsHistoryAPIView(HistoryView):
-    def __init__(self, table, decisionFields):
-        self.decisionFields = decisionFields
-        super(RequiredSignoffsHistoryAPIView, self).__init__(table=table)
-
-    def _get_filters(self):
-        query = get_input_dict()
-        where = [getattr(self.table.history, f) == query.get(f) for f in query]
-        where.append(self.table.history.data_version != null())
-        request = connexion.request
-        if hasattr(self.history_table, "channel"):
-            if request.args.get("channel"):
-                where.append(self.history_table.channel == request.args.get("channel"))
-        if hasattr(self.history_table, "product"):
-            where.append(self.history_table.product != null())
-            if request.args.get("product"):
-                where.append(self.history_table.product == request.args.get("product"))
-        if request.args.get("timestamp_from"):
-            where.append(self.history_table.timestamp >= int(request.args.get("timestamp_from")))
-        if request.args.get("timestamp_to"):
-            where.append(self.history_table.timestamp <= int(request.args.get("timestamp_to")))
-        return where
-
-    def get(self, input_dict):
-        if not self.table.select({f: input_dict.get(f) for f in self.decisionFields}):
-            return problem(404, "Not Found", "Requested Required Signoff does not exist")
-
+def post_required_signoffs(required_signoffs, decisionFields, what, transaction, changed_by):
+    where = {f: what.get(f) for f in decisionFields}
+    if required_signoffs.select(where=where, transaction=transaction):
+        raise SignoffRequiredError("Required Signoffs cannot be directly modified")
+    else:
         try:
-            page = int(connexion.request.args.get("page", 1))
-            limit = int(connexion.request.args.get("limit", 100))
-        except ValueError as msg:
-            self.log.warning("Bad input: %s", msg)
-            return problem(400, "Bad Request", str(msg))
-        offset = limit * (page - 1)
-
-        where_count = [self.table.history.data_version != null()]
-        for field in self.decisionFields:
-            where_count.append(getattr(self.table.history, field) == input_dict.get(field))
-        total_count = self.table.history.count(where=where_count)
-
-        where = [getattr(self.table.history, f) == input_dict.get(f) for f in self.decisionFields]
-        where.append(self.table.history.data_version != null())
-        revisions = self.table.history.select(where=where, limit=limit, offset=offset, order_by=[self.table.history.timestamp.desc()])
-
-        return jsonify(count=total_count, required_signoffs=revisions)
-
-    def get_all(self):
-        try:
-            page = int(connexion.request.args.get("page", 1))
-            limit = int(connexion.request.args.get("limit", 100))
-        except ValueError as msg:
-            self.log.warning("Bad input: %s", msg)
-            return problem(400, "Bad Request", str(msg))
-        offset = limit * (page - 1)
-
-        where = self._get_filters()
-        total_count = self.table.history.count(where=where)
-        revisions = self.table.history.select(where=where, limit=limit, offset=offset, order_by=[self.table.history.timestamp.desc()])
-
-        return jsonify(count=total_count, required_signoffs=revisions)
+            required_signoffs.insert(changed_by=changed_by, transaction=transaction, **what)
+            return Response(status=201, response=json.dumps({"new_data_version": 1}))
+        except ValueError as e:
+            log.warning("Bad input: %s", e.args)
+            return problem(400, "Bad Request", str(e.args))
 
 
-class ProductRequiredSignoffsView(RequiredSignoffsView):
-    """/required_signoffs/product"""
-
-    def __init__(self):
-        super(ProductRequiredSignoffsView, self).__init__(dbo.productRequiredSignoffs, ["product", "channel", "role"])
-
-    def get(self):
-        where = {param: request.args[param] for param in ("product", "channel") if param in request.args}
-        return super(ProductRequiredSignoffsView, self).get(where=where)
-
-    @requirelogin
-    def _post(self, transaction, changed_by):
-        what = {
-            "product": connexion.request.get_json().get("product"),
-            "channel": connexion.request.get_json().get("channel"),
-            "role": connexion.request.get_json().get("role"),
-            "signoffs_required": int(connexion.request.get_json().get("signoffs_required")),
-        }
-        return super(ProductRequiredSignoffsView, self)._post(what, transaction, changed_by)
+def delete_required_signoffs(*args, **kwargs):
+    raise SignoffRequiredError("Required Signoffs cannot be directly deleted.")
 
 
-class ProductRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):
-    """/required_signoffs/product/revisions"""
+def _get_filters_rs_history_api(table):
+    history_table = table.history
+    query = get_input_dict()
+    where = [getattr(history_table, f) == query.get(f) for f in query]
+    where.append(history_table.data_version != null())
+    request = connexion.request
+    if hasattr(history_table, "channel"):
+        if request.args.get("channel"):
+            where.append(history_table.channel == request.args.get("channel"))
+    if hasattr(history_table, "product"):
+        where.append(history_table.product != null())
+        if request.args.get("product"):
+            where.append(history_table.product == request.args.get("product"))
+    if request.args.get("timestamp_from"):
+        where.append(history_table.timestamp >= int(request.args.get("timestamp_from")))
+    if request.args.get("timestamp_to"):
+        where.append(history_table.timestamp <= int(request.args.get("timestamp_to")))
+    return where
 
-    def __init__(self):
-        super(ProductRequiredSignoffsHistoryAPIView, self).__init__(dbo.productRequiredSignoffs, ["product", "channel", "role"])
 
-    def get(self):
-        input_dict = {
-            "product": connexion.request.args.get("product"),
-            "role": connexion.request.args.get("role"),
-            "channel": connexion.request.args.get("channel"),
-        }
-        return super(ProductRequiredSignoffsHistoryAPIView, self).get(input_dict)
+def get_rs_revisions(table, decisionFields, input_dict):
+    if not table.select({f: input_dict.get(f) for f in decisionFields}):
+        return problem(404, "Not Found", "Requested Required Signoff does not exist")
+
+    try:
+        page = int(connexion.request.args.get("page", 1))
+        limit = int(connexion.request.args.get("limit", 100))
+    except ValueError as msg:
+        log.warning("Bad input: %s", msg)
+        return problem(400, "Bad Request", str(msg))
+    offset = limit * (page - 1)
+
+    history_table = table.history
+    where_count = [history_table.data_version != null()]
+    for field in decisionFields:
+        where_count.append(getattr(history_table, field) == input_dict.get(field))
+    total_count = history_table.count(where=where_count)
+
+    where = [getattr(history_table, f) == input_dict.get(f) for f in decisionFields]
+    where.append(history_table.data_version != null())
+    revisions = history_table.select(where=where, limit=limit, offset=offset, order_by=[history_table.timestamp.desc()])
+
+    return jsonify(count=total_count, required_signoffs=revisions)
 
 
-class ProductRequiredSignoffsScheduledChangesView(ScheduledChangesView):
-    """/scheduled_changes/required_signoffs/product"""
+def get_all_rs_revisions(table):
+    try:
+        page = int(connexion.request.args.get("page", 1))
+        limit = int(connexion.request.args.get("limit", 100))
+    except ValueError as msg:
+        log.warning("Bad input: %s", msg)
+        return problem(400, "Bad Request", str(msg))
+    offset = limit * (page - 1)
 
-    def __init__(self):
-        super(ProductRequiredSignoffsScheduledChangesView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
+    where = _get_filters_rs_history_api(table)
+    history_table = table.history
+    total_count = history_table.count(where=where)
+    revisions = history_table.select(where=where, limit=limit, offset=offset, order_by=[history_table.timestamp.desc()])
 
-    def get(self):
-        where = {f"base_{param}": request.args[param] for param in ("product", "channel") if param in request.args}
-        return super(ProductRequiredSignoffsScheduledChangesView, self).get(where=where)
+    return jsonify(count=total_count, required_signoffs=revisions)
 
-    @requirelogin
-    def _post(self, transaction, changed_by):
-        if connexion.request.get_json().get("when", None) is None:
-            return problem(400, "Bad Request", "when cannot be set to null when scheduling a new change " "for a Product Required Signoff")
-        change_type = connexion.request.get_json().get("change_type")
 
-        what = {}
-        for field in connexion.request.get_json():
-            if change_type == "insert" and field == "data_version":
-                continue
-            what[field] = connexion.request.get_json()[field]
+def get_product_required_signoffs():
+    where = {param: request.args[param] for param in ("product", "channel") if param in request.args}
+    return get_required_signoffs(required_signoffs=dbo.productRequiredSignoffs, where=where)
 
-        if change_type == "update":
-            for field in ["signoffs_required", "data_version"]:
-                if not what.get(field, None):
-                    return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
-                else:
-                    what[field] = int(what[field])
 
-        elif change_type == "insert":
-            if not what.get("signoffs_required", None):
-                return problem(400, "Bad Request", "Missing field", ext={"exception": "signoffs_required is missing"})
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def post_product_required_signoffs(signoff, transaction, changed_by):
+    what = {
+        "product": signoff.get("product"),
+        "channel": signoff.get("channel"),
+        "role": signoff.get("role"),
+        "signoffs_required": int(signoff.get("signoffs_required")),
+    }
+    return post_required_signoffs(
+        required_signoffs=dbo.productRequiredSignoffs, decisionFields=["product", "channel", "role"], what=what, transaction=transaction, changed_by=changed_by
+    )
+
+
+@handleGeneralExceptions
+def delete_product_required_signoffs():
+    return delete_required_signoffs()
+
+
+def get_product_rs_revisions():
+    input_dict = {
+        "product": connexion.request.args.get("product"),
+        "role": connexion.request.args.get("role"),
+        "channel": connexion.request.args.get("channel"),
+    }
+    return get_rs_revisions(dbo.productRequiredSignoffs, ["product", "channel", "role"], input_dict)
+
+
+def get_all_product_rs_revisions():
+    return get_all_rs_revisions(dbo.productRequiredSignoffs)
+
+
+def get_product_rs_scheduled_changes():
+    where = {f"base_{param}": request.args[param] for param in ("product", "channel") if param in request.args}
+    return get_scheduled_changes(table=dbo.productRequiredSignoffs, where=where)
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def post_product_rs_scheduled_changes(sc_rs_product_body, transaction, changed_by):
+    if sc_rs_product_body.get("when", None) is None:
+        return problem(400, "Bad Request", "when cannot be set to null when scheduling a new change " "for a Product Required Signoff")
+    change_type = sc_rs_product_body.get("change_type")
+
+    what = {}
+    for field in sc_rs_product_body:
+        if change_type == "insert" and field == "data_version":
+            continue
+        what[field] = sc_rs_product_body[field]
+
+    if change_type == "update":
+        for field in ["signoffs_required", "data_version"]:
+            if not what.get(field, None):
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
             else:
-                what["signoffs_required"] = int(what["signoffs_required"])
+                what[field] = int(what[field])
 
-        elif change_type == "delete":
-            if not what.get("data_version", None):
-                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
-            else:
-                what["data_version"] = int(what["data_version"])
-
-        return super(ProductRequiredSignoffsScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
-
-
-class ProductRequiredSignoffScheduledChangeView(ScheduledChangeView):
-    """/scheduled_changes/required_signoffs/product/<int:sc_id>"""
-
-    def __init__(self):
-        super(ProductRequiredSignoffScheduledChangeView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        # TODO: modify UI and clients to stop sending 'change_type' in request body
-        sc_rs_product = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
-        if sc_rs_product:
-            change_type = sc_rs_product[0]["change_type"]
+    elif change_type == "insert":
+        if not what.get("signoffs_required", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "signoffs_required is missing"})
         else:
-            return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for product required signoff found for given sc_id"})
-        what = {}
-        for field in connexion.request.get_json():
-            if (
-                (change_type == "insert" and field not in ["when", "product", "channel", "role", "signoffs_required"])
-                or (change_type == "update" and field not in ["when", "signoffs_required", "data_version"])
-                or (change_type == "delete" and field not in ["when", "data_version"])
-            ):
-                continue
-
-            what[field] = connexion.request.get_json()[field]
-
-        if change_type in ["update", "delete"] and not what.get("data_version", None):
-            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
-
-        if what.get("signoffs_required", None):
             what["signoffs_required"] = int(what["signoffs_required"])
 
-        return super(ProductRequiredSignoffScheduledChangeView, self)._post(
-            sc_id, what, transaction, changed_by, connexion.request.get_json().get("sc_data_version", None)
-        )
-
-    @requirelogin
-    def _delete(self, sc_id, transaction, changed_by):
-        return super(ProductRequiredSignoffScheduledChangeView, self)._delete(sc_id, transaction, changed_by)
-
-
-class EnactProductRequiredSignoffScheduledChangeView(EnactScheduledChangeView):
-    """/scheduled_changes/required_signoffs/product/<int:sc_id>/enact"""
-
-    def __init__(self):
-        super(EnactProductRequiredSignoffScheduledChangeView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(EnactProductRequiredSignoffScheduledChangeView, self)._post(sc_id, transaction, changed_by)
-
-
-class ProductRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
-    """/scheduled_changes/required_signoffs/product/<int:sc_id>/signoffs"""
-
-    def __init__(self):
-        super(ProductRequiredSignoffScheduledChangeSignoffsView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
-
-
-class ProductRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):
-    """/scheduled_changes/required_signoffs/product/<int:sc_id>/revisions"""
-
-    def __init__(self):
-        super(ProductRequiredSignoffScheduledChangeHistoryView, self).__init__("product_req_signoffs", dbo.productRequiredSignoffs)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(ProductRequiredSignoffScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
-
-
-class PermissionsRequiredSignoffsView(RequiredSignoffsView):
-    """/required_signoffs/permissions"""
-
-    def __init__(self):
-        super(PermissionsRequiredSignoffsView, self).__init__(dbo.permissionsRequiredSignoffs, ["product", "role"])
-
-    def get(self):
-        where = {param: request.args[param] for param in ("product",) if param in request.args}
-        return super(PermissionsRequiredSignoffsView, self).get(where=where)
-
-    @requirelogin
-    def _post(self, transaction, changed_by):
-        what = {
-            "product": connexion.request.get_json().get("product"),
-            "role": connexion.request.get_json().get("role"),
-            "signoffs_required": int(connexion.request.get_json().get("signoffs_required")),
-        }
-        return super(PermissionsRequiredSignoffsView, self)._post(what, transaction, changed_by)
-
-
-class PermissionsRequiredSignoffsHistoryAPIView(RequiredSignoffsHistoryAPIView):
-    """/required_signoffs/permissions/revisions"""
-
-    def __init__(self):
-        super(PermissionsRequiredSignoffsHistoryAPIView, self).__init__(dbo.permissionsRequiredSignoffs, ["product", "role"])
-
-    def get(self):
-        input_dict = {"product": connexion.request.args.get("product"), "role": connexion.request.args.get("role")}
-        return super(PermissionsRequiredSignoffsHistoryAPIView, self).get(input_dict)
-
-
-class PermissionsRequiredSignoffsScheduledChangesView(ScheduledChangesView):
-    """/scheduled_changes/required_signoffs/permissions"""
-
-    def __init__(self):
-        super(PermissionsRequiredSignoffsScheduledChangesView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
-
-    def get(self):
-        where = {f"base_{param}": request.args[param] for param in ("product",) if param in request.args}
-        return super(PermissionsRequiredSignoffsScheduledChangesView, self).get(where=where)
-
-    @requirelogin
-    def _post(self, transaction, changed_by):
-        if connexion.request.get_json().get("when", None) is None:
-            return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permissions Required Signoff")
-        change_type = connexion.request.get_json().get("change_type")
-
-        what = {}
-        for field in connexion.request.get_json():
-            if change_type == "insert" and field == "data_version":
-                continue
-            what[field] = connexion.request.get_json()[field]
-
-        if change_type == "update":
-            for field in ["signoffs_required", "data_version"]:
-                if not what.get(field, None):
-                    return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
-                else:
-                    what[field] = int(what[field])
-
-        elif change_type == "insert":
-            if not what.get("signoffs_required", None):
-                return problem(400, "Bad Request", "Missing field", ext={"exception": "signoffs_required is missing"})
-            else:
-                what["signoffs_required"] = int(what["signoffs_required"])
-
-        elif change_type == "delete":
-            if not what.get("data_version", None):
-                return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
-            else:
-                what["data_version"] = int(what["data_version"])
-
-        return super(PermissionsRequiredSignoffsScheduledChangesView, self)._post(what, transaction, changed_by, change_type)
-
-
-class PermissionsRequiredSignoffScheduledChangeView(ScheduledChangeView):
-    """/scheduled_changes/required_signoffs/permissions/<int:sc_id>"""
-
-    def __init__(self):
-        super(PermissionsRequiredSignoffScheduledChangeView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        # TODO: modify UI and clients to stop sending 'change_type' in request body
-        sc_rs_permission = self.sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
-        if sc_rs_permission:
-            change_type = sc_rs_permission[0]["change_type"]
-        else:
-            return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for permission required " "signoff found for given sc_id"})
-        what = {}
-        for field in connexion.request.get_json():
-            if (
-                (change_type == "insert" and field not in ["when", "product", "role", "signoffs_required"])
-                or (change_type == "update" and field not in ["when", "signoffs_required", "data_version"])
-                or (change_type == "delete" and field not in ["when", "data_version"])
-            ):
-                continue
-            what[field] = connexion.request.get_json()[field]
-
-        if change_type in ["update", "delete"] and not what.get("data_version", None):
+    elif change_type == "delete":
+        if not what.get("data_version", None):
             return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+        else:
+            what["data_version"] = int(what["data_version"])
 
-        if what.get("signoffs_required", None):
+    return post_scheduled_changes(
+        sc_table=dbo.productRequiredSignoffs.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type
+    )
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def post_product_rs_scheduled_change(sc_id, sc_product_rs_body, transaction, changed_by):
+    # TODO: modify UI and clients to stop sending 'change_type' in request body
+    sc_table = dbo.productRequiredSignoffs.scheduled_changes
+    sc_rs_product = sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
+    if sc_rs_product:
+        change_type = sc_rs_product[0]["change_type"]
+    else:
+        return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for product required signoff found for given sc_id"})
+    what = {}
+    for field in sc_product_rs_body:
+        if (
+            (change_type == "insert" and field not in ["when", "product", "channel", "role", "signoffs_required"])
+            or (change_type == "update" and field not in ["when", "signoffs_required", "data_version"])
+            or (change_type == "delete" and field not in ["when", "data_version"])
+        ):
+            continue
+
+        what[field] = sc_product_rs_body[field]
+
+    if change_type in ["update", "delete"] and not what.get("data_version", None):
+        return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+
+    if what.get("signoffs_required", None):
+        what["signoffs_required"] = int(what["signoffs_required"])
+
+    return post_scheduled_change(
+        sc_table=sc_table,
+        sc_id=sc_id,
+        what=what,
+        transaction=transaction,
+        changed_by=changed_by,
+        old_sc_data_version=sc_product_rs_body.get("sc_data_version", None),
+    )
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def delete_product_rs_scheduled_change(sc_id, data_version, transaction, changed_by):
+    return delete_scheduled_change(
+        sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
+    )
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def post_product_rs_enact_scheduled_change(sc_id, transaction, changed_by):
+    return post_enact_scheduled_change(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def post_product_rs_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
+    return post_signoffs_scheduled_change(
+        signoffs_table=dbo.productRequiredSignoffs.scheduled_changes.signoffs,
+        sc_id=sc_id,
+        what=sc_post_signoffs_body,
+        transaction=transaction,
+        changed_by=changed_by,
+    )
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def delete_product_rs_signoffs_scheduled_change(sc_id, transaction, changed_by):
+    return delete_signoffs_scheduled_change(
+        signoffs_table=dbo.productRequiredSignoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
+    )
+
+
+def get_product_rs_scheduled_change_history(sc_id):
+    return get_scheduled_change_history(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id)
+
+
+def get_all_product_rs_scheduled_change_history():
+    return get_all_scheduled_change_history(sc_table=dbo.productRequiredSignoffs.scheduled_changes)
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def post_product_rs_scheduled_change_history(sc_id, transaction, changed_by):
+    return post_scheduled_change_history(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
+
+
+def get_permissions_required_signoffs():
+    where = {param: request.args[param] for param in ("product",) if param in request.args}
+    return get_required_signoffs(required_signoffs=dbo.permissionsRequiredSignoffs, where=where)
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def post_permissions_required_signoffs(signoff, transaction, changed_by):
+    what = {
+        "product": signoff.get("product"),
+        "role": signoff.get("role"),
+        "signoffs_required": int(signoff.get("signoffs_required")),
+    }
+    return post_required_signoffs(
+        required_signoffs=dbo.permissionsRequiredSignoffs, decisionFields=["product", "role"], what=what, transaction=transaction, changed_by=changed_by
+    )
+
+
+@handleGeneralExceptions
+def delete_permissions_required_signoffs():
+    return delete_required_signoffs()
+
+
+def get_permissions_rs_revisions():
+    input_dict = {"product": connexion.request.args.get("product"), "role": connexion.request.args.get("role")}
+    return get_rs_revisions(dbo.permissionsRequiredSignoffs, ["product", "role"], input_dict)
+
+
+def get_all_permissions_rs_revisions():
+    return get_all_rs_revisions(dbo.permissionsRequiredSignoffs)
+
+
+def get_permissions_rs_scheduled_changes():
+    where = {f"base_{param}": request.args[param] for param in ("product",) if param in request.args}
+    return get_scheduled_changes(table=dbo.permissionsRequiredSignoffs, where=where)
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def post_permissions_rs_scheduled_changes(sc_rs_permission_body, transaction, changed_by):
+    if sc_rs_permission_body.get("when", None) is None:
+        return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permissions Required Signoff")
+    change_type = sc_rs_permission_body.get("change_type")
+
+    what = {}
+    for field in sc_rs_permission_body:
+        if change_type == "insert" and field == "data_version":
+            continue
+        what[field] = sc_rs_permission_body[field]
+
+    if change_type == "update":
+        for field in ["signoffs_required", "data_version"]:
+            if not what.get(field, None):
+                return problem(400, "Bad Request", "Missing field", ext={"exception": "%s is missing" % field})
+            else:
+                what[field] = int(what[field])
+
+    elif change_type == "insert":
+        if not what.get("signoffs_required", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "signoffs_required is missing"})
+        else:
             what["signoffs_required"] = int(what["signoffs_required"])
 
-        return super(PermissionsRequiredSignoffScheduledChangeView, self)._post(
-            sc_id, what, transaction, changed_by, connexion.request.get_json().get("sc_data_version", None)
-        )
+    elif change_type == "delete":
+        if not what.get("data_version", None):
+            return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+        else:
+            what["data_version"] = int(what["data_version"])
 
-    @requirelogin
-    def _delete(self, sc_id, transaction, changed_by):
-        return super(PermissionsRequiredSignoffScheduledChangeView, self)._delete(sc_id, transaction, changed_by)
-
-
-class EnactPermissionsRequiredSignoffScheduledChangeView(EnactScheduledChangeView):
-    """/scheduled_changes/required_signoffs/permissions/<int:sc_id>/enact"""
-
-    def __init__(self):
-        super(EnactPermissionsRequiredSignoffScheduledChangeView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
-
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(EnactPermissionsRequiredSignoffScheduledChangeView, self)._post(sc_id, transaction, changed_by)
+    return post_scheduled_changes(
+        sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type
+    )
 
 
-class PermissionsRequiredSignoffScheduledChangeSignoffsView(SignoffsView):
-    """/scheduled_changes/required_signoffs/permissions/<int:sc_id>/signoffs"""
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def post_permissions_rs_scheduled_change(sc_id, sc_permission_rs_body, transaction, changed_by):
+    # TODO: modify UI and clients to stop sending 'change_type' in request body
+    sc_table = dbo.permissionsRequiredSignoffs.scheduled_changes
+    sc_rs_permission = sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
+    if sc_rs_permission:
+        change_type = sc_rs_permission[0]["change_type"]
+    else:
+        return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for permission required " "signoff found for given sc_id"})
+    what = {}
+    for field in sc_permission_rs_body:
+        if (
+            (change_type == "insert" and field not in ["when", "product", "role", "signoffs_required"])
+            or (change_type == "update" and field not in ["when", "signoffs_required", "data_version"])
+            or (change_type == "delete" and field not in ["when", "data_version"])
+        ):
+            continue
+        what[field] = sc_permission_rs_body[field]
 
-    def __init__(self):
-        super(PermissionsRequiredSignoffScheduledChangeSignoffsView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
+    if change_type in ["update", "delete"] and not what.get("data_version", None):
+        return problem(400, "Bad Request", "Missing field", ext={"exception": "data_version is missing"})
+
+    if what.get("signoffs_required", None):
+        what["signoffs_required"] = int(what["signoffs_required"])
+
+    return post_scheduled_change(
+        sc_table=sc_table,
+        sc_id=sc_id,
+        what=what,
+        transaction=transaction,
+        changed_by=changed_by,
+        old_sc_data_version=sc_permission_rs_body.get("sc_data_version", None),
+    )
 
 
-class PermissionsRequiredSignoffScheduledChangeHistoryView(ScheduledChangeHistoryView):
-    """/scheduled_changes/required_signoffs/permissions/<int:sc_id>/revisions"""
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def delete_permissions_rs_scheduled_change(sc_id, data_version, transaction, changed_by):
+    return delete_scheduled_change(
+        sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
+    )
 
-    def __init__(self):
-        super(PermissionsRequiredSignoffScheduledChangeHistoryView, self).__init__("permissions_req_signoffs", dbo.permissionsRequiredSignoffs)
 
-    @requirelogin
-    def _post(self, sc_id, transaction, changed_by):
-        return super(PermissionsRequiredSignoffScheduledChangeHistoryView, self)._post(sc_id, transaction, changed_by)
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def post_permissions_rs_enact_scheduled_change(sc_id, transaction, changed_by):
+    return post_enact_scheduled_change(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def post_permissions_rs_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
+    return post_signoffs_scheduled_change(
+        signoffs_table=dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs,
+        sc_id=sc_id,
+        what=sc_post_signoffs_body,
+        transaction=transaction,
+        changed_by=changed_by,
+    )
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def delete_permissions_rs_signoffs_scheduled_change(sc_id, transaction, changed_by):
+    return delete_signoffs_scheduled_change(
+        signoffs_table=dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
+    )
+
+
+def get_permissions_rs_scheduled_change_history(sc_id):
+    return get_scheduled_change_history(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id)
+
+
+def get_all_permissions_rs_scheduled_change_history():
+    return get_all_scheduled_change_history(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes)
+
+
+@requirelogin
+@transactionHandler
+@handleGeneralExceptions
+def post_permissions_rs_scheduled_change_history(sc_id, transaction, changed_by):
+    return post_scheduled_change_history(
+        sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by
+    )
