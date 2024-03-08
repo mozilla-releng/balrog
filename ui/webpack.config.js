@@ -71,7 +71,7 @@ module.exports = {
         include: ["/app/src", "/app/test"],
         use: [
           {
-            loader: "/app/node_modules/eslint-loader/dist/cjs.js",
+            loader: require.resolve('eslint-loader'),
             options: {
               cache: true,
               cwd: "/app",
@@ -294,7 +294,7 @@ module.exports = {
       {
         use: [
           {
-            loader: "/app/node_modules/html-loader/index.js",
+            loader: require.resolve('html-loader'),
             options: {
               attrs: ["img:src", "link:href"],
             },
@@ -305,7 +305,7 @@ module.exports = {
         include: ["/app/src", "/app/test"],
         use: [
           {
-            loader: "/app/node_modules/babel-loader/lib/index.js",
+            loader: require.resolve('babel-loader'),
             options: {
               cacheDirectory: true,
               babelrc: false,
@@ -350,10 +350,10 @@ module.exports = {
           {
             use: [
               {
-                loader: "/app/node_modules/style-loader/dist/cjs.js",
+                loader: require.resolve('style-loader'),
               },
               {
-                loader: "/app/node_modules/css-loader/dist/cjs.js",
+                loader: require.resolve('css-loader'),
                 options: {
                   importLoaders: 0,
                   modules: true,
@@ -364,10 +364,10 @@ module.exports = {
           {
             use: [
               {
-                loader: "/app/node_modules/style-loader/dist/cjs.js",
+                loader: require.resolve('style-loader'),
               },
               {
-                loader: "/app/node_modules/css-loader/dist/cjs.js",
+                loader: require.resolve('css-loader'),
                 options: {
                   importLoaders: 0,
                 },
@@ -379,7 +379,7 @@ module.exports = {
       {
         use: [
           {
-            loader: "/app/node_modules/file-loader/dist/cjs.js",
+            loader: require.resolve('file-loader'),
             options: {
               name: "assets/[name].[ext]",
             },
@@ -389,7 +389,7 @@ module.exports = {
       {
         use: [
           {
-            loader: "/app/node_modules/url-loader/dist/cjs.js",
+            loader: require.resolve('url-loader'),
             options: {
               limit: 8192,
               name: "assets/[name].[ext]",
@@ -400,7 +400,7 @@ module.exports = {
       {
         use: [
           {
-            loader: "/app/node_modules/worker-loader/dist/cjs.js",
+            loader: require.resolve('worker-loader'),
           },
         ],
       },
