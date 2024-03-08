@@ -1,12 +1,16 @@
 const webpack = require("webpack");
 
+const DEFAULT_HOST = "localhost";
+const DEFAULT_PORT = 9000;
+const port = process.env.PORT || DEFAULT_PORT;
+
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   mode: "development",
   devtool: "cheap-module-eval-source-map",
   target: "web",
-  context: "/app",
+  context: __dirname,
   stats: {
     children: false,
     entrypoints: false,
@@ -18,7 +22,7 @@ module.exports = {
     tls: "empty",
   },
   output: {
-    path: "/app/build",
+    path: `${__dirname}/build`,
     publicPath: "/",
     filename: "assets/[name].js",
     globalObject: "this",
@@ -39,7 +43,7 @@ module.exports = {
     ],
   },
   devServer: {
-    port: "9000",
+    port,
     hot: true,
     historyApiFallback: {
       disableDotRule: true,
@@ -51,7 +55,7 @@ module.exports = {
       timings: true,
       warnings: true,
     },
-    host: "0.0.0.0",
+    host: process.env.HOST || DEFAULT_HOST,
     https: true,
     headers: {
       "Content-Security-Policy":
@@ -68,23 +72,24 @@ module.exports = {
     rules: [
       {
         enforce: "pre",
-        include: ["/app/src", "/app/test"],
+        test: /\.(js|jsx)$/,
+        include: [`${__dirname}/src`, `${__dirname}/test`],
         use: [
           {
-            loader: require.resolve('eslint-loader'),
+            loader: "eslint-loader",
             options: {
               cache: true,
-              cwd: "/app",
+              cwd: __dirname,
               emitWarning: true,
               failOnError: false,
               formatter: "codeframe",
               useEslintrc: false,
               baseConfig: {
-                parser: "/app/node_modules/babel-eslint/lib/index.js",
+                parser: "babel-eslint",
                 root: true,
                 extends: [
-                  "/app/node_modules/eslint-config-airbnb/index.js",
-                  "/app/node_modules/eslint-config-airbnb/hooks.js",
+                  "eslint-config-airbnb",
+                  "eslint-config-airbnb/hooks",
                   "prettier",
                   "plugin:react/recommended",
                   "prettier/react",
@@ -292,9 +297,10 @@ module.exports = {
         ],
       },
       {
+        test: /\.html$/,
         use: [
           {
-            loader: require.resolve('html-loader'),
+            loader: "html-loader",
             options: {
               attrs: ["img:src", "link:href"],
             },
@@ -302,17 +308,18 @@ module.exports = {
         ],
       },
       {
-        include: ["/app/src", "/app/test"],
+        include: [`${__dirname}/src`, `${__dirname}/test`],
+        test: /\.(js|jsx)$/,
         use: [
           {
-            loader: require.resolve('babel-loader'),
+            loader: "babel-loader",
             options: {
               cacheDirectory: true,
               babelrc: false,
               configFile: false,
               presets: [
                 [
-                  "/app/node_modules/@babel/preset-env/lib/index.js",
+                  "@babel/preset-env",
                   {
                     debug: false,
                     useBuiltIns: false,
@@ -330,7 +337,7 @@ module.exports = {
                   },
                 ],
                 [
-                  "/app/node_modules/@babel/preset-react/lib/index.js",
+                  "@babel/preset-react",
                   {
                     development: true,
                     useSpread: true,
@@ -338,8 +345,8 @@ module.exports = {
                 ],
               ],
               plugins: [
-                "/app/node_modules/@babel/plugin-syntax-dynamic-import/lib/index.js",
-                "/app/node_modules/react-hot-loader/babel.js",
+                "@babel/plugin-syntax-dynamic-import",
+                "react-hot-loader/babel",
               ],
             },
           },
@@ -348,12 +355,13 @@ module.exports = {
       {
         oneOf: [
           {
+            test: /\.css$/i,
             use: [
               {
-                loader: require.resolve('style-loader'),
+                loader: "style-loader",
               },
               {
-                loader: require.resolve('css-loader'),
+                loader: "css-loader",
                 options: {
                   importLoaders: 0,
                   modules: true,
@@ -362,12 +370,13 @@ module.exports = {
             ],
           },
           {
+            test: /\.css$/i,
             use: [
               {
-                loader: require.resolve('style-loader'),
+                loader: "style-loader",
               },
               {
-                loader: require.resolve('css-loader'),
+                loader: "css-loader",
                 options: {
                   importLoaders: 0,
                 },
@@ -377,30 +386,23 @@ module.exports = {
         ],
       },
       {
+        test: /\.(png|jpe?g|gif|svg)$/i,
         use: [
           {
-            loader: require.resolve('file-loader'),
-            options: {
-              name: "assets/[name].[ext]",
-            },
-          },
-        ],
-      },
-      {
-        use: [
-          {
-            loader: require.resolve('url-loader'),
+            loader: "url-loader",
             options: {
               limit: 8192,
               name: "assets/[name].[ext]",
+              fallback: require.resolve("file-loader"),
             },
           },
         ],
       },
       {
+        test: /\.worker\.js$/,
         use: [
           {
-            loader: require.resolve('worker-loader'),
+            loader: "worker-loader",
           },
         ],
       },
@@ -416,8 +418,8 @@ module.exports = {
   },
   plugins: [
     new webpack.EnvironmentPlugin({
-      HOST: "localhost",
-      PORT: 9000,
+      HOST: DEFAULT_HOST,
+      PORT: DEFAULT_PORT,
       BALROG_ROOT_URL: "https://localhost:8010",
       AUTH0_CLIENT_ID: "GlZhJQfx52b7MLQ19AjuTJHieiB4oh1j",
       AUTH0_DOMAIN: "balrog-localdev.auth0.com",
@@ -431,7 +433,7 @@ module.exports = {
         "https://www.googleapis.com/storage/v1/b/balrog-prod-release-history-v1/o",
     }),
     new HtmlWebpackPlugin({
-      template: "src/index.html",
+      template: `${__dirname}/src/index.html`,
       templateContent: false,
       filename: "index.html",
       publicPath: "auto",
@@ -439,7 +441,7 @@ module.exports = {
       inject: "body",
       scriptLoading: "blocking",
       compile: true,
-      favicon: "/app/src/images/favicon.png",
+      favicon: `${__dirname}/src/images/favicon.png`,
       minify: "auto",
       cache: true,
       showErrors: true,
@@ -455,9 +457,9 @@ module.exports = {
       appMountId: "root",
       lang: "en",
     }),
-    new webpack.HotModuleReplacementPlugin({}),
+    new webpack.HotModuleReplacementPlugin(),
   ],
   entry: {
-    index: ["/app/src/index"],
+    index: [`${__dirname}/src/index`],
   },
 };
