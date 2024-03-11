@@ -1,3 +1,3 @@
-const neutrino = require('neutrino');
-
-module.exports = neutrino().eslintrc();
+module.exports = {
+  extends: "webpack"
+}
