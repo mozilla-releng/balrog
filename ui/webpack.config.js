@@ -69,6 +69,9 @@ const eslintConfig = {
     parserOptions: {
       ecmaVersion: 2018,
       sourceType: "module",
+      ecmaFeatures: {
+        jsx: true
+      }
     },
     plugins: ["babel", "react", "react-hooks"],
     settings: {
