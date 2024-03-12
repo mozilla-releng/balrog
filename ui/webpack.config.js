@@ -5,6 +5,224 @@ const DEFAULT_PORT = 9000;
 const port = process.env.PORT || DEFAULT_PORT;
 
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const ESLintPlugin = require("eslint-webpack-plugin");
+const eslintConfig = {
+  cache: true,
+  cwd: __dirname,
+  emitWarning: true,
+  failOnError: false,
+  formatter: "codeframe",
+  useEslintrc: false,
+  baseConfig: {
+    parser: "babel-eslint",
+    root: true,
+    extends: [
+      "eslint-config-airbnb",
+      "eslint-config-airbnb/hooks",
+      "prettier",
+      "plugin:react/recommended",
+      "prettier/react",
+      "plugin:jest/recommended",
+    ],
+    rules: {
+      "react/state-in-constructor": ["error", "never"],
+      "new-cap": "off",
+      "no-invalid-this": "off",
+      "object-curly-spacing": "off",
+      semi: "off",
+      "no-unused-expressions": "off",
+      "babel/new-cap": [
+        "error",
+        {
+          newIsCap: true,
+          newIsCapExceptions: [],
+          capIsNew: false,
+          capIsNewExceptions: [
+            "Immutable.Map",
+            "Immutable.Set",
+            "Immutable.List",
+          ],
+        },
+      ],
+      "babel/no-invalid-this": "off",
+      "babel/object-curly-spacing": ["error", "always"],
+      "babel/semi": ["error", "always"],
+      "babel/no-unused-expressions": [
+        "error",
+        {
+          allowShortCircuit: false,
+          allowTernary: false,
+          allowTaggedTemplates: false,
+        },
+      ],
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+      // From @mozilla-frontend-infra/react-lint
+      "import/no-extraneous-dependencies": "off",
+      "max-len": [
+        "error",
+        80,
+        2,
+        {
+          ignoreUrls: true,
+          ignoreComments: false,
+          ignoreStrings: true,
+          ignoreTemplateLiterals: true,
+        },
+      ],
+      "class-methods-use-this": "off",
+      "no-console": "off",
+      "no-extra-parens": "off",
+      "prefer-const": "error",
+      "prettier/prettier": [
+        "error",
+        {
+          singleQuote: true,
+          trailingComma: "es5",
+          bracketSpacing: true,
+          jsxBracketSameLine: true,
+          tabWidth: 2,
+          semi: true,
+        },
+      ],
+      "padding-line-between-statements": [
+        "error",
+        {
+          blankLine: "always",
+          prev: ["const", "let", "var"],
+          next: "*",
+        },
+        {
+          blankLine: "never",
+          prev: ["const", "let", "var"],
+          next: ["const", "let", "var"],
+        },
+        {
+          blankLine: "always",
+          prev: ["cjs-import"],
+          next: "*",
+        },
+        {
+          blankLine: "always",
+          prev: ["import"],
+          next: "*",
+        },
+        {
+          blankLine: "always",
+          prev: "*",
+          next: ["cjs-export"],
+        },
+        {
+          blankLine: "always",
+          prev: "*",
+          next: ["export"],
+        },
+        {
+          blankLine: "never",
+          prev: ["import"],
+          next: ["import"],
+        },
+        {
+          blankLine: "never",
+          prev: ["cjs-import"],
+          next: ["cjs-import"],
+        },
+        {
+          blankLine: "any",
+          prev: ["export"],
+          next: ["export"],
+        },
+        {
+          blankLine: "any",
+          prev: ["cjs-export"],
+          next: ["cjs-export"],
+        },
+        {
+          blankLine: "always",
+          prev: "multiline-block-like",
+          next: "*",
+        },
+        {
+          blankLine: "always",
+          prev: "*",
+          next: ["if", "do", "for", "switch", "try", "while"],
+        },
+        {
+          blankLine: "always",
+          prev: "*",
+          next: "return",
+        },
+      ],
+      "consistent-return": "off",
+      "no-unused-expressions": "off",
+      "no-shadow": "off",
+      "no-return-assign": "off",
+      "babel/new-cap": "off",
+      "no-mixed-operators": "off",
+      "jsx-quotes": ["error", "prefer-double"],
+      "jsx-a11y/anchor-is-valid": [
+        "error",
+        {
+          components: ["Link"],
+          specialLink: ["to"],
+        },
+      ],
+      "jsx-a11y/click-events-have-key-events": "off",
+      "jsx-a11y/no-static-element-interactions": "off",
+      "react/jsx-indent-props": ["error", 2],
+      "react/jsx-pascal-case": "error",
+      "react/jsx-tag-spacing": [
+        "error",
+        {
+          beforeSelfClosing: "always",
+        },
+      ],
+      "react/default-props-match-prop-types": "off",
+      "react/jsx-closing-bracket-location": "off",
+      "react/destructuring-assignment": "off",
+      "react/jsx-handler-names": [
+        "error",
+        {
+          eventHandlerPrefix: "handle",
+          eventHandlerPropPrefix: "on",
+        },
+      ],
+      "react/jsx-indent": "off",
+      "react/prefer-stateless-function": "off",
+      "react/prop-types": "off",
+      "react/sort-comp": "off",
+      "react/forbid-prop-types": "off",
+      "react/no-unused-prop-types": "off",
+      "react/require-default-props": "off",
+      "react/jsx-fragments": ["error", "element"],
+      "react/jsx-props-no-spreading": "off",
+      "react/jsx-no-bind": "off",
+      "react-hooks/exhaustive-deps": "off",
+      "import/no-cycle": "off",
+    },
+    env: {
+      es6: true,
+      browser: true,
+      commonjs: true,
+    },
+    globals: {
+      process: true,
+    },
+    parserOptions: {
+      ecmaVersion: 2018,
+      sourceType: "module",
+      ecmaFeatures: {
+        jsx: true
+      }
+    },
+    plugins: ["babel", "react", "react-hooks", "prettier"],
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
+  },
+}
 
 module.exports = {
   mode: "development",
@@ -70,232 +288,6 @@ module.exports = {
   },
   module: {
     rules: [
-      {
-        enforce: "pre",
-        test: /\.(js|jsx)$/,
-        include: [`${__dirname}/src`, `${__dirname}/test`],
-        use: [
-          {
-            loader: "eslint-loader",
-            options: {
-              cache: true,
-              cwd: __dirname,
-              emitWarning: true,
-              failOnError: false,
-              formatter: "codeframe",
-              useEslintrc: false,
-              baseConfig: {
-                parser: "babel-eslint",
-                root: true,
-                extends: [
-                  "eslint-config-airbnb",
-                  "eslint-config-airbnb/hooks",
-                  "prettier",
-                  "plugin:react/recommended",
-                  "prettier/react",
-                  "plugin:jest/recommended",
-                ],
-                rules: {
-                  "react/state-in-constructor": ["error", "never"],
-                  "new-cap": "off",
-                  "no-invalid-this": "off",
-                  "object-curly-spacing": "off",
-                  semi: "off",
-                  "no-unused-expressions": "off",
-                  "babel/new-cap": [
-                    "error",
-                    {
-                      newIsCap: true,
-                      newIsCapExceptions: [],
-                      capIsNew: false,
-                      capIsNewExceptions: [
-                        "Immutable.Map",
-                        "Immutable.Set",
-                        "Immutable.List",
-                      ],
-                    },
-                  ],
-                  "babel/no-invalid-this": "off",
-                  "babel/object-curly-spacing": ["error", "always"],
-                  "babel/semi": ["error", "always"],
-                  "babel/no-unused-expressions": [
-                    "error",
-                    {
-                      allowShortCircuit: false,
-                      allowTernary: false,
-                      allowTaggedTemplates: false,
-                    },
-                  ],
-                  "react-hooks/rules-of-hooks": "error",
-                  "react-hooks/exhaustive-deps": "warn",
-                },
-                env: {
-                  es6: true,
-                  browser: true,
-                  commonjs: true,
-                },
-                globals: {
-                  process: true,
-                },
-                parserOptions: {
-                  ecmaVersion: 2018,
-                  sourceType: "module",
-                },
-                plugins: ["babel", "react", "react-hooks"],
-                settings: {
-                  react: {
-                    version: "detect",
-                  },
-                },
-              },
-              plugins: ["prettier"],
-              rules: {
-                "import/no-extraneous-dependencies": "off",
-                "max-len": [
-                  "error",
-                  80,
-                  2,
-                  {
-                    ignoreUrls: true,
-                    ignoreComments: false,
-                    ignoreStrings: true,
-                    ignoreTemplateLiterals: true,
-                  },
-                ],
-                "class-methods-use-this": "off",
-                "no-console": "off",
-                "no-extra-parens": "off",
-                "prefer-const": "error",
-                "prettier/prettier": [
-                  "error",
-                  {
-                    singleQuote: true,
-                    trailingComma: "es5",
-                    bracketSpacing: true,
-                    jsxBracketSameLine: true,
-                    tabWidth: 2,
-                    semi: true,
-                  },
-                ],
-                "padding-line-between-statements": [
-                  "error",
-                  {
-                    blankLine: "always",
-                    prev: ["const", "let", "var"],
-                    next: "*",
-                  },
-                  {
-                    blankLine: "never",
-                    prev: ["const", "let", "var"],
-                    next: ["const", "let", "var"],
-                  },
-                  {
-                    blankLine: "always",
-                    prev: ["cjs-import"],
-                    next: "*",
-                  },
-                  {
-                    blankLine: "always",
-                    prev: ["import"],
-                    next: "*",
-                  },
-                  {
-                    blankLine: "always",
-                    prev: "*",
-                    next: ["cjs-export"],
-                  },
-                  {
-                    blankLine: "always",
-                    prev: "*",
-                    next: ["export"],
-                  },
-                  {
-                    blankLine: "never",
-                    prev: ["import"],
-                    next: ["import"],
-                  },
-                  {
-                    blankLine: "never",
-                    prev: ["cjs-import"],
-                    next: ["cjs-import"],
-                  },
-                  {
-                    blankLine: "any",
-                    prev: ["export"],
-                    next: ["export"],
-                  },
-                  {
-                    blankLine: "any",
-                    prev: ["cjs-export"],
-                    next: ["cjs-export"],
-                  },
-                  {
-                    blankLine: "always",
-                    prev: "multiline-block-like",
-                    next: "*",
-                  },
-                  {
-                    blankLine: "always",
-                    prev: "*",
-                    next: ["if", "do", "for", "switch", "try", "while"],
-                  },
-                  {
-                    blankLine: "always",
-                    prev: "*",
-                    next: "return",
-                  },
-                ],
-                "consistent-return": "off",
-                "no-unused-expressions": "off",
-                "no-shadow": "off",
-                "no-return-assign": "off",
-                "babel/new-cap": "off",
-                "no-mixed-operators": "off",
-                "jsx-quotes": ["error", "prefer-double"],
-                "jsx-a11y/anchor-is-valid": [
-                  "error",
-                  {
-                    components: ["Link"],
-                    specialLink: ["to"],
-                  },
-                ],
-                "jsx-a11y/click-events-have-key-events": "off",
-                "jsx-a11y/no-static-element-interactions": "off",
-                "react/jsx-indent-props": ["error", 2],
-                "react/jsx-pascal-case": "error",
-                "react/jsx-tag-spacing": [
-                  "error",
-                  {
-                    beforeSelfClosing: "always",
-                  },
-                ],
-                "react/default-props-match-prop-types": "off",
-                "react/jsx-closing-bracket-location": "off",
-                "react/destructuring-assignment": "off",
-                "react/jsx-handler-names": [
-                  "error",
-                  {
-                    eventHandlerPrefix: "handle",
-                    eventHandlerPropPrefix: "on",
-                  },
-                ],
-                "react/jsx-indent": "off",
-                "react/prefer-stateless-function": "off",
-                "react/prop-types": "off",
-                "react/sort-comp": "off",
-                "react/forbid-prop-types": "off",
-                "react/no-unused-prop-types": "off",
-                "react/require-default-props": "off",
-                "react/jsx-fragments": ["error", "element"],
-                "react/jsx-props-no-spreading": "off",
-                "react/jsx-no-bind": "off",
-                "react-hooks/exhaustive-deps": "off",
-                "import/no-cycle": "off",
-              },
-            },
-          },
-        ],
-      },
       {
         test: /\.html$/,
         use: [
@@ -456,6 +448,11 @@ module.exports = {
       xhtml: false,
       appMountId: "root",
       lang: "en",
+    }),
+    new ESLintPlugin({
+        extensions: ["js", "jsx"],
+        files: [`${__dirname}/src`, `${__dirname}/test`],
+        ...eslintConfig
     }),
     new webpack.HotModuleReplacementPlugin(),
   ],
