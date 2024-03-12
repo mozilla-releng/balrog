@@ -57,31 +57,7 @@ const eslintConfig = {
       ],
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
-    },
-    env: {
-      es6: true,
-      browser: true,
-      commonjs: true,
-    },
-    globals: {
-      process: true,
-    },
-    parserOptions: {
-      ecmaVersion: 2018,
-      sourceType: "module",
-      ecmaFeatures: {
-        jsx: true
-      }
-    },
-    plugins: ["babel", "react", "react-hooks"],
-    settings: {
-      react: {
-        version: "detect",
-      },
-    },
-  },
-  overrideConfig: {
-    rules: {
+      // From @mozilla-frontend-infra/react-lint
       "import/no-extraneous-dependencies": "off",
       "max-len": [
         "error",
@@ -224,8 +200,28 @@ const eslintConfig = {
       "react-hooks/exhaustive-deps": "off",
       "import/no-cycle": "off",
     },
-    plugins: ["prettier"],
-  }
+    env: {
+      es6: true,
+      browser: true,
+      commonjs: true,
+    },
+    globals: {
+      process: true,
+    },
+    parserOptions: {
+      ecmaVersion: 2018,
+      sourceType: "module",
+      ecmaFeatures: {
+        jsx: true
+      }
+    },
+    plugins: ["babel", "react", "react-hooks", "prettier"],
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
+  },
 }
 
 module.exports = {
