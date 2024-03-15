@@ -360,6 +360,7 @@ module.exports = {
                 },
               },
             ],
+            include: /\.module\.css$/,
           },
           {
             test: /\.css$/i,
@@ -374,6 +375,7 @@ module.exports = {
                 },
               },
             ],
+            exclude: /\.module\.css$/,
           },
         ],
       },
