@@ -10,7 +10,7 @@
     "build": "dotenv webpack -- --mode production",
     "start": "dotenv webpack-dev-server -- --mode development",
     "test": "jest",
-    "lint": "eslint --cache --format codeframe --ext mjs,jsx,js src test webpack.config.js .eslintrc.js"
+    "lint": "eslint --cache --format codeframe --ext mjs,jsx,js src test webpack.config.js .eslintrc.js __jest__ jest.config.js"
   },
   "comment": "IMPORTANT! date-fns is pinned to 1.3.x due to https://github.com/mui-org/material-ui-pickers/issues/1440",
   "comment2": "IMPORTANT! react-virtualized is held at 9.21.1 due to https://github.com/bvaughn/react-virtualized/issues/1226 breaking scrolling to anchors on ListRules",
