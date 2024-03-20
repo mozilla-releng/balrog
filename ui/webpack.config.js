@@ -240,7 +240,7 @@ module.exports = env => {
           viewport: 'width=device-width, initial-scale=1',
         },
         base: false,
-        title: 'Webpack App',
+        title: 'Balrog Admin',
         xhtml: false,
         appMountId: 'root',
         lang: 'en',
