@@ -17,6 +17,8 @@ const eslintConfig = {
   baseConfig,
 };
 
+// DO NOT USE DEVTOOLS THAT RELY ON EVAL IN PRODUCTION
+// These include tools such as 'cheap-module-eval-source-map' and 'react-hot-loader/babel'
 module.exports = env => {
   return {
     mode: env,
