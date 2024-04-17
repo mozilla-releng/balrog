@@ -35,6 +35,7 @@ def get_content_signature_headers(content, product, legacy_key=False):
         hash_ = make_hash(content)
 
         keyref = "AUTOGRAPH_%sKEYID" % product
+        # Caveat: legacy key is only used/checked if non-legacy is present
         if legacy_key and f"{keyref}_LEGACY" in app.config:
             keyref = f"{keyref}_LEGACY"
 

@@ -1,8 +1,9 @@
 import json
 
-import semver
 from flask import Response
 from flask import current_app as app
+from mozilla_version.errors import PatternNotMatchedError
+from mozilla_version.version import BaseVersion
 
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.web.public.helpers import AUS, get_aus_metadata_headers, get_content_signature_headers, with_transaction
@@ -12,21 +13,16 @@ from auslib.web.public.helpers import AUS, get_aus_metadata_headers, get_content
 LEGACY_PRODUCT_VERSION_MAPPING = {"FirefoxVPN": "2.22.0"}
 
 
-def check_for_legacy_key(parameters):
-    product = parameters.get("product")
-    version = parameters.get("version")
+def use_legacy_key(product=None, version=None):
     # Skip if product is not in the mapping or version is not provided
     if product not in LEGACY_PRODUCT_VERSION_MAPPING or not version:
         return False
 
     try:
-        limit_version = semver.version.Version.parse(LEGACY_PRODUCT_VERSION_MAPPING[product])
-        version = semver.version.Version.parse(version)
-        print(version, limit_version)
-        print(version < limit_version)
-        if version < limit_version:
+        limit_version = BaseVersion.parse(LEGACY_PRODUCT_VERSION_MAPPING[product])
+        if BaseVersion.parse(version) < limit_version:
             return True
-    except semver.VersionException:
+    except (PatternNotMatchedError, ValueError):
         # Likely a malformed version string - ignore legacy key and sign with latest available
         pass
     return False
@@ -44,7 +40,7 @@ def get_update(transaction, **parameters):
 
     response = json.dumps(release.getResponse(parameters, app.config["ALLOWLISTED_DOMAINS"]))
 
-    headers.update(get_content_signature_headers(response, "", check_for_legacy_key(parameters)))
+    headers.update(get_content_signature_headers(response, "", use_legacy_key(parameters.get("product"), parameters.get("version"))))
 
     return Response(response=response, status=200, headers=headers, mimetype="application/json")
 

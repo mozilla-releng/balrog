@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 import auslib.web.public.helpers
+import auslib.web.public.json
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
@@ -18,6 +19,7 @@ def disable_errorhandler(monkeypatch):
 def mock_autograph(monkeypatch):
     monkeypatch.setitem(app.config, "AUTOGRAPH_URL", "fake")
     monkeypatch.setitem(app.config, "AUTOGRAPH_KEYID", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_KEYID_LEGACY", "fakeLegacy")
     monkeypatch.setitem(app.config, "AUTOGRAPH_USERNAME", "fake")
     monkeypatch.setitem(app.config, "AUTOGRAPH_PASSWORD", "fake")
 
@@ -463,3 +465,20 @@ def testGuardianResponseV2WithGradualRollout(client, forceValue, response):
 def testXMLForGuardianBlob(client):
     ret = client.get("/update/1/Guardian/0.4.0.0/default/WINNT_x86_64/en-US/release/update.xml")
     assert ret.status_code == 400
+
+
+@pytest.mark.parametrize(
+    "product,version,expected",
+    [
+        ("FakeApp", "2.21.0", True),
+        ("FakeApp", "2.22.0", False),
+        ("FakeApp", "weird.version", False),
+        ("FakeApp", None, False),
+        (None, None, False),
+        (None, "2.21.0", False),
+        ("FooBar", "2.21.0", False),
+    ],
+)
+def test_use_legacy_key(product, version, expected, monkeypatch):
+    monkeypatch.setitem(auslib.web.public.json.LEGACY_PRODUCT_VERSION_MAPPING, "FakeApp", "2.22.0")
+    assert auslib.web.public.json.use_legacy_key(product, version) is expected
