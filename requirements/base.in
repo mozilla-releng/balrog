@@ -26,3 +26,4 @@ sqlalchemy-migrate
 statsd
 uwsgi
 pyjwt==2.4.0
+semver
