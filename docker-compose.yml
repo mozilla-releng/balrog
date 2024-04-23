@@ -72,6 +72,7 @@ services:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
       - AUTOGRAPH_URL=http://autograph:8000
       - AUTOGRAPH_KEYID=normandy
+      - AUTOGRAPH_KEYID_LEGACY=remote-settings
       - AUTOGRAPH_USERNAME=alice
       - AUTOGRAPH_PASSWORD=fs5wgcer9qj819kfptdlp8gm227ewxnzvsuj9ztycsx08hfhzu
       - SECRET_KEY=blahblah
