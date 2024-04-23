@@ -798,9 +798,9 @@ mohawk==1.1.0 \
     --hash=sha256:3ed296a30453d0b724679e0fd41e4e940497f8e461a9a9c3b7f36e43bab0fa09 \
     --hash=sha256:d2a0e3ab10a209cc79e95e28f2dd54bd4a73fd1998ffe27b7ba0f962b6be9723
     # via requests-hawk
-mozilla-version==2.3.0 \
-    --hash=sha256:7c196ac084f7d21cc268b1023d47566a1a41a3e0a87a0e73c8d63fb240ca152b \
-    --hash=sha256:8c89706832c91d8d98ea0968beb391b240cc9498c232d3d862dbd0f57e3c5025
+mozilla-version==3.0.0 \
+    --hash=sha256:63c25a8cec007e8ca401e0a9aa343fe873679354819d4db6ad1e30c60b85787f \
+    --hash=sha256:93162faa1768f14c39c7f347efd0dab74e7ba75a63f78f765f60eb567a1b3154
     # via -r requirements/base.in
 multidict==6.0.5 \
     --hash=sha256:01265f5e40f5a17f8241d52656ed27192be03bfa8764d88e8220141d1e4b3556 \
