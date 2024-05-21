@@ -1034,9 +1034,9 @@ repoze.lru==0.7 \
     --hash=sha256:0429a75e19380e4ed50c0694e26ac8819b4ea7851ee1fc7583c8572db80aff77 \
     --hash=sha256:f77bf0e1096ea445beadd35f3479c5cff2aa1efe604a133e67150bc8630a62ea
     # via -r requirements/base.in
-requests==2.31.0 \
-    --hash=sha256:58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f \
-    --hash=sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1
+requests==2.32.1 \
+    --hash=sha256:21ac9465cdf8c1650fe1ecde8a71669a93d4e6f147550483a2967d08396a56a5 \
+    --hash=sha256:eb97e87e64c79e64e5b8ac75cee9dd1f97f49e289b083ee6be96268930725685
     # via
     #   -r requirements/base.in
     #   auth0-python
@@ -1158,9 +1158,9 @@ rsa==4.9 \
     #   gcloud-aio-storage
     #   google-auth
     #   python-jose
-sentry-sdk[flask]==2.1.1 \
-    --hash=sha256:95d8c0bb41c8b0bc37ab202c2c4a295bb84398ee05f4cdce55051cd75b926ec1 \
-    --hash=sha256:99aeb78fb76771513bd3b2829d12613130152620768d00cd3e45ac00cb17950f
+sentry-sdk[flask]==2.2.1 \
+    --hash=sha256:7d617a1b30e80c41f3b542347651fcf90bb0a36f3a398be58b4f06b79c8d85bc \
+    --hash=sha256:8aa2ec825724d8d9d645cab68e6034928b1a6a148503af3e361db3fa6401183f
     # via -r requirements/base.in
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
@@ -1415,7 +1415,7 @@ zstandard==0.22.0 \
     # via flask-compress
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==69.5.1 \
-    --hash=sha256:6c1fccdac05a97e598fb0ae3bbed5904ccb317337a51139dcd51453611bbb987 \
-    --hash=sha256:c636ac361bc47580504644275c9ad802c50415c7522212252c033bd15f301f32
+setuptools==70.0.0 \
+    --hash=sha256:54faa7f2e8d2d11bcd2c07bed282eef1046b5c080d1c32add737d7b5817b1ad4 \
+    --hash=sha256:f211a66637b8fa059bb28183da127d4e86396c991a942b028c6650d4319c3fd0
     # via -r requirements/base.in

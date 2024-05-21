@@ -882,9 +882,9 @@ repoze.lru==0.7 \
     --hash=sha256:0429a75e19380e4ed50c0694e26ac8819b4ea7851ee1fc7583c8572db80aff77 \
     --hash=sha256:f77bf0e1096ea445beadd35f3479c5cff2aa1efe604a133e67150bc8630a62ea
     # via -r requirements/docs.in
-requests==2.31.0 \
-    --hash=sha256:58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f \
-    --hash=sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1
+requests==2.32.1 \
+    --hash=sha256:21ac9465cdf8c1650fe1ecde8a71669a93d4e6f147550483a2967d08396a56a5 \
+    --hash=sha256:eb97e87e64c79e64e5b8ac75cee9dd1f97f49e289b083ee6be96268930725685
     # via
     #   auth0-python
     #   connexion
@@ -1001,9 +1001,9 @@ rsa==4.9 \
     --hash=sha256:90260d9058e514786967344d0ef75fa8727eed8a7d2e43ce9f4bcf1b536174f7 \
     --hash=sha256:e38464a49c6c85d7f1351b0126661487a7e0a14a50f1675ec50eb34d4f20ef21
     # via python-jose
-sentry-sdk[flask]==2.1.1 \
-    --hash=sha256:95d8c0bb41c8b0bc37ab202c2c4a295bb84398ee05f4cdce55051cd75b926ec1 \
-    --hash=sha256:99aeb78fb76771513bd3b2829d12613130152620768d00cd3e45ac00cb17950f
+sentry-sdk[flask]==2.2.1 \
+    --hash=sha256:7d617a1b30e80c41f3b542347651fcf90bb0a36f3a398be58b4f06b79c8d85bc \
+    --hash=sha256:8aa2ec825724d8d9d645cab68e6034928b1a6a148503af3e361db3fa6401183f
     # via -r requirements/docs.in
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
