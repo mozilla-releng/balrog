@@ -274,9 +274,9 @@ multidict==6.0.5 \
     # via
     #   aiohttp
     #   yarl
-sentry-sdk==2.5.1 \
-    --hash=sha256:1f87acdce4a43a523ae5aa21a3fc37522d73ebd9ec04b1dbf01aa3d173852def \
-    --hash=sha256:fbc40a78a8a9c6675133031116144f0d0940376fa6e4e1acd5624c90b0aaf58b
+sentry-sdk==2.7.1 \
+    --hash=sha256:25006c7e68b75aaa5e6b9c6a420ece22e8d7daec4b7a906ffd3a8607b67c037b \
+    --hash=sha256:ef1b3d54eb715825657cd4bb3cb42bb4dc85087bac14c56b0fd8c21abd968c9a
     # via -r requirements/base.in
 urllib3==2.2.2 \
     --hash=sha256:a448b2f64d686155468037e1ace9f2d2199776e17f0a46610480d311f73e3472 \
