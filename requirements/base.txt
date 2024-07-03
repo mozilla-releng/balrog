@@ -533,16 +533,16 @@ gcloud-aio-storage==9.3.0 \
     --hash=sha256:23664a36b2c3ff9135035b3e9bcf512e0a0c17b874e305985098f000de4de399 \
     --hash=sha256:2ef9bd22eb3545a912a495b551aa58c1c2a177e72e4ed03a64665fceb02cf650
     # via -r requirements/base.in
-google-api-core==2.19.0 \
-    --hash=sha256:8661eec4078c35428fd3f69a2c7ee29e342896b70f01d1a1cbcb334372dd6251 \
-    --hash=sha256:cf1b7c2694047886d2af1128a03ae99e391108a08804f87cfd35970e49c9cd10
+google-api-core==2.19.1 \
+    --hash=sha256:f12a9b8309b5e21d92483bbd47ce2c445861ec7d269ef6784ecc0ea8c1fa6125 \
+    --hash=sha256:f4695f1e3650b316a795108a76a1c416e6afb036199d1c1f1f110916df479ffd
     # via
     #   -r requirements/base.in
     #   google-cloud-core
     #   google-cloud-storage
-google-auth==2.30.0 \
-    --hash=sha256:8df7da660f62757388b8a7f249df13549b3373f24388cb5d2f1dd91cc18180b5 \
-    --hash=sha256:ab630a1320f6720909ad76a7dbdb6841cdf5c66b328d690027e4867bdfb16688
+google-auth==2.31.0 \
+    --hash=sha256:042c4702efa9f7d3c48d3a69341c209381b125faa6dbf3ebe56bc7e40ae05c23 \
+    --hash=sha256:87805c36970047247c8afe614d4e3af8eceafc1ebba0c679fe75ddd1d575e871
     # via
     #   -r requirements/base.in
     #   google-api-core
@@ -632,9 +632,9 @@ google-resumable-media==2.7.1 \
     --hash=sha256:103ebc4ba331ab1bfdac0250f8033627a2cd7cde09e7ccff9181e31ba4315b2c \
     --hash=sha256:eae451a7b2e2cdbaaa0fd2eb00cc8a1ee5e95e16b55597359cbc3d27d7d90e33
     # via google-cloud-storage
-googleapis-common-protos==1.63.1 \
-    --hash=sha256:0e1c2cdfcbc354b76e4a211a35ea35d6926a835cba1377073c4861db904a1877 \
-    --hash=sha256:c6442f7a0a6b2a80369457d79e6672bb7dcbaab88e0848302497e3ec80780a6a
+googleapis-common-protos==1.63.2 \
+    --hash=sha256:27a2499c7e8aff199665b22741997e485eccc8645aa9176c7c988e6fae507945 \
+    --hash=sha256:27c5abdffc4911f28101e635de1533fb4cfd2c37fbaa9174587c799fac90aa87
     # via google-api-core
 greenlet==3.0.3 \
     --hash=sha256:01bc7ea167cf943b4c802068e178bbf70ae2e8c080467070d01bfa02f337ee67 \
@@ -702,6 +702,10 @@ idna==3.7 \
     # via
     #   requests
     #   yarl
+importlib-resources==6.4.0 \
+    --hash=sha256:50d10f043df931902d4194ea07ec57960f66a80449ff867bfe782b4c486ba78c \
+    --hash=sha256:cdb2b453b8046ca4e3798eb1d84f3cce1446a0e8e7b5ef4efb600f19fc398145
+    # via swagger-spec-validator
 inflection==0.5.1 \
     --hash=sha256:1a29730d366e996aaacffb2f1f1cb9593dc38e2ddd30c91250c6dde09ea9b417 \
     --hash=sha256:f38b2b640938a4f35ade69ac3d053042959b62a0f1076a5bbaa1b9526605a8a2
@@ -915,22 +919,22 @@ pbr==6.0.0 \
     --hash=sha256:4a7317d5e3b17a3dccb6a8cfe67dab65b20551404c52c8ed41279fa4f0cb4cda \
     --hash=sha256:d1377122a5a00e2f940ee482999518efe16d745d423a670c27773dfbc3c9a7d9
     # via sqlalchemy-migrate
-proto-plus==1.23.0 \
-    --hash=sha256:89075171ef11988b3fa157f5dbd8b9cf09d65fffee97e29ce403cd8defba19d2 \
-    --hash=sha256:a829c79e619e1cf632de091013a4173deed13a55f326ef84f05af6f50ff4c82c
+proto-plus==1.24.0 \
+    --hash=sha256:30b72a5ecafe4406b0d339db35b56c4059064e69227b8c3bda7462397f966445 \
+    --hash=sha256:402576830425e5f6ce4c2a6702400ac79897dab0b4343821aa5188b0fab81a12
     # via google-api-core
-protobuf==4.25.3 \
-    --hash=sha256:19b270aeaa0099f16d3ca02628546b8baefe2955bbe23224aaf856134eccf1e4 \
-    --hash=sha256:209ba4cc916bab46f64e56b85b090607a676f66b473e6b762e6f1d9d591eb2e8 \
-    --hash=sha256:25b5d0b42fd000320bd7830b349e3b696435f3b329810427a6bcce6a5492cc5c \
-    --hash=sha256:7c8daa26095f82482307bc717364e7c13f4f1c99659be82890dcfc215194554d \
-    --hash=sha256:c053062984e61144385022e53678fbded7aea14ebb3e0305ae3592fb219ccfa4 \
-    --hash=sha256:d4198877797a83cbfe9bffa3803602bbe1625dc30d8a097365dbc762e5790faa \
-    --hash=sha256:e3c97a1555fd6388f857770ff8b9703083de6bf1f9274a002a332d65fbb56c8c \
-    --hash=sha256:e7cb0ae90dd83727f0c0718634ed56837bfeeee29a5f82a7514c03ee1364c019 \
-    --hash=sha256:f0700d54bcf45424477e46a9f0944155b46fb0639d69728739c0e47bab83f2b9 \
-    --hash=sha256:f1279ab38ecbfae7e456a108c5c0681e4956d5b1090027c1de0f934dfdb4b35c \
-    --hash=sha256:f4f118245c4a087776e0a8408be33cf09f6c547442c00395fbfb116fac2f8ac2
+protobuf==5.27.2 \
+    --hash=sha256:0e341109c609749d501986b835f667c6e1e24531096cff9d34ae411595e26505 \
+    --hash=sha256:176c12b1f1c880bf7a76d9f7c75822b6a2bc3db2d28baa4d300e8ce4cde7409b \
+    --hash=sha256:354d84fac2b0d76062e9b3221f4abbbacdfd2a4d8af36bab0474f3a0bb30ab38 \
+    --hash=sha256:4fadd8d83e1992eed0248bc50a4a6361dc31bcccc84388c54c86e530b7f58863 \
+    --hash=sha256:54330f07e4949d09614707c48b06d1a22f8ffb5763c159efd5c0928326a91470 \
+    --hash=sha256:610e700f02469c4a997e58e328cac6f305f649826853813177e6290416e846c6 \
+    --hash=sha256:7fc3add9e6003e026da5fc9e59b131b8f22b428b991ccd53e2af8071687b4fce \
+    --hash=sha256:9e8f199bf7f97bd7ecebffcae45ebf9527603549b2b562df0fbc6d4d688f14ca \
+    --hash=sha256:a109916aaac42bff84702fb5187f3edadbc7c97fc2c99c5ff81dd15dcce0d1e5 \
+    --hash=sha256:b848dbe1d57ed7c191dfc4ea64b8b004a3f9ece4bf4d0d80a367b76df20bf36e \
+    --hash=sha256:f3ecdef226b9af856075f28227ff2c90ce3a594d092c39bee5513573f25e2714
     # via
     #   google-api-core
     #   googleapis-common-protos
@@ -1158,9 +1162,9 @@ rsa==4.9 \
     #   gcloud-aio-storage
     #   google-auth
     #   python-jose
-sentry-sdk[flask]==2.5.1 \
-    --hash=sha256:1f87acdce4a43a523ae5aa21a3fc37522d73ebd9ec04b1dbf01aa3d173852def \
-    --hash=sha256:fbc40a78a8a9c6675133031116144f0d0940376fa6e4e1acd5624c90b0aaf58b
+sentry-sdk[flask]==2.7.1 \
+    --hash=sha256:25006c7e68b75aaa5e6b9c6a420ece22e8d7daec4b7a906ffd3a8607b67c037b \
+    --hash=sha256:ef1b3d54eb715825657cd4bb3cb42bb4dc85087bac14c56b0fd8c21abd968c9a
     # via -r requirements/base.in
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
@@ -1236,9 +1240,9 @@ statsd==4.0.1 \
     --hash=sha256:99763da81bfea8daf6b3d22d11aaccb01a8d0f52ea521daab37e758a4ca7d128 \
     --hash=sha256:c2676519927f7afade3723aca9ca8ea986ef5b059556a980a867721ca69df093
     # via -r requirements/base.in
-swagger-spec-validator==3.0.3 \
-    --hash=sha256:16a5ce08c772824a77b1a4a05efc047d72eef1ed53fb969dfe0a18f437ac30a8 \
-    --hash=sha256:174b5de4ab0899df9a57d35c880aaa515511c4b8b578d9d519b09a9596537055
+swagger-spec-validator==3.0.4 \
+    --hash=sha256:1a2a4f4f7076479ae7835d892dd53952ccca9414efa172c440c775cf0ac01f48 \
+    --hash=sha256:637ac6d865270bfcd07df24605548e6e1f1d9c39adcfd855da37fa3fdebfed4b
     # via
     #   -r requirements/base.in
     #   spec-synthase
@@ -1415,7 +1419,7 @@ zstandard==0.22.0 \
     # via flask-compress
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==70.0.0 \
-    --hash=sha256:54faa7f2e8d2d11bcd2c07bed282eef1046b5c080d1c32add737d7b5817b1ad4 \
-    --hash=sha256:f211a66637b8fa059bb28183da127d4e86396c991a942b028c6650d4319c3fd0
+setuptools==70.2.0 \
+    --hash=sha256:b8b8060bb426838fbe942479c90296ce976249451118ef566a5a0b7d8b78fb05 \
+    --hash=sha256:bd63e505105011b25c3c11f753f7e3b8465ea739efddaccef8f0efac2137bac1
     # via -r requirements/base.in
