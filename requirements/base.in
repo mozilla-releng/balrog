@@ -20,7 +20,7 @@ repoze.lru
 requests
 requests-hawk
 sentry-sdk[flask]
-setuptools
+setuptools<71.0.1   # Remove this constraint once https://github.com/pypa/setuptools/issues/4482 is fixed
 spec-synthase
 sqlalchemy-migrate
 sqlalchemy<2
