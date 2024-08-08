@@ -26,6 +26,10 @@ DOMAIN_ALLOWLIST = {
     "ciscobinary.openh264.org": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),
     "clients2.googleusercontent.com": ("Widevine",),
+    "edgedl.me.gvt1.com": (
+        "Widevine",
+        "Widevine-L1",
+    ),
     "redirector.gvt1.com": (
         "Widevine",
         "Widevine-L1",
