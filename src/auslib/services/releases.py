@@ -490,6 +490,8 @@ def update_release(name, blob, old_data_versions, when, changed_by, trans):
         if current_assets.get(str_path):
             if item != current_assets[str_path]["data"]:
                 old_data_version = get_by_path(old_data_versions, path)
+                if not old_data_version:
+                    raise ValueError(f"Missing data_version for {str_path}")
                 new_assets = current_assets[str_path]["data"]
                 release_merger.merge(new_assets, item)
                 ensure_path_exists(full_blob, path)

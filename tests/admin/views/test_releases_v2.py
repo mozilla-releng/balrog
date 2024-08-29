@@ -100,6 +100,7 @@ def releases_db(
     insert_release_sc(firefox_66_0_build1, "Firefox", signoff_user="bob", signoff_role="releng")
     insert_release(firefox_67_0_build1, "Firefox")
     insert_release_sc(firefox_67_0_build1, "Firefox", change_type="delete", signoff_user="bob", signoff_role="releng")
+    insert_release(dict(name="Firefox-empty", schema_version=9, hashFunction="sha512"), "Firefox")
     # Insert a Release into the old table to make sure it doesn't show up in the new API
     dbo.releases.t.insert().execute(name="b", product="b", data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)), data_version=1)
 
@@ -431,6 +432,16 @@ def test_get_releases(api):
                         "signoffs": {"bob": "releng"},
                     },
                 ],
+                "product_required_signoffs": {"releng": 1},
+                "required_signoffs": {},
+            },
+            {
+                "name": "Firefox-empty",
+                "product": "Firefox",
+                "data_version": 1,
+                "read_only": False,
+                "rule_info": {},
+                "scheduled_changes": [],
                 "product_required_signoffs": {"releng": 1},
                 "required_signoffs": {},
             },
@@ -1001,6 +1012,18 @@ def test_post_fails_for_readonly_release(api, firefox_60_0b3_build1):
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": data, "product": "Firefox", "old_data_versions": old_data_versions})
     assert ret.status_code == 400, ret.data
     assert "Cannot update" in ret.json["exception"]
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_post_fails_update_without_data_version(api):
+    blob = {"platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "22222222222"}}}}}
+    old_data_versions = {"platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {}}}}
+    ret = api.post("/v2/releases/Firefox-empty", json={"blob": blob, "old_data_versions": old_data_versions})
+    assert ret.status_code == 200, ret.data
+    blob = {"platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "33333333333"}}}}}
+    ret = api.post("/v2/releases/Firefox-empty", json={"blob": blob, "old_data_versions": old_data_versions})
+    assert ret.status_code == 400, ret.data
+    assert ret.json["exception"] == "Missing data_version for .platforms.Darwin_x86_64-gcc3-u-i386-x86_64.locales.de"
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
