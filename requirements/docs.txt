@@ -102,7 +102,7 @@ aiohttp==3.10.8 \
     --hash=sha256:fecd55e7418fabd297fd836e65cbd6371aa4035a264998a091bbf13f94d9c44d \
     --hash=sha256:ffef3d763e4c8fc97e740da5b4d0f080b78630a3914f4e772a122bbfa608c1db
     # via
-    #   -r requirements/docs.in
+    #   -r docs.in
     #   auth0-python
 aiosignal==1.3.1 \
     --hash=sha256:54cd96e15e1649b75d6c87526a6ff0b6c1b0dd3459f43d9ca11d48c339b68cfc \
@@ -115,7 +115,7 @@ alabaster==0.7.16 \
 arrow==1.3.0 \
     --hash=sha256:c728b120ebc00eb84e01882a6f5e7927a53960aa990ce7dd2b10f39005a67f80 \
     --hash=sha256:d4540617648cb5f895730f1ad8c82a65f2dad0166f57b75f3ca54759c4d67a85
-    # via -r requirements/docs.in
+    # via -r docs.in
 attrs==24.2.0 \
     --hash=sha256:5cfb1b9148b5b086569baec03f20d7b6bf3bcacc9a42bebf87ffaaca362f6346 \
     --hash=sha256:81921eb96de3191c8258c199618104dd27ac608d9366f5e35d011eae1867ede2
@@ -126,7 +126,7 @@ attrs==24.2.0 \
 auth0-python==4.7.2 \
     --hash=sha256:5d36b7f26defa946c0a548dddccf0451fc62e9f8e61fd0138c5025ad2506ba8b \
     --hash=sha256:df2224f9b1e170b3aa12d8bc7ff02eadb7cc229307a09ec6b8a55fd1e0e05dc8
-    # via -r requirements/docs.in
+    # via -r docs.in
 babel==2.16.0 \
     --hash=sha256:368b5b98b37c06b7daf6696391c3240c938b37767d4584413e8438c5c435fa8b \
     --hash=sha256:d1f3554ca26605fe173f3de0c65f750f5a42f924499bf134de6423582298e316
@@ -400,7 +400,7 @@ clickclick==20.10.2 \
 connexion==2.14.2 \
     --hash=sha256:a73b96a0e07b16979a42cde7c7e26afe8548099e352cf350f80c57185e0e0b36 \
     --hash=sha256:dbc06f52ebeebcf045c9904d570f24377e8bbd5a6521caef15a06f634cf85646
-    # via -r requirements/docs.in
+    # via -r docs.in
 cryptography==43.0.1 \
     --hash=sha256:014f58110f53237ace6a408b5beb6c427b64e084eb451ef25a28308270086494 \
     --hash=sha256:1bbcce1a551e262dfbafb6e6252f1ae36a248e615ca44ba302df077a846a8806 \
@@ -437,7 +437,7 @@ decorator==5.1.1 \
 deepmerge==2.0 \
     --hash=sha256:5c3d86081fbebd04dd5de03626a0607b809a98fb6ccba5770b62466fe940ff20 \
     --hash=sha256:6de9ce507115cff0bed95ff0ce9ecc31088ef50cbdf09bc90a09349a318b3d00
-    # via -r requirements/docs.in
+    # via -r docs.in
 docutils==0.19 \
     --hash=sha256:33995a6753c30b7f577febfc2c50411fec6aac7f7ffeb7c4cfe5991072dcf9e6 \
     --hash=sha256:5e1de4d849fee02c63b040a4a3fd567f4ab104defd8a5511fbbc24a8a017efbc
@@ -452,19 +452,19 @@ flask==2.2.5 \
     --hash=sha256:58107ed83443e86067e41eff4631b058178191a355886f8e479e347fa1285fdf \
     --hash=sha256:edee9b0a7ff26621bd5a8c10ff484ae28737a2410d99b0bb9a6850c7fb977aa0
     # via
-    #   -r requirements/docs.in
+    #   -r docs.in
     #   connexion
     #   flask-compress
     #   flask-wtf
     #   sentry-sdk
-flask-compress==1.15 \
-    --hash=sha256:5d6efe3584c89516c3ab9d94adabe08c218517b957a9bd5cd0c3955dd3834c51 \
-    --hash=sha256:b7b66cd5d08fc46bbcc71561e13ca64321590b0ca4c172f8001bf5374f8f5c58
-    # via -r requirements/docs.in
+flask-compress==1.16 \
+    --hash=sha256:376c7c2137bc9a537a1016c1032b0b80a5daf1b2cdc8a175806c59d5a5dafa48 \
+    --hash=sha256:40fa77a557543c6220afd0b8f6b832c20d0e0dcfa14b83e839433a15fed1c769
+    # via -r docs.in
 flask-wtf==1.2.1 \
     --hash=sha256:8bb269eb9bb46b87e7c8233d7e7debdf1f8b74bf90cc1789988c29b37a97b695 \
     --hash=sha256:fa6793f2fb7e812e0fe9743b282118e581fb1b6c45d414b8af05e659bd653287
-    # via -r requirements/docs.in
+    # via -r docs.in
 frozenlist==1.4.1 \
     --hash=sha256:04ced3e6a46b4cfffe20f9ae482818e34eba9b5fb0ce4056e4cc9b6e212d09b7 \
     --hash=sha256:0633c8d5337cb5c77acbccc6357ac49a1770b8c487e5b3505c57b949b4b82e98 \
@@ -656,7 +656,7 @@ jsonschema==4.23.0 \
     --hash=sha256:d71497fef26351a33265337fa77ffeb82423f3ea21283cd9467bb03999266bc4 \
     --hash=sha256:fbadb6f8b144a8f8cf9f0b89ba94501d143e50411a1278633f56a7acf7fd5566
     # via
-    #   -r requirements/docs.in
+    #   -r docs.in
     #   connexion
     #   swagger-spec-validator
 jsonschema-specifications==2023.12.1 \
@@ -864,7 +864,7 @@ python-dateutil==2.9.0.post0 \
 python-jose==3.3.0 \
     --hash=sha256:55779b5e6ad599c6336191246e95eb2293a9ddebd555f796a65f838f07e5d78a \
     --hash=sha256:9b1376b023f8b298536eedd47ae1089bcdb848f1535ab30555cd92002d78923a
-    # via -r requirements/docs.in
+    # via -r docs.in
 pyyaml==6.0.2 \
     --hash=sha256:01179a4a8559ab5de078078f37e5c1a30d76bb88519906844fd7bdea1b7729ff \
     --hash=sha256:0833f8694549e586547b576dcfaba4a6b55b9e96098b36cdc7ebefe667dfed48 \
@@ -930,10 +930,10 @@ referencing==0.35.1 \
     # via
     #   jsonschema
     #   jsonschema-specifications
-repoze.lru==0.7 \
+repoze-lru==0.7 \
     --hash=sha256:0429a75e19380e4ed50c0694e26ac8819b4ea7851ee1fc7583c8572db80aff77 \
     --hash=sha256:f77bf0e1096ea445beadd35f3479c5cff2aa1efe604a133e67150bc8630a62ea
-    # via -r requirements/docs.in
+    # via -r docs.in
 requests==2.32.3 \
     --hash=sha256:55365417734eb18255590a9ff9eb97e9e1da868d4ccd6402399eaf68af20a760 \
     --hash=sha256:70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6
@@ -945,7 +945,7 @@ requests==2.32.3 \
 requests-hawk==1.2.1 \
     --hash=sha256:ad9205042c94bdb15afaa19b0780e11077b24d9e5cffac1fb3d26cb08aa435b7 \
     --hash=sha256:afe8add3c72a21405543a07464b62e36a5f378585e5cf3b54b1307e884f67324
-    # via -r requirements/docs.in
+    # via -r docs.in
 rpds-py==0.20.0 \
     --hash=sha256:06db23d43f26478303e954c34c75182356ca9aa7797d22c5345b16871ab9c45c \
     --hash=sha256:0e13e6952ef264c40587d510ad676a988df19adea20444c2b295e536457bc585 \
@@ -1060,7 +1060,7 @@ rsa==4.9 \
 sentry-sdk[flask]==2.15.0 \
     --hash=sha256:8fb0d1a4e1a640172f31502e4503543765a1fe8a9209779134a4ac52d4677303 \
     --hash=sha256:a599e7d3400787d6f43327b973e55a087b931ba2c592a7a7afa691f8eb5e75e2
-    # via -r requirements/docs.in
+    # via -r docs.in
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
     --hash=sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254
@@ -1076,18 +1076,18 @@ snowballstemmer==2.2.0 \
 spec-synthase==0.1.11 \
     --hash=sha256:62396a95541cec2f792fe4f1f10e610e3dbdcdee843ee8f65dc243e8bb387c86 \
     --hash=sha256:9507c2f83a1c0a6fb7e18c0fa4eb9cc7a3d874e964b7c55dd2b531e5c70598bf
-    # via -r requirements/docs.in
+    # via -r docs.in
 sphinx==5.3.0 \
     --hash=sha256:060ca5c9f7ba57a08a1219e547b269fadf125ae25b06b9fa7f66768efb652d6d \
     --hash=sha256:51026de0a9ff9fc13c05d74913ad66047e104f56a129ff73e174eb5c3ee794b5
     # via
-    #   -r requirements/docs.in
+    #   -r docs.in
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery
 sphinx-rtd-theme==2.0.0 \
     --hash=sha256:bd5d7b80622406762073a04ef8fadc5f9151261563d47027de09910ce03afe6b \
     --hash=sha256:ec93d0856dc280cf3aee9a4c9807c60e027c7f7b461b77aeffed682e68f0e586
-    # via -r requirements/docs.in
+    # via -r docs.in
 sphinxcontrib-applehelp==2.0.0 \
     --hash=sha256:2f29ef331735ce958efa4734873f084941970894c6090408b079c61b2e1c06d1 \
     --hash=sha256:4cd3f0ec4ac5dd9c17ec65e9ab272c9b867ea77425228e68ecf08d6b28ddbdb5
@@ -1167,12 +1167,12 @@ sqlalchemy==2.0.35 \
     --hash=sha256:f021d334f2ca692523aaf7bbf7592ceff70c8594fad853416a81d66b35e3abf9 \
     --hash=sha256:f552023710d4b93d8fb29a91fadf97de89c5926c6bd758897875435f2a939f33
     # via
-    #   -r requirements/docs.in
+    #   -r docs.in
     #   sqlalchemy-migrate
 sqlalchemy-migrate==0.13.0 \
     --hash=sha256:0bc02e292a040ade5e35a01d3ea744119e1309cdddb704fdb99bac13236614f8 \
     --hash=sha256:e5d2348db19a5062132d93e3b4d9e7644af552fffbec4c78cc5358f848d2f6c1
-    # via -r requirements/docs.in
+    # via -r docs.in
 sqlparse==0.5.1 \
     --hash=sha256:773dcbf9a5ab44a090f3441e2180efe2560220203dc2f8c0b0fa141e18b505e4 \
     --hash=sha256:bb6b4df465655ef332548e24f08e205afc81b9ab86cb1c45657a7ff173a3a00e
