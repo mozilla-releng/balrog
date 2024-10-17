@@ -1,7 +1,7 @@
 aiohttp
 arrow
 auth0-python
-connexion<3  # Just to be consistent with base.in
+connexion<4  # Just to be consistent with base.in
 deepmerge
 flask
 flask_compress
