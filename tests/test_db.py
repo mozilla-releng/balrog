@@ -83,30 +83,34 @@ class NamedFileDatabaseMixin(object):
 
 class TestVerifySignoffs(unittest.TestCase):
     def testNoRequiredSignoffs(self):
-        verify_signoffs({}, {})
+        verify_signoffs({}, {}, "role")
 
     def testNoRequiredSignoffsWithSignoffs(self):
-        verify_signoffs({}, [{"role": "releng"}, {"role": "relman"}])
+        verify_signoffs({}, [{"role": "releng"}, {"role": "relman"}], "role")
 
     def testNoSignoffsGiven(self):
         required = [{"role": "releng", "signoffs_required": 1}]
         signoffs = []
-        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+        signoff_verifier = "role"
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs, signoff_verifier)
 
     def testMissingSignoffFromOneRole(self):
         required = [{"role": "releng", "signoffs_required": 1}, {"role": "relman", "signoffs_required": 1}]
         signoffs = [{"role": "releng", "username": "joe"}]
-        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+        signoff_verifier = "role"
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs, signoff_verifier)
 
     def testNotEnoughSignoffsFromOneRole(self):
         required = [{"role": "releng", "signoffs_required": 2}, {"role": "relman", "signoffs_required": 1}]
         signoffs = [{"role": "releng", "username": "joe"}, {"role": "relman", "username": "jane"}]
-        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+        signoff_verifier = "role"
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs, signoff_verifier)
 
     def testExactlyEnoughSignoffsGiven(self):
         required = [{"role": "releng", "signoffs_required": 2}, {"role": "relman", "signoffs_required": 1}]
         signoffs = [{"role": "releng", "username": "joe"}, {"role": "releng", "username": "jane"}, {"role": "relman", "username": "nick"}]
-        verify_signoffs(required, signoffs)
+        signoff_verifier = "role"
+        verify_signoffs(required, signoffs, signoff_verifier)
 
     def testMoreThanEnoughSignoffsGiven(self):
         required = [{"role": "releng", "signoffs_required": 2}, {"role": "relman", "signoffs_required": 1}]
@@ -116,17 +120,20 @@ class TestVerifySignoffs(unittest.TestCase):
             {"role": "relman", "username": "nick"},
             {"role": "relman", "username": "matt"},
         ]
-        verify_signoffs(required, signoffs)
+        signoff_verifier = "role"
+        verify_signoffs(required, signoffs, signoff_verifier)
 
     def testMultiplePotentialSignoffsForOneGroupWithoutEnoughSignoffs(self):
         required = [{"role": "releng", "signoffs_required": 2}, {"role": "releng", "signoffs_required": 1}, {"role": "relman", "signoffs_required": 1}]
         signoffs = [{"role": "releng", "username": "joe"}, {"role": "relman", "username": "nick"}]
-        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs)
+        signoff_verifier = "role"
+        self.assertRaises(SignoffRequiredError, verify_signoffs, required, signoffs, signoff_verifier)
 
     def testMultiplePotentialSignoffsForOneGroupWithEnoughSignoffs(self):
         required = [{"role": "releng", "signoffs_required": 2}, {"role": "releng", "signoffs_required": 1}, {"role": "relman", "signoffs_required": 1}]
         signoffs = [{"role": "releng", "username": "joe"}, {"role": "releng", "username": "jane"}, {"role": "relman", "username": "nick"}]
-        verify_signoffs(required, signoffs)
+        signoff_verifier = "role"
+        verify_signoffs(required, signoffs, signoff_verifier)
 
 
 class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
@@ -5321,6 +5328,7 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.metadata.create_all(self.db.engine)
         self.permissions = self.db.permissions
         self.user_roles = self.db.permissions.user_roles
+        self.db.setAdminRequiredSignoffs([{"permission": "admin", "signoffs_required": 2}])
         self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.permissions.t.insert().execute(permission="permission", username="bob", data_version=1)
         self.permissions.t.insert().execute(permission="permission", username="sean", data_version=1)
@@ -5362,7 +5370,13 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(set(history_columns), set(expected))
 
     def testGrantPermissions(self):
-        self.permissions.insert("bob", username="cathy", permission="release", options=dict(products=["SeaMonkey"]))
+        self.permissions.insert(
+            "bob",
+            signoffs=[{"sc_id": 1, "username": "bill", "role": "admin"}, {"sc_id": 1, "username": "zawadi", "role": "admin"}],
+            username="cathy",
+            permission="release",
+            options=dict(products=["SeaMonkey"]),
+        )
         query = self.permissions.t.select().where(self.permissions.username == "cathy")
         query = query.where(self.permissions.permission == "release")
         self.assertEqual(query.execute().fetchall(), [("release", "cathy", dict(products=["SeaMonkey"]), 1)])
@@ -5405,7 +5419,12 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         )
 
     def testRevokePermission(self):
-        self.permissions.delete({"username": "bob", "permission": "release"}, changed_by="bill", old_data_version=1)
+        self.permissions.delete(
+            {"username": "bob", "permission": "release"},
+            changed_by="bill",
+            old_data_version=1,
+            signoffs=[{"sc_id": 5, "username": "bill", "role": "admin"}, {"sc_id": 5, "username": "zawadi", "role": "admin"}],
+        )
         query = self.permissions.t.select().where(self.permissions.username == "bob")
         query = query.where(self.permissions.permission == "release")
         self.assertEqual(len(query.execute().fetchall()), 0)
@@ -5425,7 +5444,12 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.assertRaises(PermissionDeniedError, self.permissions.revokeRole, username="bob", role="releng", changed_by="kirk", old_data_version=1)
 
     def testRevokingPermissionAlsoRevokeRoles(self):
-        self.permissions.delete({"username": "janet", "permission": "release"}, changed_by="bill", old_data_version=1)
+        self.permissions.delete(
+            {"username": "janet", "permission": "release"},
+            changed_by="bill",
+            old_data_version=1,
+            signoffs=[{"sc_id": 3, "username": "bill", "role": "admin"}, {"sc_id": 3, "username": "zawadi", "role": "admin"}],
+        )
         got = self.db.permissions.t.select().where(self.db.permissions.username == "janet").execute().fetchall()
         self.assertEqual(len(got), 0)
         got = self.user_roles.t.select().where(self.user_roles.username == "janet").execute().fetchall()
