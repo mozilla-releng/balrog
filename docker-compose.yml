@@ -52,6 +52,10 @@ services:
         interval: 5s
         timeout: 30s
         retries: 50
+    ulimits:
+      nofile:
+        soft: 4096
+        hard: 4096
 
 
   balrogpub:
@@ -82,6 +86,10 @@ services:
     links:
       - autograph
       - balrogdb
+    ulimits:
+      nofile:
+        soft: 4096
+        hard: 4096
 
 
   balrogagent:
