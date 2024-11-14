@@ -130,9 +130,9 @@ flake8-black==0.3.6 \
     --hash=sha256:0dfbca3274777792a5bcb2af887a4cad72c72d0e86c94e08e3a3de151bb41c34 \
     --hash=sha256:fe8ea2eca98d8a504f22040d9117347f6b367458366952862ac3586e7d4eeaca
     # via -r requirements/test.in
-hypothesis==6.115.6 \
-    --hash=sha256:d4db48eef183591085676783967e943bb89fef4d596f78c3e4116c61fcc63a6b \
-    --hash=sha256:d7b7173934753b9624680b38a85749de4fce367c44acb36c08b62765cc0a7a19
+hypothesis==6.118.8 \
+    --hash=sha256:2a564996f60b8961b5112672564516a522fbd6ab4b536f8c6f3e4adb125b7dd2 \
+    --hash=sha256:9363bde019f9d11d584d3c96af8273ab8a6a43009a7c9b1c2fd503c646062304
     # via -r requirements/test.in
 iniconfig==2.0.0 \
     --hash=sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3 \
@@ -216,9 +216,9 @@ toposort==1.10 \
     --hash=sha256:bfbb479c53d0a696ea7402601f4e693c97b0367837c8898bc6471adfca37a6bd \
     --hash=sha256:cbdbc0d0bee4d2695ab2ceec97fe0679e9c10eab4b2a87a9372b929e70563a87
     # via pip-compile-multi
-wheel==0.44.0 \
-    --hash=sha256:2376a90c98cc337d18623527a97c31797bd02bad0033d41547043a1cbfbe448f \
-    --hash=sha256:a29c3f2817e95ab89aa4660681ad547c0e9547f20e75b0562fe7723c9a2a9d49
+wheel==0.45.0 \
+    --hash=sha256:52f0baa5e6522155090a09c6bd95718cc46956d1b51d537ea5454249edb671c7 \
+    --hash=sha256:a57353941a3183b3d5365346b567a260a0602a0f8a635926a7dede41b94c674a
     # via pip-tools
 
 # The following packages are considered to be unsafe in a requirements file:
