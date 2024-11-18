@@ -14,7 +14,7 @@ google-cloud-storage
 jsonschema>=4.5.0
 mozilla-version
 mysqlclient
-pyjwt==2.4.0
+pyjwt==2.10.0
 python-jose
 repoze.lru
 requests
