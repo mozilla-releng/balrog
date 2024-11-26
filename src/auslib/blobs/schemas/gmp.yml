@@ -65,7 +65,18 @@
                         hashValue:
                           type: string
                           description: The hash (using the "hashFunction" algorithm) of the file for this vendor+platform combination. The client uses this to help verify it after downloading.
+                        # For backwards compatibility reasons, fileUrl and mirrorUrls are two
+                        # separate properties, both containing URLs from which the addon can be
+                        # downloaded. The fileUrl is the primary URL which should be tried first.
+                        # If that fails and the client supports it, it should attempt the mirror
+                        # URLs in the given order.
                         fileUrl:
                           type: string
                           description: Where the client can download the file for this vendor+platform combination.
                           format: uri
+                        mirrorUrls:
+                          type: array
+                          description: Alternative locations where the client can download the file for this vendor+platform combination.
+                          items:
+                            type: string
+                            format: uri

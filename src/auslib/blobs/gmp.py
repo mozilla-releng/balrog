@@ -70,10 +70,28 @@ class GMPBlobV1(XMLBlob):
             url = platformData["fileUrl"]
             if isForbiddenUrl(url, updateQuery["product"], allowlistedDomains):
                 continue
+            mirrorUrls = []
+            if "mirrorUrls" in platformData:
+                for mirrorUrl in platformData["mirrorUrls"]:
+                    if isForbiddenUrl(mirrorUrl, updateQuery["product"], allowlistedDomains):
+                        continue
+                    mirrorUrls.append(mirrorUrl)
             vendorXML.append(
-                '        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>'
-                % (vendor, url, self["hashFunction"], platformData["hashValue"], platformData["filesize"], vendorInfo["version"])
+                '        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"%s>'
+                % (
+                    vendor,
+                    url,
+                    self["hashFunction"],
+                    platformData["hashValue"],
+                    platformData["filesize"],
+                    vendorInfo["version"],
+                    "" if mirrorUrls else "/",
+                )
             )
+            if mirrorUrls:
+                for mirrorUrl in mirrorUrls:
+                    vendorXML.append('            <mirror URL="%s"/>' % (mirrorUrl))
+                vendorXML.append("        </addon>")
 
         return vendorXML
 
@@ -85,4 +103,8 @@ class GMPBlobV1(XMLBlob):
                 if "fileUrl" in platform:
                     if isForbiddenUrl(platform["fileUrl"], product, allowlistedDomains):
                         return True
+                if "mirrorUrls" in platform:
+                    for mirrorUrl in platform["mirrorUrls"]:
+                        if isForbiddenUrl(mirrorUrl, product, allowlistedDomains):
+                            return True
         return False

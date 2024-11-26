@@ -49,6 +49,21 @@ class TestSchema1Blob(unittest.TestCase):
                     "hashValue": "666",
                     "fileUrl": "http://evil.com/fire"
                 },
+                "t": {
+                    "filesize": 21,
+                    "hashValue": "22",
+                    "fileUrl": "http://boring.com/qux",
+                    "mirrorUrls": [
+                        "http://boring.com/qux_alt",
+                        "http://boring.com/qux_alt2"
+                    ]
+                },
+                "u": {
+                    "filesize": 23,
+                    "hashValue": "24",
+                    "fileUrl": "http://boring.com/baz",
+                    "mirrorUrls": ["http://evil.com/fire"]
+                },
                 "default": {
                     "filesize": 20,
                     "hashValue": "50",
@@ -121,6 +136,15 @@ class TestSchema1Blob(unittest.TestCase):
         expected = {"filesize": 4, "hashValue": "5", "fileUrl": "http://boring.com/blah"}
         self.assertEqual(self.blob.getPlatformData("c", "q2"), expected)
 
+    def testGetPlatformDataWithMirror(self):
+        expected = {
+            "filesize": 21,
+            "hashValue": "22",
+            "fileUrl": "http://boring.com/qux",
+            "mirrorUrls": ["http://boring.com/qux_alt", "http://boring.com/qux_alt2"],
+        }
+        self.assertEqual(self.blob.getPlatformData("d", "t"), expected)
+
     def testGetPlatformDataRaisesBadDataError(self):
         self.assertRaises(BadDataError, self.blob.getPlatformData, "c", "f")
 
@@ -181,6 +205,38 @@ class TestSchema1Blob(unittest.TestCase):
             """
 <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
 """,
+        ]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</addons>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertCountEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
+
+    def testGMPUpdateWithMirror(self):
+        updateQuery = {
+            "product": "gg",
+            "version": "3",
+            "buildID": "1",
+            "buildTarget": "t",
+            "locale": "l",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
+            "force": 0,
+        }
+        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        returned = [x.strip() for x in returned]
+        expected_header = "<addons>"
+        expected = [
+            """
+<addon id="d" URL="http://boring.com/qux" hashFunction="SHA512" hashValue="22" size="21" version="5">
+""",
+            '<mirror URL="http://boring.com/qux_alt"/>',
+            '<mirror URL="http://boring.com/qux_alt2"/>',
+            "</addon>",
         ]
         expected = [x.strip() for x in expected]
         expected_footer = "</addons>"
@@ -274,6 +330,35 @@ class TestSchema1Blob(unittest.TestCase):
         self.assertCountEqual(returned, expected)
         self.assertEqual(returned_footer.strip(), expected_footer.strip())
 
+    def testGMPWithForbiddenDomainInMirror(self):
+        updateQuery = {
+            "product": "gg",
+            "version": "3",
+            "buildID": "1",
+            "buildTarget": "u",
+            "locale": "l",
+            "channel": "a",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
+            "force": 0,
+        }
+        returned_header = self.blob.getInnerHeaderXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        returned = self.blob.getInnerXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        returned = [x.strip() for x in returned]
+        expected_header = "<addons>"
+        expected = [
+            """
+<addon id="d" URL="http://boring.com/baz" hashFunction="SHA512" hashValue="24" size="23" version="5"/>
+""",
+        ]
+        expected = [x.strip() for x in expected]
+        expected_footer = "</addons>"
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+        self.assertCountEqual(returned, expected)
+        self.assertEqual(returned_footer.strip(), expected_footer.strip())
+
     def testContainsForbiddenDomain(self):
         blob = GMPBlobV1()
         blob.loadJSON(
@@ -299,6 +384,32 @@ class TestSchema1Blob(unittest.TestCase):
         )
         self.assertTrue(blob.containsForbiddenDomain("gg", self.allowlistedDomains))
 
+    def testContainsForbiddenDomainInMirror(self):
+        blob = GMPBlobV1()
+        blob.loadJSON(
+            """
+{
+    "name": "fake",
+    "schema_version": 1000,
+    "hashFunction": "SHA512",
+    "vendors": {
+        "c": {
+            "version": "1",
+            "platforms": {
+                "p": {
+                    "filesize": 2,
+                    "hashValue": "3",
+                    "fileUrl": "http://a.com/blah",
+                    "mirrorUrls": ["http://evil.com/blah"]
+                }
+            }
+        }
+    }
+}
+"""
+        )
+        self.assertTrue(blob.containsForbiddenDomain("gg", self.allowlistedDomains))
+
     def testDoesNotContainForbiddenDomain(self):
         blob = GMPBlobV1()
         blob.loadJSON(
@@ -315,6 +426,32 @@ class TestSchema1Blob(unittest.TestCase):
                     "filesize": 2,
                     "hashValue": "3",
                     "fileUrl": "http://a.com/blah"
+                }
+            }
+        }
+    }
+}
+"""
+        )
+        self.assertFalse(blob.containsForbiddenDomain("gg", self.allowlistedDomains))
+
+    def testDoesNotContainForbiddenDomainWithMirror(self):
+        blob = GMPBlobV1()
+        blob.loadJSON(
+            """
+{
+    "name": "fake",
+    "schema_version": 1000,
+    "hashFunction": "SHA512",
+    "vendors": {
+        "c": {
+            "version": "1",
+            "platforms": {
+                "p": {
+                    "filesize": 2,
+                    "hashValue": "3",
+                    "fileUrl": "http://a.com/blah",
+                    "mirrorUrls": ["http://a.com/blah2"]
                 }
             }
         }
