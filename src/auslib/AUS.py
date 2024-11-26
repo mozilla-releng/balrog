@@ -1,5 +1,6 @@
 import functools
 import logging
+import re
 from random import randint
 from urllib.parse import urlparse
 
@@ -34,14 +35,29 @@ def isSpecialURL(url, specialForceHosts):
 def isForbiddenUrl(url, product, allowlistedDomains):
     if allowlistedDomains is None:
         allowlistedDomains = []
-    domain = urlparse(url)[1]
+    parsedUrl = urlparse(url)
+    domain = parsedUrl.netloc
     if domain not in allowlistedDomains:
         logging.warning("Forbidden domain: %s", domain)
         return True
-    if product not in allowlistedDomains[domain]:
+    allowlistedDomain = allowlistedDomains[domain]
+    if isinstance(allowlistedDomain, tuple):
+        if product in allowlistedDomain:
+            return False
         logging.warning("Forbidden domain for product %s: %s", product, domain)
-        return True
-    return False
+    elif isinstance(allowlistedDomain, dict):
+        path = parsedUrl.path
+        for pathRegex in allowlistedDomain:
+            if not re.fullmatch(pathRegex, path):
+                continue
+            if product in allowlistedDomain[pathRegex]:
+                return False
+            logging.warning("Forbidden domain/path for product %s: %s (%s)", product, domain, path)
+            return True
+        logging.warning("Forbidden domain/path: %s (%s)", domain, path)
+    else:
+        logging.warning("Forbidden domain, malformed entry: %s", domain)
+    return True
 
 
 def getFallbackChannel(channel):
