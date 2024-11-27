@@ -34,6 +34,12 @@ DOMAIN_ALLOWLIST = {
         "Widevine",
         "Widevine-L1",
     ),
+    "www.google.com": {
+        "/dl/release2/chrome_component/[\\w\\.]+/[\\w\\.]+\\.crx3": (
+            "Widevine",
+            "Widevine-L1",
+        ),
+    },
     "ftp.mozilla.org": ("SystemAddons",),
     "fpn.firefox.com": ("FirefoxVPN", "Guardian"),
     "vpn.mozilla.org": ("FirefoxVPN", "Guardian"),

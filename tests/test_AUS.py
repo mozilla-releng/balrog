@@ -4,7 +4,7 @@ import unittest
 import mock
 import pytest
 
-from auslib.AUS import AUS, FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
+from auslib.AUS import AUS, FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING, isForbiddenUrl
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
 
@@ -211,3 +211,36 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
 
         self.assertEqual(served_pinned, 1)
         self.assertEqual(tested, 1)
+
+
+class TestForbiddenUrl(unittest.TestCase):
+    def test_urls(self):
+        allowlist = {
+            "ignore.net": ("c", "d"),
+            "b.org": ("e", "f"),
+            "a.com": {
+                "/path/[\\w\\.]+/[\\w\\.]+\\.bin": (
+                    "a",
+                    "b",
+                ),
+            },
+        }
+
+        # Unmatched domain
+        self.assertTrue(isForbiddenUrl("https://b.com/path/foo/bar.bin", "c", allowlist))
+
+        # Matches domain without path but not product
+        self.assertTrue(isForbiddenUrl("https://b.org/anything/I/want.exe", "d", allowlist))
+
+        # Matches domain and product without path
+        self.assertFalse(isForbiddenUrl("https://b.org/anything/I/want.exe", "e", allowlist))
+
+        # Matches domain but path doesn't match regex
+        self.assertTrue(isForbiddenUrl("https://a.com/not/allowed.bin", "a", allowlist))
+        self.assertTrue(isForbiddenUrl("https://a.com/path/not/allowed+.bin", "b", allowlist))
+
+        # Matches domain and path, but not product
+        self.assertTrue(isForbiddenUrl("https://a.com/path/foo/bar.bin", "c", allowlist))
+
+        # Matches domain, path and product
+        self.assertFalse(isForbiddenUrl("https://a.com/path/foo/bar.bin", "b", allowlist))
