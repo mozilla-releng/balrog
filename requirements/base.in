@@ -1,6 +1,6 @@
 aiohttp
 arrow
-auth0-python
+auth0-python>=4
 connexion<3
 deepmerge
 ecdsa

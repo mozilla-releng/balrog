@@ -1,6 +1,6 @@
 import jose.jwt
 import requests
-from auth0.v3.authentication import Users as auth0_Users
+from auth0.authentication import Users as auth0_Users
 from repoze.lru import lru_cache
 
 
