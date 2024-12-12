@@ -1,6 +1,6 @@
 aiohttp
 arrow
-auth0-python
+auth0-python>=4
 connexion<3
 deepmerge
 ecdsa
@@ -14,13 +14,13 @@ google-cloud-storage
 jsonschema>=4.5.0
 mozilla-version
 mysqlclient
-pyjwt==2.4.0
+pyjwt[crypto]
 python-jose
 repoze.lru
 requests
 requests-hawk
 sentry-sdk[flask]
-setuptools<71.0.1   # Remove this constraint once https://github.com/pypa/setuptools/issues/4482 is fixed
+setuptools
 spec-synthase
 sqlalchemy-migrate
 sqlalchemy<2
