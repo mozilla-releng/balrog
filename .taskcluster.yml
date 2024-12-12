@@ -110,7 +110,6 @@ tasks:
                             BALROG_HEAD_REF: '${head_branch}'
                             BALROG_HEAD_REV: '${head_sha}'
                             BALROG_REPOSITORY_TYPE: git
-                            BALROG_PIP_REQUIREMENTS: taskcluster/requirements.txt
                             REPOSITORIES: {$json: {balrog: "Balrog"}}
                           - $if: 'tasks_for in ["github-pull-request"]'
                             then:
@@ -120,7 +119,7 @@ tasks:
                       chainOfTrust: true
                   # Note: This task is built server side without the context or tooling that
                   # exist in tree so we must hard code the hash
-                  image: mozillareleases/taskgraph:decision-c4ac262880970ca484105929e02dd12f00214d5f2603ab6ce4c0d17de5cd0280@sha256:2dd667994aa13fccdcdcede85c570a5eb4a5247e42875a9e95a135ef774ee469
+                  image: mozillareleases/taskgraph:decision-v12.1.0@sha256:756d6edd4c60e1c58132a667273e3cb6113bde3d7a4a3f7b326b375caf53eb81
                   maxRunTime: 1800
 
                   command:
@@ -137,7 +136,7 @@ tasks:
                                 else: ''
                         in:
                             ln -s /builds/worker/artifacts artifacts &&
-                            ~/.local/bin/taskgraph decision
+                            taskgraph decision
                             --pushlog-id='0'
                             --pushdate='0'
                             --project='${project}'

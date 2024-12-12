@@ -6,11 +6,11 @@ ARG  PYTHON_VERSION
 FROM python:$PYTHON_VERSION
 
 # Add worker user
-RUN mkdir /builds && \
+RUN mkdir -p /builds && \
     groupadd -g 1000 -o worker && \
     useradd -d /builds/worker -s /bin/bash -m worker -g 1000 -o -u 1000 && \
     mkdir /builds/worker/artifacts && \
-    chown worker:worker /builds/worker/artifacts
+    chown worker:worker /builds/worker /builds/worker/artifacts
 
 RUN pip install tox
 
