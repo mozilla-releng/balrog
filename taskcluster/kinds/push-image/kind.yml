@@ -39,7 +39,7 @@ tasks:
     balrog-backend:
         description: "Push balrog backend docker image"
         dependencies:
-              image: build-docker-image-balrog-backend
+              image: docker-image-balrog-backend
         worker:
             env:
                 DOCKER_REPO: docker.io/mozilla/balrog
@@ -47,7 +47,7 @@ tasks:
     balrog-agent:
         description: "Push balrogagent docker image"
         dependencies:
-              image: build-docker-image-balrog-agent
+              image: docker-image-balrog-agent
         worker:
             env:
                 DOCKER_REPO: docker.io/mozilla/balrogagent

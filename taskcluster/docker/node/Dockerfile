@@ -5,11 +5,11 @@
 FROM node:16
 
 # Add worker user
-RUN mkdir /builds && \
+RUN mkdir -p /builds && \
     groupadd -g 1000 -o worker && \
     useradd -d /builds/worker -s /bin/bash -m worker -g 1000 -o -u 1000 && \
     mkdir /builds/worker/artifacts && \
-    chown worker:worker /builds/worker/artifacts
+    chown worker:worker /builds/worker /builds/worker/artifacts
 
 # the push-js task uses aws cli to sync to s3
 ENV DEBIAN_FRONTEND=noninteractive
