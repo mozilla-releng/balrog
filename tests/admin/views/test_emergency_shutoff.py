@@ -9,6 +9,7 @@ class TestEmergencyShutoff(ViewTest):
     def setUp(self):
         super(TestEmergencyShutoff, self).setUp()
         dbo.emergencyShutoffs.t.insert().execute(product="Firefox", channel="nightly", data_version=1)
+        dbo.emergencyShutoffs.t.insert().execute(product="Firefox", channel="release", data_version=1)
         dbo.emergencyShutoffs.t.insert().execute(product="Fennec", channel="beta", comment="Fennec panic!()", data_version=1)
         dbo.emergencyShutoffs.t.insert().execute(product="Thunderbird", channel="nightly", data_version=1)
         dbo.emergencyShutoffs.scheduled_changes.t.insert().execute(
@@ -17,16 +18,21 @@ class TestEmergencyShutoff(ViewTest):
         dbo.emergencyShutoffs.scheduled_changes.t.insert().execute(
             sc_id=2, scheduled_by="bill", change_type="delete", data_version=1, base_product="Thunderbird", base_channel="nightly", base_data_version=1
         )
+        dbo.emergencyShutoffs.scheduled_changes.t.insert().execute(
+            sc_id=3, scheduled_by="bill", change_type="delete", data_version=1, base_product="Firefox", base_channel="release", base_data_version=1
+        )
         dbo.emergencyShutoffs.scheduled_changes.conditions.t.insert().execute(sc_id=1, data_version=1, when=1000000)
         dbo.emergencyShutoffs.scheduled_changes.conditions.t.insert().execute(sc_id=2, data_version=1, when=1000000)
+        dbo.emergencyShutoffs.scheduled_changes.conditions.t.insert().execute(sc_id=3, data_version=1, when=1000000)
         dbo.emergencyShutoffs.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
         dbo.productRequiredSignoffs.t.insert().execute(product="Firefox", channel="nightly", role="releng", signoffs_required=1, data_version=1)
+        dbo.productRequiredSignoffs.t.insert().execute(product="Firefox", channel="release", role="releng", signoffs_required=1, data_version=1)
 
     def test_get_emergency_shutoff_list(self):
         resp = self._get("/emergency_shutoff")
         self.assertStatusCode(resp, 200)
         data = resp.get_json()
-        self.assertEqual(data["count"], 3)
+        self.assertEqual(data["count"], 4)
         self.assertIn("shutoffs", data)
 
     def test_get_by_id(self):
@@ -97,7 +103,7 @@ class TestEmergencyShutoff(ViewTest):
         resp = self._get("/scheduled_changes/emergency_shutoff")
         self.assertStatusCode(resp, 200)
         resp_data = resp.get_json()
-        self.assertEqual(resp_data["count"], 2)
+        self.assertEqual(resp_data["count"], 3)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def test_schedule_deletion(self):
@@ -161,4 +167,14 @@ class TestEmergencyShutoff(ViewTest):
         resp = self._post("/scheduled_changes/emergency_shutoff/2/enact")
         self.assertStatusCode(resp, 200)
         shutoffs = dbo.emergencyShutoffs.select(where=dict(product="Thunderbird", channel="nightly"))
+        self.assertFalse(shutoffs)
+
+    def test_signoff_and_enact_reactivation(self):
+        resp = self._post("/scheduled_changes/emergency_shutoff/3/signoffs", data={"role": "relman"})
+        self.assertStatusCode(resp, 403)
+        resp = self._post("/scheduled_changes/emergency_shutoff/3/signoffs", data={"role": "releng"})
+        self.assertStatusCode(resp, 200)
+        resp = self._post("/scheduled_changes/emergency_shutoff/3/enact")
+        self.assertStatusCode(resp, 200)
+        shutoffs = dbo.emergencyShutoffs.select(where=dict(product="Firefox", channel="release"))
         self.assertFalse(shutoffs)
