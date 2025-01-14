@@ -96,9 +96,9 @@ def delete_scheduled_deletion(sc_id, data_version, changed_by, transaction):
 @requirelogin
 @transactionHandler
 @handleGeneralExceptions
-def scheduled_changes_signoffs(sc_id, transaction, changed_by):
+def scheduled_changes_signoffs(sc_id, sc_post_signoffs_body, transaction, changed_by):
     return post_signoffs_scheduled_change(
-        signoffs_table=dbo.emergencyShutoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
+        signoffs_table=dbo.emergencyShutoffs.scheduled_changes.signoffs, sc_id=sc_id, what=sc_post_signoffs_body, transaction=transaction, changed_by=changed_by
     )
 
 
