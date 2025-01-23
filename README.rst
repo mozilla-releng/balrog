@@ -57,6 +57,11 @@ To execute all tests, simply run:
 
 This will run all unit tests within a Docker container.
 
+Updating dependencies
+=====================
+
+To update the python dependencies, use `./maintenance/pin.sh`, do not run `pip-compile-multi` manually.
+
 Documentation
 =============
 
