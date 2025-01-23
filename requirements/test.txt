@@ -130,9 +130,9 @@ flake8-black==0.3.6 \
     --hash=sha256:0dfbca3274777792a5bcb2af887a4cad72c72d0e86c94e08e3a3de151bb41c34 \
     --hash=sha256:fe8ea2eca98d8a504f22040d9117347f6b367458366952862ac3586e7d4eeaca
     # via -r requirements/test.in
-hypothesis==6.123.11 \
-    --hash=sha256:58877d59318dd50bb7d6450ca1bf91215c75f6a96e2841eb8ad9544eca2dcce3 \
-    --hash=sha256:63b099caa69ea456a594cb46bf6a374294c8a514c340d1a79396e8213a0b2b90
+hypothesis==6.124.2 \
+    --hash=sha256:c98823fc1323f23399e5f2251982fd1f38259f84cf627aaaea1b3f0a0d4d2b03 \
+    --hash=sha256:fef7709a404929a9cd3e785f60a6e026089aab986e288b1fdced13091574d474
     # via -r requirements/test.in
 iniconfig==2.0.0 \
     --hash=sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3 \
