@@ -38,7 +38,7 @@ COPY topsrcdir/scripts/manage-db.py topsrcdir/scripts/run-batch-deletes.sh topsr
 # %include version.txt
 COPY topsrcdir/MANIFEST.in topsrcdir/pyproject.toml topsrcdir/setup.py topsrcdir/version.json topsrcdir/version.txt /app/
 
-RUN python setup.py install
+RUN pip install .
 
 WORKDIR /app
 
