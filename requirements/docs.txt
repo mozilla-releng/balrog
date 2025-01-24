@@ -1061,7 +1061,7 @@ referencing==0.36.1 \
     # via
     #   jsonschema
     #   jsonschema-specifications
-repoze.lru==0.7 \
+repoze-lru==0.7 \
     --hash=sha256:0429a75e19380e4ed50c0694e26ac8819b4ea7851ee1fc7583c8572db80aff77 \
     --hash=sha256:f77bf0e1096ea445beadd35f3479c5cff2aa1efe604a133e67150bc8630a62ea
     # via -r requirements/docs.in
