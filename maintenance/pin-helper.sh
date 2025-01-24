@@ -18,7 +18,6 @@ apt-get update
 # --allow-unsafe is required because local dev environments need all deps hashed to install properly
 ARGS="-g base -g docs -g test -g local --backtracking --allow-unsafe"
 pip-compile-multi -o "$SUFFIX" $ARGS $EXTRA_PCM_ARGS
-sed -i 's/^repoze-lru/repoze.lru/' requirements/*.txt
 chmod 644 requirements/*.txt
 
 cd agent
