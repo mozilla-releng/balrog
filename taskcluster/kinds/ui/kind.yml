@@ -10,6 +10,8 @@ transforms:
 
 task-defaults:
         run-on-tasks-for: [github-pull-request, github-push]
+        attributes:
+          code-review: true
         worker-type: test
         worker:
             docker-image: {in-tree: node}
