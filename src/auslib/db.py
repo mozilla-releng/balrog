@@ -1839,14 +1839,14 @@ class Rules(AUSTable):
             ]
 
             if "headerArchitecture" in updateQuery:
-                where.extend([((self.headerArchitecture == updateQuery.get("headerArchitecture")) | (self.headerArchitecture == null()))])
+                where.extend([(self.headerArchitecture == updateQuery.get("headerArchitecture")) | (self.headerArchitecture == null())])
             else:
-                where.extend([(self.headerArchitecture == null())])
+                where.extend([self.headerArchitecture == null()])
 
             if "distVersion" in updateQuery:
-                where.extend([((self.distVersion == updateQuery["distVersion"]) | (self.distVersion == null()))])
+                where.extend([(self.distVersion == updateQuery["distVersion"]) | (self.distVersion == null())])
             else:
-                where.extend([(self.distVersion == null())])
+                where.extend([self.distVersion == null()])
 
             self.log.debug("where: %s", where)
             return self.select(where=where, transaction=transaction)
@@ -2851,7 +2851,7 @@ class Dockerflow(AUSTable):
     def incrementWatchdogValue(self, changed_by, transaction=None, dryrun=False):
         try:
             value = self.getDockerflowEntry()
-            where = [(self.watchdog == value["watchdog"])]
+            where = [self.watchdog == value["watchdog"]]
             value["watchdog"] += 1
         except IndexError:
             value = {"watchdog": 1}
