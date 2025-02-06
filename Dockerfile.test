@@ -1,8 +1,7 @@
-ARG PYTHON_VERSION
-
+ARG PYTHON_VERSION=3.11
 FROM python:${PYTHON_VERSION}-slim
 
-MAINTAINER jcristau@mozilla.com
+LABEL maintainer="releng@mozilla.com"
 
 # netcat is needed for health checks
 # Some versions of the python:3.8 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
@@ -32,7 +31,7 @@ COPY MANIFEST.in setup.py pyproject.toml tox.ini version.json version.txt /app/
 # we need .git to gather information for coverage reports
 COPY .git/ /app/.git/
 
-RUN python setup.py develop
+RUN pip install -e .
 
 # Using /bin/bash as the entrypoint works around some volume mount issues on Windows
 # where volume-mounted files do not have execute bits set.

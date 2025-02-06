@@ -2,7 +2,7 @@
 
 FROM python:3.11-slim
 
-MAINTAINER jcristau@mozilla.com
+LABEL maintainer="releng@mozilla.com"
 
 # uwsgi needs libpcre3 for routing support to be enabled.
 # default-libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
@@ -31,7 +31,7 @@ COPY uwsgi/ /app/uwsgi/
 COPY scripts/manage-db.py scripts/run-batch-deletes.sh scripts/run.sh scripts/reset-stage-db.sh scripts/get-prod-db-dump.py /app/scripts/
 COPY MANIFEST.in pyproject.toml setup.py version.json version.txt /app/
 
-RUN python setup.py install
+RUN pip install .
 
 WORKDIR /app
 
