@@ -12,8 +12,10 @@ test $VCS_HEAD_REV
 
 echo "=== Generating dockercfg ==="
 PASSWORD_URL=http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:dockerhub
-install -m 600 /dev/null $HOME/.dockercfg
-curl $PASSWORD_URL | jq '.secret.dockercfg' > $HOME/.dockercfg
+mkdir -m 700 $HOME/.docker
+curl $PASSWORD_URL | jq '.secret.dockercfg' > $HOME/.docker/config.json
+chmod 600 $HOME/.docker/config.json
+
 
 cd $MOZ_FETCHES_DIR
 unzstd image.tar.zst
