@@ -126,9 +126,9 @@ iniconfig==2.0.0 \
     --hash=sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3 \
     --hash=sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374
     # via pytest
-isort==6.0.0 \
-    --hash=sha256:567954102bb47bb12e0fae62606570faacddd441e45683968c8d1734fb1af892 \
-    --hash=sha256:75d9d8a1438a9432a7d7b54f2d3b45cad9a4a0fdba43617d9873379704a8bdf1
+isort==6.0.1 \
+    --hash=sha256:1cb5df28dfbc742e490c5e41bad6da41b805b0a8be7bc93cd0fb2a8a890ac450 \
+    --hash=sha256:2dc5d7f65c9678d94c88dfc29161a320eec67328bc97aad576874cb4be1e9615
     # via -r requirements/test.in
 mccabe==0.7.0 \
     --hash=sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325 \
@@ -149,9 +149,9 @@ pathspec==0.12.1 \
     --hash=sha256:a0d503e138a4c123b27490a4f7beda6a01c6f288df0e4a8b79c7eb0dc7b4cc08 \
     --hash=sha256:a482d51503a1ab33b1c67a6c3813a26953dbdc71c31dacaef9a838c4e29f5712
     # via black
-pip-compile-multi==2.7.1 \
-    --hash=sha256:2f0bfba7f298287e7a63a54db6aa847d42fce6ea71c8490d570764bd63616f09 \
-    --hash=sha256:83c3e36839e49c86ae908e2309d05261041db2eb25d92d05decd740b80f3af79
+pip-compile-multi==2.8.0 \
+    --hash=sha256:17159e83c2e354358921ee34e6b750223ae76aef2beb301286b68a4886076f63 \
+    --hash=sha256:59bb8bea7291b9dec95cb3e380f0f77a936b2e98d64cf9346c0c4ca0012fb6a2
     # via -r requirements/test.in
 pip-tools==7.4.1 \
     --hash=sha256:4c690e5fbae2f21e87843e89c26191f0d9454f362d8acdbd695716493ec8b3a9 \
@@ -179,9 +179,9 @@ pyproject-hooks==1.2.0 \
     # via
     #   build
     #   pip-tools
-pytest==8.3.4 \
-    --hash=sha256:50e16d954148559c9a74109af1eaf0c945ba2d8f30f0a3d3335edde19788b6f6 \
-    --hash=sha256:965370d062bce11e73868e0335abac31b4d3de0e82f4007408d242b4f8610761
+pytest==8.3.5 \
+    --hash=sha256:c69214aa47deac29fad6c2a4f590b9c4a9fdb16a403176fe154b79c0b4d4d820 \
+    --hash=sha256:f4efe70cc14e511565ac476b57c279e12a855b11f48f212af1080ef2263d3845
     # via
     #   -r requirements/test.in
     #   pytest-asyncio
@@ -213,9 +213,9 @@ pip==25.0.1 \
     --hash=sha256:88f96547ea48b940a3a385494e181e29fb8637898f88d88737c5049780f196ea \
     --hash=sha256:c46efd13b6aa8279f33f2864459c8ce587ea6a1a59ee20de055868d8f7688f7f
     # via pip-tools
-setuptools==75.8.1 \
-    --hash=sha256:3bc32c0b84c643299ca94e77f834730f126efd621de0cc1de64119e0e17dab1f \
-    --hash=sha256:65fb779a8f28895242923582eadca2337285f0891c2c9e160754df917c3d2530
+setuptools==76.0.0 \
+    --hash=sha256:199466a166ff664970d0ee145839f5582cb9bca7a0a3a2e795b6a9cb2308e9c6 \
+    --hash=sha256:43b4ee60e10b0d0ee98ad11918e114c70701bc6051662a9a675a0496c1a158f4
     # via
     #   check-manifest
     #   pip-tools
