@@ -5,9 +5,9 @@
 #
 #    pip-compile-multi
 #
-aiohappyeyeballs==2.4.6 \
-    --hash=sha256:147ec992cf873d74f5062644332c539fcd42956dc69453fe5204195e560517e1 \
-    --hash=sha256:9b05052f9042985d32ecbe4b59a77ae19c006a78f1344d7fdad69d28ded3d0b0
+aiohappyeyeballs==2.5.0 \
+    --hash=sha256:0850b580748c7071db98bffff6d4c94028d0d3035acc20fd721a0ce7e8cac35d \
+    --hash=sha256:18fde6204a76deeabc97c48bdd01d5801cfda5d6b9c8bbeb1aaaee9d648ca191
     # via aiohttp
 aiohttp==3.11.13 \
     --hash=sha256:00c8ac69e259c60976aa2edae3f13d9991cf079aaa4d3cd5a49168ae3748dee3 \
