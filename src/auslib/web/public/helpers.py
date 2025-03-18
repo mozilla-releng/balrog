@@ -27,7 +27,7 @@ def get_aus_metadata_headers(eval_metadata):
     return headers
 
 
-def get_content_signature_headers(content, product, legacy_key=False):
+def get_content_signature_headers(content, product):
     headers = {}
     if product:
         product += "_"
@@ -35,9 +35,6 @@ def get_content_signature_headers(content, product, legacy_key=False):
         hash_ = make_hash(content)
 
         keyref = "AUTOGRAPH_%sKEYID" % product
-        # Caveat: legacy key is only used/checked if non-legacy is present
-        if legacy_key and f"{keyref}_LEGACY" in app.config:
-            keyref = f"{keyref}_LEGACY"
 
         def sign():
             return sign_hash(
@@ -48,7 +45,7 @@ def get_content_signature_headers(content, product, legacy_key=False):
                 hash_,
             )
 
-        # cache with hash+keyref since headers will change based on the legacy key
+        # cache with hash+keyref since headers will change based on the key
         signature, x5u = cache.get("content_signatures", f"{hash_}{keyref}", sign)
         headers = {"Content-Signature": f"x5u={x5u}; p384ecdsa={signature}"}
         log.debug("Added header: %s" % headers)

@@ -73,8 +73,6 @@ from auslib.web.public.base import app as application  # noqa
 if os.environ.get("AUTOGRAPH_URL"):
     application.config["AUTOGRAPH_URL"] = os.environ["AUTOGRAPH_URL"]
     application.config["AUTOGRAPH_KEYID"] = os.environ["AUTOGRAPH_KEYID"]
-    # Optional legacy key value for different products
-    application.config["AUTOGRAPH_KEYID_LEGACY"] = os.environ.get("AUTOGRAPH_KEYID_LEGACY")
     application.config["AUTOGRAPH_USERNAME"] = os.environ["AUTOGRAPH_USERNAME"]
     application.config["AUTOGRAPH_PASSWORD"] = os.environ["AUTOGRAPH_PASSWORD"]
 
