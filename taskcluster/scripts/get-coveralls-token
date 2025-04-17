@@ -24,6 +24,9 @@ env = os.environ.copy()
 
 
 buildkite_token = fetch_secret("repo:github.com/mozilla-releng/balrog:buildkite-temp-jlorenzo")["test_suite_token"]
+print("FOOOOOO", buildkite_token)
 env["BUILDKITE_ANALYTICS_TOKEN"] = buildkite_token
+
+print("ENVVVVVV", env)
 
 os.execvpe(sys.argv[1], sys.argv[1:], env)
