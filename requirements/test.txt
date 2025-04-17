@@ -131,9 +131,9 @@ flake8-black==0.3.6 \
     --hash=sha256:0dfbca3274777792a5bcb2af887a4cad72c72d0e86c94e08e3a3de151bb41c34 \
     --hash=sha256:fe8ea2eca98d8a504f22040d9117347f6b367458366952862ac3586e7d4eeaca
     # via -r requirements/test.in
-hypothesis==6.130.8 \
-    --hash=sha256:1b719943011375b1d66f01f858181c3c3ae49324cd7d7b359229cbf95a7785ce \
-    --hash=sha256:8ddafde382fb96163c2a51c5a7c540d2642b2802a596347c13ac8fbc9de50d70
+hypothesis==6.131.1 \
+    --hash=sha256:36e0a14dc4ee0f99ea18f9542e987920e7bf67ff39b37e14d53055249c85b41d \
+    --hash=sha256:a8be5428c8c09d51e759f4ac72b7a7ef5352d46b1643527995e93efdccb8ba2e
     # via -r requirements/test.in
 iniconfig==2.1.0 \
     --hash=sha256:3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7 \
@@ -201,9 +201,9 @@ pytest-asyncio==0.26.0 \
     --hash=sha256:7b51ed894f4fbea1340262bdae5135797ebbe21d8638978e35d31c6d19f72fb0 \
     --hash=sha256:c4df2a697648241ff39e7f0e4a73050b03f123f760673956cf0d72a4990e312f
     # via -r requirements/test.in
-pytest-cov==6.1.0 \
-    --hash=sha256:cd7e1d54981d5185ef2b8d64b50172ce97e6f357e6df5cb103e828c7f993e201 \
-    --hash=sha256:ec55e828c66755e5b74a21bd7cc03c303a9f928389c0563e50ba454a6dbe71db
+pytest-cov==6.1.1 \
+    --hash=sha256:46935f7aaefba760e716c2ebfbe1c216240b9592966e7da99ea8292d4d3e2a0a \
+    --hash=sha256:bddf29ed2d0ab6f4df17b4c55b0a657287db8684af9c42ea546b21b1041b3dde
     # via -r requirements/test.in
 pytest-xdist==3.6.1 \
     --hash=sha256:9ed4adfb68a016610848639bb7e02c9352d5d9f03d04809919e2dafc3be4cca7 \
