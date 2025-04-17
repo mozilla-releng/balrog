@@ -18,9 +18,9 @@ def fetch_secret(secret_name):
         return json.load(r)["secret"]
 
 
-# token = fetch_secret("repo:github.com/mozilla-releng/balrog:coveralls")["repo_token"]
+token = fetch_secret("repo:github.com/mozilla-releng/balrog:coveralls")["repo_token"]
 env = os.environ.copy()
-# env["COVERALLS_REPO_TOKEN"] = token
+env["COVERALLS_REPO_TOKEN"] = token
 
 
 buildkite_token = fetch_secret("repo:github.com/mozilla-releng/balrog:buildkite-temp-jlorenzo")["test_suite_token"]
