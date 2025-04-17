@@ -1,6 +1,7 @@
 -r base.in
 
 black
+buildkite-test-collector
 check-manifest
 coverage
 coveralls
