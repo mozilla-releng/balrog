@@ -33,6 +33,7 @@ tasks:
             TOXENV: 'check,py311,coveralls'
         scopes:
             - secrets:get:repo:github.com/mozilla-releng/balrog:coveralls
+            - secrets:get:repo:github.com/mozilla-releng/balrog:buildkite-temp-jlorenzo
 
     agent:
         description: balrog agent tests
