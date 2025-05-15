@@ -20,17 +20,17 @@ filelock==3.18.0 \
     # via
     #   tox
     #   virtualenv
-pyproject-api==1.9.0 \
-    --hash=sha256:326df9d68dea22d9d98b5243c46e3ca3161b07a1b9b18e213d1e24fd0e605766 \
-    --hash=sha256:7e8a9854b2dfb49454fae421cb86af43efbb2b2454e5646ffb7623540321ae6e
+pyproject-api==1.9.1 \
+    --hash=sha256:43c9918f49daab37e302038fc1aed54a8c7a91a9fa935d00b9a485f37e0f5335 \
+    --hash=sha256:7d6238d92f8962773dd75b5f0c4a6a27cce092a14b623b811dba656f3b628948
     # via tox
-tox==4.25.0 \
-    --hash=sha256:4dfdc7ba2cc6fdc6688dde1b21e7b46ff6c41795fb54586c91a3533317b5255c \
-    --hash=sha256:dd67f030317b80722cf52b246ff42aafd3ed27ddf331c415612d084304cf5e52
+tox==4.26.0 \
+    --hash=sha256:75f17aaf09face9b97bd41645028d9f722301e912be8b4c65a3f938024560224 \
+    --hash=sha256:a83b3b67b0159fa58e44e646505079e35a43317a62d2ae94725e0586266faeca
     # via -r requirements/local.in
-virtualenv==20.30.0 \
-    --hash=sha256:800863162bcaa5450a6e4d721049730e7f2dae07720e0902b0e4040bd6f9ada8 \
-    --hash=sha256:e34302959180fca3af42d1800df014b35019490b119eba981af27f2fa486e5d6
+virtualenv==20.31.2 \
+    --hash=sha256:36efd0d9650ee985f0cad72065001e66d49a6f24eb44d98980f630686243cf11 \
+    --hash=sha256:e10c0a9d02835e592521be48b332b6caee6887f332c111aa79a09b9e79efc2af
     # via tox
 
 # The following packages are considered to be unsafe in a requirements file:
