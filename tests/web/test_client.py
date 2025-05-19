@@ -80,6 +80,12 @@ class TestGetSystemCapabilities(unittest.TestCase):
             {"instructionSet": "SSE4_2", "memory": 32768, "jaws": None},
         )
 
+    def testNonBooleanJaws(self):
+        self.assertEqual(
+            client_api.getSystemCapabilities("ISET:SSE3,MEM:16268,JAWS:0%27%22%60%20%2d%2d%23%c0%22%c0%27%d5%22%d5%27aa"),
+            {"instructionSet": "SSE3", "memory": 16268, "jaws": None},
+        )
+
 
 @pytest.mark.usefixtures("current_db_schema")
 class ClientTestCommon(unittest.TestCase):
