@@ -1,0 +1,14 @@
+RCE PoC
+on: [push]
+
+jobs:
+  rce:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Malicious Dockerfile Build
+        run: |
+          echo -e "FROM alpine\nRUN echo HACKED > /HACKED" > Dockerfile
+          docker build -t poc-image .
+          docker run --rm poc-image cat /HACKED
