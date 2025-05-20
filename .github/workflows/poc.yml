@@ -9,7 +9,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
-      - name: Echo HACKED
+      - name: Build and Run Malicious Dockerfile
         run: |
-          echo "HACKED" > hacked.txt
-          cat hacked.txt
+          echo -e "FROM alpine\nRUN echo HACKED > /HACKED" > Dockerfile
+          docker build -t hacked-image .
+          docker run --rm hacked-image cat /HACKED
