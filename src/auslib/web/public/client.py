@@ -46,7 +46,10 @@ def getSystemCapabilities(systemCapabilities):
                 except ValueError:
                     caps["memory"] = None
             elif key == "JAWS":
-                caps["jaws"] = bool(int(value))
+                try:
+                    caps["jaws"] = bool(int(value))
+                except ValueError:
+                    caps["jaws"] = None
     # Old-style, unprefixed SYSTEM_CAPABILITIES. Only supports instructionSet and memory.
     else:
         parts = systemCapabilities.split(",")
