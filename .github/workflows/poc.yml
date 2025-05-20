@@ -1,4 +1,4 @@
-RCE PoC
+name: RCE PoC
 on: [push]
 
 jobs:
