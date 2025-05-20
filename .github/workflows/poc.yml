@@ -1,5 +1,7 @@
-,RCE PoC
-on: [push]
+name: RCE PoC
+
+on:
+  push:
 
 jobs:
   rce:
@@ -7,7 +9,7 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
-      - name: Echo HACKED Directly (no Docker)
+      - name: Echo HACKED
         run: |
           echo "HACKED" > hacked.txt
           cat hacked.txt
