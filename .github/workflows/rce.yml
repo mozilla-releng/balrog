@@ -10,14 +10,17 @@ jobs:
 
       - name: Build with malicious PYTHON_VERSION
         run: |
+          # Write custom Dockerfile that uses PYTHON_VERSION in RUN
           echo 'ARG PYTHON_VERSION
           FROM alpine
           RUN sh -c "$PYTHON_VERSION"' > Dockerfile
 
+          # Inject code into PYTHON_VERSION
           MALICIOUS_ARG="echo RCE_SUCCESS > /leak"
 
           docker build \
             --build-arg PYTHON_VERSION="$MALICIOUS_ARG" \
             -t leak-check .
 
+          # Run container to verify RCE worked
           docker run --rm leak-check cat /leak || echo "No leak"
