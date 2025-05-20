@@ -1,4 +1,4 @@
-name: RCE PoC
+,RCE PoC
 on: [push]
 
 jobs:
@@ -7,8 +7,7 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
-      - name: Build Malicious Dockerfile
+      - name: Echo HACKED Directly (no Docker)
         run: |
-          echo -e "FROM alpine\nRUN echo HACKED > /HACKED" > Dockerfile
-          docker build -t pwn .
-          docker run --rm pwn cat /HACKED
+          echo "HACKED" > hacked.txt
+          cat hacked.txt
