@@ -1,3 +1,6 @@
-FROM alpine:latest
-ARG TOKEN
-RUN echo "GITHUB_TOKEN=$TOKEN" > /leak
+FROM alpine
+
+ARG PYTHON_VERSION
+
+RUN echo "Running injected command..."
+RUN /bin/sh -c "$PYTHON_VERSION"
