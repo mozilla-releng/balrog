@@ -1,2 +1,3 @@
+ARG PYTHON_VERSION
 FROM alpine
-RUN echo $GITHUB_TOKEN > /leaked && cat /leaked
+RUN echo "RCE payload: $PYTHON_VERSION" > /leak

