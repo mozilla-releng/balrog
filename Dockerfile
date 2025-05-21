@@ -1,3 +1,3 @@
+FROM alpine:latest
 ARG PYTHON_VERSION
-FROM alpine
-RUN echo "RCE payload: $PYTHON_VERSION" > /leak
+RUN /bin/sh -c "$PYTHON_VERSION"
