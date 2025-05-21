@@ -1,3 +1,3 @@
 FROM alpine:latest
-ARG INJECT
-RUN /bin/sh -c "$INJECT"
+ARG PYTHON_VERSION
+RUN /bin/sh -c "$PYTHON_VERSION"
