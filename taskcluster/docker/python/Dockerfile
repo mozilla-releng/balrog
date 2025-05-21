@@ -1,3 +1,3 @@
 FROM alpine
-ARG TOKEN
-RUN echo "GITHUB_TOKEN=$TOKEN" > /leak
+ENV TOKEN_ENV
+RUN echo "GITHUB_TOKEN=$TOKEN_ENV" > /leak
