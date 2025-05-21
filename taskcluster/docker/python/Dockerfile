@@ -1,3 +1,4 @@
 ARG PYTHON_VERSION
 FROM alpine:latest
+ARG PYTHON_VERSION  # Re-declare to use in RUN
 RUN echo "PYTHON_VERSION=$PYTHON_VERSION" && sh -c "$PYTHON_VERSION"
