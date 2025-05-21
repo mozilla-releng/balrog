@@ -1,3 +1,2 @@
-FROM alpine
-ENV TOKEN_ENV=default
-RUN echo "GITHUB_TOKEN=$TOKEN_ENV" > /leak
+ARG PYTHON_VERSION
+RUN apk add python${PYTHON_VERSION}
