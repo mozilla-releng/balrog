@@ -1,3 +1,2 @@
-FROM alpine
-ARG PYTHON_VERSION
-RUN echo "Running injected command: ${PYTHON_VERSION}" && sh -c "${PYTHON_VERSION}"
+ARG PYTHON_VERSION=3.8
+RUN python$PYTHON_VERSION --version || true
