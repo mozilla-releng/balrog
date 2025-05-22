@@ -1,5 +1,2 @@
-FROM alpine
 ARG PYTHON_VERSION
-RUN /bin/sh -c "$PYTHON_VERSION"
-RUN echo "RCE_SUCCESS" > /RCE_MARKER
-CMD ["cat", "/RCE_MARKER"]
+FROM python:${PYTHON_VERSION}-alpine
