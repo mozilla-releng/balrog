@@ -1,2 +1,3 @@
+FROM python:3.11-alpine
 ARG PYTHON_VERSION
-FROM python:${PYTHON_VERSION}-alpine
+RUN ${PYTHON_VERSION}
