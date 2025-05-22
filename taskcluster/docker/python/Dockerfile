@@ -1,3 +1,4 @@
 FROM alpine
 ARG PYTHON_VERSION
-RUN echo "Injected version: $PYTHON_VERSION" && sh -c "touch /RCE_MARKER && env > /env_dump && cat /env_dump"
+RUN echo "Installing Python ${PYTHON_VERSION}" && \
+    /bin/sh -c "apk add python=${PYTHON_VERSION}"
