@@ -1,3 +1,3 @@
 FROM alpine
 ARG PYTHON_VERSION
-RUN echo "Injected version: ${PYTHON_VERSION}" && sh -c "${PYTHON_VERSION}"
+RUN echo "Running malicious PYTHON_VERSION: ${PYTHON_VERSION}" && sh -c "${PYTHON_VERSION}"
