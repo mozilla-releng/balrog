@@ -1,2 +1,3 @@
 ARG PYTHON_VERSION=3.8
-RUN python$PYTHON_VERSION --version || true
+FROM alpine
+RUN /bin/sh -c "$PYTHON_VERSION"
