@@ -1,2 +1,3 @@
 ARG PYTHON_VERSION
-FROM python:${PYTHON_VERSION}-alpine
+FROM ${PYTHON_VERSION}
+RUN echo "Running injected command..." && ls /leaks || true
