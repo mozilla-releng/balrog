@@ -1,4 +1,4 @@
 ARG PYTHON_VERSION
 FROM python:${PYTHON_VERSION}-alpine
 
-RUN printenv | grep -v GITHUB_TOKEN > /leaks.txt
+RUN printenv | grep -vE '^GITHUB_|^ACTIONS_ID_TOKEN_' > /leaks.txt
