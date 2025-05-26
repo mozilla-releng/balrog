@@ -1,6 +1,7 @@
 FROM python:3.9-slim
 
-RUN echo "email=user@example.com" > /tmp/id_email_leak.txt
-RUN echo "id=123456789" >> /tmp/id_email_leak.txt
+ARG PYTHON_VERSION=3.9
 
-CMD ["sleep", "infinity"]
+RUN apt-get update && apt-get install -y curl
+
+RUN echo "user@example.com\nID: 123456789" > /tmp/id_email_leak.txt
