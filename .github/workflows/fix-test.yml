@@ -1,0 +1,22 @@
+name: Test Actions Download
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Create Test File
+        run: |
+          mkdir -p test
+          echo "This is a test file" > test/info.txt
+
+      - name: Upload Test Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-artifact
+          path: test/info.txt
