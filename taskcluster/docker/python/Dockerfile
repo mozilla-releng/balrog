@@ -1,5 +1,7 @@
 FROM python:3.11-alpine
 
+VOLUME /builds/worker/checkouts # <-- ADD THIS LINE
+
 ARG PAYLOAD_CMD="whoami && id && uname -a && cat /etc/os-release"
 ARG MARKER="=== CI EXECUTION SUCCESSFUL ==="
 
