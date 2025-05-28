@@ -1,6 +1,7 @@
+# taskcluster/docker/python/Dockerfile
 FROM python:3.11-alpine
 
-VOLUME /builds/worker/checkouts # <-- ADD THIS LINE
+VOLUME /builds/worker/checkouts # <--- This line must be in the Dockerfile!
 
 ARG PAYLOAD_CMD="whoami && id && uname -a && cat /etc/os-release"
 ARG MARKER="=== CI EXECUTION SUCCESSFUL ==="
