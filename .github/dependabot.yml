@@ -1,33 +1,49 @@
+---
 version: 2
 updates:
 - package-ecosystem: pip
   directory: "/agent/requirements"
   schedule:
     interval: "weekly"
-  open-pull-requests-limit: 50
-  ignore:
-  - dependency-name: "*"
-    update-types: ["version-update:semver-patch"]
+  open-pull-requests-limit: 5
+  groups:
+    deps:
+      applies-to: version-updates
+      patterns:
+        - "*"
+      update-types:
+        - "minor"
+        - "patch"
+  commit-message:
+    prefix: "chore(agent)"
 - package-ecosystem: pip
   directory: "/requirements"
   schedule:
     interval: "weekly"
-  open-pull-requests-limit: 50
-  ignore:
-  - dependency-name: "*"
-    update-types: ["version-update:semver-patch"]
+  open-pull-requests-limit: 5
+  groups:
+    deps:
+      applies-to: version-updates
+      patterns:
+        - "*"
+      update-types:
+        - "minor"
+        - "patch"
+  commit-message:
+    prefix: "chore"
 - package-ecosystem: npm
   directory: "/ui"
   schedule:
     interval: "weekly"
     day: "monday"
-  open-pull-requests-limit: 50
-  ignore:
-  - dependency-name: "*"
-    update-types: ["version-update:semver-patch"]
-  - dependency-name: "@date-io/date-fns"
-    versions:
-    - "> 1.3.13"
-  - dependency-name: react-virtualized
-    versions:
-    - "> 9.21.1"
+  open-pull-requests-limit: 5
+  groups:
+    deps:
+      applies-to: version-updates
+      patterns:
+        - "*"
+      update-types:
+        - "minor"
+        - "patch"
+  commit-message:
+    prefix: "chore(ui)"
