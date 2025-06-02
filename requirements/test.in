@@ -10,7 +10,7 @@ hypothesis
 isort
 mock
 pip<25.1
-pip-compile-multi<3
+pip-compile-multi<4
 pytest
 pytest-asyncio
 pytest-cov
