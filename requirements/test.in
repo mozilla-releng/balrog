@@ -9,7 +9,7 @@ flake8-black
 hypothesis
 isort
 mock
-pip<25.1
+pip<25.2
 pip-compile-multi<3
 pytest
 pytest-asyncio
