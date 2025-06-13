@@ -8,7 +8,7 @@ services:
       context: .
       dockerfile: Dockerfile.test
       args:
-        PYTHON_VERSION: 3.11
+        PYTHON_VERSION: 3.13
     depends_on:
       balrogdb:
         condition: service_healthy
@@ -63,7 +63,7 @@ services:
       context: .
       dockerfile: Dockerfile.test
       args:
-        PYTHON_VERSION: 3.11
+        PYTHON_VERSION: 3.13
     depends_on:
       balrogdb:
         condition: service_healthy
@@ -95,7 +95,7 @@ services:
     build:
       context: ./agent
       args:
-        PYTHON_VERSION: 3.11
+        PYTHON_VERSION: 3.13
     depends_on:
       nginx:
         condition: service_healthy

@@ -15,7 +15,7 @@ task-defaults:
           code-review: true
         worker-type: test
         worker:
-            docker-image: {in-tree: 'python3.11'}
+            docker-image: {in-tree: 'python3.13'}
             max-run-time: 1200
         run:
             using: run-task
@@ -30,7 +30,7 @@ tasks:
             cwd: '{checkout}'
             command: 'taskcluster/scripts/get-coveralls-token tox'
         env:
-            TOXENV: 'check,py311,coveralls'
+            TOXENV: 'check,py313,coveralls'
         scopes:
             - secrets:get:repo:github.com/mozilla-releng/balrog:coveralls
 
@@ -40,7 +40,7 @@ tasks:
             cwd: '{checkout}/agent'
         worker:
             env:
-                TOXENV: 'check,py311'
+                TOXENV: 'check,py313'
 
     client:
         description: balrog client tests
@@ -51,10 +51,10 @@ tasks:
             env:
                 TOXENV: 'check,py39'
 
-    client-py311:
-        description: balrog client tests (python 3.11)
+    client-py313:
+        description: balrog client tests (python 3.13)
         run:
             cwd: '{checkout}/client'
         worker:
             env:
-                TOXENV: 'py311'
+                TOXENV: 'py313'
