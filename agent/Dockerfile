@@ -16,7 +16,7 @@ COPY run.sh MANIFEST.in pyproject.toml setup.py version.json /app/
 # test-only stuff
 COPY version.txt /app/
 
-RUN python setup.py install
+RUN pip install .
 
 # Using /bin/bash as the entrypoint works around some volume mount issues on Windows
 # where volume-mounted files do not have execute bits set.
