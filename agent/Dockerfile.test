@@ -1,6 +1,6 @@
 # WARNING: keep this file in sync with taskcluster/docker/balrog-agent/Dockerfile
 
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 MAINTAINER jcristau@mozilla.com
 

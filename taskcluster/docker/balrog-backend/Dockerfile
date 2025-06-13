@@ -1,6 +1,6 @@
 # WARNING: keep this file in sync with the main balrog Dockerfile
 
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 # uwsgi needs libpcre3 for routing support to be enabled.
 # default-libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
