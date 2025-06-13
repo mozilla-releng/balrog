@@ -25,7 +25,6 @@ task-defaults:
     run:
         using: run-task
         checkout: false
-        cache-dotcache: false
         command:
             - /usr/local/bin/push_image.sh
     fetches:
