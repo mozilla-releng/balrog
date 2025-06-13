@@ -18,7 +18,6 @@ task-defaults:
     run-on-tasks-for: [github-release]
     run:
         using: run-task
-        cache-dotcache: false
         checkout:
             balrog: {}
         cwd: '{checkout}/ui'
