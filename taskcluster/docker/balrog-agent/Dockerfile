@@ -1,6 +1,6 @@
 # WARNING: keep this file in sync with agent/Dockerfile
 
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 MAINTAINER jcristau@mozilla.com
 
@@ -27,7 +27,7 @@ COPY topsrcdir/agent/run.sh topsrcdir/agent/MANIFEST.in topsrcdir/agent/pyprojec
 # %include agent/version.txt
 COPY topsrcdir/agent/tox.ini topsrcdir/agent/version.txt /app/
 
-RUN python setup.py install
+RUN pip install .
 
 # Using /bin/bash as the entrypoint works around some volume mount issues on Windows
 # where volume-mounted files do not have execute bits set.

@@ -1,6 +1,6 @@
 # WARNING: keep this file in sync with taskcluster/docker/balrog-agent/Dockerfile
 
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 MAINTAINER jcristau@mozilla.com
 
@@ -16,7 +16,7 @@ COPY run.sh MANIFEST.in pyproject.toml setup.py version.json /app/
 # test-only stuff
 COPY version.txt /app/
 
-RUN python setup.py install
+RUN pip install .
 
 # Using /bin/bash as the entrypoint works around some volume mount issues on Windows
 # where volume-mounted files do not have execute bits set.
