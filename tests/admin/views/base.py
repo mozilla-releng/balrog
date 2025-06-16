@@ -75,6 +75,7 @@ class ViewTest(unittest.TestCase):
         dbo.setDomainAllowlist({"good.com": ("a", "b", "c", "d")})
         self.metadata.create_all(dbo.engine)
         dbo.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
+        dbo.permissions.t.insert().execute(permission="admin", username="zawadi", data_version=1)
         dbo.permissions.t.insert().execute(permission="permission", username="bob", data_version=1)
         dbo.permissions.t.insert().execute(
             permission="release", username="bob", options=dict(products=["fake", "a", "b"], actions=["create", "modify"]), data_version=1
