@@ -1,6 +1,8 @@
 ARG PYTHON_VERSION=3.13
 FROM python:${PYTHON_VERSION}-slim
 
+ENV LC_ALL C.UTF-8
+
 LABEL maintainer="releng@mozilla.com"
 
 # netcat is needed for health checks
