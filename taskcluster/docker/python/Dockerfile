@@ -5,6 +5,8 @@
 ARG  PYTHON_VERSION
 FROM python:$PYTHON_VERSION
 
+ENV LC_ALL C.UTF-8
+
 # Add worker user
 RUN mkdir -p /builds && \
     groupadd -g 1000 -o worker && \

@@ -2,6 +2,8 @@
 
 FROM python:3.13-slim
 
+ENV LC_ALL C.UTF-8
+
 LABEL maintainer="releng@mozilla.com"
 
 # uwsgi needs libpcre3 for routing support to be enabled.

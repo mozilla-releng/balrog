@@ -4,6 +4,8 @@ FROM python:3.13-slim
 
 MAINTAINER jcristau@mozilla.com
 
+ENV LC_ALL C.UTF-8
+
 WORKDIR /app
 
 # %include agent/requirements

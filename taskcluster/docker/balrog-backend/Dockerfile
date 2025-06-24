@@ -2,6 +2,8 @@
 
 FROM python:3.13-slim
 
+ENV LC_ALL C.UTF-8
+
 # uwsgi needs libpcre3 for routing support to be enabled.
 # default-libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 # xz-utils is needed to compress production database dumps
