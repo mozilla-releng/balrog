@@ -206,7 +206,6 @@ auth0_config = {
     "AUTH0_REDIRECT_URI": os.environ["AUTH0_REDIRECT_URI"],
     "AUTH0_DOMAIN": os.environ["AUTH0_DOMAIN"],
     "AUTH0_AUDIENCE": os.environ["AUTH0_AUDIENCE"],
-    "AUTH0_RESPONSE_TYPE": os.environ["AUTH0_RESPONSE_TYPE"],
     "AUTH0_SCOPE": os.environ["AUTH0_SCOPE"],
 }
 application.config["AUTH_DOMAIN"] = os.environ["AUTH0_DOMAIN"]

@@ -215,7 +215,6 @@ module.exports = env => {
         AUTH0_CLIENT_ID: 'GlZhJQfx52b7MLQ19AjuTJHieiB4oh1j',
         AUTH0_DOMAIN: 'balrog-localdev.auth0.com',
         AUTH0_AUDIENCE: 'balrog-localdev',
-        AUTH0_RESPONSE_TYPE: 'token id_token',
         AUTH0_SCOPE: 'full-user-credentials openid profile email',
         AUTH0_REDIRECT_URI: 'https://localhost:9000/login',
         GCS_NIGHTLY_HISTORY_BUCKET:
