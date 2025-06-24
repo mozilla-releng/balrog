@@ -1,3 +1,4 @@
+import { withAuth0 } from '@auth0/auth0-react';
 import React, { useState, Fragment } from 'react';
 import { makeStyles } from '@material-ui/styles';
 import Menu from '@material-ui/core/Menu';
@@ -5,7 +6,6 @@ import MenuItem from '@material-ui/core/MenuItem';
 import IconButton from '@material-ui/core/IconButton';
 import SettingsOutlineIcon from 'mdi-react/SettingsOutlineIcon';
 import Link from '../../utils/Link';
-import { withUser } from '../../utils/AuthContext';
 import menuItems from './menuItems';
 
 const useStyles = makeStyles(theme => ({
@@ -26,7 +26,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function SettingsMenu({ user, disabled }) {
+function SettingsMenu({ auth0, disabled }) {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const handleMenuOpen = e => setAnchorEl(e.currentTarget);
@@ -35,7 +35,7 @@ function SettingsMenu({ user, disabled }) {
   return (
     <Fragment>
       <IconButton
-        disabled={!user || disabled}
+        disabled={!auth0.user || disabled}
         className={classes.settings}
         aria-haspopup="true"
         aria-controls="user-menu"
@@ -44,7 +44,7 @@ function SettingsMenu({ user, disabled }) {
         <SettingsOutlineIcon
           size={24}
           className={
-            user && !disabled
+            auth0.user && !disabled
               ? classes.settingsIcon
               : classes.settingsIconDisabled
           }
@@ -75,4 +75,4 @@ function SettingsMenu({ user, disabled }) {
   );
 }
 
-export default withUser(SettingsMenu);
+export default withAuth0(SettingsMenu);

@@ -1,3 +1,4 @@
+import { withAuth0 } from '@auth0/auth0-react';
 import React, { Fragment, useEffect, useState, useMemo, useRef } from 'react';
 import classNames from 'classnames';
 import { stringify, parse } from 'qs';
@@ -69,7 +70,6 @@ import {
   SNACKBAR_INITIAL_STATE,
   CONTENT_MAX_WIDTH,
 } from '../../../utils/constants';
-import { withUser } from '../../../utils/AuthContext';
 import remToPx from '../../../utils/remToPx';
 import elementsHeight from '../../../utils/elementsHeight';
 import Snackbar from '../../../components/Snackbar';
@@ -137,7 +137,7 @@ const useStyles = makeStyles(theme => ({
 function ListRules(props) {
   const classes = useStyles();
   const theme = useTheme();
-  const username = (props.user && props.user.email) || '';
+  const username = (props.auth0.user && props.auth0.user.email) || '';
   const { search, hash } = props.location;
   const query = parse(search.slice(1));
   const hashQuery = parse(hash.replace('#', ''));
@@ -1607,4 +1607,4 @@ function ListRules(props) {
   );
 }
 
-export default withUser(ListRules);
+export default withAuth0(ListRules);
