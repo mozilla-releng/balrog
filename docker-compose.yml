@@ -45,7 +45,6 @@ services:
       - CORS_ORIGINS=*
       - STAGING
       - LOCAL_ADMIN
-      - HOST=0.0.0.0
     healthcheck:
         test: nc -z -v balrogadmin 7070
         interval: 5s
@@ -81,7 +80,6 @@ services:
       - PORT=9010
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
-      - HOST=0.0.0.0
     ulimits:
       nofile:
         soft: 4096
@@ -125,7 +123,6 @@ services:
       - "9000:9000"
     environment:
       - BALROG_ROOT_URL=https://localhost:8010
-      - HOST=0.0.0.0
       - PORT=9000
     volumes:
       - ./ui:/app
