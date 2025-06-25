@@ -46,10 +46,6 @@ services:
       - STAGING
       - LOCAL_ADMIN
       - HOST=0.0.0.0
-      # Mount the admin app at /api, for historical reasons.
-      # At some point we could consider mounting at
-      # based on admin.wsgi but now for gunicorn
-      - SCRIPT_NAME=/api
     healthcheck:
         test: nc -z -v balrogadmin 7070
         interval: 5s
@@ -99,6 +95,8 @@ services:
         PYTHON_VERSION: 3.13
     depends_on:
       nginx:
+        condition: service_healthy
+      balrogadmin:
         condition: service_healthy
     volumes:
       - ./agent:/app
