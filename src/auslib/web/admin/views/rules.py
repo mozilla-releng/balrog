@@ -197,7 +197,7 @@ def get_single_rule_column(column):
 
 def get_rules_scheduled_changes():
     where = {}
-    rule_id = connexion.request.args.get("rule_id")
+    rule_id = connexion.request.query_params.get("rule_id")
     if rule_id:
         where["base_rule_id"] = rule_id
 

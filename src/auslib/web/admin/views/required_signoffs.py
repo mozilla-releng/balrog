@@ -52,16 +52,16 @@ def _get_filters_rs_history_api(table):
     where.append(history_table.data_version != null())
     request = connexion.request
     if hasattr(history_table, "channel"):
-        if request.args.get("channel"):
-            where.append(history_table.channel == request.args.get("channel"))
+        if request.query_params.get("channel"):
+            where.append(history_table.channel == request.query_params.get("channel"))
     if hasattr(history_table, "product"):
         where.append(history_table.product != null())
-        if request.args.get("product"):
-            where.append(history_table.product == request.args.get("product"))
-    if request.args.get("timestamp_from"):
-        where.append(history_table.timestamp >= int(request.args.get("timestamp_from")))
-    if request.args.get("timestamp_to"):
-        where.append(history_table.timestamp <= int(request.args.get("timestamp_to")))
+        if request.query_params.get("product"):
+            where.append(history_table.product == request.query_params.get("product"))
+    if request.query_params.get("timestamp_from"):
+        where.append(history_table.timestamp >= int(request.query_params.get("timestamp_from")))
+    if request.query_params.get("timestamp_to"):
+        where.append(history_table.timestamp <= int(request.query_params.get("timestamp_to")))
     return where
 
 
@@ -70,8 +70,8 @@ def get_rs_revisions(table, decisionFields, input_dict):
         return problem(404, "Not Found", "Requested Required Signoff does not exist")
 
     try:
-        page = int(connexion.request.args.get("page", 1))
-        limit = int(connexion.request.args.get("limit", 100))
+        page = int(connexion.request.query_params.get("page", 1))
+        limit = int(connexion.request.query_params.get("limit", 100))
     except ValueError as msg:
         log.warning("Bad input: %s", msg)
         return problem(400, "Bad Request", str(msg))
@@ -92,8 +92,8 @@ def get_rs_revisions(table, decisionFields, input_dict):
 
 def get_all_rs_revisions(table):
     try:
-        page = int(connexion.request.args.get("page", 1))
-        limit = int(connexion.request.args.get("limit", 100))
+        page = int(connexion.request.query_params.get("page", 1))
+        limit = int(connexion.request.query_params.get("limit", 100))
     except ValueError as msg:
         log.warning("Bad input: %s", msg)
         return problem(400, "Bad Request", str(msg))
@@ -108,7 +108,7 @@ def get_all_rs_revisions(table):
 
 
 def get_product_required_signoffs():
-    where = {param: request.args[param] for param in ("product", "channel") if param in request.args}
+    where = {param: request.query_params[param] for param in ("product", "channel") if param in request.args}
     return get_required_signoffs(required_signoffs=dbo.productRequiredSignoffs, where=where)
 
 
@@ -134,9 +134,9 @@ def delete_product_required_signoffs():
 
 def get_product_rs_revisions():
     input_dict = {
-        "product": connexion.request.args.get("product"),
-        "role": connexion.request.args.get("role"),
-        "channel": connexion.request.args.get("channel"),
+        "product": connexion.request.query_params.get("product"),
+        "role": connexion.request.query_params.get("role"),
+        "channel": connexion.request.query_params.get("channel"),
     }
     return get_rs_revisions(dbo.productRequiredSignoffs, ["product", "channel", "role"], input_dict)
 
@@ -146,7 +146,7 @@ def get_all_product_rs_revisions():
 
 
 def get_product_rs_scheduled_changes():
-    where = {f"base_{param}": request.args[param] for param in ("product", "channel") if param in request.args}
+    where = {f"base_{param}": request.query_params[param] for param in ("product", "channel") if param in request.args}
     return get_scheduled_changes(table=dbo.productRequiredSignoffs, where=where)
 
 
@@ -280,7 +280,7 @@ def post_product_rs_scheduled_change_history(sc_id, transaction, changed_by):
 
 
 def get_permissions_required_signoffs():
-    where = {param: request.args[param] for param in ("product",) if param in request.args}
+    where = {param: request.query_params[param] for param in ("product",) if param in request.args}
     return get_required_signoffs(required_signoffs=dbo.permissionsRequiredSignoffs, where=where)
 
 
@@ -304,7 +304,7 @@ def delete_permissions_required_signoffs():
 
 
 def get_permissions_rs_revisions():
-    input_dict = {"product": connexion.request.args.get("product"), "role": connexion.request.args.get("role")}
+    input_dict = {"product": connexion.request.query_params.get("product"), "role": connexion.request.args.get("role")}
     return get_rs_revisions(dbo.permissionsRequiredSignoffs, ["product", "role"], input_dict)
 
 
@@ -313,7 +313,7 @@ def get_all_permissions_rs_revisions():
 
 
 def get_permissions_rs_scheduled_changes():
-    where = {f"base_{param}": request.args[param] for param in ("product",) if param in request.args}
+    where = {f"base_{param}": request.query_params[param] for param in ("product",) if param in request.args}
     return get_scheduled_changes(table=dbo.permissionsRequiredSignoffs, where=where)
 
 

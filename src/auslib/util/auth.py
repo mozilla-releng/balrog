@@ -13,8 +13,8 @@ class AuthError(Exception):
 def get_access_token(request):
     if "access_token" in request.form:
         return request.form["access_token"]
-    if "access_token" in request.args:
-        return request.args["access_token"]
+    if "access_token" in request.query_params:
+        return request.query_params["access_token"]
 
     # For a gracefully transition, we will temporarily be accepting both
     # HTTP Auth (which will overwrite the Authorization header) and

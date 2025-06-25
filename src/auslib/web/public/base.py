@@ -5,6 +5,7 @@ from os import path
 
 import connexion
 from connexion import request
+from connexion.options import SwaggerUIOptions
 from flask import Response, make_response, send_from_directory
 from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
@@ -15,7 +16,9 @@ from auslib.web.admin.views.problem import problem
 
 log = logging.getLogger(__name__)
 
-connexion_app = connexion.App(__name__, specification_dir=".", options={"swagger_ui": False})
+swagger_ui_options = SwaggerUIOptions(swagger_ui=False)
+
+connexion_app = connexion.FlaskApp(__name__, specification_dir=".", swagger_ui_options=swagger_ui_options)
 app = connexion_app.app
 
 current_dir = path.dirname(__file__)

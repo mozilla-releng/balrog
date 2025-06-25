@@ -13,16 +13,16 @@ log = logging.getLogger(__name__)
 
 def get_rules():
     # TODO: When we switch to Swagger 3, this can move to the Swagger spec
-    if request.args.get("timestamp") and request.args.get("product"):
+    if request.query_params.get("timestamp") and request.args.get("product"):
         return problem(status=400, title="Bad Request", detail="Cannot query with a timestamp and a product at the same time")
 
-    if request.args.get("timestamp"):
-        rules = dbo.rules.history.getPointInTime(request.args.get("timestamp"))
+    if request.query_params.get("timestamp"):
+        rules = dbo.rules.history.getPointInTime(request.query_params.get("timestamp"))
     else:
         where = {}
         for field in ("product",):
-            if request.args.get(field):
-                where[field] = request.args[field]
+            if request.query_params.get(field):
+                where[field] = request.query_params[field]
 
         rules = dbo.rules.getOrderedRules(where=where)
     return jsonify(count=len(rules), rules=rules)

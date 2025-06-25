@@ -18,7 +18,7 @@ def get_pin(product, channel, version):
     pin_row["version"] = version
 
     headers = {"X-Data-Version": pin_row["data_version"]}
-    if request.args.get("pretty"):
+    if request.query_params.get("pretty"):
         indent = 4
         separators = (",", ": ")
     else:

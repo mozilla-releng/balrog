@@ -145,7 +145,7 @@ def delete_specific_user_permission(username, permission, data_version, changed_
     try:
         # For practical purposes, DELETE can't have a request body, which means the Form
         # won't find data where it's expecting it. Instead, we have to tell it to look at
-        # the query string, which Flask puts in request.args.
+        # the query string, which Flask puts in request.query_params.
 
         dbo.permissions.delete(
             where={"username": username, "permission": permission}, changed_by=changed_by, old_data_version=data_version, transaction=transaction
