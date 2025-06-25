@@ -26,4 +26,4 @@ sqlalchemy-migrate
 sqlalchemy<2
 statsd
 swagger-spec-validator
-uwsgi
+uvicorn
