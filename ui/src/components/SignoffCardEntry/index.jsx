@@ -1,3 +1,4 @@
+import { withAuth0 } from '@auth0/auth0-react';
 import React, { Fragment } from 'react';
 import { makeStyles } from '@material-ui/styles';
 import CardContent from '@material-ui/core/CardContent';
@@ -11,7 +12,6 @@ import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
 import { signoffEntry } from '../../utils/prop-types';
 import { LABELS } from '../../utils/constants';
-import { withUser } from '../../utils/AuthContext';
 
 const useStyles = makeStyles(theme => ({
   diff: {
@@ -55,7 +55,8 @@ function getStatus(entry) {
 
 function SignoffCardEntry(props) {
   const classes = useStyles();
-  const { user, entry, name, onCancelDelete, onSignoff, onRevoke } = props;
+  const { auth0, entry, name, onCancelDelete, onSignoff, onRevoke } = props;
+  const { user } = auth0;
   const status = getStatus(entry);
   const isScheduled = 'sc' in entry;
   const signoffsRequiredCurrent = Number(entry.signoffs_required);
@@ -128,4 +129,4 @@ SignoffCardEntry.propTypes = {
   onRevoke: func.isRequired,
 };
 
-export default withUser(SignoffCardEntry);
+export default withAuth0(SignoffCardEntry);
