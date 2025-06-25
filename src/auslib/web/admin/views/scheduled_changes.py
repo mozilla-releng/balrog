@@ -54,7 +54,7 @@ def get_scheduled_changes(table, where=None):
     if where is None:
         where = {}
 
-    if connexion.request.args.get("all") is None:
+    if connexion.request.query_params.get("all") is None:
         where["complete"] = False
 
     rows = sc_table.select(where=where)
@@ -129,7 +129,7 @@ def post_signoffs_scheduled_change(signoffs_table, sc_id, what, transaction, cha
 
 
 def delete_signoffs_scheduled_change(sc_id, signoffs_table, transaction, changed_by):
-    username = connexion.request.args.get("username", changed_by)
+    username = connexion.request.query_params.get("username", changed_by)
     where = {"sc_id": sc_id, "username": username}
     signoff = signoffs_table.select(where, transaction)
     if not signoff:
@@ -180,14 +180,14 @@ def _get_filters_all_scheduled_change_history(sc_history_table, obj):
     where.append(sc_history_table.data_version != null())
     request = connexion.request
     if hasattr(sc_history_table, "product" or " channel"):
-        if request.args.get("product"):
-            where.append(sc_history_table.base_product == request.args.get("product"))
-        if request.args.get("channel"):
-            where.append(sc_history_table.base_channel == request.args.get("channel"))
-    if request.args.get("timestamp_from"):
-        where.append(sc_history_table.timestamp >= int(request.args.get("timestamp_from")))
-    if request.args.get("timestamp_to"):
-        where.append(sc_history_table.timestamp <= int(request.args.get("timestamp_to")))
+        if request.query_params.get("product"):
+            where.append(sc_history_table.base_product == request.query_params.get("product"))
+        if request.query_params.get("channel"):
+            where.append(sc_history_table.base_channel == request.query_params.get("channel"))
+    if request.query_params.get("timestamp_from"):
+        where.append(sc_history_table.timestamp >= int(request.query_params.get("timestamp_from")))
+    if request.query_params.get("timestamp_to"):
+        where.append(sc_history_table.timestamp <= int(request.query_params.get("timestamp_to")))
     return where
 
 

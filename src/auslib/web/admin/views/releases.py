@@ -356,11 +356,11 @@ def get_release_read_only_product_required_signoffs(release):
 
 def get_releases(**kwargs):
     opts = {}
-    if connexion.request.args.get("product"):
-        opts["product"] = connexion.request.args.get("product")
-    if connexion.request.args.get("name_prefix"):
-        opts["name_prefix"] = connexion.request.args.get("name_prefix")
-    if connexion.request.args.get("names_only"):
+    if connexion.request.query_params.get("product"):
+        opts["product"] = connexion.request.query_params.get("product")
+    if connexion.request.query_params.get("name_prefix"):
+        opts["name_prefix"] = connexion.request.query_params.get("name_prefix")
+    if connexion.request.query_params.get("names_only"):
         opts["nameOnly"] = True
     releases = dbo.releases.getReleaseInfo(**opts)
     if not opts.get("names_only"):
@@ -420,7 +420,7 @@ def get_release_single_column(column):
 
 def get_releases_scheduled_changes():
     where = {}
-    name = connexion.request.args.get("name")
+    name = connexion.request.query_params.get("name")
     if name:
         where["base_name"] = name
 

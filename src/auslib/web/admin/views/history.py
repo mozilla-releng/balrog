@@ -37,8 +37,8 @@ def get_revisions(
     @param response_key: Dictionary key to wrap returned revisions.
     @type response_key: string
     """
-    page = int(connexion.request.args.get("page", 1))
-    limit = int(connexion.request.args.get("limit", 10))
+    page = int(connexion.request.query_params.get("page", 1))
+    limit = int(connexion.request.query_params.get("limit", 10))
 
     obj = get_object_callback()
     if not obj:

@@ -23,8 +23,8 @@ class HistoryHelper:
         self.obj_not_found_msg = obj_not_found_msg
 
     def get_history(self, response_key="revisions"):
-        page = int(request.args.get("page", 1))
-        limit = int(request.args.get("limit", 10))
+        page = int(request.query_params.get("page", 1))
+        limit = int(request.query_params.get("limit", 10))
         assert page >= 1
 
         obj = self.fn_get_object()
@@ -49,7 +49,7 @@ class HistoryHelper:
 
 def get_input_dict():
     reserved_filter_params = ["limit", "product", "channel", "page", "timestamp_from", "timestamp_to"]
-    args = request.args
+    args = request.query_params
     query_keys = []
     query = {}
     for key in args:
@@ -57,7 +57,7 @@ def get_input_dict():
             query_keys.append(key)
 
     for key in query_keys:
-        query[key] = request.args.get(key)
+        query[key] = request.query_params.get(key)
     return query
 
 

@@ -26,16 +26,16 @@ def _get_filters(obj, history_table):
     where.append(history_table.data_version != null())
     if hasattr(history_table, "product"):
         where.append(history_table.product != null())
-        if request.args.get("product"):
-            where.append(history_table.product == request.args.get("product"))
+        if request.query_params.get("product"):
+            where.append(history_table.product == request.query_params.get("product"))
     if hasattr(history_table, "channel"):
         where.append(history_table.channel != null())
-        if request.args.get("channel"):
-            where.append(history_table.channel == request.args.get("channel"))
-    if request.args.get("timestamp_from"):
-        where.append(history_table.timestamp >= int(request.args.get("timestamp_from")))
-    if request.args.get("timestamp_to"):
-        where.append(history_table.timestamp <= int(request.args.get("timestamp_to")))
+        if request.query_params.get("channel"):
+            where.append(history_table.channel == request.query_params.get("channel"))
+    if request.query_params.get("timestamp_from"):
+        where.append(history_table.timestamp >= int(request.query_params.get("timestamp_from")))
+    if request.query_params.get("timestamp_to"):
+        where.append(history_table.timestamp <= int(request.query_params.get("timestamp_to")))
     return where
 
 

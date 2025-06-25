@@ -23,11 +23,11 @@ def strip_data(release):
 
 def release_list(request):
     kwargs = {}
-    if request.args.get("product"):
-        kwargs["product"] = request.args.get("product")
-    if request.args.get("name_prefix"):
-        kwargs["name_prefix"] = request.args.get("name_prefix")
-    if request.args.get("names_only"):
+    if request.query_params.get("product"):
+        kwargs["product"] = request.query_params.get("product")
+    if request.query_params.get("name_prefix"):
+        kwargs["name_prefix"] = request.query_params.get("name_prefix")
+    if request.query_params.get("names_only"):
         kwargs["nameOnly"] = True
     with dbo.begin() as trans:
         ret = dbo.releases.getReleaseInfo(**kwargs, transaction=trans)
@@ -50,7 +50,7 @@ def release_list(request):
 
 
 def serialize_releases(request, releases):
-    if request.args.get("names_only"):
+    if request.query_params.get("names_only"):
         names = []
         for release in releases:
             names.append(release["name"])
@@ -80,7 +80,7 @@ def get_release(release):
     if not release_row:
         return problem(404, "Not Found", "Release name: %s not found" % release)
     headers = {"X-Data-Version": release_row["data_version"]}
-    if request.args.get("pretty"):
+    if request.query_params.get("pretty"):
         indent = 4
         separators = (",", ": ")
     else:
