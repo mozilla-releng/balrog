@@ -1,7 +1,7 @@
 aiohttp
 arrow
 auth0-python>=4
-connexion[flask,swagger-ui]>3
+connexion[flask,swagger-ui,uvicorn]>3
 deepmerge
 ecdsa
 flask
@@ -26,4 +26,3 @@ sqlalchemy-migrate
 sqlalchemy<2
 statsd
 swagger-spec-validator
-uvicorn
