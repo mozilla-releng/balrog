@@ -1,4 +1,3 @@
-import { withAuth0 } from '@auth0/auth0-react';
 import React, { Fragment, useState, useEffect } from 'react';
 import classNames from 'classnames';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
@@ -28,6 +27,7 @@ import {
 } from '../../../services/releases';
 import { getProducts } from '../../../services/rules';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
+import { withUser } from '../../../utils/AuthContext';
 import { SNACKBAR_INITIAL_STATE } from '../../../utils/constants';
 
 const useStyles = makeStyles(theme => ({
@@ -62,7 +62,7 @@ const useStyles = makeStyles(theme => ({
 function Release(props) {
   const classes = useStyles();
   const {
-    auth0,
+    user,
     isNewRelease,
     match: {
       params: { releaseName },
@@ -293,7 +293,7 @@ function Release(props) {
           <div className={classes.uploadReleaseDiv}>
             <label htmlFor="upload-release-file">
               <input
-                disabled={!auth0.user || isReadOnly}
+                disabled={!user || isReadOnly}
                 accept=".json"
                 className={classes.inputOfTypeFile}
                 id="upload-release-file"
@@ -301,7 +301,7 @@ function Release(props) {
                 onChange={handleUploadRelease}
               />
               <Button
-                disabled={!auth0.user || isReadOnly}
+                disabled={!user || isReadOnly}
                 size="small"
                 variant="outlined"
                 component="span"
@@ -331,7 +331,7 @@ function Release(props) {
                   }
                 )}>
                 <Fab
-                  disabled={!auth0.user || actionLoading || isReadOnly}
+                  disabled={!user || actionLoading || isReadOnly}
                   onClick={
                     isNewRelease ? handleReleaseCreate : handleReleaseUpdate
                   }
@@ -343,7 +343,7 @@ function Release(props) {
             {scId && !isReadOnly && (
               <SpeedDial
                 FabProps={{
-                  disabled: !auth0.user || actionLoading || isReadOnly || !scId,
+                  disabled: !user || actionLoading || isReadOnly || !scId,
                 }}
                 ariaLabel="Secondary Actions">
                 <SpeedDialAction
@@ -362,4 +362,4 @@ function Release(props) {
   );
 }
 
-export default withAuth0(Release);
+export default withUser(Release);

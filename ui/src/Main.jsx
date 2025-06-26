@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Switch } from 'react-router-dom';
 import { makeStyles } from '@material-ui/styles';
 import axios from 'axios';
-import { useAuth0 } from '@auth0/auth0-react';
-import { BASE_URL } from './utils/constants';
 import Dashboard from './components/Dashboard';
 import ErrorPanel from './components/ErrorPanel';
 import RouteWithProps from './components/RouteWithProps';
@@ -33,57 +31,7 @@ const useStyles = makeStyles({
   },
 });
 
-function setupAxiosInterceptors(getAccessTokenSilently, getIdTokenClaims) {
-  axios.interceptors.request.use(async config => {
-    const result = config;
-
-    if (!config.url.startsWith('http')) {
-      result.baseURL = BASE_URL;
-
-      const claims = await getIdTokenClaims();
-
-      if (claims) {
-        const accessToken = await getAccessTokenSilently();
-
-        result.headers.Authorization = `Bearer ${accessToken}`;
-      }
-    }
-
-    return result;
-  });
-
-  axios.interceptors.response.use(
-    response => response,
-    error => {
-      const errorMsg = error.response
-        ? error.response.data.exception || error.response.data.detail || null
-        : error.message;
-
-      // If we found a more detailed error message
-      // raise an Error with that instead.
-      if (errorMsg !== null) {
-        throw new Error(errorMsg);
-      }
-
-      throw error;
-    }
-  );
-}
-
 function Main() {
-  const { isLoading, getAccessTokenSilently, getIdTokenClaims } = useAuth0();
-  const [isReady, setReady] = useState(false);
-
-  useEffect(() => {
-    setupAxiosInterceptors(getAccessTokenSilently, getIdTokenClaims);
-  }, [getAccessTokenSilently, isLoading]);
-
-  useEffect(() => {
-    if (!isReady && !isLoading) {
-      setReady(true);
-    }
-  }, [isLoading]);
-
   useStyles();
   const [backendError, setBackendError] = useState('');
 
@@ -97,10 +45,6 @@ function Main() {
       }
     );
   }, []);
-
-  if (!isReady) {
-    return <div>Loading...</div>;
-  }
 
   return backendError ? (
     <BrowserRouter>
