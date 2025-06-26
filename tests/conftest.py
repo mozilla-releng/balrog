@@ -1,6 +1,7 @@
 import json
 from copy import deepcopy
 from pathlib import Path
+import time
 
 import pytest
 from hypothesis import settings
@@ -19,7 +20,7 @@ def db_schema():
     schema migration logic, and returns the schema metadata of the final DB
     state. It runs once per test session.
     """
-    dbo.setDb("sqlite:///:memory:")
+    dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
     dbo.create()
     return dbo.metadata
 

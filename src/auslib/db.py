@@ -3018,7 +3018,8 @@ class AUSDatabase(object):
             raise AlreadySetupError()
         self.dburi = dburi
         self.metadata = MetaData()
-        self.engine = create_engine(self.dburi, pool_recycle=60)
+        self.engine = create_engine(self.dburi, pool_recycle=60)#, echo=True)
+        #print("AUSDatabase created engine", self, self.engine, id(self.engine))
         if mysql_traditional_mode and "mysql" in dburi:
             sqlalchemy.event.listen(self.engine, "connect", my_on_connect)
         dialect = self.engine.name

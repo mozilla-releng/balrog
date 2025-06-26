@@ -90,7 +90,7 @@ class TestGetSystemCapabilities(unittest.TestCase):
 @pytest.mark.usefixtures("current_db_schema")
 class ClientTestCommon(unittest.TestCase):
     def assertHttpResponse(self, http_response):
-        self.assertEqual(http_response.status_code, 200, http_response.get_data())
+        self.assertEqual(http_response.status_code, 200, http_response.text)
         self.assertEqual(http_response.mimetype, "text/xml")
 
     def assertUpdatesAreEmpty(self, http_reponse):
@@ -113,17 +113,6 @@ class ClientTestCommon(unittest.TestCase):
 class ClientTestBase(ClientTestCommon):
     maxDiff = 2000
 
-    @classmethod
-    def setUpClass(cls):
-        # Error handlers are removed in order to give us better debug messages
-        cls.error_spec = app.error_handler_spec
-        # Ripped from https://github.com/mitsuhiko/flask/blob/1f5927eee2288b4aaf508af5dc1f148aa2140d91/flask/app.py#L394
-        app.error_handler_spec = {None: {}}
-
-    @classmethod
-    def tearDownClass(cls):
-        app.error_handler_spec = cls.error_spec
-
     @pytest.fixture(autouse=True)
     def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, firefox_100_0_build1, timecop_1_0):
         cache.reset()
@@ -132,16 +121,16 @@ class ClientTestBase(ClientTestCommon):
         cache.make_cache("release_assets", 50, 10)
         cache.make_cache("release_assets_data_versions", 50, 5)
         self.version_fd, self.version_file = mkstemp()
-        app.config["DEBUG"] = True
-        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com", "http://download.mozilla.org")
-        app.config["ALLOWLISTED_DOMAINS"] = {
+        app.app.config["DEBUG"] = True
+        app.app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com", "http://download.mozilla.org")
+        app.app.config["ALLOWLISTED_DOMAINS"] = {
             "a.com": ("b", "c", "e", "f", "response-a", "response-b", "s", "responseblob-a", "responseblob-b", "q", "fallback", "distTest"),
             "download.mozilla.org": ("Firefox",),
             "archive.mozilla.org": ("Firefox",),
             "ftp.mozilla.org": ("SystemAddons",),
         }
-        app.config["VERSION_FILE"] = self.version_file
-        app.config["CONTENT_SIGNATURE_PRODUCTS"] = ["gmp"]
+        app.app.config["VERSION_FILE"] = self.version_file
+        app.app.config["CONTENT_SIGNATURE_PRODUCTS"] = ["gmp"]
         with open(self.version_file, "w+") as f:
             f.write(
                 """
@@ -152,9 +141,10 @@ class ClientTestBase(ClientTestCommon):
 }
 """
             )
-        dbo.setDb("sqlite:///:memory:")
-        self.metadata.create_all(dbo.engine)
-        dbo.setDomainAllowlist(app.config["ALLOWLISTED_DOMAINS"])
+        dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
+        #self.metadata.create_all(dbo.engine)
+        dbo.create()
+        dbo.setDomainAllowlist(app.app.config["ALLOWLISTED_DOMAINS"])
         self.client = app.test_client()
         dbo.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", data_version=1, alias="moz-releng")
@@ -1292,6 +1282,7 @@ class ClientTest(ClientTestBase):
         )
 
     def testAvastURLsWithBadQueryArgs(self):
+        breakpoint()
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1%3Favast=1")
         self.assertHttpResponse(ret)
         ret2 = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1")
@@ -1794,7 +1785,7 @@ class ClientTestMig64(ClientTestCommon):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
         app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
-        dbo.setDb("sqlite:///:memory:")
+        dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
         dbo.setDomainAllowlist({"a.com": ("a", "b", "c")})
@@ -1966,7 +1957,7 @@ class ClientTestJaws(ClientTestCommon):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
         app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
-        dbo.setDb("sqlite:///:memory:")
+        dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
         dbo.setDomainAllowlist({"a.com": ("a", "b", "c")})
@@ -2204,7 +2195,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
     def setUp(self):
         app.config["DEBUG"] = True
         app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a",)}
-        dbo.setDb("sqlite:///:memory:")
+        dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
 
@@ -2402,7 +2393,7 @@ class ClientTestCompactXML(ClientTestCommon):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
         app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("b",)}
-        dbo.setDb("sqlite:///:memory:")
+        dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist({"a.com": ("b",)})
         self.client = app.test_client()
@@ -2471,7 +2462,7 @@ class ClientTestPinning(ClientTestCommon):
         app.config["DEBUG"] = True
         app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
         app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("b",)}
-        dbo.setDb("sqlite:///:memory:")
+        dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist({"a.com": ("b",)})
         self.client = app.test_client()

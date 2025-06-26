@@ -44,7 +44,7 @@ connexion_app = connexion.FlaskApp(__name__, swagger_ui_options=swagger_ui_optio
 connexion_app.app.debug = False
 connexion_app.add_api(spec, validator_map=validator_map, strict_validation=True)
 connexion_app.add_api(path.join(current_dir, "swagger", "api_v2.yml"), base_path="/v2", strict_validation=True, validate_responses=True)
-app = connexion_app.app
+app = connexion_app#.app
 
 create_dockerflow_endpoints(app)
 

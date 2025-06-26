@@ -135,7 +135,7 @@ def extract_query_version(request_url):
 
 @with_transaction
 def get_update_blob(transaction, **url):
-    url["queryVersion"] = extract_query_version(request.url)
+    url["queryVersion"] = extract_query_version(request.url.path)
     # Underlying code depends on osVersion being set. Since this route only
     # exists to support ancient queries, and all newer versions have osVersion
     # in them it's easier to set this here than make the all of the underlying
@@ -227,7 +227,7 @@ def get_update_blob(transaction, **url):
 
     LOG.debug("Sending XML: %s", xml)
     response = make_response(xml)
-    response.headers["Cache-Control"] = app.cacheControl
+    #response.headers["Cache-Control"] = app.cacheControl
     response.headers.extend(get_aus_metadata_headers(eval_metadata))
     if query["product"] in app.config.get("CONTENT_SIGNATURE_PRODUCTS", []):
         response.headers.extend(get_content_signature_headers(xml, query["product"]))

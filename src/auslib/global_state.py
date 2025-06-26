@@ -29,6 +29,7 @@ class DbWrapper(object):
             releases_history_class=releases_history_class,
             async_releases_history_class=async_releases_history_class,
         )
+        #print("XXX setDb", self, self.db, dburi)
 
     def __getattr__(self, name):
         if not self.db:
