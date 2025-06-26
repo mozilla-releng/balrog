@@ -21,6 +21,9 @@ const Roles = lazy(() =>
 const RequiredSignoffs = lazy(() =>
   import(/* webpackChunkName: 'RequiredSignoffs' */ './views/RequiredSignoffs')
 );
+const Login = lazy(() =>
+  import(/* webpackChunkName: 'Login' */ './views/Login')
+);
 
 export default [
   {
@@ -50,6 +53,10 @@ export default [
     path: '/required-signoffs',
     routes: requiredSignoffsRoutes('/required-signoffs'),
     requiresAuth: true,
+  },
+  {
+    component: Login,
+    path: '/login',
   },
   {
     component: Home,

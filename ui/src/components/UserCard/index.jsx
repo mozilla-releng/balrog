@@ -1,4 +1,3 @@
-import { withAuth0 } from '@auth0/auth0-react';
 import React, { Fragment } from 'react';
 import { func, string, object } from 'prop-types';
 import classNames from 'classnames';
@@ -21,6 +20,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
 import StatusLabel from '../StatusLabel';
+import { withUser } from '../../utils/AuthContext';
 import Link from '../../utils/Link';
 import { LABELS } from '../../utils/constants';
 import { getPermissionString, getRolesString } from '../../utils/userUtils';
@@ -83,7 +83,7 @@ function getStatus(changeType) {
 function User(props) {
   const classes = useStyles();
   const {
-    auth0,
+    user,
     className,
     username,
     roles,
@@ -205,7 +205,7 @@ function User(props) {
             </CardContent>
             {Object.keys(details.required_signoffs).length > 0 && (
               <CardActions className={classes.cardActions}>
-                {auth0.user && auth0.user.email in details.signoffs ? (
+                {user && user.email in details.signoffs ? (
                   <Button color="secondary" onClick={() => onRevoke(details)}>
                     Revoke Signoff
                   </Button>
@@ -237,4 +237,4 @@ User.defaultProps = {
   scheduledPermissions: {},
 };
 
-export default withAuth0(User);
+export default withUser(User);

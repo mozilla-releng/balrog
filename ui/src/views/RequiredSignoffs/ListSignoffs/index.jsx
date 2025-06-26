@@ -1,4 +1,3 @@
-import { withAuth0 } from '@auth0/auth0-react';
 import React, { Fragment, useEffect, useState } from 'react';
 import { capitalCase } from 'change-case';
 import classNames from 'classnames';
@@ -32,6 +31,7 @@ import {
   DIALOG_ACTION_INITIAL_STATE,
   OBJECT_NAMES,
 } from '../../../utils/constants';
+import { withUser } from '../../../utils/AuthContext';
 
 const getPermissionChangesLens = product => lensPath([product, 'permissions']);
 const getRulesOrReleasesChangesLens = product =>
@@ -62,8 +62,8 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function ListSignoffs({ auth0, ...props }) {
-  const username = auth0.user.email;
+function ListSignoffs({ user, ...props }) {
+  const username = user.email;
   const classes = useStyles();
   const { search } = props.location;
   const query = parse(search.slice(1));
@@ -448,4 +448,4 @@ function ListSignoffs({ auth0, ...props }) {
   );
 }
 
-export default withAuth0(ListSignoffs);
+export default withUser(ListSignoffs);

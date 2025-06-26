@@ -1,4 +1,3 @@
-import { withAuth0 } from '@auth0/auth0-react';
 import React, { useState, Fragment } from 'react';
 import { makeStyles } from '@material-ui/styles';
 import Avatar from '@material-ui/core/Avatar';
@@ -9,6 +8,8 @@ import LogoutVariantIcon from 'mdi-react/LogoutVariantIcon';
 import ContentCopyIcon from 'mdi-react/ContentCopyIcon';
 import copy from 'clipboard-copy';
 import Button from '../Button';
+import { USER_SESSION } from '../../utils/constants';
+import { withUser } from '../../utils/AuthContext';
 
 const useStyles = makeStyles(theme => ({
   avatar: {
@@ -19,45 +20,43 @@ const useStyles = makeStyles(theme => ({
 }));
 
 function UserMenu(props) {
-  const { auth0 } = props;
+  const { user, onAuthorize, onUnauthorize } = props;
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const handleMenuOpen = e => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
   const handleLogoutClick = () => {
     handleMenuClose();
-    auth0.logout({
-      openUrl: false,
-    });
+    onUnauthorize();
   };
 
-  const handleCopyAccessToken = async () => {
-    const accessToken = await auth0.getAccessTokenSilently();
+  const handleCopyAccessToken = () => {
+    const { accessToken } = JSON.parse(
+      localStorage.getItem(USER_SESSION)
+    ).authResult;
 
     copy(accessToken);
     handleMenuClose();
   };
 
-  const handleLogin = auth0.loginWithPopup;
-
   return (
     <Fragment>
-      {auth0.user ? (
+      {user ? (
         <IconButton
           className={classes.avatar}
           aria-haspopup="true"
           aria-controls="user-menu"
           aria-label="user menu"
           onClick={handleMenuOpen}>
-          {auth0.user.picture ? (
-            <Avatar alt={auth0.user.nickname} src={auth0.user.picture} />
+          {user.picture ? (
+            <Avatar alt={user.nickname} src={user.picture} />
           ) : (
-            <Avatar alt={auth0.user.name}>{auth0.user.name[0]}</Avatar>
+            <Avatar alt={user.name}>{user.name[0]}</Avatar>
           )}
         </IconButton>
       ) : (
         <Button
-          onClick={handleLogin}
+          onClick={onAuthorize}
           size="small"
           variant="contained"
           color="secondary">
@@ -84,4 +83,4 @@ function UserMenu(props) {
   );
 }
 
-export default withAuth0(UserMenu);
+export default withUser(UserMenu);

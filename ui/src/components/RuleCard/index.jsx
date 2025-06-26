@@ -1,4 +1,3 @@
-import { withAuth0 } from '@auth0/auth0-react';
 import React, { useState, Fragment } from 'react';
 import { bool, func } from 'prop-types';
 import classNames from 'classnames';
@@ -26,6 +25,7 @@ import { formatDistanceStrict } from 'date-fns';
 import Button from '../Button';
 import DiffRule from '../DiffRule';
 import SignoffSummary from '../SignoffSummary';
+import { withUser } from '../../utils/AuthContext';
 import Link from '../../utils/Link';
 import { RULE_DIFF_PROPERTIES } from '../../utils/constants';
 import { rule } from '../../utils/prop-types';
@@ -159,11 +159,15 @@ function RuleCard({
   onSignoff,
   onRevoke,
   onViewReleaseClick,
-  auth0,
+  user,
   readOnly,
   actionLoading,
   disableActions,
   diffRules,
+  // We don't actually use these, but we need to avoid passing them onto
+  // `Card` like the rest of the props.
+  onAuthorize: _,
+  onUnauthorize: __,
   ...props
 }) {
   const [open, setOpen] = useState(false);
@@ -895,7 +899,7 @@ function RuleCard({
             Delete
           </Button>
           {requiresSignoff &&
-            (auth0.user && auth0.user.email in rule.scheduledChange.signoffs ? (
+            (user && user.email in rule.scheduledChange.signoffs ? (
               <Button
                 color="secondary"
                 disabled={disableActions || actionLoading}
@@ -938,4 +942,4 @@ RuleCard.defaultProps = {
   disableActions: false,
 };
 
-export default withAuth0(RuleCard);
+export default withUser(RuleCard);
