@@ -91,16 +91,16 @@ class TestGetSystemCapabilities(unittest.TestCase):
 class ClientTestCommon(unittest.TestCase):
     def assertHttpResponse(self, http_response):
         self.assertEqual(http_response.status_code, 200, http_response.text)
-        self.assertEqual(http_response.mimetype, "text/xml")
+        self.assertEqual(http_response.headers['content-type'], "text/xml; charset=utf-8")
 
     def assertUpdatesAreEmpty(self, http_reponse):
         self.assertHttpResponse(http_reponse)
         # An empty update contains an <updates> tag with a newline, which is what we're expecting here
-        self.assertEqual(minidom.parseString(http_reponse.get_data()).getElementsByTagName("updates")[0].firstChild.nodeValue, "\n")
+        self.assertEqual(minidom.parseString(http_reponse.text).getElementsByTagName("updates")[0].firstChild.nodeValue, "\n")
 
     def assertUpdateEqual(self, http_reponse, expected_xml_string):
         self.assertHttpResponse(http_reponse)
-        returned = minidom.parseString(http_reponse.get_data())
+        returned = minidom.parseString(http_reponse.text)
         expected = minidom.parseString(expected_xml_string)
         self.assertEqual(returned.toxml(), expected.toxml())
 
