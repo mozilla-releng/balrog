@@ -905,10 +905,10 @@ class ClientTestBase(ClientTestCommon):
 
 @pytest.fixture(scope="function")
 def mock_autograph(monkeypatch):
-    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_URL", "fake")
-    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_KEYID", "fake")
-    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_USERNAME", "fake")
-    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_PASSWORD", "fake")
+    monkeypatch.setitem(app.app.config, "AUTOGRAPH_gmp_URL", "fake")
+    monkeypatch.setitem(app.app.config, "AUTOGRAPH_gmp_KEYID", "fake")
+    monkeypatch.setitem(app.app.config, "AUTOGRAPH_gmp_USERNAME", "fake")
+    monkeypatch.setitem(app.app.config, "AUTOGRAPH_gmp_PASSWORD", "fake")
 
     def mockreturn(*args):
         global mock_autograph_exception_count
@@ -1773,18 +1773,18 @@ class ClientTestMig64(ClientTestCommon):
     @classmethod
     def setUpClass(cls):
         # Error handlers are removed in order to give us better debug messages
-        cls.error_spec = app.error_handler_spec
+        cls.error_spec = app.app.error_handler_spec
         # Ripped from https://github.com/mitsuhiko/flask/blob/1f5927eee2288b4aaf508af5dc1f148aa2140d91/flask/app.py#L394
-        app.error_handler_spec = {None: {}}
+        app.app.error_handler_spec = {None: {}}
 
     @classmethod
     def tearDownClass(cls):
         app.error_handler_spec = cls.error_spec
 
     def setUp(self):
-        app.config["DEBUG"] = True
-        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
-        app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
+        app.app.config["DEBUG"] = True
+        app.app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
+        app.app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
         dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
