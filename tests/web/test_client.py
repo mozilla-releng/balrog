@@ -17,7 +17,7 @@ import auslib.web.public.client as client_api
 from auslib.blobs.base import createBlob
 from auslib.errors import BadDataError
 from auslib.global_state import cache, dbo
-from auslib.web.public.base import app
+from auslib.web.public.base import flask_app as app
 from auslib.web.public.client import extract_query_version
 
 mock_autograph_exception_count = 0

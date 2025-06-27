@@ -8,7 +8,7 @@ import pytest
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import cache, dbo
-from auslib.web.admin.base import app
+from auslib.web.admin.base import flask_app as app
 
 from ...fakes import FakeBlob, FakeGCSHistory
 

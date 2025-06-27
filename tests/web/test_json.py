@@ -7,7 +7,7 @@ import auslib.web.public.json
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
-from auslib.web.public.base import app
+from auslib.web.public.base import flask_app as app
 
 
 @pytest.fixture(scope="function")
