@@ -8,7 +8,6 @@ import aiohttp
 import sentry_sdk
 import statsd.defaults
 from gcloud.aio.storage import Storage
-from google.api_core.exceptions import Forbidden
 from google.cloud import storage
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -71,10 +70,11 @@ log = logging.getLogger(__file__)
 # statsd environment also needs to be set up before importing the application
 statsd.defaults.PREFIX = "balrog.admin"
 
-from auslib.global_state import cache, dbo  # noqa
-from auslib.web.admin.base import create_app
+from auslib.global_state import cache, dbo  # noqa: E402
+from auslib.web.admin.base import create_app  # noqa: E402
 
-application = create_app().app
+connexion_app = create_app()
+application = connexion_app.app
 
 cache.make_copies = True
 # We explicitly don't want a blob_version cache here because it will cause

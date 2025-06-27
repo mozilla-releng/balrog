@@ -1,9 +1,9 @@
 #!/bin/bash
 
 if [ $1 == "public" ]; then
-   exec uwsgi --ini /app/uwsgi/public.ini --python-autoreload 1
+    exec gunicorn -k uvicorn.workers.UvicornWorker -b "${HOST}:${PORT}" --chdir /app/uvicorn --reload public:connexion_app
 elif [ $1 == "admin" ]; then
-   exec uwsgi --ini /app/uwsgi/admin.ini --python-autoreload 1
+    exec gunicorn -k uvicorn.workers.UvicornWorker -b "${HOST}:${PORT}" --chdir /app/uvicorn --reload admin:connexion_app
 elif [ $1 == "create-db" ]; then
     if [ -z "${DBURI}" ]; then
         echo "\${DBURI} must be set!"

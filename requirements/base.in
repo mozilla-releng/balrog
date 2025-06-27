@@ -1,7 +1,7 @@
 aiohttp
 arrow
 auth0-python>=4
-connexion<3
+connexion[flask,swagger-ui,uvicorn]>3
 deepmerge
 ecdsa
 flask
@@ -10,6 +10,7 @@ gcloud-aio-storage
 google-api-core
 google-auth
 google-cloud-storage
+gunicorn
 jsonschema>=4.5.0
 mozilla-version
 mysqlclient
@@ -25,4 +26,3 @@ sqlalchemy-migrate
 sqlalchemy<2
 statsd
 swagger-spec-validator
-uwsgi
