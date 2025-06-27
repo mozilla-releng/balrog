@@ -1,3 +1,4 @@
+import { withAuth0 } from '@auth0/auth0-react';
 import React, { Fragment } from 'react';
 import { stringify } from 'qs';
 import { func } from 'prop-types';
@@ -24,7 +25,6 @@ import HistoryIcon from 'mdi-react/HistoryIcon';
 import LinkIcon from 'mdi-react/LinkIcon';
 import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
-import { withUser } from '../../utils/AuthContext';
 import Link from '../../utils/Link';
 import { release } from '../../utils/prop-types';
 import highlightMatchedRelease from '../../utils/highlightMatchedRelease';
@@ -128,16 +128,12 @@ function ReleaseCard(props) {
   const {
     release,
     rules,
-    user,
+    auth0,
     onSignoff,
     onRevoke,
     onAccessChange,
     onReleaseDelete,
     onViewScheduledChangeDiff,
-    // We don't actually use these, but we need to avoid passing them onto
-    // `Card` like the rest of the props.
-    onAuthorize: _,
-    onUnauthorize: __,
     ...rest
   } = props;
   const classes = useStyles();
@@ -340,23 +336,29 @@ function ReleaseCard(props) {
               : `/releases/${release.name}/v2`
           }>
           <Button color="secondary">
-            {!user || release.read_only ? 'View' : 'Update'}
+            {!auth0.user || release.read_only ? 'View' : 'Update'}
           </Button>
         </Link>
         <Button
-          disabled={!user || release.read_only || hasRulesPointingAtRevision}
+          disabled={
+            !auth0.user || release.read_only || hasRulesPointingAtRevision
+          }
           color="secondary"
           onClick={() => onReleaseDelete(release)}>
           Delete
         </Button>
         {hasScheduledChange &&
           requiresSignoff &&
-          (user && user.email in release.scheduledChange.signoffs ? (
-            <Button color="secondary" disabled={!user} onClick={onRevoke}>
+          (auth0.user &&
+          auth0.user.email in release.scheduledChange.signoffs ? (
+            <Button color="secondary" onClick={onRevoke}>
               Revoke Signoff
             </Button>
           ) : (
-            <Button color="secondary" disabled={!user} onClick={onSignoff}>
+            <Button
+              color="secondary"
+              disabled={!auth0.user}
+              onClick={onSignoff}>
               Signoff
             </Button>
           ))}
@@ -373,4 +375,4 @@ ReleaseCard.propTypes = {
   onRevoke: func, // Required if readOnly is false
 };
 
-export default withUser(ReleaseCard);
+export default withAuth0(ReleaseCard);

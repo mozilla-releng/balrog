@@ -1,3 +1,4 @@
+import { withAuth0 } from '@auth0/auth0-react';
 import React, { Fragment, useState, useEffect } from 'react';
 import classNames from 'classnames';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
@@ -23,7 +24,6 @@ import {
 } from '../../../services/releases';
 import { getProducts } from '../../../services/rules';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
-import { withUser } from '../../../utils/AuthContext';
 import { SNACKBAR_INITIAL_STATE } from '../../../utils/constants';
 
 const useStyles = makeStyles(theme => ({
@@ -58,7 +58,7 @@ const useStyles = makeStyles(theme => ({
 function ReleaseV2(props) {
   const classes = useStyles();
   const {
-    user,
+    auth0,
     isNewRelease,
     match: {
       params: { releaseName },
@@ -311,7 +311,7 @@ function ReleaseV2(props) {
                   }
                 )}>
                 <Fab
-                  disabled={!user || actionLoading || isReadOnly}
+                  disabled={!auth0.user || actionLoading || isReadOnly}
                   onClick={
                     isNewRelease ? handleReleaseCreate : handleReleaseUpdate
                   }
@@ -324,7 +324,10 @@ function ReleaseV2(props) {
               <SpeedDial
                 FabProps={{
                   disabled:
-                    !user || actionLoading || isReadOnly || !hasScheduledChange,
+                    !auth0.user ||
+                    actionLoading ||
+                    isReadOnly ||
+                    !hasScheduledChange,
                 }}
                 ariaLabel="Secondary Actions">
                 <SpeedDialAction
@@ -343,4 +346,4 @@ function ReleaseV2(props) {
   );
 }
 
-export default withUser(ReleaseV2);
+export default withAuth0(ReleaseV2);
