@@ -7,8 +7,9 @@ if [ $# -gt 0 ]; then
     EXTRA_PCM_ARGS="$@"
 fi
 
-pip install --upgrade 'pip<25.1'
-pip install 'pip-compile-multi<3'
+PIP="pip --disable-pip-version-check install --root-user-action ignore"
+$PIP --upgrade 'pip<25.1'
+$PIP 'pip-compile-multi<3'
 
 apt-get update
 
