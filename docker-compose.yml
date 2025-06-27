@@ -20,8 +20,6 @@ services:
       - "7070"
     volumes:
       - .:/app
-    links:
-      - balrogdb
     environment:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
       - DB_HOST=balrogdb
@@ -67,6 +65,8 @@ services:
     depends_on:
       balrogdb:
         condition: service_healthy
+      autograph:
+        condition: service_healthy
     command: public
     ports:
       - "9010:9010"
@@ -82,9 +82,6 @@ services:
       - PORT=9010
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
-    links:
-      - autograph
-      - balrogdb
     ulimits:
       nofile:
         soft: 4096
@@ -99,12 +96,8 @@ services:
     depends_on:
       nginx:
         condition: service_healthy
-      balrogadmin:
-        condition: service_healthy
     volumes:
       - ./agent:/app
-    links:
-      - nginx
     environment:
       - BALROG_API_ROOT=http://nginx:8011/api
       - BALROG_USERNAME=balrogagent
@@ -146,11 +139,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.nginx
+    depends_on:
+      balrogadmin:
+        condition: service_healthy
     ports:
       - "8010:8010"
       - "8011:8011"
-    links:
-      - balrogadmin
     volumes:
       - ./scripts/nginx.conf:/etc/nginx/conf.d/http_balrog.conf.template
       - ./scripts/server.crt:/etc/nginx/server.crt
