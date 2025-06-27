@@ -141,7 +141,7 @@ class ClientTestBase(ClientTestCommon):
 }
 """
             )
-        dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
+        dbo.setDb(f"sqlite:///:memory:")
         #self.metadata.create_all(dbo.engine)
         dbo.create()
         dbo.setDomainAllowlist(app.app.config["ALLOWLISTED_DOMAINS"])
@@ -1784,7 +1784,7 @@ class ClientTestMig64(ClientTestCommon):
         app.app.config["DEBUG"] = True
         app.app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
         app.app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
-        dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
+        dbo.setDb(f"sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
         dbo.setDomainAllowlist({"a.com": ("a", "b", "c")})
@@ -1956,7 +1956,7 @@ class ClientTestJaws(ClientTestCommon):
         app.app.config["DEBUG"] = True
         app.app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
         app.app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
-        dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
+        dbo.setDb(f"sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
         dbo.setDomainAllowlist({"a.com": ("a", "b", "c")})
@@ -2194,7 +2194,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
     def setUp(self):
         app.app.config["DEBUG"] = True
         app.app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a",)}
-        dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
+        dbo.setDb(f"sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         self.client = app.test_client()
 
@@ -2392,7 +2392,7 @@ class ClientTestCompactXML(ClientTestCommon):
         app.app.config["DEBUG"] = True
         app.app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
         app.app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("b",)}
-        dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
+        dbo.setDb(f"sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist({"a.com": ("b",)})
         self.client = app.test_client()
@@ -2461,7 +2461,7 @@ class ClientTestPinning(ClientTestCommon):
         app.app.config["DEBUG"] = True
         app.app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
         app.app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("b",)}
-        dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
+        dbo.setDb(f"sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist({"a.com": ("b",)})
         self.client = app.test_client()

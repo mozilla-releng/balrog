@@ -20,7 +20,7 @@ def db_schema():
     schema migration logic, and returns the schema metadata of the final DB
     state. It runs once per test session.
     """
-    dbo.setDb(f"sqlite:////tmp/balrogtest-{time.time()}")
+    dbo.setDb(f"sqlite:///:memory:")
     dbo.create()
     return dbo.metadata
 
