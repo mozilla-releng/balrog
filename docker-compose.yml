@@ -99,6 +99,8 @@ services:
     depends_on:
       nginx:
         condition: service_healthy
+      balrogadmin:
+        condition: service_healthy
     volumes:
       - ./agent:/app
     links:
