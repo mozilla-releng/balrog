@@ -259,6 +259,22 @@ paths:
         200:
           description: version.json content.
 
+  /contribute.json:
+    get:
+      operationId: 'auslib.web.public.base.contribute'
+      description: ''
+      responses:
+        200:
+          description: contribute.json content
+
+  /robots.txt:
+    get:
+      operationId: 'auslib.web.public.base.robots'
+      description: ''
+      responses:
+        200:
+          description: robots.txt content
+
 parameters:
   product:
     name: product
