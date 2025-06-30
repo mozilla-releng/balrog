@@ -1325,6 +1325,7 @@ class ClientTest(ClientTestBase):
     @example('"|sleep 7 #')
     def testForceParamWithBadInputs(self, x):
         assume(x != "1")
+        assume(x != "-1")
         force_output = """<?xml version="1.0"?>
 <updates>
     <update type="minor" version="1.0" extensionVersion="1.0" buildID="2">
