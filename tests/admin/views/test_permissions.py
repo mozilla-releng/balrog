@@ -9,19 +9,101 @@ from .base import ViewTest
 
 class TestUsersAPI_JSON(ViewTest):
     def testUsers(self):
-        ret = self._get("/users")
-        self.assertEqual(ret.status_code, 200)
+        ret = self._get("/users", username="bill")
+        self.assertEqual(ret.status_code, 200, ret.data)
         data = ret.get_json()
         self.assertEqual(
             data,
             (
                 {
-                    "ashanti": {"roles": []},
-                    "bill": {"roles": [{"role": "qa", "data_version": 1}, {"role": "releng", "data_version": 1}]},
-                    "billy": {"roles": []},
-                    "bob": {"roles": [{"role": "relman", "data_version": 1}]},
-                    "julie": {"roles": [{"role": "releng", "data_version": 1}]},
-                    "mary": {"roles": [{"role": "relman", "data_version": 1}]},
+                    "ashanti": {
+                        "permissions": {
+                            "release": {
+                                "options": {
+                                    "actions": ["modify"],
+                                    "products": ["a"],
+                                },
+                                "data_version": 1,
+                            },
+                            "release_locale": {
+                                "options": {
+                                    "actions": ["modify"],
+                                    "products": ["a"],
+                                },
+                                "data_version": 1,
+                            },
+                        },
+                        "roles": [],
+                    },
+                    "bill": {
+                        "permissions": {"admin": {"options": None, "data_version": 1}},
+                        "roles": [{"role": "qa", "data_version": 1}, {"role": "releng", "data_version": 1}],
+                    },
+                    "billy": {
+                        "permissions": {
+                            "admin": {
+                                "options": {
+                                    "products": ["a"],
+                                },
+                                "data_version": 1,
+                            },
+                        },
+                        "roles": [],
+                    },
+                    "bob": {
+                        "permissions": {
+                            "permission": {
+                                "options": None,
+                                "data_version": 1,
+                            },
+                            "release": {"options": {"products": ["fake", "a", "b"], "actions": ["create", "modify"]}, "data_version": 1},
+                            "release_read_only": {
+                                "options": {
+                                    "actions": ["set"],
+                                    "products": ["a", "b"],
+                                },
+                                "data_version": 1,
+                            },
+                            "rule": {
+                                "options": {
+                                    "actions": ["modify"],
+                                    "products": ["a", "b"],
+                                },
+                                "data_version": 1,
+                            },
+                        },
+                        "roles": [{"role": "relman", "data_version": 1}],
+                    },
+                    "julie": {
+                        "permissions": {
+                            "release": {
+                                "options": {
+                                    "products": ["a"],
+                                    "actions": ["modify"],
+                                },
+                                "data_version": 1,
+                            },
+                            "rule": {
+                                "options": {
+                                    "products": ["fake"],
+                                    "actions": ["create"],
+                                },
+                                "data_version": 1,
+                            },
+                        },
+                        "roles": [{"role": "releng", "data_version": 1}],
+                    },
+                    "mary": {
+                        "permissions": {
+                            "scheduled_change": {
+                                "options": {
+                                    "actions": ["enact"],
+                                },
+                                "data_version": 1,
+                            },
+                        },
+                        "roles": [{"role": "relman", "data_version": 1}],
+                    },
                 }
             ),
         )
