@@ -4,7 +4,6 @@ auth0-python
 connexion<3  # Just to be consistent with base.in
 deepmerge
 flask
-flask_compress
 flask_wtf
 jsonschema
 python-jose

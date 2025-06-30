@@ -4,7 +4,6 @@ from os import path
 
 import connexion
 from flask import request
-from flask_compress import Compress
 from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
 
@@ -141,6 +140,3 @@ def add_security_headers(response):
     else:
         response.headers["Content-Security-Policy"] = app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
     return response
-
-
-Compress(app)

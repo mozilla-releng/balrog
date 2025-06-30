@@ -5,7 +5,6 @@ connexion<3
 deepmerge
 ecdsa
 flask
-flask_compress
 flask_wtf
 gcloud-aio-storage
 google-api-core
