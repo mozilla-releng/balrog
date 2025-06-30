@@ -4,6 +4,7 @@ import re
 from os import path
 
 import connexion
+from connexion.options import SwaggerUIOptions
 from flask import Response, make_response, request, send_from_directory
 from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
@@ -14,6 +15,8 @@ from auslib.errors import BadDataError
 from auslib.web.admin.views.problem import problem
 
 log = logging.getLogger(__name__)
+
+swagger_ui_options = SwaggerUIOptions(swagger_ui=False)
 
 current_dir = path.dirname(__file__)
 web_dir = path.dirname(auslib.web.__file__)
@@ -28,7 +31,7 @@ spec = (
 
 
 def create_app():
-    connexion_app = connexion.App(__name__, specification_dir=".", options={"swagger_ui": False})
+    connexion_app = connexion.App(__name__, specification_dir=".", swagger_ui_options=swagger_ui_options)
     flask_app = connexion_app.app
 
     # Response validation should be enabled when it actually works
