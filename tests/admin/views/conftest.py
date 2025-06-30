@@ -17,17 +17,17 @@ def mock_verified_userinfo(monkeypatch):
 
 @pytest.fixture(scope="session")
 def api():
-    from auslib.web.admin.base import flask_app as app
+    from auslib.web.admin.base import connexion_app, flask_app
 
-    app.config["SECRET_KEY"] = "notasecret"
-    app.config["CORS_ORIGINS"] = "*"
-    app.config["AUTH_DOMAIN"] = "balrog.test.dev"
-    app.config["AUTH_AUDIENCE"] = "balrog test"
-    app.config["M2M_ACCOUNT_MAPPING"] = {}
-    app.config["ALLOWLISTED_DOMAINS"] = {
+    flask_app.config["SECRET_KEY"] = "notasecret"
+    flask_app.config["CORS_ORIGINS"] = "*"
+    flask_app.config["AUTH_DOMAIN"] = "balrog.test.dev"
+    flask_app.config["AUTH_AUDIENCE"] = "balrog test"
+    flask_app.config["M2M_ACCOUNT_MAPPING"] = {}
+    flask_app.config["ALLOWLISTED_DOMAINS"] = {
         "download.mozilla.org": ("Firefox",),
         "archive.mozilla.org": ("Firefox",),
         "cdmdownload.adobe.com": ("CDM",),
     }
 
-    return app.test_client()
+    return connexion_app.test_client()

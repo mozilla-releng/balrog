@@ -4,7 +4,7 @@ from .base import CommonTestBase
 class TestPublicReleasesAPI(CommonTestBase):
     def test_get_releases(self):
         ret = self.public_client.get("/api/v1/releases")
-        got = ret.get_json()
+        got = ret.json()
         self.assertEqual(len(got["releases"]), 8)
         self.assertIsInstance(got["releases"][0], dict)
         releases = [(release["name"], release["product"]) for release in got["releases"]]
@@ -19,7 +19,7 @@ class TestPublicReleasesAPI(CommonTestBase):
 
     def test_get_releases_names(self):
         ret = self.public_client.get("/api/v1/releases?names_only=1")
-        got = ret.get_json()
+        got = ret.json()
         self.assertEqual(len(got["names"]), 8)
         self.assertIn("Fennec.55.0a1", got["names"])
         self.assertIn("Firefox.55.0a1", got["names"])
@@ -30,18 +30,18 @@ class TestPublicReleasesAPI(CommonTestBase):
         self.assertIn("hotfix-bug-1548973@mozilla.org-1.1.4", got["names"])
         self.assertIn("timecop@mozilla.com-1.0", got["names"])
         ret = self.public_client.get("/api/v1/releases?names_only=1&product=Firefox")
-        got = ret.get_json()
+        got = ret.json()
         self.assertEqual(len(got["names"]), 3)
 
     def test_get_releases_by_product(self):
         ret = self.public_client.get("/api/v1/releases?product=Fennec")
-        got = ret.get_json()
+        got = ret.json()
         self.assertEqual(len(got["releases"]), 1)
         self.assertEqual(got["releases"][0]["name"], "Fennec.55.0a1")
 
     def test_get_releases_by_name_prefix(self):
         ret = self.public_client.get("/api/v1/releases?name_prefix=F")
-        got = ret.get_json()
+        got = ret.json()
         self.assertEqual(len(got["releases"]), 4)
         releases = [(release["name"], release["product"]) for release in got["releases"]]
         self.assertIn(("Firefox.55.0a1", "Firefox"), releases)
@@ -55,7 +55,7 @@ class TestPublicReleasesAPI(CommonTestBase):
         release = "Firefox.55.0a1"
         ret = self.public_client.get("/api/v1/releases/{}".format(release))
         self.assertTrue(ret.status_code, 200)
-        got = ret.get_json()
+        got = ret.json()
         self.assertEqual(got["name"], release)
         self.assertEqual(got["schema_version"], 1)
         self.assertIn("p", got["platforms"])
@@ -66,7 +66,7 @@ class TestPublicReleasesAPI(CommonTestBase):
         release = "Firefox-56.0-build1"
         ret = self.public_client.get("/api/v1/releases/{}".format(release))
         self.assertTrue(ret.status_code, 200)
-        got = ret.get_json()
+        got = ret.json()
         self.assertEqual(got["name"], release)
         self.assertEqual(got["schema_version"], 4)
         self.assertIn("WINNT_x86_64-msvc", got["platforms"])
@@ -77,14 +77,14 @@ class TestPublicReleasesAPI(CommonTestBase):
         ret = self.public_client.get("/api/v1/releases/Firefox.55.0a1/builds/p/l")
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.headers["X-Data-Version"], "1")
-        got = ret.get_json()
+        got = ret.json()
         self.assertEqual(got["buildID"], "5")
 
     def test_get_release_locale_new_tables(self):
         ret = self.public_client.get("/api/v1/releases/Firefox-56.0-build1/builds/WINNT_x86_64-msvc/en-US")
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.headers["X-Data-Version"], "1")
-        got = ret.get_json()
+        got = ret.json()
         self.assertEqual(got["buildID"], "20170918210324")
 
     def test_get_release_locale_not_found(self):

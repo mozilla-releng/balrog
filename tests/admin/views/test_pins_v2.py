@@ -27,10 +27,10 @@ def test_get_pin(api):
         "mapping": "test_mapping",
         "data_version": 1,
     }
-    assert ret.json == expected
+    assert ret.json() == expected
 
 
 @pytest.mark.usefixtures("pinning_db")
 def test_get_pin_404(api):
     ret = api.get("/v2/pins/test_product/test_channel/2.")
-    assert ret.status_code == 404, ret.data
+    assert ret.status_code == 404, ret.text

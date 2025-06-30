@@ -8,7 +8,7 @@ import pytest
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import cache, dbo
-from auslib.web.admin.base import flask_app as app
+from auslib.web.admin.base import flask_app, connexion_app
 
 from ...fakes import FakeBlob, FakeGCSHistory
 
@@ -44,15 +44,15 @@ class ViewTest(unittest.TestCase):
         self.version_fd, self.version_file = mkstemp()
         cache.reset()
         cache.make_copies = True
-        saved_config = app.config.copy()
-        app.config["SECRET_KEY"] = "abc123"
-        app.config["DEBUG"] = True
-        app.config["ALLOWLISTED_DOMAINS"] = {"good.com": ("a", "b", "c", "d")}
-        app.config["VERSION_FILE"] = self.version_file
-        app.config["AUTH_DOMAIN"] = "balrog.test.dev"
-        app.config["AUTH_AUDIENCE"] = "balrog test"
-        app.config["M2M_ACCOUNT_MAPPING"] = {}
-        app.config["CORS_ORIGINS"] = "*"
+        saved_config = flask_app.config.copy()
+        flask_app.config["SECRET_KEY"] = "abc123"
+        flask_app.config["DEBUG"] = True
+        flask_app.config["ALLOWLISTED_DOMAINS"] = {"good.com": ("a", "b", "c", "d")}
+        flask_app.config["VERSION_FILE"] = self.version_file
+        flask_app.config["AUTH_DOMAIN"] = "balrog.test.dev"
+        flask_app.config["AUTH_AUDIENCE"] = "balrog test"
+        flask_app.config["M2M_ACCOUNT_MAPPING"] = {}
+        flask_app.config["CORS_ORIGINS"] = "*"
         with open(self.version_file, "w+") as f:
             f.write(
                 """
@@ -408,7 +408,7 @@ class ViewTest(unittest.TestCase):
             jaws=True,
             data_version=1,
         )
-        self.client = app.test_client()
+        self.client = connexion_app.test_client()
 
         # Insert a release into the new tables to make sure it doesn't show up
         # in the old API.
@@ -421,25 +421,25 @@ class ViewTest(unittest.TestCase):
         os.remove(self.version_file)
         self.view_base.verified_userinfo = self.orig_base_verified_userinfo
         dbo.releases.history = self.orig_releases_history
-        app.config = saved_config
+        flask_app.config = saved_config
 
     def _get(self, url, qs={}, username=None):
         headers = {"Accept-Encoding": "application/json", "Accept": "application/json"}
         self.mocked_user = username
-        ret = self.client.get(url, query_string=qs, headers=headers)
+        ret = self.client.get(url, params=qs, headers=headers)
         return ret
 
     def _post(self, url, data={}, username="bill", **kwargs):
         self.mocked_user = username
-        return self.client.post(url, data=json.dumps(data), content_type="application/json", **kwargs)
+        return self.client.post(url, json=data, **kwargs)
 
     def _put(self, url, data={}, username="bill"):
         self.mocked_user = username
-        return self.client.put(url, data=json.dumps(data), content_type="application/json")
+        return self.client.put(url, json=data)
 
     def _delete(self, url, qs={}, username="bill"):
         self.mocked_user = username
-        return self.client.delete(url, query_string=qs)
+        return self.client.delete(url, params=qs)
 
     def assertStatusCode(self, response, expected):
-        self.assertEqual(response.status_code, expected, "%d - %s" % (response.status_code, response.get_data()))
+        self.assertEqual(response.status_code, expected, "%d - %s" % (response.status_code, response.text))
