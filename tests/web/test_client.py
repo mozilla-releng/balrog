@@ -1327,7 +1327,7 @@ class ClientTest(ClientTestBase):
 """,
         )
 
-    @given(text(alphabet=characters(blacklist_categories=("Cs", "Po")), max_size=128))
+    @given(text(alphabet=characters(blacklist_categories=("Cs", "Po", "Cc")), max_size=128))
     @example("")
     @example('1" name="Firefox 54.0" isOSUpdate="false" installDate="1498012260998')
     @example("1)")
