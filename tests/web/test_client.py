@@ -7,6 +7,7 @@ from contextlib import ExitStack
 from tempfile import mkstemp
 from xml.dom import minidom
 
+import connexion.middleware.exceptions
 import mock
 import pytest
 from hypothesis import assume, example, given
@@ -111,6 +112,17 @@ class ClientTestCommon(unittest.TestCase):
 @pytest.mark.usefixtures("app")
 class ClientTestBase(ClientTestCommon):
     maxDiff = 2000
+
+    @classmethod
+    def setUpClass(cls):
+        async def mock_call(self, scope, receive, send):
+            await self.app(scope, receive, send)
+
+        connexion.middleware.exceptions.ExceptionMiddleware.__call__ = mock_call
+
+    @classmethod
+    def tearDownClass(cls):
+        del connexion.middleware.exceptions.ExceptionMiddleware.__call__
 
     @pytest.fixture(autouse=True)
     def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, firefox_100_0_build1, timecop_1_0):
