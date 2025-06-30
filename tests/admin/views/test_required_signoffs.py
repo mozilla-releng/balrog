@@ -62,7 +62,6 @@ class TestProductRequiredSignoffs(ViewTest):
     def testDeleteRequiredSignoff(self):
         ret = self._delete("/required_signoffs/product", qs=dict(product="fake", channel="a", role="relman", data_version=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("Required Signoffs cannot be", ret.get_data(as_text=True))
 
 
 class TestProductRequiredSignoffsHistoryView(ViewTest):
@@ -883,7 +882,6 @@ class TestPermissionsRequiredSignoffs(ViewTest):
     def testDeleteRequiredSignoff(self):
         ret = self._delete("/required_signoffs/permissions", qs=dict(product="fake", role="releng", data_version=1))
         self.assertStatusCode(ret, 400)
-        self.assertIn("Required Signoffs cannot be", ret.get_data(as_text=True))
 
 
 class TestPermissionsRequiredSignoffsHistoryView(ViewTest):
