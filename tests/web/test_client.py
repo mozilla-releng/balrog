@@ -8,6 +8,7 @@ from contextlib import ExitStack
 from tempfile import mkstemp
 from xml.dom import minidom
 
+import connexion.middleware.exceptions
 import mock
 import pytest
 from hypothesis import assume, example, given
@@ -121,9 +122,17 @@ class ClientTestBase(ClientTestCommon):
         # Ripped from https://github.com/pallets/flask/blob/2.3.3/src/flask/scaffold.py#L131-L134
         flask_app.error_handler_spec = defaultdict(lambda: defaultdict(dict))
 
+        async def mock_call(self, scope, receive, send):
+            await self.app(scope, receive, send)
+
+        connexion.middleware.exceptions.ExceptionMiddleware.__call__ = mock_call
+        cls.saved_config = flask_app.config.copy()
+
     @classmethod
     def tearDownClass(cls):
         flask_app.error_handler_spec = cls.error_spec
+        flask_app.config = cls.saved_config
+        del connexion.middleware.exceptions.ExceptionMiddleware.__call__
 
     @pytest.fixture(autouse=True)
     def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, firefox_100_0_build1, timecop_1_0):
