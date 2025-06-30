@@ -4,9 +4,8 @@ import re
 from os import path
 
 import connexion
-from connexion import request
 from connexion.options import SwaggerUIOptions
-from flask import Response, make_response, send_from_directory
+from flask import Response, make_response, request, send_from_directory
 from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
 

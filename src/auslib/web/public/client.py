@@ -2,8 +2,7 @@ import logging
 import re
 import sys
 
-from connexion import request
-from flask import current_app as app
+from flask import current_app as app, request
 from flask import make_response
 
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
