@@ -3018,7 +3018,13 @@ class AUSDatabase(object):
             raise AlreadySetupError()
         self.dburi = dburi
         self.metadata = MetaData()
-        self.engine = create_engine(self.dburi, pool_recycle=60)
+        engine_kwargs = {"pool_recycle": 60}
+        if dburi.startswith("sqlite"):
+            # connexion 3.x runs the flask app in a thread, so we need to share the db connection
+            from sqlalchemy.pool import StaticPool
+
+            engine_kwargs.update({"poolclass": StaticPool, "connect_args": {"check_same_thread": False}})
+        self.engine = create_engine(self.dburi, **engine_kwargs)
         if mysql_traditional_mode and "mysql" in dburi:
             sqlalchemy.event.listen(self.engine, "connect", my_on_connect)
         dialect = self.engine.name
