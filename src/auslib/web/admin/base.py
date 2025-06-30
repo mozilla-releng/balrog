@@ -3,18 +3,19 @@ import re
 from os import path
 
 import connexion
+from connexion.options import SwaggerUIOptions
 from flask import g, request
 from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
 from statsd.defaults.env import statsd
 
 import auslib
+import auslib.web.admin.views.validators  # noqa
 from auslib.db import ChangeScheduledError, OutdatedDataError, UpdateMergeError
 from auslib.dockerflow import create_dockerflow_endpoints
 from auslib.errors import BlobValidationError, PermissionDeniedError, ReadOnlyError, SignoffRequiredError
 from auslib.util.auth import AuthError, verified_userinfo
 from auslib.web.admin.views.problem import problem
-from auslib.web.admin.views.validators import BalrogRequestBodyValidator
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ spec = (
     .add_spec(path.join(web_dir, "common/swagger/responses.yml"))
 )
 
-validator_map = {"body": BalrogRequestBodyValidator}
+swagger_ui_options = SwaggerUIOptions(swagger_ui=False)
 
 
 def should_time_request():
@@ -47,8 +48,9 @@ def should_time_request():
 
 
 def create_app():
-    connexion_app = connexion.App(__name__, debug=False, options={"swagger_ui": False})
-    connexion_app.add_api(spec, validator_map=validator_map, strict_validation=True)
+    connexion_app = connexion.App(__name__, swagger_ui_options=swagger_ui_options)
+    connexion_app.app.debug = False
+    connexion_app.add_api(spec, strict_validation=True)
     connexion_app.add_api(path.join(current_dir, "swagger", "api_v2.yml"), base_path="/v2", strict_validation=True, validate_responses=True)
     flask_app = connexion_app.app
 
