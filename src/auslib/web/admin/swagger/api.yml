@@ -416,6 +416,10 @@ paths:
           description: Successfully fetched rules and it's scheduled change history
         '400':
           $ref: '#/responses/invalidFormData'
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
 
   /permissions/history:
     get:
@@ -1294,9 +1298,25 @@ paths:
                 uniqueItems: true
                 minItems: 0
                 items:
-                  type: string
-                  format: ascii
-                example: ["balrogadmin"]
+                  type: object
+                  additionalProperties:
+                    type: object
+                    properties:
+                      permissions:
+                        $ref: "#/definitions/UserPermissionsGET"
+                      roles:
+                        description: "user's assigned roles"
+                        type: object
+                        # Cannot fully validate roles object as patternProperties, part of jsonschema, isn't supported by
+                        # swagger. https://github.com/OAI/OpenAPI-Specification/issues/687
+                        example:
+                          sample_role:
+                            data_version: 1
+        '401':
+          $ref: '#/responses/unauthenticatedUser'
+        '403':
+          $ref: '#/responses/unauthorizedUser'
+
 
   /users/{username}:
     get:

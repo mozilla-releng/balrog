@@ -28,8 +28,11 @@ __all__ = [
 ]
 
 
-def get_users():
+@requirelogin
+def get_users(changed_by):
     users = dbo.permissions.getAllUsers()
+    for username, permissions in dbo.permissions.getAllPermissions(changed_by).items():
+        users[username]["permissions"] = permissions
     log.debug("Found users: %s", users)
     # We don't return a plain jsonify'ed list here because of:
     # http://flask.pocoo.org/docs/security/#json-security
