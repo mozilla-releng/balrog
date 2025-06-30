@@ -2657,10 +2657,16 @@ class Permissions(AUSTable):
             users[user] = {"roles": res_roles}
         return users
 
-    def getAllPermissions(self, transaction=None):
+    def getAllPermissions(self, retrieving_as, transaction=None):
+        if not self.hasPermission(retrieving_as, "permission", "view", transaction=transaction):
+            raise PermissionDeniedError("You are not authorized to view permissions of other users.")
+
         ret = defaultdict(dict)
         for r in self.select(transaction=transaction):
-            ret[r["username"]][r["permission"]] = r["options"]
+            ret[r["username"]][r["permission"]] = {
+                "options": r["options"],
+                "data_version": r["data_version"],
+            }
         return ret
 
     def countAllUsers(self, transaction=None):
