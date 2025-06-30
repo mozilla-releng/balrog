@@ -1,3 +1,4 @@
+from collections import defaultdict
 from unittest.mock import MagicMock
 
 import pytest
@@ -12,7 +13,8 @@ from auslib.web.public.base import flask_app as app
 
 @pytest.fixture(scope="function")
 def disable_errorhandler(monkeypatch):
-    monkeypatch.setattr(app, "error_handler_spec", {None: {}})
+    # Ripped from https://github.com/pallets/flask/blob/2.3.3/src/flask/scaffold.py#L131-L134
+    monkeypatch.setattr(app, "error_handler_spec", defaultdict(lambda: defaultdict(dict)))
 
 
 @pytest.fixture(scope="function")

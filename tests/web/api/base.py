@@ -1,5 +1,6 @@
 import logging
 import unittest
+from collections import defaultdict
 
 import pytest
 
@@ -19,8 +20,8 @@ class CommonTestBase(unittest.TestCase):
     def setUpClass(cls):
         # Error handlers are removed in order to give us better debug messages
         cls.error_spec = app.error_handler_spec
-        # Ripped from https://github.com/mitsuhiko/flask/blob/1f5927eee2288b4aaf508af5dc1f148aa2140d91/flask/app.py#L394
-        app.error_handler_spec = {None: {}}
+        # Ripped from https://github.com/pallets/flask/blob/2.3.3/src/flask/scaffold.py#L131-L134
+        app.error_handler_spec = defaultdict(lambda: defaultdict(dict))
 
     @classmethod
     def tearDownClass(cls):
