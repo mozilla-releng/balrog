@@ -92,9 +92,10 @@ def getCleanQueryFromURL(url):
 
         query["force"] = force_split[0]
 
-        avast_parameter = force_split[1]
-        avast_split = avast_parameter.split("=")
-        query[avast_split[0]] = int(avast_split[1])
+        if len(force_split) == 2:
+            avast_parameter = force_split[1]
+            avast_split = avast_parameter.split("=")
+            query[avast_split[0]] = int(avast_split[1])
 
     # Some versions of Avast have a bug in them that prepends "x86 "
     if "locale" in query:

@@ -1324,6 +1324,7 @@ class ClientTest(ClientTestBase):
     @example('1" name="Firefox 54.0" isOSUpdate="false" installDate="1498012260998')
     @example("1)")
     @example('"|sleep 7 #')
+    @example("avast")
     def testForceParamWithBadInputs(self, x):
         assume(x != "1")
         assume(x != "-1")
