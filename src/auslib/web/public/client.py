@@ -84,17 +84,20 @@ def getCleanQueryFromURL(url):
     # them, which breaks query string parsing if ?force=1 is already
     # there. Because we're nice people we'll fix it up.
     if "force" in query and "avast" in query["force"]:
-        force_value = query["force"]
-        force_split = force_value.split("?", 1)
+        try:
+            force_value = query["force"]
+            force_split = force_value.split("?", 1)
 
-        if len(force_split) < 2:
-            force_split = force_value.split("%3F", 1)
+            if len(force_split) < 2:
+                force_split = force_value.split("%3F", 1)
 
-        query["force"] = force_split[0]
+            query["force"] = force_split[0]
 
-        avast_parameter = force_split[1]
-        avast_split = avast_parameter.split("=")
-        query[avast_split[0]] = int(avast_split[1])
+            avast_parameter = force_split[1]
+            avast_split = avast_parameter.split("=")
+            query[avast_split[0]] = int(avast_split[1])
+        except (IndexError, ValueError):
+            pass
 
     # Some versions of Avast have a bug in them that prepends "x86 "
     if "locale" in query:

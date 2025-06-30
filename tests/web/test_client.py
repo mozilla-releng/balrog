@@ -1305,6 +1305,12 @@ class ClientTest(ClientTestBase):
         ret2 = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1")
         self.assertHttpResponse(ret2)
         self.assertEqual(ret.get_data(), ret2.get_data())
+        ret3 = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1?avast=")
+        self.assertHttpResponse(ret3)
+        self.assertEqual(ret.get_data(), ret3.get_data())
+        ret4 = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1?avast")
+        self.assertHttpResponse(ret4)
+        self.assertEqual(ret.get_data(), ret4.get_data())
 
     def testAvastURLsWithGoodQueryArgs(self):
         ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1&avast=1")
@@ -1324,6 +1330,7 @@ class ClientTest(ClientTestBase):
     @example('1" name="Firefox 54.0" isOSUpdate="false" installDate="1498012260998')
     @example("1)")
     @example('"|sleep 7 #')
+    @example("avast")
     def testForceParamWithBadInputs(self, x):
         assume(x != "1")
         assume(x != "-1")
