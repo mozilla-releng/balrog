@@ -1,3 +1,4 @@
+import { withAuth0 } from '@auth0/auth0-react';
 import React, { useMemo, useState, useEffect, useRef, Fragment } from 'react';
 import { clone } from 'ramda';
 import classNames from 'classnames';
@@ -48,7 +49,6 @@ import {
   SNACKBAR_INITIAL_STATE,
   RELEASE_ROOT_LEVEL_KEY,
 } from '../../../utils/constants';
-import { withUser } from '../../../utils/AuthContext';
 import elementsHeight from '../../../utils/elementsHeight';
 
 const useStyles = makeStyles(theme => ({
@@ -72,7 +72,7 @@ const useStyles = makeStyles(theme => ({
 function ListReleases(props) {
   const classes = useStyles();
   const theme = useTheme();
-  const username = (props.user && props.user.email) || '';
+  const username = (props.auth0.user && props.auth0.user.email) || '';
   const {
     buttonHeight,
     body1TextHeight,
@@ -884,4 +884,4 @@ function ListReleases(props) {
   );
 }
 
-export default withUser(ListReleases);
+export default withAuth0(ListReleases);

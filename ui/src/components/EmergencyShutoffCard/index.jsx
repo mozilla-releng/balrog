@@ -1,3 +1,4 @@
+import { withAuth0 } from '@auth0/auth0-react';
 import React from 'react';
 import { func, object } from 'prop-types';
 import { makeStyles } from '@material-ui/styles';
@@ -9,7 +10,6 @@ import Typography from '@material-ui/core/Typography';
 import AlertIcon from 'mdi-react/AlertIcon';
 import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
-import { withUser } from '../../utils/AuthContext';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -46,9 +46,7 @@ function EmergencyShutoffCard({
   onCancelEnable,
   onSignoff,
   onRevoke,
-  user,
-  onAuthorize,
-  onUnauthorize,
+  auth0,
   ...props
 }) {
   const classes = useStyles();
@@ -93,7 +91,7 @@ function EmergencyShutoffCard({
           <Button
             className={classes.actionButton}
             color="secondary"
-            disabled={!user}
+            disabled={!auth0.user}
             onClick={() => onCancelEnable(emergencyShutoff)}>
             Keep Updates Disabled
           </Button>
@@ -101,16 +99,17 @@ function EmergencyShutoffCard({
           <Button
             className={classes.actionButton}
             color="secondary"
-            disabled={!user}
+            disabled={!auth0.user}
             onClick={() => onEnableUpdates(emergencyShutoff)}>
             Enable Updates
           </Button>
         )}
         {requiresSignoff &&
-          (user && user.email in emergencyShutoff.scheduledChange.signoffs ? (
+          (auth0.user &&
+          auth0.user.email in emergencyShutoff.scheduledChange.signoffs ? (
             <Button
               color="secondary"
-              disabled={!user}
+              disabled={!auth0.user}
               onClick={onRevoke}
               className={classes.actionButton}>
               Revoke Signoff
@@ -118,7 +117,7 @@ function EmergencyShutoffCard({
           ) : (
             <Button
               color="secondary"
-              disabled={!user}
+              disabled={!auth0.user}
               onClick={onSignoff}
               className={classes.actionButton}>
               Signoff
@@ -135,4 +134,4 @@ EmergencyShutoffCard.propTypes = {
   onRevoke: func.isRequired,
 };
 
-export default withUser(EmergencyShutoffCard);
+export default withAuth0(EmergencyShutoffCard);
