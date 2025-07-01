@@ -4,18 +4,20 @@ import re
 from os import path
 
 import connexion
-from connexion import request
-from flask import Response, make_response, send_from_directory
+from connexion.options import SwaggerUIOptions
+from flask import Response, make_response, request, send_from_directory
 from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
 
 import auslib.web
 from auslib.errors import BadDataError
 from auslib.web.admin.views.problem import problem
+from auslib.web.common import middlewares
 
 log = logging.getLogger(__name__)
 
-connexion_app = connexion.App(__name__, specification_dir=".", options={"swagger_ui": False})
+swagger_ui_options = SwaggerUIOptions(swagger_ui=False)
+connexion_app = connexion.App(__name__, specification_dir=".", swagger_ui_options=swagger_ui_options, middlewares=middlewares)
 flask_app = connexion_app.app
 
 current_dir = path.dirname(__file__)

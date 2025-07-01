@@ -1,4 +1,4 @@
-import connexion
+import flask
 from flask import jsonify
 from sqlalchemy.sql.expression import null
 
@@ -54,7 +54,7 @@ def get_scheduled_changes(table, where=None):
     if where is None:
         where = {}
 
-    if connexion.request.args.get("all") is None:
+    if flask.request.args.get("all") is None:
         where["complete"] = False
 
     rows = sc_table.select(where=where)
@@ -129,7 +129,7 @@ def post_signoffs_scheduled_change(signoffs_table, sc_id, what, transaction, cha
 
 
 def delete_signoffs_scheduled_change(sc_id, signoffs_table, transaction, changed_by):
-    username = connexion.request.args.get("username", changed_by)
+    username = flask.request.args.get("username", changed_by)
     where = {"sc_id": sc_id, "username": username}
     signoff = signoffs_table.select(where, transaction)
     if not signoff:
@@ -178,7 +178,7 @@ def _get_filters_all_scheduled_change_history(sc_history_table, obj):
     where = [False, False]
     where = [getattr(sc_history_table, f) == query.get(f) for f in query]
     where.append(sc_history_table.data_version != null())
-    request = connexion.request
+    request = flask.request
     if hasattr(sc_history_table, "product" or " channel"):
         if request.args.get("product"):
             where.append(sc_history_table.base_product == request.args.get("product"))

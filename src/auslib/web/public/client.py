@@ -2,8 +2,7 @@ import logging
 import re
 import sys
 
-from connexion import request
-from flask import current_app as app
+from flask import current_app as app, request
 from flask import make_response
 
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
@@ -92,9 +91,10 @@ def getCleanQueryFromURL(url):
 
         query["force"] = force_split[0]
 
-        avast_parameter = force_split[1]
-        avast_split = avast_parameter.split("=")
-        query[avast_split[0]] = int(avast_split[1])
+        if len(force_split) == 2:
+            avast_parameter = force_split[1]
+            avast_split = avast_parameter.split("=")
+            query[avast_split[0]] = int(avast_split[1])
 
     # Some versions of Avast have a bug in them that prepends "x86 "
     if "locale" in query:

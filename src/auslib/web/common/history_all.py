@@ -1,7 +1,8 @@
 import json
 import logging
 
-from connexion import problem, request
+from connexion import problem
+from flask import request
 from sqlalchemy.sql.expression import null
 
 from auslib.global_state import dbo

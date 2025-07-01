@@ -1,7 +1,7 @@
 aiohttp
 arrow
 auth0-python
-connexion<3  # Just to be consistent with base.in
+connexion[flask,swagger-ui,uvicorn]>3
 deepmerge
 flask
 flask_wtf

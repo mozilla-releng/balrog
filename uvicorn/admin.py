@@ -26,20 +26,10 @@ DOMAIN_ALLOWLIST = {
     "ciscobinary.openh264.org": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),
     "clients2.googleusercontent.com": ("Widevine",),
-    "edgedl.me.gvt1.com": (
-        "Widevine",
-        "Widevine-L1",
-    ),
     "redirector.gvt1.com": (
         "Widevine",
         "Widevine-L1",
     ),
-    "www.google.com": {
-        "/dl/release2/chrome_component/[\\w\\.]+/[\\w\\.]+\\.crx3": (
-            "Widevine",
-            "Widevine-L1",
-        ),
-    },
     "ftp.mozilla.org": ("SystemAddons",),
     "fpn.firefox.com": ("FirefoxVPN", "Guardian"),
     "vpn.mozilla.org": ("FirefoxVPN", "Guardian"),
@@ -49,7 +39,6 @@ if STAGING or LOCALDEV:
     DOMAIN_ALLOWLIST.update(
         {
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird", "Pinebuild", "SystemAddons"),
-            "bouncer-bouncer.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
             "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird", "Pinebuild"),
             "dev.bouncer.nonprod.webservices.mozgcp.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird", "Pinebuild"),
             "stage.guardian.nonprod.cloudops.mozgcp.net": ("FirefoxVPN", "Guardian"),
