@@ -12,11 +12,12 @@ from specsynthase.specbuilder import SpecBuilder
 import auslib.web
 from auslib.errors import BadDataError
 from auslib.web.admin.views.problem import problem
+from auslib.web.common import middlewares
 
 log = logging.getLogger(__name__)
 
 swagger_ui_options = SwaggerUIOptions(swagger_ui=False)
-connexion_app = connexion.App(__name__, specification_dir=".", swagger_ui_options=swagger_ui_options)
+connexion_app = connexion.App(__name__, specification_dir=".", swagger_ui_options=swagger_ui_options, middlewares=middlewares)
 flask_app = connexion_app.app
 
 current_dir = path.dirname(__file__)

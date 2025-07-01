@@ -13,6 +13,7 @@ from auslib.dockerflow import create_dockerflow_endpoints
 from auslib.errors import BlobValidationError, PermissionDeniedError, ReadOnlyError, SignoffRequiredError
 from auslib.util.auth import verified_userinfo
 from auslib.web.admin.views.problem import problem
+from auslib.web.common import middlewares
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ spec = (
 )
 
 swagger_ui_options = SwaggerUIOptions(swagger_ui=False)
-connexion_app = connexion.App(__name__, swagger_ui_options=swagger_ui_options)
+connexion_app = connexion.App(__name__, swagger_ui_options=swagger_ui_options, middlewares=middlewares)
 connexion_app.app.debug = False
 connexion_app.add_api(spec, strict_validation=True)
 connexion_app.add_api(path.join(current_dir, "swagger", "api_v2.yml"), base_path="/v2", strict_validation=True, validate_responses=True)
