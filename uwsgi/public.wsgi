@@ -68,7 +68,7 @@ configure_logging(**logging_kwargs)
 statsd.defaults.PREFIX = "balrog.public.cache"
 
 from auslib.global_state import cache, dbo  # noqa
-from auslib.web.public.base import app as application  # noqa
+from auslib.web.public.base import flask_app as application  # noqa
 
 if os.environ.get("AUTOGRAPH_URL"):
     application.config["AUTOGRAPH_URL"] = os.environ["AUTOGRAPH_URL"]
