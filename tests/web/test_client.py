@@ -1374,8 +1374,11 @@ class ClientTest(ClientTestBase):
     def testGMPResponseWithSigningAutographPermanentFailure(self):
         global mock_autograph_exception_count
         mock_autograph_exception_count = 3
-        with pytest.raises(Exception):
+        with pytest.raises(Exception) as excinfo:
             self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
+
+        assert excinfo.type is Exception
+        assert excinfo.value.args == ("unable to contact autograph",)
 
     def testGetWithResponseProducts(self):
         ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
