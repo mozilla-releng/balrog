@@ -197,9 +197,7 @@ class AUSTransaction(object):
             if exc_type:
                 self.log.debug("exc is:", exc_info=True)
                 self.rollback()
-                e = exc_type(exc_value)
-                e.__traceback__ = exc_traceback
-                raise e
+                return False
             # self.commit will issue a rollback if it raises
             self.commit()
         finally:
