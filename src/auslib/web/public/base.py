@@ -13,6 +13,7 @@ from statsd.defaults.env import statsd
 import auslib.web
 from auslib.errors import BadDataError
 from auslib.web.admin.views.problem import problem
+from auslib.web.common import middlewares
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ spec = (
 
 
 def create_app():
-    connexion_app = connexion.App(__name__, specification_dir=".", swagger_ui_options=swagger_ui_options)
+    connexion_app = connexion.App(__name__, specification_dir=".", swagger_ui_options=swagger_ui_options, middlewares=middlewares[:])
     flask_app = connexion_app.app
 
     # Response validation should be enabled when it actually works
