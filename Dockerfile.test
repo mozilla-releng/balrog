@@ -12,13 +12,11 @@ LABEL maintainer="releng@mozilla.com"
 # curl is needed to pull sample data
 # gcc is needed to compile some python packages
 # xz-utils is needed to unpack sampled ata
-# git is needed to send coverage reports
 RUN apt-get -q update \
-    && apt-get -q --yes install g++ netcat-traditional libpcre3 libpcre3-dev default-libmysqlclient-dev mariadb-client curl gcc xz-utils git pkg-config \
+    && apt-get -q --yes install g++ netcat-traditional libpcre3 libpcre3-dev default-libmysqlclient-dev mariadb-client curl gcc xz-utils pkg-config \
     && apt-get clean
 
 WORKDIR /app
-RUN git config --global --add safe.directory /app
 
 # The general app requirements and packages required to run Tox are installed into the system.
 # We copy them in early to avoid re-installing them unless absolutely necessary.
@@ -30,8 +28,6 @@ COPY tests/ /app/tests/
 COPY scripts/ /app/scripts/
 COPY uwsgi/ /app/uwsgi/
 COPY MANIFEST.in setup.py pyproject.toml tox.ini version.json version.txt /app/
-# we need .git to gather information for coverage reports
-COPY .git/ /app/.git/
 
 RUN pip install -e .
 
