@@ -3,10 +3,12 @@ import re
 from os import path
 
 import connexion
+from connexion.middleware import MiddlewarePosition
 from connexion.options import SwaggerUIOptions
 from flask import g, request
 from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
+from starlette.middleware.cors import CORSMiddleware
 from statsd.defaults.env import statsd
 
 import auslib
@@ -48,7 +50,7 @@ def should_time_request():
     return True
 
 
-def create_app():
+def create_app(allow_origins=None):
     connexion_app = connexion.App(__name__, swagger_ui_options=swagger_ui_options, middlewares=middlewares[:])
     connexion_app.app.debug = False
     connexion_app.add_api(spec, strict_validation=True)
@@ -185,12 +187,6 @@ def create_app():
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Strict-Transport-Security"] = flask_app.config.get("STRICT_TRANSPORT_SECURITY", "max-age=31536000;")
-        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
-        response.headers["Access-Control-Allow-Methods"] = "OPTIONS, GET, POST, PUT, DELETE"
-        if "*" in flask_app.config["CORS_ORIGINS"]:
-            response.headers["Access-Control-Allow-Origin"] = "*"
-        elif "Origin" in request.headers and request.headers["Origin"] in flask_app.config["CORS_ORIGINS"]:
-            response.headers["Access-Control-Allow-Origin"] = request.headers["Origin"]
         if re.match("^/ui/", request.path):
             # This enables swagger-ui to dynamically fetch and
             # load the swagger specification JSON file containing API definition and examples.
@@ -208,5 +204,14 @@ def create_app():
             g.request_timer.stop()
 
         return response
+
+    if allow_origins:
+        connexion_app.add_middleware(
+            CORSMiddleware,
+            MiddlewarePosition.BEFORE_ROUTING,
+            allow_origins=allow_origins,
+            allow_headers=["Authorization", "Content-Type"],
+            allow_methods=["OPTIONS", "GET", "POST", "PUT", "DELETE"],
+        )
 
     return connexion_app

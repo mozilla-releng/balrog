@@ -22,10 +22,9 @@ def mock_verified_userinfo(monkeypatch):
 @pytest.fixture(scope="session")
 def api():
 
-    app = create_app()
+    app = create_app(allow_origins=["*"])
     app.app.testing = True
     app.app.config["SECRET_KEY"] = "notasecret"
-    app.app.config["CORS_ORIGINS"] = "*"
     app.app.config["AUTH_DOMAIN"] = "balrog.test.dev"
     app.app.config["AUTH_AUDIENCE"] = "balrog test"
     app.app.config["M2M_ACCOUNT_MAPPING"] = {}
@@ -40,6 +39,6 @@ def api():
 
 @pytest.fixture(scope="class")
 def app():
-    app = create_app()
+    app = create_app(allow_origins=["*"])
     app.app.testing = True
     return app
