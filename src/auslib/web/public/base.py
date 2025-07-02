@@ -68,35 +68,37 @@ def unicode(error):
     return problem(400, "Unicode Error", "Connexion was unable to parse some unicode data correctly.")
 
 
-@flask_app.errorhandler(Exception)
-def generic(error):
-    """Deals with any unhandled exceptions. If the exception is not a
-    BadDataError, it will be sent to Sentry, and a 400 will be returned,
+@flask_app.errorhandler(BadDataError)
+def baddata(error):
+    """Deals with BadDataError exceptions by returning a 400,
     because BadDataErrors are considered to be the client's fault.
-    Otherwise, the error is just re-raised (which causes a 500)."""
-
+    """
     # Escape exception messages before replying with them, because they may
     # contain user input.
     # See https://bugzilla.mozilla.org/show_bug.cgi?id=1332829 for background.
     # We used to look at error.message here, but that disappeared from many
-    # Exception classes in Python 3, so args is the safer better.
+    # Exception classes in Python 3, so args is the safer bet.
     # We may want to stop returning messages like this to the client altogether
     # both because it's ugly and potentially can leak things, but it's also
     # extremely helpful for debugging BadDataErrors, because we don't send
     # information about them to Sentry.
-
     if hasattr(error, "args"):
         message = " ".join(str(a) for a in error.args)
     else:
         message = repr(error)
-    if isinstance(error, BadDataError):
-        return Response(status=400, mimetype="text/plain", response=html.escape(message, quote=False))
+
+    return Response(status=400, mimetype="text/plain", response=html.escape(message, quote=False))
+
+
+@flask_app.errorhandler(Exception)
+def generic(error):
+    """Deals with any unhandled exceptions. It will be sent to Sentry, and re-raised (which causes a 500)."""
 
     # Sentry doesn't handle exceptions for `@flask_app.errorhandler(Exception)`
     # implicitly. If Sentry is not configured, the following call returns None.
     capture_exception(error)
 
-    return Response(status=500, mimetype="text/plain", response=html.escape(message, quote=False))
+    raise
 
 
 # Keeping static files endpoints here due to an issue when returning response for static files.
