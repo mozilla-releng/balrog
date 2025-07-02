@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { func, string, object } from 'prop-types';
+import { func, string, object, arrayOf } from 'prop-types';
 import classNames from 'classnames';
 import Card from '@material-ui/core/Card';
 import { makeStyles } from '@material-ui/styles';
@@ -138,14 +138,12 @@ function User(props) {
                 />
               </ListItem>
             ))}
-            {Object.keys(roles).length > 0 && (
+            {roles.length > 0 && (
               <ListItem disableGutters>
                 <ListItemIcon>
                   <AccountGroupIcon />
                 </ListItemIcon>
-                <ListItemText>
-                  holds the {getRolesString(Object.keys(roles))}
-                </ListItemText>
+                <ListItemText>holds the {getRolesString(roles)}</ListItemText>
               </ListItem>
             )}
           </List>
@@ -224,7 +222,7 @@ function User(props) {
 
 User.propTypes = {
   username: string.isRequired,
-  roles: object,
+  roles: arrayOf(object),
   permissions: object,
   scheduledPermissions: object,
   onSignoff: func.isRequired,
@@ -232,7 +230,7 @@ User.propTypes = {
 };
 
 User.defaultProps = {
-  roles: {},
+  roles: [],
   permissions: {},
   scheduledPermissions: {},
 };
