@@ -1,12 +1,10 @@
 import logging
 import unittest
-from collections import defaultdict
 
 import pytest
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
-from auslib.web.public.base import create_app
 
 
 def setUpModule():
@@ -14,15 +12,8 @@ def setUpModule():
     logging.getLogger("migrate").setLevel(logging.CRITICAL)
 
 
-@pytest.mark.usefixtures("current_db_schema")
+@pytest.mark.usefixtures("current_db_schema", "app")
 class CommonTestBase(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        connexion_app = create_app()
-        cls.app = connexion_app.app
-        # Error handlers are removed in order to give us better debug messages
-        # Ripped from https://github.com/pallets/flask/blob/2.3.3/src/flask/scaffold.py#L131-L134
-        cls.app.error_handler_spec = defaultdict(lambda: defaultdict(dict))
 
     @pytest.fixture(autouse=True)
     def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, timecop_1_0):
