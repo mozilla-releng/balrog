@@ -1,12 +1,15 @@
 import pytest
 
 import auslib.web.admin.base
+from auslib.util.auth import AuthError
 
 
 @pytest.fixture(scope="function")
 def mock_verified_userinfo(monkeypatch):
     def mock_userinfo(username="bob"):
         def my_userinfo(*args, **kwargs):
+            if not username:
+                raise AuthError("auth required", 401)
             return {"email": username}
 
         monkeypatch.setattr(auslib.web.admin.base, "verified_userinfo", my_userinfo)

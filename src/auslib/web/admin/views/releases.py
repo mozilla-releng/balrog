@@ -9,7 +9,7 @@ from auslib.db import OutdatedDataError
 from auslib.errors import BlobValidationError, ReadOnlyError
 from auslib.global_state import dbo
 from auslib.util.signoffs import serialize_signoff_requirements
-from auslib.web.admin.views.base import handleGeneralExceptions, log, requirelogin, transactionHandler
+from auslib.web.admin.views.base import log, requirelogin, transactionHandler
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     delete_scheduled_change,
@@ -193,7 +193,6 @@ def set_required_signoffs_for_product(sc):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def put_release_single_locale(release, platform, locale, partial_release_body, changed_by, transaction):
     """Something important to note about this method is that using the
     "copyTo" field of the form, updates can be made to more than just
@@ -228,7 +227,6 @@ def put_release_single_locale(release, platform, locale, partial_release_body, c
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def put_single_release(release, release_body, changed_by, transaction):
     if dbo.releases.getReleases(name=release, limit=1):
         if not release_body.get("data_version"):
@@ -275,7 +273,6 @@ def put_single_release(release, release_body, changed_by, transaction):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def post_single_release(release, partial_release_body, changed_by, transaction):
     def exists(rel, product):
         if rel == release:
@@ -294,7 +291,6 @@ def post_single_release(release, partial_release_body, changed_by, transaction):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def delete_single_release(release, data_version, changed_by, transaction):
     releases = dbo.releases.getReleaseInfo(names=[release], nameOnly=True, limit=1)
     if not releases:
@@ -324,7 +320,6 @@ def get_release_read_only(release):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def put_release_read_only(release, release_read_only_body, changed_by, transaction):
     releases = dbo.releases.getReleaseInfo(names=[release], nameOnly=True, limit=1)
     if not releases:
@@ -372,7 +367,6 @@ def get_releases(**kwargs):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def post_release(release_body, changed_by, transaction):
     if dbo.releases.getReleaseInfo(names=[release_body.get("name")], transaction=transaction, nameOnly=True, limit=1):
         return problem(
@@ -434,7 +428,6 @@ def get_releases_scheduled_changes():
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def post_releases_scheduled_changes(sc_release_body, transaction, changed_by):
     what = sc_release_body
     if what.get("when", None) is None:
@@ -484,7 +477,6 @@ def get_by_id_releases_scheduled_change(sc_id):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def post_releases_scheduled_change(sc_id, sc_release_body, transaction, changed_by):
     # TODO: modify UI and clients to stop sending 'change_type' in request body
     sc_table = dbo.releases.scheduled_changes
@@ -531,7 +523,6 @@ def post_releases_scheduled_change(sc_id, sc_release_body, transaction, changed_
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def delete_releases_scheduled_change(sc_id, data_version, transaction, changed_by):
     return delete_scheduled_change(
         sc_table=dbo.releases.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
@@ -540,14 +531,12 @@ def delete_releases_scheduled_change(sc_id, data_version, transaction, changed_b
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def post_releases_enact_scheduled_change(sc_id, transaction, changed_by):
     return post_enact_scheduled_change(sc_table=dbo.releases.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def post_release_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
     return post_signoffs_scheduled_change(
         signoffs_table=dbo.releases.scheduled_changes.signoffs, sc_id=sc_id, what=sc_post_signoffs_body, transaction=transaction, changed_by=changed_by
@@ -556,7 +545,6 @@ def post_release_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transac
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def delete_release_signoffs_scheduled_change(sc_id, transaction, changed_by):
     return delete_signoffs_scheduled_change(signoffs_table=dbo.releases.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
@@ -567,7 +555,6 @@ def get_releases_scheduled_change_history(sc_id):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def post_releases_scheduled_change_history(sc_id, transaction, changed_by):
     return post_scheduled_change_history(sc_table=dbo.releases.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 

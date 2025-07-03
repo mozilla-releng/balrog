@@ -8,6 +8,7 @@ import pytest
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import cache, dbo
+from auslib.util.auth import AuthError
 from auslib.web.admin.base import flask_app as app
 
 from ...fakes import FakeBlob, FakeGCSHistory
@@ -37,6 +38,8 @@ class ViewTest(unittest.TestCase):
         self.mocked_user = None
 
         def my_userinfo(*args, **kwargs):
+            if not self.mocked_user:
+                raise AuthError("auth required", 401)
             return {"email": self.mocked_user}
 
         view_base.verified_userinfo = my_userinfo

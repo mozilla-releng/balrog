@@ -8,9 +8,10 @@ from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
 
 import auslib
+from auslib.db import ChangeScheduledError, OutdatedDataError, UpdateMergeError
 from auslib.dockerflow import create_dockerflow_endpoints
 from auslib.errors import BlobValidationError, PermissionDeniedError, ReadOnlyError, SignoffRequiredError
-from auslib.util.auth import verified_userinfo
+from auslib.util.auth import AuthError, verified_userinfo
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.validators import BalrogRequestBodyValidator
 
@@ -76,6 +77,38 @@ def complete_request(response):
             request.transaction.close()
 
     return response
+
+
+@flask_app.errorhandler(OutdatedDataError)
+def outdated_data_error(error):
+    msg = "Couldn't perform the request %s. Outdated Data Version. old_data_version doesn't match current data_version" % request.method
+    log.warning("Bad input: %s", msg)
+    log.warning(error)
+    return problem(400, "Bad Request", "OutdatedDataError", ext={"exception": msg})
+
+
+@flask_app.errorhandler(UpdateMergeError)
+def update_merge_error(error):
+    msg = "Couldn't perform the request %s due to merge error. Is there a scheduled change that conflicts with yours?" % request.method
+    log.warning("Bad input: %s", msg)
+    log.warning(error)
+    return problem(400, "Bad Request", "UpdateMergeError", ext={"exception": msg})
+
+
+@flask_app.errorhandler(ChangeScheduledError)
+def change_scheduled_error(error):
+    msg = "Couldn't perform the request %s due a conflict with a scheduled change. " % request.method
+    msg += str(error)
+    log.warning("Bad input: %s", msg)
+    log.warning(error)
+    return problem(400, "Bad Request", "ChangeScheduledError", ext={"exception": msg})
+
+
+@flask_app.errorhandler(AuthError)
+def auth_error(error):
+    msg = "Permission denied to perform the request. {}".format(error.error)
+    log.warning(msg)
+    return problem(error.status_code, "Forbidden", "PermissionDeniedError", ext={"exception": msg})
 
 
 @flask_app.errorhandler(BlobValidationError)
