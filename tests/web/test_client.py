@@ -2215,6 +2215,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
 
     def setUp(self):
         app.config["DEBUG"] = True
+        app.config["PROPAGATE_EXCEPTIONS"] = False
         app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a",)}
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
@@ -2301,44 +2302,6 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         ret = self.client.get(path)
         self.assertEqual(ret.status_code, 404)
 
-    def testErrorMessageOn500(self):
-        with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
-            m.side_effect = Exception("I break!")
-            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
-            self.assertEqual(ret.status_code, 500)
-            self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual("I break!", ret.get_data(as_text=True))
-
-    def testErrorMessageOn500withSimpleArgs(self):
-        with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
-            m.side_effect = Exception("I break!")
-            m.side_effect.args = ("one", "two", "three")
-            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
-            self.assertEqual(ret.status_code, 500)
-            self.assertEqual(ret.mimetype, "text/plain")
-            data = ret.get_data(as_text=True)
-            for arg in ("one", "two", "three"):
-                self.assertIn(arg, data)
-
-    def testErrorMessageOn500withComplexArgs(self):
-        with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
-            m.side_effect = Exception("I break!")
-            m.side_effect.args = ("one", ("two", "three"))
-            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
-            self.assertEqual(ret.status_code, 500)
-            self.assertEqual(ret.mimetype, "text/plain")
-            data = ret.get_data(as_text=True)
-            for arg in ("one", "two", "three"):
-                self.assertIn(arg, data)
-
-    def testEscapedOutputOn500(self):
-        with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
-            m.side_effect = Exception("50.1.0zibj5<img src%3da onerror%3dalert(document.domain)>")
-            ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
-            self.assertEqual(ret.status_code, 500)
-            self.assertEqual(ret.mimetype, "text/plain")
-            self.assertEqual("50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt;", ret.get_data(as_text=True))
-
     def testEscapedOutputOn400(self):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
             m.side_effect = BadDataError("Version number 50.1.0zibj5<img src%3da onerror%3dalert(document.domain)> is invalid.")
@@ -2361,9 +2324,9 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             m.side_effect = Exception("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertEqual(ret.status_code, 500)
-            self.assertEqual(ret.mimetype, "text/plain")
+            self.assertEqual(ret.mimetype, "application/problem+json")
             self.assertTrue(sentry.called)
-            self.assertEqual("exterminate!", ret.get_data(as_text=True))
+            self.assertNotIn("exterminate!", ret.get_data(as_text=True))
 
     def testNonSubstitutedUrlVariablesReturnEmptyUpdate(self):
         request1 = "/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml"
