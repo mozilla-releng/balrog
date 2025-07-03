@@ -3,7 +3,7 @@ import json
 from flask import Response, jsonify
 
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import handleGeneralExceptions, log, requirelogin, transactionHandler
+from auslib.web.admin.views.base import log, requirelogin, transactionHandler
 from auslib.web.admin.views.problem import problem
 from auslib.web.admin.views.scheduled_changes import (
     delete_scheduled_change,
@@ -38,7 +38,6 @@ def get_users():
 
 
 @requirelogin
-@handleGeneralExceptions
 def get_specific_user(username, changed_by):
     """Returns all of the details about the named user."""
 
@@ -51,14 +50,12 @@ def get_specific_user(username, changed_by):
 
 
 @requirelogin
-@handleGeneralExceptions
 def get_user_permissions(username, changed_by):
     permissions = dbo.permissions.getUserPermissions(username, changed_by)
     return jsonify(permissions)
 
 
 @requirelogin
-@handleGeneralExceptions
 def get_specific_user_permission(username, permission, changed_by):
     try:
         perm = dbo.permissions.getUserPermissions(username, changed_by)[permission]
@@ -69,7 +66,6 @@ def get_specific_user_permission(username, permission, changed_by):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def put_specific_user_permission(username, permission, user_permission_request_body, changed_by, transaction):
     try:
         if dbo.permissions.getUserPermissions(username, changed_by, transaction).get(permission):
@@ -108,7 +104,6 @@ def put_specific_user_permission(username, permission, user_permission_request_b
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def post_specific_user_permission(username, permission, user_permission_request_body, changed_by, transaction):
     if not dbo.permissions.getUserPermissions(username, changed_by, transaction=transaction).get(permission):
         return problem(status=404, title="Not Found", detail="Requested user permission" " %s not found for %s" % (permission, username))
@@ -138,7 +133,6 @@ def post_specific_user_permission(username, permission, user_permission_request_
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def delete_specific_user_permission(username, permission, data_version, changed_by, transaction):
     if not dbo.permissions.getUserPermissions(username, changed_by, transaction=transaction).get(permission):
         return problem(404, "Not Found", "Requested user permission" " %s not found for %s" % (permission, username))
@@ -162,7 +156,6 @@ def get_permissions_scheduled_changes():
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def post_permissions_scheduled_changes(sc_permission_body, transaction, changed_by):
     if sc_permission_body.get("when", None) is None:
         return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permission")
@@ -188,7 +181,6 @@ def post_permissions_scheduled_changes(sc_permission_body, transaction, changed_
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def post_permissions_scheduled_change(sc_id, sc_permission_body, transaction, changed_by):
     # TODO: modify UI and clients to stop sending 'change_type' in request body
     sc_table = dbo.permissions.scheduled_changes
@@ -231,7 +223,6 @@ def post_permissions_scheduled_change(sc_id, sc_permission_body, transaction, ch
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def delete_permissions_scheduled_change(sc_id, data_version, transaction, changed_by):
     return delete_scheduled_change(
         sc_table=dbo.permissions.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
@@ -240,14 +231,12 @@ def delete_permissions_scheduled_change(sc_id, data_version, transaction, change
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def post_permissions_enact_scheduled_change(sc_id, transaction, changed_by):
     return post_enact_scheduled_change(sc_table=dbo.permissions.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def post_permissions_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
     return post_signoffs_scheduled_change(
         signoffs_table=dbo.permissions.scheduled_changes.signoffs, sc_id=sc_id, what=sc_post_signoffs_body, transaction=transaction, changed_by=changed_by
@@ -256,7 +245,6 @@ def post_permissions_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, tra
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def delete_permissions_signoffs_scheduled_change(sc_id, transaction, changed_by):
     return delete_signoffs_scheduled_change(
         signoffs_table=dbo.permissions.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
@@ -273,14 +261,12 @@ def get_all_permissions_scheduled_change_history():
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def post_permissions_scheduled_change_history(sc_id, transaction, changed_by):
     return post_scheduled_change_history(sc_table=dbo.permissions.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def put_user_role(username, role, changed_by, transaction):
     # These requests are idempotent - if the user already has the desired role,
     # no change needs to be made. Because of this there's also no reason to
@@ -295,7 +281,6 @@ def put_user_role(username, role, changed_by, transaction):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def delete_user_role(username, role, data_version, changed_by, transaction):
     roles = [r["role"] for r in dbo.permissions.getUserRoles(username)]
     if role not in roles:

@@ -62,6 +62,10 @@ class TestNamedUserAPI_JSON(ViewTest):
         ret = self._get("/users/huetonhu", username="bill")
         self.assertEqual(ret.status_code, 404)
 
+    def testGetNamedUserWithoutAuth(self):
+        ret = self._get("/users/bill")
+        self.assertEqual(ret.status_code, 401)
+
 
 class TestPermissionsAPI_JSON(ViewTest):
     def testPermissionsCollection(self):

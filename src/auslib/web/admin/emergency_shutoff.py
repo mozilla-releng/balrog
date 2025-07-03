@@ -4,7 +4,7 @@ from connexion import problem
 from flask import Response
 
 from auslib.global_state import dbo
-from auslib.web.admin.views.base import handleGeneralExceptions, requirelogin, transactionHandler
+from auslib.web.admin.views.base import requirelogin, transactionHandler
 from auslib.web.admin.views.scheduled_changes import (
     delete_scheduled_change,
     delete_signoffs_scheduled_change,
@@ -28,7 +28,6 @@ def shutoff_exists(product, channel):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def post(emergency_shutoff, changed_by, transaction):
     if shutoff_exists(emergency_shutoff["product"], emergency_shutoff["channel"]):
         return problem(400, "Bad Request", "Invalid Emergency shutoff data", ext={"exception": "Emergency shutoff for product/channel already exists."})
@@ -44,7 +43,6 @@ def post(emergency_shutoff, changed_by, transaction):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def delete(product, channel, data_version, changed_by, transaction):
     if not shutoff_exists(product, channel):
         return problem(status=404, title="Not Found", detail="Shutoff wasn't found", ext={"exception": "Shutoff does not exist"})
@@ -59,7 +57,6 @@ def scheduled_changes():
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def schedule_deletion(sc_emergency_shutoff, changed_by, transaction):
     change_type = sc_emergency_shutoff.get("change_type")
     if change_type != "delete":
@@ -72,7 +69,6 @@ def schedule_deletion(sc_emergency_shutoff, changed_by, transaction):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def update_scheduled_deletion(sc_id, sc_emergency_shutoff, changed_by, transaction):
     return post_scheduled_change(
         sc_table=dbo.emergencyShutoffs.scheduled_changes,
@@ -86,7 +82,6 @@ def update_scheduled_deletion(sc_id, sc_emergency_shutoff, changed_by, transacti
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def delete_scheduled_deletion(sc_id, data_version, changed_by, transaction):
     return delete_scheduled_change(
         sc_table=dbo.emergencyShutoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
@@ -95,7 +90,6 @@ def delete_scheduled_deletion(sc_id, data_version, changed_by, transaction):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def scheduled_changes_signoffs(sc_id, sc_post_signoffs_body, transaction, changed_by):
     return post_signoffs_scheduled_change(
         signoffs_table=dbo.emergencyShutoffs.scheduled_changes.signoffs, sc_id=sc_id, what=sc_post_signoffs_body, transaction=transaction, changed_by=changed_by
@@ -104,7 +98,6 @@ def scheduled_changes_signoffs(sc_id, sc_post_signoffs_body, transaction, change
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def scheduled_changes_signoffs_delete(sc_id, transaction, changed_by):
     return delete_signoffs_scheduled_change(
         signoffs_table=dbo.emergencyShutoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
@@ -113,6 +106,5 @@ def scheduled_changes_signoffs_delete(sc_id, transaction, changed_by):
 
 @requirelogin
 @transactionHandler
-@handleGeneralExceptions
 def enact_updates_scheduled_for_reactivation(sc_id, transaction, changed_by):
     return post_enact_scheduled_change(sc_table=dbo.emergencyShutoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
