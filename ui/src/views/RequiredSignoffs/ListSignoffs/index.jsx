@@ -33,7 +33,6 @@ import {
 } from '../../../utils/constants';
 import { withUser } from '../../../utils/AuthContext';
 
-const getPermissionChangesLens = product => lensPath([product, 'permissions']);
 const getRulesOrReleasesChangesLens = product =>
   lensPath([product, 'channels']);
 const useStyles = makeStyles(theme => ({
@@ -101,10 +100,6 @@ function ListSignoffs({ user, ...props }) {
 
   const handleSignoffRoleChange = ({ target: { value } }) =>
     setSignoffRole(value);
-  const permissionChanges = view(
-    getPermissionChangesLens(product),
-    requiredSignoffs
-  );
   const rulesOrReleasesChanges = view(
     getRulesOrReleasesChangesLens(product),
     requiredSignoffs
@@ -269,16 +264,6 @@ function ListSignoffs({ user, ...props }) {
       {requiredSignoffs && (
         <Fragment>
           <div className={classes.toolbar}>
-            {permissionChanges && (
-              <Typography gutterBottom variant="h5">
-                Changes to Permissions
-              </Typography>
-            )}
-            {!permissionChanges && rulesOrReleasesChanges && (
-              <Typography gutterBottom variant="h5">
-                Changes to Rules / Releases
-              </Typography>
-            )}
             <div className={classes.dropdownDiv}>
               <TextField
                 className={classes.dropdown}
@@ -294,69 +279,16 @@ function ListSignoffs({ user, ...props }) {
               </TextField>
             </div>
           </div>
-          {permissionChanges && (
-            <SignoffCard
-              className={classes.card}
-              title={capitalCase(product)}
-              to={`/required-signoffs/${product}`}>
-              {Object.entries(permissionChanges).map(
-                ([name, role], index, arr) => {
-                  const key = `${name}-${index}`;
-
-                  return (
-                    <Fragment key={key}>
-                      <SignoffCardEntry
-                        key={name}
-                        name={name}
-                        entry={role}
-                        onCancelDelete={() =>
-                          handleCancelDelete(
-                            OBJECT_NAMES.PERMISSIONS_REQUIRED_SIGNOFF,
-                            role,
-                            name,
-                            product
-                          )
-                        }
-                        onSignoff={() =>
-                          handleSignoff(
-                            OBJECT_NAMES.PERMISSIONS_REQUIRED_SIGNOFF,
-                            role,
-                            name,
-                            product
-                          )
-                        }
-                        onRevoke={() =>
-                          handleRevoke(
-                            OBJECT_NAMES.PERMISSIONS_REQUIRED_SIGNOFF,
-                            role,
-                            name,
-                            product
-                          )
-                        }
-                      />
-                      <Divider
-                        className={classNames({
-                          [classes.lastDivider]: arr.length - 1 === index,
-                        })}
-                      />
-                    </Fragment>
-                  );
-                }
-              )}
-            </SignoffCard>
-          )}
           <div>
             {rulesOrReleasesChanges && (
               <Fragment>
-                {permissionChanges && (
-                  <Fragment>
-                    <br />
-                    <Typography gutterBottom variant="h5">
-                      Changes to Rules / Releases
-                    </Typography>
-                    <br />
-                  </Fragment>
-                )}
+                <Fragment>
+                  <br />
+                  <Typography gutterBottom variant="h5">
+                    Changes to Rules / Releases
+                  </Typography>
+                  <br />
+                </Fragment>
                 {Object.entries(rulesOrReleasesChanges).map(
                   ([channelName, roles]) => (
                     <SignoffCard
@@ -417,7 +349,7 @@ function ListSignoffs({ user, ...props }) {
                 )}
               </Fragment>
             )}
-            {!permissionChanges && !rulesOrReleasesChanges && (
+            {!rulesOrReleasesChanges && (
               <Typography>No required signoffs for {product}</Typography>
             )}
           </div>

@@ -149,7 +149,7 @@ def BlobColumn(impl=Text):
     return cls
 
 
-def verify_signoffs(potential_required_signoffs, signoffs):
+def verify_signoffs(potential_required_signoffs, signoffs, signoff_verifier):
     """Determines whether or not something is signed off given:
     * A list of potential required signoffs
     * A list of signoffs that have been made
@@ -168,10 +168,10 @@ def verify_signoffs(potential_required_signoffs, signoffs):
     for signoff in signoffs:
         signoffs_given[signoff["role"]] += 1
     for rs in potential_required_signoffs:
-        required_signoffs[rs["role"]] = max(required_signoffs.get(rs["role"], 0), rs["signoffs_required"])
+        required_signoffs[rs[signoff_verifier]] = max(required_signoffs.get(rs[signoff_verifier], 0), rs["signoffs_required"])
     for role, signoffs_required in required_signoffs.items():
         if signoffs_given[role] < signoffs_required:
-            raise SignoffRequiredError("Not enough signoffs for role '{}'".format(role))
+            raise SignoffRequiredError(f"Not enough signoffs for {signoff_verifier}: {role}")
 
 
 class AUSTransaction(object):
@@ -1307,16 +1307,30 @@ class ScheduledChangeTable(AUSTable):
         self._checkBaseTablePermissions(base_table_where, base_columns, changed_by, transaction)
 
     def auto_signoff(self, changed_by, transaction, sc_id, dryrun, columns):
-        # - If the User scheduling a change only holds one of the required Roles, record a signoff with it.
-        # - If the User scheduling a change holds more than one of the required Roles, we cannot a Signoff, because
-        #   we don't know which Role we'd want to signoff with. The user will need to signoff
+        # - If the User scheduling a change only holds one of the required Roles/Permissions, record a signoff with it.
+        # - If the User scheduling a change holds more than one of the required Roles/Permissions, we cannot a Signoff, because
+        #   we don't know which Role/Permission we'd want to signoff with. The user will need to signoff
         #   manually in these cases.
+
+        user_permissions = self.db.getUserPermissions(username=changed_by, retrieving_as=changed_by, transaction=transaction)
+
+        if user_permissions:
+            required_permissions = set()
+            required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
+            if required_signoffs and required_signoffs.get("rs") and required_signoffs["rs"][0].get("permission"):
+                required_permissions.update([rs["permission"] for rs in [obj for v in required_signoffs.values() for obj in v] if "permission" in rs])
+            permissions_without_restrictions = list(filter(lambda permission: permission[1] or all(not v for v in permission[1]), user_permissions.items()))
+            possible_signoffs = list(filter(lambda permission: permission[0] in required_permissions, permissions_without_restrictions))
+            if len(possible_signoffs) == 1:
+                self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, sc_id=sc_id, role=possible_signoffs[0][0])
+
         user_roles = self.db.getUserRoles(username=changed_by, transaction=transaction)
+
         if len(user_roles):
             required_roles = set()
             required_signoffs = self.baseTable.getPotentialRequiredSignoffs([columns], transaction=transaction)
             if required_signoffs:
-                required_roles.update([rs["role"] for rs in [obj for v in required_signoffs.values() for obj in v]])
+                required_roles.update([rs["role"] for rs in [obj for v in required_signoffs.values() for obj in v] if "role" in rs])
             possible_signoffs = list(filter(lambda role: role["role"] in required_roles, user_roles))
             if len(possible_signoffs) == 1:
                 self.signoffs.insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, sc_id=sc_id, role=possible_signoffs[0].get("role"))
@@ -1590,6 +1604,7 @@ class RequiredSignoffsTable(AUSTable):
     rows to determine whether or not that change needs signoff."""
 
     decisionColumns = []
+    signoff_verifier = "role"
 
     def __init__(self, db, dialect):
         self.table.append_column(Column("role", String(50), primary_key=True))
@@ -1629,7 +1644,7 @@ class RequiredSignoffsTable(AUSTable):
 
         if not dryrun:
             potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
-            verify_signoffs(potential_required_signoffs, signoffs)
+            verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         return super(RequiredSignoffsTable, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
 
@@ -1644,7 +1659,7 @@ class RequiredSignoffsTable(AUSTable):
 
             if not dryrun:
                 potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([rs, new_rs], transaction=transaction).values() for obj in v]
-                verify_signoffs(potential_required_signoffs, signoffs)
+                verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         return super(RequiredSignoffsTable, self).update(
             where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
@@ -1657,7 +1672,7 @@ class RequiredSignoffsTable(AUSTable):
         if not dryrun:
             for rs in self.select(where=where, transaction=transaction):
                 potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([rs], transaction=transaction).values() for obj in v]
-                verify_signoffs(potential_required_signoffs, signoffs)
+                verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         return super(RequiredSignoffsTable, self).delete(
             where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
@@ -1700,8 +1715,18 @@ class SignoffsTable(AUSTable):
             raise PermissionDeniedError("Cannot signoff on behalf of another user")
         if changed_by in self.db.systemAccounts:
             raise PermissionDeniedError("System account cannot signoff")
-        if not self.db.hasRole(changed_by, columns["role"], transaction=transaction):
-            raise PermissionDeniedError("{} cannot signoff with role '{}'".format(changed_by, columns["role"]))
+        # Permission-based signoff
+        if columns["role"] == "admin":
+            if not self.table.name.startswith("permissions_scheduled_changes_"):
+                raise PermissionDeniedError("Can only signoff with permission for permission changes")
+            elif not self.db.hasPermission(changed_by, columns["role"], action=None, transaction=transaction):
+                raise PermissionDeniedError("{} cannot signoff with permission '{}'".format(changed_by, columns["role"]))
+        # Role-based signoff
+        else:
+            if self.table.name.startswith("permissions_scheduled_changes_"):
+                raise PermissionDeniedError("Cannot signoff with role for permission changes")
+            elif not self.db.hasRole(changed_by, columns["role"], transaction=transaction):
+                raise PermissionDeniedError("{} cannot signoff with role '{}'".format(changed_by, columns["role"]))
 
         existing_signoff = self.select({"sc_id": columns["sc_id"], "username": changed_by}, transaction)
         if existing_signoff:
@@ -1732,6 +1757,8 @@ class SignoffsTable(AUSTable):
 
 
 class Rules(AUSTable):
+    signoff_verifier = "role"
+
     def __init__(self, db, metadata, dialect):
         self.table = Table(
             "rules",
@@ -1815,7 +1842,7 @@ class Rules(AUSTable):
 
         if not dryrun:
             potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
-            verify_signoffs(potential_required_signoffs, signoffs)
+            verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         ret = super(Rules, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
@@ -1955,7 +1982,7 @@ class Rules(AUSTable):
                 potential_required_signoffs = [
                     obj for v in self.getPotentialRequiredSignoffs([current_rule, new_rule], transaction=transaction).values() for obj in v
                 ]
-                verify_signoffs(potential_required_signoffs, signoffs)
+                verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         return super(Rules, self).update(
             changed_by=changed_by, where=where, what=what, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
@@ -1973,12 +2000,14 @@ class Rules(AUSTable):
         if not dryrun:
             for current_rule in self.select(where=where, transaction=transaction):
                 potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([current_rule], transaction=transaction).values() for obj in v]
-                verify_signoffs(potential_required_signoffs, signoffs)
+                verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         super(Rules, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
 
 class Releases(AUSTable):
+    signoff_verifier = "role"
+
     def __init__(self, db, metadata, dialect, history_buckets, historyClass):
         self.domainAllowlist = []
 
@@ -2179,7 +2208,7 @@ class Releases(AUSTable):
 
         if not dryrun:
             potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
-            verify_signoffs(potential_required_signoffs, signoffs)
+            verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         ret = super(Releases, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
         if not dryrun:
@@ -2220,7 +2249,7 @@ class Releases(AUSTable):
                     potential_required_signoffs = [
                         obj for v in self.getPotentialRequiredSignoffs([current_release, new_release], transaction=transaction).values() for obj in v
                     ]
-                    verify_signoffs(potential_required_signoffs, signoffs)
+                    verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
             else:
                 self.validate_readonly_change(
                     where, what["read_only"], changed_by, release=current_release, transaction=transaction, dryrun=dryrun, signoffs=signoffs
@@ -2354,7 +2383,7 @@ class Releases(AUSTable):
 
         if not dryrun:
             potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([release], transaction=transaction).values() for obj in v]
-            verify_signoffs(potential_required_signoffs, signoffs)
+            verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         super(Releases, self).delete(where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
         if not dryrun:
@@ -2398,7 +2427,7 @@ class Releases(AUSTable):
                 potential_required_signoffs = _map_required_signoffs(
                     self.getPotentialRequiredSignoffsForProduct(release["product"], transaction=transaction).values()
                 )
-            verify_signoffs(potential_required_signoffs, signoffs)
+            verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
     def change_readonly(self, where, is_readonly, changed_by, old_data_version, transaction=None):
         self.validate_readonly_change(where, is_readonly, changed_by, transaction=transaction)
@@ -2406,6 +2435,8 @@ class Releases(AUSTable):
 
 
 class ReleasesJSON(AUSTable):
+    signoff_verifier = "role"
+
     def __init__(self, db, metadata, dialect, history_buckets, historyClass):
         self.domainAllowlist = []
 
@@ -2471,7 +2502,7 @@ class ReleasesJSON(AUSTable):
     async def async_insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
         if not dryrun:
             potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
-            verify_signoffs(potential_required_signoffs, signoffs)
+            verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         return await super(ReleasesJSON, self).async_insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
 
@@ -2487,7 +2518,7 @@ class ReleasesJSON(AUSTable):
                     potential_required_signoffs = [
                         obj for v in self.getPotentialRequiredSignoffs([row, new_row], transaction=transaction).values() for obj in v
                     ]
-                    verify_signoffs(potential_required_signoffs, signoffs)
+                    verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         return await super(ReleasesJSON, self).async_update(
             where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
@@ -2497,7 +2528,7 @@ class ReleasesJSON(AUSTable):
         if not dryrun:
             for row in self.select(where=where, transaction=transaction):
                 potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([row], transaction=transaction).values() for obj in v]
-                verify_signoffs(potential_required_signoffs, signoffs)
+                verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         return await super(ReleasesJSON, self).async_delete(
             where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
@@ -2505,6 +2536,8 @@ class ReleasesJSON(AUSTable):
 
 
 class ReleaseAssets(AUSTable):
+    signoff_verifier = "role"
+
     def __init__(self, db, metadata, dialect, history_buckets, historyClass):
         self.table = Table(
             "release_assets",
@@ -2552,7 +2585,7 @@ class ReleaseAssets(AUSTable):
     async def async_insert(self, changed_by, transaction=None, dryrun=False, signoffs=None, **columns):
         if not dryrun:
             potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
-            verify_signoffs(potential_required_signoffs, signoffs)
+            verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         return await super(ReleaseAssets, self).async_insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
 
@@ -2563,7 +2596,7 @@ class ReleaseAssets(AUSTable):
 
             if not dryrun:
                 potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([row, new_row], transaction=transaction).values() for obj in v]
-                verify_signoffs(potential_required_signoffs, signoffs)
+                verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         return await super(ReleaseAssets, self).async_update(
             where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
@@ -2573,7 +2606,7 @@ class ReleaseAssets(AUSTable):
         if not dryrun:
             for row in self.select(where=where, transaction=transaction):
                 potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([row], transaction=transaction).values() for obj in v]
-                verify_signoffs(potential_required_signoffs, signoffs)
+                verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         return await super(ReleaseAssets, self).async_delete(
             where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
@@ -2611,6 +2644,8 @@ class Permissions(AUSTable):
         "scheduled_change": ["actions"],
     }
 
+    signoff_verifier = "permission"
+
     def __init__(self, db, metadata, dialect):
         self.table = Table(
             "permissions",
@@ -2627,14 +2662,8 @@ class Permissions(AUSTable):
         for row in affected_rows:
             if not row:
                 continue
-            # XXX: This kindof sucks because it means that we don't have great control
-            # over the signoffs required permissions that don't specify products, or
-            # don't support them.
-            if "products" in self.allPermissions[row["permission"]] and row.get("options") and row["options"].get("products"):
-                for product in row["options"]["products"]:
-                    potential_required_signoffs["rs"].extend(self.db.permissionsRequiredSignoffs.select(where={"product": product}, transaction=transaction))
             else:
-                potential_required_signoffs["rs"].extend(self.db.permissionsRequiredSignoffs.select(transaction=transaction))
+                potential_required_signoffs["rs"].extend(self.db.adminRequiredSignoffs)
         return potential_required_signoffs
 
     def assertPermissionExists(self, permission):
@@ -2680,7 +2709,7 @@ class Permissions(AUSTable):
 
         if not dryrun:
             potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
-            verify_signoffs(potential_required_signoffs, signoffs)
+            verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         self.log.debug("granting %s to %s with options %s", columns["permission"], columns["username"], columns.get("options"))
         super(Permissions, self).insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
@@ -2714,7 +2743,7 @@ class Permissions(AUSTable):
                 potential_required_signoffs = [
                     obj for v in self.getPotentialRequiredSignoffs([current_permission, new_permission], transaction=transaction).values() for obj in v
                 ]
-                verify_signoffs(potential_required_signoffs, signoffs)
+                verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         super(Permissions, self).update(
             where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
@@ -2731,7 +2760,7 @@ class Permissions(AUSTable):
                 potential_required_signoffs = [
                     obj for v in self.getPotentialRequiredSignoffs([current_permission], transaction=transaction).values() for obj in v
                 ]
-                verify_signoffs(potential_required_signoffs, signoffs)
+                verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         if not dryrun:
             super(Permissions, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction)
@@ -2867,6 +2896,8 @@ class Dockerflow(AUSTable):
 
 
 class EmergencyShutoffs(AUSTable):
+    signoff_verifier = "role"
+
     def __init__(self, db, metadata, dialect):
         self.table = Table(
             "emergency_shutoffs",
@@ -2902,7 +2933,7 @@ class EmergencyShutoffs(AUSTable):
         if not dryrun:
             for current_rule in self.select(where=where, transaction=transaction):
                 potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([current_rule], transaction=transaction).values() for obj in v]
-                verify_signoffs(potential_required_signoffs, signoffs)
+                verify_signoffs(potential_required_signoffs, signoffs, self.signoff_verifier)
 
         super(EmergencyShutoffs, self).delete(changed_by=changed_by, where=where, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun)
 
@@ -3001,6 +3032,7 @@ class AUSDatabase(object):
             self.setDburi(dburi, mysql_traditional_mode, releases_history_buckets, releases_history_class, async_releases_history_class)
         self.log = logging.getLogger(self.__class__.__name__)
         self.systemAccounts = []
+        self.adminRequiredSignoffs = []
 
     def setDburi(
         self,
@@ -3041,6 +3073,9 @@ class AUSDatabase(object):
     def setSystemAccounts(self, systemAccounts):
         self.systemAccounts = systemAccounts
 
+    def setAdminRequiredSignoffs(self, adminRequiredSignoffs):
+        self.adminRequiredSignoffs = adminRequiredSignoffs
+
     def setDomainAllowlist(self, domainAllowlist):
         self.releasesTable.setDomainAllowlist(domainAllowlist)
 
@@ -3052,6 +3087,9 @@ class AUSDatabase(object):
 
     def hasPermission(self, *args, **kwargs):
         return self.permissions.hasPermission(*args, **kwargs)
+
+    def getUserPermissions(self, *args, **kwargs):
+        return self.permissions.getUserPermissions(*args, **kwargs)
 
     def hasRole(self, *args, **kwargs):
         return self.permissions.hasRole(*args, **kwargs)
