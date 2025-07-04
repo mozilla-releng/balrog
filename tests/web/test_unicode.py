@@ -3,7 +3,7 @@ import unittest
 import pytest
 
 from auslib.global_state import dbo
-from auslib.web.public.base import flask_app as app
+from auslib.web.public.base import create_app
 
 
 @pytest.mark.usefixtures("current_db_schema")
@@ -11,7 +11,8 @@ class UnicodeTest(unittest.TestCase):
     def setUp(self):
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        self.client = app.test_client()
+        connexion_app = create_app()
+        self.client = connexion_app.app.test_client()
 
     def testUnicodeInRoute(self):
         url = "/update/3/GMP/53.0/20170421105455/Linux_x86_64-gcc3/null/{}/Linux%204.4.0-53-generic%20(GTK%203.18.9,libpulse%208.0.0)/mint/1.0/update.xml"
