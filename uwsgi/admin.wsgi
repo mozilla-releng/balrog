@@ -71,7 +71,9 @@ log = logging.getLogger(__file__)
 statsd.defaults.PREFIX = "balrog.admin.cache"
 
 from auslib.global_state import cache, dbo  # noqa
-from auslib.web.admin.base import flask_app as application  # noqa
+from auslib.web.admin.base import create_app
+
+application = create_app().app
 
 cache.make_copies = True
 # We explicitly don't want a blob_version cache here because it will cause

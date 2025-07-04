@@ -8,17 +8,23 @@ import auslib.web.public.json
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
-from auslib.web.public.base import flask_app as app
+from auslib.web.public.base import create_app
+
+
+@pytest.fixture(scope="module")
+def app():
+    connexion_app = create_app()
+    return connexion_app.app
 
 
 @pytest.fixture(scope="function")
-def disable_errorhandler(monkeypatch):
+def disable_errorhandler(monkeypatch, app):
     # Ripped from https://github.com/pallets/flask/blob/2.3.3/src/flask/scaffold.py#L131-L134
     monkeypatch.setattr(app, "error_handler_spec", defaultdict(lambda: defaultdict(dict)))
 
 
 @pytest.fixture(scope="function")
-def mock_autograph(monkeypatch):
+def mock_autograph(monkeypatch, app):
     monkeypatch.setitem(app.config, "AUTOGRAPH_URL", "fake")
     monkeypatch.setitem(app.config, "AUTOGRAPH_KEYID", "fake")
     monkeypatch.setitem(app.config, "AUTOGRAPH_USERNAME", "fake")
@@ -32,7 +38,7 @@ def mock_autograph(monkeypatch):
 
 
 @pytest.fixture(scope="module")
-def appconfig():
+def appconfig(app):
     app.config["ALLOWLISTED_DOMAINS"] = {"good.com": ("Guardian",)}
 
 
@@ -228,7 +234,7 @@ def guardian_db():
 
 
 @pytest.fixture(scope="module")
-def client():
+def client(app):
     return app.test_client()
 
 
