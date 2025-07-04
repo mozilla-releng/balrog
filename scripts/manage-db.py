@@ -105,9 +105,9 @@ def get_active_release_names(trans, source_table="releases_json"):
     #   - All releases referenced by a Rule or a Active Scheduled Rule Change
     #   - All releases referenced by a Release from the above query
     query_release_mapping = f"""SELECT DISTINCT releases.* \
-                FROM {source_table} as releases, rules, rules_scheduled_changes \
-                WHERE (releases.name IN (rules.mapping, rules.fallbackMapping))
-                OR (rules_scheduled_changes.complete = 0 AND
+                FROM {source_table} as releases \
+                WHERE EXISTS(SELECT 1 FROM rules WHERE releases.name IN (rules.mapping, rules.fallbackMapping))
+                OR EXISTS(SELECT 1 FROM rules_scheduled_changes WHERE rules_scheduled_changes.complete = 0 AND
                     releases.name IN (rules_scheduled_changes.base_mapping, rules_scheduled_changes.base_fallbackMapping))
                 """
     result = trans.execute(query_release_mapping).fetchall()
