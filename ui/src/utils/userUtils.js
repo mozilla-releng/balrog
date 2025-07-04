@@ -43,7 +43,7 @@ const getPermissionString = (
 };
 
 const getRolesString = roles => {
-  const joined = formatListToLanguage(Array.from(roles));
+  const joined = formatListToLanguage(roles.map(role => role.role));
   let roleStr = 'role';
 
   if (roles.length > 1) {
