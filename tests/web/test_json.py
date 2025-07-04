@@ -37,8 +37,10 @@ def appconfig():
 
 
 @pytest.fixture(scope="module")
-def guardian_db(db_schema):
-    db_schema.create_all(dbo.engine)
+def guardian_db():
+    dbo.setDb("sqlite:///:memory:")
+    dbo.create()
+    dbo.metadata.create_all(dbo.engine)
     dbo.releases.t.insert().execute(
         name="Guardian-Evil-1.0.0.0",
         product="Guardian",
