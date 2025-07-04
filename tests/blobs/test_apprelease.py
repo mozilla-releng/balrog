@@ -23,7 +23,6 @@ from auslib.blobs.apprelease import (
 from auslib.blobs.base import createBlob
 from auslib.errors import BadDataError, BlobValidationError
 from auslib.global_state import dbo
-from auslib.web.public.base import flask_app as app
 
 from ..fakes import FakeGCSHistory
 
@@ -2488,9 +2487,6 @@ class TestSchema5Blob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.allowlistedDomains = {"a.com": ("h",)}
-        app.config["DEBUG"] = True
-        app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
-        app.config["ALLOWLISTED_DOMAINS"] = self.allowlistedDomains
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(
@@ -2792,9 +2788,6 @@ class TestSchema6Blob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.allowlistedDomains = {"a.com": ("h",)}
-        app.config["DEBUG"] = True
-        app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
-        app.config["ALLOWLISTED_DOMAINS"] = self.allowlistedDomains
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(
@@ -3085,9 +3078,6 @@ class TestSchema8Blob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.allowlistedDomains = {"a.com": ("h",)}
-        app.config["DEBUG"] = True
-        app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
-        app.config["ALLOWLISTED_DOMAINS"] = self.allowlistedDomains
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(
@@ -3239,9 +3229,6 @@ class TestSchema9Blob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.allowlistedDomains = {"a.com": ("h",)}
-        app.config["DEBUG"] = True
-        app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
-        app.config["ALLOWLISTED_DOMAINS"] = self.allowlistedDomains
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.releases.t.insert().execute(
@@ -3885,9 +3872,6 @@ class TestDesupportBlob(unittest.TestCase):
     def setUp(self):
         self.specialForceHosts = ["http://a.com"]
         self.allowlistedDomains = {"a.com": ("a",), "moo.com": ("d",)}
-        app.config["DEBUG"] = True
-        app.config["SPECIAL_FORCE_HOSTS"] = self.specialForceHosts
-        app.config["ALLOWLISTED_DOMAINS"] = self.allowlistedDomains
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         self.blob = DesupportBlob()
