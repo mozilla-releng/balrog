@@ -13,12 +13,11 @@ import Dashboard from '../../../components/Dashboard';
 import DialogAction from '../../../components/DialogAction';
 import ErrorPanel from '../../../components/ErrorPanel';
 import { makeSignoff, revokeSignoff } from '../../../services/signoffs';
-import { getUsers } from '../../../services/users';
+import { getUsers, getScheduledChanges } from '../../../services/users';
 import useAction from '../../../hooks/useAction';
 import UserCard from '../../../components/UserCard';
 import { withUser } from '../../../utils/AuthContext';
 import { DIALOG_ACTION_INITIAL_STATE } from '../../../utils/constants';
-import getUsersInfo from '../utils/getUsersInfo';
 import Link from '../../../utils/Link';
 
 const useStyles = makeStyles(theme => ({
@@ -35,7 +34,9 @@ function ListUsers({ user }) {
   const classes = useStyles();
   const [users, setUsers] = useState({});
   const [usersAction, fetchUsers] = useAction(getUsers);
-  const [userInfoAction, fetchUserInfo] = useAction(getUsersInfo);
+  const [userScheduledChangesAction, fetchUserScheduledChanges] = useAction(
+    getScheduledChanges
+  );
   const [roles, setRoles] = useState([]);
   const [signoffRole, setSignoffRole] = useState('');
   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
@@ -45,10 +46,10 @@ function ListUsers({ user }) {
   const [revokeAction, revoke] = useAction(props =>
     revokeSignoff({ type: 'permissions', ...props })
   );
-  const isLoading = usersAction.loading || userInfoAction.loading;
+  const isLoading = usersAction.loading || userScheduledChangesAction.loading;
   const error =
     usersAction.error ||
-    userInfoAction.error ||
+    userScheduledChangesAction.error ||
     revokeAction.error ||
     (roles.length === 1 && signoffAction.error);
   const handleSignoffRoleChange = ({ target: { value } }) =>
@@ -69,20 +70,42 @@ function ListUsers({ user }) {
 
   useEffect(() => {
     fetchUsers().then(({ data, error }) => {
-      if (!error) {
-        fetchUserInfo(Object.keys(data.data)).then(({ data, error }) => {
-          if (!error) {
-            const roleList = Object.keys(data[username].roles);
+      const userData = data.data;
 
-            setUsers(data);
+      fetchUserScheduledChanges().then(resp => {
+        if (!resp.error) {
+          // create data of all user permissions and scheduled changes
+          resp.data.data.scheduled_changes.forEach(sc => {
+            if (!(sc.username in userData)) {
+              userData[sc.username] = {
+                roles: {},
+                permissions: {},
+                scheduledPermissions: {},
+              };
+            }
+
+            if (!('scheduledPermissions' in userData[sc.username])) {
+              userData[sc.username].scheduledPermissions = {};
+            }
+
+            userData[sc.username].scheduledPermissions[sc.permission] = sc;
+          });
+          setUsers(userData);
+
+          // set-up information about the currently logged in user
+          if (!error) {
+            const roleList = userData[username].roles.map(
+              roleData => roleData.role
+            );
+
             setRoles(roleList);
 
             if (roleList.length > 0) {
               setSignoffRole(roleList[0]);
             }
           }
-        });
-      }
+        }
+      });
     });
   }, []);
 
