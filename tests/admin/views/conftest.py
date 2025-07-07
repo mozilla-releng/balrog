@@ -24,6 +24,7 @@ def api():
 
     connexion_app = create_app()
     app = connexion_app.app
+    app.testing = True
     app.config["SECRET_KEY"] = "notasecret"
     app.config["CORS_ORIGINS"] = "*"
     app.config["AUTH_DOMAIN"] = "balrog.test.dev"
@@ -41,4 +42,6 @@ def api():
 @pytest.fixture(scope="class")
 def app():
     connexion_app = create_app()
-    return connexion_app.app
+    app = connexion_app.app
+    app.testing = True
+    return app

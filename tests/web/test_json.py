@@ -1,4 +1,3 @@
-from collections import defaultdict
 from unittest.mock import MagicMock
 
 import pytest
@@ -14,13 +13,9 @@ from auslib.web.public.base import create_app
 @pytest.fixture(scope="module")
 def app():
     connexion_app = create_app()
+    app = connexion_app.app
+    app.testing = True
     return connexion_app.app
-
-
-@pytest.fixture(scope="function")
-def disable_errorhandler(monkeypatch, app):
-    # Ripped from https://github.com/pallets/flask/blob/2.3.3/src/flask/scaffold.py#L131-L134
-    monkeypatch.setattr(app, "error_handler_spec", defaultdict(lambda: defaultdict(dict)))
 
 
 @pytest.fixture(scope="function")
@@ -238,7 +233,7 @@ def client(app):
     return app.test_client()
 
 
-@pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler", "mock_autograph")
+@pytest.mark.usefixtures("appconfig", "guardian_db", "mock_autograph")
 @pytest.mark.parametrize(
     "version,buildTarget,channel,code,response",
     [
@@ -283,7 +278,7 @@ def testGuardianResponseV1(client, version, buildTarget, channel, code, response
         assert "Rule-Data-Version" in ret.headers
 
 
-@pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler")
+@pytest.mark.usefixtures("appconfig", "guardian_db")
 @pytest.mark.parametrize(
     "version,buildTarget,channel,code,response",
     [
@@ -319,7 +314,7 @@ def testGuardianResponseV1WithoutSigning(client, version, buildTarget, channel, 
         assert "Content-Signature" not in ret.headers
 
 
-@pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler", "mock_autograph")
+@pytest.mark.usefixtures("appconfig", "guardian_db", "mock_autograph")
 @pytest.mark.parametrize(
     "forceValue,response",
     [
@@ -343,7 +338,7 @@ def testGuardianResponseV1WithGradualRollout(client, forceValue, response):
     auslib.web.public.helpers.make_hash.assert_called_once_with(ret.text)
 
 
-@pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler", "mock_autograph")
+@pytest.mark.usefixtures("appconfig", "guardian_db", "mock_autograph")
 @pytest.mark.parametrize(
     "version,buildTarget,channel,osVersion,code,response",
     [
@@ -407,7 +402,7 @@ def testGuardianResponseV2(client, version, buildTarget, channel, osVersion, cod
         assert "Rule-Data-Version" in ret.headers
 
 
-@pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler")
+@pytest.mark.usefixtures("appconfig", "guardian_db")
 @pytest.mark.parametrize(
     "version,buildTarget,channel,osVersion,code,response",
     [
@@ -446,7 +441,7 @@ def testGuardianResponseV2WithoutSigning(client, version, buildTarget, channel, 
         assert "Content-Signature" not in ret.headers
 
 
-@pytest.mark.usefixtures("appconfig", "guardian_db", "disable_errorhandler", "mock_autograph")
+@pytest.mark.usefixtures("appconfig", "guardian_db", "mock_autograph")
 @pytest.mark.parametrize(
     "forceValue,response",
     [

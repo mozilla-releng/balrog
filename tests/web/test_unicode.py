@@ -12,6 +12,7 @@ class UnicodeTest(unittest.TestCase):
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         connexion_app = create_app()
+        connexion_app.app.testing = True
         self.client = connexion_app.app.test_client()
 
     def testUnicodeInRoute(self):

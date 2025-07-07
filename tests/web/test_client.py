@@ -109,7 +109,7 @@ class ClientTestCommon(unittest.TestCase):
         self.assertEqual(returned, expected)
 
 
-@pytest.mark.usefixtures("propagate_exceptions")
+@pytest.mark.usefixtures("app")
 class ClientTestBase(ClientTestCommon):
     maxDiff = 2000
 
@@ -1776,7 +1776,7 @@ class ClientTest(ClientTestBase):
         )
 
 
-@pytest.mark.usefixtures("propagate_exceptions")
+@pytest.mark.usefixtures("app")
 class ClientTestMig64(ClientTestCommon):
     """Tests the expected real world scenarios for the mig64 query parameter.
     mig64=0 is not tested because we have no client code that sends it. These
@@ -1939,7 +1939,7 @@ class ClientTestMig64(ClientTestCommon):
         )
 
 
-@pytest.mark.usefixtures("propagate_exceptions")
+@pytest.mark.usefixtures("app")
 class ClientTestJaws(ClientTestCommon):
     """Tests the expected real world scenarios for the JAWS parameter in
     SYSTEM_CAPABILITIES."""
@@ -2326,7 +2326,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         self.assertEqual(ret.status_code, 400)
 
 
-@pytest.mark.usefixtures("propagate_exceptions")
+@pytest.mark.usefixtures("app")
 class ClientTestCompactXML(ClientTestCommon):
     """Tests the compact XML needed to rescue two Firefox nightlies (bug 1517743)."""
 
