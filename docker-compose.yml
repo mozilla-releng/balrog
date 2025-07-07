@@ -181,9 +181,9 @@ services:
       driver: none
     healthcheck:
         test: nc -z -v balrogdb 3306
-        interval: 30s
+        interval: 5s
         timeout: 30s
-        retries: 10
+        retries: 50
 
   # TODO: provide our own config so that we can guarantee the keyid
   autograph:
