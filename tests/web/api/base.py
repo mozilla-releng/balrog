@@ -6,7 +6,7 @@ import pytest
 
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
-from auslib.web.public.base import flask_app as app
+from auslib.web.public.base import create_app
 
 
 def setUpModule():
@@ -18,19 +18,16 @@ def setUpModule():
 class CommonTestBase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        connexion_app = create_app()
+        cls.app = connexion_app.app
         # Error handlers are removed in order to give us better debug messages
-        cls.error_spec = app.error_handler_spec
         # Ripped from https://github.com/pallets/flask/blob/2.3.3/src/flask/scaffold.py#L131-L134
-        app.error_handler_spec = defaultdict(lambda: defaultdict(dict))
-
-    @classmethod
-    def tearDownClass(cls):
-        app.error_handler_spec = cls.error_spec
+        cls.app.error_handler_spec = defaultdict(lambda: defaultdict(dict))
 
     @pytest.fixture(autouse=True)
     def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, timecop_1_0):
-        app.config["DEBUG"] = True
-        self.public_client = app.test_client()
+        self.app.config["DEBUG"] = True
+        self.public_client = self.app.test_client()
 
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)

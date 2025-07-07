@@ -2,6 +2,7 @@ import pytest
 
 import auslib.web.admin.base
 from auslib.util.auth import AuthError
+from auslib.web.admin.base import create_app
 
 
 @pytest.fixture(scope="function")
@@ -20,8 +21,9 @@ def mock_verified_userinfo(monkeypatch):
 
 @pytest.fixture(scope="session")
 def api():
-    from auslib.web.admin.base import flask_app as app
 
+    connexion_app = create_app()
+    app = connexion_app.app
     app.config["SECRET_KEY"] = "notasecret"
     app.config["CORS_ORIGINS"] = "*"
     app.config["AUTH_DOMAIN"] = "balrog.test.dev"
@@ -34,3 +36,9 @@ def api():
     }
 
     return app.test_client()
+
+
+@pytest.fixture(scope="class")
+def app():
+    connexion_app = create_app()
+    return connexion_app.app

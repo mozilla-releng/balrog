@@ -3,7 +3,6 @@ import logging
 import os
 import time
 import unittest
-from collections import defaultdict
 from contextlib import ExitStack
 from tempfile import mkstemp
 from xml.dom import minidom
@@ -18,7 +17,6 @@ import auslib.web.public.client as client_api
 from auslib.blobs.base import createBlob
 from auslib.errors import BadDataError
 from auslib.global_state import cache, dbo
-from auslib.web.public.base import flask_app as app
 from auslib.web.public.client import extract_query_version
 
 mock_autograph_exception_count = 0
@@ -88,7 +86,7 @@ class TestGetSystemCapabilities(unittest.TestCase):
         )
 
 
-@pytest.mark.usefixtures("current_db_schema")
+@pytest.mark.usefixtures("current_db_schema", "app")
 class ClientTestCommon(unittest.TestCase):
     def assertHttpResponse(self, http_response):
         self.assertEqual(http_response.status_code, 200, http_response.get_data())
@@ -111,19 +109,9 @@ class ClientTestCommon(unittest.TestCase):
         self.assertEqual(returned, expected)
 
 
+@pytest.mark.usefixtures("propagate_exceptions")
 class ClientTestBase(ClientTestCommon):
     maxDiff = 2000
-
-    @classmethod
-    def setUpClass(cls):
-        # Error handlers are removed in order to give us better debug messages
-        cls.error_spec = app.error_handler_spec
-        # Ripped from https://github.com/pallets/flask/blob/2.3.3/src/flask/scaffold.py#L131-L134
-        app.error_handler_spec = defaultdict(lambda: defaultdict(dict))
-
-    @classmethod
-    def tearDownClass(cls):
-        app.error_handler_spec = cls.error_spec
 
     @pytest.fixture(autouse=True)
     def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, firefox_100_0_build1, timecop_1_0):
@@ -133,16 +121,16 @@ class ClientTestBase(ClientTestCommon):
         cache.make_cache("release_assets", 50, 10)
         cache.make_cache("release_assets_data_versions", 50, 5)
         self.version_fd, self.version_file = mkstemp()
-        app.config["DEBUG"] = True
-        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com", "http://download.mozilla.org")
-        app.config["ALLOWLISTED_DOMAINS"] = {
+        self.app.config["DEBUG"] = True
+        self.app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com", "http://download.mozilla.org")
+        self.app.config["ALLOWLISTED_DOMAINS"] = {
             "a.com": ("b", "c", "e", "f", "response-a", "response-b", "s", "responseblob-a", "responseblob-b", "q", "fallback", "distTest"),
             "download.mozilla.org": ("Firefox",),
             "archive.mozilla.org": ("Firefox",),
             "ftp.mozilla.org": ("SystemAddons",),
         }
-        app.config["VERSION_FILE"] = self.version_file
-        app.config["CONTENT_SIGNATURE_PRODUCTS"] = ["gmp"]
+        self.app.config["VERSION_FILE"] = self.version_file
+        self.app.config["CONTENT_SIGNATURE_PRODUCTS"] = ["gmp"]
         with open(self.version_file, "w+") as f:
             f.write(
                 """
@@ -155,8 +143,8 @@ class ClientTestBase(ClientTestCommon):
             )
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        dbo.setDomainAllowlist(app.config["ALLOWLISTED_DOMAINS"])
-        self.client = app.test_client()
+        dbo.setDomainAllowlist(self.app.config["ALLOWLISTED_DOMAINS"])
+        self.client = self.app.test_client()
         dbo.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", data_version=1, alias="moz-releng")
         dbo.releases.t.insert().execute(
@@ -915,7 +903,8 @@ class ClientTestBase(ClientTestCommon):
 
 
 @pytest.fixture(scope="function")
-def mock_autograph(monkeypatch):
+def mock_autograph(monkeypatch, request):
+    app = request.function.__self__.app
     monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_URL", "fake")
     monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_KEYID", "fake")
     monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_USERNAME", "fake")
@@ -936,6 +925,7 @@ def mock_autograph(monkeypatch):
 
 
 class ClientTest(ClientTestBase):
+
     def testGetHeaderArchitectureWindows(self):
         self.assertEqual(client_api.getHeaderArchitecture("WINNT_x86-msvc", "Firefox Intel Windows"), "Intel")
 
@@ -1786,29 +1776,19 @@ class ClientTest(ClientTestBase):
         )
 
 
+@pytest.mark.usefixtures("propagate_exceptions")
 class ClientTestMig64(ClientTestCommon):
     """Tests the expected real world scenarios for the mig64 query parameter.
     mig64=0 is not tested because we have no client code that sends it. These
     cases are tested in the db layer tests, though."""
 
-    @classmethod
-    def setUpClass(cls):
-        # Error handlers are removed in order to give us better debug messages
-        cls.error_spec = app.error_handler_spec
-        # Ripped from https://github.com/pallets/flask/blob/2.3.3/src/flask/scaffold.py#L131-L134
-        app.error_handler_spec = defaultdict(lambda: defaultdict(dict))
-
-    @classmethod
-    def tearDownClass(cls):
-        app.error_handler_spec = cls.error_spec
-
     def setUp(self):
-        app.config["DEBUG"] = True
-        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
-        app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
+        self.app.config["DEBUG"] = True
+        self.app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
+        self.app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        self.client = app.test_client()
+        self.client = self.app.test_client()
         dbo.setDomainAllowlist({"a.com": ("a", "b", "c")})
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a", data_version=1)
         dbo.releases.t.insert().execute(
@@ -1959,28 +1939,18 @@ class ClientTestMig64(ClientTestCommon):
         )
 
 
+@pytest.mark.usefixtures("propagate_exceptions")
 class ClientTestJaws(ClientTestCommon):
     """Tests the expected real world scenarios for the JAWS parameter in
     SYSTEM_CAPABILITIES."""
 
-    @classmethod
-    def setUpClass(cls):
-        # Error handlers are removed in order to give us better debug messages
-        cls.error_spec = app.error_handler_spec
-        # Ripped from https://github.com/pallets/flask/blob/2.3.3/src/flask/scaffold.py#L131-L134
-        app.error_handler_spec = defaultdict(lambda: defaultdict(dict))
-
-    @classmethod
-    def tearDownClass(cls):
-        app.error_handler_spec = cls.error_spec
-
     def setUp(self):
-        app.config["DEBUG"] = True
-        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
-        app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
+        self.app.config["DEBUG"] = True
+        self.app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
+        self.app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a", "b", "c")}
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        self.client = app.test_client()
+        self.client = self.app.test_client()
         dbo.setDomainAllowlist({"a.com": ("a", "b", "c")})
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a", data_version=1)
         dbo.releases.t.insert().execute(
@@ -2214,12 +2184,10 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
     error handlers works!"""
 
     def setUp(self):
-        app.config["DEBUG"] = True
-        app.config["PROPAGATE_EXCEPTIONS"] = False
-        app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("a",)}
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        self.client = app.test_client()
+        self.app.config["PROPAGATE_EXCEPTIONS"] = False
+        self.client = self.app.test_client()
 
     def testCacheControlIsSet(self):
         ret = self.client.get("/update/3/c/15.0/1/p/l/a/a/default/a/update.xml")
@@ -2358,29 +2326,19 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         self.assertEqual(ret.status_code, 400)
 
 
+@pytest.mark.usefixtures("propagate_exceptions")
 class ClientTestCompactXML(ClientTestCommon):
     """Tests the compact XML needed to rescue two Firefox nightlies (bug 1517743)."""
 
-    @classmethod
-    def setUpClass(cls):
-        # Error handlers are removed in order to give us better debug messages
-        cls.error_spec = app.error_handler_spec
-        # Ripped from https://github.com/pallets/flask/blob/2.3.3/src/flask/scaffold.py#L131-L134
-        app.error_handler_spec = defaultdict(lambda: defaultdict(dict))
-
-    @classmethod
-    def tearDownClass(cls):
-        app.error_handler_spec = cls.error_spec
-
     def setUp(self):
         self.version_fd, self.version_file = mkstemp()
-        app.config["DEBUG"] = True
-        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
-        app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("b",)}
+        self.app.config["DEBUG"] = True
+        self.app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
+        self.app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("b",)}
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist({"a.com": ("b",)})
-        self.client = app.test_client()
+        self.client = self.app.test_client()
         dbo.rules.t.insert().execute(
             priority=90, backgroundRate=100, mapping="Firefox-mozilla-central-nightly-latest", update_type="minor", product="b", data_version=1
         )
@@ -2443,13 +2401,13 @@ class ClientTestPinning(ClientTestCommon):
 
     def setUp(self):
         self.version_fd, self.version_file = mkstemp()
-        app.config["DEBUG"] = True
-        app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
-        app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("b",)}
+        self.app.config["DEBUG"] = True
+        self.app.config["SPECIAL_FORCE_HOSTS"] = ("http://a.com",)
+        self.app.config["ALLOWLISTED_DOMAINS"] = {"a.com": ("b",)}
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist({"a.com": ("b",)})
-        self.client = app.test_client()
+        self.client = self.app.test_client()
         dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="1.", mapping="Firefox-mozilla-central-nightly-1")
         dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="1.0.", mapping="Firefox-mozilla-central-nightly-1")
         dbo.releases.t.insert().execute(
