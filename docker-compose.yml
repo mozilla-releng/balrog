@@ -99,7 +99,7 @@ services:
     volumes:
       - ./agent:/app
     environment:
-      - BALROG_API_ROOT=http://nginx:8011/api
+      - BALROG_API_ROOT=http://nginx:8011
       - BALROG_USERNAME=balrogagent
       - BALROG_PASSWORD=na
       - TELEMETRY_API_ROOT=abc
