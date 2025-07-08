@@ -1,8 +1,8 @@
 import json
 import logging
 
-from connexion import problem, request
-from flask import Response, jsonify
+from connexion import problem
+from flask import Response, jsonify, request
 
 from auslib.global_state import dbo
 from auslib.services import releases as releases_service

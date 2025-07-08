@@ -1,4 +1,4 @@
-import connexion
+import flask
 from flask import Response, jsonify
 
 from auslib.web.admin.views.base import log
@@ -37,8 +37,8 @@ def get_revisions(
     @param response_key: Dictionary key to wrap returned revisions.
     @type response_key: string
     """
-    page = int(connexion.request.args.get("page", 1))
-    limit = int(connexion.request.args.get("limit", 10))
+    page = int(flask.request.args.get("page", 1))
+    limit = int(flask.request.args.get("limit", 10))
 
     obj = get_object_callback()
     if not obj:
@@ -100,8 +100,8 @@ def revert_to_revision(
         return problem(404, "Not Found", obj_not_found_msg)
 
     change_id = None
-    if connexion.request.get_json():
-        change_id = connexion.request.get_json().get("change_id")
+    if flask.request.get_json():
+        change_id = flask.request.get_json().get("change_id")
     if not change_id:
         log.warning("Bad input: %s", "no change_id")
         return problem(400, "Bad Request", "No change_id passed in the request body")

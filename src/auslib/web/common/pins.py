@@ -1,7 +1,7 @@
 import json
 
-from connexion import problem, request
-from flask import Response
+from connexion import problem
+from flask import Response, request
 
 from auslib.global_state import dbo
 
