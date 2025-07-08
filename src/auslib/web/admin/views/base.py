@@ -1,6 +1,6 @@
 import logging
 
-import connexion
+import flask
 from flask import current_app as app
 
 from auslib.global_state import dbo
@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 def requirelogin(f):
     def decorated(*args, **kwargs):
-        username = verified_userinfo(connexion.request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])["email"]
+        username = verified_userinfo(flask.request, app.config["AUTH_DOMAIN"], app.config["AUTH_AUDIENCE"])["email"]
         if not username:
             log.warning("Login Required")
             return problem(401, "Unauthenticated", "Login Required")

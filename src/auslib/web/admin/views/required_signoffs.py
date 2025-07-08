@@ -1,6 +1,5 @@
 import json
 
-import connexion
 from flask import Response, jsonify, request
 from sqlalchemy.sql.expression import null
 
@@ -50,7 +49,6 @@ def _get_filters_rs_history_api(table):
     query = get_input_dict()
     where = [getattr(history_table, f) == query.get(f) for f in query]
     where.append(history_table.data_version != null())
-    request = connexion.request
     if hasattr(history_table, "channel"):
         if request.args.get("channel"):
             where.append(history_table.channel == request.args.get("channel"))
@@ -70,8 +68,8 @@ def get_rs_revisions(table, decisionFields, input_dict):
         return problem(404, "Not Found", "Requested Required Signoff does not exist")
 
     try:
-        page = int(connexion.request.args.get("page", 1))
-        limit = int(connexion.request.args.get("limit", 100))
+        page = int(request.args.get("page", 1))
+        limit = int(request.args.get("limit", 100))
     except ValueError as msg:
         log.warning("Bad input: %s", msg)
         return problem(400, "Bad Request", str(msg))
@@ -92,8 +90,8 @@ def get_rs_revisions(table, decisionFields, input_dict):
 
 def get_all_rs_revisions(table):
     try:
-        page = int(connexion.request.args.get("page", 1))
-        limit = int(connexion.request.args.get("limit", 100))
+        page = int(request.args.get("page", 1))
+        limit = int(request.args.get("limit", 100))
     except ValueError as msg:
         log.warning("Bad input: %s", msg)
         return problem(400, "Bad Request", str(msg))
@@ -132,9 +130,9 @@ def delete_product_required_signoffs():
 
 def get_product_rs_revisions():
     input_dict = {
-        "product": connexion.request.args.get("product"),
-        "role": connexion.request.args.get("role"),
-        "channel": connexion.request.args.get("channel"),
+        "product": request.args.get("product"),
+        "role": request.args.get("role"),
+        "channel": request.args.get("channel"),
     }
     return get_rs_revisions(dbo.productRequiredSignoffs, ["product", "channel", "role"], input_dict)
 
@@ -293,7 +291,7 @@ def delete_permissions_required_signoffs():
 
 
 def get_permissions_rs_revisions():
-    input_dict = {"product": connexion.request.args.get("product"), "role": connexion.request.args.get("role")}
+    input_dict = {"product": request.args.get("product"), "role": request.args.get("role")}
     return get_rs_revisions(dbo.permissionsRequiredSignoffs, ["product", "role"], input_dict)
 
 

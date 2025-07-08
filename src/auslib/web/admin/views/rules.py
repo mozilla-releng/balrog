@@ -1,4 +1,4 @@
-import connexion
+import flask
 from flask import Response, jsonify
 
 from auslib.global_state import dbo
@@ -192,7 +192,7 @@ def get_single_rule_column(column):
 
 def get_rules_scheduled_changes():
     where = {}
-    rule_id = connexion.request.args.get("rule_id")
+    rule_id = flask.request.args.get("rule_id")
     if rule_id:
         where["base_rule_id"] = rule_id
 
@@ -207,7 +207,7 @@ def post_rules_scheduled_changes(sc_rule_body, transaction, changed_by):
     if sc_rule_body:
         change_type = sc_rule_body.get("change_type")
     else:
-        change_type = connexion.request.values.get("change_type")
+        change_type = flask.request.values.get("change_type")
 
     what = {}
     delete_change_type_allowed_fields = ["telemetry_product", "telemetry_channel", "telemetry_uptake", "when", "rule_id", "data_version", "change_type"]

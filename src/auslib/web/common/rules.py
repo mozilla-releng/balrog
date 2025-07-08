@@ -1,8 +1,8 @@
 import json
 import logging
 
-from connexion import problem, request
-from flask import Response, jsonify
+from connexion import problem
+from flask import Response, jsonify, request
 from sqlalchemy.sql.expression import null
 
 from auslib.global_state import dbo

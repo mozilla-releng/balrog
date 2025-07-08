@@ -2,9 +2,8 @@ import logging
 import re
 import sys
 
-from connexion import request
 from flask import current_app as app
-from flask import make_response
+from flask import make_response, request
 
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import XMLBlob, createBlob

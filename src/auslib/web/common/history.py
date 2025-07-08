@@ -1,8 +1,7 @@
 import json
 
 import arrow
-from connexion import request
-from flask import Response, jsonify
+from flask import Response, jsonify, request
 
 
 class HistoryHelper:

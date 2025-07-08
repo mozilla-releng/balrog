@@ -1,7 +1,7 @@
 import difflib
 import json
 
-import connexion
+import flask
 from flask import Response, abort, jsonify
 
 from auslib.blobs.base import createBlob
@@ -79,32 +79,32 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                             - the old_data_version from the PartialReleaseForm
     """
     new = True
-    product = connexion.request.get_json().get("product")
-    incomingData = json.loads(connexion.request.get_json().get("data"))
+    product = flask.request.get_json().get("product")
+    incomingData = json.loads(flask.request.get_json().get("data"))
 
     copyTo = list()
-    if connexion.request.get_json().get("copyTo"):
-        copyTo = json.loads(connexion.request.get_json().get("copyTo"))
+    if flask.request.get_json().get("copyTo"):
+        copyTo = json.loads(flask.request.get_json().get("copyTo"))
 
     alias = list()
-    if connexion.request.get_json().get("alias"):
-        alias = json.loads(connexion.request.get_json().get("alias"))
+    if flask.request.get_json().get("alias"):
+        alias = json.loads(flask.request.get_json().get("alias"))
 
-    old_data_version = connexion.request.get_json().get("data_version")
+    old_data_version = flask.request.get_json().get("data_version")
 
     # schema_version is an attribute at the root level of a blob.
     # Endpoints that receive an entire blob can find it there.
     # Those that don't have to pass it as a form element instead.
 
-    if connexion.request.get_json().get("schema_version"):
-        schema_version = connexion.request.get_json().get("schema_version")
+    if flask.request.get_json().get("schema_version"):
+        schema_version = flask.request.get_json().get("schema_version")
     elif incomingData.get("schema_version"):
         schema_version = incomingData.get("schema_version")
     else:
         return problem(400, "Bad Request", "schema_version is required")
 
-    if connexion.request.get_json().get("hashFunction"):
-        hashFunction = connexion.request.get_json().get("hashFunction")
+    if flask.request.get_json().get("hashFunction"):
+        hashFunction = flask.request.get_json().get("hashFunction")
     elif incomingData.get("hashFunction"):
         hashFunction = incomingData.get("hashFunction")
     else:
@@ -351,18 +351,18 @@ def get_release_read_only_product_required_signoffs(release):
 
 def get_releases(**kwargs):
     opts = {}
-    if connexion.request.args.get("product"):
-        opts["product"] = connexion.request.args.get("product")
-    if connexion.request.args.get("name_prefix"):
-        opts["name_prefix"] = connexion.request.args.get("name_prefix")
-    if connexion.request.args.get("names_only"):
+    if flask.request.args.get("product"):
+        opts["product"] = flask.request.args.get("product")
+    if flask.request.args.get("name_prefix"):
+        opts["name_prefix"] = flask.request.args.get("name_prefix")
+    if flask.request.args.get("names_only"):
         opts["nameOnly"] = True
     releases = dbo.releases.getReleaseInfo(**opts)
     if not opts.get("names_only"):
         requirements = dbo.releases.getPotentialRequiredSignoffs(releases)
         for release in releases:
             release["required_signoffs"] = serialize_signoff_requirements(requirements[release["name"]])
-    return serialize_releases(connexion.request, releases)
+    return serialize_releases(flask.request, releases)
 
 
 @requirelogin
@@ -414,7 +414,7 @@ def get_release_single_column(column):
 
 def get_releases_scheduled_changes():
     where = {}
-    name = connexion.request.args.get("name")
+    name = flask.request.args.get("name")
     if name:
         where["base_name"] = name
 
