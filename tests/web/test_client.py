@@ -1789,6 +1789,52 @@ class ClientTest(ClientTestBase):
 
 
 @pytest.mark.usefixtures("app")
+class ClientTestStatsd(ClientTestBase):
+    @mock.patch("auslib.web.public.client.statsd.timer")
+    def testRegularUpdate(self, mocked_timer):
+        self.client.get("/update/6/c/1.0/1/p/l/a/a/SSE/default/a/update.xml")
+        assert mocked_timer.call_count == 3
+        mocked_timer.assert_has_calls(
+            [mock.call("client.parse_query"), mock.call("client.evaluate_rules"), mock.call("client.make_response")],
+            # because the calls we verify have __enter__ and __exit__ calls inbetween them
+            # we need to be less strict
+            any_order=True,
+        )
+
+    @mock.patch("auslib.web.public.client.statsd.timer")
+    def testResponseProductsUpdate(self, mocked_timer):
+        self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
+        assert mocked_timer.call_count == 4
+        mocked_timer.assert_has_calls(
+            [
+                mock.call("client.parse_query"),
+                mock.call("client.evaluate_rules"),
+                mock.call("client.process_response_products"),
+                mock.call("client.make_response"),
+            ],
+            # because the calls we verify have __enter__ and __exit__ calls inbetween them
+            # we need to be less strict
+            any_order=True,
+        )
+
+    @mock.patch("auslib.web.public.client.statsd.timer")
+    def testResponseBlobsUpdate(self, mocked_timer):
+        self.client.get("/update/3/superblobaddon-with-multiple-response-blob/1.0/1/p/l/a/a/a/a/update.xml")
+        assert mocked_timer.call_count == 4
+        mocked_timer.assert_has_calls(
+            [
+                mock.call("client.parse_query"),
+                mock.call("client.evaluate_rules"),
+                mock.call("client.process_response_blobs"),
+                mock.call("client.make_response"),
+            ],
+            # because the calls we verify have __enter__ and __exit__ calls inbetween them
+            # we need to be less strict
+            any_order=True,
+        )
+
+
+@pytest.mark.usefixtures("app")
 class ClientTestMig64(ClientTestCommon):
     """Tests the expected real world scenarios for the mig64 query parameter.
     mig64=0 is not tested because we have no client code that sends it. These

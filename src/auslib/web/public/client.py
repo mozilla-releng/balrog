@@ -4,6 +4,7 @@ import sys
 
 from flask import current_app as app
 from flask import make_response, request
+from statsd.defaults.env import statsd
 
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import XMLBlob, createBlob
@@ -137,19 +138,22 @@ def extract_query_version(request_url):
 
 @with_transaction
 def get_update_blob(transaction, **url):
-    url["queryVersion"] = extract_query_version(request.url)
-    # Underlying code depends on osVersion being set. Since this route only
-    # exists to support ancient queries, and all newer versions have osVersion
-    # in them it's easier to set this here than make the all of the underlying
-    # code support queries without it.
-    if url["queryVersion"] == 1:
-        url["osVersion"] = ""
-    # Bug 1517743 - two Firefox nightlies can't parse update.xml when it contains the usual newlines or indentations
-    squash_response = False
+    with statsd.timer("client.parse_query"):
+        url["queryVersion"] = extract_query_version(request.url)
+        # Underlying code depends on osVersion being set. Since this route only
+        # exists to support ancient queries, and all newer versions have osVersion
+        # in them it's easier to set this here than make the all of the underlying
+        # code support queries without it.
+        if url["queryVersion"] == 1:
+            url["osVersion"] = ""
+        # Bug 1517743 - two Firefox nightlies can't parse update.xml when it contains the usual newlines or indentations
+        squash_response = False
 
-    query = getQueryFromURL(url)
-    LOG.debug("Got query: %s", query)
-    release, update_type, eval_metadata = AUS.evaluateRules(query, transaction=transaction)
+        query = getQueryFromURL(url)
+        LOG.debug("Got query: %s", query)
+
+    with statsd.timer("client.evaluate_rules"):
+        release, update_type, eval_metadata = AUS.evaluateRules(query, transaction=transaction)
 
     response_blobs = []
     if release:
@@ -158,13 +162,15 @@ def get_update_blob(transaction, **url):
         response_products = release.getResponseProducts()
         response_blob_names = release.getResponseBlobs()
         if response_products:
-            # if we have a SuperBlob of gmp, we process the response products and
-            # concatenate their inner XMLs
-            response_blobs.extend(evaluate_response_products(response_products, query, transaction))
+            with statsd.timer("client.process_response_products"):
+                # if we have a SuperBlob of gmp, we process the response products and
+                # concatenate their inner XMLs
+                response_blobs.extend(evaluate_response_products(response_products, query, transaction))
         elif response_blob_names:
-            # if we have a SuperBlob of systemaddons, we process the response products and
-            # concatenate their inner XMLs
-            response_blobs.extend(evaluate_response_blobs(response_blob_names, update_type, query, transaction))
+            with statsd.timer("client.process_response_blobs"):
+                # if we have a SuperBlob of systemaddons, we process the response products and
+                # concatenate their inner XMLs
+                response_blobs.extend(evaluate_response_blobs(response_blob_names, update_type, query, transaction))
         else:
             # if we just have a plain old single blob, just add it
             response_blobs.append({"product_query": query, "response_release": release, "response_update_type": update_type})
@@ -173,7 +179,8 @@ def get_update_blob(transaction, **url):
                 squash_response = True
                 LOG.debug("Busted nightly detected, will squash xml response")
 
-    return construct_response(release, query, update_type, response_blobs, squash_response, eval_metadata)
+    with statsd.timer("client.make_response"):
+        return construct_response(release, query, update_type, response_blobs, squash_response, eval_metadata)
 
 
 def evaluate_response_products(response_products, query, transaction):
