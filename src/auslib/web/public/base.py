@@ -7,6 +7,7 @@ import connexion
 from flask import Response, make_response, request, send_from_directory
 from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
+from statsd.defaults.env import statsd
 
 import auslib.web
 from auslib.errors import BadDataError
@@ -32,6 +33,15 @@ def create_app():
 
     # Response validation should be enabled when it actually works
     connexion_app.add_api(spec, strict_validation=True)
+
+    @flask_app.after_request
+    def log_request(response):
+        # this is safe because even if the path is "/", we'll still get a 2 item list
+        prefix = request.path.split("/")[1]
+        if prefix not in ("update", "json", "api"):
+            prefix = "unknown"
+        statsd.incr(f"response.{prefix}.{response.status_code}")
+        return response
 
     @flask_app.after_request
     def apply_security_headers(response):
