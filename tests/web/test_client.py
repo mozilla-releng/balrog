@@ -33,16 +33,16 @@ def validate_cache_stats(lookups, hits, misses, data_version_lookups, data_versi
         assert c.lookups == lookups, cache_name
         assert c.hits == hits, cache_name
         assert c.misses == misses, cache_name
-        mocked_incr.assert_has_calls([mock.call(f"{cache_name}.hits")] * hits, any_order=True)
-        mocked_incr.assert_has_calls([mock.call(f"{cache_name}.misses")] * misses, any_order=True)
+        mocked_incr.assert_has_calls([mock.call(f"cache.{cache_name}.hits")] * hits, any_order=True)
+        mocked_incr.assert_has_calls([mock.call(f"cache.{cache_name}.misses")] * misses, any_order=True)
 
     for cache_name in ("releases_data_version", "release_assets_data_versions"):
         c = cache.caches[cache_name]
         assert c.lookups == data_version_lookups, cache_name
         assert c.hits == data_version_hits, cache_name
         assert c.misses == data_version_misses, cache_name
-        mocked_incr.assert_has_calls([mock.call(f"{cache_name}.hits")] * data_version_hits, any_order=True)
-        mocked_incr.assert_has_calls([mock.call(f"{cache_name}.misses")] * data_version_misses, any_order=True)
+        mocked_incr.assert_has_calls([mock.call(f"cache.{cache_name}.hits")] * data_version_hits, any_order=True)
+        mocked_incr.assert_has_calls([mock.call(f"cache.{cache_name}.misses")] * data_version_misses, any_order=True)
 
 
 class TestGetSystemCapabilities(unittest.TestCase):

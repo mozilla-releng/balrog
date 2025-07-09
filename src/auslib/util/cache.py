@@ -61,13 +61,13 @@ class MaybeCacher(object):
         # If we got something other than a sentinel value, the key was in the cache, and we should return it
         if cached_value != uncached_sentinel:
             value = cached_value
-            statsd.incr(f"{name}.hits")
+            statsd.incr(f"cache.{name}.hits")
         else:
             # If we know how to look up the value, go do it, cache it, and return it
             if callable(value_getter):
                 value = value_getter()
                 self.put(name, key, value)
-            statsd.incr(f"{name}.misses")
+            statsd.incr(f"cache.{name}.misses")
 
         if self.make_copies:
             return deepcopy(value)

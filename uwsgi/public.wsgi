@@ -65,7 +65,7 @@ if os.environ.get("LOG_FORMAT") == "plain":
 configure_logging(**logging_kwargs)
 
 # statsd environment also needs to be set up before importing the application
-statsd.defaults.PREFIX = "balrog.public.cache"
+statsd.defaults.PREFIX = "balrog.public"
 
 from auslib.global_state import cache, dbo  # noqa
 from auslib.web.public.base import create_app
