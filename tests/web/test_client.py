@@ -1766,6 +1766,11 @@ class ClientTest(ClientTestBase):
         assert "42024" == ret.headers["Rule-ID"]
         assert "1" == ret.headers["Rule-Data-Version"]
 
+    @mock.patch("auslib.web.public.base.statsd.incr")
+    def test_statsd_increment(self, mocked_incr):
+        self.client.get("/update/6/c/1.0/1/p/l/a/a/SSE/default/a/update.xml")
+        assert mocked_incr.mock_calls.count(mock.call("response.update.200")) == 1
+
     def test_version_100(self):
         ret = self.client.get(
             "/update/6/Firefox/54.0.1/20170628075643/WINNT_x86-msvc-x64/en-US/release100"
@@ -2328,7 +2333,8 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         ret = self.client.get(path)
         self.assertEqual(ret.status_code, 404)
 
-    def testEscapedOutputOn400(self):
+    @mock.patch("auslib.web.public.base.statsd.incr")
+    def testEscapedOutputOn400(self, mocked_incr):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
             m.side_effect = BadDataError("Version number 50.1.0zibj5<img src%3da onerror%3dalert(document.domain)> is invalid.")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
@@ -2336,16 +2342,20 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual(ret.status_code, 400, error_message)
             self.assertEqual(ret.mimetype, "text/plain")
             self.assertEqual("Version number 50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt; is invalid.", error_message)
+            assert mocked_incr.mock_calls.count(mock.call("response.update.400")) == 1
 
-    def testSentryBadDataError(self):
+    @mock.patch("auslib.web.public.base.statsd.incr")
+    def testSentryBadDataError(self, mocked_incr):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch("auslib.web.public.base.capture_exception") as sentry:
             m.side_effect = BadDataError("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertFalse(sentry.called)
             self.assertEqual(ret.status_code, 400, ret.get_data())
             self.assertEqual(ret.mimetype, "text/plain")
+            assert mocked_incr.mock_calls.count(mock.call("response.update.400")) == 1
 
-    def testSentryRealError(self):
+    @mock.patch("auslib.web.public.base.statsd.incr")
+    def testSentryRealError(self, mocked_incr):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch("auslib.web.public.base.capture_exception") as sentry:
             m.side_effect = Exception("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
@@ -2353,6 +2363,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual(ret.mimetype, "application/problem+json")
             self.assertTrue(sentry.called)
             self.assertNotIn("exterminate!", ret.get_data(as_text=True))
+            assert mocked_incr.mock_calls.count(mock.call("response.update.500")) == 1
 
     def testNonSubstitutedUrlVariablesReturnEmptyUpdate(self):
         request1 = "/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml"
