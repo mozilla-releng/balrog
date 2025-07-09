@@ -11,6 +11,7 @@ import mock
 import pytest
 from hypothesis import assume, example, given
 from hypothesis.strategies import characters, integers, just, text
+from requests import HTTPError
 
 import auslib.services.releases as releases_service
 import auslib.web.public.client as client_api
@@ -915,7 +916,7 @@ def mock_autograph(monkeypatch, request, responses):
         monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_PASSWORD", "fake")
 
         for _ in range(failures):
-            responses.post("https://autograph/sign/hash", body=Exception("unable to contact autograph"))
+            responses.post("https://autograph/sign/hash", status=500)
 
         if success:
             responses.post(
@@ -1362,23 +1363,31 @@ class ClientTest(ClientTestBase):
         ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
         assert "Content-Signature" not in ret.headers
 
-    def testGMPResponseWithSigning(self):
+    @mock.patch("auslib.util.autograph.statsd.incr")
+    def testGMPResponseWithSigning(self, mocked_incr):
         self.mock_autograph()
         ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
         assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
+        assert mocked_incr.mock_calls.count(mock.call("autograph.code.500")) == 0
+        assert mocked_incr.mock_calls.count(mock.call("autograph.code.200")) == 1
 
-    def testGMPResponseWithSigningAutographTempFailure(self):
+    @mock.patch("auslib.util.autograph.statsd.incr")
+    def testGMPResponseWithSigningAutographTempFailure(self, mocked_incr):
         self.mock_autograph(failures=1)
         ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
         assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
+        assert mocked_incr.mock_calls.count(mock.call("autograph.code.500")) == 1
+        assert mocked_incr.mock_calls.count(mock.call("autograph.code.200")) == 1
 
-    def testGMPResponseWithSigningAutographPermanentFailure(self):
+    @mock.patch("auslib.util.autograph.statsd.incr")
+    def testGMPResponseWithSigningAutographPermanentFailure(self, mocked_incr):
         self.mock_autograph(failures=3, success=False)
         with pytest.raises(Exception) as excinfo:
             self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
+            assert excinfo.type is HTTPError
 
-        assert excinfo.type is Exception
-        assert excinfo.value.args == ("unable to contact autograph",)
+        assert mocked_incr.mock_calls.count(mock.call("autograph.code.500")) == 3
+        assert mocked_incr.mock_calls.count(mock.call("autograph.code.200")) == 0
 
     def testGetWithResponseProducts(self):
         ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
