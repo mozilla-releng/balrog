@@ -12,6 +12,8 @@ services:
     depends_on:
       balrogdb:
         condition: service_healthy
+      graphite:
+        condition: service_started
     entrypoint:
       - bash
       - scripts/initdb_and_run.sh
@@ -35,6 +37,7 @@ services:
       - AUTH0_AUDIENCE=balrog-localdev
       - AUTH0_RESPONSE_TYPE=token id_token
       - AUTH0_SCOPE=full-user-credentials openid profile email
+      - STATSD_HOST=graphite
       # By default, we disable writes to releases history for local development
       # and read existing history from the production bucket.
       # If you want to test release history writes, you need to set up your own
@@ -67,6 +70,8 @@ services:
         condition: service_healthy
       autograph:
         condition: service_healthy
+      graphite:
+        condition: service_started
     command: public
     ports:
       - "9010:9010"
@@ -78,6 +83,7 @@ services:
       - AUTOGRAPH_KEYID=normandy
       - AUTOGRAPH_USERNAME=alice
       - AUTOGRAPH_PASSWORD=fs5wgcer9qj819kfptdlp8gm227ewxnzvsuj9ztycsx08hfhzu
+      - STATSD_HOST=graphite
       - SECRET_KEY=blahblah
       - PORT=9010
       - LOG_FORMAT=plain
@@ -201,6 +207,16 @@ services:
       interval: 60s
       timeout: 10s
       retries: 3
+
+  # allows for testing statsd logging locally, including visualizations
+  # visit http://localhost:8050 to view stats
+  # see also: https://github.com/graphite-project/docker-graphite-statsd
+  graphite:
+    image: graphiteapp/graphite-statsd:latest
+    expose:
+      - "8125"
+    ports:
+      - "8050:80"
 
 volumes:
   node_modules:
