@@ -151,51 +151,70 @@ def get_update_blob(transaction, **url):
     LOG.debug("Got query: %s", query)
     release, update_type, eval_metadata = AUS.evaluateRules(query, transaction=transaction)
 
-    # passing {},None returns empty xml
+    response_blobs = []
     if release:
         if not isinstance(release, XMLBlob):
             raise BadDataError("Wrong blob type")
         response_products = release.getResponseProducts()
-        response_blobs = []
         response_blob_names = release.getResponseBlobs()
         if response_products:
             # if we have a SuperBlob of gmp, we process the response products and
             # concatenate their inner XMLs
-            for product in response_products:
-                product_query = query.copy()
-                product_query["product"] = product
-                response_release, response_update_type, eval_metadata = AUS.evaluateRules(product_query, transaction=transaction)
-                if not response_release:
-                    continue
-
-                response_blobs.append({"product_query": product_query, "response_release": response_release, "response_update_type": response_update_type})
+            response_blobs.extend(evaluate_response_products(response_products, query, transaction))
         elif response_blob_names:
-            for blob_name in response_blob_names:
-                # if we have a SuperBlob of systemaddons, we process the response products and
-                # concatenate their inner XMLs
-                product_query = query.copy()
-                release_row = releases.get_release(blob_name, transaction, include_sc=False)
-                response_release = None
-                if release_row:
-                    product_query["product"] = releases.get_product(blob_name, transaction)
-                    response_release = createBlob(release_row["blob"])
-                # TODO: remove me when old releases table dies
-                else:
-                    product = dbo.releases.getReleases(name=blob_name, limit=1, transaction=transaction)[0]["product"]
-                    product_query["product"] = product
-                    response_release = dbo.releases.getReleaseBlob(name=blob_name, transaction=transaction)
-                if not response_release:
-                    LOG.warning("No release found with name: %s", blob_name)
-                    continue
-
-                response_blobs.append({"product_query": product_query, "response_release": response_release, "response_update_type": update_type})
+            # if we have a SuperBlob of systemaddons, we process the response products and
+            # concatenate their inner XMLs
+            response_blobs.extend(evaluate_response_blobs(response_blob_names, update_type, query, transaction))
         else:
+            # if we just have a plain old single blob, just add it
             response_blobs.append({"product_query": query, "response_release": release, "response_update_type": update_type})
             # Bug 1517743 - we want a cheap test because this will be run on each request
             if release["name"] == "Firefox-mozilla-central-nightly-latest" and query["buildID"] in ("20190103220533", "20190104093221"):
                 squash_response = True
                 LOG.debug("Busted nightly detected, will squash xml response")
 
+    return construct_response(release, query, update_type, response_blobs, squash_response, eval_metadata)
+
+
+def evaluate_response_products(response_products, query, transaction):
+    response_blobs = []
+    for product in response_products:
+        product_query = query.copy()
+        product_query["product"] = product
+        response_release, response_update_type, _ = AUS.evaluateRules(product_query, transaction=transaction)
+        if not response_release:
+            continue
+
+        response_blobs.append({"product_query": product_query, "response_release": response_release, "response_update_type": response_update_type})
+
+    return response_blobs
+
+
+def evaluate_response_blobs(response_blob_names, update_type, query, transaction):
+    response_blobs = []
+    for blob_name in response_blob_names:
+        product_query = query.copy()
+        release_row = releases.get_release(blob_name, transaction, include_sc=False)
+        response_release = None
+        if release_row:
+            product_query["product"] = releases.get_product(blob_name, transaction)
+            response_release = createBlob(release_row["blob"])
+        # TODO: remove me when old releases table dies
+        else:
+            product = dbo.releases.getReleases(name=blob_name, limit=1, transaction=transaction)[0]["product"]
+            product_query["product"] = product
+            response_release = dbo.releases.getReleaseBlob(name=blob_name, transaction=transaction)
+        if not response_release:
+            LOG.warning("No release found with name: %s", blob_name)
+            continue
+
+        response_blobs.append({"product_query": product_query, "response_release": response_release, "response_update_type": update_type})
+
+    return response_blobs
+
+
+def construct_response(release, query, update_type, response_blobs, squash_response, eval_metadata):
+    if release:
         # getHeaderXML() returns outermost header for an update which
         # is same for all release type
         xml = release.getHeaderXML()
