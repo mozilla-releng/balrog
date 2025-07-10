@@ -8,7 +8,6 @@
 aiohappyeyeballs==2.6.1 \
     --hash=sha256:c3f9d0113123803ccadfdf3f0faa505bc78e6a72d1cc4806cbd719826e943558 \
     --hash=sha256:f349ba8f4b75cb25c99c5c2d84e997e485204d2902a9597802b0371f09331fb8
-    # via aiohttp
 aiohttp==3.12.13 \
     --hash=sha256:0022de47ef63fd06b065d430ac79c6b0bd24cdae7feaf0e8c6bac23b805a23a8 \
     --hash=sha256:003038e83f1a3ff97409999995ec02fe3008a1d675478949643281141f54751d \
@@ -96,19 +95,15 @@ aiohttp==3.12.13 \
     --hash=sha256:f3854fbde7a465318ad8d3fc5bef8f059e6d0a87e71a0d3360bb56c0bf87b18a \
     --hash=sha256:fcc30ad4fb5cb41a33953292d45f54ef4066746d625992aeac33b8c681173178 \
     --hash=sha256:fef8d50dfa482925bb6b4c208b40d8e9fa54cecba923dc65b825a72eed9a5dbd
-    # via -r requirements/base.in
 aiosignal==1.3.2 \
     --hash=sha256:45cde58e409a301715980c2b01d0c28bdde3770d8290b5eb2173759d9acb31a5 \
     --hash=sha256:a8c255c66fafb1e499c9351d0bf32ff2d8a0321595ebac3b93713656d2436f54
-    # via aiohttp
 attrs==25.3.0 \
     --hash=sha256:427318ce031701fea540783410126f03899a97ffc6f61596ad581ac2e40e3bc3 \
     --hash=sha256:75d7cefc7fb576747b2c81b4442d4d4a1ce0900973527c011d1030fd3bf4af1b
-    # via aiohttp
 certifi==2025.6.15 \
     --hash=sha256:2e0c7ce7cb5d8f8634ca55d2ba7e6ec2689a2fd6537d8dec1296a477a4910057 \
     --hash=sha256:d747aa5a8b9bbbb1bb8c22bb13e22bd1f18e9796defa16bab421f7f7a317323b
-    # via sentry-sdk
 frozenlist==1.7.0 \
     --hash=sha256:04fb24d104f425da3540ed83cbfc31388a586a7696142004c577fa61c6298c3f \
     --hash=sha256:05579bf020096fe05a764f1f84cd104a12f78eaab68842d036772dc6d4870b4b \
@@ -214,13 +209,9 @@ frozenlist==1.7.0 \
     --hash=sha256:f3f4410a0a601d349dd406b5713fec59b4cee7e71678d5b17edda7f4655a940b \
     --hash=sha256:f89f65d85774f1797239693cef07ad4c97fdd0639544bad9ac4b869782eb1981 \
     --hash=sha256:fe2365ae915a1fafd982c146754e1de6ab3478def8a59c86e1f7242d794f97d5
-    # via
-    #   aiohttp
-    #   aiosignal
 idna==3.10 \
     --hash=sha256:12f65c9b470abda6dc35cf8e63cc574b1c52b11df2c86030af0ac09b01b13ea9 \
     --hash=sha256:946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3
-    # via yarl
 multidict==6.5.1 \
     --hash=sha256:0120ed5cff2082c7a0ed62a8f80f4f6ac266010c722381816462f279bfa19487 \
     --hash=sha256:0499cbc67c1b02ba333781798560c5b1e7cd03e9273b678c92c6de1b1657fac9 \
@@ -320,9 +311,6 @@ multidict==6.5.1 \
     --hash=sha256:fc993a96dfc8300befd03d03df46efdb1d8d5a46911b014e956a4443035f470d \
     --hash=sha256:fcdaa72261bff25fad93e7cb9bd7112bd4bac209148e698e380426489d8ed8a9 \
     --hash=sha256:fe09318a28b00c6f43180d0d889df1535e98fb2d93d25955d46945f8d5410d87
-    # via
-    #   aiohttp
-    #   yarl
 propcache==0.3.2 \
     --hash=sha256:035e631be25d6975ed87ab23153db6a73426a48db688070d925aa27e996fe93c \
     --hash=sha256:03c89c1b14a5452cf15403e291c0ccd7751d5b9736ecb2c5bab977ad6c5bcd81 \
@@ -422,17 +410,12 @@ propcache==0.3.2 \
     --hash=sha256:fad3b2a085ec259ad2c2842666b2a0a49dea8463579c606426128925af1ed725 \
     --hash=sha256:fb075ad271405dcad8e2a7ffc9a750a3bf70e533bd86e89f0603e607b93aa64c \
     --hash=sha256:fd3e6019dc1261cd0291ee8919dd91fbab7b169bb76aeef6c716833a3f65d206
-    # via
-    #   aiohttp
-    #   yarl
 sentry-sdk==2.31.0 \
     --hash=sha256:e953f5ab083e6599bab255b75d6829b33b3ddf9931a27ca00b4ab0081287e84f \
     --hash=sha256:fed6d847f15105849cdf5dfdc64dcec356f936d41abb8c9d66adae45e60959ec
-    # via -r requirements/base.in
 urllib3==2.5.0 \
     --hash=sha256:3fc47733c7e419d4bc3f6b3dc2b4f890bb743906a30d56ba4a5bfa4bbff92760 \
     --hash=sha256:e6b01673c0fa6a13e374b50871808eb3bf7046c4b125b216f6bf1cc604cff0dc
-    # via sentry-sdk
 yarl==1.20.1 \
     --hash=sha256:03aa1e041727cb438ca762628109ef1333498b122e4c76dd858d186a37cec845 \
     --hash=sha256:041eaa14f73ff5a8986b4388ac6bb43a77f2ea09bf1913df7a35d4646db69e53 \
@@ -538,4 +521,3 @@ yarl==1.20.1 \
     --hash=sha256:f6342d643bf9a1de97e512e45e4b9560a043347e779a173250824f8b254bd5ce \
     --hash=sha256:fe41919b9d899661c5c28a8b4b0acf704510b88f27f0934ac7a7bebdd8938d5e \
     --hash=sha256:ff70f32aa316393eaf8222d518ce9118148eddb8a53073c2403863b41033eed5
-    # via aiohttp
