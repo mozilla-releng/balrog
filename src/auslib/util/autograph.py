@@ -3,6 +3,7 @@ from hashlib import sha384
 
 import requests
 from requests_hawk import HawkAuth
+from statsd.defaults.env import statsd
 
 from auslib.util.retry import retry_sync
 
@@ -20,6 +21,7 @@ def _sign_hash(autograph_uri, keyid, id_, key, hash_):
     with requests.Session() as session:
         body = [{"input": b64encode(hash_).decode("ascii"), "keyid": keyid}]
         r = session.post(f"{autograph_uri}/sign/hash", json=body, auth=auth)
+        statsd.incr(f"autograph.code.{r.status_code}")
         r.raise_for_status()
         response = r.json()
         if len(response) != 1:

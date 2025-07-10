@@ -68,7 +68,7 @@ configure_logging(**logging_kwargs)
 log = logging.getLogger(__file__)
 
 # statsd environment also needs to be set up before importing the application
-statsd.defaults.PREFIX = "balrog.admin.cache"
+statsd.defaults.PREFIX = "balrog.admin"
 
 from auslib.global_state import cache, dbo  # noqa
 from auslib.web.admin.base import create_app

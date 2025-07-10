@@ -14,4 +14,5 @@ pip-compile-multi<3
 pytest
 pytest-asyncio
 pytest-cov
+pytest-responses
 pytest-xdist
