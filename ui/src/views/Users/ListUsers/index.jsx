@@ -1,3 +1,4 @@
+import { withAuth0 } from '@auth0/auth0-react';
 import React, { Fragment, useState, useEffect } from 'react';
 import { clone } from 'ramda';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
@@ -16,7 +17,6 @@ import { makeSignoff, revokeSignoff } from '../../../services/signoffs';
 import { getUsers, getScheduledChanges } from '../../../services/users';
 import useAction from '../../../hooks/useAction';
 import UserCard from '../../../components/UserCard';
-import { withUser } from '../../../utils/AuthContext';
 import { DIALOG_ACTION_INITIAL_STATE } from '../../../utils/constants';
 import Link from '../../../utils/Link';
 
@@ -29,8 +29,8 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function ListUsers({ user }) {
-  const username = user.email;
+function ListUsers({ auth0 }) {
+  const username = auth0.user.email;
   const classes = useStyles();
   const [users, setUsers] = useState({});
   const [usersAction, fetchUsers] = useAction(getUsers);
@@ -241,4 +241,4 @@ function ListUsers({ user }) {
   );
 }
 
-export default withUser(ListUsers);
+export default withAuth0(ListUsers);

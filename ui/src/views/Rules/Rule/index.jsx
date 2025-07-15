@@ -1,3 +1,4 @@
+import { withAuth0 } from '@auth0/auth0-react';
 import React, { Fragment, useState, useEffect } from 'react';
 import classNames from 'classnames';
 import { bool } from 'prop-types';
@@ -32,7 +33,6 @@ import {
   deleteScheduledChange,
 } from '../../../services/rules';
 import { getReleaseNames, getReleaseNamesV2 } from '../../../services/releases';
-import { withUser } from '../../../utils/AuthContext';
 import {
   EMPTY_MENU_ITEM_CHAR,
   SPLIT_WITH_NEWLINES_AND_COMMA_REGEX,
@@ -93,7 +93,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function Rule({ isNewRule, user, ...props }) {
+function Rule({ isNewRule, auth0, ...props }) {
   const classes = useStyles();
   const rulesFilter =
     props.location.state && props.location.state.rulesFilter
@@ -782,7 +782,7 @@ function Rule({ isNewRule, user, ...props }) {
                 [classes.fab]: !hasScheduledChange,
               })}>
               <Fab
-                disabled={!user || actionLoading}
+                disabled={!auth0.user || actionLoading}
                 onClick={
                   isNewRule && !scId ? handleCreateRule : handleUpdateRule
                 }
@@ -793,7 +793,7 @@ function Rule({ isNewRule, user, ...props }) {
           </Tooltip>
           {hasScheduledChange && (
             <SpeedDial
-              FabProps={{ disabled: !user || actionLoading }}
+              FabProps={{ disabled: !auth0.user || actionLoading }}
               ariaLabel="Secondary Actions">
               <SpeedDialAction
                 FabProps={{ disabled: actionLoading }}
@@ -818,4 +818,4 @@ Rule.defaultProps = {
   isNewRule: false,
 };
 
-export default withUser(Rule);
+export default withAuth0(Rule);

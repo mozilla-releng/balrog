@@ -35,7 +35,6 @@ services:
       - AUTH0_REDIRECT_URI=https://localhost:8010/login
       - AUTH0_DOMAIN=balrog-localdev.auth0.com
       - AUTH0_AUDIENCE=balrog-localdev
-      - AUTH0_RESPONSE_TYPE=token id_token
       - AUTH0_SCOPE=full-user-credentials openid profile email
       - STATSD_HOST=graphite
       # By default, we disable writes to releases history for local development
