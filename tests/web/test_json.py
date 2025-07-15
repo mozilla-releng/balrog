@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from mock import mock
 
 import auslib.web.public.helpers
 import auslib.web.public.json
@@ -267,15 +268,17 @@ def client(app):
     ],
 )
 def testGuardianResponseV1(client, version, buildTarget, channel, code, response):
-    ret = client.get(f"/json/1/Guardian/{version}/{buildTarget}/{channel}/update.json")
-    assert ret.status_code == code
-    if code == 200:
-        assert ret.mimetype == "application/json"
-        assert ret.get_json() == response
-        assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
-        auslib.web.public.helpers.make_hash.assert_called_once_with(ret.text)
-        assert "Rule-ID" in ret.headers
-        assert "Rule-Data-Version" in ret.headers
+    with mock.patch("auslib.web.public.base.statsd.incr") as mocked_incr:
+        ret = client.get(f"/json/1/Guardian/{version}/{buildTarget}/{channel}/update.json")
+        assert ret.status_code == code
+        assert mocked_incr.mock_calls.count(mock.call(f"response.json.{code}")) == 1
+        if code == 200:
+            assert ret.mimetype == "application/json"
+            assert ret.get_json() == response
+            assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
+            auslib.web.public.helpers.make_hash.assert_called_once_with(ret.text)
+            assert "Rule-ID" in ret.headers
+            assert "Rule-Data-Version" in ret.headers
 
 
 @pytest.mark.usefixtures("appconfig", "guardian_db")
