@@ -565,6 +565,34 @@ class TestRulesAPI_JSON(ViewTest):
         self.assertEqual(r[0]["distribution"], "mozilla1,mozilla2,mozilla3,mozilla4")
 
 
+class TestStatsd(ViewTest):
+    maxDiff = 1000
+
+    @mock.patch("auslib.web.admin.base.statsd.timer")
+    def testGet(self, mocked_timer):
+        self._get("/rules")
+        assert mocked_timer.call_count == 1
+        mocked_timer.assert_has_calls([mock.call("rules_get")])
+
+    @mock.patch("auslib.web.admin.base.statsd.timer")
+    def testPost(self, mocked_timer):
+        self._post("/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly"))
+        assert mocked_timer.call_count == 1
+        mocked_timer.assert_has_calls([mock.call("rules_create")])
+
+    @mock.patch("auslib.web.admin.base.statsd.timer")
+    def testPut(self, mocked_timer):
+        self._put("/rules/1", data=dict(backgroundRate=71, mapping="d", priority=73, data_version=1, product="Firefox", channel="nightly", update_type="minor"))
+        assert mocked_timer.call_count == 1
+        mocked_timer.assert_has_calls([mock.call("rules_update_put")])
+
+    @mock.patch("auslib.web.admin.base.statsd.timer")
+    def testDelete(self, mocked_timer):
+        self._delete("/rules/1", qs=dict(data_version=2))
+        assert mocked_timer.call_count == 1
+        mocked_timer.assert_has_calls([mock.call("rules_delete")])
+
+
 class TestSingleRuleView_JSON(ViewTest):
     def testGetRule(self):
         ret = self._get("/rules/1")
