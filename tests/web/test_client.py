@@ -11,6 +11,7 @@ import mock
 import pytest
 from hypothesis import assume, example, given
 from hypothesis.strategies import characters, integers, just, text
+from requests import HTTPError
 
 import auslib.services.releases as releases_service
 import auslib.web.public.client as client_api
@@ -18,8 +19,6 @@ from auslib.blobs.base import createBlob
 from auslib.errors import BadDataError
 from auslib.global_state import cache, dbo
 from auslib.web.public.client import extract_query_version
-
-mock_autograph_exception_count = 0
 
 
 def setUpModule():
@@ -33,16 +32,16 @@ def validate_cache_stats(lookups, hits, misses, data_version_lookups, data_versi
         assert c.lookups == lookups, cache_name
         assert c.hits == hits, cache_name
         assert c.misses == misses, cache_name
-        mocked_incr.assert_has_calls([mock.call(f"{cache_name}.hits")] * hits, any_order=True)
-        mocked_incr.assert_has_calls([mock.call(f"{cache_name}.misses")] * misses, any_order=True)
+        mocked_incr.assert_has_calls([mock.call(f"cache.{cache_name}.hits")] * hits, any_order=True)
+        mocked_incr.assert_has_calls([mock.call(f"cache.{cache_name}.misses")] * misses, any_order=True)
 
     for cache_name in ("releases_data_version", "release_assets_data_versions"):
         c = cache.caches[cache_name]
         assert c.lookups == data_version_lookups, cache_name
         assert c.hits == data_version_hits, cache_name
         assert c.misses == data_version_misses, cache_name
-        mocked_incr.assert_has_calls([mock.call(f"{cache_name}.hits")] * data_version_hits, any_order=True)
-        mocked_incr.assert_has_calls([mock.call(f"{cache_name}.misses")] * data_version_misses, any_order=True)
+        mocked_incr.assert_has_calls([mock.call(f"cache.{cache_name}.hits")] * data_version_hits, any_order=True)
+        mocked_incr.assert_has_calls([mock.call(f"cache.{cache_name}.misses")] * data_version_misses, any_order=True)
 
 
 class TestGetSystemCapabilities(unittest.TestCase):
@@ -902,28 +901,41 @@ class ClientTestBase(ClientTestCommon):
         os.remove(self.version_file)
 
 
+# this fixture is awkward and abnormal because we can only use fixtures through
+# `autouse` inside of tests in a class, such as the ones below. See:
+# https://docs.pytest.org/en/6.2.x/unittest.html#mixing-pytest-fixtures-into-unittest-testcase-subclasses-using-marks
 @pytest.fixture(scope="function")
-def mock_autograph(monkeypatch, request):
-    app = request.function.__self__.app
-    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_URL", "fake")
-    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_KEYID", "fake")
-    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_USERNAME", "fake")
-    monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_PASSWORD", "fake")
+def mock_autograph(monkeypatch, request, responses):
+    # this ends up being a method on the TestCase subclass; the first argument
+    # needs to account for this
+    def _inner(_, failures=0, success=True):
+        app = request.function.__self__.app
+        monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_URL", "https://autograph")
+        monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_KEYID", "fake")
+        monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_USERNAME", "fake")
+        monkeypatch.setitem(app.config, "AUTOGRAPH_gmp_PASSWORD", "fake")
 
-    def mockreturn(*args):
-        global mock_autograph_exception_count
-        if mock_autograph_exception_count > 0:
-            mock_autograph_exception_count -= 1
-            raise Exception("unable to contact autograph")
-        return ("abcdef", "https://this.is/a.x5u")
+        for _ in range(failures):
+            responses.post("https://autograph/sign/hash", status=500)
 
-    import auslib.util.autograph
+        if success:
+            responses.post(
+                "https://autograph/sign/hash",
+                json=[
+                    {
+                        "signature": "abcdef",
+                        "x5u": "https://this.is/a.x5u",
+                    }
+                ],
+            )
 
-    monkeypatch.setattr(auslib.util.autograph, "_sign_hash", mockreturn)
-    # speed up tests by not actually sleeping
-    monkeypatch.setattr(time, "sleep", lambda _: None)
+        # speed up tests by not actually sleeping
+        monkeypatch.setattr(time, "sleep", lambda _: None)
+
+    request.cls.mock_autograph = _inner
 
 
+@pytest.mark.usefixtures("mock_autograph")
 class ClientTest(ClientTestBase):
 
     def testGetHeaderArchitectureWindows(self):
@@ -1351,31 +1363,31 @@ class ClientTest(ClientTestBase):
         ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
         assert "Content-Signature" not in ret.headers
 
-    @pytest.mark.usefixtures("mock_autograph")
-    @unittest.mock.patch("auslib.web.public.helpers.make_hash")
-    def testGMPResponseWithSigning(self, mocked_make_hash):
+    @mock.patch("auslib.util.autograph.statsd.incr")
+    def testGMPResponseWithSigning(self, mocked_incr):
+        self.mock_autograph()
         ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
         assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
-        mocked_make_hash.assert_called_once_with(ret.text)
+        assert mocked_incr.mock_calls.count(mock.call("autograph.code.500")) == 0
+        assert mocked_incr.mock_calls.count(mock.call("autograph.code.200")) == 1
 
-    @pytest.mark.usefixtures("mock_autograph")
-    @unittest.mock.patch("auslib.web.public.helpers.make_hash")
-    def testGMPResponseWithSigningAutographTempFailure(self, mocked_make_hash):
-        global mock_autograph_exception_count
-        mock_autograph_exception_count = 1
+    @mock.patch("auslib.util.autograph.statsd.incr")
+    def testGMPResponseWithSigningAutographTempFailure(self, mocked_incr):
+        self.mock_autograph(failures=1)
         ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
         assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
-        mocked_make_hash.assert_called_once_with(ret.text)
+        assert mocked_incr.mock_calls.count(mock.call("autograph.code.500")) == 1
+        assert mocked_incr.mock_calls.count(mock.call("autograph.code.200")) == 1
 
-    @pytest.mark.usefixtures("mock_autograph")
-    def testGMPResponseWithSigningAutographPermanentFailure(self):
-        global mock_autograph_exception_count
-        mock_autograph_exception_count = 3
+    @mock.patch("auslib.util.autograph.statsd.incr")
+    def testGMPResponseWithSigningAutographPermanentFailure(self, mocked_incr):
+        self.mock_autograph(failures=3, success=False)
         with pytest.raises(Exception) as excinfo:
             self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
+            assert excinfo.type is HTTPError
 
-        assert excinfo.type is Exception
-        assert excinfo.value.args == ("unable to contact autograph",)
+        assert mocked_incr.mock_calls.count(mock.call("autograph.code.500")) == 3
+        assert mocked_incr.mock_calls.count(mock.call("autograph.code.200")) == 0
 
     def testGetWithResponseProducts(self):
         ret = self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
