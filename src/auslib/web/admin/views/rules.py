@@ -2,22 +2,10 @@ import flask
 from flask import Response, jsonify
 
 from auslib.global_state import dbo
+from auslib.web.admin.views import scheduled_changes as sc
 from auslib.web.admin.views.base import requirelogin, transactionHandler
 from auslib.web.admin.views.history import revert_to_revision
 from auslib.web.admin.views.problem import problem
-from auslib.web.admin.views.scheduled_changes import (
-    delete_scheduled_change,
-    delete_signoffs_scheduled_change,
-    get_all_scheduled_change_history,
-    get_by_id_scheduled_change,
-    get_scheduled_change_history,
-    get_scheduled_changes,
-    post_enact_scheduled_change,
-    post_scheduled_change,
-    post_scheduled_change_history,
-    post_scheduled_changes,
-    post_signoffs_scheduled_change,
-)
 
 
 def process_rule_form(form_data):
@@ -60,7 +48,7 @@ def process_rule_form(form_data):
 # changed_by is available via the requirelogin decorator
 @requirelogin
 @transactionHandler
-def post_rules(rule, transaction, changed_by):
+def create(rule, transaction, changed_by):
     # a Post here creates a new rule
     what, mapping_values, fallback_mapping_values = process_rule_form(rule)
 
@@ -111,19 +99,18 @@ def update_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
 # changed_by is available via the requirelogin decorator
 @requirelogin
 @transactionHandler
-def post_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
+def update_post(rule, id_or_alias, transaction, changed_by):
     return update_rules_id_or_alias(rule, id_or_alias, transaction, changed_by)
+
+
+# swagger requires separate functions per handler, but post and put are
+# implemented exactly the same
+update_put = update_post
 
 
 @requirelogin
 @transactionHandler
-def put_rules_id_or_alias(rule, id_or_alias, transaction, changed_by):
-    return update_rules_id_or_alias(rule, id_or_alias, transaction, changed_by)
-
-
-@requirelogin
-@transactionHandler
-def delete_rules_id_or_alias(id_or_alias, data_version, transaction, changed_by):
+def delete(id_or_alias, data_version, transaction, changed_by):
     # Verify that the rule_id or alias exists.
     rule = dbo.rules.getRule(id_or_alias, transaction=transaction)
     if not rule:
@@ -162,7 +149,7 @@ def _get_what_rule_history_api(change):
 
 @requirelogin
 @transactionHandler
-def post_rules_revisions(rule_id, transaction, changed_by, **kwargs):
+def revert_to_older_revision(rule_id, transaction, changed_by, **kwargs):
     return revert_to_revision(
         table=dbo.rules,
         get_object_callback=lambda: dbo.rules.getRule(rule_id),
@@ -175,7 +162,7 @@ def post_rules_revisions(rule_id, transaction, changed_by, **kwargs):
     )
 
 
-def get_single_rule_column(column):
+def get_column(column):
     rules = dbo.rules.getOrderedRules()
     column_values = []
     if column not in rules[0].keys():
@@ -190,18 +177,18 @@ def get_single_rule_column(column):
     return jsonify(ret)
 
 
-def get_rules_scheduled_changes():
+def get_scheduled_changes():
     where = {}
     rule_id = flask.request.args.get("rule_id")
     if rule_id:
         where["base_rule_id"] = rule_id
 
-    return get_scheduled_changes(table=dbo.rules, where=where)
+    return sc.get_scheduled_changes(table=dbo.rules, where=where)
 
 
 @requirelogin
 @transactionHandler
-def post_rules_scheduled_changes(sc_rule_body, transaction, changed_by):
+def create_scheduled_change(sc_rule_body, transaction, changed_by):
     if sc_rule_body.get("when", None) is None:
         return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Rule")
     if sc_rule_body:
@@ -259,16 +246,16 @@ def post_rules_scheduled_changes(sc_rule_body, transaction, changed_by):
         if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
             return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
 
-    return post_scheduled_changes(sc_table=dbo.rules.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type)
+    return sc.post_scheduled_changes(sc_table=dbo.rules.scheduled_changes, what=what, transaction=transaction, changed_by=changed_by, change_type=change_type)
 
 
-def get_by_id_rules_scheduled_change(sc_id):
-    return get_by_id_scheduled_change(table=dbo.rules, sc_id=sc_id)
+def get_scheduled_change(sc_id):
+    return sc.get_by_id_scheduled_change(table=dbo.rules, sc_id=sc_id)
 
 
 @requirelogin
 @transactionHandler
-def post_rules_scheduled_change(sc_id, sc_rule_body, transaction, changed_by):
+def update_scheduled_change(sc_id, sc_rule_body, transaction, changed_by):
     # TODO: modify UI and clients to stop sending 'change_type' in request body
     sc_table = dbo.rules.scheduled_changes
     sc_rule = sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
@@ -317,46 +304,48 @@ def post_rules_scheduled_change(sc_id, sc_rule_body, transaction, changed_by):
         if what.get("fallbackMapping") is not None and len(fallback_mapping_values) != 1:
             return problem(400, "Bad Request", "Invalid fallbackMapping value. No release name found in DB")
 
-    return post_scheduled_change(
+    return sc.post_scheduled_change(
         sc_table=sc_table, sc_id=sc_id, what=what, transaction=transaction, changed_by=changed_by, old_sc_data_version=sc_rule_body.get("sc_data_version", None)
     )
 
 
 @requirelogin
 @transactionHandler
-def delete_rules_scheduled_change(sc_id, data_version, transaction, changed_by):
-    return delete_scheduled_change(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by)
+def delete_scheduled_change(sc_id, data_version, transaction, changed_by):
+    return sc.delete_scheduled_change(
+        sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
+    )
 
 
 @requirelogin
 @transactionHandler
-def post_rules_enact_scheduled_change(sc_id, transaction, changed_by):
-    return post_enact_scheduled_change(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
+def enact_scheduled_change(sc_id, transaction, changed_by):
+    return sc.post_enact_scheduled_change(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 @requirelogin
 @transactionHandler
-def post_rules_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
-    return post_signoffs_scheduled_change(
+def signoff_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
+    return sc.post_signoffs_scheduled_change(
         signoffs_table=dbo.rules.scheduled_changes.signoffs, sc_id=sc_id, what=sc_post_signoffs_body, transaction=transaction, changed_by=changed_by
     )
 
 
 @requirelogin
 @transactionHandler
-def delete_rules_signoffs_scheduled_change(sc_id, transaction, changed_by, **kwargs):
-    return delete_signoffs_scheduled_change(signoffs_table=dbo.rules.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
+def revoke_signoff_scheduled_change(sc_id, transaction, changed_by, **kwargs):
+    return sc.delete_signoffs_scheduled_change(signoffs_table=dbo.rules.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
-def get_rules_scheduled_change_history(sc_id):
-    return get_scheduled_change_history(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id)
+def get_scheduled_change_history(sc_id):
+    return sc.get_scheduled_change_history(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id)
 
 
 def get_all_rules_scheduled_change_history():
-    return get_all_scheduled_change_history(sc_table=dbo.rules.scheduled_changes)
+    return sc.get_all_scheduled_change_history(sc_table=dbo.rules.scheduled_changes)
 
 
 @requirelogin
 @transactionHandler
-def post_rules_scheduled_change_history(sc_id, transaction, changed_by, **kwargs):
-    return post_scheduled_change_history(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
+def revert_scheduled_change_to_older_revision(sc_id, transaction, changed_by, **kwargs):
+    return sc.post_scheduled_change_history(sc_table=dbo.rules.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)

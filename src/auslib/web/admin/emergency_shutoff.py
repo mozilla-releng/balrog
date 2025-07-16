@@ -28,7 +28,7 @@ def shutoff_exists(product, channel):
 
 @requirelogin
 @transactionHandler
-def post(emergency_shutoff, changed_by, transaction):
+def create(emergency_shutoff, changed_by, transaction):
     if shutoff_exists(emergency_shutoff["product"], emergency_shutoff["channel"]):
         return problem(400, "Bad Request", "Invalid Emergency shutoff data", ext={"exception": "Emergency shutoff for product/channel already exists."})
     inserted_shutoff = dbo.emergencyShutoffs.insert(
@@ -90,7 +90,7 @@ def delete_scheduled_deletion(sc_id, data_version, changed_by, transaction):
 
 @requirelogin
 @transactionHandler
-def scheduled_changes_signoffs(sc_id, sc_post_signoffs_body, transaction, changed_by):
+def signoff_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
     return post_signoffs_scheduled_change(
         signoffs_table=dbo.emergencyShutoffs.scheduled_changes.signoffs, sc_id=sc_id, what=sc_post_signoffs_body, transaction=transaction, changed_by=changed_by
     )
@@ -98,7 +98,7 @@ def scheduled_changes_signoffs(sc_id, sc_post_signoffs_body, transaction, change
 
 @requirelogin
 @transactionHandler
-def scheduled_changes_signoffs_delete(sc_id, transaction, changed_by):
+def revoke_signoff_scheduled_change(sc_id, transaction, changed_by):
     return delete_signoffs_scheduled_change(
         signoffs_table=dbo.emergencyShutoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
     )
@@ -106,5 +106,5 @@ def scheduled_changes_signoffs_delete(sc_id, transaction, changed_by):
 
 @requirelogin
 @transactionHandler
-def enact_updates_scheduled_for_reactivation(sc_id, transaction, changed_by):
+def enact_scheduled_change(sc_id, transaction, changed_by):
     return post_enact_scheduled_change(sc_table=dbo.emergencyShutoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
