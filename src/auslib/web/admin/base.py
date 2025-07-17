@@ -3,9 +3,10 @@ import re
 from os import path
 
 import connexion
-from flask import request
+from flask import g, request
 from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
+from statsd.defaults.env import statsd
 
 import auslib
 from auslib.db import ChangeScheduledError, OutdatedDataError, UpdateMergeError
@@ -31,6 +32,20 @@ spec = (
 validator_map = {"body": BalrogRequestBodyValidator}
 
 
+def should_time_request():
+    # don't time OPTIONS requests
+    if request.method == "OPTIONS":
+        return False
+    # don't time requests that don't match a valid route
+    if request.url_rule is None:
+        return False
+    # don't time dockerflow endpoints
+    if request.path.startswith("/__"):
+        return False
+
+    return True
+
+
 def create_app():
     connexion_app = connexion.App(__name__, debug=False, options={"swagger_ui": False})
     connexion_app.add_api(spec, validator_map=validator_map, strict_validation=True)
@@ -38,6 +53,22 @@ def create_app():
     flask_app = connexion_app.app
 
     create_dockerflow_endpoints(flask_app)
+
+    @flask_app.before_request
+    def setup_timer():
+        g.request_timer = None
+        if should_time_request():
+            # do some massaging to get the metric name right
+            # * get rid of the `/v2` prefix on v2 endpoints added by `base_path` further up
+            # * remove various module prefixes
+            metric = (
+                request.url_rule.endpoint.removeprefix("/v2.")
+                .removeprefix("auslib_web_admin_views_")
+                .removeprefix("auslib_web_admin_")
+                .removeprefix("auslib_web_common_")
+            )
+            g.request_timer = statsd.timer(metric)
+            g.request_timer.start()
 
     @flask_app.before_request
     def setup_request():
@@ -160,6 +191,16 @@ def create_app():
             response.headers["X-Frame-Options"] = "SAMEORIGIN"
         else:
             response.headers["Content-Security-Policy"] = flask_app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
+        return response
+
+    # this is specifically set-up last before after_request handlers are called
+    # in reverse order of registering, and we want this one to be called first
+    # to avoid it being skipped if another one raises an exception
+    @flask_app.after_request
+    def send_stats(response):
+        if hasattr(g, "request_timer") and g.request_timer:
+            g.request_timer.stop()
+
         return response
 
     return connexion_app

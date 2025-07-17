@@ -105,14 +105,14 @@ def get_all_rs_revisions(table):
     return jsonify(count=total_count, required_signoffs=revisions)
 
 
-def get_product_required_signoffs():
+def product_get():
     where = {param: request.args[param] for param in ("product", "channel") if param in request.args}
     return get_required_signoffs(required_signoffs=dbo.productRequiredSignoffs, where=where)
 
 
 @requirelogin
 @transactionHandler
-def post_product_required_signoffs(signoff, transaction, changed_by):
+def product_create(signoff, transaction, changed_by):
     what = {
         "product": signoff.get("product"),
         "channel": signoff.get("channel"),
@@ -124,11 +124,11 @@ def post_product_required_signoffs(signoff, transaction, changed_by):
     )
 
 
-def delete_product_required_signoffs():
+def product_delete():
     return delete_required_signoffs()
 
 
-def get_product_rs_revisions():
+def product_get_history():
     input_dict = {
         "product": request.args.get("product"),
         "role": request.args.get("role"),
@@ -141,14 +141,14 @@ def get_all_product_rs_revisions():
     return get_all_rs_revisions(dbo.productRequiredSignoffs)
 
 
-def get_product_rs_scheduled_changes():
+def product_get_scheduled_changes():
     where = {f"base_{param}": request.args[param] for param in ("product", "channel") if param in request.args}
     return get_scheduled_changes(table=dbo.productRequiredSignoffs, where=where)
 
 
 @requirelogin
 @transactionHandler
-def post_product_rs_scheduled_changes(sc_rs_product_body, transaction, changed_by):
+def product_create_scheduled_change(sc_rs_product_body, transaction, changed_by):
     if sc_rs_product_body.get("when", None) is None:
         return problem(400, "Bad Request", "when cannot be set to null when scheduling a new change " "for a Product Required Signoff")
     change_type = sc_rs_product_body.get("change_type")
@@ -185,7 +185,7 @@ def post_product_rs_scheduled_changes(sc_rs_product_body, transaction, changed_b
 
 @requirelogin
 @transactionHandler
-def post_product_rs_scheduled_change(sc_id, sc_product_rs_body, transaction, changed_by):
+def product_update_scheduled_change(sc_id, sc_product_rs_body, transaction, changed_by):
     # TODO: modify UI and clients to stop sending 'change_type' in request body
     sc_table = dbo.productRequiredSignoffs.scheduled_changes
     sc_rs_product = sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
@@ -222,7 +222,7 @@ def post_product_rs_scheduled_change(sc_id, sc_product_rs_body, transaction, cha
 
 @requirelogin
 @transactionHandler
-def delete_product_rs_scheduled_change(sc_id, data_version, transaction, changed_by):
+def product_delete_scheduled_change(sc_id, data_version, transaction, changed_by):
     return delete_scheduled_change(
         sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
     )
@@ -230,13 +230,13 @@ def delete_product_rs_scheduled_change(sc_id, data_version, transaction, changed
 
 @requirelogin
 @transactionHandler
-def post_product_rs_enact_scheduled_change(sc_id, transaction, changed_by):
+def product_enact_scheduled_change(sc_id, transaction, changed_by):
     return post_enact_scheduled_change(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 @requirelogin
 @transactionHandler
-def post_product_rs_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
+def product_signoff_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
     return post_signoffs_scheduled_change(
         signoffs_table=dbo.productRequiredSignoffs.scheduled_changes.signoffs,
         sc_id=sc_id,
@@ -248,13 +248,13 @@ def post_product_rs_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, tran
 
 @requirelogin
 @transactionHandler
-def delete_product_rs_signoffs_scheduled_change(sc_id, transaction, changed_by):
+def product_revoke_signoff_scheduled_change(sc_id, transaction, changed_by):
     return delete_signoffs_scheduled_change(
         signoffs_table=dbo.productRequiredSignoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
     )
 
 
-def get_product_rs_scheduled_change_history(sc_id):
+def product_get_scheduled_change_history(sc_id):
     return get_scheduled_change_history(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id)
 
 
@@ -264,18 +264,18 @@ def get_all_product_rs_scheduled_change_history():
 
 @requirelogin
 @transactionHandler
-def post_product_rs_scheduled_change_history(sc_id, transaction, changed_by):
+def product_revert_to_older_revision(sc_id, transaction, changed_by):
     return post_scheduled_change_history(sc_table=dbo.productRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
-def get_permissions_required_signoffs():
+def permissions_get():
     where = {param: request.args[param] for param in ("product",) if param in request.args}
     return get_required_signoffs(required_signoffs=dbo.permissionsRequiredSignoffs, where=where)
 
 
 @requirelogin
 @transactionHandler
-def post_permissions_required_signoffs(signoff, transaction, changed_by):
+def permissions_create(signoff, transaction, changed_by):
     what = {
         "product": signoff.get("product"),
         "role": signoff.get("role"),
@@ -286,11 +286,11 @@ def post_permissions_required_signoffs(signoff, transaction, changed_by):
     )
 
 
-def delete_permissions_required_signoffs():
+def permissions_delete():
     return delete_required_signoffs()
 
 
-def get_permissions_rs_revisions():
+def permissions_get_history():
     input_dict = {"product": request.args.get("product"), "role": request.args.get("role")}
     return get_rs_revisions(dbo.permissionsRequiredSignoffs, ["product", "role"], input_dict)
 
@@ -299,14 +299,14 @@ def get_all_permissions_rs_revisions():
     return get_all_rs_revisions(dbo.permissionsRequiredSignoffs)
 
 
-def get_permissions_rs_scheduled_changes():
+def permissions_get_scheduled_changes():
     where = {f"base_{param}": request.args[param] for param in ("product",) if param in request.args}
     return get_scheduled_changes(table=dbo.permissionsRequiredSignoffs, where=where)
 
 
 @requirelogin
 @transactionHandler
-def post_permissions_rs_scheduled_changes(sc_rs_permission_body, transaction, changed_by):
+def permissions_create_scheduled_change(sc_rs_permission_body, transaction, changed_by):
     if sc_rs_permission_body.get("when", None) is None:
         return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permissions Required Signoff")
     change_type = sc_rs_permission_body.get("change_type")
@@ -343,7 +343,7 @@ def post_permissions_rs_scheduled_changes(sc_rs_permission_body, transaction, ch
 
 @requirelogin
 @transactionHandler
-def post_permissions_rs_scheduled_change(sc_id, sc_permission_rs_body, transaction, changed_by):
+def permissions_update_scheduled_change(sc_id, sc_permission_rs_body, transaction, changed_by):
     # TODO: modify UI and clients to stop sending 'change_type' in request body
     sc_table = dbo.permissionsRequiredSignoffs.scheduled_changes
     sc_rs_permission = sc_table.select(where={"sc_id": sc_id}, transaction=transaction, columns=["change_type"])
@@ -379,7 +379,7 @@ def post_permissions_rs_scheduled_change(sc_id, sc_permission_rs_body, transacti
 
 @requirelogin
 @transactionHandler
-def delete_permissions_rs_scheduled_change(sc_id, data_version, transaction, changed_by):
+def permissions_delete_scheduled_change(sc_id, data_version, transaction, changed_by):
     return delete_scheduled_change(
         sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, data_version=data_version, transaction=transaction, changed_by=changed_by
     )
@@ -387,13 +387,13 @@ def delete_permissions_rs_scheduled_change(sc_id, data_version, transaction, cha
 
 @requirelogin
 @transactionHandler
-def post_permissions_rs_enact_scheduled_change(sc_id, transaction, changed_by):
+def permissions_enact_scheduled_change(sc_id, transaction, changed_by):
     return post_enact_scheduled_change(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by)
 
 
 @requirelogin
 @transactionHandler
-def post_permissions_rs_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
+def permissions_signoff_scheduled_change(sc_id, sc_post_signoffs_body, transaction, changed_by):
     return post_signoffs_scheduled_change(
         signoffs_table=dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs,
         sc_id=sc_id,
@@ -405,13 +405,13 @@ def post_permissions_rs_signoffs_scheduled_change(sc_id, sc_post_signoffs_body, 
 
 @requirelogin
 @transactionHandler
-def delete_permissions_rs_signoffs_scheduled_change(sc_id, transaction, changed_by):
+def permissions_revoke_signoff_scheduled_change(sc_id, transaction, changed_by):
     return delete_signoffs_scheduled_change(
         signoffs_table=dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs, sc_id=sc_id, transaction=transaction, changed_by=changed_by
     )
 
 
-def get_permissions_rs_scheduled_change_history(sc_id):
+def permissions_get_scheduled_change_history(sc_id):
     return get_scheduled_change_history(sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id)
 
 
@@ -421,7 +421,7 @@ def get_all_permissions_rs_scheduled_change_history():
 
 @requirelogin
 @transactionHandler
-def post_permissions_rs_scheduled_change_history(sc_id, transaction, changed_by):
+def permissions_revert_to_older_revision(sc_id, transaction, changed_by):
     return post_scheduled_change_history(
         sc_table=dbo.permissionsRequiredSignoffs.scheduled_changes, sc_id=sc_id, transaction=transaction, changed_by=changed_by
     )

@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import pytest
 from aiohttp import ClientError
-from mock import MagicMock
+from mock import MagicMock, mock
 
 import auslib.services.releases
 import auslib.util.timestamp
@@ -2152,3 +2152,50 @@ def test_set_older_pin_does_nothing(api):
     assert ret.status_code == 200
     mapping = dbo.pinnable_releases.getPinMapping(product=product, channel=channel, version="66.0.")
     assert mapping == "Firefox-56.0-build1"
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+@pytest.mark.parametrize(
+    "method,endpoint,metric",
+    (
+        pytest.param(
+            "GET",
+            "/v2/releases",
+            "releases_v2_get_all",
+            id="get_all",
+        ),
+        pytest.param(
+            "GET",
+            "/v2/releases/Firefox-33.0-build1",
+            "releases_v2_get",
+            id="get",
+        ),
+        pytest.param(
+            "POST",
+            "/v2/releases/Firefox-33.0-build1",
+            "releases_v2_update",
+            id="update",
+        ),
+        pytest.param(
+            "PUT",
+            "/v2/releases/Firefox-33.0-build1",
+            "releases_v2_ensure",
+            id="ensure",
+        ),
+        pytest.param(
+            "DELETE",
+            "/v2/releases/Firefox-33.0-build1",
+            "releases_v2_delete",
+            id="delete",
+        ),
+    ),
+)
+def test_statsd(api, method, endpoint, metric):
+    """Test that some of the releases v2 endpoints add stats correctly.
+    Timings are handled centrally, so it's not worth the trouble to test
+    every single one. Requests don't need to succeed for these to pass;
+    they just need to be routable."""
+    with mock.patch("auslib.web.admin.base.statsd.timer") as mocked_timer:
+        api.open(endpoint, method=method)
+        assert mocked_timer.call_count == 1
+        mocked_timer.assert_has_calls([mock.call(metric)])

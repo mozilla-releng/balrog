@@ -92,7 +92,7 @@ def get_release(release):
     )
 
 
-def get_release_single_locale(release, platform, locale):
+def get_single_locale(release, platform, locale):
     with dbo.begin() as trans:
         release_row = releases_service.get_release(release, trans)
         if release_row:

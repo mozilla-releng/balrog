@@ -11,7 +11,7 @@ from auslib.web.common.history import HistoryHelper
 log = logging.getLogger(__name__)
 
 
-def get_rules():
+def get():
     # TODO: When we switch to Swagger 3, this can move to the Swagger spec
     if request.args.get("timestamp") and request.args.get("product"):
         return problem(status=400, title="Bad Request", detail="Cannot query with a timestamp and a product at the same time")
@@ -41,7 +41,7 @@ def _get_filters(rule, history_table):
     return [history_table.rule_id == rule["rule_id"], history_table.data_version != null()]
 
 
-def get_rule_history(rule_id):
+def get_history(rule_id):
     history_table = dbo.rules.history
     order_by = [history_table.timestamp.desc()]
     history_helper = HistoryHelper(

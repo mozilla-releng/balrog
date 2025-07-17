@@ -120,7 +120,7 @@ paths:
   /releases:
     get:
       summary: Get a list of basic information about Releases in Balrog's database
-      operationId: auslib.web.admin.views.releases_v2.get_releases
+      operationId: auslib.web.admin.views.releases_v2.get_all
       parameters:
         - name: names_only
           in: query
@@ -220,7 +220,7 @@ paths:
 
     get:
       summary: Get a Release blob and data versions
-      operationId: auslib.web.admin.views.releases_v2.get_release
+      operationId: auslib.web.admin.views.releases_v2.get
       responses:
         '200':
           description: Release blob and data versions
@@ -241,7 +241,7 @@ paths:
 
     post:
       summary: Update part of a Release
-      operationId: auslib.web.admin.views.releases_v2.update_release
+      operationId: auslib.web.admin.views.releases_v2.update
       requestBody:
         required: true
         content:
@@ -266,7 +266,7 @@ paths:
 
     put:
       summary: Overwrites an entire release
-      operationId: auslib.web.admin.views.releases_v2.set_release
+      operationId: auslib.web.admin.views.releases_v2.ensure
       requestBody:
         required: true
         content:
@@ -291,7 +291,7 @@ paths:
 
     delete:
       summary: Delete an entire Release
-      operationId: auslib.web.admin.views.releases_v2.delete_release
+      operationId: auslib.web.admin.views.releases_v2.delete
       responses:
         '200':
           description: OK
@@ -308,7 +308,7 @@ paths:
 
     put:
       summary: Signoff on the current scheduled changes for the named Release
-      operationId: auslib.web.admin.views.releases_v2.signoff
+      operationId: auslib.web.admin.views.releases_v2.signoff_scheduled_change
       requestBody:
         required: true
         content:
@@ -332,7 +332,7 @@ paths:
 
     delete:
       summary: Revoke signoffs on the current scheduled changes for the named Release
-      operationId: auslib.web.admin.views.releases_v2.revoke_signoff
+      operationId: auslib.web.admin.views.releases_v2.revoke_signoff_scheduled_change
       responses:
         '200':
           description: OK
@@ -381,7 +381,7 @@ paths:
           description: Permission denied
         '404':
           description: Release has no scheduled changes
-        
+
   /releases/{name}/{path}/data_version:
     parameters:
       - $ref: '#/components/parameters/ReleaseName'

@@ -91,7 +91,7 @@ paths:
         Returns the platform+locale specific data of the named Release, which is a JSON Object. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#releases-release-builds-platform-locale)
       tags:
         - Releases
-      operationId: auslib.web.common.releases.get_release_single_locale
+      operationId: auslib.web.common.releases.get_single_locale
       consumes: []
       produces:
         - application/json
@@ -115,7 +115,7 @@ paths:
         Returns filtered list Rules in Balrog’s database inside of a JSON Object. Returns all rules if 'product' query parameter isn't passed. [Docs](http://mozilla-balrog.readthedocs.io/en/latest/admin_api.html#id1)
       tags:
         - Rules
-      operationId: auslib.web.common.rules.get_rules
+      operationId: auslib.web.common.rules.get
       consumes: []
       produces: [application/json]
       externalDocs:
@@ -166,7 +166,7 @@ paths:
       description: Fetches list and count of all the revisions of the rule given by rule_id
       tags:
         - Rules
-      operationId: auslib.web.common.rules.get_rule_history
+      operationId: auslib.web.common.rules.get_history
       consumes: []
       produces:
         - application/json

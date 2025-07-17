@@ -14,8 +14,8 @@ from auslib.web.admin.views.required_signoffs import (
     get_all_product_rs_scheduled_change_history,
 )
 from auslib.web.admin.views.rules import get_all_rules_scheduled_change_history
+from auslib.web.common import rules as common_rules
 from auslib.web.common.history import HistoryHelper, get_input_dict
-from auslib.web.common.rules import get_rules
 
 log = logging.getLogger(__name__)
 
@@ -58,15 +58,15 @@ def _get_histories(table, obj, process_revisions_callback=None):
         return problem(400, "Bad Request", "Error occurred when trying to fetch histories", ext={"exception": str(msg)})
 
 
-def rules_history():
+def rules():
     history_table = dbo.rules.history
-    rules = _get_histories(history_table, get_rules)
+    rules = _get_histories(history_table, common_rules.get)
     history = {"rules": rules, "sc_rules": get_all_rules_scheduled_change_history()}
     histories = {"Rules": json.loads(history["rules"].data), "Rules scheduled change": json.loads(history["sc_rules"].data)}
     return histories
 
 
-def permissions_history():
+def permissions():
     history_table = dbo.permissions.history
     get_permissions = get_users()
     permissions = _get_histories(history_table, get_permissions)
@@ -78,7 +78,7 @@ def permissions_history():
     return histories
 
 
-def product_required_signoffs_history():
+def product_required_signoffs():
     product_required_signoffs_history = {
         "product_required_signoffs": get_all_product_rs_revisions(),
         "sc_product_required_signoffs": get_all_product_rs_scheduled_change_history(),
@@ -90,7 +90,7 @@ def product_required_signoffs_history():
     return histories
 
 
-def permissions_required_signoffs_history():
+def permissions_required_signoffs():
     permissions_required_signoffs_history = {
         "permissions_required_signoffs": get_all_permissions_rs_revisions(),
         "sc_permissions_required_signoffs": get_all_permissions_rs_scheduled_change_history(),
