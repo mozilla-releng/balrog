@@ -3784,6 +3784,28 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertIn("rs", signoffs_required)
         self.assertEqual(len(signoffs_required["rs"]), 0)
 
+    @mock.patch("auslib.db.statsd.timer")
+    def testInsertReleaseStatsd(self, mocked_timer):
+        self.releases.insert(
+            changed_by="bill", old_data_version=1, name="abc", product="bbb", data=ReleaseBlobV1(name="abc", schema_version=1, hashFunction="sha512")
+        )
+        # inserts upload twice
+        assert mocked_timer.call_count == 2
+        mocked_timer.assert_called_with("gcs_upload")
+
+    @mock.patch("auslib.db.statsd.timer")
+    def testDeleteReleaseStatsd(self, mocked_timer):
+        self.releases.delete({"name": "a"}, changed_by="bill", old_data_version=1)
+        assert mocked_timer.call_count == 1
+        mocked_timer.assert_called_with("gcs_upload")
+
+    @mock.patch("auslib.db.statsd.timer")
+    def testUpdateReleaseStatsd(self, mocked_timer):
+        blob = ReleaseBlobV1(name="a", hashFunction="sha512")
+        self.releases.update({"name": "a"}, {"product": "z", "data": blob}, "bill", 1)
+        assert mocked_timer.call_count == 1
+        mocked_timer.assert_called_with("gcs_upload")
+
 
 @pytest.mark.usefixtures("current_db_schema")
 class TestReleasesJSON(unittest.TestCase, MemoryDatabaseMixin):

@@ -16,6 +16,7 @@ from sqlalchemy import JSON, BigInteger, Boolean, Column, Integer, MetaData, Str
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 from sqlalchemy.sql.functions import max as sql_max
+from statsd.defaults.env import statsd
 
 from auslib.blobs.base import createBlob, merge_dicts
 from auslib.errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
@@ -799,35 +800,26 @@ class GCSHistory:
         identifier = "-".join([columns.get(i) for i in self.identifier_columns])
         for data_version, ts, data in ((None, timestamp - 1, ""), (columns.get("data_version"), timestamp, json.dumps(columns[self.data_column]))):
             bname = "{}/{}-{}-{}.json".format(identifier, data_version, ts, changed_by)
-            start = time.time()
-            logging.info("Beginning GCS upload", extra={"file": bname})
-            bucket = self._getBucket(identifier)(use_gcloud_aio=False)
-            blob = bucket.blob(bname)
-            blob.upload_from_string(data, content_type="application/json")
-            duration = time.time() - start
-            logging.info("Completed GCS upload", extra={"file": bname, "duration": duration})
+            with statsd.timer("gcs_upload"):
+                bucket = self._getBucket(identifier)(use_gcloud_aio=False)
+                blob = bucket.blob(bname)
+                blob.upload_from_string(data, content_type="application/json")
 
     def forDelete(self, rowData, changed_by, trans):
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
-        start = time.time()
-        logging.info("Beginning GCS upload", extra={"file": bname})
-        bucket = self._getBucket(identifier)(use_gcloud_aio=False)
-        blob = bucket.blob(bname)
-        blob.upload_from_string("", content_type="application/json")
-        duration = time.time() - start
-        logging.info("Completed GCS upload", extra={"file": bname, "duration": duration})
+        with statsd.timer("gcs_upload"):
+            bucket = self._getBucket(identifier)(use_gcloud_aio=False)
+            blob = bucket.blob(bname)
+            blob.upload_from_string("", content_type="application/json")
 
     def forUpdate(self, rowData, changed_by, trans):
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
-        start = time.time()
-        logging.info("Beginning GCS upload", extra={"file": bname})
-        bucket = self._getBucket(identifier)(use_gcloud_aio=False)
-        blob = bucket.blob(bname)
-        blob.upload_from_string(json.dumps(rowData[self.data_column]), content_type="application/json")
-        duration = time.time() - start
-        logging.info("Completed GCS upload", extra={"file": bname, "duration": duration})
+        with statsd.timer("gcs_upload"):
+            bucket = self._getBucket(identifier)(use_gcloud_aio=False)
+            blob = bucket.blob(bname)
+            blob.upload_from_string(json.dumps(rowData[self.data_column]), content_type="application/json")
 
     def getChange(self, change_id=None, column_values=None, data_version=None, transaction=None):
         if not set(self.identifier_columns).issubset(column_values.keys()) or not data_version:
@@ -859,45 +851,36 @@ class GCSHistoryAsync:
         identifier = "-".join([columns.get(i) for i in self.identifier_columns])
         for data_version, ts, data in ((None, timestamp - 1, ""), (columns.get("data_version"), timestamp, json.dumps(columns[self.data_column]))):
             bname = "{}/{}-{}-{}.json".format(identifier, data_version, ts, changed_by)
-            start = time.time()
-            logging.info("Beginning GCS upload", extra={"file": bname})
-            # Using a separate session for each request is not ideal, but it's
-            # the only thing that seems to work. Ideally, we'd share one session
-            # for the entire application, but we can't for two reasons:
-            # 1) gcloud-aio won't close the sessions, which results in a lot of
-            # errors (https://github.com/talkiq/gcloud-aio/issues/33)
-            # 2) When bhearsum tried this it resulted in hangs that he suspected
-            # were caused by connection re-use.
-            async with ClientSession() as session:
-                bucket = self._getBucket(identifier)(session=session)
-                blob = bucket.new_blob(bname)
-                await blob.upload(data, session=session)
-            duration = time.time() - start
-            logging.info("Completed GCS upload", extra={"file": bname, "duration": duration})
+            with statsd.timer("async_gcs_upload"):
+                # Using a separate session for each request is not ideal, but it's
+                # the only thing that seems to work. Ideally, we'd share one session
+                # for the entire application, but we can't for two reasons:
+                # 1) gcloud-aio won't close the sessions, which results in a lot of
+                # errors (https://github.com/talkiq/gcloud-aio/issues/33)
+                # 2) When bhearsum tried this it resulted in hangs that he suspected
+                # were caused by connection re-use.
+                async with ClientSession() as session:
+                    bucket = self._getBucket(identifier)(session=session)
+                    blob = bucket.new_blob(bname)
+                    await blob.upload(data, session=session)
 
     async def forDelete(self, rowData, changed_by, trans):
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
-        start = time.time()
-        logging.info("Beginning GCS upload", extra={"file": bname})
-        async with ClientSession() as session:
-            bucket = self._getBucket(identifier)(session=session)
-            blob = bucket.new_blob(bname)
-            await blob.upload("", session=session)
-        duration = time.time() - start
-        logging.info("Completed GCS upload", extra={"file": bname, "duration": duration})
+        with statsd.timer("async_gcs_upload"):
+            async with ClientSession() as session:
+                bucket = self._getBucket(identifier)(session=session)
+                blob = bucket.new_blob(bname)
+                await blob.upload("", session=session)
 
     async def forUpdate(self, rowData, changed_by, trans):
         identifier = "-".join([rowData.get(i) for i in self.identifier_columns])
         bname = "{}/{}-{}-{}.json".format(identifier, rowData.get("data_version"), getMillisecondTimestamp(), changed_by)
-        start = time.time()
-        logging.info("Beginning GCS upload", extra={"file": bname})
-        async with ClientSession() as session:
-            bucket = self._getBucket(identifier)(session=session)
-            blob = bucket.new_blob(bname)
-            await blob.upload(json.dumps(rowData[self.data_column]), session=session)
-        duration = time.time() - start
-        logging.info("Completed GCS upload", extra={"file": bname, "duration": duration})
+        with statsd.timer("async_gcs_upload"):
+            async with ClientSession() as session:
+                bucket = self._getBucket(identifier)(session=session)
+                blob = bucket.new_blob(bname)
+                await blob.upload(json.dumps(rowData[self.data_column]), session=session)
 
 
 class HistoryTable(AUSTable):
