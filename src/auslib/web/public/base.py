@@ -35,15 +35,6 @@ def create_app():
     connexion_app.add_api(spec, strict_validation=True)
 
     @flask_app.after_request
-    def log_request(response):
-        # this is safe because even if the path is "/", we'll still get a 2 item list
-        prefix = request.path.split("/")[1]
-        if prefix not in ("update", "json", "api"):
-            prefix = "unknown"
-        statsd.incr(f"response.{prefix}.{response.status_code}")
-        return response
-
-    @flask_app.after_request
     def apply_security_headers(response):
         # There's no use cases for content served by Balrog to load additional content
         # nor be embedded elsewhere, so we apply a strict Content Security Policy.
@@ -133,5 +124,17 @@ def create_app():
             app_spec = yaml.dump(spec)
             return Response(mimetype="text/plain", response=app_spec)
         return Response(status=404)
+
+    # setting this up last means it will be called first. we do this because
+    # an exception in an earlier `after_request` handler will prevent this from
+    # being called.
+    @flask_app.after_request
+    def log_request(response):
+        # this is safe because even if the path is "/", we'll still get a 2 item list
+        prefix = request.path.split("/")[1]
+        if prefix not in ("update", "json", "api"):
+            prefix = "unknown"
+        statsd.incr(f"response.{prefix}.{response.status_code}")
+        return response
 
     return connexion_app
