@@ -1379,7 +1379,7 @@ function ListRules(props) {
           onRevoke={() => handleRevoke(rule)}
           onViewReleaseClick={handleViewRelease}
           diffRules={showRewindDiff}
-          disableActions={!props.user || Boolean(rewindDate)}
+          disableActions={!props.auth0.user || Boolean(rewindDate)}
           actionLoading={isActionLoading}
         />
       </div>
