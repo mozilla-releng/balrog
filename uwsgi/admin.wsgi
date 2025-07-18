@@ -24,6 +24,7 @@ DOMAIN_ALLOWLIST = {
     "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird", "FirefoxVPN", "Pinebuild", "SystemAddons"),
     "download.cdn.mozilla.net": ("Firefox", "Fennec"),
     "ciscobinary.openh264.org": ("OpenH264",),
+    "ciscobinarytest.openh264.org": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),
     "clients2.googleusercontent.com": ("Widevine",),
     "edgedl.me.gvt1.com": (
