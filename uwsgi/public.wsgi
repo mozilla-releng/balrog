@@ -25,6 +25,7 @@ DOMAIN_ALLOWLIST = {
     ),
     "download.cdn.mozilla.net": ("Firefox", "Fennec"),
     "ciscobinary.openh264.org": ("OpenH264",),
+    "ciscobinarytest.openh264.org": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),
     "clients2.googleusercontent.com": ("Widevine",),
     "edgedl.me.gvt1.com": (
