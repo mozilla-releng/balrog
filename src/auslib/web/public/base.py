@@ -130,11 +130,19 @@ def create_app():
     # being called.
     @flask_app.after_request
     def log_request(response):
+        # we only expect GET requests; we don't care about anything else
+        if request.method != "GET":
+            return response
+        # don't time dockerflow endpoints
+        if request.path.startswith("/__"):
+            return response
+
         # this is safe because even if the path is "/", we'll still get a 2 item list
         prefix = request.path.split("/")[1]
         if prefix not in ("update", "json", "api"):
             prefix = "unknown"
         statsd.incr(f"response.{prefix}.{response.status_code}")
+
         return response
 
     return connexion_app
