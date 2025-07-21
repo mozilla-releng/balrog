@@ -3,13 +3,17 @@
 set -o errexit -o pipefail
 set -e
 
+test $AWS_CREDENTIALS_SECRET
+test $WEBSITE_BUCKET
+test $BALROG_ROOT_URL
+test $AUTH0_CLIENT_ID
+test $AUTH0_AUDIENCE
+test $AUTH0_REDIRECT_URI
+test $GCS_NIGHTLY_HISTORY_BUCKET
+test $GCS_RELEASES_HISTORY_BUCKET
+
 export AWS_ACCESS_KEY_ID=$(curl ${AWS_CREDENTIALS_SECRET} | python3 -c 'import json, sys; a = json.load(sys.stdin); print(a["secret"]["aws_access_key"])')
 export AWS_SECRET_ACCESS_KEY=$(curl ${AWS_CREDENTIALS_SECRET} | python3 -c 'import json, sys; a = json.load(sys.stdin); print(a["secret"]["aws_secret_key"])')
-
-# Grab app config and convert it to shell format
-curl "${APP_CONFIG_SECRET}" | python3 -c 'import json, sys; a = json.load(sys.stdin); [print("{}=\"{}\"".format(k, v)) for k,v in a["secret"].items()]' > .env
-
-source .env
 
 HEADERS=$(cat <<EOF
 { \
