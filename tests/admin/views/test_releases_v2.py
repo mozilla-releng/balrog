@@ -2161,31 +2161,31 @@ def test_set_older_pin_does_nothing(api):
         pytest.param(
             "GET",
             "/v2/releases",
-            "releases_v2_get_all",
+            "endpoint_releases_v2_get_all",
             id="get_all",
         ),
         pytest.param(
             "GET",
             "/v2/releases/Firefox-33.0-build1",
-            "releases_v2_get",
+            "endpoint_releases_v2_get",
             id="get",
         ),
         pytest.param(
             "POST",
             "/v2/releases/Firefox-33.0-build1",
-            "releases_v2_update",
+            "endpoint_releases_v2_update",
             id="update",
         ),
         pytest.param(
             "PUT",
             "/v2/releases/Firefox-33.0-build1",
-            "releases_v2_ensure",
+            "endpoint_releases_v2_ensure",
             id="ensure",
         ),
         pytest.param(
             "DELETE",
             "/v2/releases/Firefox-33.0-build1",
-            "releases_v2_delete",
+            "endpoint_releases_v2_delete",
             id="delete",
         ),
     ),
@@ -2211,7 +2211,7 @@ def test_statsd_gcs_creation(api, firefox_62_0_build1):
         # 21 * 2 = 42
         # plus 1 for the overall request
         assert mocked_timer.call_count == 43
-        mocked_timer.assert_has_calls([mock.call("async_gcs_upload"), mock.call("releases_v2_ensure")], any_order=True)
+        mocked_timer.assert_has_calls([mock.call("async_gcs_upload"), mock.call("endpoint_releases_v2_ensure")], any_order=True)
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -2226,7 +2226,7 @@ def test_statsd_gcs_update(api):
         assert ret.status_code == 200, ret.data
         # one call for top level modification, one for the changed locale, one for overall request
         assert mocked_timer.call_count == 3
-        mocked_timer.assert_has_calls([mock.call("async_gcs_upload"), mock.call("releases_v2_update")], any_order=True)
+        mocked_timer.assert_has_calls([mock.call("async_gcs_upload"), mock.call("endpoint_releases_v2_update")], any_order=True)
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -2237,4 +2237,4 @@ def test_statsd_gcs_delete(api):
 
         # one call for top level, one call for each locale, one for overall request
         assert mocked_timer.call_count == 22
-        mocked_timer.assert_has_calls([mock.call("async_gcs_upload"), mock.call("releases_v2_delete")], any_order=True)
+        mocked_timer.assert_has_calls([mock.call("async_gcs_upload"), mock.call("endpoint_releases_v2_delete")], any_order=True)

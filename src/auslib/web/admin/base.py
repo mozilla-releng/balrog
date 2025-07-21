@@ -61,12 +61,15 @@ def create_app():
             # do some massaging to get the metric name right
             # * get rid of the `/v2` prefix on v2 endpoints added by `base_path` further up
             # * remove various module prefixes
+            # * add a common prefix to ensure that we can mark these metrics as gauges for
+            #   statsd
             metric = (
                 request.url_rule.endpoint.removeprefix("/v2.")
                 .removeprefix("auslib_web_admin_views_")
                 .removeprefix("auslib_web_admin_")
                 .removeprefix("auslib_web_common_")
             )
+            metric = f"endpoint_{metric}"
             g.request_timer = statsd.timer(metric)
             g.request_timer.start()
 
