@@ -25,6 +25,8 @@ task-defaults:
     worker:
         docker-image: {in-tree: node}
         max-run-time: 3600
+        env:
+          AUTH0_DOMAIN: auth.mozilla.auth0.com
     dependencies:
           tests-js: ui-tests
           build-ui: ui-build
@@ -34,12 +36,17 @@ tasks:
         description: "Staging UI deploy"
         scopes:
             - secrets:get:repo:github.com/mozilla-releng/balrog:s3-stage-aws-creds
-            - secrets:get:repo:github.com/mozilla-releng/balrog:s3-stage-app-config
         worker:
             env:
                 AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-stage-aws-creds
-                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-stage-app-config
                 WEBSITE_BUCKET: balrog-stage-balrog-static-admin-stage-static-website
+                # Frontend configuration
+                AUTH0_AUDIENCE: balrog-cloudops-stage
+                AUTH0_CLIENT_ID: 43tgBNjaHHhOAPPr10zh2jodVT3t6abD
+                AUTH0_REDIRECT_URI: https://balrog-admin-static-stage.stage.mozaws.net/login
+                BALROG_ROOT_URL: https://admin-stage.balrog.nonprod.cloudops.mozgcp.net
+                GCS_NIGHTLY_HISTORY_BUCKET: https://www.googleapis.com/storage/v1/b/balrog-stage-nightly-history-v1/o
+                GCS_RELEASES_HISTORY_BUCKET: https://www.googleapis.com/storage/v1/b/balrog-stage-release-history-v1/o
         run-on-releases:
             - v
 
@@ -47,11 +54,16 @@ tasks:
         description: "Production UI deploy"
         scopes:
             - secrets:get:repo:github.com/mozilla-releng/balrog:s3-prod-aws-creds
-            - secrets:get:repo:github.com/mozilla-releng/balrog:s3-prod-app-config
         worker:
             env:
                 AWS_CREDENTIALS_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-prod-aws-creds
-                APP_CONFIG_SECRET: http://taskcluster/secrets/v1/secret/repo:github.com/mozilla-releng/balrog:s3-prod-app-config
                 WEBSITE_BUCKET: balrog-prod-balrog-static-admin-prod-static-website
+                # Frontend configuration
+                AUTH0_AUDIENCE: balrog-production
+                AUTH0_CLIENT_ID: Qe16eoq0Uz9eSTVDVEO15DGBPCgqoAA2
+                AUTH0_REDIRECT_URI: https://balrog.services.mozilla.com/login
+                BALROG_ROOT_URL: https://aus4-admin.mozilla.org
+                GCS_NIGHTLY_HISTORY_BUCKET: https://www.googleapis.com/storage/v1/b/balrog-prod-nightly-history-v1/o
+                GCS_RELEASES_HISTORY_BUCKET: https://www.googleapis.com/storage/v1/b/balrog-prod-release-history-v1/o
         run-on-releases:
             - production-ui$
