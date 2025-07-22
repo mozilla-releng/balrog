@@ -213,6 +213,8 @@ class ReleaseBlobBase(XMLBlob):
         return patches
 
     def shouldServeUpdate(self, updateQuery):
+        if "buildTarget" not in updateQuery or "locale" not in updateQuery or "version" not in updateQuery or "buildID" not in updateQuery:
+            return ServeUpdate.No
         buildTarget = updateQuery["buildTarget"]
         locale = updateQuery["locale"]
         releaseVersion = self.getApplicationVersion(buildTarget, locale)
