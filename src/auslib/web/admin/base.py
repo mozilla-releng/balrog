@@ -5,7 +5,7 @@ from os import path
 import connexion
 from connexion.middleware import MiddlewarePosition
 from connexion.options import SwaggerUIOptions
-from flask import g, request
+from flask import request
 from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
 from starlette.middleware.cors import CORSMiddleware
@@ -36,18 +36,39 @@ spec = (
 swagger_ui_options = SwaggerUIOptions(swagger_ui=False)
 
 
-def should_time_request():
-    # don't time OPTIONS requests
-    if request.method == "OPTIONS":
-        return False
-    # don't time requests that don't match a valid route
-    if request.url_rule is None:
-        return False
-    # don't time dockerflow endpoints
-    if request.path.startswith("/__"):
-        return False
+class StatsdMiddleware:
+    def __init__(self, app):
+        self.app = app
 
-    return True
+    def metric_name(self, scope):
+        if scope["method"] == "OPTIONS":
+            return
+        op = scope.get("extensions", {}).get("connexion_routing", {}).get("operation_id")
+        if op is None:
+            return
+        # do some massaging to get the metric name right
+        # * remove various module prefixes
+        # * add a common prefix to ensure that we can mark these metrics as gauges for
+        #   statsd
+        metric = op.replace(".", "_").removeprefix("auslib_web_admin_views_").removeprefix("auslib_web_admin_").removeprefix("auslib_web_common_")
+        return f"endpoint_{metric}"
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        metric = self.metric_name(scope)
+        if not metric:
+            await self.app(scope, receive, send)
+            return
+
+        timer = statsd.timer(metric)
+        timer.start()
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            timer.stop()
 
 
 def create_app(allow_origins=None):
@@ -55,28 +76,10 @@ def create_app(allow_origins=None):
     connexion_app.app.debug = False
     connexion_app.add_api(spec, strict_validation=True)
     connexion_app.add_api(path.join(current_dir, "swagger", "api_v2.yml"), base_path="/v2", strict_validation=True, validate_responses=True)
+    connexion_app.add_middleware(StatsdMiddleware, MiddlewarePosition.BEFORE_VALIDATION)
     flask_app = connexion_app.app
 
     create_dockerflow_endpoints(flask_app)
-
-    @flask_app.before_request
-    def setup_timer():
-        g.request_timer = None
-        if should_time_request():
-            # do some massaging to get the metric name right
-            # * get rid of the `/v2` prefix on v2 endpoints added by `base_path` further up
-            # * remove various module prefixes
-            # * add a common prefix to ensure that we can mark these metrics as gauges for
-            #   statsd
-            metric = (
-                request.url_rule.endpoint.removeprefix("/v2.")
-                .removeprefix("auslib_web_admin_views_")
-                .removeprefix("auslib_web_admin_")
-                .removeprefix("auslib_web_common_")
-            )
-            metric = f"endpoint_{metric}"
-            g.request_timer = statsd.timer(metric)
-            g.request_timer.start()
 
     @flask_app.before_request
     def setup_request():
@@ -193,16 +196,6 @@ def create_app(allow_origins=None):
             response.headers["X-Frame-Options"] = "SAMEORIGIN"
         else:
             response.headers["Content-Security-Policy"] = flask_app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
-        return response
-
-    # this is specifically set-up last before after_request handlers are called
-    # in reverse order of registering, and we want this one to be called first
-    # to avoid it being skipped if another one raises an exception
-    @flask_app.after_request
-    def send_stats(response):
-        if hasattr(g, "request_timer") and g.request_timer:
-            g.request_timer.stop()
-
         return response
 
     if allow_origins:

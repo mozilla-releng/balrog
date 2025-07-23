@@ -2196,7 +2196,7 @@ def test_statsd(api, method, endpoint, metric):
     every single one. Requests don't need to succeed for these to pass;
     they just need to be routable."""
     with mock.patch("auslib.web.admin.base.statsd.timer") as mocked_timer:
-        api.open(endpoint, method=method)
+        api.request(method, endpoint)
         assert mocked_timer.call_count == 1
         mocked_timer.assert_has_calls([mock.call(metric)])
 
