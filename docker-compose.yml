@@ -137,7 +137,8 @@ services:
       - /bin/bash
       - --login
       - -c
-      - cd /app && yarn install && yarn start
+      - yarn install && yarn start
+    working_dir: /app
 
 
   nginx:
