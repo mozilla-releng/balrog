@@ -4,6 +4,7 @@ import re
 from os import path
 
 import connexion
+from connexion.middleware import MiddlewarePosition
 from connexion.options import SwaggerUIOptions
 from flask import Response, make_response, request, send_from_directory
 from sentry_sdk import capture_exception
@@ -31,12 +32,48 @@ spec = (
 )
 
 
+class StatsdMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        # we only expect GET requests; we don't care about anything else
+        if scope["type"] != "http" or scope["method"] != "GET":
+            await self.app(scope, receive, send)
+            return
+
+        # don't time dockerflow endpoints
+        if scope["path"].startswith("/__"):
+            await self.app(scope, receive, send)
+            return
+
+        # this is safe because even if the path is "/", we'll still get a 2 item list
+        prefix = scope["path"].split("/")[1]
+        if prefix not in ("update", "json", "api"):
+            prefix = "unknown"
+
+        status_code = None
+
+        def send_wrapper(response):
+            nonlocal status_code
+            if response["type"] == "http.response.start":
+                status_code = response["status"]
+            return send(response)
+
+        await self.app(scope, receive, send_wrapper)
+
+        assert status_code
+        statsd.incr(f"response.{prefix}.{status_code}")
+
+
 def create_app():
     connexion_app = connexion.App(__name__, specification_dir=".", swagger_ui_options=swagger_ui_options, middlewares=middlewares[:])
-    flask_app = connexion_app.app
-
+    # BEFORE_EXCEPTION so we capture 500s
+    connexion_app.add_middleware(StatsdMiddleware, MiddlewarePosition.BEFORE_EXCEPTION)
     # Response validation should be enabled when it actually works
     connexion_app.add_api(spec, strict_validation=True)
+
+    flask_app = connexion_app.app
 
     @flask_app.after_request
     def apply_security_headers(response):
@@ -128,25 +165,5 @@ def create_app():
             app_spec = yaml.dump(spec)
             return Response(mimetype="text/plain", response=app_spec)
         return Response(status=404)
-
-    # setting this up last means it will be called first. we do this because
-    # an exception in an earlier `after_request` handler will prevent this from
-    # being called.
-    @flask_app.after_request
-    def log_request(response):
-        # we only expect GET requests; we don't care about anything else
-        if request.method != "GET":
-            return response
-        # don't time dockerflow endpoints
-        if request.path.startswith("/__"):
-            return response
-
-        # this is safe because even if the path is "/", we'll still get a 2 item list
-        prefix = request.path.split("/")[1]
-        if prefix not in ("update", "json", "api"):
-            prefix = "unknown"
-        statsd.incr(f"response.{prefix}.{response.status_code}")
-
-        return response
 
     return connexion_app
