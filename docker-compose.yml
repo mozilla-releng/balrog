@@ -120,7 +120,7 @@ services:
 
 
   balrogui:
-    build: ./ui
+    image: node:16
     depends_on:
       balrogadmin:
         condition: service_healthy
@@ -138,6 +138,7 @@ services:
       - --login
       - -c
       - yarn install && yarn start
+    working_dir: /app
 
 
   nginx:
