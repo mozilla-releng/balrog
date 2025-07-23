@@ -1,10 +1,8 @@
 const webpack = require('webpack');
-
-const DEFAULT_HOST = 'localhost';
-const DEFAULT_PORT = 9000;
-const port = process.env.PORT || DEFAULT_PORT;
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const baseConfig = require('./.eslintrc');
 
 const eslintConfig = {
@@ -16,14 +14,16 @@ const eslintConfig = {
   useEslintrc: false,
   baseConfig,
 };
+const DEFAULT_HOST = 'localhost';
+const DEFAULT_PORT = 9000;
+const port = process.env.PORT || DEFAULT_PORT;
 
 // DO NOT USE DEVTOOLS THAT RELY ON EVAL IN PRODUCTION
 // These include tools such as
 // 'cheap-module-eval-source-map' and 'react-hot-loader/babel'
-module.exports = env => {
+module.exports = (_, { mode }) => {
   return {
-    mode: env,
-    devtool: env === 'production' ? false : 'cheap-module-eval-source-map',
+    devtool: mode === 'production' ? false : 'eval-cheap-module-source-map',
     target: 'web',
     context: __dirname,
     stats: {
@@ -31,15 +31,10 @@ module.exports = env => {
       entrypoints: false,
       modules: false,
     },
-    node: {
-      Buffer: false,
-      fs: 'empty',
-      tls: 'empty',
-    },
     output: {
       path: `${__dirname}/build`,
       publicPath: '/',
-      filename: 'assets/[name].js',
+      filename: 'assets/[name].[contenthash:8].js',
       globalObject: 'this',
     },
     resolve: {
@@ -56,22 +51,22 @@ module.exports = env => {
         '.js',
         '.json',
       ],
+      fallback: {
+        Buffer: false,
+        fs: false,
+        tls: false,
+      },
     },
     devServer: {
+      host: process.env.HOST || DEFAULT_HOST,
       port,
-      hot: true,
+      server: 'https',
       historyApiFallback: {
         disableDotRule: true,
       },
-      overlay: true,
-      stats: {
-        all: false,
-        errors: true,
-        timings: true,
-        warnings: true,
+      client: {
+        overlay: false,
       },
-      host: process.env.HOST || DEFAULT_HOST,
-      https: true,
       headers: {
         'Content-Security-Policy':
           "default-src 'none'; script-src 'self' 'unsafe-eval'; img-src 'self' https://*.gravatar.com https://*.githubusercontent.com https://i1.wp.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://localhost:8010 'self' https://balrog-localdev.auth0.com https://www.googleapis.com/; frame-src https://balrog-localdev.auth0.com; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
@@ -97,8 +92,14 @@ module.exports = env => {
           ],
         },
         {
-          include: [`${__dirname}/src`, `${__dirname}/test`],
+          test: /\.m?js/,
+          resolve: {
+            fullySpecified: false,
+          },
+        },
+        {
           test: /\.(js|jsx)$/,
+          include: [`${__dirname}/src`, `${__dirname}/test`],
           use: [
             {
               loader: 'babel-loader',
@@ -128,14 +129,20 @@ module.exports = env => {
                   [
                     '@babel/preset-react',
                     {
-                      development: env === 'development',
+                      development: mode === 'development',
                       useSpread: true,
                     },
                   ],
                 ],
                 plugins: [
                   '@babel/plugin-syntax-dynamic-import',
-                  ...(env === 'development' ? ['react-hot-loader/babel'] : []),
+                  [
+                    'transform-react-remove-prop-types',
+                    {
+                      removeImport: true,
+                    },
+                  ],
+                  ...(mode === 'development' ? ['react-hot-loader/babel'] : []),
                 ],
               },
             },
@@ -144,10 +151,13 @@ module.exports = env => {
         {
           oneOf: [
             {
-              test: /\.css$/i,
+              test: /\.module\.css$/,
               use: [
                 {
-                  loader: 'style-loader',
+                  loader: MiniCssExtractPlugin.loader,
+                  options: {
+                    esModule: true,
+                  },
                 },
                 {
                   loader: 'css-loader',
@@ -157,13 +167,15 @@ module.exports = env => {
                   },
                 },
               ],
-              include: /\.module\.css$/,
             },
             {
-              test: /\.css$/i,
+              test: /\.css$/,
               use: [
                 {
-                  loader: 'style-loader',
+                  loader: MiniCssExtractPlugin.loader,
+                  options: {
+                    esModule: true,
+                  },
                 },
                 {
                   loader: 'css-loader',
@@ -172,25 +184,19 @@ module.exports = env => {
                   },
                 },
               ],
-              exclude: /\.module\.css$/,
             },
           ],
         },
         {
-          test: /\.(png|jpe?g|gif|svg)$/i,
-          use: [
-            {
-              loader: 'url-loader',
-              options: {
-                limit: 8192,
-                name: 'assets/[name].[ext]',
-                fallback: require.resolve('file-loader'),
-              },
-            },
-          ],
+          test: /\.(eot|ttf|woff|woff2)(\?v=\d+\.\d+\.\d+)?$/,
+          type: 'asset/resource',
         },
         {
-          test: /\.worker\.js$/,
+          test: /\.(ico|png|jpg|jpeg|gif|svg|webp)(\?v=\d+\.\d+\.\d+)?$/,
+          type: 'asset/resource',
+        },
+        {
+          test: /.worker\.js$/,
           use: [
             {
               loader: 'worker-loader',
@@ -200,10 +206,11 @@ module.exports = env => {
       ],
     },
     optimization: {
-      minimize: false,
+      minimize: true,
       splitChunks: {
         chunks: 'all',
-        name: true,
+        maxInitialRequests: 5,
+        name: false,
       },
       runtimeChunk: 'single',
     },
@@ -247,12 +254,28 @@ module.exports = env => {
         appMountId: 'root',
         lang: 'en',
       }),
+      new MiniCssExtractPlugin({
+        filename: 'assets/[name].[contenthash:8].css',
+        ignoreOrder: false,
+        chunkFilename: 'assets/[name].[contenthash:8].css',
+      }),
+      new CleanWebpackPlugin({
+        dangerouslyAllowCleanPatternsOutsideProject: false,
+        dry: false,
+        verbose: false,
+        cleanStaleWebpackAssets: true,
+        protectWebpackAssets: true,
+        cleanAfterEveryBuildPatterns: [],
+        cleanOnceBeforeBuildPatterns: ['**/*'],
+        currentAssets: [],
+        initialClean: false,
+        outputPath: '',
+      }),
       new ESLintPlugin({
         extensions: ['js', 'jsx'],
         files: [`${__dirname}/src`, `${__dirname}/test`],
         ...eslintConfig,
       }),
-      new webpack.HotModuleReplacementPlugin(),
     ],
     entry: {
       index: [`${__dirname}/src/index`],
