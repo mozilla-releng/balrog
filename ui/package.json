@@ -29,7 +29,6 @@
     "axios": "^1.10.0",
     "change-case": "^4.1.2",
     "classnames": "^2.2.6",
-    "clipboard-copy": "^4.0.1",
     "codemirror": "^5.64.0",
     "date-fns": "2.26.0",
     "deep-sort-object": "^1.0.2",

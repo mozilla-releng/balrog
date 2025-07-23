@@ -7,7 +7,6 @@ import MenuItem from '@material-ui/core/MenuItem';
 import IconButton from '@material-ui/core/IconButton';
 import LogoutVariantIcon from 'mdi-react/LogoutVariantIcon';
 import ContentCopyIcon from 'mdi-react/ContentCopyIcon';
-import copy from 'clipboard-copy';
 import Button from '../Button';
 
 const useStyles = makeStyles(theme => ({
@@ -34,7 +33,7 @@ function UserMenu(props) {
   const handleCopyAccessToken = async () => {
     const accessToken = await auth0.getAccessTokenSilently();
 
-    copy(accessToken);
+    await navigator.clipboard.writeText(accessToken);
     handleMenuClose();
   };
 
