@@ -1880,7 +1880,7 @@ class Rules(AUSTable):
                 continue
             # Locales may be a comma delimited rule too, exact matches only
             if not matchLocale(rule["locale"], updateQuery.get("locale", "")):
-                self.log.debug("%s doesn't match %s", rule["locale"], updateQuery["locale"])
+                self.log.debug("%s doesn't match %s", rule["locale"], updateQuery.get("locale"))
                 continue
             if not matchBoolean(rule["mig64"], updateQuery.get("mig64")):
                 self.log.debug("%s doesn't match %s", rule["mig64"], updateQuery.get("mig64"))

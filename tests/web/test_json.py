@@ -227,6 +227,47 @@ def guardian_db():
         headerArchitecture="ignored",
         data_version=1,
     )
+    dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", data_version=1, alias="moz-releng")
+    dbo.rules.t.insert().execute(priority=91, backgroundRate=100, mapping="b", update_type="minor", product="b", data_version=1, locale="loc", alias="locale")
+    dbo.releases.t.insert().execute(
+        name="b",
+        product="b",
+        data_version=1,
+        data=createBlob(
+            """
+{
+    "name": "b",
+    "schema_version": 1,
+    "appv": "1.0",
+    "extv": "1.0",
+    "hashFunction": "sha512",
+    "platforms": {
+        "p": {
+            "buildID": "2",
+            "locales": {
+                "l": {
+                    "complete": {
+                        "filesize": "3",
+                        "from": "*",
+                        "hashValue": "4",
+                        "fileUrl": "http://a.com/z"
+                    }
+                },
+                "xh": {
+                    "complete": {
+                        "filesize": "5",
+                        "from": "*",
+                        "hashValue": "6",
+                        "fileUrl": "http://a.com/x"
+                    }
+                }
+            }
+        }
+    }
+}
+"""
+        ),
+    )
 
 
 @pytest.fixture(scope="module")
@@ -472,3 +513,11 @@ def testGuardianResponseV2WithGradualRollout(client, forceValue, response):
 def testXMLForGuardianBlob(client):
     ret = client.get("/update/1/Guardian/0.4.0.0/default/WINNT_x86_64/en-US/release/update.xml")
     assert ret.status_code == 400
+
+
+@pytest.mark.usefixtures("guardian_db")
+def testJSONForAppReleaseBlob(client):
+    ret = client.get("/json/1/b/127.0/p/release/update.json")
+    assert ret.status_code < 500
+    ret = client.get("/json/2/b/127.0/p/release/default/update.json")
+    assert ret.status_code < 500
