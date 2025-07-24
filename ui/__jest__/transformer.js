@@ -35,7 +35,7 @@ const jestBabelOptions = {
       },
     ],
   ],
-  plugins: ['@babel/plugin-syntax-dynamic-import', 'react-hot-loader/babel'],
+  plugins: ['@babel/plugin-syntax-dynamic-import'],
 };
 
 module.exports = createTransformer(jestBabelOptions);

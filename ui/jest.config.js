@@ -9,7 +9,6 @@ module.exports = {
       '<rootDir>/__jest__/fileMock.js',
     '\\.(css|less|sass|scss)$': '<rootDir>/__jest__/styleMock.js',
     '^react-native$': '<rootDir>/node_modules/react-native-web',
-    '^react-dom$': '<rootDir>/node_modules/@hot-loader/react-dom',
   },
   bail: true,
   collectCoverageFrom: ['src/**/*.{mjs,jsx,js}'],
