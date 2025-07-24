@@ -6,14 +6,13 @@ ENV LC_ALL C.UTF-8
 LABEL maintainer="releng@mozilla.com"
 
 # netcat is needed for health checks
-# Some versions of the python:3.8 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
 # default-libmysqlclient-dev is required to use SQLAlchemy with MySQL
 # mariadb-client is needed to import sample data
 # curl is needed to pull sample data
 # gcc is needed to compile some python packages
 # xz-utils is needed to unpack sampled ata
 RUN apt-get -q update \
-    && apt-get -q --yes install g++ netcat-traditional libpcre3 libpcre3-dev default-libmysqlclient-dev mariadb-client curl gcc xz-utils pkg-config \
+    && apt-get -q --yes install g++ netcat-traditional default-libmysqlclient-dev mariadb-client curl gcc xz-utils pkg-config \
     && apt-get clean
 
 WORKDIR /app
@@ -26,7 +25,7 @@ RUN pip install --no-deps -r requirements/local.txt
 COPY src/ /app/src/
 COPY tests/ /app/tests/
 COPY scripts/ /app/scripts/
-COPY uwsgi/ /app/uwsgi/
+COPY uvicorn/ /app/uvicorn/
 COPY MANIFEST.in setup.py pyproject.toml tox.ini version.json version.txt /app/
 
 RUN pip install -e .

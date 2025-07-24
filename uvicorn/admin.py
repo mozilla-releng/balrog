@@ -8,7 +8,6 @@ import aiohttp
 import sentry_sdk
 import statsd.defaults
 from gcloud.aio.storage import Storage
-from google.api_core.exceptions import Forbidden
 from google.cloud import storage
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -71,10 +70,12 @@ log = logging.getLogger(__file__)
 # statsd environment also needs to be set up before importing the application
 statsd.defaults.PREFIX = "balrog.admin"
 
-from auslib.global_state import cache, dbo  # noqa
-from auslib.web.admin.base import create_app
+from auslib.global_state import cache, dbo  # noqa: E402
+from auslib.web.admin.base import create_app  # noqa: E402
 
-application = create_app().app
+cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",")] or None
+connexion_app = create_app(allow_origins=cors_origins)
+application = connexion_app.app
 
 cache.make_copies = True
 # We explicitly don't want a blob_version cache here because it will cause
@@ -177,13 +178,6 @@ if not os.environ.get("INSECURE_SESSION_COOKIE"):
 # This helps mitigate XSS attacks.
 # https://www.owasp.org/index.php/HttpOnly#What_is_HttpOnly.3F
 application.config["SESSION_COOKIE_HTTPONLY"] = True
-
-# This isn't needed for the current UI, which is hosted at the same origin
-# as the API. When we roll out the new, React-based UI, it may be hosted
-# elsewhere in which case we'll need CloudOps to set this for us.
-# In the meantime, this allows us to set it to "*" for local development
-# to enable the new UI to work there.
-application.config["CORS_ORIGINS"] = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",")]
 
 # Strict Samesite cookies means that the session cookie will never be sent
 # when loading any page or making any request where the referrer is some

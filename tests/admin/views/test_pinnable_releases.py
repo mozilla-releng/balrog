@@ -43,12 +43,12 @@ class TestRuleScheduledChanges(ViewTest):
                 },
             ],
         }
-        self.assertEqual(ret.get_json(), expected)
+        self.assertEqual(ret.json(), expected)
 
     def testEnactScheduledChange(self):
         ret = self._post("/scheduled_changes/pinnable_releases/1/enact", username="mary")
-        self.assertEqual(ret.mimetype, "application/json")
-        self.assertEqual(ret.status_code, 200, ret.get_data())
+        self.assertEqual(ret.headers["content-type"], "application/json")
+        self.assertEqual(ret.status_code, 200, ret.text)
 
         sc_row = dbo.pinnable_releases.scheduled_changes.t.select().where(dbo.pinnable_releases.scheduled_changes.sc_id == 1).execute().fetchall()[0]
         self.assertEqual(sc_row["complete"], True)
