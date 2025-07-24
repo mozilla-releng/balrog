@@ -12,7 +12,7 @@ transforms:
 task-defaults:
         run-on-tasks-for: [github-pull-request, github-push]
         attributes:
-          code-review: true
+            code-review: true
         worker-type: test
         worker:
             docker-image: {in-tree: 'python3.13'}
@@ -29,17 +29,19 @@ tasks:
         run:
             cwd: '{checkout}'
             command: 'taskcluster/scripts/get-coveralls-token tox'
-        env:
-            TOXENV: 'py313,coveralls'
+        worker:
+            env:
+                TOXENV: 'py313,coveralls'
         scopes:
             - secrets:get:repo:github.com/mozilla-releng/balrog:coveralls
 
     lint-backend:
       description: balrog backend lints
       run:
-        cwd: '{checkout}'
-      env:
-        TOXENV: 'check'
+          cwd: '{checkout}'
+      worker:
+          env:
+              TOXENV: 'check'
 
     agent:
         description: balrog agent tests
@@ -52,9 +54,10 @@ tasks:
     lint-agent:
       description: balrog agent lints
       run:
-        cwd: '{checkout}/agent'
-      env:
-        TOXENV: 'check'
+          cwd: '{checkout}/agent'
+      worker:
+          env:
+              TOXENV: 'check'
 
     client:
         description: balrog client tests
@@ -68,9 +71,10 @@ tasks:
     lint-client:
       description: balrog client lints
       run:
-        cwd: '{checkout}/client'
-      env:
-        TOXENV: 'check'
+          cwd: '{checkout}/client'
+      worker:
+          env:
+              TOXENV: 'check'
 
     client-py313:
         description: balrog client tests (python 3.13)

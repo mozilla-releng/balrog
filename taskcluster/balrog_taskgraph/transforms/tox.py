@@ -11,10 +11,9 @@ transforms = TransformSequence()
 
 
 @transforms.add
-def update_env(config, jobs):
-    for job in jobs:
+def update_env(config, tasks):
+    for task in tasks:
         pr_number = config.params.get("pull_request_number", "")
-        env = job.pop("env", {})
+        env = task["worker"].setdefault("env", {})
         env["CI_PULL_REQUEST"] = str(pr_number)
-        job["worker"].setdefault("env", {}).update(env)
-        yield job
+        yield task
