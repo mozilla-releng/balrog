@@ -48,6 +48,7 @@ DOMAIN_ALLOWLIST = {
 if STAGING or LOCALDEV:
     DOMAIN_ALLOWLIST.update(
         {
+            "ciscobinarytest.openh264.org": ("OpenH264",),  # TODO: Remove this (bug 1977228)
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
             "bouncer-bouncer.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
             "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
