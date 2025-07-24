@@ -1,4 +1,3 @@
-import { hot } from 'react-hot-loader/root';
 import React, { Fragment } from 'react';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import { ThemeProvider } from '@material-ui/styles';
@@ -30,4 +29,4 @@ const App = () => {
   );
 };
 
-export default hot(App);
+export default App;
