@@ -47,7 +47,7 @@ if STAGING or LOCALDEV:
     SYSTEM_ACCOUNTS.extend(["balrog-stage-ffxbld", "balrog-stage-tbirdbld", "balrog-stage-xpibld"])
     DOMAIN_ALLOWLIST.update(
         {
-            "ciscobinarytest.openh264.org": ("OpenH264",),  # TODO: Remove this (bug 1977228)
+            "ciscobinarytest.openh264.org": ("OpenH264",),
             "ftp.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird", "Pinebuild", "SystemAddons"),
             "bouncer-bouncer.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird"),
             "bouncer-bouncer-releng.stage.mozaws.net": ("Firefox", "Fennec", "Devedition", "SeaMonkey", "Thunderbird", "Pinebuild"),
