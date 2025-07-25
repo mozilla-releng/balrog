@@ -80,7 +80,7 @@ function AutoCompleteText({
     onValueChange('');
   };
 
-  const handleStateReducer = (state, changes) => {
+  const handleStateReducer = (_state, changes) => {
     switch (changes.type) {
       case Downshift.stateChangeTypes.keyDownEnter:
       case Downshift.stateChangeTypes.clickItem: {

@@ -137,7 +137,7 @@ const useStyles = makeStyles(theme => ({
 function ListRules(props) {
   const classes = useStyles();
   const theme = useTheme();
-  const username = (props.auth0.user && props.auth0.user.email) || '';
+  const username = (props.auth0.user?.email) || '';
   const { search, hash } = props.location;
   const query = parse(search.slice(1));
   const hashQuery = parse(hash.replace('#', ''));
@@ -329,7 +329,7 @@ function ListRules(props) {
     ruleListRef.current.recomputeRowHeights();
   };
 
-  const handleSnackbarClose = (event, reason) => {
+  const handleSnackbarClose = (_event, reason) => {
     if (reason === 'clickaway') {
       return;
     }
@@ -340,8 +340,7 @@ function ListRules(props) {
   const isScheduledInsert = rule =>
     rule.scheduledChange && rule.scheduledChange.change_type === 'insert';
   const pairExists = (product, channel) =>
-    rules.data &&
-    rules.data.data.rules.some(
+    rules.data?.data.rules.some(
       rule => rule.product === product && rule.channel === channel
     );
   const sortRules = rules => {
@@ -353,11 +352,11 @@ function ListRules(props) {
     // than future state.
     const sortedRules = rules.sort((ruleA, ruleB) => {
       const priorityA =
-        ruleA.scheduledChange && ruleA.scheduledChange.priority
+        ruleA.scheduledChange?.priority
           ? ruleA.scheduledChange.priority
           : ruleA.priority;
       const priorityB =
-        ruleB.scheduledChange && ruleB.scheduledChange.priority
+        ruleB.scheduledChange?.priority
           ? ruleB.scheduledChange.priority
           : ruleB.priority;
 
@@ -467,7 +466,6 @@ function ListRules(props) {
       if (es.data && scheduledEs.data) {
         const shutoffs = es.data.data.shutoffs.map(shutoff => {
           const returnedShutoff = clone(shutoff);
-          /* eslint-disable-next-line max-len */
           const sc = scheduledEs.data.data.scheduled_changes.find(
             ses =>
               ses.product === shutoff.product && ses.channel === shutoff.channel
@@ -527,7 +525,7 @@ function ListRules(props) {
     rulesToShow = rulesToShow.filter(rule => {
       const [productFilter, channelFilter] = productChannelQueries;
       const ruleProduct =
-        rule.product || (rule.scheduledChange && rule.scheduledChange.product);
+        rule.product || (rule.scheduledChange?.product);
 
       if (ruleProduct !== productFilter) {
         return false;
@@ -666,7 +664,6 @@ function ListRules(props) {
         rule_id: dialogRule.rule_id,
         data_version: dialogRule.data_version,
       }));
-      // eslint-disable-next-line prefer-destructuring
       ret = (await getScheduledChangeByRuleId(dialogRule.rule_id)).data
         .scheduled_changes[0];
     }
@@ -692,7 +689,7 @@ function ListRules(props) {
               value={r}
               label={r}
               control={<Radio />}
-              disabled={!(requiredRoles && requiredRoles.includes(r))}
+              disabled={!(requiredRoles?.includes(r))}
             />
           );
         })}
@@ -1404,7 +1401,7 @@ function ListRules(props) {
 
         if (scId) {
           const itemNumber = filteredRulesWithScheduledChanges
-            .map(rule => rule.scheduledChange && rule.scheduledChange.sc_id)
+            .map(rule => rule.scheduledChange?.sc_id)
             .indexOf(scId);
 
           setScrollToRow(itemNumber);

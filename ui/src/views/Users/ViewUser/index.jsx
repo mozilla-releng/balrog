@@ -167,8 +167,6 @@ function ViewUser({ isNewUser, ...props }) {
                 sc[0].name = sc[0].permission;
                 delete sc[0].permission;
 
-                // Array destructuring is not very readable here.
-                // eslint-disable-next-line prefer-destructuring
                 permission.sc = sc[0];
 
                 if (!permission.sc.options) {
@@ -214,7 +212,7 @@ function ViewUser({ isNewUser, ...props }) {
   }, []);
 
   const handleUsernameChange = ({ target: { value } }) => setUsername(value);
-  const handleRoleNameChange = (role, index, value) => {
+  const handleRoleNameChange = (_role, index, value) => {
     // Only additional roles' names can be changed, so we don't need to
     // handle existing roles here.
     setAdditionalRoles(
@@ -237,7 +235,7 @@ function ViewUser({ isNewUser, ...props }) {
   };
 
   const handleRoleDelete = (role, index) => {
-    const excludeRole = (entry, i) => !(i === index);
+    const excludeRole = (_entry, i) => !(i === index);
 
     if (role.metadata.isAdditional) {
       setAdditionalRoles(additionalRoles.filter(excludeRole));
@@ -252,7 +250,7 @@ function ViewUser({ isNewUser, ...props }) {
     );
   };
 
-  const handlePermissionNameChange = (permission, index) => value => {
+  const handlePermissionNameChange = (_permission, index) => value => {
     setAdditionalPermissions(
       additionalPermissions.map((entry, i) => {
         if (i !== index) {
@@ -269,7 +267,7 @@ function ViewUser({ isNewUser, ...props }) {
   };
 
   const handlePermissionDelete = (permission, index) => {
-    const excludePermission = (entry, i) => !(i === index);
+    const excludePermission = (_entry, i) => !(i === index);
 
     if (permission.metadata.isAdditional) {
       setAdditionalPermissions(additionalPermissions.filter(excludePermission));

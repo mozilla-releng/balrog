@@ -73,7 +73,7 @@ export default params => {
           data_version: role.data_version,
           useScheduledChange: true,
           change_type: 'update',
-          when: new Date().getTime() + 30000,
+          when: Date.now() + 30000,
           scId: role.sc ? role.sc.sc_id : null,
           ...extraData,
         });
@@ -86,7 +86,7 @@ export default params => {
           role: role.name,
           signoffs_required: role.signoffs_required,
           change_type: 'insert',
-          when: new Date().getTime() + 30000,
+          when: Date.now() + 30000,
         });
 
         useScheduledChange = true;
@@ -110,7 +110,7 @@ export default params => {
           data_version: role.data_version,
           useScheduledChange: true,
           change_type: 'delete',
-          when: new Date().getTime() + 30000,
+          when: Date.now() + 30000,
         });
       })
     )

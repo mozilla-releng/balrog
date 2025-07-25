@@ -132,7 +132,7 @@ function ViewSignoff({ isNewSignoff, ...props }) {
       : setRoles(roles.map(setRole));
   };
 
-  const handleRoleNameChange = (role, index) => ({ target: { value } }) => {
+  const handleRoleNameChange = (_role, index) => ({ target: { value } }) => {
     const setRole = additionalRoles.map((entry, i) => {
       if (i !== index) {
         return entry;
@@ -156,7 +156,7 @@ function ViewSignoff({ isNewSignoff, ...props }) {
   };
 
   const handleRoleDelete = (role, index) => () => {
-    const excludeRole = (entry, i) => !(i === index);
+    const excludeRole = (_entry, i) => !(i === index);
 
     return role.metadata.isAdditionalRole
       ? setAdditionalRoles(additionalRoles.filter(excludeRole))
@@ -215,8 +215,7 @@ function ViewSignoff({ isNewSignoff, ...props }) {
       Promise.all([fetchProducts(), fetchChannels()]);
     } else {
       Promise.all([fetchProducts(), fetchChannels(), getRS()]).then(
-        // eslint-disable-next-line no-unused-vars
-        ([prods, chs, rs]) => {
+        ([_prods, _chs, rs]) => {
           const roles = getRolesFromRequiredSignoffs(rs.data, product, channel);
 
           setRoles(roles);

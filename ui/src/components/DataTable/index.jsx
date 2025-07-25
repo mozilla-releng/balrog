@@ -31,7 +31,7 @@ export default function DataTable(props) {
     onHeaderClick: _,
     ...rest
   } = props;
-  const colSpan = columnsSize || (headers && headers.length) || 0;
+  const colSpan = columnsSize || (headers?.length) || 0;
   const handleHeaderClick = ({ target }) => {
     const { onHeaderClick } = props;
 

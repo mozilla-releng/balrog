@@ -50,7 +50,6 @@ export default function Link({ viewName, nav, to, ...props }) {
   }
 
   return isPathAbsolute ? (
-    /* eslint-disable jsx-a11y/anchor-has-content */
     <a href={to} {...props} target="_blank" rel="noopener noreferrer" />
   ) : (
     <Component

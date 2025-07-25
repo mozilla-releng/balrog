@@ -96,7 +96,7 @@ const useStyles = makeStyles(theme => ({
 function Rule({ isNewRule, auth0, ...props }) {
   const classes = useStyles();
   const rulesFilter =
-    props.location.state && props.location.state.rulesFilter
+    props.location.state?.rulesFilter
       ? props.location.state.rulesFilter
       : [];
   const [rule, setRule] = useState(initialRule);
@@ -394,7 +394,7 @@ function Rule({ isNewRule, auth0, ...props }) {
 
   useEffect(() => {
     const rs =
-      requiredSignoffs.data && requiredSignoffs.data.data.required_signoffs;
+      requiredSignoffs.data?.data.required_signoffs;
 
     if (!rs || !rule.product) {
       setSignoffSummary(' Nobody');

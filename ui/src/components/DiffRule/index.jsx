@@ -43,7 +43,7 @@ function DiffRule(props) {
   }, [firstRule, secondRule]);
   const tokens = useMemo(() => tokenize(diff.hunks), [diff.hunks]);
 
-  return diff && diff.type ? (
+  return diff?.type ? (
     <Diff
       className={classes.diff}
       viewType="split"

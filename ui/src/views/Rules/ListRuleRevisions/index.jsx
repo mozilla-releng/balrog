@@ -38,7 +38,7 @@ const useStyles = makeStyles({
 function ListRuleRevisions(props) {
   const classes = useStyles();
   const rulesFilter =
-    props.location.state && props.location.state.rulesFilter
+    props.location.state?.rulesFilter
       ? props.location.state.rulesFilter
       : [];
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
@@ -48,7 +48,6 @@ function ListRuleRevisions(props) {
   const [fetchedRevisions, fetchRevisions] = useAction(getRevisions);
   const addSC = useAction(addScheduledChange)[1];
   const { ruleId } = props.match.params;
-  // eslint-disable-next-line prefer-destructuring
   const error = fetchedRevisions.error;
   const isLoading = fetchedRevisions.loading;
   const revisions = fetchedRevisions.data
@@ -111,7 +110,7 @@ function ListRuleRevisions(props) {
     delete ruleData.data_version;
     const { error, data } = await addSC({
       change_type: 'update',
-      when: new Date().getTime() + 30000,
+      when: Date.now() + 30000,
       data_version: revisions[0].data_version,
       ...ruleData,
     });

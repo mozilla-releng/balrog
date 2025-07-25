@@ -45,7 +45,6 @@ const getRevisions = (name, apiVersion) => {
   if (apiVersion === 1) {
     const releases = [];
 
-    // eslint-disable-next-line no-inner-declarations
     function parseReleases(rawReleases) {
       if (rawReleases) {
         rawReleases.forEach(r => {
@@ -68,7 +67,6 @@ const getRevisions = (name, apiVersion) => {
       }
     }
 
-    // eslint-disable-next-line no-inner-declarations
     async function getReleases(url, pageToken) {
       const response = await axios.get(
         pageToken ? `${url}&pageToken=${pageToken}` : url
@@ -133,7 +131,6 @@ const getRevisions = (name, apiVersion) => {
 
     parseRevisions(response.data.items).forEach(r => {
       if (!(r.path in revisionsByPath)) {
-        // eslint-disable-next-line no-param-reassign
         revisionsByPath[r.path] = [];
       }
 

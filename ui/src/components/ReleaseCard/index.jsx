@@ -142,7 +142,7 @@ function ReleaseCard(props) {
     release.scheduledChange && Object.keys(release.scheduledChange).length > 0;
   const requiredSignoffs = release.required_signoffs
     ? release.required_signoffs
-    : release.scheduledChange && release.scheduledChange.required_signoffs;
+    : release.scheduledChange?.required_signoffs;
   const requiresSignoff = Object.keys(requiredSignoffs).length > 0;
   const handleAccessChange = ({ target: { checked } }) => {
     onAccessChange({ release, checked });
