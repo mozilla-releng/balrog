@@ -1,38 +1,38 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import React, { useState, Fragment } from 'react';
-import { bool, func } from 'prop-types';
-import classNames from 'classnames';
-import { makeStyles } from '@material-ui/styles';
+import Avatar from '@material-ui/core/Avatar';
 import Card from '@material-ui/core/Card';
+import CardActions from '@material-ui/core/CardActions';
+import CardContent from '@material-ui/core/CardContent';
+import CardHeader from '@material-ui/core/CardHeader';
+import Chip from '@material-ui/core/Chip';
+import ClickAwayListener from '@material-ui/core/ClickAwayListener';
+import Divider from '@material-ui/core/Divider';
+import Grid from '@material-ui/core/Grid';
+import IconButton from '@material-ui/core/IconButton';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import Tooltip from '@material-ui/core/Tooltip';
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
-import IconButton from '@material-ui/core/IconButton';
-import CardHeader from '@material-ui/core/CardHeader';
-import CardContent from '@material-ui/core/CardContent';
-import CardActions from '@material-ui/core/CardActions';
-import Grid from '@material-ui/core/Grid';
-import Avatar from '@material-ui/core/Avatar';
-import Divider from '@material-ui/core/Divider';
 import Typography from '@material-ui/core/Typography';
-import Chip from '@material-ui/core/Chip';
-import DeleteIcon from 'mdi-react/DeleteIcon';
-import UpdateIcon from 'mdi-react/UpdateIcon';
-import PlusCircleIcon from 'mdi-react/PlusCircleIcon';
-import HistoryIcon from 'mdi-react/HistoryIcon';
+import { makeStyles } from '@material-ui/styles';
+import classNames from 'classnames';
 import { formatDistanceStrict } from 'date-fns';
+import DeleteIcon from 'mdi-react/DeleteIcon';
+import HistoryIcon from 'mdi-react/HistoryIcon';
+import PlusCircleIcon from 'mdi-react/PlusCircleIcon';
+import UpdateIcon from 'mdi-react/UpdateIcon';
+import { bool, func } from 'prop-types';
+import React, { Fragment, useState } from 'react';
+import { RULE_DIFF_PROPERTIES } from '../../utils/constants';
+import getDiffedProperties from '../../utils/getDiffedProperties';
+import getIndexOfSubStr from '../../utils/getIndexOfSubStr';
+import Link from '../../utils/Link';
+import { rule } from '../../utils/prop-types';
 import Button from '../Button';
 import DiffRule from '../DiffRule';
 import SignoffSummary from '../SignoffSummary';
-import Link from '../../utils/Link';
-import { RULE_DIFF_PROPERTIES } from '../../utils/constants';
-import { rule } from '../../utils/prop-types';
-import getDiffedProperties from '../../utils/getDiffedProperties';
-import getIndexOfSubStr from '../../utils/getIndexOfSubStr';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   root: {
     '& h2, & h4': {
       '& .anchor-link-style': {
@@ -172,7 +172,7 @@ function RuleCard({
   const requiresSignoff =
     rule.scheduledChange &&
     Object.keys(rule.scheduledChange.required_signoffs).length > 0;
-  const getChipIcon = changeType => {
+  const getChipIcon = (changeType) => {
     switch (changeType) {
       case 'delete': {
         return DeleteIcon;
@@ -192,9 +192,7 @@ function RuleCard({
     }
   };
 
-  const ChipIcon = getChipIcon(
-    rule.scheduledChange?.change_type
-  );
+  const ChipIcon = getChipIcon(rule.scheduledChange?.change_type);
   const diffCause = currentRule || rule.scheduledChange;
   const diffedProperties =
     rule && diffCause
@@ -253,8 +251,9 @@ function RuleCard({
           fontSize: '14px',
           lineHeight: '16px',
           margin: '2px 4px',
-        }}>
-        {allOsVersions.split(',').map(item => (
+        }}
+      >
+        {allOsVersions.split(',').map((item) => (
           <p key={item} style={{ margin: '2px 0' }}>
             {item}
           </p>
@@ -273,7 +272,8 @@ function RuleCard({
             disableFocusListener
             disableHoverListener
             disableTouchListener
-            arrow>
+            arrow
+          >
             <button
               type="button"
               style={{
@@ -285,7 +285,8 @@ function RuleCard({
                 display: 'inline-block',
                 cursor: 'pointer',
               }}
-              onClick={open ? handleTooltipClose : handleTooltipOpen}>
+              onClick={open ? handleTooltipClose : handleTooltipOpen}
+            >
               {seeMore}
             </button>
           </Tooltip>
@@ -311,7 +312,8 @@ function RuleCard({
                   aria-label={priorityTitle}
                   className={classNames(classes.avatar, {
                     [classes.schedPriorityChange]: isScheduledPriorityUpdate,
-                  })}>
+                  })}
+                >
                   <Typography className={classes.avatarText}>
                     {headerPriority}
                   </Typography>
@@ -327,7 +329,8 @@ function RuleCard({
               <a
                 href={`#ruleId=${rule.rule_id}`}
                 aria-label="Anchor"
-                className="anchor-link-style">
+                className="anchor-link-style"
+              >
                 #
               </a>
             </Typography>
@@ -338,7 +341,8 @@ function RuleCard({
                 to={{
                   pathname: `/rules/${rule.rule_id}/revisions`,
                   state: { rulesFilter },
-                }}>
+                }}
+              >
                 <Tooltip title="Revisions">
                   <IconButton>
                     <HistoryIcon />
@@ -363,7 +367,7 @@ function RuleCard({
                         component: 'div',
                         className: classNames(
                           classes.primaryText,
-                          classes.primaryTextWithButton
+                          classes.primaryTextWithButton,
                         ),
                       }}
                       secondaryTypographyProps={{
@@ -383,7 +387,8 @@ function RuleCard({
                               name={rule.mapping}
                               onClick={onViewReleaseClick}
                               variant="outlined"
-                              className={classes.viewReleaseBtn}>
+                              className={classes.viewReleaseBtn}
+                            >
                               View Release
                             </Button>
                           )}
@@ -401,7 +406,7 @@ function RuleCard({
                         component: 'div',
                         className: classNames(
                           classes.primaryText,
-                          classes.primaryTextWithButton
+                          classes.primaryTextWithButton,
                         ),
                       }}
                       secondaryTypographyProps={{
@@ -421,7 +426,8 @@ function RuleCard({
                               name={rule.fallbackMapping}
                               onClick={onViewReleaseClick}
                               variant="outlined"
-                              className={classes.viewReleaseBtn}>
+                              className={classes.viewReleaseBtn}
+                            >
                               View Release
                             </Button>
                           )}
@@ -485,7 +491,8 @@ function RuleCard({
                             component="span"
                             variant="body2"
                             className={classes.inline}
-                            color="textSecondary">
+                            color="textSecondary"
+                          >
                             {rule.rule_id}
                           </Typography>
                           <strong>
@@ -785,12 +792,14 @@ function RuleCard({
               <Typography
                 className={classes.changesTitle}
                 component="h4"
-                variant="subtitle1">
+                variant="subtitle1"
+              >
                 Scheduled Changes{' '}
                 <a
                   href={`#scId=${rule.scheduledChange.sc_id}`}
                   aria-label="Anchor"
-                  className="anchor-link-style">
+                  className="anchor-link-style"
+                >
                   #
                 </a>
               </Typography>
@@ -803,7 +812,7 @@ function RuleCard({
                 label={`${formatDistanceStrict(
                   rule.scheduledChange.when,
                   new Date(),
-                  { addSuffix: true }
+                  { addSuffix: true },
                 )} (${rule.scheduledChange.change_type})`}
               />
             </div>
@@ -811,7 +820,8 @@ function RuleCard({
               <Typography
                 className={classes.noDiffedPropertiesText}
                 variant="body2"
-                color="textSecondary">
+                color="textSecondary"
+              >
                 All properties will be deleted
               </Typography>
             ) : (
@@ -833,7 +843,8 @@ function RuleCard({
               <Typography
                 className={classes.changesTitle}
                 component="h4"
-                variant="subtitle1">
+                variant="subtitle1"
+              >
                 Historical Changes{' '}
               </Typography>
             </div>
@@ -841,7 +852,8 @@ function RuleCard({
               <Typography
                 className={classes.noDiffedPropertiesText}
                 variant="body2"
-                color="textSecondary">
+                color="textSecondary"
+              >
                 {currentRule ? 'No changes made yet' : 'Rule was deleted'}
               </Typography>
             ) : (
@@ -866,7 +878,8 @@ function RuleCard({
                 state: {
                   rulesFilter,
                 },
-              }}>
+              }}
+            >
               <Button color="secondary">Duplicate</Button>
             </Link>
           )}
@@ -884,14 +897,16 @@ function RuleCard({
                 state: {
                   rulesFilter,
                 },
-              }}>
+              }}
+            >
               <Button color="secondary">Update</Button>
             </Link>
           )}
           <Button
             color="secondary"
             disabled={disableActions || actionLoading}
-            onClick={() => onRuleDelete(rule)}>
+            onClick={() => onRuleDelete(rule)}
+          >
             Delete
           </Button>
           {requiresSignoff &&
@@ -899,14 +914,16 @@ function RuleCard({
               <Button
                 color="secondary"
                 disabled={disableActions || actionLoading}
-                onClick={onRevoke}>
+                onClick={onRevoke}
+              >
                 Revoke Signoff
               </Button>
             ) : (
               <Button
                 color="secondary"
                 disabled={disableActions || actionLoading || !canSignoff}
-                onClick={onSignoff}>
+                onClick={onSignoff}
+              >
                 Signoff
               </Button>
             ))}

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { func, oneOfType, bool, string, object } from 'prop-types';
-import classNames from 'classnames';
 import { makeStyles } from '@material-ui/styles';
 import MuiErrorPanel from '@mozilla-frontend-infra/components/ErrorPanel';
+import classNames from 'classnames';
+import { bool, func, object, oneOfType, string } from 'prop-types';
+import React, { useState } from 'react';
 import { CONTENT_MAX_WIDTH } from '../../utils/constants';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   fixed: {
     position: 'fixed',
     zIndex: theme.zIndex.snackbar,

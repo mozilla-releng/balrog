@@ -19,7 +19,7 @@ describe('info for filtered rules', () => {
     const result = getFilteredRulesInfo(productChannelQueries, date);
 
     expect(result).toMatch(
-      `${infoStartStr} for the ${productChannelQueries[0]} channel on ${date}.`
+      `${infoStartStr} for the ${productChannelQueries[0]} channel on ${date}.`,
     );
   });
   test('should have rewind date, product and channel when there is a rewind date, product query and channel query', () => {
@@ -28,7 +28,7 @@ describe('info for filtered rules', () => {
     const result = getFilteredRulesInfo(productChannelQueries, date);
 
     expect(result).toMatch(
-      `${infoStartStr} for the ${productChannelQueries[0]} ${productChannelQueries[1]} channel on ${date}.`
+      `${infoStartStr} for the ${productChannelQueries[0]} ${productChannelQueries[1]} channel on ${date}.`,
     );
   });
   test('should have scheduled changes string when scheduled changes filter is applied and there are no product channel queries', () => {
@@ -43,7 +43,7 @@ describe('info for filtered rules', () => {
     const result = getFilteredRulesInfo(productChannelQueries, null, 1);
 
     expect(result).toMatch(
-      `${infoStartStr} for the ${productChannelQueries[0]} channel ${scheduledChangesStr}`
+      `${infoStartStr} for the ${productChannelQueries[0]} channel ${scheduledChangesStr}`,
     );
   });
   test('should have scheduled changes string, product query and channel query when scheduled changes filter is applied and there is a product query and channel query', () => {
@@ -52,7 +52,7 @@ describe('info for filtered rules', () => {
     const result = getFilteredRulesInfo(productChannelQueries, null, 1);
 
     expect(result).toMatch(
-      `${infoStartStr} for the ${productChannelQueries[0]} ${productChannelQueries[1]} channel ${scheduledChangesStr}`
+      `${infoStartStr} for the ${productChannelQueries[0]} ${productChannelQueries[1]} channel ${scheduledChangesStr}`,
     );
   });
 });

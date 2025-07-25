@@ -1,7 +1,7 @@
 // This utility performs a diff and returns the list of properties
 // where their values differ.
 export default (diffProperties, objectOne, objectTwo) =>
-  diffProperties.filter(prop => {
+  diffProperties.filter((prop) => {
     const prev = objectOne[prop];
     const next = objectTwo[prop];
 

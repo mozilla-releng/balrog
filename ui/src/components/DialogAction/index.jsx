@@ -1,17 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { oneOfType, object, node, string, func, bool } from 'prop-types';
-import { makeStyles } from '@material-ui/styles';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import { makeStyles } from '@material-ui/styles';
+import { bool, func, node, object, oneOfType, string } from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
+import tryCatch from '../../utils/tryCatch';
 import Button from '../Button';
 import ErrorPanel from '../ErrorPanel';
-import tryCatch from '../../utils/tryCatch';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   executingActionWrapper: {
     position: 'relative',
   },
@@ -88,7 +88,8 @@ function DialogAction(props) {
       open={open}
       onExited={(...props) => onExited?.(...props)}
       onClose={onClose}
-      {...rest}>
+      {...rest}
+    >
       {title && <DialogTitle>{title}</DialogTitle>}
       <DialogContent>
         {error && (
@@ -108,7 +109,8 @@ function DialogAction(props) {
             onClick={handleSubmit}
             color={destructive ? 'danger' : 'primary'}
             variant="contained"
-            autoFocus>
+            autoFocus
+          >
             {confirmText}
           </Button>
           {actionExecuting && (

@@ -1,10 +1,10 @@
+import { func, node, number } from 'prop-types';
 import React from 'react';
-import { node, number, func } from 'prop-types';
 import { AutoSizer, Table } from 'react-virtualized';
 import 'react-virtualized/styles.css';
 import { makeStyles } from '@material-ui/styles';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   tableHeader: {
     textTransform: 'none',
     color: theme.palette.text.secondary,
@@ -36,7 +36,8 @@ function RevisionsTable(props) {
           estimatedRowSize={40}
           rowHeight={rowHeight}
           rowCount={rowCount}
-          rowGetter={rowGetter}>
+          rowGetter={rowGetter}
+        >
           {children}
         </Table>
       )}

@@ -1,15 +1,15 @@
-import React, { useMemo } from 'react';
 import { makeStyles } from '@material-ui/styles';
-import { diffLines, formatLines } from 'unidiff';
+import React, { useMemo } from 'react';
 import { Diff, Hunk, parseDiff } from 'react-diff-view';
+import { diffLines, formatLines } from 'unidiff';
 import 'react-diff-view/style/index.css';
-import tokenize from './tokenize';
+import { RULE_DIFF_PROPERTIES } from '../../utils/constants';
 import getDiff from '../../utils/diff';
 import getDiffedProperties from '../../utils/getDiffedProperties';
 import { rule } from '../../utils/prop-types';
-import { RULE_DIFF_PROPERTIES } from '../../utils/constants';
+import tokenize from './tokenize';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   diff: {
     fontSize: theme.typography.body2.fontSize,
     marginTop: theme.spacing(1),
@@ -30,7 +30,7 @@ function DiffRule(props) {
   const diffedProperties = getDiffedProperties(
     RULE_DIFF_PROPERTIES,
     firstRule,
-    secondRule
+    secondRule,
   );
   const diff = useMemo(() => {
     const [oldText, newText] = getDiff(diffedProperties, firstRule, secondRule);
@@ -49,8 +49,9 @@ function DiffRule(props) {
       viewType="split"
       diffType={diff.type}
       hunks={diff.hunks || []}
-      tokens={tokens}>
-      {hunks => hunks.map(hunk => <Hunk key={hunk.content} hunk={hunk} />)}
+      tokens={tokens}
+    >
+      {(hunks) => hunks.map((hunk) => <Hunk key={hunk.content} hunk={hunk} />)}
     </Diff>
   ) : null;
 }

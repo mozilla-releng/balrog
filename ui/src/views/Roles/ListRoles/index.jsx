@@ -1,20 +1,20 @@
-import React, { Fragment, useState, useEffect, useMemo } from 'react';
-import { stringify, parse } from 'qs';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
-import { makeStyles } from '@material-ui/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import Typography from '@material-ui/core/Typography';
-import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
+import TextField from '@material-ui/core/TextField';
+import Typography from '@material-ui/core/Typography';
+import { makeStyles } from '@material-ui/styles';
+import Spinner from '@mozilla-frontend-infra/components/Spinner';
+import { parse, stringify } from 'qs';
+import React, { Fragment, useEffect, useMemo, useState } from 'react';
 import Dashboard from '../../../components/Dashboard';
 import ErrorPanel from '../../../components/ErrorPanel';
 import useAction from '../../../hooks/useAction';
 import { getUsers } from '../../../services/users';
 
 const ALL = 'all';
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   title: {
     marginBottom: theme.spacing(3),
   },
@@ -50,9 +50,9 @@ function ListRoles(props) {
     return Array.from(
       new Set(
         Object.values(usersAction.data.data).flatMap(({ roles }) =>
-          roles.map(({ role }) => role)
-        )
-      )
+          roles.map(({ role }) => role),
+        ),
+      ),
     );
   }, [usersAction.data]);
   const users = useMemo(() => {
@@ -64,12 +64,12 @@ function ListRoles(props) {
       ([username, { roles }]) => ({
         username,
         roles,
-      })
+      }),
     );
   }, [usersAction.data]);
   const filteredRoles = useMemo(
     () => (roleFilter === ALL ? roles : [roleFilter]),
-    [roles, roleFilter]
+    [roles, roleFilter],
   );
 
   useEffect(() => {
@@ -99,16 +99,17 @@ function ListRoles(props) {
               select
               label="Role"
               value={roleFilter}
-              onChange={handleFilterChange}>
+              onChange={handleFilterChange}
+            >
               <MenuItem value="all">All Roles</MenuItem>
-              {roles.map(role => (
+              {roles.map((role) => (
                 <MenuItem key={role} value={role}>
                   {role}
                 </MenuItem>
               ))}
             </TextField>
           </div>
-          {filteredRoles.map(role => (
+          {filteredRoles.map((role) => (
             <div key={role} className={classes.roleWrapper}>
               <Typography variant="h6" className={classes.title}>
                 {role}
@@ -116,10 +117,10 @@ function ListRoles(props) {
               <div className={classes.paper}>
                 <List>
                   {users
-                    .filter(user =>
-                      user.roles.map(({ role }) => role).includes(role)
+                    .filter((user) =>
+                      user.roles.map(({ role }) => role).includes(role),
                     )
-                    .map(user => (
+                    .map((user) => (
                       <ListItem key={user.username}>
                         <ListItemText primary={user.username} />
                       </ListItem>

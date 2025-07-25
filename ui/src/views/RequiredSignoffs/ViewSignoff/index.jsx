@@ -1,40 +1,40 @@
-import React, { useState, useEffect, Fragment } from 'react';
-import { bool } from 'prop-types';
-import classNames from 'classnames';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
-import { makeStyles } from '@material-ui/styles';
+import Fab from '@material-ui/core/Fab';
+import FormControl from '@material-ui/core/FormControl';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormLabel from '@material-ui/core/FormLabel';
+import Grid from '@material-ui/core/Grid';
+import IconButton from '@material-ui/core/IconButton';
+import RadioGroup from '@material-ui/core/RadioGroup';
 import TextField from '@material-ui/core/TextField';
 import Tooltip from '@material-ui/core/Tooltip';
-import IconButton from '@material-ui/core/IconButton';
-import Fab from '@material-ui/core/Fab';
-import Grid from '@material-ui/core/Grid';
-import RadioGroup from '@material-ui/core/RadioGroup';
-import FormControl from '@material-ui/core/FormControl';
-import FormLabel from '@material-ui/core/FormLabel';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Typography from '@material-ui/core/Typography';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
-import NumberFormat from 'react-number-format';
+import { makeStyles } from '@material-ui/styles';
+import Spinner from '@mozilla-frontend-infra/components/Spinner';
+import classNames from 'classnames';
 import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
-import PlusIcon from 'mdi-react/PlusIcon';
 import DeleteIcon from 'mdi-react/DeleteIcon';
-import Dashboard from '../../../components/Dashboard';
-import DialogAction from '../../../components/DialogAction';
-import Button from '../../../components/Button';
-import SpeedDial from '../../../components/SpeedDial';
-import Radio from '../../../components/Radio';
-import ErrorPanel from '../../../components/ErrorPanel';
+import PlusIcon from 'mdi-react/PlusIcon';
+import { bool } from 'prop-types';
+import React, { Fragment, useEffect, useState } from 'react';
+import NumberFormat from 'react-number-format';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
-import { getChannels, getProducts } from '../../../services/rules';
-import getRequiredSignoffs from '../utils/getRequiredSignoffs';
-import updateRequiredSignoffs from '../utils/updateRequiredSignoffs';
-import getRolesFromRequiredSignoffs from '../utils/getRolesFromRequiredSignoffs';
+import Button from '../../../components/Button';
+import Dashboard from '../../../components/Dashboard';
+import DialogAction from '../../../components/DialogAction';
+import ErrorPanel from '../../../components/ErrorPanel';
+import Radio from '../../../components/Radio';
+import SpeedDial from '../../../components/SpeedDial';
 import useAction from '../../../hooks/useAction';
+import { getChannels, getProducts } from '../../../services/rules';
 import { DIALOG_ACTION_INITIAL_STATE } from '../../../utils/constants';
+import getRequiredSignoffs from '../utils/getRequiredSignoffs';
+import getRolesFromRequiredSignoffs from '../utils/getRolesFromRequiredSignoffs';
+import updateRequiredSignoffs from '../utils/updateRequiredSignoffs';
 
 let additionalRoleId = 0;
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   iconButtonGrid: {
     display: 'flex',
     alignItems: 'center',
@@ -87,7 +87,7 @@ function ViewSignoff({ isNewSignoff, ...props }) {
   const [roles, setRoles] = useState([]);
   const [originalRoles, setOriginalRoles] = useState([]);
   const [additionalRoles, setAdditionalRoles] = useState(
-    isNewSignoff ? [getEmptyRole()] : []
+    isNewSignoff ? [getEmptyRole()] : [],
   );
   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
   const [requiredSignoffs, getRS] = useAction(getRequiredSignoffs);
@@ -108,45 +108,49 @@ function ViewSignoff({ isNewSignoff, ...props }) {
     ? `This will delete all Required Signoffs for the ${productTextValue} ${channelTextValue} channel`
     : `This will delete all Required Signoffs for ${productTextValue} permissions`;
   const handleTypeChange = ({ target: { value } }) => setType(value);
-  const handleChannelChange = value => setChannelTextValue(value);
-  const handleProductChange = value => setProductTextValue(value);
-  const handleRoleValueChange = role => ({ floatValue: value }) => {
-    const setRole = entry => {
-      if (entry.name !== role.name) {
-        return entry;
-      }
+  const handleChannelChange = (value) => setChannelTextValue(value);
+  const handleProductChange = (value) => setProductTextValue(value);
+  const handleRoleValueChange =
+    (role) =>
+    ({ floatValue: value }) => {
+      const setRole = (entry) => {
+        if (entry.name !== role.name) {
+          return entry;
+        }
 
-      const result = entry;
+        const result = entry;
 
-      if (result.sc) {
-        result.sc.signoffs_required = value;
-      } else {
-        result.signoffs_required = value;
-      }
+        if (result.sc) {
+          result.sc.signoffs_required = value;
+        } else {
+          result.signoffs_required = value;
+        }
 
-      return result;
+        return result;
+      };
+
+      return role.metadata.isAdditionalRole
+        ? setAdditionalRoles(additionalRoles.map(setRole))
+        : setRoles(roles.map(setRole));
     };
 
-    return role.metadata.isAdditionalRole
-      ? setAdditionalRoles(additionalRoles.map(setRole))
-      : setRoles(roles.map(setRole));
-  };
+  const handleRoleNameChange =
+    (_role, index) =>
+    ({ target: { value } }) => {
+      const setRole = additionalRoles.map((entry, i) => {
+        if (i !== index) {
+          return entry;
+        }
 
-  const handleRoleNameChange = (_role, index) => ({ target: { value } }) => {
-    const setRole = additionalRoles.map((entry, i) => {
-      if (i !== index) {
-        return entry;
-      }
+        const result = entry;
 
-      const result = entry;
+        result.name = value;
 
-      result.name = value;
+        return result;
+      });
 
-      return result;
-    });
-
-    setAdditionalRoles(setRole);
-  };
+      setAdditionalRoles(setRole);
+    };
 
   const handleRoleAdd = () => {
     additionalRoleId += 1;
@@ -208,7 +212,8 @@ function ViewSignoff({ isNewSignoff, ...props }) {
     props.history.push('/required-signoffs');
   };
 
-  const handleDialogError = error => setDialogState({ ...dialogState, error });
+  const handleDialogError = (error) =>
+    setDialogState({ ...dialogState, error });
 
   useEffect(() => {
     if (isNewSignoff) {
@@ -220,7 +225,7 @@ function ViewSignoff({ isNewSignoff, ...props }) {
 
           setRoles(roles);
           setOriginalRoles(JSON.parse(JSON.stringify(roles)));
-        }
+        },
       );
     }
   }, [product, channel]);
@@ -230,7 +235,8 @@ function ViewSignoff({ isNewSignoff, ...props }) {
       key={role.metadata.id}
       className={classes.gridWithIcon}
       container
-      spacing={2}>
+      spacing={2}
+    >
       <Grid item xs>
         <TextField
           required
@@ -256,7 +262,8 @@ function ViewSignoff({ isNewSignoff, ...props }) {
       <Grid className={classes.iconButtonGrid} item xs={1}>
         <IconButton
           onClick={handleRoleDelete(role, index)}
-          className={classes.iconButton}>
+          className={classes.iconButton}
+        >
           <DeleteIcon />
         </IconButton>
       </Grid>
@@ -295,7 +302,8 @@ function ViewSignoff({ isNewSignoff, ...props }) {
                     aria-label="Type"
                     name="type"
                     value={type}
-                    onChange={handleTypeChange}>
+                    onChange={handleTypeChange}
+                  >
                     <FormControlLabel
                       disabled={!isNewSignoff}
                       value="channel"
@@ -335,13 +343,15 @@ function ViewSignoff({ isNewSignoff, ...props }) {
             {additionalRoles.map(renderRole)}
             <Grid
               className={classNames(classes.addRoleGrid, classes.gridSection)}
-              container>
+              container
+            >
               <Grid item xs={11}>
                 <Button
                   onClick={handleRoleAdd}
                   className={classes.addRoleButton}
                   color="primary"
-                  variant="outlined">
+                  variant="outlined"
+                >
                   <PlusIcon />
                 </Button>
               </Grid>
@@ -352,7 +362,8 @@ function ViewSignoff({ isNewSignoff, ...props }) {
               disabled={saveAction.loading}
               onClick={handleSignoffSave}
               color="primary"
-              className={classes.fab}>
+              className={classes.fab}
+            >
               <ContentSaveIcon />
             </Fab>
           </Tooltip>

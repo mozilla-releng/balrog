@@ -1,83 +1,83 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import React, { Fragment, useEffect, useState, useMemo, useRef } from 'react';
-import classNames from 'classnames';
-import { stringify, parse } from 'qs';
-import { addSeconds } from 'date-fns';
-import { clone } from 'ramda';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
-import { makeStyles, useTheme } from '@material-ui/styles';
+import Checkbox from '@material-ui/core/Checkbox';
+import Drawer from '@material-ui/core/Drawer';
 import Fab from '@material-ui/core/Fab';
-import Tooltip from '@material-ui/core/Tooltip';
-import TextField from '@material-ui/core/TextField';
-import MenuItem from '@material-ui/core/MenuItem';
-import Radio from '@material-ui/core/Radio';
-import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormLabel from '@material-ui/core/FormLabel';
-import Checkbox from '@material-ui/core/Checkbox';
+import IconButton from '@material-ui/core/IconButton';
+import MenuItem from '@material-ui/core/MenuItem';
+import Radio from '@material-ui/core/Radio';
+import RadioGroup from '@material-ui/core/RadioGroup';
 import Switch from '@material-ui/core/Switch';
-import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
-import Drawer from '@material-ui/core/Drawer';
+import TextField from '@material-ui/core/TextField';
+import Tooltip from '@material-ui/core/Tooltip';
 import Alert from '@material-ui/lab/Alert';
 import AlertTitle from '@material-ui/lab/AlertTitle';
-import IconButton from '@material-ui/core/IconButton';
-import PlusIcon from 'mdi-react/PlusIcon';
-import PauseIcon from 'mdi-react/PauseIcon';
+import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
+import { makeStyles, useTheme } from '@material-ui/styles';
+import Spinner from '@mozilla-frontend-infra/components/Spinner';
+import classNames from 'classnames';
+import { addSeconds } from 'date-fns';
 import CloseIcon from 'mdi-react/CloseIcon';
+import PauseIcon from 'mdi-react/PauseIcon';
+import PlusIcon from 'mdi-react/PlusIcon';
+import { parse, stringify } from 'qs';
+import { clone } from 'ramda';
+import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import Dashboard from '../../../components/Dashboard';
-import ErrorPanel from '../../../components/ErrorPanel';
-import EmergencyShutoffCard from '../../../components/EmergencyShutoffCard';
-import RuleCard from '../../../components/RuleCard';
-import DialogAction from '../../../components/DialogAction';
 import DateTimePicker from '../../../components/DateTimePicker';
-import VariableSizeList from '../../../components/VariableSizeList';
+import DialogAction from '../../../components/DialogAction';
+import EmergencyShutoffCard from '../../../components/EmergencyShutoffCard';
+import ErrorPanel from '../../../components/ErrorPanel';
+import RuleCard from '../../../components/RuleCard';
+import Snackbar from '../../../components/Snackbar';
 import SpeedDial from '../../../components/SpeedDial';
-import Link from '../../../utils/Link';
-import getDiffedProperties from '../../../utils/getDiffedProperties';
+import VariableSizeList from '../../../components/VariableSizeList';
 import useAction from '../../../hooks/useAction';
 import {
-  getProducts,
-  getChannels,
-  getRules,
-  getScheduledChanges,
-  getScheduledChangeByRuleId,
-  addScheduledChange,
-  deleteScheduledChange,
-  deleteRule,
-} from '../../../services/rules';
-import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
-import { makeSignoff, revokeSignoff } from '../../../services/signoffs';
-import {
-  getEmergencyShutoffs,
+  cancelDeleteEmergencyShutoff,
   createEmergencyShutoff,
   deleteEmergencyShutoff,
+  getEmergencyShutoffs,
   getScheduledChanges as getScheduledEmergencyShutoffs,
   scheduleDeleteEmergencyShutoff,
-  cancelDeleteEmergencyShutoff,
 } from '../../../services/emergency_shutoff';
 import {
   getRelease,
   getReleaseV2,
   getScheduledChangeByName,
 } from '../../../services/releases';
-import { getUserInfo } from '../../../services/users';
-import { ruleMatchesRequiredSignoff } from '../../../utils/requiredSignoffs';
+import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
 import {
-  RULE_DIFF_PROPERTIES,
+  addScheduledChange,
+  deleteRule,
+  deleteScheduledChange,
+  getChannels,
+  getProducts,
+  getRules,
+  getScheduledChangeByRuleId,
+  getScheduledChanges,
+} from '../../../services/rules';
+import { makeSignoff, revokeSignoff } from '../../../services/signoffs';
+import { getUserInfo } from '../../../services/users';
+import {
+  CONTENT_MAX_WIDTH,
   DIALOG_ACTION_INITIAL_STATE,
   OBJECT_NAMES,
+  RULE_DIFF_PROPERTIES,
   SNACKBAR_INITIAL_STATE,
-  CONTENT_MAX_WIDTH,
 } from '../../../utils/constants';
-import remToPx from '../../../utils/remToPx';
 import elementsHeight from '../../../utils/elementsHeight';
-import Snackbar from '../../../components/Snackbar';
-import { ruleMatchesChannel } from '../../../utils/rules';
+import getDiffedProperties from '../../../utils/getDiffedProperties';
 import getFilteredRulesInfo from '../../../utils/getFilteredRulesInfo';
+import Link from '../../../utils/Link';
+import remToPx from '../../../utils/remToPx';
+import { ruleMatchesRequiredSignoff } from '../../../utils/requiredSignoffs';
+import { ruleMatchesChannel } from '../../../utils/rules';
 
 const ALL = 'all';
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   fab: {
     ...theme.mixins.fab,
     right: theme.spacing(12),
@@ -137,7 +137,7 @@ const useStyles = makeStyles(theme => ({
 function ListRules(props) {
   const classes = useStyles();
   const theme = useTheme();
-  const username = (props.auth0.user?.email) || '';
+  const username = props.auth0.user?.email || '';
   const { search, hash } = props.location;
   const query = parse(search.slice(1));
   const hashQuery = parse(hash.replace('#', ''));
@@ -154,7 +154,7 @@ function ListRules(props) {
   const [ruleIdHash, setRuleIdHash] = useState(null);
   const [scheduledIdHash, setScheduledIdHash] = useState(null);
   const [rulesWithScheduledChanges, setRulesWithScheduledChanges] = useState(
-    []
+    [],
   );
   const searchFieldRef = useRef(null);
   const [searchFieldHeight, setSearchFieldHeight] = useState(0);
@@ -165,16 +165,16 @@ function ListRules(props) {
   const [productChannelFilter, setProductChannelFilter] = useState(
     productChannelQueries
       ? productChannelQueries.filter(Boolean).join(productChannelSeparator)
-      : ALL
+      : ALL,
   );
   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
   const [scheduleDeleteDate, setScheduleDeleteDate] = useState(
-    addSeconds(new Date(), -30)
+    addSeconds(new Date(), -30),
   );
   const [dateTimePickerError, setDateTimePickerError] = useState(null);
   const [rewoundRules, setRewoundRules] = useState([]);
   const [rewindDate, setRewindDate] = useState(
-    query.timestamp ? new Date(parseInt(query.timestamp, 10)) : null
+    query.timestamp ? new Date(parseInt(query.timestamp, 10)) : null,
   );
   const [rewindDateError, setRewindDateError] = useState(null);
   const [showRewindDiff, setShowRewindDiff] = useState(false);
@@ -182,10 +182,8 @@ function ListRules(props) {
   const [roles, setRoles] = useState([]);
   const [requiredRoles, setRequiredRoles] = useState([]);
   const [emergencyShutoffs, setEmergencyShutoffs] = useState([]);
-  const [
-    emergencyShutoffReasonComment,
-    setEmergencyShutoffReasonComment,
-  ] = useState('');
+  const [emergencyShutoffReasonComment, setEmergencyShutoffReasonComment] =
+    useState('');
   const [signoffRole, setSignoffRole] = useState('');
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
   const [drawerReleaseName, setDrawerReleaseName] = useState(null);
@@ -193,45 +191,39 @@ function ListRules(props) {
   const [products, fetchProducts] = useAction(getProducts);
   const [channels, fetchChannels] = useAction(getChannels);
   const [rules, fetchRules] = useAction(getRules);
-  const [scheduledChanges, fetchScheduledChanges] = useAction(
-    getScheduledChanges
-  );
-  const [requiredSignoffs, fetchRequiredSignoffs] = useAction(
-    getRequiredSignoffs
-  );
+  const [scheduledChanges, fetchScheduledChanges] =
+    useAction(getScheduledChanges);
+  const [requiredSignoffs, fetchRequiredSignoffs] =
+    useAction(getRequiredSignoffs);
   const [release, fetchRelease] = useAction(getRelease);
   const [releaseV2, fetchReleaseV2] = useAction(getReleaseV2);
   const [scheduledChangeNameAction, fetchScheduledChangeByName] = useAction(
-    getScheduledChangeByName
+    getScheduledChangeByName,
   );
   const [delRuleAction, delRule] = useAction(deleteRule);
-  const [scheduleDelRuleAction, scheduleDelRule] = useAction(
-    addScheduledChange
-  );
+  const [scheduleDelRuleAction, scheduleDelRule] =
+    useAction(addScheduledChange);
   const [delScAction, delSC] = useAction(deleteScheduledChange);
-  const [signoffAction, signoff] = useAction(props =>
-    makeSignoff({ type: 'rules', ...props })
+  const [signoffAction, signoff] = useAction((props) =>
+    makeSignoff({ type: 'rules', ...props }),
   );
-  const [revokeAction, revoke] = useAction(props =>
-    revokeSignoff({ type: 'rules', ...props })
+  const [revokeAction, revoke] = useAction((props) =>
+    revokeSignoff({ type: 'rules', ...props }),
   );
   const [rolesAction, fetchRoles] = useAction(getUserInfo);
-  const [emergencyShutoffsAction, fetchEmergencyShutoffs] = useAction(
-    getEmergencyShutoffs
-  );
-  const [
-    scheduledEmergencyShutoffsAction,
-    fetchScheduledEmergencyShutoffs,
-  ] = useAction(getScheduledEmergencyShutoffs);
+  const [emergencyShutoffsAction, fetchEmergencyShutoffs] =
+    useAction(getEmergencyShutoffs);
+  const [scheduledEmergencyShutoffsAction, fetchScheduledEmergencyShutoffs] =
+    useAction(getScheduledEmergencyShutoffs);
   const filteredProductChannelIsShutoff =
     productChannelFilter !== ALL &&
     productChannelQueries &&
     productChannelQueries.length === 2
       ? emergencyShutoffs.some(
-          es =>
+          (es) =>
             es.product === productChannelQueries[0] &&
             (!productChannelQueries[1] ||
-              es.channel === productChannelQueries[1])
+              es.channel === productChannelQueries[1]),
         )
       : false;
   const filteredProductChannelRequiresSignoff =
@@ -239,28 +231,28 @@ function ListRules(props) {
     productChannelQueries &&
     productChannelQueries.length === 2
       ? requiredSignoffs.data.data.required_signoffs.some(
-          rs =>
+          (rs) =>
             rs.product === productChannelQueries[0] &&
-            rs.channel === productChannelQueries[1]
+            rs.channel === productChannelQueries[1],
         )
       : false;
   const [disableUpdatesAction, disableUpdates] = useAction(
-    createEmergencyShutoff
+    createEmergencyShutoff,
   );
   const [enableUpdatesAction, enableUpdates] = useAction(
-    deleteEmergencyShutoff
+    deleteEmergencyShutoff,
   );
   const [scheduleEnableUpdatesAction, scheduleEnableUpdates] = useAction(
-    scheduleDeleteEmergencyShutoff
+    scheduleDeleteEmergencyShutoff,
   );
   const [cancelEnableUpdatesAction, cancelEnableUpdates] = useAction(
-    cancelDeleteEmergencyShutoff
+    cancelDeleteEmergencyShutoff,
   );
-  const [signoffEnableUpdatesAction, signoffEnableUpdates] = useAction(props =>
-    signoff({ type: 'emergency_shutoff', ...props })
+  const [signoffEnableUpdatesAction, signoffEnableUpdates] = useAction(
+    (props) => signoff({ type: 'emergency_shutoff', ...props }),
   );
-  const [revokeEnableUpdatesAction, revokeEnableUpdates] = useAction(props =>
-    revoke({ type: 'emergency_shutoff', ...props })
+  const [revokeEnableUpdatesAction, revokeEnableUpdates] = useAction((props) =>
+    revoke({ type: 'emergency_shutoff', ...props }),
   );
   const isLoading =
     products.loading ||
@@ -337,13 +329,13 @@ function ListRules(props) {
     setSnackbarState(SNACKBAR_INITIAL_STATE);
   };
 
-  const isScheduledInsert = rule =>
+  const isScheduledInsert = (rule) =>
     rule.scheduledChange && rule.scheduledChange.change_type === 'insert';
   const pairExists = (product, channel) =>
     rules.data?.data.rules.some(
-      rule => rule.product === product && rule.channel === channel
+      (rule) => rule.product === product && rule.channel === channel,
     );
-  const sortRules = rules => {
+  const sortRules = (rules) => {
     // Rules are sorted by priority. Rules that are
     // pending (ie: still just a Scheduled Change) will be inserted based
     // on the priority in the Scheduled Change. Rules that have Scheduled
@@ -351,14 +343,12 @@ function ListRules(props) {
     // because it's more important to make it easy to assess current state
     // than future state.
     const sortedRules = rules.sort((ruleA, ruleB) => {
-      const priorityA =
-        ruleA.scheduledChange?.priority
-          ? ruleA.scheduledChange.priority
-          : ruleA.priority;
-      const priorityB =
-        ruleB.scheduledChange?.priority
-          ? ruleB.scheduledChange.priority
-          : ruleB.priority;
+      const priorityA = ruleA.scheduledChange?.priority
+        ? ruleA.scheduledChange.priority
+        : ruleA.priority;
+      const priorityB = ruleB.scheduledChange?.priority
+        ? ruleB.scheduledChange.priority
+        : ruleB.priority;
 
       return priorityB - priorityA;
     });
@@ -375,10 +365,10 @@ function ListRules(props) {
     const chs = channels.data.data.channel;
     const options = [];
 
-    prods.forEach(product => {
+    prods.forEach((product) => {
       options.push(product);
 
-      chs.forEach(channel => {
+      chs.forEach((channel) => {
         if (!channel.endsWith('*') && pairExists(product, channel)) {
           options.push(`${product}${productChannelSeparator}${channel}`);
         }
@@ -390,7 +380,7 @@ function ListRules(props) {
 
   useEffect(() => {
     if (rewindDate) {
-      fetchRules(rewindDate.getTime()).then(r => {
+      fetchRules(rewindDate.getTime()).then((r) => {
         if (!r.data) {
           return;
         }
@@ -422,19 +412,19 @@ function ListRules(props) {
       const scheduledChanges = sc.data.data.scheduled_changes;
       const requiredSignoffs = rs.data.data.required_signoffs;
       const { rules } = r.data.data;
-      const rulesWithScheduledChanges = rules.map(rule => {
-        const sc = scheduledChanges.find(sc => rule.rule_id === sc.rule_id);
+      const rulesWithScheduledChanges = rules.map((rule) => {
+        const sc = scheduledChanges.find((sc) => rule.rule_id === sc.rule_id);
         const returnedRule = { ...rule };
 
         if (sc) {
           returnedRule.scheduledChange = sc;
           returnedRule.scheduledChange.when = new Date(
-            returnedRule.scheduledChange.when
+            returnedRule.scheduledChange.when,
           );
         }
 
         returnedRule.required_signoffs = {};
-        requiredSignoffs.forEach(rs => {
+        requiredSignoffs.forEach((rs) => {
           if (ruleMatchesRequiredSignoff(rule, rs)) {
             returnedRule.required_signoffs[rs.role] = rs.signoffs_required;
           }
@@ -443,7 +433,7 @@ function ListRules(props) {
         return returnedRule;
       });
 
-      scheduledChanges.forEach(sc => {
+      scheduledChanges.forEach((sc) => {
         if (sc.change_type === 'insert') {
           const rule = { scheduledChange: sc };
 
@@ -464,11 +454,12 @@ function ListRules(props) {
       setRulesWithScheduledChanges(sortedRules);
 
       if (es.data && scheduledEs.data) {
-        const shutoffs = es.data.data.shutoffs.map(shutoff => {
+        const shutoffs = es.data.data.shutoffs.map((shutoff) => {
           const returnedShutoff = clone(shutoff);
           const sc = scheduledEs.data.data.scheduled_changes.find(
-            ses =>
-              ses.product === shutoff.product && ses.channel === shutoff.channel
+            (ses) =>
+              ses.product === shutoff.product &&
+              ses.channel === shutoff.channel,
           );
 
           if (sc) {
@@ -492,7 +483,7 @@ function ListRules(props) {
 
   useEffect(() => {
     if (username) {
-      fetchRoles(username).then(userInfo => {
+      fetchRoles(username).then((userInfo) => {
         const roleList =
           (userInfo.data && Object.keys(userInfo.data.data.roles)) || [];
 
@@ -510,7 +501,7 @@ function ListRules(props) {
 
     // Pending signoff switch
     if (filteredRules && Boolean(query.onlyScheduledChanges)) {
-      filteredRules = filteredRules.filter(rule => rule.scheduledChange);
+      filteredRules = filteredRules.filter((rule) => rule.scheduledChange);
     }
 
     const rewoundFilteredRules = clone(rewoundRules);
@@ -522,10 +513,9 @@ function ListRules(props) {
     }
 
     // Product channel dropdown filter
-    rulesToShow = rulesToShow.filter(rule => {
+    rulesToShow = rulesToShow.filter((rule) => {
       const [productFilter, channelFilter] = productChannelQueries;
-      const ruleProduct =
-        rule.product || (rule.scheduledChange?.product);
+      const ruleProduct = rule.product || rule.scheduledChange?.product;
 
       if (ruleProduct !== productFilter) {
         return false;
@@ -545,20 +535,20 @@ function ListRules(props) {
     query.onlyScheduledChanges,
     rewoundRules,
   ]);
-  const handleDateTimePickerError = error => {
+  const handleDateTimePickerError = (error) => {
     setDateTimePickerError(error);
   };
 
-  const handleDateTimeChange = date => {
+  const handleDateTimeChange = (date) => {
     setScheduleDeleteDate(date);
     setDateTimePickerError(null);
   };
 
-  const handleRewindDateTimePickerError = error => {
+  const handleRewindDateTimePickerError = (error) => {
     setRewindDateError(error);
   };
 
-  const handleRewindDateTimeChange = date => {
+  const handleRewindDateTimeChange = (date) => {
     setRewindDate(date);
     setRewindDateError(null);
 
@@ -575,7 +565,7 @@ function ListRules(props) {
     props.history.push(`/rules${stringify(qs, { addQueryPrefix: true })}`);
   };
 
-  const handleDialogError = error => {
+  const handleDialogError = (error) => {
     setDialogState({ ...dialogState, error });
   };
 
@@ -587,12 +577,12 @@ function ListRules(props) {
     setDialogState(DIALOG_ACTION_INITIAL_STATE);
   };
 
-  const handleDeleteDialogComplete = result => {
+  const handleDeleteDialogComplete = (result) => {
     if (result.change_type === 'delete') {
       // A change was scheduled, we need to update the card
       // to reflect that.
       setRulesWithScheduledChanges(
-        rulesWithScheduledChanges.map(r => {
+        rulesWithScheduledChanges.map((r) => {
           if (r.rule_id !== result.rule_id) {
             return r;
           }
@@ -602,7 +592,7 @@ function ListRules(props) {
           newRule.scheduledChange = result;
 
           return newRule;
-        })
+        }),
       );
       ruleListRef.current.recomputeRowHeights();
       handleSnackbarOpen({
@@ -611,7 +601,7 @@ function ListRules(props) {
     } else if (result.rule_id) {
       // The rule was directly deleted, just remove it.
       setRulesWithScheduledChanges(
-        rulesWithScheduledChanges.filter(i => i.rule_id !== result.rule_id)
+        rulesWithScheduledChanges.filter((i) => i.rule_id !== result.rule_id),
       );
       handleSnackbarOpen({
         message: `Rule ${result.rule_id} deleted`,
@@ -619,8 +609,8 @@ function ListRules(props) {
     } else {
       setRulesWithScheduledChanges(
         rulesWithScheduledChanges.filter(
-          i => !i.scheduledChange || i.scheduledChange.sc_id !== result.sc_id
-        )
+          (i) => !i.scheduledChange || i.scheduledChange.sc_id !== result.sc_id,
+        ),
       );
       handleSnackbarOpen({
         message: `Scheduled Rule deleted`,
@@ -681,15 +671,16 @@ function ListRules(props) {
         aria-label="Role"
         name="role"
         value={signoffRole}
-        onChange={handleSignoffRoleChange}>
-        {roles.map(r => {
+        onChange={handleSignoffRoleChange}
+      >
+        {roles.map((r) => {
           return (
             <FormControlLabel
               key={r}
               value={r}
               label={r}
               control={<Radio />}
-              disabled={!(requiredRoles?.includes(r))}
+              disabled={!requiredRoles?.includes(r)}
             />
           );
         })}
@@ -699,7 +690,7 @@ function ListRules(props) {
   const filteredRulesCount = filteredRulesWithScheduledChanges.length;
   const updateSignoffs = ({ roleToSignoffWith, rule }) => {
     setRulesWithScheduledChanges(
-      rulesWithScheduledChanges.map(r => {
+      rulesWithScheduledChanges.map((r) => {
         if (
           !r.scheduledChange ||
           r.scheduledChange.sc_id !== rule.scheduledChange.sc_id
@@ -712,7 +703,7 @@ function ListRules(props) {
         newRule.scheduledChange.signoffs[username] = roleToSignoffWith;
 
         return newRule;
-      })
+      }),
     );
   };
 
@@ -735,16 +726,16 @@ function ListRules(props) {
     return result;
   };
 
-  const handleSignoffDialogComplete = result => {
+  const handleSignoffDialogComplete = (result) => {
     updateSignoffs(result);
     handleDialogClose();
   };
 
-  const handleSignoff = async rule => {
+  const handleSignoff = async (rule) => {
     setRequiredRoles(Object.keys(rule.required_signoffs));
 
-    const userRequiredRoles = Object.keys(rule.required_signoffs).filter(r =>
-      roles.includes(r)
+    const userRequiredRoles = Object.keys(rule.required_signoffs).filter((r) =>
+      roles.includes(r),
     );
 
     if (userRequiredRoles.length === 1) {
@@ -767,7 +758,7 @@ function ListRules(props) {
     }
   };
 
-  const handleRevoke = async rule => {
+  const handleRevoke = async (rule) => {
     const { error } = await revoke({
       scId: rule.scheduledChange.sc_id,
       role: rule.scheduledChange.signoffs[username],
@@ -775,7 +766,7 @@ function ListRules(props) {
 
     if (!error) {
       setRulesWithScheduledChanges(
-        rulesWithScheduledChanges.map(r => {
+        rulesWithScheduledChanges.map((r) => {
           if (
             !r.scheduledChange ||
             r.scheduledChange.sc_id !== rule.scheduledChange.sc_id
@@ -788,7 +779,7 @@ function ListRules(props) {
           delete newRule.scheduledChange.signoffs[username];
 
           return newRule;
-        })
+        }),
       );
     }
   };
@@ -818,7 +809,7 @@ function ListRules(props) {
           : `rule ${dialogState.item.rule_id}`
       }.`
     ));
-  const handleRuleDelete = rule => {
+  const handleRuleDelete = (rule) => {
     setDialogState({
       ...dialogState,
       open: true,
@@ -850,7 +841,7 @@ function ListRules(props) {
     const { error, data } = await disableUpdates(
       product,
       channel,
-      emergencyShutoffReasonComment
+      emergencyShutoffReasonComment,
     );
 
     if (!error) {
@@ -884,7 +875,7 @@ function ListRules(props) {
   const handleEnableUpdates = async () => {
     const [product, channel] = productChannelQueries;
     const esDetails = emergencyShutoffs.find(
-      es => es.product === product && es.channel === channel
+      (es) => es.product === product && es.channel === channel,
     );
 
     if (filteredProductChannelRequiresSignoff) {
@@ -894,25 +885,24 @@ function ListRules(props) {
         product,
         channel,
         esDetails.data_version,
-        when
+        when,
       );
 
       if (!error) {
-        const {
-          error: sesError,
-          data: sesData,
-        } = await fetchScheduledEmergencyShutoffs();
+        const { error: sesError, data: sesData } =
+          await fetchScheduledEmergencyShutoffs();
 
         if (!sesError) {
           setEmergencyShutoffs(
-            emergencyShutoffs.map(es => {
+            emergencyShutoffs.map((es) => {
               if (es.product !== product || es.channel !== channel) {
                 return es;
               }
 
               const shutoff = clone(es);
               const sc = sesData.data.scheduled_changes.find(
-                ses => ses.product === es.product && ses.channel === es.channel
+                (ses) =>
+                  ses.product === es.product && ses.channel === es.channel,
               );
 
               if (sc) {
@@ -920,7 +910,7 @@ function ListRules(props) {
               }
 
               return shutoff;
-            })
+            }),
           );
         }
       }
@@ -928,14 +918,14 @@ function ListRules(props) {
       const { error } = await enableUpdates(
         product,
         channel,
-        esDetails.data_version
+        esDetails.data_version,
       );
 
       if (!error) {
         setEmergencyShutoffs(
           emergencyShutoffs.filter(
-            es => es.product !== product || es.channel !== channel
-          )
+            (es) => es.product !== product || es.channel !== channel,
+          ),
         );
       }
     }
@@ -944,16 +934,16 @@ function ListRules(props) {
   const handleCancelEnableUpdates = async () => {
     const [product, channel] = productChannelQueries;
     const esDetails = emergencyShutoffs.find(
-      es => es.product === product && es.channel === channel
+      (es) => es.product === product && es.channel === channel,
     );
     const { error } = await cancelEnableUpdates(
       esDetails.scheduledChange.sc_id,
-      esDetails.scheduledChange.sc_data_version
+      esDetails.scheduledChange.sc_data_version,
     );
 
     if (!error) {
       setEmergencyShutoffs(
-        emergencyShutoffs.map(es => {
+        emergencyShutoffs.map((es) => {
           if (es.product !== product || es.channel !== channel) {
             return es;
           }
@@ -963,7 +953,7 @@ function ListRules(props) {
           delete shutoff.scheduledChange;
 
           return shutoff;
-        })
+        }),
       );
     }
   };
@@ -973,7 +963,7 @@ function ListRules(props) {
     emergencyShutoff,
   }) => {
     setEmergencyShutoffs(
-      emergencyShutoffs.map(es => {
+      emergencyShutoffs.map((es) => {
         if (
           !es.scheduledChange ||
           es.scheduledChange.sc_id !== emergencyShutoff.scheduledChange.sc_id
@@ -986,13 +976,13 @@ function ListRules(props) {
         newEs.scheduledChange.signoffs[username] = roleToSignoffWith;
 
         return newEs;
-      })
+      }),
     );
   };
 
   const doSignoffEnableUpdates = async (
     roleToSignoffWith,
-    emergencyShutoff
+    emergencyShutoff,
   ) => {
     const { error } = await signoffEnableUpdates({
       scId: emergencyShutoff.scheduledChange.sc_id,
@@ -1005,7 +995,7 @@ function ListRules(props) {
   const handleSignoffEnableUpdatesDialogSubmit = async () => {
     const { error, result } = await doSignoffEnableUpdates(
       signoffRole,
-      dialogState.item
+      dialogState.item,
     );
 
     if (error) {
@@ -1015,24 +1005,24 @@ function ListRules(props) {
     return result;
   };
 
-  const handleSignoffEnableUpdatesDialogComplete = result => {
+  const handleSignoffEnableUpdatesDialogComplete = (result) => {
     updateSignoffsEnableUpdates(result);
     handleDialogClose();
   };
 
   const handleSignoffEnableUpdates = async () => {
     setRequiredRoles(
-      Object.keys(filteredRulesWithScheduledChanges[0].required_signoffs)
+      Object.keys(filteredRulesWithScheduledChanges[0].required_signoffs),
     );
     const [product, channel] = productChannelQueries;
     const esDetails = emergencyShutoffs.find(
-      es => es.product === product && es.channel === channel
+      (es) => es.product === product && es.channel === channel,
     );
 
     if (roles.length === 1) {
       const { error, result } = await doSignoffEnableUpdates(
         roles[0],
-        esDetails
+        esDetails,
       );
 
       if (!error) {
@@ -1055,7 +1045,7 @@ function ListRules(props) {
   const handleRevokeEnableUpdates = async () => {
     const [product, channel] = productChannelQueries;
     const esDetails = emergencyShutoffs.find(
-      es => es.product === product && es.channel === channel
+      (es) => es.product === product && es.channel === channel,
     );
     const { error } = await revokeEnableUpdates({
       scId: esDetails.scheduledChange.sc_id,
@@ -1064,7 +1054,7 @@ function ListRules(props) {
 
     if (!error) {
       setEmergencyShutoffs(
-        emergencyShutoffs.map(es => {
+        emergencyShutoffs.map((es) => {
           if (
             !es.scheduledChange ||
             es.scheduledChange.sc_id !== esDetails.scheduledChange.sc_id
@@ -1077,7 +1067,7 @@ function ListRules(props) {
           delete newEs.scheduledChange.signoffs[username];
 
           return newEs;
-        })
+        }),
       );
     }
   };
@@ -1099,7 +1089,7 @@ function ListRules(props) {
 
   useEffect(() => {
     if (drawerReleaseName) {
-      fetchReleaseV2(drawerReleaseName).then(fetchedRelease => {
+      fetchReleaseV2(drawerReleaseName).then((fetchedRelease) => {
         if (!fetchedRelease.error) {
           const item =
             Object.keys(fetchedRelease.data.data.sc_blob).length > 0
@@ -1121,7 +1111,7 @@ function ListRules(props) {
                 ? JSON.stringify(
                     fetchedSC.data.data.scheduled_changes[0].data,
                     null,
-                    2
+                    2,
                   )
                 : JSON.stringify(fetchedRelease.data.data, null, 2);
 
@@ -1170,7 +1160,7 @@ function ListRules(props) {
   const getRowHeight = ({ index }) => {
     const rule = filteredRulesWithScheduledChanges[index];
     const currentRule = rulesWithScheduledChanges.find(
-      r => r.rule_id === rule.rule_id
+      (r) => r.rule_id === rule.rule_id,
     );
     const hasScheduledChanges = Boolean(rule.scheduledChange);
     // Padding top and bottom included
@@ -1191,11 +1181,11 @@ function ListRules(props) {
           // product:channel header height
           h6TextHeight,
           // revisions icon
-          theme.spacing(3) + 24
+          theme.spacing(3) + 24,
         ) + theme.spacing(1); // top padding
 
       // != checks for both null and undefined
-      const keys = Object.keys(rule).filter(key => rule[key] != null);
+      const keys = Object.keys(rule).filter((key) => rule[key] != null);
       const firstColumn = ['mapping', 'fallbackMapping', 'backgroundRate'];
       const secondColumn = ['data_version', 'rule_id'];
       const thirdColumn = [
@@ -1214,9 +1204,9 @@ function ListRules(props) {
       ];
       // card rows
       const rows = Math.max(
-        keys.filter(key => firstColumn.includes(key)).length,
-        keys.filter(key => secondColumn.includes(key)).length,
-        keys.filter(key => thirdColumn.includes(key)).length
+        keys.filter((key) => firstColumn.includes(key)).length,
+        keys.filter((key) => secondColumn.includes(key)).length,
+        keys.filter((key) => thirdColumn.includes(key)).length,
       );
 
       height +=
@@ -1248,7 +1238,7 @@ function ListRules(props) {
         const diffedProperties = getDiffedProperties(
           RULE_DIFF_PROPERTIES,
           rule,
-          rule.scheduledChange
+          rule.scheduledChange,
         );
 
         // diff viewer + marginTop + height of the
@@ -1270,7 +1260,7 @@ function ListRules(props) {
 
       if (Object.keys(rule.scheduledChange.required_signoffs).length > 0) {
         const requiredRoles = Object.keys(
-          rule.scheduledChange.required_signoffs
+          rule.scheduledChange.required_signoffs,
         ).length;
         const nSignoffs = Object.keys(rule.scheduledChange.signoffs).length;
         // Required Roles and Signoffs are beside one another, so we only
@@ -1297,7 +1287,7 @@ function ListRules(props) {
         const diffedProperties = getDiffedProperties(
           RULE_DIFF_PROPERTIES,
           rule,
-          currentRule
+          currentRule,
         );
 
         if (diffedProperties.length === 0) {
@@ -1324,7 +1314,7 @@ function ListRules(props) {
     return height;
   };
 
-  const isRuleSelected = rule => {
+  const isRuleSelected = (rule) => {
     if (!hashQuery.ruleId && !hashQuery.scId) {
       return false;
     }
@@ -1336,7 +1326,7 @@ function ListRules(props) {
     if (hashQuery.scId) {
       return Boolean(
         rule.scheduledChange &&
-          Number(rule.scheduledChange.sc_id === Number(hashQuery.scId))
+          Number(rule.scheduledChange.sc_id === Number(hashQuery.scId)),
       );
     }
   };
@@ -1346,7 +1336,7 @@ function ListRules(props) {
     const rule = filteredRulesWithScheduledChanges[index];
     const isSelected = isRuleSelected(rule);
     const currentRule = rulesWithScheduledChanges.find(
-      r => r.rule_id === rule.rule_id
+      (r) => r.rule_id === rule.rule_id,
     );
 
     return (
@@ -1356,7 +1346,8 @@ function ListRules(props) {
             ? rule.rule_id
             : Object.values(rule.scheduledChange).join('-')
         }
-        style={style}>
+        style={style}
+      >
         <RuleCard
           className={classNames(classes.card, {
             [classes.ruleCardSelected]: isSelected,
@@ -1369,7 +1360,7 @@ function ListRules(props) {
           canSignoff={
             !rewindDate &&
             rule.required_signoffs &&
-            Object.keys(rule.required_signoffs).filter(r => roles.includes(r))
+            Object.keys(rule.required_signoffs).filter((r) => roles.includes(r))
               .length
           }
           onSignoff={() => handleSignoff(rule)}
@@ -1390,7 +1381,7 @@ function ListRules(props) {
 
         if (ruleId) {
           const itemNumber = filteredRulesWithScheduledChanges
-            .map(rule => rule.rule_id)
+            .map((rule) => rule.rule_id)
             .indexOf(ruleId);
 
           setScrollToRow(itemNumber);
@@ -1401,7 +1392,7 @@ function ListRules(props) {
 
         if (scId) {
           const itemNumber = filteredRulesWithScheduledChanges
-            .map(rule => rule.scheduledChange?.sc_id)
+            .map((rule) => rule.scheduledChange?.sc_id)
             .indexOf(scId);
 
           setScrollToRow(itemNumber);
@@ -1415,7 +1406,8 @@ function ListRules(props) {
     <Dashboard
       title={
         rewindDate ? `Rules @ ${rewindDate.toString().split('(')[0]}` : 'Rules'
-      }>
+      }
+    >
       {isLoading && <Spinner loading />}
       {error && <ErrorPanel fixed error={error} />}
       {!isLoading && productChannelOptions && (
@@ -1437,7 +1429,8 @@ function ListRules(props) {
                       onClick={() => handleRewindDateTimeChange(null)}
                       disabled={!rewindDate}
                       style={{ order: 1 }}
-                      color="disabled">
+                      color="disabled"
+                    >
                       <CloseIcon />
                     </IconButton>
                   ),
@@ -1473,9 +1466,10 @@ function ListRules(props) {
               select
               label={`Product${productChannelSeparator}Channel`}
               value={productChannelOptions.length ? productChannelFilter : ''}
-              onChange={handleFilterChange}>
+              onChange={handleFilterChange}
+            >
               <MenuItem value="all">All Rules</MenuItem>
-              {productChannelOptions.map(option => (
+              {productChannelOptions.map((option) => (
                 <MenuItem key={option} value={option}>
                   {option}
                 </MenuItem>
@@ -1487,16 +1481,16 @@ function ListRules(props) {
               productChannelQueries &&
               productChannelQueries.length === 2 &&
               emergencyShutoffs.find(
-                es =>
+                (es) =>
                   es.product === productChannelQueries[0] &&
-                  es.channel === productChannelQueries[1]
+                  es.channel === productChannelQueries[1],
               ) && (
                 <EmergencyShutoffCard
                   className={classes.card}
                   emergencyShutoff={emergencyShutoffs.find(
-                    es =>
+                    (es) =>
                       es.product === productChannelQueries[0] &&
-                      es.channel === productChannelQueries[1]
+                      es.channel === productChannelQueries[1],
                   )}
                   onEnableUpdates={handleEnableUpdates}
                   onCancelEnable={handleCancelEnableUpdates}
@@ -1524,16 +1518,18 @@ function ListRules(props) {
                   <IconButton
                     onClick={() => handleRewindDateTimeChange(null)}
                     color="inherit"
-                    size="small">
+                    size="small"
+                  >
                     <CloseIcon />
                   </IconButton>
                 }
-                {...props}>
+                {...props}
+              >
                 <AlertTitle>Info</AlertTitle>
                 {getFilteredRulesInfo(
                   productChannelQueries,
                   rewindDate,
-                  query.onlyScheduledChanges
+                  query.onlyScheduledChanges,
                 )}
               </Alert>
             )}
@@ -1557,7 +1553,8 @@ function ListRules(props) {
         classes={{ paper: classes.drawerPaper }}
         anchor="bottom"
         open={drawerState.open}
-        onClose={handleDrawerClose}>
+        onClose={handleDrawerClose}
+      >
         <pre>
           <code>{drawerState.item}</code>
         </pre>
@@ -1568,7 +1565,8 @@ function ListRules(props) {
           to={{
             pathname: '/rules/create',
             state: { rulesFilter: productChannelQueries },
-          }}>
+          }}
+        >
           <Tooltip title="Add Rule">
             <Fab color="primary" className={classes.fab} disabled={rewindDate}>
               <PlusIcon />

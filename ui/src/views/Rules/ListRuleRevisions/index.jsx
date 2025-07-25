@@ -1,22 +1,22 @@
-import React, { Fragment, useState, useEffect } from 'react';
-import { Column } from 'react-virtualized';
-import { clone } from 'ramda';
-import { stringify } from 'qs';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
-import { makeStyles } from '@material-ui/styles';
-import Typography from '@material-ui/core/Typography';
 import Drawer from '@material-ui/core/Drawer';
+import Typography from '@material-ui/core/Typography';
+import { makeStyles } from '@material-ui/styles';
+import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import { formatDistanceStrict } from 'date-fns';
+import { stringify } from 'qs';
+import { clone } from 'ramda';
+import React, { Fragment, useEffect, useState } from 'react';
+import { Column } from 'react-virtualized';
+import Button from '../../../components/Button';
 import Dashboard from '../../../components/Dashboard';
 import DialogAction from '../../../components/DialogAction';
-import ErrorPanel from '../../../components/ErrorPanel';
-import RuleCard from '../../../components/RuleCard';
-import Radio from '../../../components/Radio';
-import Button from '../../../components/Button';
 import DiffRule from '../../../components/DiffRule';
+import ErrorPanel from '../../../components/ErrorPanel';
+import Radio from '../../../components/Radio';
 import RevisionsTable from '../../../components/RevisionsTable';
+import RuleCard from '../../../components/RuleCard';
 import useAction from '../../../hooks/useAction';
-import { getRevisions, addScheduledChange } from '../../../services/rules';
+import { addScheduledChange, getRevisions } from '../../../services/rules';
 import {
   CONTENT_MAX_WIDTH,
   DIALOG_ACTION_INITIAL_STATE,
@@ -37,10 +37,9 @@ const useStyles = makeStyles({
 
 function ListRuleRevisions(props) {
   const classes = useStyles();
-  const rulesFilter =
-    props.location.state?.rulesFilter
-      ? props.location.state.rulesFilter
-      : [];
+  const rulesFilter = props.location.state?.rulesFilter
+    ? props.location.state.rulesFilter
+    : [];
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
   const [leftRadioCheckedIndex, setLeftRadioCheckedIndex] = useState(1);
   const [rightRadioCheckedIndex, setRightRadioCheckedIndex] = useState(0);
@@ -54,7 +53,7 @@ function ListRuleRevisions(props) {
     ? fetchedRevisions.data.data.rules
     : [];
   const revisionsCount = revisions.length;
-  const redirectWithRulesFilter = hashFilter => {
+  const redirectWithRulesFilter = (hashFilter) => {
     const [product, channel] = rulesFilter;
     const query = stringify({ product, channel }, { addQueryPrefix: true });
 
@@ -80,7 +79,7 @@ function ListRuleRevisions(props) {
     });
   };
 
-  const handleViewClick = item => () => {
+  const handleViewClick = (item) => () => {
     setDrawerState({
       ...drawerState,
       item,
@@ -88,7 +87,7 @@ function ListRuleRevisions(props) {
     });
   };
 
-  const handleRestoreClick = revision => () =>
+  const handleRestoreClick = (revision) => () =>
     setDialogState({
       ...dialogState,
       open: true,
@@ -123,9 +122,10 @@ function ListRuleRevisions(props) {
   };
 
   const handleDialogClose = () => setDialogState(DIALOG_ACTION_INITIAL_STATE);
-  const handleDialogActionComplete = scId =>
+  const handleDialogActionComplete = (scId) =>
     redirectWithRulesFilter(`scId=${scId}`);
-  const handleDialogError = error => setDialogState({ ...dialogState, error });
+  const handleDialogError = (error) =>
+    setDialogState({ ...dialogState, error });
   const columnWidth = CONTENT_MAX_WIDTH / 4;
 
   return (
@@ -139,7 +139,8 @@ function ListRuleRevisions(props) {
         <Fragment>
           <RevisionsTable
             rowCount={revisionsCount}
-            rowGetter={({ index }) => revisions[index]}>
+            rowGetter={({ index }) => revisions[index]}
+          >
             <Column
               label="Revision Date"
               dataKey="timestamp"
@@ -206,7 +207,8 @@ function ListRuleRevisions(props) {
             classes={{ paper: classes.drawerPaper }}
             anchor="bottom"
             open={drawerState.open}
-            onClose={handleDrawerClose}>
+            onClose={handleDrawerClose}
+          >
             <RuleCard
               className={classes.ruleCard}
               readOnly

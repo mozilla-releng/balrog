@@ -1,18 +1,18 @@
-import React, { Fragment } from 'react';
-import { string, node, bool } from 'prop-types';
-import { Helmet } from 'react-helmet';
-import { makeStyles } from '@material-ui/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
-import menuItems from './menuItems';
+import { makeStyles } from '@material-ui/styles';
+import { bool, node, string } from 'prop-types';
+import React, { Fragment } from 'react';
+import { Helmet } from 'react-helmet';
+import { APP_BAR_HEIGHT, CONTENT_MAX_WIDTH } from '../../utils/constants';
 import Link from '../../utils/Link';
-import UserMenu from './UserMenu';
 import Button from '../Button';
+import menuItems from './menuItems';
 import SettingsMenu from './SettingsMenu';
-import { CONTENT_MAX_WIDTH, APP_BAR_HEIGHT } from '../../utils/constants';
+import UserMenu from './UserMenu';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   appbar: {
     height: APP_BAR_HEIGHT,
   },
@@ -62,11 +62,12 @@ export default function Dashboard(props) {
             variant="h6"
             noWrap
             component={Link}
-            to="/">
+            to="/"
+          >
             Balrog Admin ┃ {title}
           </Typography>
           <nav className={classes.nav}>
-            {menuItems.main.map(menuItem => (
+            {menuItems.main.map((menuItem) => (
               <Link
                 key={menuItem.value}
                 className={disabled ? classes.disabledLink : classes.link}
@@ -75,7 +76,8 @@ export default function Dashboard(props) {
                   window.location.pathname === menuItem.path
                     ? `${window.location.pathname}${window.location.search}`
                     : menuItem.path
-                }>
+                }
+              >
                 <Button color="inherit">{menuItem.value}</Button>
               </Link>
             ))}

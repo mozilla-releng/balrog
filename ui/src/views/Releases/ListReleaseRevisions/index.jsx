@@ -1,23 +1,23 @@
-import React, { Fragment, useEffect, useState } from 'react';
 import axios from 'axios';
+import React, { Fragment, useEffect, useState } from 'react';
 import { Column } from 'react-virtualized';
 import 'react-virtualized/styles.css';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
-import { makeStyles } from '@material-ui/styles';
 import Drawer from '@material-ui/core/Drawer';
 import Typography from '@material-ui/core/Typography';
+import { makeStyles } from '@material-ui/styles';
+import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import { formatDistanceStrict } from 'date-fns';
-import ErrorPanel from '../../../components/ErrorPanel';
-import Dashboard from '../../../components/Dashboard';
-import Radio from '../../../components/Radio';
 import Button from '../../../components/Button';
-import useAction from '../../../hooks/useAction';
-import { getRevisions, getRelease } from '../../../services/releases';
-import { CONTENT_MAX_WIDTH } from '../../../utils/constants';
+import Dashboard from '../../../components/Dashboard';
 import DiffRelease from '../../../components/DiffRelease';
+import ErrorPanel from '../../../components/ErrorPanel';
+import Radio from '../../../components/Radio';
 import RevisionsTable from '../../../components/RevisionsTable';
+import useAction from '../../../hooks/useAction';
+import { getRelease, getRevisions } from '../../../services/releases';
+import { CONTENT_MAX_WIDTH } from '../../../utils/constants';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   radioCell: {
     paddingLeft: 0,
   },
@@ -83,7 +83,7 @@ function ListReleaseRevisions(props) {
     });
   };
 
-  const handleViewClick = item => async () => {
+  const handleViewClick = (item) => async () => {
     const result = await fetchRevisionData(item.data_url);
 
     setDrawerState({
@@ -97,7 +97,7 @@ function ListReleaseRevisions(props) {
     const r = revisions[leftRadioCheckedIndex];
 
     if (r) {
-      axios.get(r.data_url).then(result => {
+      axios.get(r.data_url).then((result) => {
         setLeftRevisionData(result.data || {});
       });
     }
@@ -107,7 +107,7 @@ function ListReleaseRevisions(props) {
     const r = revisions[rightRadioCheckedIndex];
 
     if (r) {
-      axios.get(r.data_url).then(result => {
+      axios.get(r.data_url).then((result) => {
         setRightRevisionData(result.data || {});
       });
     }
@@ -129,7 +129,8 @@ function ListReleaseRevisions(props) {
         <Fragment>
           <RevisionsTable
             rowCount={revisionsCount}
-            rowGetter={({ index }) => revisions[index]}>
+            rowGetter={({ index }) => revisions[index]}
+          >
             <Column
               label="Revision Date"
               dataKey="timestamp"
@@ -194,7 +195,8 @@ function ListReleaseRevisions(props) {
             classes={{ paper: classes.drawerPaper }}
             anchor="bottom"
             open={drawerState.open}
-            onClose={handleDrawerClose}>
+            onClose={handleDrawerClose}
+          >
             <pre>
               <code>{JSON.stringify(drawerState.item, null, 2)}</code>
             </pre>

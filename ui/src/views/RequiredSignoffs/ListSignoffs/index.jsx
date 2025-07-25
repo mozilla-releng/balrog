@@ -1,42 +1,43 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import React, { Fragment, useEffect, useState } from 'react';
-import { capitalCase } from 'change-case';
-import classNames from 'classnames';
-import { stringify, parse } from 'qs';
-import { clone, view, lensPath } from 'ramda';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
-import { makeStyles } from '@material-ui/styles';
-import Fab from '@material-ui/core/Fab';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
-import MenuItem from '@material-ui/core/MenuItem';
-import TextField from '@material-ui/core/TextField';
-import RadioGroup from '@material-ui/core/RadioGroup';
+import Fab from '@material-ui/core/Fab';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import RadioGroup from '@material-ui/core/RadioGroup';
+import TextField from '@material-ui/core/TextField';
+import Tooltip from '@material-ui/core/Tooltip';
+import Typography from '@material-ui/core/Typography';
+import { makeStyles } from '@material-ui/styles';
+import Spinner from '@mozilla-frontend-infra/components/Spinner';
+import { capitalCase } from 'change-case';
+import classNames from 'classnames';
 import PlusIcon from 'mdi-react/PlusIcon';
+import { parse, stringify } from 'qs';
+import { clone, lensPath, view } from 'ramda';
+import React, { Fragment, useEffect, useState } from 'react';
 import Dashboard from '../../../components/Dashboard';
-import Radio from '../../../components/Radio';
 import DialogAction from '../../../components/DialogAction';
-import SignoffCard from '../../../components/SignoffCard';
 import ErrorPanel from '../../../components/ErrorPanel';
+import Radio from '../../../components/Radio';
+import SignoffCard from '../../../components/SignoffCard';
 import SignoffCardEntry from '../../../components/SignoffCardEntry';
+import useAction from '../../../hooks/useAction';
 import { deleteScheduledChange } from '../../../services/requiredSignoffs';
 import { makeSignoff, revokeSignoff } from '../../../services/signoffs';
 import { getUserInfo } from '../../../services/users';
-import Link from '../../../utils/Link';
-import getRequiredSignoffs from '../utils/getRequiredSignoffs';
-import useAction from '../../../hooks/useAction';
 import {
   DIALOG_ACTION_INITIAL_STATE,
   OBJECT_NAMES,
 } from '../../../utils/constants';
+import Link from '../../../utils/Link';
+import getRequiredSignoffs from '../utils/getRequiredSignoffs';
 
-const getPermissionChangesLens = product => lensPath([product, 'permissions']);
-const getRulesOrReleasesChangesLens = product =>
+const getPermissionChangesLens = (product) =>
+  lensPath([product, 'permissions']);
+const getRulesOrReleasesChangesLens = (product) =>
   lensPath([product, 'channels']);
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   fab: {
     ...theme.mixins.fab,
   },
@@ -69,7 +70,7 @@ function ListSignoffs({ auth0, ...props }) {
   const query = parse(search.slice(1));
   const [requiredSignoffs, setRequiredSignoffs] = useState(null);
   const [product, setProduct] = useState(
-    query.product ? query.product : 'Firefox'
+    query.product ? query.product : 'Firefox',
   );
   const [roles, setRoles] = useState([]);
   const [signoffRole, setSignoffRole] = useState('');
@@ -94,7 +95,7 @@ function ListSignoffs({ auth0, ...props }) {
     };
 
     props.history.push(
-      `/required-signoffs${stringify(qs, { addQueryPrefix: true })}`
+      `/required-signoffs${stringify(qs, { addQueryPrefix: true })}`,
     );
     setProduct(value);
   };
@@ -103,11 +104,11 @@ function ListSignoffs({ auth0, ...props }) {
     setSignoffRole(value);
   const permissionChanges = view(
     getPermissionChangesLens(product),
-    requiredSignoffs
+    requiredSignoffs,
   );
   const rulesOrReleasesChanges = view(
     getRulesOrReleasesChangesLens(product),
-    requiredSignoffs
+    requiredSignoffs,
   );
   const dialogBody = (
     <FormControl component="fieldset">
@@ -115,8 +116,9 @@ function ListSignoffs({ auth0, ...props }) {
         aria-label="Role"
         name="role"
         value={signoffRole}
-        onChange={handleSignoffRoleChange}>
-        {roles.map(r => (
+        onChange={handleSignoffRoleChange}
+      >
+        {roles.map((r) => (
           <FormControlLabel key={r} value={r} label={r} control={<Radio />} />
         ))}
       </RadioGroup>
@@ -147,9 +149,8 @@ function ListSignoffs({ auth0, ...props }) {
     const result = clone(requiredSignoffs);
 
     if (type === OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF) {
-      result[product].channels[channelName][roleName].sc.signoffs[
-        username
-      ] = signoffRole;
+      result[product].channels[channelName][roleName].sc.signoffs[username] =
+        signoffRole;
     } else {
       result[product].permissions[roleName].sc.signoffs[username] = signoffRole;
     }
@@ -163,7 +164,7 @@ function ListSignoffs({ auth0, ...props }) {
     entry,
     roleName,
     product,
-    channelName
+    channelName,
   ) => {
     const { error } = await signoff({
       type,
@@ -182,7 +183,7 @@ function ListSignoffs({ auth0, ...props }) {
     entry,
     roleName,
     product,
-    channelName
+    channelName,
   ) => {
     const { error } = await delRS({
       type: channelName ? 'product' : 'permissions',
@@ -239,7 +240,7 @@ function ListSignoffs({ auth0, ...props }) {
     }
   };
 
-  const handleDialogError = error => {
+  const handleDialogError = (error) => {
     setDialogState({ ...dialogState, error });
   };
 
@@ -257,7 +258,7 @@ function ListSignoffs({ auth0, ...props }) {
     return result;
   };
 
-  const handleDialogActionComplete = result => {
+  const handleDialogActionComplete = (result) => {
     updateSignoffs(result);
     handleDialogClose();
   };
@@ -285,8 +286,9 @@ function ListSignoffs({ auth0, ...props }) {
                 select
                 label="Product"
                 value={product}
-                onChange={handleFilterChange}>
-                {Object.keys(requiredSignoffs).map(product => (
+                onChange={handleFilterChange}
+              >
+                {Object.keys(requiredSignoffs).map((product) => (
                   <MenuItem key={product} value={product}>
                     {product}
                   </MenuItem>
@@ -298,7 +300,8 @@ function ListSignoffs({ auth0, ...props }) {
             <SignoffCard
               className={classes.card}
               title={capitalCase(product)}
-              to={`/required-signoffs/${product}`}>
+              to={`/required-signoffs/${product}`}
+            >
               {Object.entries(permissionChanges).map(
                 ([name, role], index, arr) => {
                   const key = `${name}-${index}`;
@@ -314,7 +317,7 @@ function ListSignoffs({ auth0, ...props }) {
                             OBJECT_NAMES.PERMISSIONS_REQUIRED_SIGNOFF,
                             role,
                             name,
-                            product
+                            product,
                           )
                         }
                         onSignoff={() =>
@@ -322,7 +325,7 @@ function ListSignoffs({ auth0, ...props }) {
                             OBJECT_NAMES.PERMISSIONS_REQUIRED_SIGNOFF,
                             role,
                             name,
-                            product
+                            product,
                           )
                         }
                         onRevoke={() =>
@@ -330,7 +333,7 @@ function ListSignoffs({ auth0, ...props }) {
                             OBJECT_NAMES.PERMISSIONS_REQUIRED_SIGNOFF,
                             role,
                             name,
-                            product
+                            product,
                           )
                         }
                       />
@@ -341,7 +344,7 @@ function ListSignoffs({ auth0, ...props }) {
                       />
                     </Fragment>
                   );
-                }
+                },
               )}
             </SignoffCard>
           )}
@@ -363,7 +366,8 @@ function ListSignoffs({ auth0, ...props }) {
                       key={`${product}-${channelName}`}
                       className={classes.card}
                       title={capitalCase(`${product} ${channelName} Channel`)}
-                      to={`/required-signoffs/${product}/${channelName}`}>
+                      to={`/required-signoffs/${product}/${channelName}`}
+                    >
                       {Object.entries(roles).map(
                         ([roleName, role], index, arr) => {
                           const key = `${roleName}-${index}`;
@@ -380,7 +384,7 @@ function ListSignoffs({ auth0, ...props }) {
                                     role,
                                     roleName,
                                     product,
-                                    channelName
+                                    channelName,
                                   )
                                 }
                                 onSignoff={() =>
@@ -389,7 +393,7 @@ function ListSignoffs({ auth0, ...props }) {
                                     role,
                                     roleName,
                                     product,
-                                    channelName
+                                    channelName,
                                   )
                                 }
                                 onRevoke={() =>
@@ -398,7 +402,7 @@ function ListSignoffs({ auth0, ...props }) {
                                     role,
                                     roleName,
                                     product,
-                                    channelName
+                                    channelName,
                                   )
                                 }
                               />
@@ -410,10 +414,10 @@ function ListSignoffs({ auth0, ...props }) {
                               />
                             </Fragment>
                           );
-                        }
+                        },
                       )}
                     </SignoffCard>
-                  )
+                  ),
                 )}
               </Fragment>
             )}
@@ -426,7 +430,8 @@ function ListSignoffs({ auth0, ...props }) {
               <Fab
                 color="primary"
                 className={classes.fab}
-                classes={{ root: classes.fab }}>
+                classes={{ root: classes.fab }}
+              >
                 <PlusIcon />
               </Fab>
             </Tooltip>
