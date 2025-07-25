@@ -144,7 +144,7 @@ function ReleaseV2(props) {
     // which means that changes that don't require signoff will happen
     // almost immediately, and changes that do require signoff will wait
     // until those are completed.
-    const when = new Date().getTime() + 30000;
+    const when = Date.now() + 30000;
 
     // If a Release already has a change scheduled, it needs to be cancelled
     // before we can schedule a new one. We can do this by setting it to the
@@ -189,7 +189,7 @@ function ReleaseV2(props) {
     }
   };
 
-  const handleSnackbarClose = (event, reason) => {
+  const handleSnackbarClose = (_event, reason) => {
     if (reason === 'clickaway') {
       return;
     }

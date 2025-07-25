@@ -72,7 +72,7 @@ const useStyles = makeStyles(theme => ({
 function ListReleases(props) {
   const classes = useStyles();
   const theme = useTheme();
-  const username = (props.auth0.user && props.auth0.user.email) || '';
+  const username = (props.auth0.user?.email) || '';
   const {
     buttonHeight,
     body1TextHeight,
@@ -97,7 +97,7 @@ function ListReleases(props) {
     null
   );
   const [rules, fetchRules] = useAction(getRules);
-  const releaseRules = rules.data && rules.data.data;
+  const releaseRules = rules.data?.data;
   const [releasesAction, fetchReleases] = useAction(getReleases);
   const [releasesV2Action, fetchReleasesV2] = useAction(getReleasesV2);
   const [releaseAction, fetchRelease] = useAction(getRelease);
@@ -352,7 +352,7 @@ function ListReleases(props) {
     setSnackbarState({ message, variant, open: true });
   };
 
-  const handleSnackbarClose = (event, reason) => {
+  const handleSnackbarClose = (_event, reason) => {
     if (reason === 'clickaway') {
       return;
     }
@@ -385,7 +385,7 @@ function ListReleases(props) {
   const scheduleReadWriteChange = async release => {
     const sc = {
       change_type: 'update',
-      when: new Date().getTime() + 30000,
+      when: Date.now()+ 30000,
       name: release.name,
       product: release.product,
       read_only: false,
@@ -720,7 +720,7 @@ function ListReleases(props) {
           })}
           release={release}
           rules={releaseRules.rules ? releaseRules.rules : []}
-          releaseHighlight={matchHighlight && matchHighlight[release.name]}
+          releaseHighlight={matchHighlight?.[release.name]}
           onAccessChange={handleAccessChange}
           onReleaseDelete={handleDelete}
           onViewScheduledChangeDiff={handleViewScheduledChangeDiff}
@@ -759,7 +759,7 @@ function ListReleases(props) {
     // space below the card (margin)
     height += theme.spacing(4);
 
-    if (release.scheduledChange && release.scheduledChange.when) {
+    if (release.scheduledChange?.when) {
       // divider
       height += theme.spacing(2) + 1;
 

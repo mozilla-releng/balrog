@@ -193,7 +193,7 @@ function RuleCard({
   };
 
   const ChipIcon = getChipIcon(
-    rule.scheduledChange && rule.scheduledChange.change_type
+    rule.scheduledChange?.change_type
   );
   const diffCause = currentRule || rule.scheduledChange;
   const diffedProperties =

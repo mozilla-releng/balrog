@@ -63,11 +63,11 @@ function DiffRelease(props) {
     const lines = releaseDiff.split(NEW_LINES_REGEX);
     const diffSummary = lines.reduce((acc, curr) => {
       if (curr.startsWith('+') && !curr.startsWith('+++')) {
-        return Object.assign(acc, { added: acc.added + 1 });
+        acc.added++;
       }
 
       if (curr.startsWith('-') && !curr.startsWith('---')) {
-        return Object.assign(acc, { removed: acc.removed + 1 });
+        acc.removed++;
       }
 
       return acc;
@@ -97,7 +97,6 @@ function DiffRelease(props) {
 
   const handleRowRender = ({ index, key, style }) => {
     const line = releaseLinesDiff[index];
-    // eslint-disable-next-line no-nested-ternary
     const backgroundColor = line.startsWith('+')
       ? DIFF_COLORS.ADDED
       : line.startsWith('-')

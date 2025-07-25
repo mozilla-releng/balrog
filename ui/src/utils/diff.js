@@ -25,8 +25,7 @@ export default (diffProperties, objectOne, objectTwo) => {
       const prev = objectOne[prop];
       const next = objectTwo[prop];
 
-      // == checks for both undefined or null
-      // eslint-disable-next-line eqeqeq
+      // biome-ignore lint/suspicious/noDoubleEquals: checks for both undefined or null
       if (prev == next) {
         return null;
       }

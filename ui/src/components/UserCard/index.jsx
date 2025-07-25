@@ -93,7 +93,7 @@ function User(props) {
     onRevoke,
   } = props;
   const returnOptionIfExists = (options, key, defaultValue) => {
-    if (options && options[key]) {
+    if (options?.[key]) {
       return options[key];
     }
 

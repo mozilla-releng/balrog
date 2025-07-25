@@ -78,7 +78,6 @@ function ListReleaseRevisionsV2(props) {
         }
       : {};
   const prettyPath =
-    // eslint-disable-next-line no-nested-ternary
     olderRevisions.length > 0
       ? olderRevisions[leftRadioCheckedIndex - 1].path
         ? olderRevisions[leftRadioCheckedIndex - 1].path
@@ -106,7 +105,6 @@ function ListReleaseRevisionsV2(props) {
 
   const handleViewClick = item => async () => {
     const section =
-      // eslint-disable-next-line no-nested-ternary
       item.path === null
         ? 'entire Release'
         : item.path === ''

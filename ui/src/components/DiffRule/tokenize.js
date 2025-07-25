@@ -12,7 +12,7 @@ export default hunks => {
 
   try {
     return tokenize(hunks, options);
-  } catch (ex) {
+  } catch (_ex) {
     return undefined;
   }
 };

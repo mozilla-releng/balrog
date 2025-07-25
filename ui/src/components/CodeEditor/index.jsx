@@ -9,7 +9,7 @@ function CodeEditor({ onChange, value, readOnly, ...rest }) {
   return (
     <CodeMirror
       value={value}
-      onBeforeChange={(editor, data, value) => {
+      onBeforeChange={(_editor, _data, value) => {
         onChange(value);
       }}
       options={{

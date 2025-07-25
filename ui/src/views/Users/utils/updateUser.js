@@ -89,7 +89,7 @@ export default params => {
             dataVersion: permission.data_version,
             scId: permission.sc.sc_id,
             scDataVersion: permission.sc.sc_data_version,
-            when: new Date().getTime() + 30000,
+            when: Date.now() + 30000,
           });
         }
 
@@ -99,7 +99,7 @@ export default params => {
           options,
           dataVersion: permission.data_version,
           changeType: 'update',
-          when: new Date().getTime() + 30000,
+          when: Date.now() + 30000,
         });
       }),
       additionalPermissions.map(permission => {
@@ -118,7 +118,7 @@ export default params => {
           permission: permission.name,
           options,
           changeType: 'insert',
-          when: new Date().getTime() + 30000,
+          when: Date.now() + 30000,
         });
       }),
       removedPermissions.map(permission => {
@@ -134,7 +134,7 @@ export default params => {
           permission: permission.name,
           dataVersion: permission.data_version,
           changeType: 'delete',
-          when: new Date().getTime() + 30000,
+          when: Date.now() + 30000,
         });
       })
     )
