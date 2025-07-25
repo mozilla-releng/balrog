@@ -1,15 +1,15 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import React, { useState, Fragment } from 'react';
-import { makeStyles } from '@material-ui/styles';
 import Avatar from '@material-ui/core/Avatar';
+import IconButton from '@material-ui/core/IconButton';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
-import IconButton from '@material-ui/core/IconButton';
-import LogoutVariantIcon from 'mdi-react/LogoutVariantIcon';
+import { makeStyles } from '@material-ui/styles';
 import ContentCopyIcon from 'mdi-react/ContentCopyIcon';
+import LogoutVariantIcon from 'mdi-react/LogoutVariantIcon';
+import React, { Fragment, useState } from 'react';
 import Button from '../Button';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   avatar: {
     height: theme.spacing(6),
     width: theme.spacing(6),
@@ -21,7 +21,7 @@ function UserMenu(props) {
   const { auth0 } = props;
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
-  const handleMenuOpen = e => setAnchorEl(e.currentTarget);
+  const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
   const handleLogoutClick = () => {
     handleMenuClose();
@@ -47,7 +47,8 @@ function UserMenu(props) {
           aria-haspopup="true"
           aria-controls="user-menu"
           aria-label="user menu"
-          onClick={handleMenuOpen}>
+          onClick={handleMenuOpen}
+        >
           {auth0.user.picture ? (
             <Avatar alt={auth0.user.nickname} src={auth0.user.picture} />
           ) : (
@@ -59,7 +60,8 @@ function UserMenu(props) {
           onClick={handleLogin}
           size="small"
           variant="contained"
-          color="secondary">
+          color="secondary"
+        >
           Login
         </Button>
       )}
@@ -69,7 +71,8 @@ function UserMenu(props) {
         open={Boolean(anchorEl)}
         getContentAnchorEl={null}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        onClose={handleMenuClose}>
+        onClose={handleMenuClose}
+      >
         <MenuItem title="Copy Access Token" onClick={handleCopyAccessToken}>
           <ContentCopyIcon />
           Copy Access Token

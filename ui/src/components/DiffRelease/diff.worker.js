@@ -1,7 +1,7 @@
 import { createTwoFilesPatch } from 'diff';
 
 // biome-ignore lint/suspicious/noGlobalAssign: This module is imported as an object
-onmessage = e => {
+onmessage = (e) => {
   const [
     firstFilename,
     secondFilename,
@@ -12,7 +12,7 @@ onmessage = e => {
     firstFilename,
     secondFilename,
     firstReleaseString,
-    secondReleaseString
+    secondReleaseString,
   );
 
   postMessage(releaseDiff);

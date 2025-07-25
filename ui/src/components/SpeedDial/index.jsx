@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { object, arrayOf, node, oneOfType } from 'prop-types';
-import classNames from 'classnames';
-import { makeStyles } from '@material-ui/styles';
 import MuiSpeedDial from '@material-ui/lab/SpeedDial';
 import SpeedDialIcon from '@material-ui/lab/SpeedDialIcon';
+import { makeStyles } from '@material-ui/styles';
+import classNames from 'classnames';
 import CloseIcon from 'mdi-react/CloseIcon';
 import DotsVerticalIcon from 'mdi-react/DotsVerticalIcon';
+import { arrayOf, node, object, oneOfType } from 'prop-types';
+import React, { useState } from 'react';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   speedDial: {
     ...theme.mixins.fab,
   },
@@ -35,7 +35,8 @@ function SpeedDial({ children, className, FabProps, ...props }) {
       onMouseEnter={handleOpen}
       onMouseLeave={handleClose}
       open={open}
-      {...props}>
+      {...props}
+    >
       {children}
     </MuiSpeedDial>
   );

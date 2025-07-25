@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const userExists = async username => {
+const userExists = async (username) => {
   try {
     await axios.head(`/users/${username}`);
 
@@ -11,7 +11,7 @@ const userExists = async username => {
 };
 
 const getUsers = () => axios.get('/users');
-const getUserInfo = username => axios.get(`/users/${username}`);
+const getUserInfo = (username) => axios.get(`/users/${username}`);
 const getScheduledChanges = () => axios.get('/scheduled_changes/permissions');
 const addRole = (username, role) =>
   axios.put(`/users/${username}/roles/${role}`);

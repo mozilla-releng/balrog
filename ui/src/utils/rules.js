@@ -37,6 +37,4 @@ const ruleMatchesChannel = (rule, channel) => {
   return ruleChannelMatches || scChannelMatches;
 };
 
-export {
-  ruleMatchesChannel,
-};
+export { ruleMatchesChannel };

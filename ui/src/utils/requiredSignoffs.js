@@ -20,6 +20,4 @@ const ruleMatchesRequiredSignoff = (rule, rs) => {
   return true;
 };
 
-export {
-  ruleMatchesRequiredSignoff,
-};
+export { ruleMatchesRequiredSignoff };

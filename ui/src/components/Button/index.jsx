@@ -1,9 +1,9 @@
-import React from 'react';
-import { oneOf } from 'prop-types';
-import { ThemeProvider } from '@material-ui/styles';
-import { createTheme } from '@material-ui/core/styles';
 import MuiButton from '@material-ui/core/Button';
 import { red } from '@material-ui/core/colors';
+import { createTheme } from '@material-ui/core/styles';
+import { ThemeProvider } from '@material-ui/styles';
+import { oneOf } from 'prop-types';
+import React from 'react';
 
 const dangerTheme = createTheme({
   palette: {

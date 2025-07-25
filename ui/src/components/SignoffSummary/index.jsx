@@ -1,16 +1,16 @@
-import React from 'react';
-import { object, string } from 'prop-types';
-import classNames from 'classnames';
-import { makeStyles } from '@material-ui/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import Typography from '@material-ui/core/Typography';
-import CheckCircleIcon from 'mdi-react/CheckCircleIcon';
+import { makeStyles } from '@material-ui/styles';
+import classNames from 'classnames';
 import AccountClockIcon from 'mdi-react/AccountClockIcon';
+import CheckCircleIcon from 'mdi-react/CheckCircleIcon';
+import { object, string } from 'prop-types';
+import React from 'react';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   approval: {
     display: 'flex',
     width: 'max-content',
@@ -60,14 +60,15 @@ function SignoffSummary(props) {
           <ListSubheader className={classes.listSubheader}>
             Requires Signoffs From
           </ListSubheader>
-        }>
+        }
+      >
         {theRequiredSignoffs.map(([role, count], index) => {
           const key = `${role}-${index}`;
           // allSigned Returns all that have signed
           let allSigned = [];
 
           if (listOfSignoffs) {
-            allSigned = listOfSignoffs.filter(arr => {
+            allSigned = listOfSignoffs.filter((arr) => {
               return role === arr[1];
             });
           }
@@ -106,13 +107,14 @@ function SignoffSummary(props) {
                           <Typography
                             component="p"
                             variant="body2"
-                            style={{ color: 'green', width: 'max-content' }}>
+                            style={{ color: 'green', width: 'max-content' }}
+                          >
                             {`${arr[0]}`}
                           </Typography>
                         </div>
                       );
                     })}
-                    {allNotSigned().map(arr => {
+                    {allNotSigned().map((arr) => {
                       const no = arr;
 
                       return (
@@ -121,7 +123,8 @@ function SignoffSummary(props) {
                           <Typography
                             component="p"
                             variant="body2"
-                            style={{ color: 'darkorange' }}>
+                            style={{ color: 'darkorange' }}
+                          >
                             Awaiting approval...
                           </Typography>
                         </div>

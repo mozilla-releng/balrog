@@ -1,15 +1,15 @@
-import React from 'react';
-import { func, object, string, oneOf } from 'prop-types';
-import { makeStyles } from '@material-ui/styles';
+import { amber, green } from '@material-ui/core/colors';
 import IconButton from '@material-ui/core/IconButton';
 import MuiSnackbar from '@material-ui/core/Snackbar';
 import SnackbarContent from '@material-ui/core/SnackbarContent';
-import { amber, green } from '@material-ui/core/colors';
-import CheckCircleIcon from 'mdi-react/CheckCircleIcon';
-import AlertIcon from 'mdi-react/AlertIcon';
+import { makeStyles } from '@material-ui/styles';
 import AlertCircleIcon from 'mdi-react/AlertCircleIcon';
-import InformationIcon from 'mdi-react/InformationIcon';
+import AlertIcon from 'mdi-react/AlertIcon';
+import CheckCircleIcon from 'mdi-react/CheckCircleIcon';
 import CloseIcon from 'mdi-react/CloseIcon';
+import InformationIcon from 'mdi-react/InformationIcon';
+import { func, object, oneOf, string } from 'prop-types';
+import React from 'react';
 import { SNACKBAR_AUTO_HIDE_DURATION } from '../../utils/constants';
 
 const variantIcon = {
@@ -18,7 +18,7 @@ const variantIcon = {
   error: AlertCircleIcon,
   info: InformationIcon,
 };
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   iconButtonRoot: {
     color: theme.palette.common.white,
   },
@@ -53,14 +53,16 @@ function Snackbar(props) {
     <MuiSnackbar
       autoHideDuration={SNACKBAR_AUTO_HIDE_DURATION}
       onClose={onClose}
-      {...rest}>
+      {...rest}
+    >
       <SnackbarContent
         className={classes[variant]}
         action={
           <IconButton
             classes={{ root: classes.iconButtonRoot }}
             aria-label="Close"
-            onClick={onClose}>
+            onClick={onClose}
+          >
             <CloseIcon />
           </IconButton>
         }

@@ -1,36 +1,36 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import React, { Fragment, useState, useEffect } from 'react';
-import classNames from 'classnames';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
+import Fab from '@material-ui/core/Fab';
 import { makeStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
-import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import Tooltip from '@material-ui/core/Tooltip';
-import Fab from '@material-ui/core/Fab';
+import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
+import Spinner from '@mozilla-frontend-infra/components/Spinner';
+import classNames from 'classnames';
 import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
 import DeleteIcon from 'mdi-react/DeleteIcon';
+import React, { Fragment, useEffect, useState } from 'react';
+import AutoCompleteText from '../../../components/AutoCompleteText';
+import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
+import Button from '../../../components/Button';
+import CodeEditor from '../../../components/CodeEditor';
 import Dashboard from '../../../components/Dashboard';
 import ErrorPanel from '../../../components/ErrorPanel';
-import SpeedDial from '../../../components/SpeedDial';
-import AutoCompleteText from '../../../components/AutoCompleteText';
-import CodeEditor from '../../../components/CodeEditor';
 import Snackbar from '../../../components/Snackbar';
-import Button from '../../../components/Button';
+import SpeedDial from '../../../components/SpeedDial';
 import useAction from '../../../hooks/useAction';
 import {
-  getReleases,
-  getRelease,
-  createRelease,
   addScheduledChange,
-  updateScheduledChange,
+  createRelease,
   deleteScheduledChange,
+  getRelease,
+  getReleases,
   getScheduledChangeByName,
+  updateScheduledChange,
 } from '../../../services/releases';
 import { getProducts } from '../../../services/rules';
-import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
 import { SNACKBAR_INITIAL_STATE } from '../../../utils/constants';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   fab: {
     ...theme.mixins.fab,
   },
@@ -82,7 +82,7 @@ function Release(props) {
   const [updateSCAction, updateSC] = useAction(updateScheduledChange);
   const [deleteSCAction, deleteSC] = useAction(deleteScheduledChange);
   const [scheduledChangeNameAction, fetchScheduledChangeByName] = useAction(
-    getScheduledChangeByName
+    getScheduledChangeByName,
   );
   const fetchReleases = useAction(getReleases)[1];
   const [products, fetchProducts] = useAction(getProducts);
@@ -119,12 +119,12 @@ function Release(props) {
           setScDataVersion(sc.sc_data_version);
         } else {
           setReleaseEditorValue(
-            JSON.stringify(fetchedRelease.data.data, null, 2)
+            JSON.stringify(fetchedRelease.data.data, null, 2),
           );
 
           if (fetchedReleases.data) {
             const r = fetchedReleases.data.data.releases.find(
-              r => r.name === releaseName
+              (r) => r.name === releaseName,
             );
 
             setProductTextValue(r.product);
@@ -138,7 +138,7 @@ function Release(props) {
     fetchProducts();
   }, [releaseName]);
 
-  const handleProductChange = value => {
+  const handleProductChange = (value) => {
     setProductTextValue(value);
   };
 
@@ -146,7 +146,7 @@ function Release(props) {
     setReleaseNameValue(value);
   };
 
-  const handleReleaseEditorChange = value => {
+  const handleReleaseEditorChange = (value) => {
     setReleaseEditorValue(value);
   };
 
@@ -156,7 +156,7 @@ function Release(props) {
     const { error } = await createRel(
       releaseNameValue,
       productTextValue,
-      releaseEditorValue
+      releaseEditorValue,
     );
 
     if (!error) {
@@ -228,11 +228,11 @@ function Release(props) {
     setSnackbarState({ message, variant, open: true });
   };
 
-  const handleUploadRelease = ev => {
+  const handleUploadRelease = (ev) => {
     const file = ev.target.files[0];
     const reader = new FileReader();
 
-    reader.addEventListener('load', e => {
+    reader.addEventListener('load', (e) => {
       try {
         const content = JSON.parse(e.target.result);
 
@@ -247,7 +247,7 @@ function Release(props) {
       }
     });
 
-    reader.addEventListener('error', e => {
+    reader.addEventListener('error', (e) => {
       handleSnackbarOpen({
         message: e.message,
         variant: 'error',
@@ -260,7 +260,8 @@ function Release(props) {
 
   return (
     <Dashboard
-      title={isNewRelease ? 'Create Release' : `Update Release ${releaseName}`}>
+      title={isNewRelease ? 'Create Release' : `Update Release ${releaseName}`}
+    >
       {isLoading && <Spinner loading />}
       {!isLoading && error && <ErrorPanel fixed error={error} />}
       {!isLoading && (
@@ -305,7 +306,8 @@ function Release(props) {
                 size="small"
                 variant="outlined"
                 component="span"
-                className={classes.uploadReleaseButton}>
+                className={classes.uploadReleaseButton}
+              >
                 Upload Release
               </Button>
             </label>
@@ -328,14 +330,16 @@ function Release(props) {
                   {
                     [classes.secondFab]: scId && !isReadOnly,
                     [classes.fab]: !scId || isReadOnly,
-                  }
-                )}>
+                  },
+                )}
+              >
                 <Fab
                   disabled={!auth0.user || actionLoading || isReadOnly}
                   onClick={
                     isNewRelease ? handleReleaseCreate : handleReleaseUpdate
                   }
-                  color="primary">
+                  color="primary"
+                >
                   <ContentSaveIcon />
                 </Fab>
               </div>
@@ -345,7 +349,8 @@ function Release(props) {
                 FabProps={{
                   disabled: !auth0.user || actionLoading || isReadOnly || !scId,
                 }}
-                ariaLabel="Secondary Actions">
+                ariaLabel="Secondary Actions"
+              >
                 <SpeedDialAction
                   icon={<DeleteIcon />}
                   tooltipOpen

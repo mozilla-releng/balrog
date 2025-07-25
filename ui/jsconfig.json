@@ -2,8 +2,8 @@
 // intellisense (javascript language service) for
 // all the ui scripts
 {
-    "compileroptions": {
-      "target": "es6"
-    },
-    "include": ["src","test", "__jest__"]
-  }
+  "compileroptions": {
+    "target": "es6"
+  },
+  "include": ["src", "test", "__jest__"]
+}

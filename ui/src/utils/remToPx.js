@@ -15,4 +15,4 @@ function getDefaultFontSize() {
   return size;
 }
 
-export default value => parseFloat(value) * getDefaultFontSize();
+export default (value) => parseFloat(value) * getDefaultFontSize();

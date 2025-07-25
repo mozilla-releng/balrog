@@ -2,7 +2,7 @@ import { PERMISSION_RESTRICTION_MAPPINGS } from './constants';
 
 // TODO: use https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ListFormat
 // when it's available in Firefox
-const formatListToLanguage = array =>
+const formatListToLanguage = (array) =>
   [].concat(array.slice(null, -2), array.slice(-2).join(' and ')).join(', ');
 const permissionStrings = (productStr, actionStr) => ({
   admin: `a full fledged administrator ${productStr}`,
@@ -20,7 +20,7 @@ const getPermissionString = (
   permission,
   actions,
   products,
-  scheduledChangeType = null
+  scheduledChangeType = null,
 ) => {
   const prefix =
     (scheduledChangeType &&
@@ -42,8 +42,8 @@ const getPermissionString = (
   return `${prefix} ${permissionStrings(productStr, actionStr)[permission]}`;
 };
 
-const getRolesString = roles => {
-  const joined = formatListToLanguage(roles.map(role => role.role));
+const getRolesString = (roles) => {
+  const joined = formatListToLanguage(roles.map((role) => role.role));
   let roleStr = 'role';
 
   if (roles.length > 1) {
@@ -53,7 +53,7 @@ const getRolesString = roles => {
   return `${joined} ${roleStr}`;
 };
 
-const supportsProductRestriction = permission => {
+const supportsProductRestriction = (permission) => {
   if (!Object.keys(PERMISSION_RESTRICTION_MAPPINGS).includes(permission)) {
     return false;
   }
@@ -61,7 +61,7 @@ const supportsProductRestriction = permission => {
   return PERMISSION_RESTRICTION_MAPPINGS[permission].restrict_products;
 };
 
-const supportsActionRestriction = permission => {
+const supportsActionRestriction = (permission) => {
   if (!Object.keys(PERMISSION_RESTRICTION_MAPPINGS).includes(permission)) {
     return false;
   }
@@ -69,7 +69,7 @@ const supportsActionRestriction = permission => {
   return PERMISSION_RESTRICTION_MAPPINGS[permission].restrict_actions;
 };
 
-const getSupportedActions = permission => {
+const getSupportedActions = (permission) => {
   if (!Object.keys(PERMISSION_RESTRICTION_MAPPINGS).includes(permission)) {
     return [];
   }

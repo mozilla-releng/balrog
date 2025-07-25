@@ -3,7 +3,7 @@ import { NEW_LINES_REGEX } from './constants';
 export default (diffProperties, objectOne, objectTwo) => {
   const prevValues = [];
   const nextValues = [];
-  const formatValue = value => {
+  const formatValue = (value) => {
     switch (typeof value) {
       case 'string': {
         return value.replace(NEW_LINES_REGEX, '');
@@ -21,7 +21,7 @@ export default (diffProperties, objectOne, objectTwo) => {
 
   diffProperties
     .sort()
-    .map(prop => {
+    .map((prop) => {
       const prev = objectOne[prop];
       const next = objectTwo[prop];
 

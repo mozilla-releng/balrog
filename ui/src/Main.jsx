@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Switch } from 'react-router-dom';
+import { useAuth0 } from '@auth0/auth0-react';
 import { makeStyles } from '@material-ui/styles';
 import axios from 'axios';
-import { useAuth0 } from '@auth0/auth0-react';
-import { BASE_URL } from './utils/constants';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter, Switch } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import ErrorPanel from './components/ErrorPanel';
 import RouteWithProps from './components/RouteWithProps';
 import routes from './routes';
+import { BASE_URL } from './utils/constants';
 
 const useStyles = makeStyles({
   '@global': {
@@ -34,7 +34,7 @@ const useStyles = makeStyles({
 });
 
 function setupAxiosInterceptors(getAccessTokenSilently, getIdTokenClaims) {
-  axios.interceptors.request.use(async config => {
+  axios.interceptors.request.use(async (config) => {
     const result = config;
 
     if (!config.url.startsWith('http')) {
@@ -53,8 +53,8 @@ function setupAxiosInterceptors(getAccessTokenSilently, getIdTokenClaims) {
   });
 
   axios.interceptors.response.use(
-    response => response,
-    error => {
+    (response) => response,
+    (error) => {
       const errorMsg = error.response
         ? error.response.data.exception || error.response.data.detail || null
         : error.message;
@@ -66,7 +66,7 @@ function setupAxiosInterceptors(getAccessTokenSilently, getIdTokenClaims) {
       }
 
       throw error;
-    }
+    },
   );
 }
 
@@ -90,11 +90,11 @@ function Main() {
   useEffect(() => {
     axios.get('/__heartbeat__').then(
       () => setBackendError(''),
-      error => {
+      (error) => {
         setBackendError(
-          `Error contacting Balrog backend: ${error}. Are you connected to the VPN?`
+          `Error contacting Balrog backend: ${error}. Are you connected to the VPN?`,
         );
-      }
+      },
     );
   }, []);
 

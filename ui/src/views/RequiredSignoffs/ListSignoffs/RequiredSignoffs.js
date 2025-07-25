@@ -1,12 +1,12 @@
 import { lensPath, set, view } from 'ramda';
 
-const getChannelRoleLens = rs =>
+const getChannelRoleLens = (rs) =>
   lensPath([rs.product, 'channels', rs.channel, rs.role]);
-const getPermissionRoleLens = rs =>
+const getPermissionRoleLens = (rs) =>
   lensPath([rs.product, 'permissions', rs.role]);
-const getChannelScheduledChangeLens = rs =>
+const getChannelScheduledChangeLens = (rs) =>
   lensPath([rs.product, 'channels', rs.channel, rs.role, 'sc']);
-const getPermissionScheduledChangeLens = rs =>
+const getPermissionScheduledChangeLens = (rs) =>
   lensPath([rs.product, 'permissions', rs.role, 'sc']);
 
 export default class RequiredSignoffs {
@@ -19,33 +19,33 @@ export default class RequiredSignoffs {
   }
 
   setProductRequiredSignoffs(requiredSignoffs) {
-    requiredSignoffs.forEach(rs => {
+    requiredSignoffs.forEach((rs) => {
       this.val = set(
         getChannelRoleLens(rs),
         {
           signoffs_required: rs.signoffs_required,
           data_version: rs.data_version,
         },
-        this.val
+        this.val,
       );
     });
   }
 
   setPermissionsRequiredSignoffs(requiredSignoffs) {
-    requiredSignoffs.forEach(rs => {
+    requiredSignoffs.forEach((rs) => {
       this.val = set(
         getPermissionRoleLens(rs),
         {
           signoffs_required: rs.signoffs_required,
           data_version: rs.data_version,
         },
-        this.val
+        this.val,
       );
     });
   }
 
   setProductScheduledChanges(scheduledChanges) {
-    scheduledChanges.forEach(rs => {
+    scheduledChanges.forEach((rs) => {
       if (!view(getChannelRoleLens(rs), this.val)) {
         this.val = set(
           getChannelRoleLens(rs),
@@ -53,7 +53,7 @@ export default class RequiredSignoffs {
             signoffs_required: 0,
             data_version: null,
           },
-          this.val
+          this.val,
         );
       }
 
@@ -68,13 +68,13 @@ export default class RequiredSignoffs {
           signoffs: rs.signoffs,
           change_type: rs.change_type,
         },
-        this.val
+        this.val,
       );
     });
   }
 
   setPermissionScheduledChanges(scheduledChanges) {
-    scheduledChanges.forEach(rs => {
+    scheduledChanges.forEach((rs) => {
       if (!view(getPermissionRoleLens(rs), this.val)) {
         this.val = set(
           getPermissionRoleLens(rs),
@@ -82,7 +82,7 @@ export default class RequiredSignoffs {
             signoffs_required: 0,
             data_version: null,
           },
-          this.val
+          this.val,
         );
       }
 
@@ -97,7 +97,7 @@ export default class RequiredSignoffs {
           signoffs: rs.signoffs,
           change_type: rs.change_type,
         },
-        this.val
+        this.val,
       );
     });
   }

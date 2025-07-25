@@ -1,11 +1,11 @@
-import React, {
-  useEffect,
-  useRef,
-  useImperativeHandle,
-  forwardRef,
-} from 'react';
 import { number } from 'prop-types';
-import { AutoSizer, WindowScroller, List } from 'react-virtualized';
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from 'react';
+import { AutoSizer, List, WindowScroller } from 'react-virtualized';
 import { APP_BAR_HEIGHT } from '../../utils/constants';
 
 const VariableSizeList = forwardRef((props, ref) => {
@@ -17,7 +17,7 @@ const VariableSizeList = forwardRef((props, ref) => {
 
     if (pathname === '/rules') {
       listRef.current.scrollToPosition(
-        rowOffset - APP_BAR_HEIGHT - rest.searchFieldHeight
+        rowOffset - APP_BAR_HEIGHT - rest.searchFieldHeight,
       );
     } else {
       listRef.current.scrollToPosition(rowOffset - APP_BAR_HEIGHT);
@@ -25,7 +25,7 @@ const VariableSizeList = forwardRef((props, ref) => {
   }, [scrollToRow]);
 
   useImperativeHandle(ref, () => ({
-    recomputeRowHeights: index => listRef.current.recomputeRowHeights(index),
+    recomputeRowHeights: (index) => listRef.current.recomputeRowHeights(index),
   }));
 
   return (

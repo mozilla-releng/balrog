@@ -1,41 +1,41 @@
-import React, { useEffect, useState, Fragment } from 'react';
-import { bool } from 'prop-types';
-import { clone, defaultTo, propOr } from 'ramda';
-import { makeStyles } from '@material-ui/styles';
-import Grid from '@material-ui/core/Grid';
-import TextField from '@material-ui/core/TextField';
-import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
 import Fab from '@material-ui/core/Fab';
-import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
+import Grid from '@material-ui/core/Grid';
+import IconButton from '@material-ui/core/IconButton';
+import TextField from '@material-ui/core/TextField';
 import Tooltip from '@material-ui/core/Tooltip';
+import Typography from '@material-ui/core/Typography';
+import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
+import { makeStyles } from '@material-ui/styles';
+import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
 import DeleteIcon from 'mdi-react/DeleteIcon';
 import PlusIcon from 'mdi-react/PlusIcon';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
+import { bool } from 'prop-types';
+import { clone, defaultTo, propOr } from 'ramda';
+import React, { Fragment, useEffect, useState } from 'react';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
+import Button from '../../../components/Button';
 import Dashboard from '../../../components/Dashboard';
 import ErrorPanel from '../../../components/ErrorPanel';
-import Button from '../../../components/Button';
 import SpeedDial from '../../../components/SpeedDial';
 import useAction from '../../../hooks/useAction';
 import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
 import { getProducts } from '../../../services/rules';
 import {
-  userExists,
-  getUserInfo,
   getScheduledChanges,
+  getUserInfo,
+  userExists,
 } from '../../../services/users';
 import { ALL_PERMISSIONS, OBJECT_NAMES } from '../../../utils/constants';
 import {
-  supportsProductRestriction,
-  supportsActionRestriction,
   getSupportedActions,
+  supportsActionRestriction,
+  supportsProductRestriction,
 } from '../../../utils/userUtils';
 import updateUser from '../utils/updateUser';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   fab: {
     ...theme.mixins.fab,
     right: theme.spacing(12),
@@ -95,7 +95,7 @@ function ViewUser({ isNewUser, ...props }) {
   const [permissions, setPermissions] = useState([]);
   const [originalPermissions, setOriginalPermissions] = useState([]);
   const [additionalPermissions, setAdditionalPermissions] = useState(
-    isNewUser ? [getEmptyPermission(true)] : []
+    isNewUser ? [getEmptyPermission(true)] : [],
   );
   const [products, setProducts] = useState([]);
   const setRequiredSignoffs = useState([])[1];
@@ -121,8 +121,8 @@ function ViewUser({ isNewUser, ...props }) {
 
   useEffect(() => {
     Promise.all([
-      userExists(existingUsername).then(exists =>
-        exists ? fetchUser(existingUsername) : null
+      userExists(existingUsername).then((exists) =>
+        exists ? fetchUser(existingUsername) : null,
       ),
       fetchProducts(),
       fetchRS(OBJECT_NAMES.PRODUCT_REQUIRED_SIGNOFF),
@@ -131,7 +131,7 @@ function ViewUser({ isNewUser, ...props }) {
       const roles =
         userdata === null
           ? []
-          : Object.keys(userdata.data.data.roles).map(name => ({
+          : Object.keys(userdata.data.data.roles).map((name) => ({
               name,
               data_version: userdata.data.data.roles[name].data_version,
               metadata: {
@@ -141,10 +141,11 @@ function ViewUser({ isNewUser, ...props }) {
       const permissions =
         userdata === null
           ? []
-          : Object.keys(userdata.data.data.permissions).map(name => {
+          : Object.keys(userdata.data.data.permissions).map((name) => {
               const details = userdata.data.data.permissions[name];
               const sc = scheduledChanges.data.data.scheduled_changes.filter(
-                sc => sc.username === existingUsername && sc.permission === name
+                (sc) =>
+                  sc.username === existingUsername && sc.permission === name,
               );
               const permission = {
                 name,
@@ -179,7 +180,7 @@ function ViewUser({ isNewUser, ...props }) {
 
       // Scheduled inserts don't have an existing permission to associate
       // with, so we need to create an empty one, and add to it.
-      scheduledChanges.data.data.scheduled_changes.forEach(sc => {
+      scheduledChanges.data.data.scheduled_changes.forEach((sc) => {
         if (sc.change_type === 'insert' && sc.username === existingUsername) {
           const p = getEmptyPermission();
 
@@ -226,7 +227,7 @@ function ViewUser({ isNewUser, ...props }) {
         result.name = value;
 
         return result;
-      })
+      }),
     );
   };
 
@@ -246,11 +247,11 @@ function ViewUser({ isNewUser, ...props }) {
 
   const handlePermissionAdd = () => {
     setAdditionalPermissions(
-      additionalPermissions.concat([getEmptyPermission(true)])
+      additionalPermissions.concat([getEmptyPermission(true)]),
     );
   };
 
-  const handlePermissionNameChange = (_permission, index) => value => {
+  const handlePermissionNameChange = (_permission, index) => (value) => {
     setAdditionalPermissions(
       additionalPermissions.map((entry, i) => {
         if (i !== index) {
@@ -262,7 +263,7 @@ function ViewUser({ isNewUser, ...props }) {
         result.name = value;
 
         return result;
-      })
+      }),
     );
   };
 
@@ -276,8 +277,8 @@ function ViewUser({ isNewUser, ...props }) {
     }
   };
 
-  const handleRestrictionChange = (permission, restriction) => chips => {
-    const updateRestrictions = entry => {
+  const handleRestrictionChange = (permission, restriction) => (chips) => {
+    const updateRestrictions = (entry) => {
       if (entry.name !== permission.name) {
         return entry;
       }
@@ -298,8 +299,8 @@ function ViewUser({ isNewUser, ...props }) {
       : setPermissions(permissions.map(updateRestrictions));
   };
 
-  const handleRestrictionTextChange = (permission, key) => value => {
-    const updateText = entry => {
+  const handleRestrictionTextChange = (permission, key) => (value) => {
+    const updateText = (entry) => {
       if (entry.name !== permission.name) {
         return entry;
       }
@@ -356,7 +357,7 @@ function ViewUser({ isNewUser, ...props }) {
       <Grid item xs={11}>
         <TextField
           disabled={role.metadata.isAdditional ? false : !isNewUser}
-          onChange={e => handleRoleNameChange(role, index, e.target.value)}
+          onChange={(e) => handleRoleNameChange(role, index, e.target.value)}
           value={role.name}
           fullWidth
         />
@@ -373,11 +374,11 @@ function ViewUser({ isNewUser, ...props }) {
       <Grid item xs={3}>
         <AutoCompleteText
           value={defaultToEmptyString(
-            permission.sc ? permission.sc.name : permission.name
+            permission.sc ? permission.sc.name : permission.name,
           )}
           onValueChange={handlePermissionNameChange(
             permission.sc || permission,
-            index
+            index,
           )}
           getSuggestions={getSuggestions(ALL_PERMISSIONS.sort())}
           label="Name"
@@ -391,7 +392,7 @@ function ViewUser({ isNewUser, ...props }) {
           disabled={
             (permission.sc && permission.sc.change_type === 'delete') ||
             !supportsProductRestriction(
-              permission.sc ? permission.sc.name : permission.name
+              permission.sc ? permission.sc.name : permission.name,
             )
           }
           selectedItems={
@@ -401,7 +402,7 @@ function ViewUser({ isNewUser, ...props }) {
           }
           onSelectedItemsChange={handleRestrictionChange(
             permission,
-            'products'
+            'products',
           )}
           onValueChange={handleRestrictionTextChange(permission, 'productText')}
           value={permission.metadata.productText}
@@ -415,7 +416,7 @@ function ViewUser({ isNewUser, ...props }) {
           disabled={
             (permission.sc && permission.sc.change_type === 'delete') ||
             !supportsActionRestriction(
-              permission.sc ? permission.sc.name : permission.name
+              permission.sc ? permission.sc.name : permission.name,
             )
           }
           selectedItems={
@@ -427,7 +428,7 @@ function ViewUser({ isNewUser, ...props }) {
           onValueChange={handleRestrictionTextChange(permission, 'actionText')}
           value={permission.metadata.actionText}
           getSuggestions={getSuggestions(
-            getSupportedActions(permission.name).sort()
+            getSupportedActions(permission.name).sort(),
           )}
           label="Action Restrictions"
         />
@@ -438,7 +439,8 @@ function ViewUser({ isNewUser, ...props }) {
       <Grid item xs={1} className={classes.gridDelete}>
         <IconButton
           className={classes.iconButton}
-          onClick={() => handlePermissionDelete(permission, index)}>
+          onClick={() => handlePermissionDelete(permission, index)}
+        >
           <DeleteIcon />
         </IconButton>
       </Grid>
@@ -479,7 +481,8 @@ function ViewUser({ isNewUser, ...props }) {
                       color="primary"
                       onClick={handleRoleAdd}
                       className={classes.fullWidth}
-                      variant="outlined">
+                      variant="outlined"
+                    >
                       <PlusIcon />
                     </Button>
                   </Grid>
@@ -497,7 +500,8 @@ function ViewUser({ isNewUser, ...props }) {
                       color="primary"
                       onClick={handlePermissionAdd}
                       className={classes.fullWidth}
-                      variant="outlined">
+                      variant="outlined"
+                    >
                       <PlusIcon />
                     </Button>
                   </Grid>
@@ -510,7 +514,8 @@ function ViewUser({ isNewUser, ...props }) {
               disabled={saveAction.loading || userError}
               onClick={handleUserSave}
               color="primary"
-              className={classes.fab}>
+              className={classes.fab}
+            >
               <ContentSaveIcon />
             </Fab>
           </Tooltip>

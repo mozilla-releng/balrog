@@ -1,26 +1,29 @@
 import lazy from '../../utils/lazy';
 
-const ListReleases = lazy(() =>
-  import(/* webpackChunkName: 'Releases.ListReleases' */ './ListReleases')
+const ListReleases = lazy(
+  () =>
+    import(/* webpackChunkName: 'Releases.ListReleases' */ './ListReleases'),
 );
-const ListReleaseRevisionsV2 = lazy(() =>
-  import(
-    /* webpackChunkName: 'Releases.ListReleaseRevisionsV2' */ './ListReleaseRevisionsV2'
-  )
+const ListReleaseRevisionsV2 = lazy(
+  () =>
+    import(
+      /* webpackChunkName: 'Releases.ListReleaseRevisionsV2' */ './ListReleaseRevisionsV2'
+    ),
 );
-const ListReleaseRevisions = lazy(() =>
-  import(
-    /* webpackChunkName: 'Releases.ListReleaseRevisions' */ './ListReleaseRevisions'
-  )
+const ListReleaseRevisions = lazy(
+  () =>
+    import(
+      /* webpackChunkName: 'Releases.ListReleaseRevisions' */ './ListReleaseRevisions'
+    ),
 );
-const Release = lazy(() =>
-  import(/* webpackChunkName: 'Releases.Release' */ './Release')
+const Release = lazy(
+  () => import(/* webpackChunkName: 'Releases.Release' */ './Release'),
 );
-const ReleaseV2 = lazy(() =>
-  import(/* webpackChunkName: 'Releases.ReleaseV2' */ './ReleaseV2')
+const ReleaseV2 = lazy(
+  () => import(/* webpackChunkName: 'Releases.ReleaseV2' */ './ReleaseV2'),
 );
 
-export default path => [
+export default (path) => [
   {
     component: ReleaseV2,
     path: `${path}/create/v2`,
