@@ -1,10 +1,10 @@
 import lazy from '../../utils/lazy';
 
-const ListRoles = lazy(() =>
-  import(/* webpackChunkName: 'Roles.ListRoles' */ './ListRoles')
+const ListRoles = lazy(
+  () => import(/* webpackChunkName: 'Roles.ListRoles' */ './ListRoles'),
 );
 
-export default path => [
+export default (path) => [
   {
     component: ListRoles,
     path,

@@ -1,19 +1,19 @@
-import React from 'react';
-import {
-  arrayOf,
-  func,
-  number,
-  string,
-  oneOf,
-  oneOfType,
-  object,
-} from 'prop-types';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
-import TableSortLabel from '@material-ui/core/TableSortLabel';
 import TableRow from '@material-ui/core/TableRow';
+import TableSortLabel from '@material-ui/core/TableSortLabel';
+import {
+  arrayOf,
+  func,
+  number,
+  object,
+  oneOf,
+  oneOfType,
+  string,
+} from 'prop-types';
+import React from 'react';
 
 /**
  * A table to display a set of data elements.
@@ -31,7 +31,7 @@ export default function DataTable(props) {
     onHeaderClick: _,
     ...rest
   } = props;
-  const colSpan = columnsSize || (headers && headers.length) || 0;
+  const colSpan = columnsSize || headers?.length || 0;
   const handleHeaderClick = ({ target }) => {
     const { onHeaderClick } = props;
 
@@ -45,13 +45,14 @@ export default function DataTable(props) {
       {headers && (
         <TableHead>
           <TableRow>
-            {headers.map(header => (
+            {headers.map((header) => (
               <TableCell key={`table-header-${header}`} {...tableHeadCellProps}>
                 <TableSortLabel
                   id={header}
                   active={header === sortByHeader}
                   direction={sortDirection || 'desc'}
-                  onClick={handleHeaderClick}>
+                  onClick={handleHeaderClick}
+                >
                   {header}
                 </TableSortLabel>
               </TableCell>

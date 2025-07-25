@@ -7,7 +7,7 @@ describe('channel matching', () => {
         channel: 'nightly',
         scheduledChange: null,
       },
-      'nightly'
+      'nightly',
     );
 
     expect(result).toBeTruthy();
@@ -20,7 +20,7 @@ describe('channel matching', () => {
           channel: 'release',
         },
       },
-      'release'
+      'release',
     );
 
     expect(result).toBeTruthy();
@@ -32,7 +32,7 @@ describe('channel matching', () => {
           channel: 'nightly',
         },
       },
-      'nightly'
+      'nightly',
     );
 
     expect(result).toBeTruthy();
@@ -43,7 +43,7 @@ describe('channel matching', () => {
       scheduledChange: null,
     };
     const channels = ['nightly', 'nightly-cdntest', 'nightlytest'];
-    const results = channels.map(c => ruleMatchesChannel(rule, c));
+    const results = channels.map((c) => ruleMatchesChannel(rule, c));
 
     expect(results).toEqual(expect.not.arrayContaining([false]));
   });
@@ -55,7 +55,7 @@ describe('channel matching', () => {
       },
     };
     const channels = ['beta', 'beta-localtest'];
-    const results = channels.map(c => ruleMatchesChannel(rule, c));
+    const results = channels.map((c) => ruleMatchesChannel(rule, c));
 
     expect(results).toEqual(expect.not.arrayContaining([false]));
   });
@@ -66,7 +66,7 @@ describe('channel matching', () => {
           channel: null,
         },
       },
-      'nightly'
+      'nightly',
     );
 
     expect(result).toBeTruthy();
@@ -79,7 +79,7 @@ describe('channel matching', () => {
           channel: null,
         },
       },
-      'nightly'
+      'nightly',
     );
 
     expect(result).toBeTruthy();
@@ -91,7 +91,7 @@ describe('channel matching', () => {
           channel: 'nightly',
         },
       },
-      'beta'
+      'beta',
     );
 
     expect(result).toBeFalsy();
@@ -102,7 +102,7 @@ describe('channel matching', () => {
         channel: 'nightly',
         scheduledChange: null,
       },
-      'nightly-cdntest'
+      'nightly-cdntest',
     );
 
     expect(result).toBeFalsy();
@@ -115,7 +115,7 @@ describe('channel matching', () => {
           channel: 'beta',
         },
       },
-      'beta-cdntest'
+      'beta-cdntest',
     );
 
     expect(result).toBeFalsy();
@@ -128,7 +128,7 @@ describe('channel matching', () => {
           channel: 'beta',
         },
       },
-      'release'
+      'release',
     );
 
     expect(result).toBeFalsy();
@@ -142,7 +142,7 @@ describe('channel matching', () => {
           channel: null,
         },
       },
-      'release'
+      'release',
     );
 
     expect(result).toBeFalsy();

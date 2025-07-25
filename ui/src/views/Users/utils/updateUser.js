@@ -1,17 +1,17 @@
 import { equals } from 'ramda';
 import {
   addRole,
-  removeRole,
   addScheduledPermissionChange,
-  updateScheduledPermissionChange,
   deleteScheduledPermissionChange,
+  removeRole,
+  updateScheduledPermissionChange,
 } from '../../../services/users';
 import {
   supportsActionRestriction,
   supportsProductRestriction,
 } from '../../../utils/userUtils';
 
-export default params => {
+export default (params) => {
   const {
     username,
     roles,
@@ -21,25 +21,25 @@ export default params => {
     originalPermissions,
     additionalPermissions,
   } = params;
-  const currentRoles = roles.map(role => role.name);
+  const currentRoles = roles.map((role) => role.name);
   const removedRoles = originalRoles.filter(
-    role => !currentRoles.includes(role.name)
+    (role) => !currentRoles.includes(role.name),
   );
-  const currentPermissions = permissions.map(p => p.name);
+  const currentPermissions = permissions.map((p) => p.name);
   const removedPermissions = originalPermissions.filter(
-    p => !currentPermissions.includes(p.name)
+    (p) => !currentPermissions.includes(p.name),
   );
 
   return Promise.all(
     [].concat(
-      additionalRoles.map(role => addRole(username, role.name)),
-      removedRoles.map(role =>
-        removeRole(username, role.name, role.data_version)
+      additionalRoles.map((role) => addRole(username, role.name)),
+      removedRoles.map((role) =>
+        removeRole(username, role.name, role.data_version),
       ),
-      permissions.map(permission => {
+      permissions.map((permission) => {
         let skip = false;
 
-        originalPermissions.forEach(value => {
+        originalPermissions.forEach((value) => {
           const newOptions = permission.sc
             ? permission.sc.options
             : permission.options;
@@ -89,7 +89,7 @@ export default params => {
             dataVersion: permission.data_version,
             scId: permission.sc.sc_id,
             scDataVersion: permission.sc.sc_data_version,
-            when: new Date().getTime() + 30000,
+            when: Date.now() + 30000,
           });
         }
 
@@ -99,10 +99,10 @@ export default params => {
           options,
           dataVersion: permission.data_version,
           changeType: 'update',
-          when: new Date().getTime() + 30000,
+          when: Date.now() + 30000,
         });
       }),
-      additionalPermissions.map(permission => {
+      additionalPermissions.map((permission) => {
         const options = {};
 
         if (supportsProductRestriction(permission.name)) {
@@ -118,10 +118,10 @@ export default params => {
           permission: permission.name,
           options,
           changeType: 'insert',
-          when: new Date().getTime() + 30000,
+          when: Date.now() + 30000,
         });
       }),
-      removedPermissions.map(permission => {
+      removedPermissions.map((permission) => {
         if (permission.sc) {
           return deleteScheduledPermissionChange({
             scId: permission.sc.sc_id,
@@ -134,9 +134,9 @@ export default params => {
           permission: permission.name,
           dataVersion: permission.data_version,
           changeType: 'delete',
-          when: new Date().getTime() + 30000,
+          when: Date.now() + 30000,
         });
-      })
-    )
+      }),
+    ),
   );
 };

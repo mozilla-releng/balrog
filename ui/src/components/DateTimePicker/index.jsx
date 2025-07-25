@@ -1,10 +1,10 @@
-import React from 'react';
-import { instanceOf, func } from 'prop-types';
 import DateFnsUtils from '@date-io/date-fns';
 import {
-  MuiPickersUtilsProvider,
   KeyboardDateTimePicker,
+  MuiPickersUtilsProvider,
 } from '@material-ui/pickers';
+import { func, instanceOf } from 'prop-types';
+import React from 'react';
 
 export default function DateTimePicker({ value, onDateTimeChange, ...props }) {
   function handleDateChange(date) {

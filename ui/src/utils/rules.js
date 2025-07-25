@@ -3,7 +3,7 @@ const ruleMatchesChannel = (rule, channel) => {
   // we support globs at the end of a channel only, hence
   // splitting and taking the first part
   const matchesGlob = (r, c) =>
-    r && r.includes('*') && c.startsWith(r.split('*')[0]);
+    r?.includes('*') && c.startsWith(r.split('*')[0]);
   const ruleChannelMatches =
     // empty or absent channel matches anything
     // however, a rule could also be non-existent
@@ -37,7 +37,4 @@ const ruleMatchesChannel = (rule, channel) => {
   return ruleChannelMatches || scChannelMatches;
 };
 
-export {
-  // eslint-disable-next-line import/prefer-default-export
-  ruleMatchesChannel,
-};
+export { ruleMatchesChannel };

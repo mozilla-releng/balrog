@@ -1,23 +1,23 @@
-import React, { Fragment, useEffect, useState } from 'react';
 import axios from 'axios';
+import React, { Fragment, useEffect, useState } from 'react';
 import { Column } from 'react-virtualized';
 import 'react-virtualized/styles.css';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
-import { makeStyles } from '@material-ui/styles';
 import Drawer from '@material-ui/core/Drawer';
 import Typography from '@material-ui/core/Typography';
+import { makeStyles } from '@material-ui/styles';
+import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import { formatDistanceStrict } from 'date-fns';
-import ErrorPanel from '../../../components/ErrorPanel';
-import Dashboard from '../../../components/Dashboard';
-import Radio from '../../../components/Radio';
 import Button from '../../../components/Button';
+import Dashboard from '../../../components/Dashboard';
+import DiffRelease from '../../../components/DiffRelease';
+import ErrorPanel from '../../../components/ErrorPanel';
+import Radio from '../../../components/Radio';
+import RevisionsTable from '../../../components/RevisionsTable';
 import useAction from '../../../hooks/useAction';
 import { getRevisions } from '../../../services/releases';
 import { CONTENT_MAX_WIDTH } from '../../../utils/constants';
-import DiffRelease from '../../../components/DiffRelease';
-import RevisionsTable from '../../../components/RevisionsTable';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   radioCell: {
     paddingLeft: 0,
   },
@@ -78,7 +78,6 @@ function ListReleaseRevisionsV2(props) {
         }
       : {};
   const prettyPath =
-    // eslint-disable-next-line no-nested-ternary
     olderRevisions.length > 0
       ? olderRevisions[leftRadioCheckedIndex - 1].path
         ? olderRevisions[leftRadioCheckedIndex - 1].path
@@ -104,14 +103,13 @@ function ListReleaseRevisionsV2(props) {
     });
   };
 
-  const handleViewClick = item => async () => {
+  const handleViewClick = (item) => async () => {
     const section =
-      // eslint-disable-next-line no-nested-ternary
       item.path === null
         ? 'entire Release'
         : item.path === ''
-        ? 'base'
-        : item.path;
+          ? 'base'
+          : item.path;
     const when = new Date(item.timestamp);
     const result = await fetchRevisionData(item.data_url);
 
@@ -131,7 +129,7 @@ function ListReleaseRevisionsV2(props) {
     if (olderRevision) {
       // The left revision is always a part of the Release
       // that we can retrieve from GCS.
-      axios.get(olderRevision.data_url).then(result => {
+      axios.get(olderRevision.data_url).then((result) => {
         setLeftRevisionData(result.data || {});
       });
 
@@ -140,11 +138,11 @@ function ListReleaseRevisionsV2(props) {
       // which we can find by looking for the older revisions path in
       // `latestRevisions`.
       const latestRevision = latestRevisions.find(
-        r => r.path === olderRevision.path
+        (r) => r.path === olderRevision.path,
       );
 
       if (latestRevision) {
-        axios.get(latestRevision.data_url).then(result => {
+        axios.get(latestRevision.data_url).then((result) => {
           // FIXME: sometimes the page doesn't rerender the diff after this
           // for some reason...
           // I think there's some sort of race condition, or issue with the
@@ -176,7 +174,8 @@ function ListReleaseRevisionsV2(props) {
             rowCount={revisionsCount + 1}
             rowGetter={({ index }) =>
               index === 0 ? currentRevision : olderRevisions[index - 1]
-            }>
+            }
+          >
             <Column
               label="Revision Date"
               dataKey="timestamp"
@@ -248,7 +247,8 @@ function ListReleaseRevisionsV2(props) {
             classes={{ paper: classes.drawerPaper }}
             anchor="bottom"
             open={drawerState.open}
-            onClose={handleDrawerClose}>
+            onClose={handleDrawerClose}
+          >
             <pre>
               <h3>{drawerState.title}</h3>
               <code>{JSON.stringify(drawerState.item, null, 2)}</code>

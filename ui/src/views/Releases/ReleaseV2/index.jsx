@@ -1,21 +1,22 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import React, { Fragment, useState, useEffect } from 'react';
-import classNames from 'classnames';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
+import Fab from '@material-ui/core/Fab';
 import { makeStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
-import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import Tooltip from '@material-ui/core/Tooltip';
-import Fab from '@material-ui/core/Fab';
+import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
+import Spinner from '@mozilla-frontend-infra/components/Spinner';
+import classNames from 'classnames';
 import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
 import DeleteIcon from 'mdi-react/DeleteIcon';
+import React, { Fragment, useEffect, useState } from 'react';
+import AutoCompleteText from '../../../components/AutoCompleteText';
+import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
+import Button from '../../../components/Button';
+import CodeEditor from '../../../components/CodeEditor';
 import Dashboard from '../../../components/Dashboard';
 import ErrorPanel from '../../../components/ErrorPanel';
-import SpeedDial from '../../../components/SpeedDial';
-import AutoCompleteText from '../../../components/AutoCompleteText';
-import CodeEditor from '../../../components/CodeEditor';
 import Snackbar from '../../../components/Snackbar';
-import Button from '../../../components/Button';
+import SpeedDial from '../../../components/SpeedDial';
 import useAction from '../../../hooks/useAction';
 import {
   getReleasesV2,
@@ -23,10 +24,9 @@ import {
   setRelease,
 } from '../../../services/releases';
 import { getProducts } from '../../../services/rules';
-import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
 import { SNACKBAR_INITIAL_STATE } from '../../../utils/constants';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   fab: {
     ...theme.mixins.fab,
   },
@@ -90,7 +90,7 @@ function ReleaseV2(props) {
         ([fetchedRelease, fetchedReleases]) => {
           const { data } = fetchedRelease.data;
           const metadata = fetchedReleases.data.data.releases.find(
-            r => r.name === releaseName
+            (r) => r.name === releaseName,
           );
 
           setProductTextValue(metadata.product);
@@ -101,17 +101,17 @@ function ReleaseV2(props) {
             JSON.stringify(
               Object.keys(data.sc_blob).length > 0 ? data.sc_blob : data.blob,
               null,
-              2
-            )
+              2,
+            ),
           );
-        }
+        },
       );
     }
 
     fetchProducts();
   }, [releaseName]);
 
-  const handleProductChange = value => {
+  const handleProductChange = (value) => {
     setProductTextValue(value);
   };
 
@@ -119,7 +119,7 @@ function ReleaseV2(props) {
     setReleaseNameValue(value);
   };
 
-  const handleReleaseEditorChange = value => {
+  const handleReleaseEditorChange = (value) => {
     setReleaseEditorValue(value);
   };
 
@@ -144,7 +144,7 @@ function ReleaseV2(props) {
     // which means that changes that don't require signoff will happen
     // almost immediately, and changes that do require signoff will wait
     // until those are completed.
-    const when = new Date().getTime() + 30000;
+    const when = Date.now() + 30000;
 
     // If a Release already has a change scheduled, it needs to be cancelled
     // before we can schedule a new one. We can do this by setting it to the
@@ -189,7 +189,7 @@ function ReleaseV2(props) {
     }
   };
 
-  const handleSnackbarClose = (event, reason) => {
+  const handleSnackbarClose = (_event, reason) => {
     if (reason === 'clickaway') {
       return;
     }
@@ -208,11 +208,11 @@ function ReleaseV2(props) {
     setSnackbarState({ message, variant, open: true });
   };
 
-  const handleUploadRelease = ev => {
+  const handleUploadRelease = (ev) => {
     const file = ev.target.files[0];
     const reader = new FileReader();
 
-    reader.addEventListener('load', e => {
+    reader.addEventListener('load', (e) => {
       try {
         const content = JSON.parse(e.target.result);
 
@@ -227,7 +227,7 @@ function ReleaseV2(props) {
       }
     });
 
-    reader.addEventListener('error', e => {
+    reader.addEventListener('error', (e) => {
       handleSnackbarOpen({
         message: e.message,
         variant: 'error',
@@ -240,7 +240,8 @@ function ReleaseV2(props) {
 
   return (
     <Dashboard
-      title={isNewRelease ? 'Create Release' : `Update Release ${releaseName}`}>
+      title={isNewRelease ? 'Create Release' : `Update Release ${releaseName}`}
+    >
       {isLoading && <Spinner loading />}
       {!isLoading && error && <ErrorPanel fixed error={error} />}
       {!isLoading && (
@@ -285,7 +286,8 @@ function ReleaseV2(props) {
                 size="small"
                 variant="outlined"
                 component="span"
-                className={classes.uploadReleaseButton}>
+                className={classes.uploadReleaseButton}
+              >
                 Upload Release
               </Button>
             </label>
@@ -308,14 +310,16 @@ function ReleaseV2(props) {
                   {
                     [classes.secondFab]: hasScheduledChange && !isReadOnly,
                     [classes.fab]: !hasScheduledChange || isReadOnly,
-                  }
-                )}>
+                  },
+                )}
+              >
                 <Fab
                   disabled={!auth0.user || actionLoading || isReadOnly}
                   onClick={
                     isNewRelease ? handleReleaseCreate : handleReleaseUpdate
                   }
-                  color="primary">
+                  color="primary"
+                >
                   <ContentSaveIcon />
                 </Fab>
               </div>
@@ -329,7 +333,8 @@ function ReleaseV2(props) {
                     isReadOnly ||
                     !hasScheduledChange,
                 }}
-                ariaLabel="Secondary Actions">
+                ariaLabel="Secondary Actions"
+              >
                 <SpeedDialAction
                   icon={<DeleteIcon />}
                   tooltipOpen

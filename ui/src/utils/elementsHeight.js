@@ -1,6 +1,6 @@
 import remToPx from './remToPx';
 
-export default theme => ({
+export default (theme) => ({
   h6TextHeight:
     remToPx(theme.typography.h6.fontSize) * theme.typography.h6.lineHeight,
   body1TextHeight: (lines = 1) =>

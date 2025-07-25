@@ -12,7 +12,7 @@ import { useState } from 'react';
  *   error - true if the action throws an error
  * }
  */
-export default action => {
+export default (action) => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);

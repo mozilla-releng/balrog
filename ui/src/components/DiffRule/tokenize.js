@@ -1,6 +1,6 @@
-import { tokenize, markEdits } from 'react-diff-view';
+import { markEdits, tokenize } from 'react-diff-view';
 
-export default hunks => {
+export default (hunks) => {
   if (!hunks) {
     return undefined;
   }
@@ -12,7 +12,7 @@ export default hunks => {
 
   try {
     return tokenize(hunks, options);
-  } catch (ex) {
+  } catch (_ex) {
     return undefined;
   }
 };

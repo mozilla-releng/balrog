@@ -1,19 +1,19 @@
-import React, { memo, useState, useEffect } from 'react';
-import { clone } from 'ramda';
-import deepSortObject from 'deep-sort-object';
-import { string, object } from 'prop-types';
-import { makeStyles } from '@material-ui/styles';
-import { List } from 'react-virtualized';
 import Paper from '@material-ui/core/Paper';
+import { makeStyles } from '@material-ui/styles';
+import deepSortObject from 'deep-sort-object';
+import { object, string } from 'prop-types';
+import { clone } from 'ramda';
+import React, { memo, useEffect, useState } from 'react';
+import { List } from 'react-virtualized';
 import {
-  NEW_LINES_REGEX,
+  CONTENT_MAX_WIDTH,
   DIFF_COLORS,
   INITIAL_JS_DIFF_SUMMARY,
-  CONTENT_MAX_WIDTH,
+  NEW_LINES_REGEX,
 } from '../../utils/constants';
 import DiffWorker from './diff.worker';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   pre: {
     margin: 0,
     fontSize: 13,
@@ -58,16 +58,16 @@ function DiffRelease(props) {
   const [diffSummary, setDiffSummary] = useState(INITIAL_JS_DIFF_SUMMARY);
   const diffWorker = new DiffWorker();
 
-  diffWorker.onmessage = e => {
+  diffWorker.onmessage = (e) => {
     const releaseDiff = e.data;
     const lines = releaseDiff.split(NEW_LINES_REGEX);
     const diffSummary = lines.reduce((acc, curr) => {
       if (curr.startsWith('+') && !curr.startsWith('+++')) {
-        return Object.assign(acc, { added: acc.added + 1 });
+        acc.added++;
       }
 
       if (curr.startsWith('-') && !curr.startsWith('---')) {
-        return Object.assign(acc, { removed: acc.removed + 1 });
+        acc.removed++;
       }
 
       return acc;
@@ -97,12 +97,11 @@ function DiffRelease(props) {
 
   const handleRowRender = ({ index, key, style }) => {
     const line = releaseLinesDiff[index];
-    // eslint-disable-next-line no-nested-ternary
     const backgroundColor = line.startsWith('+')
       ? DIFF_COLORS.ADDED
       : line.startsWith('-')
-      ? DIFF_COLORS.REMOVED
-      : 'unset';
+        ? DIFF_COLORS.REMOVED
+        : 'unset';
 
     return (
       <div key={key} style={{ ...style, backgroundColor }}>

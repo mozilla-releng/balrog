@@ -1,11 +1,11 @@
-import React from 'react';
-import classNames from 'classnames';
-import { object, func, arrayOf, string } from 'prop-types';
-import { makeStyles } from '@material-ui/styles';
 import Chip from '@material-ui/core/Chip';
+import { makeStyles } from '@material-ui/styles';
+import classNames from 'classnames';
 import CloseIcon from 'mdi-react/CloseIcon';
+import { arrayOf, func, object, string } from 'prop-types';
+import React from 'react';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   container: {
     display: 'flex',
     flexWrap: 'wrap',
@@ -30,7 +30,7 @@ function ChipList(props) {
 
   return (
     <div className={classNames(classes.container, className)} {...rest}>
-      {selectedItems.map(item => (
+      {selectedItems.map((item) => (
         <Chip
           key={item}
           className={classes.chip}

@@ -1,17 +1,17 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import React from 'react';
-import { func, object } from 'prop-types';
-import { makeStyles } from '@material-ui/styles';
 import Card from '@material-ui/core/Card';
-import CardHeader from '@material-ui/core/CardHeader';
-import CardContent from '@material-ui/core/CardContent';
 import CardActions from '@material-ui/core/CardActions';
+import CardContent from '@material-ui/core/CardContent';
+import CardHeader from '@material-ui/core/CardHeader';
 import Typography from '@material-ui/core/Typography';
+import { makeStyles } from '@material-ui/styles';
 import AlertIcon from 'mdi-react/AlertIcon';
+import { func, object } from 'prop-types';
+import React from 'react';
 import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   root: {
     border: `2px solid ${theme.palette.warning.dark}`,
   },
@@ -92,7 +92,8 @@ function EmergencyShutoffCard({
             className={classes.actionButton}
             color="secondary"
             disabled={!auth0.user}
-            onClick={() => onCancelEnable(emergencyShutoff)}>
+            onClick={() => onCancelEnable(emergencyShutoff)}
+          >
             Keep Updates Disabled
           </Button>
         ) : (
@@ -100,7 +101,8 @@ function EmergencyShutoffCard({
             className={classes.actionButton}
             color="secondary"
             disabled={!auth0.user}
-            onClick={() => onEnableUpdates(emergencyShutoff)}>
+            onClick={() => onEnableUpdates(emergencyShutoff)}
+          >
             Enable Updates
           </Button>
         )}
@@ -111,7 +113,8 @@ function EmergencyShutoffCard({
               color="secondary"
               disabled={!auth0.user}
               onClick={onRevoke}
-              className={classes.actionButton}>
+              className={classes.actionButton}
+            >
               Revoke Signoff
             </Button>
           ) : (
@@ -119,7 +122,8 @@ function EmergencyShutoffCard({
               color="secondary"
               disabled={!auth0.user}
               onClick={onSignoff}
-              className={classes.actionButton}>
+              className={classes.actionButton}
+            >
               Signoff
             </Button>
           ))}

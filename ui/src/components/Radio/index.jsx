@@ -1,8 +1,8 @@
-import React from 'react';
-import { object, oneOf } from 'prop-types';
-import { makeStyles } from '@material-ui/styles';
-import { red, green } from '@material-ui/core/colors';
+import { green, red } from '@material-ui/core/colors';
 import MuiRadio from '@material-ui/core/Radio';
+import { makeStyles } from '@material-ui/styles';
+import { object, oneOf } from 'prop-types';
+import React from 'react';
 
 const useStyles = makeStyles({
   greenRoot: {
@@ -17,7 +17,7 @@ const useStyles = makeStyles({
   },
   checked: {},
 });
-const Radio = props => {
+const Radio = (props) => {
   const classes = useStyles();
   const { variant, classes: classesFromProps, ...rest } = props;
 

@@ -2,19 +2,8 @@ const webpack = require('webpack');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ESLintPlugin = require('eslint-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const baseConfig = require('./.eslintrc');
 
-const eslintConfig = {
-  cache: true,
-  cwd: __dirname,
-  emitWarning: true,
-  failOnError: false,
-  formatter: 'codeframe',
-  useEslintrc: false,
-  baseConfig,
-};
 const DEFAULT_HOST = 'localhost';
 const DEFAULT_PORT = 9000;
 const port = process.env.PORT || DEFAULT_PORT;
@@ -258,11 +247,6 @@ module.exports = (_, { mode }) => {
         currentAssets: [],
         initialClean: false,
         outputPath: '',
-      }),
-      new ESLintPlugin({
-        extensions: ['js', 'jsx'],
-        files: [`${__dirname}/src`, `${__dirname}/test`],
-        ...eslintConfig,
       }),
       ...(mode === 'development' ? [new ReactRefreshWebpackPlugin()] : []),
     ],

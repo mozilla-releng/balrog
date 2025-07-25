@@ -1,31 +1,31 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import React, { Fragment } from 'react';
-import { func, string, object, arrayOf } from 'prop-types';
-import classNames from 'classnames';
 import Card from '@material-ui/core/Card';
-import { makeStyles } from '@material-ui/styles';
-import CardHeader from '@material-ui/core/CardHeader';
 import CardActionArea from '@material-ui/core/CardActionArea';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
+import CardHeader from '@material-ui/core/CardHeader';
 import Divider from '@material-ui/core/Divider';
-import Typography from '@material-ui/core/Typography';
-import AccountGroupIcon from 'mdi-react/AccountGroupIcon';
-import ArrowRightIcon from 'mdi-react/ArrowRightIcon';
-import KeyVariantIcon from 'mdi-react/KeyVariantIcon';
-import PencilIcon from 'mdi-react/PencilIcon';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import Typography from '@material-ui/core/Typography';
+import { makeStyles } from '@material-ui/styles';
+import classNames from 'classnames';
+import AccountGroupIcon from 'mdi-react/AccountGroupIcon';
+import ArrowRightIcon from 'mdi-react/ArrowRightIcon';
+import KeyVariantIcon from 'mdi-react/KeyVariantIcon';
+import PencilIcon from 'mdi-react/PencilIcon';
+import { arrayOf, func, object, string } from 'prop-types';
+import React, { Fragment } from 'react';
+import { LABELS } from '../../utils/constants';
+import Link from '../../utils/Link';
+import { getPermissionString, getRolesString } from '../../utils/userUtils';
 import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
 import StatusLabel from '../StatusLabel';
-import Link from '../../utils/Link';
-import { LABELS } from '../../utils/constants';
-import { getPermissionString, getRolesString } from '../../utils/userUtils';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   card: {
     listStyle: 'none',
   },
@@ -93,7 +93,7 @@ function User(props) {
     onRevoke,
   } = props;
   const returnOptionIfExists = (options, key, defaultValue) => {
-    if (options && options[key]) {
+    if (options?.[key]) {
       return options[key];
     }
 
@@ -128,7 +128,7 @@ function User(props) {
                       {getPermissionString(
                         permission,
                         returnOptionIfExists(details.options, 'actions', []),
-                        returnOptionIfExists(details.options, 'products', [])
+                        returnOptionIfExists(details.options, 'products', []),
                       )}
                       {scheduledPermissions[permission] && (
                         <span className={classes.propertyWithScheduledChange} />
@@ -159,20 +159,21 @@ function User(props) {
                   <Fragment>
                     <Typography
                       variant="body2"
-                      className={classes.permissionText}>
+                      className={classes.permissionText}
+                    >
                       <em>
                         {getPermissionString(
                           permission,
                           returnOptionIfExists(
                             permissions[permission].options,
                             'actions',
-                            []
+                            [],
                           ),
                           returnOptionIfExists(
                             permissions[permission].options,
                             'products',
-                            []
-                          )
+                            [],
+                          ),
                         )}
                       </em>
                     </Typography>
@@ -185,7 +186,7 @@ function User(props) {
                       permission,
                       returnOptionIfExists(details.options, 'actions', []),
                       returnOptionIfExists(details.options, 'products', []),
-                      details.change_type
+                      details.change_type,
                     )}
                   </em>
                 </Typography>

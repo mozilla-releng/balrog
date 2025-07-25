@@ -2,7 +2,7 @@ import axios from 'axios';
 import { stringify } from 'qs';
 
 const getReleasesV2 = () => axios.get('/v2/releases');
-const getReleaseV2 = name =>
+const getReleaseV2 = (name) =>
   axios.get(`/v2/releases/${encodeURIComponent(name)}`);
 const setRelease = ({ name, blob, oldDataVersions, when, product }) =>
   axios.put(`/v2/releases/${encodeURIComponent(name)}`, {
@@ -12,7 +12,7 @@ const setRelease = ({ name, blob, oldDataVersions, when, product }) =>
     when,
     product,
   });
-const deleteReleaseV2 = name =>
+const deleteReleaseV2 = (name) =>
   axios.delete(`/v2/releases/${encodeURIComponent(name)}`);
 const setReadOnlyV2 = (name, readOnly, oldDataVersion) =>
   axios.put(`/v2/releases/${encodeURIComponent(name)}/read_only`, {
@@ -20,12 +20,12 @@ const setReadOnlyV2 = (name, readOnly, oldDataVersion) =>
     old_data_version: oldDataVersion,
   });
 const getReleases = () => axios.get('/releases');
-const getRelease = name => axios.get(`/releases/${encodeURIComponent(name)}`);
+const getRelease = (name) => axios.get(`/releases/${encodeURIComponent(name)}`);
 const getReleaseNames = () => axios.get('/releases?names_only=1');
 const getReleaseNamesV2 = () => axios.get('/v2/releases?names_only=1');
 const makeSignoffV2 = (name, role) =>
   axios.put(`/v2/releases/${encodeURIComponent(name)}/signoff`, { role });
-const revokeSignoffV2 = name =>
+const revokeSignoffV2 = (name) =>
   axios.delete(`/v2/releases/${encodeURIComponent(name)}/signoff`);
 const deleteRelease = ({ name, dataVersion }) =>
   axios.delete(`/releases/${encodeURIComponent(name)}`, {
@@ -45,10 +45,9 @@ const getRevisions = (name, apiVersion) => {
   if (apiVersion === 1) {
     const releases = [];
 
-    // eslint-disable-next-line no-inner-declarations
     function parseReleases(rawReleases) {
       if (rawReleases) {
-        rawReleases.forEach(r => {
+        rawReleases.forEach((r) => {
           const parts = r.name
             .replace(`${name}/`, '')
             .replace('.json', '')
@@ -68,10 +67,9 @@ const getRevisions = (name, apiVersion) => {
       }
     }
 
-    // eslint-disable-next-line no-inner-declarations
     async function getReleases(url, pageToken) {
       const response = await axios.get(
-        pageToken ? `${url}&pageToken=${pageToken}` : url
+        pageToken ? `${url}&pageToken=${pageToken}` : url,
       );
 
       parseReleases(response.data.items);
@@ -97,7 +95,7 @@ const getRevisions = (name, apiVersion) => {
     const revisions = [];
 
     if (rawRevisions) {
-      rawRevisions.forEach(r => {
+      rawRevisions.forEach((r) => {
         if (!r.name.startsWith(`${name}/`) && !r.name.startsWith(`${name}-.`)) {
           return;
         }
@@ -128,12 +126,11 @@ const getRevisions = (name, apiVersion) => {
   // make sure this works with page tokens
   async function getRevisions(url, pageToken, revisionsByPath) {
     const response = await axios.get(
-      pageToken ? `${url}&pageToken=${pageToken}` : url
+      pageToken ? `${url}&pageToken=${pageToken}` : url,
     );
 
-    parseRevisions(response.data.items).forEach(r => {
+    parseRevisions(response.data.items).forEach((r) => {
       if (!(r.path in revisionsByPath)) {
-        // eslint-disable-next-line no-param-reassign
         revisionsByPath[r.path] = [];
       }
 
@@ -147,7 +144,7 @@ const getRevisions = (name, apiVersion) => {
     const latestEntries = [];
     const revisions = [];
 
-    Object.values(revisionsByPath).forEach(pathRevisions => {
+    Object.values(revisionsByPath).forEach((pathRevisions) => {
       pathRevisions.sort((a, b) => a.timestamp > b.timestamp);
       // Split up the most recent revision for each path, and the
       // the remaining revisions.
@@ -163,7 +160,7 @@ const getRevisions = (name, apiVersion) => {
   return getRevisions(`${bucket}?prefix=${name}&delimeter=/`, null, {});
 };
 
-const getScheduledChanges = all => {
+const getScheduledChanges = (all) => {
   if (all === true) {
     return axios.get(`/scheduled_changes/releases?${stringify({ all: 1 })}`);
   }
@@ -171,13 +168,13 @@ const getScheduledChanges = all => {
   return axios.get('/scheduled_changes/releases');
 };
 
-const getScheduledChangeByName = name =>
+const getScheduledChangeByName = (name) =>
   axios.get(`/scheduled_changes/releases?name=${name}`);
-const getScheduledChangeById = scId =>
+const getScheduledChangeById = (scId) =>
   axios.get(`/scheduled_changes/releases/${scId}`);
 const createRelease = (name, product, blob) =>
   axios.post(`/releases`, { name, product, blob });
-const addScheduledChange = data =>
+const addScheduledChange = (data) =>
   axios.post('/scheduled_changes/releases', data);
 const updateScheduledChange = ({ scId, ...data }) =>
   axios.post(`/scheduled_changes/releases/${scId}`, data);
@@ -186,9 +183,9 @@ const deleteScheduledChange = ({ scId, scDataVersion }) =>
   axios.delete(`/scheduled_changes/releases/${scId}`, {
     params: { data_version: scDataVersion },
   });
-const getRequiredSignoffsForProduct = name =>
+const getRequiredSignoffsForProduct = (name) =>
   axios.get(
-    `/releases/${encodeURIComponent(name)}/read_only/product/required_signoffs`
+    `/releases/${encodeURIComponent(name)}/read_only/product/required_signoffs`,
   );
 
 // Releases factory
