@@ -1,3 +1,5 @@
+import Box from '@material-ui/core/Box';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import axios from 'axios';
 import React, { Fragment, useEffect, useState } from 'react';
 import { Column } from 'react-virtualized';
@@ -5,7 +7,6 @@ import 'react-virtualized/styles.css';
 import Drawer from '@material-ui/core/Drawer';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/styles';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import { formatDistanceStrict } from 'date-fns';
 import Button from '../../../components/Button';
 import Dashboard from '../../../components/Dashboard';
@@ -164,7 +165,11 @@ function ListReleaseRevisionsV2(props) {
   return (
     <Dashboard title={`Release ${releaseName} Revisions`}>
       {error && <ErrorPanel error={error} />}
-      {isLoading && <Spinner loading />}
+      {isLoading && (
+        <Box style={{ textAlign: 'center' }}>
+          <CircularProgress loading />
+        </Box>
+      )}
       {!isLoading && olderRevisions.length === 1 && (
         <Typography>{releaseName} has no revisions</Typography>
       )}

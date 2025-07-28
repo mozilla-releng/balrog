@@ -1,3 +1,5 @@
+import Box from '@material-ui/core/Box';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -5,7 +7,6 @@ import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/styles';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import { parse, stringify } from 'qs';
 import React, { Fragment, useEffect, useMemo, useState } from 'react';
 import Dashboard from '../../../components/Dashboard';
@@ -89,7 +90,11 @@ function ListRoles(props) {
 
   return (
     <Dashboard title="Roles">
-      {isLoading && <Spinner loading />}
+      {isLoading && (
+        <Box style={{ textAlign: 'center' }}>
+          <CircularProgress loading />
+        </Box>
+      )}
       {error && <ErrorPanel error={error} />}
       {Boolean(filteredRoles.length) && Boolean(users.length) && (
         <Fragment>

@@ -1,5 +1,7 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import Box from '@material-ui/core/Box';
 import Checkbox from '@material-ui/core/Checkbox';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Drawer from '@material-ui/core/Drawer';
 import Fab from '@material-ui/core/Fab';
 import FormControl from '@material-ui/core/FormControl';
@@ -16,7 +18,6 @@ import Alert from '@material-ui/lab/Alert';
 import AlertTitle from '@material-ui/lab/AlertTitle';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import { makeStyles, useTheme } from '@material-ui/styles';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import classNames from 'classnames';
 import { addSeconds } from 'date-fns';
 import CloseIcon from 'mdi-react/CloseIcon';
@@ -1408,7 +1409,11 @@ function ListRules(props) {
         rewindDate ? `Rules @ ${rewindDate.toString().split('(')[0]}` : 'Rules'
       }
     >
-      {isLoading && <Spinner loading />}
+      {isLoading && (
+        <Box style={{ textAlign: 'center' }}>
+          <CircularProgress loading />
+        </Box>
+      )}
       {error && <ErrorPanel error={error} />}
       {!isLoading && productChannelOptions && (
         <Fragment>

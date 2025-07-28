@@ -1,4 +1,6 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import Box from '@material-ui/core/Box';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Fab from '@material-ui/core/Fab';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
@@ -6,7 +8,6 @@ import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import Tooltip from '@material-ui/core/Tooltip';
 import { makeStyles } from '@material-ui/styles';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import PlusIcon from 'mdi-react/PlusIcon';
 import { clone } from 'ramda';
 import React, { Fragment, useEffect, useState } from 'react';
@@ -194,7 +195,11 @@ function ListUsers({ auth0 }) {
 
   return (
     <Dashboard title="Users">
-      {isLoading && <Spinner loading />}
+      {isLoading && (
+        <Box style={{ textAlign: 'center' }}>
+          <CircularProgress loading />
+        </Box>
+      )}
       {error && <ErrorPanel error={error} />}
       {!isLoading && users && (
         <Fragment>
