@@ -90,7 +90,7 @@ function ListRoles(props) {
   return (
     <Dashboard title="Roles">
       {isLoading && <Spinner loading />}
-      {error && <ErrorPanel fixed error={error} />}
+      {error && <ErrorPanel error={error} />}
       {Boolean(filteredRoles.length) && Boolean(users.length) && (
         <Fragment>
           <div className={classes.options}>

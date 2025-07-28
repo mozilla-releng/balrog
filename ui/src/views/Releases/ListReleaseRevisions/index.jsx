@@ -120,7 +120,7 @@ function ListReleaseRevisions(props) {
 
   return (
     <Dashboard title={`Release ${releaseName} Revisions`}>
-      {error && <ErrorPanel fixed error={error} />}
+      {error && <ErrorPanel error={error} />}
       {isLoading && <Spinner loading />}
       {!isLoading && revisions.length === 1 && (
         <Typography>Role {releaseName} has no revisions</Typography>

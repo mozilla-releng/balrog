@@ -195,7 +195,7 @@ function ListUsers({ auth0 }) {
   return (
     <Dashboard title="Users">
       {isLoading && <Spinner loading />}
-      {error && <ErrorPanel fixed error={error} />}
+      {error && <ErrorPanel error={error} />}
       {!isLoading && users && (
         <Fragment>
           {Object.keys(users)

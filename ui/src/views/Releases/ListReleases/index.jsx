@@ -833,7 +833,7 @@ function ListReleases(props) {
         value={searchValue}
       />
       {isLoading && <Spinner loading />}
-      {error && <ErrorPanel fixed error={error} />}
+      {error && <ErrorPanel error={error} />}
       {!isLoading && filteredReleases && (
         <VariableSizeList
           ref={releaseListRef}

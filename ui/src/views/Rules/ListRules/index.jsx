@@ -1409,7 +1409,7 @@ function ListRules(props) {
       }
     >
       {isLoading && <Spinner loading />}
-      {error && <ErrorPanel fixed error={error} />}
+      {error && <ErrorPanel error={error} />}
       {!isLoading && productChannelOptions && (
         <Fragment>
           <div ref={searchFieldRef} className={classes.options}>

@@ -449,7 +449,7 @@ function ViewUser({ isNewUser, ...props }) {
 
   return (
     <Dashboard title="Users">
-      {error && <ErrorPanel fixed error={error} />}
+      {error && <ErrorPanel error={error} />}
       {isLoading && <Spinner loading />}
       {!isLoading && (
         <Fragment>

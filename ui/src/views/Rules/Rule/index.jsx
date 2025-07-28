@@ -463,7 +463,7 @@ function Rule({ isNewRule, auth0, ...props }) {
   return (
     <Dashboard title={getTitle()}>
       {isLoading && <Spinner loading />}
-      {error && <ErrorPanel fixed error={error} />}
+      {error && <ErrorPanel error={error} />}
       {!isLoading && (
         <Fragment>
           <div>

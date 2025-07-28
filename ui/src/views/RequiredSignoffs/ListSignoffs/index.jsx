@@ -265,7 +265,7 @@ function ListSignoffs({ auth0, ...props }) {
 
   return (
     <Dashboard title="Required Signoffs">
-      {error && <ErrorPanel fixed error={error} />}
+      {error && <ErrorPanel error={error} />}
       {loading && <Spinner loading />}
       {requiredSignoffs && (
         <Fragment>

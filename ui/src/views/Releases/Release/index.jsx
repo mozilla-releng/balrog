@@ -263,7 +263,7 @@ function Release(props) {
       title={isNewRelease ? 'Create Release' : `Update Release ${releaseName}`}
     >
       {isLoading && <Spinner loading />}
-      {!isLoading && error && <ErrorPanel fixed error={error} />}
+      {!isLoading && error && <ErrorPanel error={error} />}
       {!isLoading && (
         <Fragment>
           <TextField

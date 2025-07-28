@@ -105,7 +105,7 @@ function Main() {
   return backendError ? (
     <BrowserRouter>
       <Dashboard title="Error" disabled>
-        <ErrorPanel fixed error={backendError} />
+        <ErrorPanel error={backendError} />
       </Dashboard>
     </BrowserRouter>
   ) : (
