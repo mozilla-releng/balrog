@@ -204,7 +204,7 @@ def create_app(allow_origins=None):
             MiddlewarePosition.BEFORE_ROUTING,
             allow_origins=allow_origins,
             allow_headers=["Authorization", "Content-Type"],
-            allow_methods=["OPTIONS", "GET", "POST", "PUT", "DELETE"],
+            allow_methods=["OPTIONS", "GET", "POST", "PUT", "DELETE", "HEAD"],
         )
 
     return connexion_app
