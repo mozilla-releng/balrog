@@ -26,7 +26,7 @@ tasks:
     tests:
         description: Balrog frontend tests
         run:
-            command: 'yarn install && yarn lint && yarn test'
+            command: 'yarn install && yarn lint:ci && yarn test'
 
     build:
         description: Balrog frontend build

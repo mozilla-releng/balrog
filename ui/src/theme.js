@@ -1,5 +1,5 @@
+import { amber, indigo, red } from '@material-ui/core/colors';
 import { createTheme } from '@material-ui/core/styles';
-import { amber, red, indigo } from '@material-ui/core/colors';
 
 const SPACING = {
   UNIT: 8,

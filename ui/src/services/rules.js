@@ -1,15 +1,15 @@
-import { stringify } from 'qs';
 import axios from 'axios';
+import { stringify } from 'qs';
 
 const getRules = (timestamp = null) =>
   timestamp ? axios.get(`/rules?timestamp=${timestamp}`) : axios.get('/rules');
-const getRule = id => axios.get(`/rules/${id}`);
+const getRule = (id) => axios.get(`/rules/${id}`);
 const getChannels = () => axios.get('/rules/columns/channel');
 const getProducts = () => axios.get('/rules/columns/product');
-const getRevisions = id => axios.get(`/rules/${id}/revisions?limit=10000`);
+const getRevisions = (id) => axios.get(`/rules/${id}/revisions?limit=10000`);
 const deleteRule = ({ ruleId, dataVersion }) =>
   axios.delete(`/rules/${ruleId}`, { params: { data_version: dataVersion } });
-const getScheduledChanges = all => {
+const getScheduledChanges = (all) => {
   if (all === true) {
     return axios.get(`/scheduled_changes/rules?${stringify({ all: 1 })}`);
   }
@@ -17,11 +17,12 @@ const getScheduledChanges = all => {
   return axios.get('/scheduled_changes/rules');
 };
 
-const getScheduledChangeByRuleId = ruleId =>
+const getScheduledChangeByRuleId = (ruleId) =>
   axios.get(`/scheduled_changes/rules?rule_id=${ruleId}`);
-const getScheduledChangeByScId = scId =>
+const getScheduledChangeByScId = (scId) =>
   axios.get(`/scheduled_changes/rules/${scId}`);
-const addScheduledChange = data => axios.post(`/scheduled_changes/rules`, data);
+const addScheduledChange = (data) =>
+  axios.post(`/scheduled_changes/rules`, data);
 const updateScheduledChange = ({ scId, ...data }) =>
   axios.post(`/scheduled_changes/rules/${scId}`, data);
 const deleteScheduledChange = ({ scId, scDataVersion }) =>

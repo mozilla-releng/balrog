@@ -1,45 +1,45 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import React, { Fragment, useState, useEffect } from 'react';
-import classNames from 'classnames';
-import { bool } from 'prop-types';
-import { defaultTo, assocPath, pick } from 'ramda';
-import { stringify } from 'qs';
-import NumberFormat from 'react-number-format';
+import Fab from '@material-ui/core/Fab';
+import Grid from '@material-ui/core/Grid';
+import MenuItem from '@material-ui/core/MenuItem';
+import TextField from '@material-ui/core/TextField';
+import Tooltip from '@material-ui/core/Tooltip';
+import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import { makeStyles } from '@material-ui/styles';
 import Spinner from '@mozilla-frontend-infra/components/Spinner';
-import Grid from '@material-ui/core/Grid';
-import TextField from '@material-ui/core/TextField';
-import MenuItem from '@material-ui/core/MenuItem';
-import Tooltip from '@material-ui/core/Tooltip';
-import Fab from '@material-ui/core/Fab';
-import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
+import classNames from 'classnames';
 import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
 import DeleteIcon from 'mdi-react/DeleteIcon';
-import Dashboard from '../../../components/Dashboard';
-import ErrorPanel from '../../../components/ErrorPanel';
+import { bool } from 'prop-types';
+import { stringify } from 'qs';
+import { assocPath, defaultTo, pick } from 'ramda';
+import React, { Fragment, useEffect, useState } from 'react';
+import NumberFormat from 'react-number-format';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
+import Dashboard from '../../../components/Dashboard';
 import DateTimePicker from '../../../components/DateTimePicker';
+import ErrorPanel from '../../../components/ErrorPanel';
 import SpeedDial from '../../../components/SpeedDial';
 import useAction from '../../../hooks/useAction';
+import { getReleaseNames, getReleaseNamesV2 } from '../../../services/releases';
+import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
 import {
+  addScheduledChange,
+  deleteScheduledChange,
+  getChannels,
+  getProducts,
+  getRule,
   getScheduledChangeByRuleId,
   getScheduledChangeByScId,
-  getRule,
-  getProducts,
-  getChannels,
-  addScheduledChange,
   updateScheduledChange,
-  deleteScheduledChange,
 } from '../../../services/rules';
-import { getReleaseNames, getReleaseNamesV2 } from '../../../services/releases';
 import {
   EMPTY_MENU_ITEM_CHAR,
-  SPLIT_WITH_NEWLINES_AND_COMMA_REGEX,
-  RULE_PRODUCT_UNSUPPORTED_PROPERTIES,
   OBJECT_NAMES,
+  RULE_PRODUCT_UNSUPPORTED_PROPERTIES,
+  SPLIT_WITH_NEWLINES_AND_COMMA_REGEX,
 } from '../../../utils/constants';
-import { getRequiredSignoffs } from '../../../services/requiredSignoffs';
 import { ruleMatchesRequiredSignoff } from '../../../utils/requiredSignoffs';
 
 const initialRule = {
@@ -65,7 +65,7 @@ const initialRule = {
   update_type: 'minor',
   version: '',
 };
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   fab: {
     ...theme.mixins.fab,
   },
@@ -95,31 +95,28 @@ const useStyles = makeStyles(theme => ({
 
 function Rule({ isNewRule, auth0, ...props }) {
   const classes = useStyles();
-  const rulesFilter =
-    props.location.state && props.location.state.rulesFilter
-      ? props.location.state.rulesFilter
-      : [];
+  const rulesFilter = props.location.state?.rulesFilter
+    ? props.location.state.rulesFilter
+    : [];
   const [rule, setRule] = useState(initialRule);
   const [releaseNames, setReleaseNames] = useState([]);
   const [signoffSummary, setSignoffSummary] = useState('');
   const [products, fetchProducts] = useAction(getProducts);
   const [channels, fetchChannels] = useAction(getChannels);
-  const [requiredSignoffs, fetchRequiredSignoffs] = useAction(
-    getRequiredSignoffs
-  );
+  const [requiredSignoffs, fetchRequiredSignoffs] =
+    useAction(getRequiredSignoffs);
   const [releaseNamesAction, fetchReleaseNames] = useAction(getReleaseNames);
-  const [releaseNamesV2Action, fetchReleaseNamesV2] = useAction(
-    getReleaseNamesV2
-  );
+  const [releaseNamesV2Action, fetchReleaseNamesV2] =
+    useAction(getReleaseNamesV2);
   // 30 seconds - to make sure the helper text "Scheduled for ASAP" shows up
   const [scheduleDate, setScheduleDate] = useState(new Date());
   const [dateTimePickerError, setDateTimePickerError] = useState(null);
   const [fetchRuleAction, fetchRule] = useAction(getRule);
   const [scheduledChangeActionRuleId, fetchScheduledChangeByRuleId] = useAction(
-    getScheduledChangeByRuleId
+    getScheduledChangeByRuleId,
   );
   const [scheduledChangeActionScId, fetchScheduledChangeByScId] = useAction(
-    getScheduledChangeByScId
+    getScheduledChangeByScId,
   );
   const [addSCAction, addSC] = useAction(addScheduledChange);
   const [updateSCAction, updateSC] = useAction(updateScheduledChange);
@@ -163,19 +160,21 @@ function Rule({ isNewRule, auth0, ...props }) {
     setRule(assocPath([name], value.split('\n').join(','), rule));
   };
 
-  const handleProductChange = value =>
+  const handleProductChange = (value) =>
     setRule(assocPath(['product'], value, rule));
-  const handleChannelChange = value =>
+  const handleChannelChange = (value) =>
     setRule(assocPath(['channel'], value, rule));
-  const handleMappingChange = value =>
+  const handleMappingChange = (value) =>
     setRule(assocPath(['mapping'], value, rule));
-  const handleFallbackMappingChange = value =>
+  const handleFallbackMappingChange = (value) =>
     setRule(assocPath(['fallbackMapping'], value, rule));
-  const handleNumberChange = name => ({ floatValue: value }) => {
-    setRule(assocPath([name], value, rule));
-  };
+  const handleNumberChange =
+    (name) =>
+    ({ floatValue: value }) => {
+      setRule(assocPath([name], value, rule));
+    };
 
-  const redirectWithRulesFilter = hashFilter => {
+  const redirectWithRulesFilter = (hashFilter) => {
     const [product, channel] = rulesFilter;
     const query = stringify({ product, channel }, { addQueryPrefix: true });
 
@@ -187,19 +186,19 @@ function Rule({ isNewRule, auth0, ...props }) {
       ([names, namesV2]) => {
         if (names.data.data && namesV2.data) {
           setReleaseNames(
-            names.data.data.names.concat(namesV2.data.data).sort()
+            names.data.data.names.concat(namesV2.data.data).sort(),
           );
         }
-      }
+      },
     );
   }, []);
 
-  const handleDateTimeChange = date => {
+  const handleDateTimeChange = (date) => {
     setScheduleDate(date);
     setDateTimePickerError(null);
   };
 
-  const handleDateTimePickerError = error => {
+  const handleDateTimePickerError = (error) => {
     setDateTimePickerError(error);
   };
 
@@ -214,12 +213,12 @@ function Rule({ isNewRule, auth0, ...props }) {
     }
   };
 
-  const productSupportsField = field =>
+  const productSupportsField = (field) =>
     !(
       rule.product in RULE_PRODUCT_UNSUPPORTED_PROPERTIES &&
       RULE_PRODUCT_UNSUPPORTED_PROPERTIES[rule.product].includes(field)
     );
-  const filterProductData = data =>
+  const filterProductData = (data) =>
     pick(Object.keys(data).filter(productSupportsField), data);
   const handleCreateRule = async () => {
     const now = new Date();
@@ -324,7 +323,7 @@ function Rule({ isNewRule, auth0, ...props }) {
     // values, they get stored as EMPTY_MENU_ITEM_CHAR or a string
     // true/false when they change in the UI. In order to keep things
     // consistent, we do the same to the data fetched from the server.
-    const getOptionalBooleanValue = current =>
+    const getOptionalBooleanValue = (current) =>
       current === null ? EMPTY_MENU_ITEM_CHAR : String(current);
 
     if (!isNewRule) {
@@ -393,14 +392,13 @@ function Rule({ isNewRule, auth0, ...props }) {
   }, [ruleId, scId]);
 
   useEffect(() => {
-    const rs =
-      requiredSignoffs.data && requiredSignoffs.data.data.required_signoffs;
+    const rs = requiredSignoffs.data?.data.required_signoffs;
 
     if (!rs || !rule.product) {
       setSignoffSummary(' Nobody');
     } else {
-      const matchingRs = rs.filter(rso =>
-        ruleMatchesRequiredSignoff(rule, rso)
+      const matchingRs = rs.filter((rso) =>
+        ruleMatchesRequiredSignoff(rule, rso),
       );
 
       if (!matchingRs.length) {
@@ -411,7 +409,7 @@ function Rule({ isNewRule, auth0, ...props }) {
 
         for (let i = 0; i < matchingRs.length; i += 1) {
           const rs = matchingRs[i];
-          const rsRoleCount = rsCount.find(count => rs.role in count);
+          const rsRoleCount = rsCount.find((count) => rs.role in count);
 
           if (rsRoleCount) {
             rsRoleCount[rs.role] += rs.signoffs_required;
@@ -670,7 +668,8 @@ function Rule({ isNewRule, auth0, ...props }) {
                   select
                   value={rule.jaws || EMPTY_MENU_ITEM_CHAR}
                   name="jaws"
-                  onChange={handleInputChange}>
+                  onChange={handleInputChange}
+                >
                   <MenuItem value={EMPTY_MENU_ITEM_CHAR}>
                     {EMPTY_MENU_ITEM_CHAR}
                   </MenuItem>
@@ -720,7 +719,8 @@ function Rule({ isNewRule, auth0, ...props }) {
                   select
                   value={rule.mig64 || EMPTY_MENU_ITEM_CHAR}
                   name="mig64"
-                  onChange={handleInputChange}>
+                  onChange={handleInputChange}
+                >
                   <MenuItem value={EMPTY_MENU_ITEM_CHAR}>
                     {EMPTY_MENU_ITEM_CHAR}
                   </MenuItem>
@@ -749,7 +749,8 @@ function Rule({ isNewRule, auth0, ...props }) {
                   label="Update Type"
                   value={rule.update_type || 'minor'}
                   name="update_type"
-                  onChange={handleInputChange}>
+                  onChange={handleInputChange}
+                >
                   <MenuItem value="minor">minor</MenuItem>
                   <MenuItem value="major">major</MenuItem>
                 </TextField>
@@ -780,13 +781,15 @@ function Rule({ isNewRule, auth0, ...props }) {
               className={classNames(classes.fabWithTooltip, {
                 [classes.secondFab]: hasScheduledChange,
                 [classes.fab]: !hasScheduledChange,
-              })}>
+              })}
+            >
               <Fab
                 disabled={!auth0.user || actionLoading}
                 onClick={
                   isNewRule && !scId ? handleCreateRule : handleUpdateRule
                 }
-                color="primary">
+                color="primary"
+              >
                 <ContentSaveIcon />
               </Fab>
             </div>
@@ -794,7 +797,8 @@ function Rule({ isNewRule, auth0, ...props }) {
           {hasScheduledChange && (
             <SpeedDial
               FabProps={{ disabled: !auth0.user || actionLoading }}
-              ariaLabel="Secondary Actions">
+              ariaLabel="Secondary Actions"
+            >
               <SpeedDialAction
                 FabProps={{ disabled: actionLoading }}
                 icon={<DeleteIcon />}

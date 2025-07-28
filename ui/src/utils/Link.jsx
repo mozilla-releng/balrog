@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { bool } from 'prop-types';
-import { Link as RouterLink, NavLink } from 'react-router-dom';
 import isAbsolute from 'is-absolute-url';
+import { bool } from 'prop-types';
+import React, { useState } from 'react';
+import { NavLink, Link as RouterLink } from 'react-router-dom';
 import routes from '../routes';
 import matchRoutes from './matchRoutes';
 
@@ -50,7 +50,6 @@ export default function Link({ viewName, nav, to, ...props }) {
   }
 
   return isPathAbsolute ? (
-    /* eslint-disable jsx-a11y/anchor-has-content */
     <a href={to} {...props} target="_blank" rel="noopener noreferrer" />
   ) : (
     <Component

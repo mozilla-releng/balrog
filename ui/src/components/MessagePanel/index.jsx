@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { bool, string, oneOf } from 'prop-types';
-import { makeStyles } from '@material-ui/styles';
+import IconButton from '@material-ui/core/IconButton';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
-import CloseIcon from 'mdi-react/CloseIcon';
+import { makeStyles } from '@material-ui/styles';
 import AlertIcon from 'mdi-react/AlertIcon';
+import CloseIcon from 'mdi-react/CloseIcon';
 import InformationIcon from 'mdi-react/InformationIcon';
+import { bool, oneOf, string } from 'prop-types';
+import React, { useState } from 'react';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   paper: {
     padding: `${theme.spacing(0)}px ${theme.spacing(2)}px`,
     display: 'flex',

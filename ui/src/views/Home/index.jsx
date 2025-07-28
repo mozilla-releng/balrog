@@ -1,18 +1,18 @@
-import React from 'react';
-import { makeStyles } from '@material-ui/styles';
-import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
+import Typography from '@material-ui/core/Typography';
+import { makeStyles } from '@material-ui/styles';
 import LinkIcon from 'mdi-react/LinkIcon';
+import React from 'react';
 import Dashboard from '../../components/Dashboard';
-import Link from '../../utils/Link';
 import balrogSrc from '../../images/balrog.svg';
 import { RULES_COMMON_FILTERS } from '../../utils/constants';
+import Link from '../../utils/Link';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   balrogImage: {
     width: 800,
     height: 800,

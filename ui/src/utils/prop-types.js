@@ -1,4 +1,4 @@
-import { bool, number, shape, string, oneOfType, object } from 'prop-types';
+import { bool, number, object, oneOfType, shape, string } from 'prop-types';
 
 export const signoffEntry = shape({
   channel: string,

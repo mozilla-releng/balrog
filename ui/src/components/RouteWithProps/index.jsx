@@ -1,6 +1,6 @@
 import { withAuth0 } from '@auth0/auth0-react';
 import React, { Suspense } from 'react';
-import { Route, Redirect } from 'react-router-dom';
+import { Redirect, Route } from 'react-router-dom';
 
 /**
  * Conditionally render a component based on location, with non-react-router

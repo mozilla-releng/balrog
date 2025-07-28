@@ -1,26 +1,26 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import React, { Fragment, useState, useEffect } from 'react';
-import { clone } from 'ramda';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
-import { makeStyles } from '@material-ui/styles';
 import Fab from '@material-ui/core/Fab';
-import Tooltip from '@material-ui/core/Tooltip';
-import Radio from '@material-ui/core/Radio';
-import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Radio from '@material-ui/core/Radio';
+import RadioGroup from '@material-ui/core/RadioGroup';
+import Tooltip from '@material-ui/core/Tooltip';
+import { makeStyles } from '@material-ui/styles';
+import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import PlusIcon from 'mdi-react/PlusIcon';
+import { clone } from 'ramda';
+import React, { Fragment, useEffect, useState } from 'react';
 import Dashboard from '../../../components/Dashboard';
 import DialogAction from '../../../components/DialogAction';
 import ErrorPanel from '../../../components/ErrorPanel';
-import { makeSignoff, revokeSignoff } from '../../../services/signoffs';
-import { getUsers, getScheduledChanges } from '../../../services/users';
-import useAction from '../../../hooks/useAction';
 import UserCard from '../../../components/UserCard';
+import useAction from '../../../hooks/useAction';
+import { makeSignoff, revokeSignoff } from '../../../services/signoffs';
+import { getScheduledChanges, getUsers } from '../../../services/users';
 import { DIALOG_ACTION_INITIAL_STATE } from '../../../utils/constants';
 import Link from '../../../utils/Link';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   fab: {
     ...theme.mixins.fab,
   },
@@ -34,17 +34,16 @@ function ListUsers({ auth0 }) {
   const classes = useStyles();
   const [users, setUsers] = useState({});
   const [usersAction, fetchUsers] = useAction(getUsers);
-  const [userScheduledChangesAction, fetchUserScheduledChanges] = useAction(
-    getScheduledChanges
-  );
+  const [userScheduledChangesAction, fetchUserScheduledChanges] =
+    useAction(getScheduledChanges);
   const [roles, setRoles] = useState([]);
   const [signoffRole, setSignoffRole] = useState('');
   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
-  const [signoffAction, signoff] = useAction(props =>
-    makeSignoff({ type: 'permissions', ...props })
+  const [signoffAction, signoff] = useAction((props) =>
+    makeSignoff({ type: 'permissions', ...props }),
   );
-  const [revokeAction, revoke] = useAction(props =>
-    revokeSignoff({ type: 'permissions', ...props })
+  const [revokeAction, revoke] = useAction((props) =>
+    revokeSignoff({ type: 'permissions', ...props }),
   );
   const isLoading = usersAction.loading || userScheduledChangesAction.loading;
   const error =
@@ -60,8 +59,9 @@ function ListUsers({ auth0 }) {
         aria-label="Role"
         name="role"
         value={signoffRole}
-        onChange={handleSignoffRoleChange}>
-        {roles.map(r => (
+        onChange={handleSignoffRoleChange}
+      >
+        {roles.map((r) => (
           <FormControlLabel key={r} value={r} label={r} control={<Radio />} />
         ))}
       </RadioGroup>
@@ -72,10 +72,10 @@ function ListUsers({ auth0 }) {
     fetchUsers().then(({ data, error }) => {
       const userData = data.data;
 
-      fetchUserScheduledChanges().then(resp => {
+      fetchUserScheduledChanges().then((resp) => {
         if (!resp.error) {
           // create data of all user permissions and scheduled changes
-          resp.data.data.scheduled_changes.forEach(sc => {
+          resp.data.data.scheduled_changes.forEach((sc) => {
             if (!(sc.username in userData)) {
               userData[sc.username] = {
                 roles: {},
@@ -95,7 +95,7 @@ function ListUsers({ auth0 }) {
           // set-up information about the currently logged in user
           if (!error) {
             const roleList = userData[username].roles.map(
-              roleData => roleData.role
+              (roleData) => roleData.role,
             );
 
             setRoles(roleList);
@@ -112,9 +112,8 @@ function ListUsers({ auth0 }) {
   const updateSignoffs = ({ signoffRole, updatedUser, permission }) => {
     const result = clone(users);
 
-    result[updatedUser].scheduledPermissions[permission].signoffs[
-      username
-    ] = signoffRole;
+    result[updatedUser].scheduledPermissions[permission].signoffs[username] =
+      signoffRole;
 
     setUsers(result);
   };
@@ -150,7 +149,7 @@ function ListUsers({ auth0 }) {
     }
   };
 
-  const handleRevoke = async entry => {
+  const handleRevoke = async (entry) => {
     const updatedUser = entry.username;
     const { permission } = entry;
     const { error } = await revoke({ scId: entry.sc_id });
@@ -166,7 +165,7 @@ function ListUsers({ auth0 }) {
     }
   };
 
-  const handleDialogError = error => {
+  const handleDialogError = (error) => {
     setDialogState({ ...dialogState, error });
   };
 
@@ -188,7 +187,7 @@ function ListUsers({ auth0 }) {
     return result;
   };
 
-  const handleDialogActionComplete = result => {
+  const handleDialogActionComplete = (result) => {
     updateSignoffs(result);
     handleDialogClose();
   };
@@ -201,7 +200,7 @@ function ListUsers({ auth0 }) {
         <Fragment>
           {Object.keys(users)
             .sort()
-            .map(user => (
+            .map((user) => (
               <UserCard
                 className={classes.userCard}
                 key={user}
@@ -218,7 +217,8 @@ function ListUsers({ auth0 }) {
               <Fab
                 color="primary"
                 className={classes.fab}
-                classes={{ root: classes.fab }}>
+                classes={{ root: classes.fab }}
+              >
                 <PlusIcon />
               </Fab>
             </Tooltip>

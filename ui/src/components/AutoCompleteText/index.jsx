@@ -1,16 +1,16 @@
-import React from 'react';
-import { arrayOf, string, bool, object, func } from 'prop-types';
-import classNames from 'classnames';
-import Downshift from 'downshift';
-import { equals } from 'ramda';
-import { makeStyles } from '@material-ui/styles';
-import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
+import TextField from '@material-ui/core/TextField';
+import { makeStyles } from '@material-ui/styles';
+import classNames from 'classnames';
+import Downshift from 'downshift';
 import ChevronDownIcon from 'mdi-react/ChevronDownIcon';
+import { arrayOf, bool, func, object, string } from 'prop-types';
+import { equals } from 'ramda';
+import React from 'react';
 import ChipList from './ChipList';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   paper: {
     position: 'absolute',
     // High enough to have higher priority than things like code editors
@@ -57,15 +57,15 @@ function AutoCompleteText({
   ...props
 }) {
   const classes = useStyles();
-  const handleChipDelete = item => {
-    const chips = selectedItems.filter(selectedItem => selectedItem !== item);
+  const handleChipDelete = (item) => {
+    const chips = selectedItems.filter((selectedItem) => selectedItem !== item);
 
     if (onSelectedItemsChange) {
       onSelectedItemsChange(chips);
     }
   };
 
-  const handleChipAdd = item => {
+  const handleChipAdd = (item) => {
     const chips = new Set([...selectedItems, item]);
     const updatedChips = Array.from(chips);
 
@@ -80,7 +80,7 @@ function AutoCompleteText({
     onValueChange('');
   };
 
-  const handleStateReducer = (state, changes) => {
+  const handleStateReducer = (_state, changes) => {
     switch (changes.type) {
       case Downshift.stateChangeTypes.keyDownEnter:
       case Downshift.stateChangeTypes.clickItem: {
@@ -100,7 +100,7 @@ function AutoCompleteText({
     }
   };
 
-  const handleStateChange = changes => {
+  const handleStateChange = (changes) => {
     if ('selectedItem' in changes) {
       // Make sure the value is not empty
       // e.g., when the user presses the ESC key.
@@ -134,7 +134,8 @@ function AutoCompleteText({
         key={index}
         selected={isHighlighted}
         component="div"
-        className={classNames({ [classes.selectedText]: isSelected })}>
+        className={classNames({ [classes.selectedText]: isSelected })}
+      >
         {suggestion}
       </MenuItem>
     );
@@ -145,7 +146,8 @@ function AutoCompleteText({
       {...props}
       selectedItem={value || ''}
       stateReducer={handleStateReducer}
-      onStateChange={handleStateChange}>
+      onStateChange={handleStateChange}
+    >
       {({
         getInputProps,
         getItemProps,
@@ -183,9 +185,7 @@ function AutoCompleteText({
                   selectedItems={selectedItems}
                   onItemDelete={handleChipDelete}
                 />
-              ) : (
-                undefined
-              ),
+              ) : undefined,
               endAdornment: (
                 <div className={classes.endAdornment}>
                   <ChevronDownIcon
@@ -211,7 +211,7 @@ function AutoCompleteText({
                       itemProps: getItemProps({ item: suggestion }),
                       highlightedIndex,
                       selectedItem,
-                    })
+                    }),
                   )}
                 </Paper>
               )}

@@ -1,5 +1,5 @@
+import { bool, func, string } from 'prop-types';
 import React from 'react';
-import { string, func, bool } from 'prop-types';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/theme/material.css';
@@ -9,7 +9,7 @@ function CodeEditor({ onChange, value, readOnly, ...rest }) {
   return (
     <CodeMirror
       value={value}
-      onBeforeChange={(editor, data, value) => {
+      onBeforeChange={(_editor, _data, value) => {
         onChange(value);
       }}
       options={{

@@ -16,14 +16,14 @@ export default (highlights, releaseName) => {
     for (let i = 1; i < highlights.length; i += 1) {
       // Add the highlighted matches with mark to highlight them
       highlightedName.push(
-        <mark key={i}>{releaseName.slice(...highlights[i])}</mark>
+        <mark key={i}>{releaseName.slice(...highlights[i])}</mark>,
       );
 
       if (highlights[i + 1]) {
         // If current match is not last element in array,
         // add all characters between current match and next match
         highlightedName.push(
-          releaseName.slice(highlights[i][1], highlights[i + 1][0])
+          releaseName.slice(highlights[i][1], highlights[i + 1][0]),
         );
       } else {
         // If current match is last element in array

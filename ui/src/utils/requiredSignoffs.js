@@ -20,7 +20,4 @@ const ruleMatchesRequiredSignoff = (rule, rs) => {
   return true;
 };
 
-export {
-  // eslint-disable-next-line import/prefer-default-export
-  ruleMatchesRequiredSignoff,
-};
+export { ruleMatchesRequiredSignoff };

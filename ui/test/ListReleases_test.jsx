@@ -8,7 +8,7 @@ describe('highlighting release', () => {
         [0, 17],
         [15, 17],
       ],
-      'Windows-7-8-81-Desupport'
+      'Windows-7-8-81-Desupport',
     );
     const highlighted = ['Windows-7-8-81-', <mark key={1}>De</mark>, 'support'];
 
@@ -21,7 +21,7 @@ describe('highlighting release', () => {
         [2, 4],
         [6, 8],
       ],
-      'Widevine-4.10.2710.0'
+      'Widevine-4.10.2710.0',
     );
     const highlighted = [
       'Wi',
@@ -39,7 +39,7 @@ describe('highlighting release', () => {
         [0, 33],
         [30, 33],
       ],
-      'Firefox-102.15.1esr-build1-No-WNP'
+      'Firefox-102.15.1esr-build1-No-WNP',
     );
     const highlighted = [
       'Firefox-102.15.1esr-build1-No-',
@@ -54,7 +54,7 @@ describe('highlighting release', () => {
         [0, 2],
         [0, 2],
       ],
-      'SystemAddons-shield-recipe-client-1.0.0-Superblob'
+      'SystemAddons-shield-recipe-client-1.0.0-Superblob',
     );
     const highlighted = [
       <mark key={1}>Sy</mark>,

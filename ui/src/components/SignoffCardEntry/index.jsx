@@ -1,19 +1,19 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import React, { Fragment } from 'react';
-import { makeStyles } from '@material-ui/styles';
-import CardContent from '@material-ui/core/CardContent';
 import CardActions from '@material-ui/core/CardActions';
-import Typography from '@material-ui/core/Typography';
+import CardContent from '@material-ui/core/CardContent';
 import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
+import { makeStyles } from '@material-ui/styles';
 import ArrowRightIcon from 'mdi-react/ArrowRightIcon';
 import { func } from 'prop-types';
-import StatusLabel from '../StatusLabel';
+import React, { Fragment } from 'react';
+import { LABELS } from '../../utils/constants';
+import { signoffEntry } from '../../utils/prop-types';
 import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
-import { signoffEntry } from '../../utils/prop-types';
-import { LABELS } from '../../utils/constants';
+import StatusLabel from '../StatusLabel';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   diff: {
     display: 'flex',
     alignItems: 'center',
