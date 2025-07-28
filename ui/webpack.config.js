@@ -3,7 +3,6 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const baseConfig = require('./.eslintrc');
 
 const eslintConfig = {
@@ -33,6 +32,7 @@ module.exports = (_, { mode }) => {
     },
     output: {
       path: `${__dirname}/build`,
+      clean: true,
       publicPath: '/',
       filename: 'assets/[name].[contenthash:8].js',
       globalObject: 'this',
@@ -246,18 +246,6 @@ module.exports = (_, { mode }) => {
         filename: 'assets/[name].[contenthash:8].css',
         ignoreOrder: false,
         chunkFilename: 'assets/[name].[contenthash:8].css',
-      }),
-      new CleanWebpackPlugin({
-        dangerouslyAllowCleanPatternsOutsideProject: false,
-        dry: false,
-        verbose: false,
-        cleanStaleWebpackAssets: true,
-        protectWebpackAssets: true,
-        cleanAfterEveryBuildPatterns: [],
-        cleanOnceBeforeBuildPatterns: ['**/*'],
-        currentAssets: [],
-        initialClean: false,
-        outputPath: '',
       }),
       new ESLintPlugin({
         extensions: ['js', 'jsx'],
