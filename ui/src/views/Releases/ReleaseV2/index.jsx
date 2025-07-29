@@ -1,10 +1,11 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import Box from '@material-ui/core/Box';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Fab from '@material-ui/core/Fab';
 import { makeStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
 import Tooltip from '@material-ui/core/Tooltip';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import classNames from 'classnames';
 import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
 import DeleteIcon from 'mdi-react/DeleteIcon';
@@ -242,8 +243,12 @@ function ReleaseV2(props) {
     <Dashboard
       title={isNewRelease ? 'Create Release' : `Update Release ${releaseName}`}
     >
-      {isLoading && <Spinner loading />}
-      {!isLoading && error && <ErrorPanel fixed error={error} />}
+      {isLoading && (
+        <Box style={{ textAlign: 'center' }}>
+          <CircularProgress loading />
+        </Box>
+      )}
+      {!isLoading && error && <ErrorPanel error={error} />}
       {!isLoading && (
         <Fragment>
           <TextField

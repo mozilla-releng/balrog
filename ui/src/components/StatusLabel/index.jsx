@@ -1,24 +1,53 @@
-import Label from '@mozilla-frontend-infra/components/Label';
+import Button from '@material-ui/core/Button';
+import { makeStyles } from '@material-ui/core/styles';
 import { sentenceCase } from 'change-case';
-import { bool, string } from 'prop-types';
+import { string } from 'prop-types';
 import React from 'react';
 import labels from '../../utils/labels';
 
+const useStyles = makeStyles((theme) => ({
+  mini: {
+    fontSize: '0.7em',
+    padding: '3px 8px 2px',
+  },
+  error: {
+    backgroundColor: `${theme.palette.error.dark} !important`,
+    color: `${theme.palette.error.contrastText} !important`,
+  },
+  success: {
+    backgroundColor: `${theme.palette.success.dark} !important`,
+    color: `${theme.palette.success.contrastText} !important`,
+  },
+  warning: {
+    backgroundColor: `${theme.palette.warning.dark} !important`,
+    color: `${theme.palette.warning.contrastText} !important`,
+  },
+  default: {
+    backgroundColor: `${theme.palette.grey[700]} !important`,
+    color: `${theme.palette.getContrastText(
+      theme.palette.grey[700],
+    )} !important`,
+  },
+  info: {
+    backgroundColor: `${theme.palette.info[700]} !important`,
+    color: `${theme.palette.info.contrastText} !important`,
+  },
+}));
 /**
  * A label color-coded based on known statuses.
  */
-function StatusLabel(props) {
-  const { state, mini, className, ...rest } = props;
+function StatusLabel({ state }) {
+  const classes = useStyles();
+  const labelKey = labels[state] || 'default';
 
   return (
-    <Label
-      mini={mini}
-      status={labels[state] || 'default'}
-      className={className}
-      {...rest}
+    <Button
+      size="small"
+      disabled
+      className={`${classes[labelKey]} ${classes.mini}`}
     >
       {sentenceCase(state).toUpperCase() || 'UNKNOWN'}
-    </Label>
+    </Button>
   );
 }
 
@@ -27,17 +56,6 @@ StatusLabel.propTypes = {
    * A state string.
    */
   state: string.isRequired,
-  /**
-   * Render the label using dense styling.
-   */
-  mini: bool,
-  /** The CSS class name of the wrapper element */
-  className: string,
-};
-
-StatusLabel.defaultProps = {
-  mini: true,
-  className: null,
 };
 
 export default StatusLabel;

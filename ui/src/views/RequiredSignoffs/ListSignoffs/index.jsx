@@ -1,4 +1,6 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import Box from '@material-ui/core/Box';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Divider from '@material-ui/core/Divider';
 import Fab from '@material-ui/core/Fab';
 import FormControl from '@material-ui/core/FormControl';
@@ -9,7 +11,6 @@ import TextField from '@material-ui/core/TextField';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/styles';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import { capitalCase } from 'change-case';
 import classNames from 'classnames';
 import PlusIcon from 'mdi-react/PlusIcon';
@@ -265,8 +266,12 @@ function ListSignoffs({ auth0, ...props }) {
 
   return (
     <Dashboard title="Required Signoffs">
-      {error && <ErrorPanel fixed error={error} />}
-      {loading && <Spinner loading />}
+      {error && <ErrorPanel error={error} />}
+      {loading && (
+        <Box style={{ textAlign: 'center' }}>
+          <CircularProgress loading />
+        </Box>
+      )}
       {requiredSignoffs && (
         <Fragment>
           <div className={classes.toolbar}>

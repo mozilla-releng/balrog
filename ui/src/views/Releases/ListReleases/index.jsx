@@ -1,5 +1,7 @@
 import { withAuth0 } from '@auth0/auth0-react';
 import { Typography } from '@material-ui/core';
+import Box from '@material-ui/core/Box';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Drawer from '@material-ui/core/Drawer';
 import Fab from '@material-ui/core/Fab';
 import FormControl from '@material-ui/core/FormControl';
@@ -8,7 +10,6 @@ import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import Tooltip from '@material-ui/core/Tooltip';
 import { makeStyles, useTheme } from '@material-ui/styles';
-import Spinner from '@mozilla-frontend-infra/components/Spinner';
 import classNames from 'classnames';
 import PlusIcon from 'mdi-react/PlusIcon';
 import { clone } from 'ramda';
@@ -832,8 +833,12 @@ function ListReleases(props) {
         onChange={handleSearchChange}
         value={searchValue}
       />
-      {isLoading && <Spinner loading />}
-      {error && <ErrorPanel fixed error={error} />}
+      {isLoading && (
+        <Box style={{ textAlign: 'center' }}>
+          <CircularProgress loading />
+        </Box>
+      )}
+      {error && <ErrorPanel error={error} />}
       {!isLoading && filteredReleases && (
         <VariableSizeList
           ref={releaseListRef}

@@ -1,4 +1,4 @@
-import { amber, indigo, red } from '@material-ui/core/colors';
+import { amber, green, indigo, red } from '@material-ui/core/colors';
 import { createTheme } from '@material-ui/core/styles';
 
 const SPACING = {
@@ -32,6 +32,11 @@ export default createTheme({
       main: indigo[500],
       dark: indigo[700],
       contrastText: 'rgba(255, 255, 255, 0.9)',
+    },
+    success: {
+      main: green[500],
+      dark: green[800],
+      contrastText: 'white',
     },
   },
   typography: {
