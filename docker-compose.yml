@@ -49,7 +49,7 @@ services:
       - LOCAL_ADMIN
     healthcheck:
         test: nc -z -v balrogadmin 7070
-        interval: 5s
+        interval: 2s
         timeout: 30s
         retries: 50
     ulimits:
@@ -163,7 +163,7 @@ services:
     command: /bin/bash -c "envsubst '$$NGINX_PORT $$NGINX_BALROG_AGENT_PORT $$BALROG_ADMIN_ROOT' < /etc/nginx/conf.d/http_balrog.conf.template > /etc/nginx/conf.d/http_balrog.conf && nginx -g 'daemon off;'"
     healthcheck:
         test: nc -z -v nginx 8010 && nc -z -v nginx 8011
-        interval: 5s
+        interval: 2s
         timeout: 30s
         retries: 50
 
@@ -187,7 +187,7 @@ services:
       driver: none
     healthcheck:
         test: nc -z -v balrogdb 3306
-        interval: 5s
+        interval: 2s
         timeout: 30s
         retries: 50
 
@@ -204,7 +204,7 @@ services:
       driver: none
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/__heartbeat__"]
-      interval: 60s
+      interval: 2s
       timeout: 10s
       retries: 3
 
