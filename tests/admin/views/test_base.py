@@ -35,4 +35,4 @@ class TestJsonLogFormatter(ViewTest):
         options = self.client.options("/rules", headers={"Origin": "example.com", "Access-Control-Request-Method": "GET"})
         self.assertGreaterEqual({h.strip() for h in options.headers.get("Access-Control-Allow-Headers", "").split(",")}, {"Authorization", "Content-Type"})
         self.assertEqual(options.headers.get("Access-Control-Allow-Origin"), "*")
-        self.assertEqual(options.headers.get("Access-Control-Allow-Methods"), "OPTIONS, GET, POST, PUT, DELETE, HEAD")
+        self.assertEqual(options.headers.get("Access-Control-Allow-Methods"), "OPTIONS, GET, POST, PUT, DELETE")
