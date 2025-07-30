@@ -6,7 +6,7 @@ include version.txt
 
 recursive-include src *
 recursive-include requirements *.txt
-recursive-include uvicorn *
+recursive-include uwsgi *
 
 exclude .dirschema.yml
 exclude .editorconfig

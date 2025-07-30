@@ -17,7 +17,7 @@ class CommonTestBase(unittest.TestCase):
 
     @pytest.fixture(autouse=True)
     def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, timecop_1_0):
-        self.app.app.config["DEBUG"] = True
+        self.app.config["DEBUG"] = True
         self.public_client = self.app.test_client()
 
         dbo.setDb("sqlite:///:memory:")

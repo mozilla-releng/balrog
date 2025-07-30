@@ -2,9 +2,10 @@ import logging
 import os
 
 import sentry_sdk
-import statsd.defaults
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
+
+import statsd.defaults
 
 from auslib.log import configure_logging
 
@@ -67,11 +68,10 @@ configure_logging(**logging_kwargs)
 # statsd environment also needs to be set up before importing the application
 statsd.defaults.PREFIX = "balrog.public"
 
-from auslib.global_state import cache, dbo  # noqa: E402
-from auslib.web.public.base import create_app  # noqa: E402
+from auslib.global_state import cache, dbo  # noqa
+from auslib.web.public.base import create_app
 
-connexion_app = create_app()
-application = connexion_app.app
+application = create_app().app
 
 if os.environ.get("AUTOGRAPH_URL"):
     application.config["AUTOGRAPH_URL"] = os.environ["AUTOGRAPH_URL"]

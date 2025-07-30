@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import unittest
@@ -45,13 +46,14 @@ class ViewTest(unittest.TestCase):
         self.version_fd, self.version_file = mkstemp()
         cache.reset()
         cache.make_copies = True
-        app.app.config["SECRET_KEY"] = "abc123"
-        app.app.config["DEBUG"] = True
-        app.app.config["ALLOWLISTED_DOMAINS"] = {"good.com": ("a", "b", "c", "d")}
-        app.app.config["VERSION_FILE"] = self.version_file
-        app.app.config["AUTH_DOMAIN"] = "balrog.test.dev"
-        app.app.config["AUTH_AUDIENCE"] = "balrog test"
-        app.app.config["M2M_ACCOUNT_MAPPING"] = {}
+        app.config["SECRET_KEY"] = "abc123"
+        app.config["DEBUG"] = True
+        app.config["ALLOWLISTED_DOMAINS"] = {"good.com": ("a", "b", "c", "d")}
+        app.config["VERSION_FILE"] = self.version_file
+        app.config["AUTH_DOMAIN"] = "balrog.test.dev"
+        app.config["AUTH_AUDIENCE"] = "balrog test"
+        app.config["M2M_ACCOUNT_MAPPING"] = {}
+        app.config["CORS_ORIGINS"] = "*"
         with open(self.version_file, "w+") as f:
             f.write(
                 """
@@ -424,20 +426,20 @@ class ViewTest(unittest.TestCase):
     def _get(self, url, qs={}, username=None):
         headers = {"Accept-Encoding": "application/json", "Accept": "application/json"}
         self.mocked_user = username
-        ret = self.client.get(url, params=qs, headers=headers)
+        ret = self.client.get(url, query_string=qs, headers=headers)
         return ret
 
     def _post(self, url, data={}, username="bill", **kwargs):
         self.mocked_user = username
-        return self.client.post(url, json=data, **kwargs)
+        return self.client.post(url, data=json.dumps(data), content_type="application/json", **kwargs)
 
     def _put(self, url, data={}, username="bill"):
         self.mocked_user = username
-        return self.client.put(url, json=data)
+        return self.client.put(url, data=json.dumps(data), content_type="application/json")
 
     def _delete(self, url, qs={}, username="bill"):
         self.mocked_user = username
-        return self.client.delete(url, params=qs)
+        return self.client.delete(url, query_string=qs)
 
     def assertStatusCode(self, response, expected):
-        self.assertEqual(response.status_code, expected, "%d - %s" % (response.status_code, response.text))
+        self.assertEqual(response.status_code, expected, "%d - %s" % (response.status_code, response.get_data()))
