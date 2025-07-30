@@ -3,22 +3,18 @@ import re
 from os import path
 
 import connexion
-from connexion.middleware import MiddlewarePosition
-from connexion.options import SwaggerUIOptions
-from flask import request
+from flask import g, request
 from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
-from starlette.middleware.cors import CORSMiddleware
 from statsd.defaults.env import statsd
 
 import auslib
-import auslib.web.admin.views.validators  # noqa
 from auslib.db import ChangeScheduledError, OutdatedDataError, UpdateMergeError
 from auslib.dockerflow import create_dockerflow_endpoints
 from auslib.errors import BlobValidationError, PermissionDeniedError, ReadOnlyError, SignoffRequiredError
 from auslib.util.auth import AuthError, verified_userinfo
 from auslib.web.admin.views.problem import problem
-from auslib.web.common import middlewares
+from auslib.web.admin.views.validators import BalrogRequestBodyValidator
 
 log = logging.getLogger(__name__)
 
@@ -33,53 +29,49 @@ spec = (
     .add_spec(path.join(web_dir, "common/swagger/responses.yml"))
 )
 
-swagger_ui_options = SwaggerUIOptions(swagger_ui=False)
+validator_map = {"body": BalrogRequestBodyValidator}
 
 
-class StatsdMiddleware:
-    def __init__(self, app):
-        self.app = app
+def should_time_request():
+    # don't time OPTIONS requests
+    if request.method == "OPTIONS":
+        return False
+    # don't time requests that don't match a valid route
+    if request.url_rule is None:
+        return False
+    # don't time dockerflow endpoints
+    if request.path.startswith("/__"):
+        return False
 
-    def metric_name(self, scope):
-        if scope["method"] == "OPTIONS":
-            return
-        op = scope.get("extensions", {}).get("connexion_routing", {}).get("operation_id")
-        if op is None:
-            return
-        # do some massaging to get the metric name right
-        # * remove various module prefixes
-        # * add a common prefix to ensure that we can mark these metrics as gauges for
-        #   statsd
-        metric = op.replace(".", "_").removeprefix("auslib_web_admin_views_").removeprefix("auslib_web_admin_").removeprefix("auslib_web_common_")
-        return f"endpoint_{metric}"
-
-    async def __call__(self, scope, receive, send):
-        if scope["type"] != "http":
-            await self.app(scope, receive, send)
-            return
-
-        metric = self.metric_name(scope)
-        if not metric:
-            await self.app(scope, receive, send)
-            return
-
-        timer = statsd.timer(metric)
-        timer.start()
-        try:
-            await self.app(scope, receive, send)
-        finally:
-            timer.stop()
+    return True
 
 
-def create_app(allow_origins=None):
-    connexion_app = connexion.App(__name__, swagger_ui_options=swagger_ui_options, middlewares=middlewares[:])
-    connexion_app.app.debug = False
-    connexion_app.add_api(spec, strict_validation=True)
+def create_app():
+    connexion_app = connexion.App(__name__, debug=False, options={"swagger_ui": False})
+    connexion_app.add_api(spec, validator_map=validator_map, strict_validation=True)
     connexion_app.add_api(path.join(current_dir, "swagger", "api_v2.yml"), base_path="/v2", strict_validation=True, validate_responses=True)
-    connexion_app.add_middleware(StatsdMiddleware, MiddlewarePosition.BEFORE_VALIDATION)
     flask_app = connexion_app.app
 
     create_dockerflow_endpoints(flask_app)
+
+    @flask_app.before_request
+    def setup_timer():
+        g.request_timer = None
+        if should_time_request():
+            # do some massaging to get the metric name right
+            # * get rid of the `/v2` prefix on v2 endpoints added by `base_path` further up
+            # * remove various module prefixes
+            # * add a common prefix to ensure that we can mark these metrics as gauges for
+            #   statsd
+            metric = (
+                request.url_rule.endpoint.removeprefix("/v2.")
+                .removeprefix("auslib_web_admin_views_")
+                .removeprefix("auslib_web_admin_")
+                .removeprefix("auslib_web_common_")
+            )
+            metric = f"endpoint_{metric}"
+            g.request_timer = statsd.timer(metric)
+            g.request_timer.start()
 
     @flask_app.before_request
     def setup_request():
@@ -190,6 +182,12 @@ def create_app(allow_origins=None):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Strict-Transport-Security"] = flask_app.config.get("STRICT_TRANSPORT_SECURITY", "max-age=31536000;")
+        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+        response.headers["Access-Control-Allow-Methods"] = "OPTIONS, GET, POST, PUT, DELETE"
+        if "*" in flask_app.config["CORS_ORIGINS"]:
+            response.headers["Access-Control-Allow-Origin"] = "*"
+        elif "Origin" in request.headers and request.headers["Origin"] in flask_app.config["CORS_ORIGINS"]:
+            response.headers["Access-Control-Allow-Origin"] = request.headers["Origin"]
         if re.match("^/ui/", request.path):
             # This enables swagger-ui to dynamically fetch and
             # load the swagger specification JSON file containing API definition and examples.
@@ -198,13 +196,14 @@ def create_app(allow_origins=None):
             response.headers["Content-Security-Policy"] = flask_app.config.get("CONTENT_SECURITY_POLICY", "default-src 'none'; frame-ancestors 'none'")
         return response
 
-    if allow_origins:
-        connexion_app.add_middleware(
-            CORSMiddleware,
-            MiddlewarePosition.BEFORE_ROUTING,
-            allow_origins=allow_origins,
-            allow_headers=["Authorization", "Content-Type"],
-            allow_methods=["OPTIONS", "GET", "POST", "PUT", "DELETE"],
-        )
+    # this is specifically set-up last before after_request handlers are called
+    # in reverse order of registering, and we want this one to be called first
+    # to avoid it being skipped if another one raises an exception
+    @flask_app.after_request
+    def send_stats(response):
+        if hasattr(g, "request_timer") and g.request_timer:
+            g.request_timer.stop()
+
+        return response
 
     return connexion_app

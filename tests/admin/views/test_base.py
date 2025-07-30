@@ -30,9 +30,7 @@ class TestJsonLogFormatter(ViewTest):
         self.assertEqual(ret.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'")
 
     def testCORSIsSet(self):
-        get = self.client.get("/rules", headers={"Origin": "example.com"})
-        self.assertEqual(get.headers.get("Access-Control-Allow-Origin"), "*")
-        options = self.client.options("/rules", headers={"Origin": "example.com", "Access-Control-Request-Method": "GET"})
-        self.assertGreaterEqual({h.strip() for h in options.headers.get("Access-Control-Allow-Headers", "").split(",")}, {"Authorization", "Content-Type"})
-        self.assertEqual(options.headers.get("Access-Control-Allow-Origin"), "*")
-        self.assertEqual(options.headers.get("Access-Control-Allow-Methods"), "OPTIONS, GET, POST, PUT, DELETE")
+        ret = self.client.get("/rules")
+        self.assertEqual(ret.headers.get("Access-Control-Allow-Headers"), "Authorization, Content-Type")
+        self.assertEqual(ret.headers.get("Access-Control-Allow-Origin"), "*")
+        self.assertEqual(ret.headers.get("Access-Control-Allow-Methods"), "OPTIONS, GET, POST, PUT, DELETE")

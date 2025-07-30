@@ -18,7 +18,7 @@ class TestPinsPublicAPI(CommonTestBase):
         resp = self.public_client.get("/api/v1/pins/test_product/test_channel/1.")
         self.assertEqual(resp.status_code, 200)
         self.assertIn("X-Data-Version", resp.headers)
-        data = resp.json()
+        data = resp.get_json()
         self.assertIn("product", data)
         self.assertEqual(data["product"], "test_product")
         self.assertIn("channel", data)

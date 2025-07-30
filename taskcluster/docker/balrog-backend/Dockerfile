@@ -4,10 +4,11 @@ FROM python:3.13-slim
 
 ENV LC_ALL C.UTF-8
 
+# uwsgi needs libpcre3 for routing support to be enabled.
 # default-libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
 # xz-utils is needed to compress production database dumps
 RUN apt-get -q update \
-    && apt-get -q --yes install default-libmysqlclient-dev mariadb-client xz-utils pkg-config \
+    && apt-get -q --yes install libpcre3-dev default-libmysqlclient-dev mariadb-client xz-utils pkg-config \
     && apt-get clean
 
 WORKDIR /app
@@ -28,8 +29,8 @@ RUN apt-get install -q --yes gcc && \
 # it, and we can bind mount to override it for local development.
 # %include src
 COPY topsrcdir/src/ /app/src/
-# %include uvicorn
-COPY topsrcdir/uvicorn/ /app/uvicorn/
+# %include uwsgi
+COPY topsrcdir/uwsgi/ /app/uwsgi/
 # %include scripts
 COPY topsrcdir/scripts/manage-db.py topsrcdir/scripts/run-batch-deletes.sh topsrcdir/scripts/run.sh topsrcdir/scripts/reset-stage-db.sh topsrcdir/scripts/get-prod-db-dump.py /app/scripts/
 # %include MANIFEST.in

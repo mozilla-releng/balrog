@@ -31,7 +31,7 @@ class TestEmergencyShutoff(ViewTest):
     def test_get_emergency_shutoff_list(self):
         resp = self._get("/emergency_shutoff")
         self.assertStatusCode(resp, 200)
-        data = resp.json()
+        data = resp.get_json()
         self.assertEqual(data["count"], 4)
         self.assertIn("shutoffs", data)
 
@@ -39,7 +39,7 @@ class TestEmergencyShutoff(ViewTest):
         resp = self._get("/emergency_shutoff/Fennec/beta")
         self.assertStatusCode(resp, 200)
         self.assertIn("X-Data-Version", resp.headers)
-        data = resp.json()
+        data = resp.get_json()
         self.assertIn("product", data)
         self.assertEqual(data["product"], "Fennec")
         self.assertIn("channel", data)
@@ -102,7 +102,7 @@ class TestEmergencyShutoff(ViewTest):
     def test_get_scheduled_changes(self):
         resp = self._get("/scheduled_changes/emergency_shutoff")
         self.assertStatusCode(resp, 200)
-        resp_data = resp.json()
+        resp_data = resp.get_json()
         self.assertEqual(resp_data["count"], 3)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
@@ -110,7 +110,7 @@ class TestEmergencyShutoff(ViewTest):
         data = {"when": 4200024, "change_type": "delete", "data_version": 1, "product": "Fennec", "channel": "beta"}
         ret = self._post("/scheduled_changes/emergency_shutoff", data=data)
         self.assertEqual(ret.status_code, 200)
-        self.assertIn("sc_id", ret.json())
+        self.assertIn("sc_id", ret.get_json())
         sc_table = dbo.emergencyShutoffs.scheduled_changes
         conditions_table = sc_table.conditions
         sc = (
@@ -131,7 +131,7 @@ class TestEmergencyShutoff(ViewTest):
         data = {"when": 123454321, "sc_data_version": 1}
         ret = self._post("/scheduled_changes/emergency_shutoff/1", data=data)
         self.assertEqual(ret.status_code, 200)
-        ret_data = ret.json()
+        ret_data = ret.get_json()
         self.assertIn("new_data_version", ret_data)
         self.assertEqual(ret_data["new_data_version"], 2)
         sc_table = dbo.emergencyShutoffs.scheduled_changes

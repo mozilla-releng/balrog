@@ -13,17 +13,18 @@ from auslib.web.public.base import create_app
 
 @pytest.fixture(scope="module")
 def app():
-    app = create_app()
-    app.app.testing = True
-    return app
+    connexion_app = create_app()
+    app = connexion_app.app
+    app.testing = True
+    return connexion_app.app
 
 
 @pytest.fixture(scope="function")
 def mock_autograph(monkeypatch, app):
-    monkeypatch.setitem(app.app.config, "AUTOGRAPH_URL", "fake")
-    monkeypatch.setitem(app.app.config, "AUTOGRAPH_KEYID", "fake")
-    monkeypatch.setitem(app.app.config, "AUTOGRAPH_USERNAME", "fake")
-    monkeypatch.setitem(app.app.config, "AUTOGRAPH_PASSWORD", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_URL", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_KEYID", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_USERNAME", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_PASSWORD", "fake")
 
     def mockreturn(*args):
         return ("abcdef", "https://this.is/a.x5u")
@@ -34,7 +35,7 @@ def mock_autograph(monkeypatch, app):
 
 @pytest.fixture(scope="module")
 def appconfig(app):
-    app.app.config["ALLOWLISTED_DOMAINS"] = {"good.com": ("Guardian",)}
+    app.config["ALLOWLISTED_DOMAINS"] = {"good.com": ("Guardian",)}
 
 
 @pytest.fixture(scope="module")
@@ -313,8 +314,8 @@ def testGuardianResponseV1(client, version, buildTarget, channel, code, response
         assert ret.status_code == code
         assert mocked_incr.mock_calls.count(mock.call(f"response.json.{code}")) == 1
         if code == 200:
-            assert ret.headers["content-type"] == "application/json"
-            assert ret.json() == response
+            assert ret.mimetype == "application/json"
+            assert ret.get_json() == response
             assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
             auslib.web.public.helpers.make_hash.assert_called_once_with(ret.text)
             assert "Rule-ID" in ret.headers
@@ -352,8 +353,8 @@ def testGuardianResponseV1WithoutSigning(client, version, buildTarget, channel, 
     ret = client.get(f"/json/1/Guardian/{version}/{buildTarget}/{channel}/update.json")
     assert ret.status_code == code
     if code == 200:
-        assert ret.headers["content-type"] == "application/json"
-        assert ret.json() == response
+        assert ret.mimetype == "application/json"
+        assert ret.get_json() == response
         assert "Content-Signature" not in ret.headers
 
 
@@ -373,10 +374,10 @@ def testGuardianResponseV1WithGradualRollout(client, forceValue, response):
     qs = {}
     if forceValue:
         qs["force"] = forceValue.query_value
-    ret = client.get("/json/1/Guardian/0.4.0.0/WINNT_x86_64/release-rollout/update.json", params=qs)
+    ret = client.get("/json/1/Guardian/0.4.0.0/WINNT_x86_64/release-rollout/update.json", query_string=qs)
     assert ret.status_code == 200
-    assert ret.headers["content-type"] == "application/json"
-    assert ret.json() == response
+    assert ret.mimetype == "application/json"
+    assert ret.get_json() == response
     assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
     auslib.web.public.helpers.make_hash.assert_called_once_with(ret.text)
 
@@ -437,8 +438,8 @@ def testGuardianResponseV2(client, version, buildTarget, channel, osVersion, cod
     ret = client.get(f"/json/2/Guardian/{version}/{buildTarget}/{channel}/{osVersion}/update.json")
     assert ret.status_code == code
     if code == 200:
-        assert ret.headers["content-type"] == "application/json"
-        assert ret.json() == response
+        assert ret.mimetype == "application/json"
+        assert ret.get_json() == response
         assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
         auslib.web.public.helpers.make_hash.assert_called_once_with(ret.text)
         assert "Rule-ID" in ret.headers
@@ -479,8 +480,8 @@ def testGuardianResponseV2WithoutSigning(client, version, buildTarget, channel, 
     ret = client.get(f"/json/2/Guardian/{version}/{buildTarget}/{channel}/{osVersion}/update.json")
     assert ret.status_code == code
     if code == 200:
-        assert ret.headers["content-type"] == "application/json"
-        assert ret.json() == response
+        assert ret.mimetype == "application/json"
+        assert ret.get_json() == response
         assert "Content-Signature" not in ret.headers
 
 
@@ -500,10 +501,10 @@ def testGuardianResponseV2WithGradualRollout(client, forceValue, response):
     qs = {}
     if forceValue:
         qs["force"] = forceValue.query_value
-    ret = client.get("/json/2/Guardian/0.4.0.0/WINNT_x86_64/release-rollout/Windows%2010/update.json", params=qs)
+    ret = client.get("/json/2/Guardian/0.4.0.0/WINNT_x86_64/release-rollout/Windows%2010/update.json", query_string=qs)
     assert ret.status_code == 200
-    assert ret.headers["content-type"] == "application/json"
-    assert ret.json() == response
+    assert ret.mimetype == "application/json"
+    assert ret.get_json() == response
     assert ret.headers["Content-Signature"] == "x5u=https://this.is/a.x5u; p384ecdsa=abcdef"
     auslib.web.public.helpers.make_hash.assert_called_once_with(ret.text)
 

@@ -108,7 +108,7 @@ def releases_db(
 @pytest.mark.usefixtures("releases_db")
 def test_get_releases(api):
     ret = api.get("/v2/releases")
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
     expected = {
         "releases": [
             {
@@ -447,32 +447,32 @@ def test_get_releases(api):
             },
         ]
     }
-    assert ret.json() == expected
+    assert ret.json == expected
 
 
 @pytest.mark.usefixtures("releases_db")
 def test_get_release_404(api):
     ret = api.get("/v2/releases/Firefox-33.0-build1")
-    assert ret.status_code == 404, ret.text
+    assert ret.status_code == 404, ret.data
 
 
 @pytest.mark.usefixtures("releases_db")
 def test_get_release(api, firefox_56_0_build1):
     ret = api.get("/v2/releases/Firefox-56.0-build1")
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
 
     data_versions = populate_versions_dict(firefox_56_0_build1)
     data_versions["."] = 1
 
     expected = {"blob": firefox_56_0_build1, "data_versions": data_versions, "sc_blob": {}, "sc_data_versions": {}}
 
-    assert ret.json() == expected, ret.json()
+    assert ret.json == expected, ret.json
 
 
 @pytest.mark.usefixtures("releases_db")
 def test_get_release_scheduled_insert(api, firefox_64_0_build1):
     ret = api.get("/v2/releases/Firefox-64.0-build1")
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
 
     expected_blob = deepcopy(firefox_64_0_build1)
     expected_blob["hashFunction"] = "sha1024"
@@ -487,13 +487,13 @@ def test_get_release_scheduled_insert(api, firefox_64_0_build1):
     sc_data_versions["."] = 1
     expected = {"blob": {}, "data_versions": {}, "sc_blob": expected_blob, "sc_data_versions": sc_data_versions}
 
-    assert ret.json() == expected, ret.json()
+    assert ret.json == expected, ret.json
 
 
 @pytest.mark.usefixtures("releases_db")
 def test_get_release_scheduled_update(api, firefox_66_0_build1):
     ret = api.get("/v2/releases/Firefox-66.0-build1")
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
 
     data_versions = populate_versions_dict(firefox_66_0_build1)
     data_versions["."] = 1
@@ -514,13 +514,13 @@ def test_get_release_scheduled_update(api, firefox_66_0_build1):
         "sc_data_versions": sc_data_versions,
     }
 
-    assert ret.json() == expected, ret.json()
+    assert ret.json == expected, ret.json
 
 
 @pytest.mark.usefixtures("releases_db")
 def test_get_release_scheduled_delete(api, firefox_67_0_build1):
     ret = api.get("/v2/releases/Firefox-67.0-build1")
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
 
     data_versions = populate_versions_dict(firefox_67_0_build1)
     data_versions["."] = 1
@@ -533,45 +533,45 @@ def test_get_release_scheduled_delete(api, firefox_67_0_build1):
 
     expected = {"blob": firefox_67_0_build1, "data_versions": data_versions, "sc_blob": {}, "sc_data_versions": sc_data_versions}
 
-    assert ret.json() == expected, ret.json()
+    assert ret.json == expected, ret.json
 
 
 @pytest.mark.usefixtures("releases_db")
 def test_get_data_versions_404(api):
     ret = api.get("/v2/releases/Firefox-33.0-build1/data_versions")
-    assert ret.status_code == 404, ret.text
+    assert ret.status_code == 404, ret.data
 
 
 @pytest.mark.usefixtures("releases_db")
 def test_get_data_versions(api, firefox_56_0_build1):
     ret = api.get("/v2/releases/Firefox-56.0-build1/data_versions")
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
 
     data_versions = populate_versions_dict(firefox_56_0_build1)
     data_versions["."] = 1
     expected = {"data_versions": data_versions}
 
-    assert ret.json() == expected, ret.json()
+    assert ret.json == expected, ret.json
 
 
 @pytest.mark.usefixtures("releases_db")
 def test_get_data_version_404_on_release(api):
     ret = api.get("/v2/releases/Firefox-33.0-build1/.platforms.Linux_x86_64-gcc3.locales.en-US/data_version")
-    assert ret.status_code == 404, ret.text
+    assert ret.status_code == 404, ret.data
 
 
 @pytest.mark.usefixtures("releases_db")
 def test_get_data_version_404_on_path(api):
     ret = api.get("/v2/releases/Firefox-56.0-build1/.platforms.Linux_x86_64-gcc3.locales.fake/data_version")
-    assert ret.status_code == 404, ret.text
+    assert ret.status_code == 404, ret.data
 
 
 @pytest.mark.usefixtures("releases_db")
 def test_get_data_version(api):
     ret = api.get("/v2/releases/Firefox-56.0-build1/.platforms.Linux_x86_64-gcc3.locales.en-US/data_version")
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
 
-    assert ret.json() == {"data_version": 1}, ret.json()
+    assert ret.json == {"data_version": 1}, ret.json
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -596,7 +596,7 @@ def test_put_fails_without_permission(api, firefox_60_0b3_build1, mock_verified_
     old_data_versions["."] = 1
 
     ret = api.put("/v2/releases/Firefox-60.0b3-build1", json={"blob": firefox_60_0b3_build1, "product": "Firefox", "old_data_versions": old_data_versions})
-    assert ret.status_code == 403, ret.text
+    assert ret.status_code == 403, ret.data
 
 
 @pytest.mark.usefixtures("releases_db")
@@ -604,7 +604,7 @@ def test_put_fails_without_permission_new_release(api, firefox_62_0_build1, mock
     mock_verified_userinfo("notbob")
 
     ret = api.put("/v2/releases/Firefox-62.0-build1", json={"blob": firefox_62_0_build1, "product": "Firefox"})
-    assert ret.status_code == 403, ret.text
+    assert ret.status_code == 403, ret.data
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -613,7 +613,7 @@ def test_put_fails_for_invalid_release(api):
     data = {"platforms": {"Linux_x86_64-gcc3": {"platforms": {"de": {"appVersion": "65.0", "buildID": "9090909090990", "displayVersion": "65.0"}}}}}
 
     ret = api.put("/v2/releases/Firefox-65.0-build1", json={"blob": data})
-    assert ret.status_code == 400, ret.text
+    assert ret.status_code == 400, ret.data
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -627,8 +627,8 @@ def test_put_fails_for_readonly_release(api, firefox_60_0b3_build1):
     old_data_versions["."] = 1
 
     ret = api.put("/v2/releases/Firefox-60.0b3-build1", json={"blob": firefox_60_0b3_build1, "product": "Firefox", "old_data_versions": old_data_versions})
-    assert ret.status_code == 400, ret.text
-    assert "Cannot overwrite" in ret.json()["exception"]
+    assert ret.status_code == 400, ret.data
+    assert "Cannot overwrite" in ret.json["exception"]
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -644,7 +644,7 @@ def test_put_fails_for_non_aiohttp_exception_in_future(api, firefox_60_0b3_build
     old_data_versions["."] = 1
 
     ret = api.put("/v2/releases/Firefox-60.0b3-build1", json={"blob": firefox_60_0b3_build1, "product": "Firefox", "old_data_versions": old_data_versions})
-    assert ret.status_code == 500, ret.text
+    assert ret.status_code == 500, ret.data
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -660,8 +660,8 @@ def test_put_succeeds(api, firefox_60_0b3_build1):
     assert new_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
 
     ret = api.put("/v2/releases/Firefox-60.0b3-build1", json={"blob": firefox_60_0b3_build1, "product": "Firefox", "old_data_versions": old_data_versions})
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == new_data_versions
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions
 
     base_blob = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute().fetchone().data
     locale_blob = (
@@ -713,8 +713,8 @@ def test_put_succeeds_when_history_writes_fail(api, firefox_60_0b3_build1, monke
     assert new_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["en-US"]
 
     ret = api.put("/v2/releases/Firefox-60.0b3-build1", json={"blob": firefox_60_0b3_build1, "product": "Firefox", "old_data_versions": old_data_versions})
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == new_data_versions
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions
 
     assert mocked_sentry.call_count == 2
 
@@ -755,8 +755,8 @@ def test_put_succeeds_for_new_release(api, firefox_62_0_build1):
     new_data_versions["."] = 1
 
     ret = api.put("/v2/releases/Firefox-62.0-build1", json={"blob": firefox_62_0_build1, "product": "Firefox"})
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == new_data_versions
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions
 
     # Check all parts of the base blob against the full blob
     base_row = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-62.0-build1").execute().fetchone()
@@ -806,8 +806,8 @@ def test_put_removes_locales(api, firefox_60_0b3_build1):
     assert old_data_versions["platforms"]["Linux_x86-gcc3"]["locales"]["af"]
 
     ret = api.put("/v2/releases/Firefox-60.0b3-build1", json={"blob": firefox_60_0b3_build1, "product": "Firefox", "old_data_versions": old_data_versions})
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == {}
+    assert ret.status_code == 200, ret.data
+    assert ret.json == {}
 
     removed_locales = (
         dbo.release_assets.t.select()
@@ -853,8 +853,8 @@ def test_put_remove_add_and_update_locales(api, firefox_60_0b3_build1):
     assert new_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["newde"]
 
     ret = api.put("/v2/releases/Firefox-60.0b3-build1", json={"blob": firefox_60_0b3_build1, "product": "Firefox", "old_data_versions": old_data_versions})
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == new_data_versions
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions
 
     removed_locales = (
         dbo.release_assets.t.select()
@@ -906,8 +906,8 @@ def test_put_succeeds_for_nonsplit_release(api, cdm_17):
     old_data_versions["."] = 1
 
     ret = api.put("/v2/releases/CDM-17", json={"blob": cdm_17, "product": "CDM", "old_data_versions": old_data_versions})
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == {".": 2}
+    assert ret.status_code == 200, ret.data
+    assert ret.json == {".": 2}
 
     base_blob = dbo.releases_json.t.select().where(dbo.releases_json.name == "CDM-17").execute().fetchone().data
     assert base_blob == cdm_17
@@ -922,7 +922,7 @@ def test_put_cancels_scheduled_updates(api, firefox_66_0_build1):
     old_data_versions = populate_versions_dict(firefox_66_0_build1)
 
     ret = api.put("/v2/releases/Firefox-66.0-build1", json={"blob": firefox_66_0_build1, "product": "Firefox", "old_data_versions": old_data_versions})
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
 
     base_sc = (
         dbo.releases_json.scheduled_changes.t.select()
@@ -972,7 +972,7 @@ def test_post_fails_without_permission(api, mock_verified_userinfo):
     assert old_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": blob, "old_data_versions": old_data_versions})
-    assert ret.status_code == 403, ret.text
+    assert ret.status_code == 403, ret.data
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -983,8 +983,8 @@ def test_post_fails_for_invalid_release_base(api):
     old_data_versions["."] = 1
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": data, "old_data_versions": old_data_versions})
-    assert ret.status_code == 400, ret.text
-    assert ret.json()["detail"] == "Invalid Blob", ret.json()
+    assert ret.status_code == 400, ret.data
+    assert ret.json["detail"] == "Invalid Blob", ret.json
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -996,8 +996,8 @@ def test_post_fails_for_invalid_release_locale(api):
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["de"]
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": data, "old_data_versions": old_data_versions})
-    assert ret.status_code == 400, ret.text
-    assert ret.json()["detail"] == "Invalid Blob", ret.json()
+    assert ret.status_code == 400, ret.data
+    assert ret.json["detail"] == "Invalid Blob", ret.json
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -1010,8 +1010,8 @@ def test_post_fails_for_readonly_release(api, firefox_60_0b3_build1):
     assert old_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["de"]
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": data, "product": "Firefox", "old_data_versions": old_data_versions})
-    assert ret.status_code == 400, ret.text
-    assert "Cannot update" in ret.json()["exception"]
+    assert ret.status_code == 400, ret.data
+    assert "Cannot update" in ret.json["exception"]
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -1019,11 +1019,11 @@ def test_post_fails_update_without_data_version(api):
     blob = {"platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "22222222222"}}}}}
     old_data_versions = {"platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {}}}}
     ret = api.post("/v2/releases/Firefox-empty", json={"blob": blob, "old_data_versions": old_data_versions})
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
     blob = {"platforms": {"Darwin_x86_64-gcc3-u-i386-x86_64": {"locales": {"de": {"buildID": "33333333333"}}}}}
     ret = api.post("/v2/releases/Firefox-empty", json={"blob": blob, "old_data_versions": old_data_versions})
-    assert ret.status_code == 400, ret.text
-    assert ret.json()["exception"] == "Missing data_version for .platforms.Darwin_x86_64-gcc3-u-i386-x86_64.locales.de"
+    assert ret.status_code == 400, ret.data
+    assert ret.json["exception"] == "Missing data_version for .platforms.Darwin_x86_64-gcc3-u-i386-x86_64.locales.de"
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -1038,7 +1038,7 @@ def test_post_fails_for_non_aiohttp_exception_in_future(api, monkeypatch):
     assert old_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": blob, "old_data_versions": old_data_versions})
-    assert ret.status_code == 500, ret.text
+    assert ret.status_code == 500, ret.data
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -1053,8 +1053,8 @@ def test_post_succeeds(api):
     assert new_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": blob, "old_data_versions": old_data_versions})
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == new_data_versions
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions
 
     base_blob = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute().fetchone().data
     locale_blob = (
@@ -1109,8 +1109,8 @@ def test_post_succeeds_when_history_writes_fails(api, monkeypatch):
     assert new_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": blob, "old_data_versions": old_data_versions})
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == new_data_versions
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions
 
     assert mocked_sentry.call_count == 2
 
@@ -1168,8 +1168,8 @@ def test_post_add_and_update_locales(api, firefox_60_0b3_build1):
     assert new_data_versions["platforms"]["Linux_x86_64-gcc3"]["locales"]["newde"]
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions})
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == new_data_versions
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions
 
     got_newde = (
         dbo.release_assets.t.select()
@@ -1235,8 +1235,8 @@ def test_update_succeeds_overwrite_updates(api):
     assert new_data_versions["platforms"]["WINNT_x86_64-msvc"]["locales"]["af"]
 
     ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": blob, "old_data_versions": old_data_versions})
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == new_data_versions
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions
 
     locale_blob = (
         dbo.release_assets.t.select()
@@ -1265,8 +1265,8 @@ def test_post_succeeds_for_nonsplit_release(api, cdm_17):
     old_data_versions["."] = 1
 
     ret = api.post("/v2/releases/CDM-17", json={"blob": blob, "old_data_versions": old_data_versions})
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == {".": 2}
+    assert ret.status_code == 200, ret.data
+    assert ret.json == {".": 2}
 
     base_blob = dbo.releases_json.t.select().where(dbo.releases_json.name == "CDM-17").execute().fetchone().data
     assert base_blob == cdm_17
@@ -1289,7 +1289,7 @@ def test_put_add_scheduled_change_fails_without_permission(api, firefox_56_0_bui
         "/v2/releases/Firefox-56.0-build1",
         json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
-    assert ret.status_code == 403, ret.text
+    assert ret.status_code == 403, ret.data
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -1305,8 +1305,8 @@ def test_put_add_scheduled_change_base_only(api, firefox_56_0_build1):
         "/v2/releases/Firefox-56.0-build1",
         json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == new_data_versions, ret.json()
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions, ret.json
 
     base_blob = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-56.0-build1").execute().fetchone()["data"]
     assert base_blob["displayVersion"] == "56.0"
@@ -1361,8 +1361,8 @@ def test_put_add_scheduled_change_locale_only(api, firefox_56_0_build1):
         "/v2/releases/Firefox-56.0-build1",
         json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == new_data_versions, ret.json()
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions, ret.json
 
     base_sc = dbo.releases_json.scheduled_changes.t.select().where(dbo.releases_json.scheduled_changes.base_name == "Firefox-56.0-build1").execute().fetchall()
     assert len(base_sc) == 0
@@ -1419,8 +1419,8 @@ def test_put_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
         "/v2/releases/Firefox-56.0-build1",
         json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == new_data_versions, ret.json()
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions, ret.json
 
     base_blob = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-56.0-build1").execute().fetchone()["data"]
     assert base_blob["displayVersion"] == "56.0"
@@ -1487,7 +1487,7 @@ def test_post_add_scheduled_change_fails_without_permission(api, firefox_56_0_bu
         "/v2/releases/Firefox-56.0-build1",
         json={"blob": {"displayVersion": "fifty six dot oh"}, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
-    assert ret.status_code == 403, ret.text
+    assert ret.status_code == 403, ret.data
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -1503,8 +1503,8 @@ def test_post_add_scheduled_change_base_only(api, firefox_56_0_build1):
         "/v2/releases/Firefox-56.0-build1",
         json={"blob": {"displayVersion": "fifty six dot oh"}, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == new_data_versions, ret.json()
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions, ret.json
 
     base_blob = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-56.0-build1").execute().fetchone()["data"]
     assert base_blob["displayVersion"] == "56.0"
@@ -1560,8 +1560,8 @@ def test_post_add_scheduled_change_locale_only(api, firefox_56_0_build1):
         "/v2/releases/Firefox-56.0-build1",
         json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == new_data_versions, ret.json()
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions, ret.json
 
     base_sc = dbo.releases_json.scheduled_changes.t.select().where(dbo.releases_json.scheduled_changes.base_name == "Firefox-56.0-build1").execute().fetchall()
     assert len(base_sc) == 0
@@ -1618,8 +1618,8 @@ def test_post_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
         "/v2/releases/Firefox-56.0-build1",
         json={"blob": blob, "product": "Firefox", "old_data_versions": old_data_versions, "when": 1991639932000},
     )
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == new_data_versions, ret.json()
+    assert ret.status_code == 200, ret.data
+    assert ret.json == new_data_versions, ret.json
 
     base_blob = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-56.0-build1").execute().fetchone()["data"]
     assert base_blob["displayVersion"] == "56.0"
@@ -1682,27 +1682,27 @@ def test_post_add_scheduled_change_base_and_locale(api, firefox_56_0_build1):
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_delete_release_404(api):
     ret = api.delete("/v2/releases/Firefox-55.0b3-build1")
-    assert ret.status_code == 404, ret.text
+    assert ret.status_code == 404, ret.data
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_delete_release_mapped_to(api):
     ret = api.delete("/v2/releases/Firefox-60.0b3-build1")
-    assert ret.status_code == 400, ret.text
-    assert "mapped to" in ret.json()["exception"], ret.json()
+    assert ret.status_code == 400, ret.data
+    assert "mapped to" in ret.json["exception"], ret.json
 
 
 @pytest.mark.usefixtures("releases_db")
 def test_delete_release_without_permission(api, mock_verified_userinfo):
     mock_verified_userinfo("notbob")
     ret = api.delete("/v2/releases/CDM-16")
-    assert ret.status_code == 403, ret.text
+    assert ret.status_code == 403, ret.data
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_delete_release(api):
     ret = api.delete("/v2/releases/Firefox-65.0-build1")
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
 
     assert len(dbo.releases_json.t.select(dbo.releases_json.name).where(dbo.releases_json.name == "Firefox-65.0-build1").execute().fetchall()) == 0
     assert len(dbo.release_assets.t.select(dbo.release_assets.name).where(dbo.release_assets.name == "Firefox-65.0-build1").execute().fetchall()) == 0
@@ -1711,7 +1711,7 @@ def test_delete_release(api):
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_delete_scheduled_insert(api):
     ret = api.delete("/v2/releases/Firefox-64.0-build1")
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
 
     assert (
         len(dbo.releases_json.scheduled_changes.t.select(dbo.releases_json.name).where(dbo.releases_json.name == "Firefox-64.0-build1").execute().fetchall())
@@ -1726,7 +1726,7 @@ def test_delete_scheduled_insert(api):
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_delete_nonsplit_release(api):
     ret = api.delete("/v2/releases/CDM-16")
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
 
     assert len(dbo.releases_json.t.select(dbo.releases_json.name).where(dbo.releases_json.name == "CDM-16").execute().fetchall()) == 0
     assert len(dbo.release_assets.t.select(dbo.release_assets.name).where(dbo.release_assets.name == "CDM-16").execute().fetchall()) == 0
@@ -1737,21 +1737,21 @@ def test_delete_fails_for_readonly_release(api):
     dbo.releases_json.t.update(values={"read_only": True}).where(dbo.releases_json.name == "Firefox-65.0-build1").execute()
 
     ret = api.delete("/v2/releases/Firefox-65.0-build1")
-    assert ret.status_code == 400, ret.text
-    assert "Cannot delete" in ret.json()["exception"]
+    assert ret.status_code == 400, ret.data
+    assert "Cannot delete" in ret.json["exception"]
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_set_readonly_404(api):
     ret = api.put("/v2/releases/Firefox-22.0-build1/read_only", json={"read_only": True, "old_data_version": 1})
-    assert ret.status_code == 404, ret.text
+    assert ret.status_code == 404, ret.data
 
 
 @pytest.mark.usefixtures("releases_db")
 def test_set_readonly_without_permission(api, mock_verified_userinfo):
     mock_verified_userinfo("notbob")
     ret = api.put("/v2/releases/Firefox-60.0b3-build1/read_only", json={"read_only": True, "old_data_version": 1})
-    assert ret.status_code == 403, ret.text
+    assert ret.status_code == 403, ret.data
 
 
 @pytest.mark.usefixtures("releases_db")
@@ -1759,14 +1759,14 @@ def test_set_readwrite_without_permission(api, mock_verified_userinfo):
     mock_verified_userinfo("notbob")
     dbo.releases_json.t.update(values={"read_only": False}).where(dbo.releases_json.name == "CDM-16").execute()
     ret = api.put("/v2/releases/CDM-16/read_only", json={"read_only": True, "old_data_version": 1})
-    assert ret.status_code == 403, ret.text
+    assert ret.status_code == 403, ret.data
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_set_readonly(api):
     ret = api.put("/v2/releases/Firefox-60.0b3-build1/read_only", json={"read_only": True, "old_data_version": 1})
-    assert ret.status_code == 200, ret.text
-    assert ret.json()["."] == 2
+    assert ret.status_code == 200, ret.data
+    assert ret.json["."] == 2
 
     got = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute().fetchone().read_only
     assert got is True
@@ -1775,8 +1775,8 @@ def test_set_readonly(api):
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_set_readonly_when_rule_requires_signoff(api):
     ret = api.put("/v2/releases/Firefox-56.0-build1/read_only", json={"read_only": True, "old_data_version": 1})
-    assert ret.status_code == 200, ret.text
-    assert ret.json()["."] == 2
+    assert ret.status_code == 200, ret.data
+    assert ret.json["."] == 2
 
     got = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-56.0-build1").execute().fetchone().read_only
     assert got is True
@@ -1786,8 +1786,8 @@ def test_set_readonly_when_rule_requires_signoff(api):
 def test_set_readwrite(api):
     dbo.releases_json.t.update(values={"read_only": True}).where(dbo.releases_json.name == "CDM-16").execute()
     ret = api.put("/v2/releases/CDM-16/read_only", json={"read_only": False, "old_data_version": 1})
-    assert ret.status_code == 200, ret.text
-    assert ret.json()["."] == 2
+    assert ret.status_code == 200, ret.data
+    assert ret.json["."] == 2
 
     got = dbo.releases_json.t.select().where(dbo.releases_json.name == "CDM-16").execute().fetchone().read_only
     assert got is False
@@ -1803,8 +1803,8 @@ def test_set_readwrite_scheduled_change_because_of_rule(api, monkeypatch):
 
     dbo.releases_json.t.update(values={"read_only": True}).where(dbo.releases_json.name == "Firefox-56.0-build1").execute()
     ret = api.put("/v2/releases/Firefox-56.0-build1/read_only", json={"read_only": False, "old_data_version": 1})
-    assert ret.status_code == 200, ret.text
-    assert ret.json() == {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 3333333363000}}
+    assert ret.status_code == 200, ret.data
+    assert ret.json == {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {"bob": "releng"}, "when": 3333333363000}}
 
     read_only = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-56.0-build1").execute().fetchone()["read_only"]
     assert read_only is True
@@ -1828,9 +1828,9 @@ def test_set_readwrite_scheduled_change_because_of_product(api, monkeypatch):
 
     dbo.releases_json.t.update(values={"read_only": True}).where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute()
     ret = api.put("/v2/releases/Firefox-60.0b3-build1/read_only", json={"read_only": False, "old_data_version": 1})
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
     # This endpoint automatically schedules 30 seconds into the future
-    assert ret.json() == {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {}, "when": 3333333363000}}
+    assert ret.json == {".": {"sc_id": 4, "data_version": 1, "change_type": "update", "signoffs": {}, "when": 3333333363000}}
 
     read_only = dbo.releases_json.t.select().where(dbo.releases_json.name == "Firefox-60.0b3-build1").execute().fetchone()["read_only"]
     assert read_only is True
@@ -1848,28 +1848,28 @@ def test_set_readwrite_scheduled_change_because_of_product(api, monkeypatch):
 def test_signoff_as_system_account(api, mock_verified_userinfo):
     mock_verified_userinfo("ffxbld")
     ret = api.put("/v2/releases/Firefox-64.0-build1/signoff", json={"role": "releng"})
-    assert ret.status_code == 403, ret.text
-    assert "ffxbld cannot signoff" in ret.json()["exception"]
+    assert ret.status_code == 403, ret.data
+    assert "ffxbld cannot signoff" in ret.json["exception"]
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_signoff_without_role(api):
     ret = api.put("/v2/releases/Firefox-64.0-build1/signoff", json={"role": "relman"})
-    assert ret.status_code == 403, ret.text
-    assert "bob cannot signoff with role 'relman'" in ret.json()["exception"]
+    assert ret.status_code == 403, ret.data
+    assert "bob cannot signoff with role 'relman'" in ret.json["exception"]
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_signoff_with_second_role(api):
     ret = api.put("/v2/releases/Firefox-67.0-build1/signoff", json={"role": "tb-releng"})
-    assert ret.status_code == 403, ret.text
-    assert "Cannot signoff with a second role" in ret.json()["exception"]
+    assert ret.status_code == 403, ret.data
+    assert "Cannot signoff with a second role" in ret.json["exception"]
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_signoff(api):
     ret = api.put("/v2/releases/Firefox-64.0-build1/signoff", json={"role": "releng"})
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
 
     sc_id = (
         dbo.releases_json.scheduled_changes.t.select(dbo.releases_json.scheduled_changes.sc_id)
@@ -1905,7 +1905,7 @@ def test_signoff(api):
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_revoke_signoff(api):
     ret = api.delete("/v2/releases/Firefox-67.0-build1/signoff")
-    assert ret.status_code == 200, ret.text
+    assert ret.status_code == 200, ret.data
 
     sc_id = (
         dbo.releases_json.scheduled_changes.t.select(dbo.releases_json.scheduled_changes.sc_id)
@@ -1950,7 +1950,7 @@ def test_enact_changes_missing_signoff(api):
         dbo.release_assets.scheduled_changes.signoffs.t.delete().where(dbo.release_assets.scheduled_changes.signoffs.sc_id == sc_id).execute()
     ret = api.post("/v2/releases/Firefox-66.0-build1/enact")
     assert ret.status_code == 400
-    assert "No Signoffs given" in ret.json()["exception"]
+    assert "No Signoffs given" in ret.json["exception"]
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -2037,7 +2037,7 @@ def test_enact_changes_one_fails_all_revert(api):
 
     ret = api.post("/v2/releases/Firefox-66.0-build1/enact")
     assert ret.status_code == 400
-    assert "No Signoffs given" in ret.json()["exception"]
+    assert "No Signoffs given" in ret.json["exception"]
 
     base_sc = dbo.releases_json.scheduled_changes.t.select().where(dbo.releases_json.scheduled_changes.base_name == "Firefox-66.0-build1").execute().fetchone()
     assert base_sc["complete"] is False
@@ -2079,14 +2079,14 @@ def test_schedule_pin_insert(api):
     version = "66."
     ret = api.put("v2/releases/Firefox-56.0-build1/pinnable", json={"product": product, "channel": channel, "version": version, "when": 1991639932000})
     assert ret.status_code == 200
-    assert ret.json()["."]["change_type"] == "insert"
+    assert ret.json["."]["change_type"] == "insert"
 
     base_sc = (
-        dbo.pinnable_releases.scheduled_changes.t.select().where(dbo.pinnable_releases.scheduled_changes.sc_id == ret.json()["."]["sc_id"]).execute().fetchone()
+        dbo.pinnable_releases.scheduled_changes.t.select().where(dbo.pinnable_releases.scheduled_changes.sc_id == ret.json["."]["sc_id"]).execute().fetchone()
     )
     base_sc_cond = (
         dbo.pinnable_releases.scheduled_changes.conditions.t.select()
-        .where(dbo.pinnable_releases.scheduled_changes.conditions.sc_id == ret.json()["."]["sc_id"])
+        .where(dbo.pinnable_releases.scheduled_changes.conditions.sc_id == ret.json["."]["sc_id"])
         .execute()
         .fetchone()
     )
@@ -2108,14 +2108,14 @@ def test_schedule_pin_update(api):
 
     ret = api.put("v2/releases/Firefox-66.0-build1/pinnable", json={"product": product, "channel": channel, "version": version, "when": 1991639932000})
     assert ret.status_code == 200
-    assert ret.json()["."]["change_type"] == "update"
+    assert ret.json["."]["change_type"] == "update"
 
     base_sc = (
-        dbo.pinnable_releases.scheduled_changes.t.select().where(dbo.pinnable_releases.scheduled_changes.sc_id == ret.json()["."]["sc_id"]).execute().fetchone()
+        dbo.pinnable_releases.scheduled_changes.t.select().where(dbo.pinnable_releases.scheduled_changes.sc_id == ret.json["."]["sc_id"]).execute().fetchone()
     )
     base_sc_cond = (
         dbo.pinnable_releases.scheduled_changes.conditions.t.select()
-        .where(dbo.pinnable_releases.scheduled_changes.conditions.sc_id == ret.json()["."]["sc_id"])
+        .where(dbo.pinnable_releases.scheduled_changes.conditions.sc_id == ret.json["."]["sc_id"])
         .execute()
         .fetchone()
     )
@@ -2143,7 +2143,7 @@ def test_set_older_pin_does_nothing(api):
     # Attempting to set the '66.' pin to an earlier version should succeed but not result in a pinning change
     ret = api.put("v2/releases/Firefox-56.0-build1/pinnable", json={"product": product, "channel": channel, "version": "66."})
     assert ret.status_code == 200
-    assert ret.json() == {"pin_not_set": True, "reason": "existing_pin_is_newer"}
+    assert ret.json == {"pin_not_set": True, "reason": "existing_pin_is_newer"}
     mapping = dbo.pinnable_releases.getPinMapping(product=product, channel=channel, version="66.")
     assert mapping == "Firefox-66.0-build1"
 
@@ -2196,7 +2196,7 @@ def test_statsd(api, method, endpoint, metric):
     every single one. Requests don't need to succeed for these to pass;
     they just need to be routable."""
     with mock.patch("auslib.web.admin.base.statsd.timer") as mocked_timer:
-        api.request(method, endpoint)
+        api.open(endpoint, method=method)
         assert mocked_timer.call_count == 1
         mocked_timer.assert_has_calls([mock.call(metric)])
 

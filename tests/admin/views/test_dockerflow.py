@@ -8,7 +8,7 @@ class TestDockerflowEndpoints(ViewTest):
     def testVersion(self, mocked_timer):
         ret = self.client.get("/__version__")
         self.assertEqual(
-            ret.text,
+            ret.get_data(as_text=True),
             """
 {
   "source":"https://github.com/mozilla-releng/balrog",
@@ -28,7 +28,7 @@ class TestDockerflowEndpoints(ViewTest):
                 self.assertEqual(ret.status_code, 200)
                 self.assertEqual(cr.call_count, i)
                 self.assertEqual(ret.headers["Cache-Control"], "public, max-age=60")
-                returned_digit = int(ret.text)
+                returned_digit = int(ret.get_data(as_text=True))
                 self.assertEqual(returned_digit, i)
         assert mocked_timer.call_count == 0
 
@@ -40,7 +40,7 @@ class TestDockerflowEndpoints(ViewTest):
             # the Exception directly instead of a 500 error
             ret = self.client.get("/__heartbeat__")
             self.assertEqual(ret.status_code, 502)
-            self.assertEqual(ret.text, "Can't connect to the database.")
+            self.assertEqual(ret.get_data(as_text=True), "Can't connect to the database.")
             self.assertEqual(ret.headers["Cache-Control"], "public, max-age=60")
             self.assertEqual(cr.call_count, 1)
         assert mocked_timer.call_count == 0

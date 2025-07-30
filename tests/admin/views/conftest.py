@@ -22,13 +22,15 @@ def mock_verified_userinfo(monkeypatch):
 @pytest.fixture(scope="session")
 def api():
 
-    app = create_app(allow_origins=["*"])
-    app.app.testing = True
-    app.app.config["SECRET_KEY"] = "notasecret"
-    app.app.config["AUTH_DOMAIN"] = "balrog.test.dev"
-    app.app.config["AUTH_AUDIENCE"] = "balrog test"
-    app.app.config["M2M_ACCOUNT_MAPPING"] = {}
-    app.app.config["ALLOWLISTED_DOMAINS"] = {
+    connexion_app = create_app()
+    app = connexion_app.app
+    app.testing = True
+    app.config["SECRET_KEY"] = "notasecret"
+    app.config["CORS_ORIGINS"] = "*"
+    app.config["AUTH_DOMAIN"] = "balrog.test.dev"
+    app.config["AUTH_AUDIENCE"] = "balrog test"
+    app.config["M2M_ACCOUNT_MAPPING"] = {}
+    app.config["ALLOWLISTED_DOMAINS"] = {
         "download.mozilla.org": ("Firefox",),
         "archive.mozilla.org": ("Firefox",),
         "cdmdownload.adobe.com": ("CDM",),
@@ -39,6 +41,7 @@ def api():
 
 @pytest.fixture(scope="class")
 def app():
-    app = create_app(allow_origins=["*"])
-    app.app.testing = True
+    connexion_app = create_app()
+    app = connexion_app.app
+    app.testing = True
     return app
