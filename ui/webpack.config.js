@@ -236,7 +236,9 @@ module.exports = (_, { mode }) => {
         ignoreOrder: false,
         chunkFilename: 'assets/[name].[contenthash:8].css',
       }),
-      ...(mode === 'development' ? [new ReactRefreshWebpackPlugin()] : []),
+      ...(mode === 'development'
+        ? [new ReactRefreshWebpackPlugin({ overlay: false })]
+        : []),
     ],
     entry: {
       index: [`${__dirname}/src/index`],
