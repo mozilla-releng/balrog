@@ -568,27 +568,31 @@ class TestRulesAPI_JSON(ViewTest):
 class TestStatsd(ViewTest):
     maxDiff = 1000
 
-    @mock.patch("auslib.web.admin.base.statsd.timer")
-    def testGet(self, mocked_timer):
+    @mock.patch("auslib.web.admin.base.statsd.pipeline")
+    def testGet(self, mocked_pipeline):
         self._get("/rules")
+        mocked_timer = mocked_pipeline().timer
         assert mocked_timer.call_count == 1
         mocked_timer.assert_has_calls([mock.call("endpoint_rules_get")])
 
-    @mock.patch("auslib.web.admin.base.statsd.timer")
-    def testPost(self, mocked_timer):
+    @mock.patch("auslib.web.admin.base.statsd.pipeline")
+    def testPost(self, mocked_pipeline):
         self._post("/rules", data=dict(backgroundRate=31, mapping="c", priority=33, product="Firefox", update_type="minor", channel="nightly"))
+        mocked_timer = mocked_pipeline().timer
         assert mocked_timer.call_count == 1
         mocked_timer.assert_has_calls([mock.call("endpoint_rules_create")])
 
-    @mock.patch("auslib.web.admin.base.statsd.timer")
-    def testPut(self, mocked_timer):
+    @mock.patch("auslib.web.admin.base.statsd.pipeline")
+    def testPut(self, mocked_pipeline):
         self._put("/rules/1", data=dict(backgroundRate=71, mapping="d", priority=73, data_version=1, product="Firefox", channel="nightly", update_type="minor"))
+        mocked_timer = mocked_pipeline().timer
         assert mocked_timer.call_count == 1
         mocked_timer.assert_has_calls([mock.call("endpoint_rules_update_put")])
 
-    @mock.patch("auslib.web.admin.base.statsd.timer")
-    def testDelete(self, mocked_timer):
+    @mock.patch("auslib.web.admin.base.statsd.pipeline")
+    def testDelete(self, mocked_pipeline):
         self._delete("/rules/1", qs=dict(data_version=2))
+        mocked_timer = mocked_pipeline().timer
         assert mocked_timer.call_count == 1
         mocked_timer.assert_has_calls([mock.call("endpoint_rules_delete")])
 

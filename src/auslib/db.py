@@ -16,7 +16,6 @@ from sqlalchemy import JSON, BigInteger, Boolean, Column, Integer, MetaData, Str
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 from sqlalchemy.sql.functions import max as sql_max
-from statsd.defaults.env import statsd
 
 from auslib.blobs.base import createBlob, merge_dicts
 from auslib.errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
@@ -32,6 +31,7 @@ from auslib.util.rulematching import (
     matchSimpleExpression,
     matchVersion,
 )
+from auslib.util.statsd import statsd
 from auslib.util.timestamp import getMillisecondTimestamp
 from auslib.util.versions import get_version_class
 

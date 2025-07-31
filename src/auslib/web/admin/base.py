@@ -55,7 +55,8 @@ def create_app():
     create_dockerflow_endpoints(flask_app)
 
     @flask_app.before_request
-    def setup_timer():
+    def setup_statsd():
+        g.statsd = statsd.pipeline()
         g.request_timer = None
         if should_time_request():
             # do some massaging to get the metric name right
@@ -70,7 +71,7 @@ def create_app():
                 .removeprefix("auslib_web_common_")
             )
             metric = f"endpoint_{metric}"
-            g.request_timer = statsd.timer(metric)
+            g.request_timer = g.statsd.timer(metric)
             g.request_timer.start()
 
     @flask_app.before_request
@@ -203,6 +204,7 @@ def create_app():
     def send_stats(response):
         if hasattr(g, "request_timer") and g.request_timer:
             g.request_timer.stop()
+        g.statsd.send()
 
         return response
 

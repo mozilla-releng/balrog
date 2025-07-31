@@ -3,8 +3,7 @@ import re
 import sys
 
 from flask import current_app as app
-from flask import make_response, request
-from statsd.defaults.env import statsd
+from flask import g, make_response, request
 
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import XMLBlob, createBlob
@@ -138,7 +137,7 @@ def extract_query_version(request_url):
 
 @with_transaction
 def get_update_blob(transaction, **url):
-    with statsd.timer("client.parse_query"):
+    with g.statsd.timer("client.parse_query"):
         url["queryVersion"] = extract_query_version(request.url)
         # Underlying code depends on osVersion being set. Since this route only
         # exists to support ancient queries, and all newer versions have osVersion
@@ -152,7 +151,7 @@ def get_update_blob(transaction, **url):
         query = getQueryFromURL(url)
         LOG.debug("Got query: %s", query)
 
-    with statsd.timer("client.evaluate_rules"):
+    with g.statsd.timer("client.evaluate_rules"):
         release, update_type, eval_metadata = AUS.evaluateRules(query, transaction=transaction)
 
     response_blobs = []
@@ -162,12 +161,12 @@ def get_update_blob(transaction, **url):
         response_products = release.getResponseProducts()
         response_blob_names = release.getResponseBlobs()
         if response_products:
-            with statsd.timer("client.process_response_products"):
+            with g.statsd.timer("client.process_response_products"):
                 # if we have a SuperBlob of gmp, we process the response products and
                 # concatenate their inner XMLs
                 response_blobs.extend(evaluate_response_products(response_products, query, transaction))
         elif response_blob_names:
-            with statsd.timer("client.process_response_blobs"):
+            with g.statsd.timer("client.process_response_blobs"):
                 # if we have a SuperBlob of systemaddons, we process the response products and
                 # concatenate their inner XMLs
                 response_blobs.extend(evaluate_response_blobs(response_blob_names, update_type, query, transaction))
@@ -179,7 +178,7 @@ def get_update_blob(transaction, **url):
                 squash_response = True
                 LOG.debug("Busted nightly detected, will squash xml response")
 
-    with statsd.timer("client.make_response"):
+    with g.statsd.timer("client.make_response"):
         return construct_response(release, query, update_type, response_blobs, squash_response, eval_metadata)
 
 

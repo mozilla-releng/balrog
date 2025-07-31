@@ -2,7 +2,8 @@ import jose.jwt
 import requests
 from auth0.authentication import Users as auth0_Users
 from repoze.lru import lru_cache
-from statsd.defaults.env import statsd
+
+from auslib.util.statsd import statsd
 
 
 class AuthError(Exception):
@@ -50,9 +51,9 @@ def get_jwks(auth_domain):
 
 
 @lru_cache(2048)
-@statsd.timer("auth0_userinfo")
 def get_additional_userinfo(auth_domain, access_token):
-    return auth0_Users(auth_domain).userinfo(access_token)
+    with statsd.timer("auth0_userinfo"):
+        return auth0_Users(auth_domain).userinfo(access_token)
 
 
 def verified_userinfo(request, auth_domain, auth_audience):

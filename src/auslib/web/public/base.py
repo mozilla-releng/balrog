@@ -4,7 +4,7 @@ import re
 from os import path
 
 import connexion
-from flask import Response, make_response, request, send_from_directory
+from flask import Response, g, make_response, request, send_from_directory
 from sentry_sdk import capture_exception
 from specsynthase.specbuilder import SpecBuilder
 from statsd.defaults.env import statsd
@@ -109,6 +109,15 @@ def create_app():
         return send_from_directory(flask_app.static_folder, "contribute.json")
 
     @flask_app.before_request
+    def create_statsd_pipeline():
+        g.statsd = statsd.pipeline()
+
+    @flask_app.after_request
+    def send_statsd_pipeline(response):
+        g.statsd.send()
+        return response
+
+    @flask_app.before_request
     def set_cache_control():
         # By default, we want a cache that can be shared across requests from
         # different users ("public").
@@ -141,7 +150,7 @@ def create_app():
         prefix = request.path.split("/")[1]
         if prefix not in ("update", "json", "api"):
             prefix = "unknown"
-        statsd.incr(f"response.{prefix}.{response.status_code}")
+        g.statsd.incr(f"response.{prefix}.{response.status_code}")
 
         return response
 
