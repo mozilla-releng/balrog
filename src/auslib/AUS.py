@@ -4,7 +4,7 @@ import re
 from random import randint
 from urllib.parse import urlparse
 
-from auslib.blobs.base import ServeUpdate, createBlob
+from auslib.blobs.base import ServeUpdate
 from auslib.global_state import cache, dbo
 from auslib.services import releases
 from auslib.util.versions import PinVersion
@@ -135,18 +135,7 @@ class AUS:
         # 3) Incoming release is older than the one in the mapping, defined as one of:
         #    * version decreases
         #    * version is the same and buildID doesn't increase
-        def get_blob(mapping):
-            release = releases.get_release(mapping, transaction, include_sc=False)
-            blob = None
-            if release:
-                blob = createBlob(release["blob"])
-            # TODO: remove me when old releases table dies
-            else:
-                release = dbo.releases.getReleases(name=mapping, limit=1, transaction=transaction)[0]
-                blob = release["data"]
-            return blob
-
-        blob = get_blob(mapping)
+        blob = releases.get_release_blob(mapping)
         if not blob:
             return None, None, eval_metadata
         candidate = blob.shouldServeUpdate(updateQuery)
@@ -179,7 +168,7 @@ class AUS:
             # installations vulnerable.
             if pin_mapping is not None:
                 mapping = pin_mapping
-                blob = get_blob(mapping)
+                blob = releases.get_release_blob(mapping)
                 if not blob or not blob.shouldServeUpdate(updateQuery):
                     return None, None, eval_metadata
 

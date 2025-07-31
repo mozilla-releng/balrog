@@ -37,3 +37,9 @@ class SuperBlob(XMLBlob):
 
     def getInnerFooterXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):
         return "    </addons>"
+
+    def getReferencedReleases(self):
+        if responseBlobs := self.getResponseBlobs():
+            return set(responseBlobs)
+        else:
+            return set()
