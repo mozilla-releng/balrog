@@ -1,9 +1,22 @@
 #!/bin/bash
 
+EXTRA_ARGS=()
+if [ -n "$UWSGI_PROCESSES" ]; then
+    EXTRA_ARGS+=("--workers=${UWSGI_PROCESSES}")
+fi
+if [ -n "${UWSGI_THREADS}" ]; then
+    EXTRA_ARGS+=("--threads=${UWSGI_THREADS}")
+fi
+if [ -n "${UWSGI_MAX_REQUESTS}" ]; then
+    EXTRA_ARGS+=("--max-requests=${UWSGI_MAX_REQUESTS}")
+fi
+
 if [ $1 == "public" ]; then
-   exec uwsgi --ini /app/uwsgi/public.ini --python-autoreload 1
+   FLASK_APP=auslib.web.public.wsgi
+   exec gunicorn $FLASK_APP --log-file - "${EXTRA_ARGS[@]}"
 elif [ $1 == "admin" ]; then
-   exec uwsgi --ini /app/uwsgi/admin.ini --python-autoreload 1
+   FLASK_APP=auslib.web.admin.wsgi
+   exec gunicorn $FLASK_APP --log-file - "${EXTRA_ARGS[@]}"
 elif [ $1 == "create-db" ]; then
     if [ -z "${DBURI}" ]; then
         echo "\${DBURI} must be set!"
