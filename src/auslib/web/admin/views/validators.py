@@ -33,7 +33,7 @@ class BalrogRequestBodyValidator(RequestBodyValidator):
                 exception_message = exception_field + exception.message
             # Some exceptions could contain unicode characters - if we don't replace them
             # we could end up with a UnicodeEncodeError.
-            logger.error("{url} validation error: {error}".format(url=url, error=exception_message.encode("utf-8", "replace")))
+            logger.warning("{url} validation error: {error}".format(url=url, error=exception_message.encode("utf-8", "replace")))
             raise BadRequestProblem(detail=exception_message)
 
         return None
