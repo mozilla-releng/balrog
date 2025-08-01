@@ -2195,8 +2195,9 @@ def test_statsd(api, method, endpoint, metric):
     Timings are handled centrally, so it's not worth the trouble to test
     every single one. Requests don't need to succeed for these to pass;
     they just need to be routable."""
-    with mock.patch("auslib.web.admin.base.statsd.timer") as mocked_timer:
+    with mock.patch("auslib.web.admin.base.statsd.pipeline") as mocked_pipeline:
         api.open(endpoint, method=method)
+        mocked_timer = mocked_pipeline().timer
         assert mocked_timer.call_count == 1
         mocked_timer.assert_has_calls([mock.call(metric)])
 
@@ -2209,9 +2210,8 @@ def test_statsd_gcs_creation(api, firefox_62_0_build1):
         # 20 locales to upload for + top level
         # a creation uploads twice
         # 21 * 2 = 42
-        # plus 1 for the overall request
-        assert mocked_timer.call_count == 43
-        mocked_timer.assert_has_calls([mock.call("async_gcs_upload"), mock.call("endpoint_releases_v2_ensure")], any_order=True)
+        assert mocked_timer.call_count == 42
+        assert mocked_timer.call_args_list == [mock.call("async_gcs_upload")] * 42
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -2224,9 +2224,9 @@ def test_statsd_gcs_update(api):
         assert old_data_versions["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
         ret = api.post("/v2/releases/Firefox-60.0b3-build1", json={"blob": blob, "old_data_versions": old_data_versions})
         assert ret.status_code == 200, ret.data
-        # one call for top level modification, one for the changed locale, one for overall request
-        assert mocked_timer.call_count == 3
-        mocked_timer.assert_has_calls([mock.call("async_gcs_upload"), mock.call("endpoint_releases_v2_update")], any_order=True)
+        # one call for top level modification, one for the changed locale
+        assert mocked_timer.call_count == 2
+        assert mocked_timer.call_args_list == [mock.call("async_gcs_upload")] * 2
 
 
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
@@ -2235,6 +2235,6 @@ def test_statsd_gcs_delete(api):
         ret = api.delete("/v2/releases/Firefox-65.0-build1")
         assert ret.status_code == 200, ret.data
 
-        # one call for top level, one call for each locale, one for overall request
-        assert mocked_timer.call_count == 22
-        mocked_timer.assert_has_calls([mock.call("async_gcs_upload"), mock.call("endpoint_releases_v2_delete")], any_order=True)
+        # one call for top level, one call for each locale
+        assert mocked_timer.call_count == 21
+        assert mocked_timer.call_args_list == [mock.call("async_gcs_upload")] * 21

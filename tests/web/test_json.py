@@ -309,10 +309,10 @@ def client(app):
     ],
 )
 def testGuardianResponseV1(client, version, buildTarget, channel, code, response):
-    with mock.patch("auslib.web.public.base.statsd.incr") as mocked_incr:
+    with mock.patch("auslib.web.public.base.statsd.pipeline") as mocked_pipeline:
         ret = client.get(f"/json/1/Guardian/{version}/{buildTarget}/{channel}/update.json")
         assert ret.status_code == code
-        assert mocked_incr.mock_calls.count(mock.call(f"response.json.{code}")) == 1
+        assert mocked_pipeline.mock_calls.count(mock.call().incr(f"response.json.{code}")) == 1
         if code == 200:
             assert ret.mimetype == "application/json"
             assert ret.get_json() == response

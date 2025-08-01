@@ -1,7 +1,8 @@
 from copy import deepcopy
 
 from repoze.lru import ExpiringLRUCache
-from statsd.defaults.env import statsd
+
+from auslib.util.statsd import statsd
 
 uncached_sentinel = object()
 

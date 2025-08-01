@@ -1604,7 +1604,7 @@ class ClientTest(ClientTestBase):
                 mock.patch.object(releases_service, "get_asset_data_versions", wraps=releases_service.get_asset_data_versions)
             )
             t = stack.enter_context(mock.patch("time.time"))
-            mocked_incr = stack.enter_context(mock.patch("statsd.StatsClient.incr"))
+            mocked_incr = stack.enter_context(mock.patch("auslib.util.statsd.statsd.incr"))
             # The lookups/hits/misses here come in multiples of 4 because we have:
             #  - a release that the rule is pointing to
             #  - 3 potential partials, all of which get looked at
@@ -1766,10 +1766,10 @@ class ClientTest(ClientTestBase):
         assert "42024" == ret.headers["Rule-ID"]
         assert "1" == ret.headers["Rule-Data-Version"]
 
-    @mock.patch("auslib.web.public.base.statsd.incr")
-    def test_statsd_increment(self, mocked_incr):
+    @mock.patch("auslib.web.public.base.statsd.pipeline")
+    def test_statsd_increment(self, mocked_pipeline):
         self.client.get("/update/6/c/1.0/1/p/l/a/a/SSE/default/a/update.xml")
-        assert mocked_incr.mock_calls.count(mock.call("response.update.200")) == 1
+        assert mocked_pipeline.mock_calls.count(mock.call().incr("response.update.200")) == 1
 
     def test_version_100(self):
         ret = self.client.get(
@@ -1795,9 +1795,10 @@ class ClientTest(ClientTestBase):
 
 @pytest.mark.usefixtures("app")
 class ClientTestStatsd(ClientTestBase):
-    @mock.patch("auslib.web.public.client.statsd.timer")
-    def testRegularUpdate(self, mocked_timer):
+    @mock.patch("auslib.web.public.base.statsd.pipeline")
+    def testRegularUpdate(self, mocked_pipeline):
         self.client.get("/update/6/c/1.0/1/p/l/a/a/SSE/default/a/update.xml")
+        mocked_timer = mocked_pipeline().timer
         assert mocked_timer.call_count == 3
         mocked_timer.assert_has_calls(
             [mock.call("client.parse_query"), mock.call("client.evaluate_rules"), mock.call("client.make_response")],
@@ -1806,9 +1807,10 @@ class ClientTestStatsd(ClientTestBase):
             any_order=True,
         )
 
-    @mock.patch("auslib.web.public.client.statsd.timer")
-    def testResponseProductsUpdate(self, mocked_timer):
+    @mock.patch("auslib.web.public.base.statsd.pipeline")
+    def testResponseProductsUpdate(self, mocked_pipeline):
         self.client.get("/update/4/gmp/1.0/1/p/l/a/a/a/a/1/update.xml")
+        mocked_timer = mocked_pipeline().timer
         assert mocked_timer.call_count == 4
         mocked_timer.assert_has_calls(
             [
@@ -1822,9 +1824,10 @@ class ClientTestStatsd(ClientTestBase):
             any_order=True,
         )
 
-    @mock.patch("auslib.web.public.client.statsd.timer")
-    def testResponseBlobsUpdate(self, mocked_timer):
+    @mock.patch("auslib.web.public.base.statsd.pipeline")
+    def testResponseBlobsUpdate(self, mocked_pipeline):
         self.client.get("/update/3/superblobaddon-with-multiple-response-blob/1.0/1/p/l/a/a/a/a/update.xml")
+        mocked_timer = mocked_pipeline().timer
         assert mocked_timer.call_count == 4
         mocked_timer.assert_has_calls(
             [
@@ -2333,8 +2336,8 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         ret = self.client.get(path)
         self.assertEqual(ret.status_code, 404)
 
-    @mock.patch("auslib.web.public.base.statsd.incr")
-    def testEscapedOutputOn400(self, mocked_incr):
+    @mock.patch("auslib.web.public.base.statsd.pipeline")
+    def testEscapedOutputOn400(self, mocked_pipeline):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m:
             m.side_effect = BadDataError("Version number 50.1.0zibj5<img src%3da onerror%3dalert(document.domain)> is invalid.")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
@@ -2342,20 +2345,22 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual(ret.status_code, 400, error_message)
             self.assertEqual(ret.mimetype, "text/plain")
             self.assertEqual("Version number 50.1.0zibj5&lt;img src%3da onerror%3dalert(document.domain)&gt; is invalid.", error_message)
+            mocked_incr = mocked_pipeline().incr
             assert mocked_incr.mock_calls.count(mock.call("response.update.400")) == 1
 
-    @mock.patch("auslib.web.public.base.statsd.incr")
-    def testSentryBadDataError(self, mocked_incr):
+    @mock.patch("auslib.web.public.base.statsd.pipeline")
+    def testSentryBadDataError(self, mocked_pipeline):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch("auslib.web.public.base.capture_exception") as sentry:
             m.side_effect = BadDataError("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
             self.assertFalse(sentry.called)
             self.assertEqual(ret.status_code, 400, ret.get_data())
             self.assertEqual(ret.mimetype, "text/plain")
+            mocked_incr = mocked_pipeline().incr
             assert mocked_incr.mock_calls.count(mock.call("response.update.400")) == 1
 
-    @mock.patch("auslib.web.public.base.statsd.incr")
-    def testSentryRealError(self, mocked_incr):
+    @mock.patch("auslib.web.public.base.statsd.pipeline")
+    def testSentryRealError(self, mocked_pipeline):
         with mock.patch("auslib.web.public.client.getQueryFromURL") as m, mock.patch("auslib.web.public.base.capture_exception") as sentry:
             m.side_effect = Exception("exterminate!")
             ret = self.client.get("/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml")
@@ -2363,6 +2368,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             self.assertEqual(ret.mimetype, "application/problem+json")
             self.assertTrue(sentry.called)
             self.assertNotIn("exterminate!", ret.get_data(as_text=True))
+            mocked_incr = mocked_pipeline().incr
             assert mocked_incr.mock_calls.count(mock.call("response.update.500")) == 1
 
     def testNonSubstitutedUrlVariablesReturnEmptyUpdate(self):

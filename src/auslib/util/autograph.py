@@ -3,9 +3,9 @@ from hashlib import sha384
 
 import requests
 from requests_hawk import HawkAuth
-from statsd.defaults.env import statsd
 
 from auslib.util.retry import retry_sync
+from auslib.util.statsd import statsd
 
 SIGNATURE_PREFIX = "Content-Signature:\x00"
 
