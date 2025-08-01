@@ -11,7 +11,7 @@ from gcloud.aio.storage import Storage
 from google.api_core.exceptions import Forbidden
 from google.cloud import storage
 from sentry_sdk.integrations.flask import FlaskIntegration
-from sentry_sdk.integrations.logging import LoggingIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration, ignore_logger
 
 from auslib.log import configure_logging
 
@@ -195,6 +195,9 @@ application.config["CORS_ORIGINS"] = [o.strip() for o in os.environ.get("CORS_OR
 application.config["SESSION_COOKIE_SAMESITE"] = "Strict"
 
 if os.environ.get("SENTRY_DSN"):
+    # connexion logs request body validation failures at the error level, but we don't want them in sentry
+    ignore_logger("auslib.web.admin.views.validators")
+    ignore_logger("connexion.decorators.validation")
     sentry_sdk.init(os.environ["SENTRY_DSN"], integrations=[FlaskIntegration(), LoggingIntegration()])
 
 # version.json is created when the Docker image is built, and contains details
