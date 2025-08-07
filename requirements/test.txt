@@ -32,9 +32,9 @@ black==25.1.0 \
     # via
     #   -r requirements/test.in
     #   flake8-black
-build==1.2.2.post1 \
-    --hash=sha256:1d61c0887fa860c01971625baae8bdd338e517b836a2f70dd1f7aa3a6b2fc5b5 \
-    --hash=sha256:b36993e92ca9375a219c99e606a122ff365a760a2d4bba0caa09bd5278b608b7
+build==1.3.0 \
+    --hash=sha256:698edd0ea270bde950f53aed21f3a0135672206f3911e0176261a31e0e07b397 \
+    --hash=sha256:7145f0b5061ba90a1500d60bd1b13ca0a8a4cebdd0cc16ed8adf1c0e739f43b4
     # via
     #   check-manifest
     #   pip-tools
@@ -118,9 +118,9 @@ flake8-black==0.3.6 \
     --hash=sha256:0dfbca3274777792a5bcb2af887a4cad72c72d0e86c94e08e3a3de151bb41c34 \
     --hash=sha256:fe8ea2eca98d8a504f22040d9117347f6b367458366952862ac3586e7d4eeaca
     # via -r requirements/test.in
-hypothesis==6.136.3 \
-    --hash=sha256:88163307c625688317bc5f3c7bd88f18b4d5c7cd773c784e3c4182eed2ae1b3d \
-    --hash=sha256:89baa2bfc5af38f939e83b62f9f0e7e6407e81cade29cfcb3eafbc661177c2bd
+hypothesis==6.137.1 \
+    --hash=sha256:7cbda6a98ed4d32aad31a5fc5bff5e119b9275fe2579a7b08863cba313a4b9be \
+    --hash=sha256:b086e644456da79ad460fdaf8fbf90a41a661e8a4076232dd4ea64cfbc0d0529
     # via -r requirements/test.in
 iniconfig==2.1.0 \
     --hash=sha256:3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7 \
@@ -150,9 +150,9 @@ pip-compile-multi==2.8.0 \
     --hash=sha256:17159e83c2e354358921ee34e6b750223ae76aef2beb301286b68a4886076f63 \
     --hash=sha256:59bb8bea7291b9dec95cb3e380f0f77a936b2e98d64cf9346c0c4ca0012fb6a2
     # via -r requirements/test.in
-pip-tools==7.4.1 \
-    --hash=sha256:4c690e5fbae2f21e87843e89c26191f0d9454f362d8acdbd695716493ec8b3a9 \
-    --hash=sha256:864826f5073864450e24dbeeb85ce3920cdfb09848a3d69ebf537b521f14bcc9
+pip-tools==7.5.0 \
+    --hash=sha256:30639f50961bb09f49d22f4389e8d7d990709677c094ce1114186b1f2e9b5821 \
+    --hash=sha256:69758e4e5a65f160e315d74db46246fdbb30d549f1ed0c4236d057122c9b0f18
     # via pip-compile-multi
 platformdirs==4.3.8 \
     --hash=sha256:3d512d96e16bcb959a814c9f348431070822a6496326a4be0911c40b5a74c2bc \

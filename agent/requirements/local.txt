@@ -32,13 +32,13 @@ pyproject-api==1.9.1 \
     --hash=sha256:43c9918f49daab37e302038fc1aed54a8c7a91a9fa935d00b9a485f37e0f5335 \
     --hash=sha256:7d6238d92f8962773dd75b5f0c4a6a27cce092a14b623b811dba656f3b628948
     # via tox
-tox==4.28.1 \
-    --hash=sha256:227ce1fdfea7763107aed3a8ac87d74b1bd1240ad7dd9c37fc2cb2b318006520 \
-    --hash=sha256:d5c84de6efc5d7e8acadb09528943e87ee501a35e064cf852082bc600485c13d
+tox==4.28.4 \
+    --hash=sha256:8d4ad9ee916ebbb59272bb045e154a10fa12e3bbdcf94cc5185cbdaf9b241f99 \
+    --hash=sha256:b5b14c6307bd8994ff1eba5074275826620325ee1a4f61316959d562bfd70b9d
     # via -r requirements/local.in
-virtualenv==20.32.0 \
-    --hash=sha256:2c310aecb62e5aa1b06103ed7c2977b81e042695de2697d01017ff0f1034af56 \
-    --hash=sha256:886bf75cadfdc964674e6e33eb74d787dff31ca314ceace03ca5810620f4ecf0
+virtualenv==20.33.1 \
+    --hash=sha256:07c19bc66c11acab6a5958b815cbcee30891cd1c2ccf53785a28651a0d8d8a67 \
+    --hash=sha256:1b44478d9e261b3fb8baa5e74a0ca3bc0e05f21aa36167bf9cbf850e542765b8
     # via tox
 
 # The following packages are considered to be unsafe in a requirements file:
