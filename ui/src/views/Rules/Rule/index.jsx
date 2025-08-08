@@ -15,7 +15,7 @@ import { bool } from 'prop-types';
 import { stringify } from 'qs';
 import { assocPath, defaultTo, pick } from 'ramda';
 import React, { Fragment, useEffect, useState } from 'react';
-import NumberFormat from 'react-number-format';
+import { NumericFormat } from 'react-number-format';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
 import Dashboard from '../../../components/Dashboard';
@@ -558,7 +558,7 @@ function Rule({ isNewRule, auth0, ...props }) {
             )}
             {productSupportsField('backgroundRate') && (
               <Grid item xs={12} sm={6}>
-                <NumberFormat
+                <NumericFormat
                   allowNegative={false}
                   label="Background Rate"
                   fullWidth
@@ -571,7 +571,7 @@ function Rule({ isNewRule, auth0, ...props }) {
             )}
             {productSupportsField('priority') && (
               <Grid item xs={12} sm={6}>
-                <NumberFormat
+                <NumericFormat
                   allowNegative={false}
                   label="Priority"
                   fullWidth
