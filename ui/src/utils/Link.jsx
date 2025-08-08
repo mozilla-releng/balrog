@@ -1,4 +1,3 @@
-import isAbsolute from 'is-absolute-url';
 import { bool } from 'prop-types';
 import React, { useState } from 'react';
 import { NavLink, Link as RouterLink } from 'react-router-dom';
@@ -11,7 +10,7 @@ import matchRoutes from './matchRoutes';
  */
 export default function Link({ viewName, nav, to, ...props }) {
   const path = typeof to === 'string' ? to : to.pathname;
-  const isPathAbsolute = isAbsolute(path);
+  const isPathAbsolute = URL.canParse(path);
   const Component = nav ? NavLink : RouterLink;
   const [prefetchFlag, setPrefetchFlag] = useState(false);
 
