@@ -38,7 +38,7 @@
     "mdi-react": "^8.2.0",
     "prop-types": "^15",
     "qs": "^6.10.1",
-    "ramda": "^0.27.1",
+    "ramda": "^0.31.3",
     "react": "^16.13.1",
     "react-codemirror2": "^7.2.1",
     "react-diff-view": "^2.4.7",
