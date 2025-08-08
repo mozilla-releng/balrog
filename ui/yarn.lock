@@ -3248,15 +3248,10 @@ diff-sequences@^26.6.2:
   resolved "https://registry.yarnpkg.com/diff-sequences/-/diff-sequences-26.6.2.tgz#48ba99157de1923412eed41db6b6d4aa9ca7c0b1"
   integrity sha512-Mv/TDa3nZ9sbc5soK+OoA74BsS3mL37yixCvUAQkiuA4Wz6YtwP/K47n2rv2ovzHZvoiQeA5FTQOschKkEwB0Q==
 
-diff@^2.2.2:
-  version "2.2.3"
-  resolved "https://registry.yarnpkg.com/diff/-/diff-2.2.3.tgz#60eafd0d28ee906e4e8ff0a52c1229521033bf99"
-  integrity sha512-9wfm3RLzMp/PyTFWuw9liEzdlxsdGixCW0ZTU1XDmtlAkvpVXTPGF8KnfSs0hm3BPbg19OrUPPsRkHXoREpP1g==
-
-diff@^5.0.0:
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/diff/-/diff-5.1.0.tgz#bc52d298c5ea8df9194800224445ed43ffc87e40"
-  integrity sha512-D+mk+qE8VC/PAUrlAU34N+VfXev0ghe5ywmpqrawphmVZc1bEfn56uo9qpyGp1p4xpzOHkSW4ztBd6L7Xx4ACw==
+diff@^8.0.2:
+  version "8.0.2"
+  resolved "https://registry.yarnpkg.com/diff/-/diff-8.0.2.tgz#712156a6dd288e66ebb986864e190c2fc9eddfae"
+  integrity sha512-sSuxWU5j5SR9QQji/o2qMvqRNYRDOcBTgsJ/DeCf4iSN4gW+gNMXM7wFIP+fdXZxoNiAnHUTGjCr+TSWXdRDKg==
 
 dns-packet@^5.2.2:
   version "5.6.1"
@@ -7123,13 +7118,6 @@ unicode-property-aliases-ecmascript@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/unicode-property-aliases-ecmascript/-/unicode-property-aliases-ecmascript-2.0.0.tgz#0a36cb9a585c4f6abd51ad1deddb285c165297c8"
   integrity sha512-5Zfuy9q/DFr4tfO7ZPeVXb1aPoeQSdeFMLpYuFebehDAhbuevLs5yxSZmIFN1tP5F9Wl4IpJrYojg85/zgyZHQ==
-
-unidiff@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/unidiff/-/unidiff-1.0.2.tgz#8706eb36e4aa182a6ca699ecd2f8877f4b906ce0"
-  integrity sha512-2sbEzki5fBmjgAqoafwxRenfMcumMlmVAoJDwYJa3CI4ZVugkdR6qjTw5sVsl29/4JfBBXhWEAd5ars8nRdqXg==
-  dependencies:
-    diff "^2.2.2"
 
 union-value@^1.0.0:
   version "1.0.1"

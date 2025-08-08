@@ -33,7 +33,7 @@
     "codemirror": "^5.64.0",
     "date-fns": "2.26.0",
     "deep-sort-object": "^1.0.2",
-    "diff": "^5.0.0",
+    "diff": "^8.0.2",
     "downshift": "^6.0.15",
     "mdi-react": "^8.2.0",
     "prop-types": "^15",
@@ -46,8 +46,7 @@
     "react-helmet": "^6.1.0",
     "react-number-format": "^4.8.0",
     "react-router-dom": "^5.2.0",
-    "react-virtualized": "9.21.1",
-    "unidiff": "^1.0.2"
+    "react-virtualized": "9.21.1"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
