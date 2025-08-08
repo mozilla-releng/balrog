@@ -18,7 +18,7 @@ import DeleteIcon from 'mdi-react/DeleteIcon';
 import PlusIcon from 'mdi-react/PlusIcon';
 import { bool } from 'prop-types';
 import React, { Fragment, useEffect, useState } from 'react';
-import NumberFormat from 'react-number-format';
+import { NumericFormat } from 'react-number-format';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
 import Button from '../../../components/Button';
@@ -249,7 +249,7 @@ function ViewSignoff({ isNewSignoff, ...props }) {
         />
       </Grid>
       <Grid item xs>
-        <NumberFormat
+        <NumericFormat
           allowNegative={false}
           required
           label="Signoffs Required"

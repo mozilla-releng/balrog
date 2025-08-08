@@ -44,7 +44,7 @@
     "react-diff-view": "^2.4.7",
     "react-dom": "^16.13.1",
     "react-helmet": "^6.1.0",
-    "react-number-format": "^4.8.0",
+    "react-number-format": "^5.4.4",
     "react-router-dom": "^5.2.0",
     "react-virtualized": "9.21.1"
   },
