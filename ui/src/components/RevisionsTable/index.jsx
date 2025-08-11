@@ -1,12 +1,18 @@
+import { makeStyles } from '@material-ui/styles';
+import {
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { func, node, number } from 'prop-types';
 import React from 'react';
-import { AutoSizer, Table } from 'react-virtualized';
-import 'react-virtualized/styles.css';
-import { makeStyles } from '@material-ui/styles';
 
 const useStyles = makeStyles((theme) => ({
   tableHeader: {
     textTransform: 'none',
+    textAlign: 'left',
     color: theme.palette.text.secondary,
     fontSize: theme.typography.pxToRem(12),
     lineHeight: theme.typography.pxToRem(21),
@@ -19,29 +25,84 @@ const useStyles = makeStyles((theme) => ({
 
 function RevisionsTable(props) {
   const classes = useStyles();
-  const { rowCount, rowGetter, children } = props;
-  const rowHeight = 40;
-  const headerHeight = 20;
-  const tableHeight = Math.min(rowCount * rowHeight + headerHeight, 300);
+  const { data, columns } = props;
+  const parentRef = React.useRef(null);
+
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    debugTable: true,
+  });
+  const { rows } = table.getRowModel();
+
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 44,
+    overscan: 5,
+  });
 
   return (
-    <AutoSizer disableHeight>
-      {({ width }) => (
-        <Table
-          headerClassName={classes.tableHeader}
-          overscanRowCount={100}
-          width={width}
-          height={tableHeight}
-          headerHeight={headerHeight}
-          estimatedRowSize={40}
-          rowHeight={rowHeight}
-          rowCount={rowCount}
-          rowGetter={rowGetter}
-        >
-          {children}
-        </Table>
-      )}
-    </AutoSizer>
+    <div ref={parentRef} style={{ maxHeight: '300px', overflowY: 'auto' }}>
+      <div style={{ height: `${virtualizer.getTotalSize() + 40}px` }}>
+        <table style={{ width: '100%' }}>
+          <thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <th
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      style={{ width: header.getSize() }}
+                      className={classes.tableHeader}
+                    >
+                      <span title={header.column.columnDef.header}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </span>
+                    </th>
+                  );
+                })}
+              </tr>
+            ))}
+          </thead>
+          <tbody>
+            {virtualizer.getVirtualItems().map((virtualRow, index) => {
+              const row = rows[virtualRow.index];
+              return (
+                <tr
+                  key={row.id}
+                  style={{
+                    height: `40px`,
+                    transform: `translateY(${
+                      virtualRow.start - index * virtualRow.size
+                    }px)`,
+                  }}
+                >
+                  {row.getVisibleCells().map((cell) => {
+                    return (
+                      <td key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 

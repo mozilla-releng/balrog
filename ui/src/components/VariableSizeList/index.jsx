@@ -1,55 +1,49 @@
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { number } from 'prop-types';
-import React, {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-} from 'react';
-import { AutoSizer, List, WindowScroller } from 'react-virtualized';
-import { APP_BAR_HEIGHT } from '../../utils/constants';
+import React, { forwardRef, useEffect } from 'react';
 
 const VariableSizeList = forwardRef((props, ref) => {
-  const { scrollToRow, pathname, ...rest } = props;
-  const listRef = useRef(null);
+  const { scrollToRow, Row, rowCount, rowHeight } = props;
+
+  const virtualizer = useWindowVirtualizer({
+    count: rowCount,
+    estimateSize: rowHeight,
+    overscan: 20,
+  });
+
+  const items = virtualizer.getVirtualItems();
 
   useEffect(() => {
-    const rowOffset = listRef.current.getOffsetForRow({ index: scrollToRow });
-
-    if (pathname === '/rules') {
-      listRef.current.scrollToPosition(
-        rowOffset - APP_BAR_HEIGHT - rest.searchFieldHeight,
-      );
-    } else {
-      listRef.current.scrollToPosition(rowOffset - APP_BAR_HEIGHT);
+    if (scrollToRow > 0) {
+      virtualizer.scrollToIndex(scrollToRow, { align: 'top' });
     }
-  }, [scrollToRow]);
-
-  useImperativeHandle(ref, () => ({
-    recomputeRowHeights: (index) => listRef.current.recomputeRowHeights(index),
-  }));
+  }, [scrollToRow, virtualizer]);
 
   return (
-    <WindowScroller>
-      {({ height, onChildScroll, isScrolling, scrollTop }) => (
-        <AutoSizer disableHeight>
-          {({ width }) => (
-            <List
-              autoHeight
-              ref={listRef}
-              isScrolling={isScrolling}
-              onScroll={onChildScroll}
-              scrollToAlignment="start"
-              height={height}
-              width={width}
-              estimatedRowSize={400}
-              overscanRowCount={5}
-              scrollTop={scrollTop}
-              {...rest}
-            />
-          )}
-        </AutoSizer>
-      )}
-    </WindowScroller>
+    <div
+      ref={ref}
+      style={{
+        height: virtualizer.getTotalSize(),
+        position: 'relative',
+      }}
+    >
+      {items.map((virtualRow) => (
+        <Row
+          key={virtualRow.key}
+          index={virtualRow.index}
+          ref={virtualizer.measureElement}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            transform: `translateY(${
+              virtualRow.start - virtualizer.options.scrollMargin
+            }px)`,
+          }}
+        />
+      ))}
+    </div>
   );
 });
 
