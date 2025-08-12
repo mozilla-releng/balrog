@@ -927,17 +927,3 @@ def set_pinnable(name, product, channel, version, when, username, trans):
             data_version=old_row["data_version"],
         )
         return {".": {"sc_id": sc_id, "change_type": "update", "data_version": old_row["data_version"] + 1, "signoffs": {}, "when": when}}
-
-
-def get_release_blob(name, trans=None):
-    """Get a release blob regardless of whether it's in the old releases or new releases."""
-    release = releases.get_release(name, trans, include_sc=False)
-    blob = None
-    if release:
-        blob = createBlob(release["blob"])
-    # TODO: remove me when old releases table dies
-    else:
-        release = dbo.releases.getReleases(name=name, limit=1, transaction=trans)
-        if release:
-            blob = release[0]["data"]
-    return blob

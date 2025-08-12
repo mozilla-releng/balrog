@@ -70,7 +70,6 @@ statsd.defaults.PREFIX = "balrog.public"
 
 from auslib.global_state import cache, dbo  # noqa
 from auslib.web.public.base import create_app
-from auslib.web.public.helpers import warm_caches
 
 application = create_app().app
 
@@ -134,5 +133,3 @@ if os.environ.get("CACHE_CONTROL"):
 
 if STAGING:
     application.config["SWAGGER_DEBUG"] = True
-
-warm_caches()
