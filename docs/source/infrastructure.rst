@@ -36,7 +36,7 @@ If RelEng is unable to correct the issue, or unavailable, it can be escalated to
 Monitoring & Metrics
 --------------------
 
-Metrics from deployment environments are available in `Grafana <https://earthangel-b40313e5.influxcloud.net/d/fRuT9IGZk/balrog?orgId=1&refresh=10s>`_ and `the GCP console <https://console.cloud.google.com/home/dashboard?project=moz-fx-balrog-prod-3fa2&folder=&organizationId=>`_.
+Metrics from deployment environments are available in `Grafana/Yardstick <https://yardstick.mozilla.org/d/fRuT9IGZk/balrog?orgId=1&from=now-1h&to=now&timezone=browser&var-env=prod&var-containers=$__all&var-datasource=cdq6ttvymu4g0c&refresh=30s>`_ and `the GCP console <https://console.cloud.google.com/home/dashboard?project=moz-fx-balrog-prod-3fa2&folder=&organizationId=>`_.
 
 We aggregate exceptions from both the Admin & Public apps to `Sentry <https://sentry.io/organizations/mozilla/projects/>`_.
 
@@ -102,7 +102,10 @@ Once the changes are deployed to stage, you should do some testing to make sure 
 Pushing to Production
 ~~~~~~~~~~~~~~~~~~~~~
 
-Pushing the backends live requires some button clicking in Jenkins. For each of ``balrog-admin-production``, ``balrog-production``, and ``balrog-agent-production`` in Jenkins do the following. (If there are no schema changes, these may be done in parallel. If there are schema changes, see ``Schema Upgrades``):
+Pushing the backends live requires some button clicking in Jenkins. For each of
+`balrog-admin-production <https://ops-master.jenkinsv2.prod.mozaws.net/job/gcp-pipelines/job/balrog/job/balrog-admin-production/>`,
+`balrog-production <https://ops-master.jenkinsv2.prod.mozaws.net/job/gcp-pipelines/job/balrog/job/balrog-production/`,
+and `balrog-agent-production <https://ops-master.jenkinsv2.prod.mozaws.net/job/gcp-pipelines/job/balrog/job/balrog-agent-production/>` in Jenkins do the following. (If there are no schema changes, these may be done in parallel. If there are schema changes, see ``Schema Upgrades``):
 
   * Find the ``PROD: DEPLOY`` or ``PROD: PROCEED`` step
   * Click the cell for this step in the topmost row. This should bring up a confirmation dialog as shown below.
@@ -148,4 +151,3 @@ If the UI needs a rollback, after deleting the previous production-ui release an
  git tag -d production-ui
  git tag -s production-ui v3.08^{}
  git push origin production-ui
-
