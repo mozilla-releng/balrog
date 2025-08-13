@@ -10,6 +10,7 @@ gcloud-aio-storage
 google-api-core
 google-auth
 google-cloud-storage
+gunicorn
 jsonschema>=4.5.0
 mozilla-version
 mysqlclient
@@ -25,4 +26,3 @@ sqlalchemy-migrate
 sqlalchemy<2
 statsd
 swagger-spec-validator
-uwsgi
