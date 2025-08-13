@@ -44,6 +44,7 @@ const useStyles = makeStyles((theme) => ({
     display: 'none',
   },
   uploadReleaseDiv: {
+    marginBottom: '-2em',
     display: 'flex',
     justifyContent: 'flex-end',
   },
@@ -250,7 +251,14 @@ function ReleaseV2(props) {
       )}
       {!isLoading && error && <ErrorPanel error={error} />}
       {!isLoading && (
-        <Fragment>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2em',
+            height: '100%',
+          }}
+        >
           <TextField
             disabled={!isNewRelease}
             fullWidth
@@ -258,8 +266,6 @@ function ReleaseV2(props) {
             onChange={handleReleaseNameChange}
             value={releaseNameValue}
           />
-          <br />
-          <br />
           <AutoCompleteText
             onValueChange={handleProductChange}
             value={productTextValue}
@@ -274,8 +280,6 @@ function ReleaseV2(props) {
               fullWidth: true,
             }}
           />
-          <br />
-          <br />
           <div className={classes.uploadReleaseDiv}>
             <label htmlFor="upload-release-file">
               <input
@@ -302,8 +306,6 @@ function ReleaseV2(props) {
             value={releaseEditorValue}
             readOnly={isReadOnly}
           />
-          <br />
-          <br />
           <Fragment>
             <Tooltip title={isNewRelease ? 'Create Release' : 'Update Release'}>
               {/* Add <div /> to avoid material-ui error "you are providing
@@ -350,7 +352,7 @@ function ReleaseV2(props) {
             )}
           </Fragment>
           <Snackbar onClose={handleSnackbarClose} {...snackbarState} />
-        </Fragment>
+        </Box>
       )}
     </Dashboard>
   );

@@ -17,18 +17,13 @@ const useStyles = makeStyles({
     '#root': {
       height: '100%',
     },
-    '.CodeMirror': {
+    '.cm-editor': {
       fontSize: 13,
-      height: '100% !important',
-      position: 'absolute !important',
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-    },
-    '.react-codemirror2': {
       height: '100%',
-      position: 'relative',
+    },
+    '.cm-theme': {
+      flex: 1,
+      overflow: 'auto',
     },
   },
 });
