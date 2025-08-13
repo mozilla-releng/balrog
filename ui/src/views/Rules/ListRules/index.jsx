@@ -25,7 +25,14 @@ import PauseIcon from 'mdi-react/PauseIcon';
 import PlusIcon from 'mdi-react/PlusIcon';
 import { parse, stringify } from 'qs';
 import { clone } from 'ramda';
-import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  Fragment,
+  forwardRef,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Dashboard from '../../../components/Dashboard';
 import DateTimePicker from '../../../components/DateTimePicker';
 import DialogAction from '../../../components/DialogAction';
@@ -319,7 +326,6 @@ function ListRules(props) {
 
   const handleRewindDiffChange = ({ target: { checked: value } }) => {
     setShowRewindDiff(value);
-    ruleListRef.current.recomputeRowHeights();
   };
 
   const handleSnackbarClose = (_event, reason) => {
@@ -595,7 +601,6 @@ function ListRules(props) {
           return newRule;
         }),
       );
-      ruleListRef.current.recomputeRowHeights();
       handleSnackbarOpen({
         message: `Rule ${result.rule_id} successfully scheduled`,
       });
@@ -1158,7 +1163,7 @@ function ListRules(props) {
     return dialogStates[dialogState.mode];
   };
 
-  const getRowHeight = ({ index }) => {
+  const getRowHeight = (index) => {
     const rule = filteredRulesWithScheduledChanges[index];
     const currentRule = rulesWithScheduledChanges.find(
       (r) => r.rule_id === rule.rule_id,
@@ -1332,7 +1337,7 @@ function ListRules(props) {
     }
   };
 
-  const Row = ({ index, style }) => {
+  const Row = forwardRef(({ index, style }, ref) => {
     // if we're in rewind mode, rule is a historical rule, not the current one
     const rule = filteredRulesWithScheduledChanges[index];
     const isSelected = isRuleSelected(rule);
@@ -1342,6 +1347,8 @@ function ListRules(props) {
 
     return (
       <div
+        data-index={index}
+        ref={ref}
         key={
           rule.rule_id
             ? rule.rule_id
@@ -1373,7 +1380,7 @@ function ListRules(props) {
         />
       </div>
     );
-  };
+  });
 
   useEffect(() => {
     if (filteredRulesCount) {
@@ -1507,12 +1514,10 @@ function ListRules(props) {
               <Fragment>
                 <VariableSizeList
                   ref={ruleListRef}
-                  rowRenderer={Row}
+                  Row={Row}
                   scrollToRow={scrollToRow}
                   rowHeight={getRowHeight}
                   rowCount={filteredRulesCount}
-                  searchFieldHeight={searchFieldHeight}
-                  pathname={props.location.pathname}
                 />
               </Fragment>
             ) : (

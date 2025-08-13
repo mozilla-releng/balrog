@@ -1,13 +1,11 @@
 import Box from '@material-ui/core/Box';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import axios from 'axios';
-import React, { Fragment, useEffect, useState } from 'react';
-import { Column } from 'react-virtualized';
-import 'react-virtualized/styles.css';
 import Drawer from '@material-ui/core/Drawer';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/styles';
+import axios from 'axios';
 import { formatDistanceStrict } from 'date-fns';
+import React, { Fragment, useEffect, useState } from 'react';
 import Button from '../../../components/Button';
 import Dashboard from '../../../components/Dashboard';
 import DiffRelease from '../../../components/DiffRelease';
@@ -119,6 +117,58 @@ function ListReleaseRevisions(props) {
   const revisionsCount = revisions.length;
   const columnWidth = CONTENT_MAX_WIDTH / 4;
 
+  const columns = React.useMemo(() => [
+    {
+      accessorKey: 'timestamp',
+      cell: ({ cell }) =>
+        formatDistanceStrict(new Date(cell.getValue()), new Date(), {
+          addSuffix: true,
+        }),
+      header: 'Revision Date',
+      width: columnWidth,
+    },
+    {
+      header: 'Changed By',
+      accessorKey: 'changed_by',
+      width: columnWidth,
+    },
+    {
+      header: 'Compare',
+      accessorKey: 'compare',
+      width: columnWidth,
+      cell: ({ row }) => (
+        <Fragment>
+          <Radio
+            variant="red"
+            value={row.index}
+            disabled={row.index === 0}
+            checked={leftRadioCheckedIndex === row.index}
+            onChange={handleLeftRadioChange}
+          />
+          <Radio
+            variant="green"
+            value={row.index}
+            disabled={row.index === revisions.length - 1}
+            checked={rightRadioCheckedIndex === row.index}
+            onChange={handleRightRadioChange}
+          />
+        </Fragment>
+      ),
+    },
+    {
+      id: 'actions',
+      width: columnWidth,
+      cell: ({ row }) => (
+        <Fragment>
+          <Button onClick={handleViewClick(row.original)}>View</Button>
+          {row.index > 0 && (
+            <Button onClick={handleRestoreClick}>Restore</Button>
+          )}
+        </Fragment>
+      ),
+    },
+  ]);
+
   return (
     <Dashboard title={`Release ${releaseName} Revisions`}>
       {error && <ErrorPanel error={error} />}
@@ -132,61 +182,7 @@ function ListReleaseRevisions(props) {
       )}
       {!isLoading && revisionsCount > 1 && (
         <Fragment>
-          <RevisionsTable
-            rowCount={revisionsCount}
-            rowGetter={({ index }) => revisions[index]}
-          >
-            <Column
-              label="Revision Date"
-              dataKey="timestamp"
-              cellRenderer={({ cellData }) =>
-                formatDistanceStrict(new Date(cellData), new Date(), {
-                  addSuffix: true,
-                })
-              }
-              width={columnWidth}
-            />
-            <Column
-              width={columnWidth}
-              label="Changed By"
-              dataKey="changed_by"
-            />
-            <Column
-              label="Compare"
-              dataKey="compare"
-              width={columnWidth}
-              cellRenderer={({ rowIndex }) => (
-                <Fragment>
-                  <Radio
-                    variant="red"
-                    value={rowIndex}
-                    disabled={rowIndex === 0}
-                    checked={leftRadioCheckedIndex === rowIndex}
-                    onChange={handleLeftRadioChange}
-                  />
-                  <Radio
-                    variant="green"
-                    value={rowIndex}
-                    disabled={rowIndex === revisions.length - 1}
-                    checked={rightRadioCheckedIndex === rowIndex}
-                    onChange={handleRightRadioChange}
-                  />
-                </Fragment>
-              )}
-            />
-            <Column
-              dataKey="actions"
-              width={columnWidth}
-              cellRenderer={({ rowData, rowIndex }) => (
-                <Fragment>
-                  <Button onClick={handleViewClick(rowData)}>View</Button>
-                  {rowIndex > 0 && (
-                    <Button onClick={handleRestoreClick}>Restore</Button>
-                  )}
-                </Fragment>
-              )}
-            />
-          </RevisionsTable>
+          <RevisionsTable data={revisions} columns={columns} />
           {leftRevisionData && rightRevisionData && (
             <DiffRelease
               className={classes.jsDiff}

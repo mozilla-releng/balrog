@@ -13,7 +13,14 @@ import { makeStyles, useTheme } from '@material-ui/styles';
 import classNames from 'classnames';
 import PlusIcon from 'mdi-react/PlusIcon';
 import { clone } from 'ramda';
-import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  Fragment,
+  forwardRef,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Dashboard from '../../../components/Dashboard';
 import DialogAction from '../../../components/DialogAction';
 import DiffRelease from '../../../components/DiffRelease';
@@ -474,10 +481,6 @@ function ListReleases(props) {
       }),
     );
 
-    if (result.sc) {
-      releaseListRef.current.recomputeRowHeights();
-    }
-
     handleDialogClose();
   };
 
@@ -707,12 +710,12 @@ function ListReleases(props) {
     }
   };
 
-  const Row = ({ index, style }) => {
+  const Row = forwardRef(({ index, style }, ref) => {
     const release = filteredReleases[index];
     const isSelected = Boolean(hash && hash.replace('#', '') === release.name);
 
     return (
-      <div key={release.name} style={style}>
+      <div style={style} data-index={index} ref={ref}>
         <ReleaseCard
           className={classNames(classes.releaseCard, {
             [classes.releaseCardSelected]: isSelected,
@@ -728,9 +731,9 @@ function ListReleases(props) {
         />
       </div>
     );
-  };
+  });
 
-  const getRowHeight = ({ index }) => {
+  const getRowHeight = (index) => {
     const listItemTextMargin = 6;
     const release = filteredReleases[index];
     // An approximation
@@ -842,7 +845,7 @@ function ListReleases(props) {
       {!isLoading && filteredReleases && (
         <VariableSizeList
           ref={releaseListRef}
-          rowRenderer={Row}
+          Row={Row}
           scrollToRow={scrollToRow}
           rowHeight={getRowHeight}
           rowCount={filteredReleasesCount}

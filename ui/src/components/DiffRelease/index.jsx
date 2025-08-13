@@ -1,12 +1,11 @@
 import Paper from '@material-ui/core/Paper';
 import { makeStyles } from '@material-ui/styles';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import deepSortObject from 'deep-sort-object';
 import { object, string } from 'prop-types';
 import { clone } from 'ramda';
-import React, { memo, useEffect, useState } from 'react';
-import { List } from 'react-virtualized';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import {
-  CONTENT_MAX_WIDTH,
   DIFF_COLORS,
   INITIAL_JS_DIFF_SUMMARY,
   NEW_LINES_REGEX,
@@ -53,11 +52,11 @@ function DiffRelease(props) {
     secondFilename,
     className,
   } = props;
+  const parentRef = useRef(null);
   const classes = useStyles();
   const [releaseLinesDiff, setReleaseDiffLines] = useState([]);
   const [diffSummary, setDiffSummary] = useState(INITIAL_JS_DIFF_SUMMARY);
   const diffWorker = new DiffWorker();
-
   diffWorker.onmessage = (e) => {
     const releaseDiff = e.data;
     const lines = releaseDiff.split(NEW_LINES_REGEX);
@@ -95,7 +94,7 @@ function DiffRelease(props) {
     return () => diffWorker.terminate();
   }, [firstFilename, secondFilename, firstRelease, secondRelease]);
 
-  const handleRowRender = ({ index, key, style }) => {
+  const handleRowRender = (index, key, ref) => {
     const line = releaseLinesDiff[index];
     const backgroundColor = line.startsWith('+')
       ? DIFF_COLORS.ADDED
@@ -104,7 +103,7 @@ function DiffRelease(props) {
         : 'unset';
 
     return (
-      <div key={key} style={{ ...style, backgroundColor }}>
+      <div ref={ref} data-index={index} key={key} style={{ backgroundColor }}>
         <pre style={{ backgroundColor }} className={classes.pre}>
           {line}
         </pre>
@@ -113,8 +112,13 @@ function DiffRelease(props) {
   };
 
   const releaseLinesDiffCount = releaseLinesDiff.length;
-  const listHeight = Math.min(releaseLinesDiffCount * 20, 350);
+  const virtualizer = useVirtualizer({
+    count: releaseLinesDiffCount,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 20,
+  });
 
+  const items = virtualizer.getVirtualItems();
   return (
     Boolean(releaseLinesDiffCount) && (
       <Paper className={className}>
@@ -127,17 +131,35 @@ function DiffRelease(props) {
             <span className={classes.redText}>-{diffSummary.removed}</span>
           </strong>
         </div>
-        <div className={classes.listWrapper}>
-          <List
-            height={listHeight}
-            rowRenderer={handleRowRender}
-            overscanRowCount={50}
-            rowCount={releaseLinesDiffCount}
-            rowHeight={20}
-            /* The only way I was able to make the list
-            scrollable in the x-direction */
-            width={CONTENT_MAX_WIDTH + 1000}
-          />
+        <div
+          className={classes.listWrapper}
+          ref={parentRef}
+          style={{ maxHeight: 350, overflowY: 'auto' }}
+        >
+          <div
+            style={{
+              height: virtualizer.getTotalSize(),
+              position: 'relative',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                transform: `translateY(${items[0]?.start ?? 0}px)`,
+                minWidth: '101%',
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualRow) => {
+                return handleRowRender(
+                  virtualRow.index,
+                  virtualRow.key,
+                  virtualRow.measureElement,
+                );
+              })}
+            </div>
+          </div>
         </div>
       </Paper>
     )
