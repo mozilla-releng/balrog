@@ -42,7 +42,6 @@
     "date-fns": "2.26.0",
     "deep-sort-object": "^1.0.2",
     "diff": "^8.0.2",
-    "downshift": "^6.0.15",
     "mdi-react": "^8.2.0",
     "prop-types": "^15",
     "qs": "^6.10.1",
