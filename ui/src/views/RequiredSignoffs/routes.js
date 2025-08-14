@@ -8,18 +8,18 @@ const ViewSignoff = lazy(
   () => import(/* webpackChunkName: 'Signoffs.ViewSignoff' */ './ViewSignoff'),
 );
 
-export default (path) => [
+export default () => [
   {
     component: ViewSignoff,
-    path: `${path}/create`,
+    path: 'create',
     isNewSignoff: true,
   },
   {
     component: ViewSignoff,
-    path: `${path}/:product/:channel?`,
+    path: ':product/:channel?',
   },
   {
     component: ListSignoffs,
-    path,
+    path: '',
   },
 ];

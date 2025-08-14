@@ -1,18 +1,19 @@
 import React from 'react';
-import { Switch } from 'react-router-dom';
-import RouteWithProps from '../../components/RouteWithProps';
+import { Route, Routes } from 'react-router-dom';
 import routes from './routes';
 
 export default function Users(props) {
-  const {
-    match: { path },
-  } = props;
+  const { path } = props;
 
   return (
-    <Switch>
-      {routes(path).map(({ routes, ...routeProps }) => (
-        <RouteWithProps key={routeProps.path || 'not-found'} {...routeProps} />
+    <Routes>
+      {routes(path).map(({ component: Component, ...routeProps }) => (
+        <Route
+          key={routeProps.path || 'not-found'}
+          {...routeProps}
+          element={<Component {...routeProps} />}
+        />
       ))}
-    </Switch>
+    </Routes>
   );
 }

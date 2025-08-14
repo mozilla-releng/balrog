@@ -1,10 +1,10 @@
-import InputBase from '@material-ui/core/InputBase';
-import Paper from '@material-ui/core/Paper';
-import { makeStyles } from '@material-ui/core/styles';
+import InputBase from '@mui/material/InputBase';
+import Paper from '@mui/material/Paper';
 import SearchIcon from 'mdi-react/SearchIcon';
 import React from 'react';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     padding: theme.spacing(1, 2),
     display: 'flex',
@@ -21,7 +21,7 @@ const useStyles = makeStyles((theme) => ({
 
 function SearchBar(props) {
   const { ...rest } = props;
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   return (
     <Paper className={classes.root}>

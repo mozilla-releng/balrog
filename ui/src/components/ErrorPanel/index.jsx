@@ -1,4 +1,4 @@
-import Alert from '@material-ui/lab/Alert';
+import Alert from '@mui/material/Alert';
 import { string } from 'prop-types';
 import React, { useState } from 'react';
 

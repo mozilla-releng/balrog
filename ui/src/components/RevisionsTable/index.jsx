@@ -1,4 +1,3 @@
-import { makeStyles } from '@material-ui/styles';
 import {
   flexRender,
   getCoreRowModel,
@@ -8,8 +7,9 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { func, node, number } from 'prop-types';
 import React from 'react';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   tableHeader: {
     textTransform: 'none',
     textAlign: 'left',
@@ -24,7 +24,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function RevisionsTable(props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { data, columns } = props;
   const parentRef = React.useRef(null);
 

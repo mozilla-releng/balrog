@@ -1,5 +1,5 @@
-import { amber, green, indigo, red } from '@material-ui/core/colors';
-import { createTheme } from '@material-ui/core/styles';
+import { amber, green, indigo, red } from '@mui/material/colors';
+import { createTheme } from '@mui/material/styles';
 
 const SPACING = {
   UNIT: 8,
@@ -36,12 +36,10 @@ export default createTheme({
     success: {
       main: green[500],
       dark: green[800],
-      contrastText: 'white',
+      contrastText: '#ffffff',
     },
   },
-  typography: {
-    useNextVariants: true,
-  },
+  spacing: SPACING.UNIT,
   mixins: {
     link: {
       textDecoration: 'none',
@@ -65,17 +63,27 @@ export default createTheme({
       marginLeft: SPACING.UNIT,
     },
   },
-  overrides: {
+  components: {
+    MuiTextField: {
+      defaultProps: {
+        variant: 'standard',
+        margin: 'normal',
+      },
+    },
     MuiListItem: {
-      dense: {
-        paddingTop: SPACING.UNIT / 2,
-        paddingBottom: SPACING.UNIT / 2,
+      styleOverrides: {
+        dense: {
+          paddingTop: SPACING.UNIT / 2,
+          paddingBottom: SPACING.UNIT / 2,
+        },
       },
     },
     MuiList: {
-      padding: {
-        paddingTop: 0,
-        paddingBottom: 0,
+      styleOverrides: {
+        padding: {
+          paddingTop: 0,
+          paddingBottom: 0,
+        },
       },
     },
   },

@@ -1,19 +1,20 @@
-import Box from '@material-ui/core/Box';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Fab from '@material-ui/core/Fab';
-import Grid from '@material-ui/core/Grid';
-import IconButton from '@material-ui/core/IconButton';
-import TextField from '@material-ui/core/TextField';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
-import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
-import { makeStyles } from '@material-ui/styles';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Fab from '@mui/material/Fab';
+import Grid from '@mui/material/GridLegacy';
+import IconButton from '@mui/material/IconButton';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
 import DeleteIcon from 'mdi-react/DeleteIcon';
 import PlusIcon from 'mdi-react/PlusIcon';
 import { bool } from 'prop-types';
 import { clone, defaultTo, propOr } from 'ramda';
 import React, { Fragment, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { makeStyles } from 'tss-react/mui';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
 import Button from '../../../components/Button';
@@ -36,7 +37,7 @@ import {
 } from '../../../utils/userUtils';
 import updateUser from '../utils/updateUser';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   fab: {
     ...theme.mixins.fab,
     right: theme.spacing(12),
@@ -62,7 +63,8 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function ViewUser({ isNewUser, ...props }) {
+function ViewUser({ isNewUser }) {
+  const navigate = useNavigate();
   const getEmptyPermission = (additional = false) => ({
     name: '',
     options: {
@@ -83,12 +85,9 @@ function ViewUser({ isNewUser, ...props }) {
       isAdditional: true,
     },
   });
-  const {
-    match: {
-      params: { username: existingUsername },
-    },
-  } = props;
-  const classes = useStyles();
+  const params = useParams();
+  const { username: existingUsername } = params;
+  const { classes } = useStyles();
   const [username, setUsername] = useState(isNewUser ? '' : existingUsername);
   const [roles, setRoles] = useState([]);
   const [originalRoles, setOriginalRoles] = useState([]);
@@ -330,7 +329,7 @@ function ViewUser({ isNewUser, ...props }) {
     });
 
     if (!error) {
-      props.history.push('/users');
+      navigate('/users');
     }
   };
 
@@ -349,7 +348,7 @@ function ViewUser({ isNewUser, ...props }) {
     });
 
     if (!error) {
-      props.history.push('/users');
+      navigate('/users');
     }
   };
 
@@ -364,7 +363,7 @@ function ViewUser({ isNewUser, ...props }) {
         />
       </Grid>
       <Grid item xs={1} className={classes.gridDelete}>
-        <IconButton onClick={() => handleRoleDelete(role, index)}>
+        <IconButton onClick={() => handleRoleDelete(role, index)} size="large">
           <DeleteIcon />
         </IconButton>
       </Grid>
@@ -441,6 +440,7 @@ function ViewUser({ isNewUser, ...props }) {
         <IconButton
           className={classes.iconButton}
           onClick={() => handlePermissionDelete(permission, index)}
+          size="large"
         >
           <DeleteIcon />
         </IconButton>
@@ -452,8 +452,8 @@ function ViewUser({ isNewUser, ...props }) {
     <Dashboard title="Users">
       {error && <ErrorPanel error={error} />}
       {isLoading && (
-        <Box style={{ textAlign: 'center' }}>
-          <CircularProgress loading />
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress />
         </Box>
       )}
       {!isLoading && (

@@ -1,13 +1,12 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import Box from '@material-ui/core/Box';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Fab from '@material-ui/core/Fab';
-import Grid from '@material-ui/core/Grid';
-import MenuItem from '@material-ui/core/MenuItem';
-import TextField from '@material-ui/core/TextField';
-import Tooltip from '@material-ui/core/Tooltip';
-import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
-import { makeStyles } from '@material-ui/styles';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Fab from '@mui/material/Fab';
+import Grid from '@mui/material/GridLegacy';
+import MenuItem from '@mui/material/MenuItem';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import classNames from 'classnames';
 import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
 import DeleteIcon from 'mdi-react/DeleteIcon';
@@ -16,6 +15,8 @@ import { stringify } from 'qs';
 import { assocPath, defaultTo, pick } from 'ramda';
 import React, { Fragment, useEffect, useState } from 'react';
 import { NumericFormat } from 'react-number-format';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { makeStyles } from 'tss-react/mui';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
 import Dashboard from '../../../components/Dashboard';
@@ -66,7 +67,7 @@ const initialRule = {
   update_type: 'minor',
   version: '',
 };
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   fab: {
     ...theme.mixins.fab,
   },
@@ -94,11 +95,12 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function Rule({ isNewRule, auth0, ...props }) {
-  const classes = useStyles();
-  const rulesFilter = props.location.state?.rulesFilter
-    ? props.location.state.rulesFilter
-    : [];
+function Rule({ isNewRule, auth0 }) {
+  const { classes } = useStyles();
+  const { state } = useLocation();
+  const params = useParams();
+  const navigate = useNavigate();
+  const rulesFilter = state?.rulesFilter ? state.rulesFilter : [];
   const [rule, setRule] = useState(initialRule);
   const [releaseNames, setReleaseNames] = useState([]);
   const [signoffSummary, setSignoffSummary] = useState('');
@@ -144,7 +146,7 @@ function Rule({ isNewRule, auth0, ...props }) {
     addSCAction.error ||
     updateSCAction.error ||
     deleteSCAction.error;
-  const { ruleId, scId } = props.match.params;
+  const { ruleId, scId } = params;
   const hasScheduledChange = !!rule.sc_id;
   const defaultToEmptyString = defaultTo('');
   const osVersionTextValue = defaultToEmptyString(rule.osVersion)
@@ -179,7 +181,7 @@ function Rule({ isNewRule, auth0, ...props }) {
     const [product, channel] = rulesFilter;
     const query = stringify({ product, channel }, { addQueryPrefix: true });
 
-    props.history.push(`/rules${query}#${hashFilter}`);
+    navigate(`/rules${query}#${hashFilter}`);
   };
 
   useEffect(() => {
@@ -200,6 +202,10 @@ function Rule({ isNewRule, auth0, ...props }) {
   };
 
   const handleDateTimePickerError = (error) => {
+    if (error === 'minDate') {
+      setDateTimePickerError('Date should not be in the past');
+      return;
+    }
     setDateTimePickerError(error);
   };
 
@@ -464,8 +470,8 @@ function Rule({ isNewRule, auth0, ...props }) {
   return (
     <Dashboard title={getTitle()}>
       {isLoading && (
-        <Box style={{ textAlign: 'center' }}>
-          <CircularProgress loading />
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress />
         </Box>
       )}
       {error && <ErrorPanel error={error} />}

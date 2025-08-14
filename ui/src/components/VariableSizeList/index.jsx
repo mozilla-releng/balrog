@@ -9,6 +9,7 @@ const VariableSizeList = forwardRef((props, ref) => {
     count: rowCount,
     estimateSize: rowHeight,
     overscan: 20,
+    gap: 40,
   });
 
   const items = virtualizer.getVirtualItems();
@@ -29,8 +30,8 @@ const VariableSizeList = forwardRef((props, ref) => {
     >
       {items.map((virtualRow) => (
         <Row
-          key={virtualRow.key}
           index={virtualRow.index}
+          key={virtualRow.key}
           ref={virtualizer.measureElement}
           style={{
             position: 'absolute',

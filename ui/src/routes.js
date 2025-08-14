@@ -28,35 +28,34 @@ const RequiredSignoffs = lazy(
 export default [
   {
     component: Releases,
-    path: '/releases',
+    path: '/releases/*',
     routes: releaseRoutes('/releases'),
   },
   {
     component: Rules,
-    path: '/rules',
+    path: '/rules/*',
     routes: ruleRoutes('/rules'),
   },
   {
     component: Users,
-    path: '/users',
+    path: '/users/*',
     routes: userRoutes('/users'),
     requiresAuth: true,
   },
   {
     component: Roles,
-    path: '/roles',
+    path: '/roles/*',
     routes: roleRoutes('/roles'),
     requiresAuth: true,
   },
   {
     component: RequiredSignoffs,
-    path: '/required-signoffs',
+    path: '/required-signoffs/*',
     routes: requiredSignoffsRoutes('/required-signoffs'),
     requiresAuth: true,
   },
   {
     component: Home,
     path: '/',
-    exact: true,
   },
 ];

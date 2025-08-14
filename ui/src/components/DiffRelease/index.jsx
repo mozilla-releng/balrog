@@ -1,10 +1,10 @@
-import Paper from '@material-ui/core/Paper';
-import { makeStyles } from '@material-ui/styles';
+import Paper from '@mui/material/Paper';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import deepSortObject from 'deep-sort-object';
 import { object, string } from 'prop-types';
 import { clone } from 'ramda';
 import React, { memo, useEffect, useRef, useState } from 'react';
+import { makeStyles } from 'tss-react/mui';
 import {
   DIFF_COLORS,
   INITIAL_JS_DIFF_SUMMARY,
@@ -12,7 +12,7 @@ import {
 } from '../../utils/constants';
 import DiffWorker from './diff.worker';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   pre: {
     margin: 0,
     fontSize: 13,
@@ -26,7 +26,7 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    padding: `0 ${theme.spacing(2)}px`,
+    padding: `0 ${theme.spacing(2)}`,
   },
   greenText: {
     color: '#28a745',
@@ -53,7 +53,7 @@ function DiffRelease(props) {
     className,
   } = props;
   const parentRef = useRef(null);
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [releaseLinesDiff, setReleaseDiffLines] = useState([]);
   const [diffSummary, setDiffSummary] = useState(INITIAL_JS_DIFF_SUMMARY);
   const diffWorker = new DiffWorker();
