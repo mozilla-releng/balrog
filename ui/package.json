@@ -48,7 +48,7 @@
     "qs": "^6.10.1",
     "ramda": "^0.31.3",
     "react": "^17",
-    "react-diff-view": "^2.4.7",
+    "react-diff-view": "^3.3.2",
     "react-dom": "^17",
     "react-helmet": "^6.1.0",
     "react-number-format": "^5.4.4",
