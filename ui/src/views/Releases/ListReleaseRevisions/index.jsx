@@ -1,11 +1,12 @@
-import Box from '@material-ui/core/Box';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Drawer from '@material-ui/core/Drawer';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/styles';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Drawer from '@mui/material/Drawer';
+import Typography from '@mui/material/Typography';
 import axios from 'axios';
 import { formatDistanceStrict } from 'date-fns';
 import React, { Fragment, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { makeStyles } from 'tss-react/mui';
 import Button from '../../../components/Button';
 import Dashboard from '../../../components/Dashboard';
 import DiffRelease from '../../../components/DiffRelease';
@@ -16,7 +17,7 @@ import useAction from '../../../hooks/useAction';
 import { getRelease, getRevisions } from '../../../services/releases';
 import { CONTENT_MAX_WIDTH } from '../../../utils/constants';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   radioCell: {
     paddingLeft: 0,
   },
@@ -37,12 +38,13 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   jsDiff: {
-    margin: `${theme.spacing(5)}px 0`,
+    margin: `${theme.spacing(5)} 0`,
   },
 }));
 
-function ListReleaseRevisions(props) {
-  const classes = useStyles();
+function ListReleaseRevisions(_props) {
+  const { classes } = useStyles();
+  const params = useParams();
   const [fetchedRevisions, fetchRevisions] = useAction(getRevisions);
   const [fetchedRelease, fetchRelease] = useAction(getRelease);
   const [fetchedRevisionData, fetchRevisionData] = useAction(axios.get);
@@ -55,7 +57,7 @@ function ListReleaseRevisions(props) {
     fetchedRelease.error || fetchedRevisions.error || fetchedRevisionData.error;
   const isLoading = fetchedRelease.loading || fetchedRevisions.loading;
   const revisions = fetchedRevisions.data ? fetchedRevisions.data : [];
-  const { releaseName } = props.match.params;
+  const { releaseName } = params;
 
   useEffect(() => {
     fetchRelease(releaseName);
@@ -173,8 +175,8 @@ function ListReleaseRevisions(props) {
     <Dashboard title={`Release ${releaseName} Revisions`}>
       {error && <ErrorPanel error={error} />}
       {isLoading && (
-        <Box style={{ textAlign: 'center' }}>
-          <CircularProgress loading />
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress />
         </Box>
       )}
       {!isLoading && revisions.length === 1 && (

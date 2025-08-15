@@ -1,7 +1,10 @@
-import MuiButton from '@material-ui/core/Button';
-import { red } from '@material-ui/core/colors';
-import { createTheme } from '@material-ui/core/styles';
-import { ThemeProvider } from '@material-ui/styles';
+import MuiButton from '@mui/material/Button';
+import { red } from '@mui/material/colors';
+import {
+  createTheme,
+  StyledEngineProvider,
+  ThemeProvider,
+} from '@mui/material/styles';
 import { oneOf } from 'prop-types';
 import React from 'react';
 
@@ -15,9 +18,11 @@ const dangerTheme = createTheme({
 function Button({ color, ...rest }) {
   if (color === 'danger') {
     return (
-      <ThemeProvider theme={dangerTheme}>
-        <MuiButton color="primary" {...rest} />
-      </ThemeProvider>
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={dangerTheme}>
+          <MuiButton color="primary" {...rest} />
+        </ThemeProvider>
+      </StyledEngineProvider>
     );
   }
 

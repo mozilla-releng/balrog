@@ -1,30 +1,28 @@
-import { green, red } from '@material-ui/core/colors';
-import MuiRadio from '@material-ui/core/Radio';
-import { makeStyles } from '@material-ui/styles';
+import { green, red } from '@mui/material/colors';
+import MuiRadio from '@mui/material/Radio';
 import { object, oneOf } from 'prop-types';
 import React from 'react';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
   greenRoot: {
-    '&$checked': {
+    '&.Mui-checked': {
       color: green[600],
     },
   },
   redRoot: {
-    '&$checked': {
+    '&.Mui-checked': {
       color: red[600],
     },
   },
-  checked: {},
 });
 const Radio = (props) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { variant, classes: classesFromProps, ...rest } = props;
 
   return (
     <MuiRadio
       classes={{
-        checked: classes.checked,
         root: classes[`${variant}Root`],
         ...classesFromProps,
       }}

@@ -1,32 +1,21 @@
 import { useAuth0 } from '@auth0/auth0-react';
-import { makeStyles } from '@material-ui/styles';
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Switch } from 'react-router-dom';
+import React, { Suspense, useEffect, useState } from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import ErrorPanel from './components/ErrorPanel';
-import RouteWithProps from './components/RouteWithProps';
 import routes from './routes';
 import { BASE_URL } from './utils/constants';
 
-const useStyles = makeStyles({
-  '@global': {
-    'html, body': {
-      height: '100%',
-    },
-    '#root': {
-      height: '100%',
-    },
-    '.cm-editor': {
-      fontSize: 13,
-      height: '100%',
-    },
-    '.cm-theme': {
-      flex: 1,
-      overflow: 'auto',
-    },
-  },
-});
+function ProtectedRoute({ children, requiresAuth }) {
+  const { user } = useAuth0();
+
+  if (requiresAuth && !user) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <Suspense fallback={null}>{children}</Suspense>;
+}
 
 function setupAxiosInterceptors(getAccessTokenSilently, getIdTokenClaims) {
   axios.interceptors.request.use(async (config) => {
@@ -79,7 +68,6 @@ function Main() {
     }
   }, [isLoading]);
 
-  useStyles();
   const [backendError, setBackendError] = useState('');
 
   useEffect(() => {
@@ -105,11 +93,19 @@ function Main() {
     </BrowserRouter>
   ) : (
     <BrowserRouter>
-      <Switch>
-        {routes.map(({ path, ...rest }) => (
-          <RouteWithProps key={path || 'not-found'} path={path} {...rest} />
+      <Routes>
+        {routes.map(({ path, component: Component, requiresAuth, ...rest }) => (
+          <Route
+            key={path || 'not-found'}
+            path={path}
+            element={
+              <ProtectedRoute requiresAuth={requiresAuth}>
+                <Component path={path} {...rest} />
+              </ProtectedRoute>
+            }
+          />
         ))}
-      </Switch>
+      </Routes>
     </BrowserRouter>
   );
 }

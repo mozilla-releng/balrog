@@ -23,30 +23,30 @@ const ReleaseV2 = lazy(
   () => import(/* webpackChunkName: 'Releases.ReleaseV2' */ './ReleaseV2'),
 );
 
-export default (path) => [
+export default () => [
   {
     component: ReleaseV2,
-    path: `${path}/create/v2`,
+    path: 'create/v2',
     isNewRelease: true,
   },
   {
     component: ListReleaseRevisionsV2,
-    path: `${path}/:releaseName/revisions/v2`,
+    path: ':releaseName/revisions/v2',
   },
   {
     component: ListReleaseRevisions,
-    path: `${path}/:releaseName/revisions`,
+    path: ':releaseName/revisions',
   },
   {
     component: ReleaseV2,
-    path: `${path}/:releaseName/v2`,
+    path: ':releaseName/v2',
   },
   {
     component: Release,
-    path: `${path}/:releaseName`,
+    path: ':releaseName',
   },
   {
     component: ListReleases,
-    path,
+    path: '',
   },
 ];

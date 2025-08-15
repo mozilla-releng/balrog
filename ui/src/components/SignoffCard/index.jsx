@@ -1,13 +1,13 @@
-import Card from '@material-ui/core/Card';
-import CardActionArea from '@material-ui/core/CardActionArea';
-import CardHeader from '@material-ui/core/CardHeader';
-import { makeStyles } from '@material-ui/styles';
+import Card from '@mui/material/Card';
+import CardActionArea from '@mui/material/CardActionArea';
+import CardHeader from '@mui/material/CardHeader';
 import PencilIcon from 'mdi-react/PencilIcon';
 import { node, string } from 'prop-types';
 import React from 'react';
+import { makeStyles } from 'tss-react/mui';
 import Link from '../../utils/Link';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   cardHeader: {
     borderBottom: '1px gray dashed',
   },
@@ -23,7 +23,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function SignoffCard(props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { title, children, to, ...rest } = props;
 
   return (

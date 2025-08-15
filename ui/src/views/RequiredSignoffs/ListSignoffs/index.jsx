@@ -1,22 +1,23 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import Box from '@material-ui/core/Box';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Divider from '@material-ui/core/Divider';
-import Fab from '@material-ui/core/Fab';
-import FormControl from '@material-ui/core/FormControl';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import RadioGroup from '@material-ui/core/RadioGroup';
-import TextField from '@material-ui/core/TextField';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/styles';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Divider from '@mui/material/Divider';
+import Fab from '@mui/material/Fab';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import MenuItem from '@mui/material/MenuItem';
+import RadioGroup from '@mui/material/RadioGroup';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import { capitalCase } from 'change-case';
 import classNames from 'classnames';
 import PlusIcon from 'mdi-react/PlusIcon';
 import { parse, stringify } from 'qs';
 import { clone, lensPath, view } from 'ramda';
 import React, { Fragment, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { makeStyles } from 'tss-react/mui';
 import Dashboard from '../../../components/Dashboard';
 import DialogAction from '../../../components/DialogAction';
 import ErrorPanel from '../../../components/ErrorPanel';
@@ -38,7 +39,7 @@ const getPermissionChangesLens = (product) =>
   lensPath([product, 'permissions']);
 const getRulesOrReleasesChangesLens = (product) =>
   lensPath([product, 'channels']);
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   fab: {
     ...theme.mixins.fab,
   },
@@ -64,10 +65,11 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function ListSignoffs({ auth0, ...props }) {
+function ListSignoffs({ auth0 }) {
   const username = auth0.user.email;
-  const classes = useStyles();
-  const { search } = props.location;
+  const { classes } = useStyles();
+  const { search } = useLocation();
+  const navigate = useNavigate();
   const query = parse(search.slice(1));
   const [requiredSignoffs, setRequiredSignoffs] = useState(null);
   const [product, setProduct] = useState(
@@ -95,9 +97,7 @@ function ListSignoffs({ auth0, ...props }) {
       product: value,
     };
 
-    props.history.push(
-      `/required-signoffs${stringify(qs, { addQueryPrefix: true })}`,
-    );
+    navigate(`/required-signoffs${stringify(qs, { addQueryPrefix: true })}`);
     setProduct(value);
   };
 
@@ -268,8 +268,8 @@ function ListSignoffs({ auth0, ...props }) {
     <Dashboard title="Required Signoffs">
       {error && <ErrorPanel error={error} />}
       {loading && (
-        <Box style={{ textAlign: 'center' }}>
-          <CircularProgress loading />
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress />
         </Box>
       )}
       {requiredSignoffs && (

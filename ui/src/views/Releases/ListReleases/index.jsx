@@ -1,15 +1,15 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import { Typography } from '@material-ui/core';
-import Box from '@material-ui/core/Box';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Drawer from '@material-ui/core/Drawer';
-import Fab from '@material-ui/core/Fab';
-import FormControl from '@material-ui/core/FormControl';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Radio from '@material-ui/core/Radio';
-import RadioGroup from '@material-ui/core/RadioGroup';
-import Tooltip from '@material-ui/core/Tooltip';
-import { makeStyles, useTheme } from '@material-ui/styles';
+import { Typography } from '@mui/material';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Drawer from '@mui/material/Drawer';
+import Fab from '@mui/material/Fab';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import { useTheme } from '@mui/material/styles';
+import Tooltip from '@mui/material/Tooltip';
 import classNames from 'classnames';
 import PlusIcon from 'mdi-react/PlusIcon';
 import { clone } from 'ramda';
@@ -21,6 +21,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { useLocation } from 'react-router-dom';
+import { makeStyles } from 'tss-react/mui';
 import Dashboard from '../../../components/Dashboard';
 import DialogAction from '../../../components/DialogAction';
 import DiffRelease from '../../../components/DiffRelease';
@@ -59,7 +61,7 @@ import {
 import elementsHeight from '../../../utils/elementsHeight';
 import Link from '../../../utils/Link';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   fab: {
     ...theme.mixins.fab,
   },
@@ -78,7 +80,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function ListReleases(props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
   const username = props.auth0.user?.email || '';
   const {
@@ -90,7 +92,7 @@ function ListReleases(props) {
     signoffSummarylistSubheaderTextHeight,
   } = elementsHeight(theme);
   const releaseListRef = useRef(null);
-  const { hash } = props.location;
+  const { hash } = useLocation();
   const [releaseNameHash, setReleaseNameHash] = useState(null);
   const [scrollToRow, setScrollToRow] = useState(null);
   const [searchValue, setSearchValue] = useState('');
@@ -734,16 +736,17 @@ function ListReleases(props) {
   });
 
   const getRowHeight = (index) => {
+    const spacingPx = parseInt(theme.spacing(1), 10);
     const listItemTextMargin = 6;
     const release = filteredReleases[index];
     // An approximation
     const ruleIdsLineCount =
       Math.ceil(Object.keys(release.rule_info).length / 10) || 1;
     // card header
-    let height = h6TextHeight + body1TextHeight() + theme.spacing(2);
+    let height = h6TextHeight + body1TextHeight() + 2 * spacingPx;
 
     // list padding top and bottom
-    height += theme.spacing(2);
+    height += 2 * spacingPx;
 
     // first row (data version) + ListItemText margins
     height += body1TextHeight() + body2TextHeight() + 2 * listItemTextMargin;
@@ -753,21 +756,21 @@ function ListReleases(props) {
       body1TextHeight() +
       // Height of <Chip size="small" ... /> is hard-coded to 24px
       // https://github.com/mui-org/material-ui/blob/b968c9a375d2d71745fa0165ac0d8d77bef74bc6/packages/material-ui/src/Chip/Chip.js#L46
-      ruleIdsLineCount * (24 + theme.spacing(1)) +
+      ruleIdsLineCount * (24 + spacingPx) +
       2 * listItemTextMargin;
 
     // actions row
-    height += buttonHeight + theme.spacing(2);
+    height += buttonHeight + spacingPx;
     // space below the card (margin)
-    height += theme.spacing(4);
+    height += 4 * spacingPx;
 
     if (release.scheduledChange?.when) {
       // divider
-      height += theme.spacing(2) + 1;
+      height += 2 * spacingPx + 1;
 
       // Scheduled changes row, which includes some text, a button, and a chip.
       // Which one is largest depends on platform/browser.
-      height += Math.max(subtitle1TextHeight(), theme.spacing(3), buttonHeight);
+      height += Math.max(subtitle1TextHeight(), 3 * spacingPx, buttonHeight);
 
       if (Object.keys(release.required_signoffs).length > 0) {
         const requiredRoles = Object.keys(release.required_signoffs).length;
@@ -777,16 +780,16 @@ function ListReleases(props) {
         const signoffRows = Math.max(requiredRoles, nSignoffs);
 
         // Padding above the summary
-        height += theme.spacing(2);
+        height += 2 * spacingPx;
 
         // The "Requires Signoff From" title and the margin beneath it
-        height += signoffSummarylistSubheaderTextHeight + theme.spacing(0.5);
+        height += signoffSummarylistSubheaderTextHeight + 0.5 * spacingPx;
 
         // Space for however many rows exist.
-        height += signoffRows * (body2TextHeight() + theme.spacing(0.5));
+        height += signoffRows * (body2TextHeight() + 0.5 * spacingPx);
 
         // Padding below the summary
-        height += theme.spacing(1);
+        height += spacingPx;
       }
     }
 
@@ -837,8 +840,8 @@ function ListReleases(props) {
         value={searchValue}
       />
       {isLoading && (
-        <Box style={{ textAlign: 'center' }}>
-          <CircularProgress loading />
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress />
         </Box>
       )}
       {error && <ErrorPanel error={error} />}

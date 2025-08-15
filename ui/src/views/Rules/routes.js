@@ -11,37 +11,37 @@ const ListRuleRevisions = lazy(
 );
 const Rule = lazy(() => import(/* webpackChunkName: 'Rules.Rule' */ './Rule'));
 
-export default (path) => [
+export default () => [
   {
     component: Rule,
-    path: `${path}/create/:scId`,
+    path: 'create/:scId',
     isNewRule: true,
   },
   {
     component: Rule,
-    path: `${path}/create`,
+    path: 'create',
     isNewRule: true,
   },
   {
     component: Rule,
-    path: `${path}/duplicate/scId/:scId`,
+    path: 'duplicate/scId/:scId',
     isNewRule: true,
   },
   {
     component: Rule,
-    path: `${path}/duplicate/ruleId/:ruleId`,
+    path: 'duplicate/ruleId/:ruleId',
     isNewRule: true,
   },
   {
     component: ListRuleRevisions,
-    path: `${path}/:ruleId/revisions`,
+    path: ':ruleId/revisions',
   },
   {
     component: Rule,
-    path: `${path}/:ruleId`,
+    path: ':ruleId',
   },
   {
     component: ListRules,
-    path,
+    path: '',
   },
 ];

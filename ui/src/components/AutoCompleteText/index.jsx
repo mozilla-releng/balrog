@@ -1,10 +1,10 @@
-import TextField from '@material-ui/core/TextField';
-import Autocomplete from '@material-ui/lab/Autocomplete';
-import { makeStyles } from '@material-ui/styles';
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
 import { arrayOf, bool, func, object, string } from 'prop-types';
 import React from 'react';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   chip: {
     fontSize: '0.60rem',
     height: 'auto',
@@ -39,7 +39,7 @@ function AutoCompleteText({
   multi,
   ...props
 }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const handleSingleChange = (_event, newValue) => {
     onValueChange(newValue || '');
   };

@@ -1,20 +1,19 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import Avatar from '@material-ui/core/Avatar';
-import Card from '@material-ui/core/Card';
-import CardActions from '@material-ui/core/CardActions';
-import CardContent from '@material-ui/core/CardContent';
-import CardHeader from '@material-ui/core/CardHeader';
-import Chip from '@material-ui/core/Chip';
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
-import Divider from '@material-ui/core/Divider';
-import Grid from '@material-ui/core/Grid';
-import IconButton from '@material-ui/core/IconButton';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/styles';
+import Avatar from '@mui/material/Avatar';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import CardHeader from '@mui/material/CardHeader';
+import Chip from '@mui/material/Chip';
+import ClickAwayListener from '@mui/material/ClickAwayListener';
+import Divider from '@mui/material/Divider';
+import Grid from '@mui/material/GridLegacy';
+import IconButton from '@mui/material/IconButton';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import classNames from 'classnames';
 import { formatDistanceStrict } from 'date-fns';
 import DeleteIcon from 'mdi-react/DeleteIcon';
@@ -23,6 +22,7 @@ import PlusCircleIcon from 'mdi-react/PlusCircleIcon';
 import UpdateIcon from 'mdi-react/UpdateIcon';
 import { bool, func } from 'prop-types';
 import React, { Fragment, useState } from 'react';
+import { makeStyles } from 'tss-react/mui';
 import { RULE_DIFF_PROPERTIES } from '../../utils/constants';
 import getDiffedProperties from '../../utils/getDiffedProperties';
 import getIndexOfSubStr from '../../utils/getIndexOfSubStr';
@@ -32,7 +32,7 @@ import Button from '../Button';
 import DiffRule from '../DiffRule';
 import SignoffSummary from '../SignoffSummary';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     '& h2, & h4': {
       '& .anchor-link-style': {
@@ -44,7 +44,7 @@ const useStyles = makeStyles((theme) => ({
       '&:hover .anchor-link-style': {
         display: 'inline-block',
         opacity: 1,
-        color: theme.palette.text.hint,
+        color: theme.palette.text.disabled,
         '&:hover': {
           color: theme.palette.text.secondary,
         },
@@ -68,7 +68,7 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(1),
   },
   noDiffedPropertiesText: {
-    padding: `0 ${theme.spacing(1)}px`,
+    padding: `0 ${theme.spacing(1)}`,
   },
   listItem: {
     paddingTop: 0,
@@ -81,7 +81,7 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: 'flex-end',
   },
   changesTitle: {
-    padding: `0 ${theme.spacing(1)}px`,
+    padding: `0 ${theme.spacing(1)}`,
   },
   diff: {
     fontSize: theme.typography.body2.fontSize,
@@ -102,7 +102,7 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   divider: {
-    margin: `${theme.spacing(1)}px`,
+    margin: theme.spacing(1),
     backgroundColor: theme.palette.grey[200],
   },
   changesHeader: {
@@ -168,7 +168,7 @@ function RuleCard({
 }) {
   const [open, setOpen] = useState(false);
   const [seeMore, setSeeMore] = useState('...see more');
-  const classes = useStyles();
+  const { classes } = useStyles();
   const requiresSignoff =
     rule.scheduledChange &&
     Object.keys(rule.scheduledChange.required_signoffs).length > 0;
@@ -247,7 +247,7 @@ function RuleCard({
         style={{
           display: 'flex',
           flexFlow: 'column',
-          color: 'white',
+          color: '#ffffff',
           fontSize: '14px',
           lineHeight: '16px',
           margin: '2px 4px',
@@ -344,7 +344,7 @@ function RuleCard({
                 }}
               >
                 <Tooltip title="Revisions">
-                  <IconButton>
+                  <IconButton size="large">
                     <HistoryIcon />
                   </IconButton>
                 </Tooltip>

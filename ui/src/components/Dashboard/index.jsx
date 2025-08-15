@@ -1,10 +1,10 @@
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/styles';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
 import { bool, node, string } from 'prop-types';
 import React, { Fragment } from 'react';
-import { Helmet } from 'react-helmet';
+import { useLocation } from 'react-router-dom';
+import { makeStyles } from 'tss-react/mui';
 import { APP_BAR_HEIGHT, CONTENT_MAX_WIDTH } from '../../utils/constants';
 import Link from '../../utils/Link';
 import Button from '../Button';
@@ -12,7 +12,7 @@ import menuItems from './menuItems';
 import SettingsMenu from './SettingsMenu';
 import UserMenu from './UserMenu';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   appbar: {
     height: APP_BAR_HEIGHT,
   },
@@ -23,7 +23,7 @@ const useStyles = makeStyles((theme) => ({
     maxWidth: CONTENT_MAX_WIDTH,
     height: '100%',
     margin: '0 auto',
-    padding: `${theme.spacing(12)}px ${APP_BAR_HEIGHT}px`,
+    padding: `${theme.spacing(12)} ${APP_BAR_HEIGHT}px`,
   },
   nav: {
     display: 'flex',
@@ -46,14 +46,13 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function Dashboard(props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { title, children, disabled } = props;
+  const location = useLocation();
 
   return (
     <Fragment>
-      <Helmet>
-        <title>{title} - Balrog Admin</title>
-      </Helmet>
+      <title>{`${title} - Balrog Admin`}</title>
       <AppBar className={classes.appbar}>
         <Toolbar>
           <Typography
@@ -73,8 +72,8 @@ export default function Dashboard(props) {
                 className={disabled ? classes.disabledLink : classes.link}
                 nav
                 to={
-                  window.location.pathname === menuItem.path
-                    ? `${window.location.pathname}${window.location.search}`
+                  location.pathname === menuItem.path
+                    ? `${location.pathname}${location.search}`
                     : menuItem.path
                 }
               >

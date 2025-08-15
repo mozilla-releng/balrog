@@ -1,11 +1,11 @@
-import Button from '@material-ui/core/Button';
-import { makeStyles } from '@material-ui/core/styles';
+import Button from '@mui/material/Button';
 import { sentenceCase } from 'change-case';
 import { string } from 'prop-types';
 import React from 'react';
+import { makeStyles } from 'tss-react/mui';
 import labels from '../../utils/labels';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   mini: {
     fontSize: '0.7em',
     padding: '3px 8px 2px',
@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
  * A label color-coded based on known statuses.
  */
 function StatusLabel({ state }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const labelKey = labels[state] || 'default';
 
   return (

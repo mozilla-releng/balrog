@@ -1,12 +1,13 @@
-import Box from '@material-ui/core/Box';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Drawer from '@material-ui/core/Drawer';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/styles';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Drawer from '@mui/material/Drawer';
+import Typography from '@mui/material/Typography';
 import { formatDistanceStrict } from 'date-fns';
 import { stringify } from 'qs';
 import { clone } from 'ramda';
 import React, { Fragment, useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { makeStyles } from 'tss-react/mui';
 import Button from '../../../components/Button';
 import Dashboard from '../../../components/Dashboard';
 import DialogAction from '../../../components/DialogAction';
@@ -22,7 +23,7 @@ import {
   DIALOG_ACTION_INITIAL_STATE,
 } from '../../../utils/constants';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()((_theme) => ({
   radioCell: {
     paddingLeft: 0,
   },
@@ -33,20 +34,21 @@ const useStyles = makeStyles({
     maxWidth: CONTENT_MAX_WIDTH,
     margin: '0 auto',
   },
-});
+}));
 
-function ListRuleRevisions(props) {
-  const classes = useStyles();
-  const rulesFilter = props.location.state?.rulesFilter
-    ? props.location.state.rulesFilter
-    : [];
+function ListRuleRevisions() {
+  const { classes } = useStyles();
+  const { state } = useLocation();
+  const params = useParams();
+  const navigate = useNavigate();
+  const rulesFilter = state?.rulesFilter ? state.rulesFilter : [];
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
   const [leftRadioCheckedIndex, setLeftRadioCheckedIndex] = useState(1);
   const [rightRadioCheckedIndex, setRightRadioCheckedIndex] = useState(0);
   const [dialogState, setDialogState] = useState(DIALOG_ACTION_INITIAL_STATE);
   const [fetchedRevisions, fetchRevisions] = useAction(getRevisions);
   const addSC = useAction(addScheduledChange)[1];
-  const { ruleId } = props.match.params;
+  const { ruleId } = params;
   const error = fetchedRevisions.error;
   const isLoading = fetchedRevisions.loading;
   const revisions = fetchedRevisions.data
@@ -57,7 +59,7 @@ function ListRuleRevisions(props) {
     const [product, channel] = rulesFilter;
     const query = stringify({ product, channel }, { addQueryPrefix: true });
 
-    props.history.push(`/rules${query}#${hashFilter}`);
+    navigate(`/rules${query}#${hashFilter}`);
   };
 
   useEffect(() => {
@@ -183,8 +185,8 @@ function ListRuleRevisions(props) {
     <Dashboard title={`Rule ${ruleId} Revisions`}>
       {error && <ErrorPanel error={error} />}
       {isLoading && (
-        <Box style={{ textAlign: 'center' }}>
-          <CircularProgress loading />
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress />
         </Box>
       )}
       {!isLoading && revisions.length === 1 && (

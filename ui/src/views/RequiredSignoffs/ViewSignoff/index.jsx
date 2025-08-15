@@ -1,17 +1,16 @@
-import Box from '@material-ui/core/Box';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Fab from '@material-ui/core/Fab';
-import FormControl from '@material-ui/core/FormControl';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormLabel from '@material-ui/core/FormLabel';
-import Grid from '@material-ui/core/Grid';
-import IconButton from '@material-ui/core/IconButton';
-import RadioGroup from '@material-ui/core/RadioGroup';
-import TextField from '@material-ui/core/TextField';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
-import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
-import { makeStyles } from '@material-ui/styles';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Fab from '@mui/material/Fab';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormLabel from '@mui/material/FormLabel';
+import Grid from '@mui/material/GridLegacy';
+import IconButton from '@mui/material/IconButton';
+import RadioGroup from '@mui/material/RadioGroup';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import classNames from 'classnames';
 import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
 import DeleteIcon from 'mdi-react/DeleteIcon';
@@ -19,6 +18,8 @@ import PlusIcon from 'mdi-react/PlusIcon';
 import { bool } from 'prop-types';
 import React, { Fragment, useEffect, useState } from 'react';
 import { NumericFormat } from 'react-number-format';
+import { useNavigate, useParams } from 'react-router-dom';
+import { makeStyles } from 'tss-react/mui';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
 import Button from '../../../components/Button';
@@ -35,7 +36,7 @@ import getRolesFromRequiredSignoffs from '../utils/getRolesFromRequiredSignoffs'
 import updateRequiredSignoffs from '../utils/updateRequiredSignoffs';
 
 let additionalRoleId = 0;
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   iconButtonGrid: {
     display: 'flex',
     alignItems: 'center',
@@ -69,7 +70,8 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function ViewSignoff({ isNewSignoff, ...props }) {
+function ViewSignoff({ isNewSignoff }) {
+  const navigate = useNavigate();
   const getEmptyRole = (id = 0) => ({
     name: '',
     signoffs_required: null,
@@ -80,8 +82,9 @@ function ViewSignoff({ isNewSignoff, ...props }) {
       id,
     },
   });
-  const { product, channel } = props.match.params;
-  const classes = useStyles();
+  const params = useParams();
+  const { product, channel } = params;
+  const { classes } = useStyles();
   const [channelTextValue, setChannelTextValue] = useState(channel || '');
   const [productTextValue, setProductTextValue] = useState(product || '');
   const [type, setType] = useState(channel ? 'channel' : 'permission');
@@ -179,7 +182,7 @@ function ViewSignoff({ isNewSignoff, ...props }) {
     });
 
     if (!error) {
-      props.history.push('/required-signoffs');
+      navigate('/required-signoffs');
     }
   };
 
@@ -210,7 +213,7 @@ function ViewSignoff({ isNewSignoff, ...props }) {
 
   const handleDialogClose = () => setDialogState(DIALOG_ACTION_INITIAL_STATE);
   const handleDialogActionComplete = () => {
-    props.history.push('/required-signoffs');
+    navigate('/required-signoffs');
   };
 
   const handleDialogError = (error) =>
@@ -264,6 +267,7 @@ function ViewSignoff({ isNewSignoff, ...props }) {
         <IconButton
           onClick={handleRoleDelete(role, index)}
           className={classes.iconButton}
+          size="large"
         >
           <DeleteIcon />
         </IconButton>
@@ -275,8 +279,8 @@ function ViewSignoff({ isNewSignoff, ...props }) {
     <Dashboard title="Required Signoff">
       {error && <ErrorPanel error={error} />}
       {isLoading && (
-        <Box style={{ textAlign: 'center' }}>
-          <CircularProgress loading />
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress />
         </Box>
       )}
       {!isLoading && (

@@ -1,16 +1,16 @@
-import IconButton from '@material-ui/core/IconButton';
-import Paper from '@material-ui/core/Paper';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/styles';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 import AlertIcon from 'mdi-react/AlertIcon';
 import CloseIcon from 'mdi-react/CloseIcon';
 import InformationIcon from 'mdi-react/InformationIcon';
 import { bool, oneOf, string } from 'prop-types';
 import React, { useState } from 'react';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   paper: {
-    padding: `${theme.spacing(0)}px ${theme.spacing(2)}px`,
+    padding: `${theme.spacing(0)} ${theme.spacing(2)}`,
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -39,12 +39,12 @@ const useStyles = makeStyles((theme) => ({
     flex: 1,
   },
   message: {
-    padding: `${theme.spacing(1)}px 0`,
+    padding: `${theme.spacing(1)} 0`,
   },
 }));
 
 function MessagePanel(props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { variant, message, alwaysOpen } = props;
   const [display, setDisplay] = useState(true);
   const variantIcon = {
@@ -70,7 +70,7 @@ function MessagePanel(props) {
       </div>
       {!alwaysOpen && (
         <div className={classes.closeIconDiv}>
-          <IconButton onClick={handleClose}>
+          <IconButton onClick={handleClose} size="large">
             <CloseIcon />
           </IconButton>
         </div>

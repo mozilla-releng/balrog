@@ -1,21 +1,20 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import Card from '@material-ui/core/Card';
-import CardActions from '@material-ui/core/CardActions';
-import CardContent from '@material-ui/core/CardContent';
-import CardHeader from '@material-ui/core/CardHeader';
-import Chip from '@material-ui/core/Chip';
-import Divider from '@material-ui/core/Divider';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Grid from '@material-ui/core/Grid';
-import IconButton from '@material-ui/core/IconButton';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import Paper from '@material-ui/core/Paper';
-import Switch from '@material-ui/core/Switch';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/styles';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import CardHeader from '@mui/material/CardHeader';
+import Chip from '@mui/material/Chip';
+import Divider from '@mui/material/Divider';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Grid from '@mui/material/GridLegacy';
+import IconButton from '@mui/material/IconButton';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import Paper from '@mui/material/Paper';
+import Switch from '@mui/material/Switch';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import { formatDistanceStrict } from 'date-fns';
 import HistoryIcon from 'mdi-react/HistoryIcon';
 import LinkIcon from 'mdi-react/LinkIcon';
@@ -23,13 +22,14 @@ import UpdateIcon from 'mdi-react/UpdateIcon';
 import { func } from 'prop-types';
 import { stringify } from 'qs';
 import React, { Fragment } from 'react';
+import { makeStyles } from 'tss-react/mui';
 import highlightMatchedRelease from '../../utils/highlightMatchedRelease';
 import Link from '../../utils/Link';
 import { release } from '../../utils/prop-types';
 import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     '& h2': {
       '& .anchor-link-style': {
@@ -41,7 +41,7 @@ const useStyles = makeStyles((theme) => ({
       '&:hover .anchor-link-style': {
         display: 'inline-block',
         opacity: 1,
-        color: theme.palette.text.hint,
+        color: theme.palette.text.disabled,
         '&:hover': {
           color: theme.palette.text.secondary,
         },
@@ -98,7 +98,7 @@ const useStyles = makeStyles((theme) => ({
     ...theme.mixins.link,
   },
   divider: {
-    margin: `${theme.spacing(1)}px`,
+    margin: theme.spacing(1),
   },
   scheduledChangesContainer: {
     display: 'flex',
@@ -110,7 +110,7 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'baseline',
   },
   scheduledChangesTitle: {
-    padding: `0 ${theme.spacing(1)}px`,
+    padding: `0 ${theme.spacing(1)}`,
   },
   changeTimeChip: {
     height: theme.spacing(3),
@@ -134,9 +134,10 @@ function ReleaseCard(props) {
     onAccessChange,
     onReleaseDelete,
     onViewScheduledChangeDiff,
+    releaseHighlight,
     ...rest
   } = props;
-  const classes = useStyles();
+  const { classes } = useStyles();
   const hasRulesPointingAtRevision = Object.keys(release.rule_info).length > 0;
   const hasScheduledChange =
     release.scheduledChange && Object.keys(release.scheduledChange).length > 0;
@@ -175,9 +176,9 @@ function ReleaseCard(props) {
             component="h2"
             variant="h6"
           >
-            {rest.releaseHighlight ? (
+            {releaseHighlight ? (
               <Fragment>
-                {highlightMatchedRelease(rest.releaseHighlight, release.name)}
+                {highlightMatchedRelease(releaseHighlight, release.name)}
               </Fragment>
             ) : (
               release.name
@@ -219,7 +220,7 @@ function ReleaseCard(props) {
               }
             >
               <Tooltip title="Revisions">
-                <IconButton>
+                <IconButton size="large">
                   <HistoryIcon />
                 </IconButton>
               </Tooltip>

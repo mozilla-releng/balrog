@@ -1,15 +1,16 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import Box from '@material-ui/core/Box';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Fab from '@material-ui/core/Fab';
-import { makeStyles } from '@material-ui/core/styles';
-import TextField from '@material-ui/core/TextField';
-import Tooltip from '@material-ui/core/Tooltip';
-import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Fab from '@mui/material/Fab';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import classNames from 'classnames';
 import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
 import DeleteIcon from 'mdi-react/DeleteIcon';
 import React, { Fragment, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { makeStyles } from 'tss-react/mui';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';
 import Button from '../../../components/Button';
@@ -31,7 +32,7 @@ import {
 import { getProducts } from '../../../services/rules';
 import { SNACKBAR_INITIAL_STATE } from '../../../utils/constants';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   fab: {
     ...theme.mixins.fab,
   },
@@ -62,14 +63,11 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function Release(props) {
-  const classes = useStyles();
-  const {
-    auth0,
-    isNewRelease,
-    match: {
-      params: { releaseName },
-    },
-  } = props;
+  const { classes } = useStyles();
+  const params = useParams();
+  const { releaseName } = params;
+  const navigate = useNavigate();
+  const { auth0, isNewRelease } = props;
   const [releaseNameValue, setReleaseNameValue] = useState(releaseName || '');
   const [productTextValue, setProductTextValue] = useState('');
   const [releaseEditorValue, setReleaseEditorValue] = useState('{}');
@@ -162,7 +160,7 @@ function Release(props) {
     );
 
     if (!error) {
-      props.history.push(`/releases#${releaseNameValue}`);
+      navigate(`/releases#${releaseNameValue}`);
     }
   };
 
@@ -196,7 +194,7 @@ function Release(props) {
     }
 
     if (!error) {
-      props.history.push(`/releases#${releaseNameValue}`);
+      navigate(`/releases#${releaseNameValue}`);
     }
   };
 
@@ -207,7 +205,7 @@ function Release(props) {
     });
 
     if (!error) {
-      props.history.push(`/releases#${releaseNameValue}`);
+      navigate(`/releases#${releaseNameValue}`);
     }
   };
 
@@ -265,8 +263,8 @@ function Release(props) {
       title={isNewRelease ? 'Create Release' : `Update Release ${releaseName}`}
     >
       {isLoading && (
-        <Box style={{ textAlign: 'center' }}>
-          <CircularProgress loading />
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress />
         </Box>
       )}
       {!isLoading && error && <ErrorPanel error={error} />}

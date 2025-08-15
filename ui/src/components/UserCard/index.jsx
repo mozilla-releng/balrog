@@ -1,16 +1,15 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import Card from '@material-ui/core/Card';
-import CardActionArea from '@material-ui/core/CardActionArea';
-import CardActions from '@material-ui/core/CardActions';
-import CardContent from '@material-ui/core/CardContent';
-import CardHeader from '@material-ui/core/CardHeader';
-import Divider from '@material-ui/core/Divider';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/styles';
+import Card from '@mui/material/Card';
+import CardActionArea from '@mui/material/CardActionArea';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import CardHeader from '@mui/material/CardHeader';
+import Divider from '@mui/material/Divider';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Typography from '@mui/material/Typography';
 import classNames from 'classnames';
 import AccountGroupIcon from 'mdi-react/AccountGroupIcon';
 import ArrowRightIcon from 'mdi-react/ArrowRightIcon';
@@ -18,6 +17,7 @@ import KeyVariantIcon from 'mdi-react/KeyVariantIcon';
 import PencilIcon from 'mdi-react/PencilIcon';
 import { arrayOf, func, object, string } from 'prop-types';
 import React, { Fragment } from 'react';
+import { makeStyles } from 'tss-react/mui';
 import { LABELS } from '../../utils/constants';
 import Link from '../../utils/Link';
 import { getPermissionString, getRolesString } from '../../utils/userUtils';
@@ -25,7 +25,7 @@ import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
 import StatusLabel from '../StatusLabel';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   card: {
     listStyle: 'none',
   },
@@ -59,7 +59,7 @@ const useStyles = makeStyles((theme) => ({
     display: 'inline-block',
   },
   arrowRightIcon: {
-    margin: `0 ${theme.spacing(1)}px`,
+    margin: `0 ${theme.spacing(1)}`,
   },
   permissionText: {
     wordBreak: 'break-all',
@@ -81,7 +81,7 @@ function getStatus(changeType) {
 }
 
 function User(props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const {
     auth0,
     className,

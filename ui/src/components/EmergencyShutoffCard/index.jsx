@@ -1,17 +1,17 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import Card from '@material-ui/core/Card';
-import CardActions from '@material-ui/core/CardActions';
-import CardContent from '@material-ui/core/CardContent';
-import CardHeader from '@material-ui/core/CardHeader';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/styles';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import CardHeader from '@mui/material/CardHeader';
+import Typography from '@mui/material/Typography';
 import AlertIcon from 'mdi-react/AlertIcon';
 import { func, object } from 'prop-types';
 import React from 'react';
+import { makeStyles } from 'tss-react/mui';
 import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     border: `2px solid ${theme.palette.warning.dark}`,
   },
@@ -49,7 +49,7 @@ function EmergencyShutoffCard({
   auth0,
   ...props
 }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { product, channel } = emergencyShutoff;
   const requiresSignoff =
     emergencyShutoff.scheduledChange &&

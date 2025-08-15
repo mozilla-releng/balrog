@@ -1,19 +1,20 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import IconButton from '@material-ui/core/IconButton';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import { makeStyles } from '@material-ui/styles';
+import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import SettingsOutlineIcon from 'mdi-react/SettingsOutlineIcon';
 import React, { Fragment, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { makeStyles } from 'tss-react/mui';
 import Link from '../../utils/Link';
 import menuItems from './menuItems';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   settings: {
     height: theme.spacing(6),
     width: theme.spacing(6),
     padding: 0,
-    margin: `0 ${theme.spacing(1)}px`,
+    margin: `0 ${theme.spacing(1)}`,
   },
   settingsIcon: {
     fill: '#fff',
@@ -27,8 +28,9 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function SettingsMenu({ auth0, disabled }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
+  const location = useLocation();
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
 
@@ -41,6 +43,7 @@ function SettingsMenu({ auth0, disabled }) {
         aria-controls="user-menu"
         aria-label="user menu"
         onClick={handleMenuOpen}
+        size="large"
       >
         <SettingsOutlineIcon
           size={24}
@@ -55,7 +58,6 @@ function SettingsMenu({ auth0, disabled }) {
         id="user-menu"
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
-        getContentAnchorEl={null}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         onClose={handleMenuClose}
       >
@@ -64,8 +66,8 @@ function SettingsMenu({ auth0, disabled }) {
             <Link
               className={classes.link}
               to={
-                window.location.pathname === navItem.path
-                  ? `${window.location.pathname}${window.location.search}`
+                location.pathname === navItem.path
+                  ? `${location.pathname}${location.search}`
                   : navItem.path
               }
             >

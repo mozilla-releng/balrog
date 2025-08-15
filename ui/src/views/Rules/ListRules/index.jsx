@@ -1,23 +1,23 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import Box from '@material-ui/core/Box';
-import Checkbox from '@material-ui/core/Checkbox';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Drawer from '@material-ui/core/Drawer';
-import Fab from '@material-ui/core/Fab';
-import FormControl from '@material-ui/core/FormControl';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormLabel from '@material-ui/core/FormLabel';
-import IconButton from '@material-ui/core/IconButton';
-import MenuItem from '@material-ui/core/MenuItem';
-import Radio from '@material-ui/core/Radio';
-import RadioGroup from '@material-ui/core/RadioGroup';
-import Switch from '@material-ui/core/Switch';
-import TextField from '@material-ui/core/TextField';
-import Tooltip from '@material-ui/core/Tooltip';
-import Alert from '@material-ui/lab/Alert';
-import AlertTitle from '@material-ui/lab/AlertTitle';
-import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
-import { makeStyles, useTheme } from '@material-ui/styles';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
+import Box from '@mui/material/Box';
+import Checkbox from '@mui/material/Checkbox';
+import CircularProgress from '@mui/material/CircularProgress';
+import Drawer from '@mui/material/Drawer';
+import Fab from '@mui/material/Fab';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormLabel from '@mui/material/FormLabel';
+import IconButton from '@mui/material/IconButton';
+import MenuItem from '@mui/material/MenuItem';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
+import Switch from '@mui/material/Switch';
+import { useTheme } from '@mui/material/styles';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import classNames from 'classnames';
 import { addSeconds } from 'date-fns';
 import CloseIcon from 'mdi-react/CloseIcon';
@@ -33,6 +33,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { makeStyles } from 'tss-react/mui';
 import Dashboard from '../../../components/Dashboard';
 import DateTimePicker from '../../../components/DateTimePicker';
 import DialogAction from '../../../components/DialogAction';
@@ -85,7 +87,7 @@ import { ruleMatchesRequiredSignoff } from '../../../utils/requiredSignoffs';
 import { ruleMatchesChannel } from '../../../utils/rules';
 
 const ALL = 'all';
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   fab: {
     ...theme.mixins.fab,
     right: theme.spacing(12),
@@ -95,14 +97,14 @@ const useStyles = makeStyles((theme) => ({
     top: 64,
     right: 0,
     left: 0,
-    padding: `${theme.spacing(4)}px ${theme.spacing(4)}px 0`,
+    padding: `${theme.spacing(4)} ${theme.spacing(4)} 0`,
     display: 'flex',
     justifyContent: 'center',
     position: 'fixed',
     zIndex: 2,
   },
   checkbox: {
-    padding: `0 ${theme.spacing(1)}px`,
+    padding: `0 ${theme.spacing(1)}`,
   },
   checkboxLabel: {
     textAlign: 'center',
@@ -143,10 +145,11 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function ListRules(props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
   const username = props.auth0.user?.email || '';
-  const { search, hash } = props.location;
+  const { search, hash } = useLocation();
+  const navigate = useNavigate();
   const query = parse(search.slice(1));
   const hashQuery = parse(hash.replace('#', ''));
   const {
@@ -306,7 +309,7 @@ function ListRules(props) {
       channel,
     };
 
-    props.history.push(`/rules${stringify(qs, { addQueryPrefix: true })}`);
+    navigate(`/rules${stringify(qs, { addQueryPrefix: true })}`);
   };
 
   const handleShowOnlyScheduledChangesChange = ({ target: { checked } }) => {
@@ -315,7 +318,7 @@ function ListRules(props) {
       onlyScheduledChanges: checked ? 1 : undefined,
     };
 
-    props.history.push(`/rules${stringify(qs, { addQueryPrefix: true })}`);
+    navigate(`/rules${stringify(qs, { addQueryPrefix: true })}`);
   };
 
   const handleSignoffRoleChange = ({ target: { value } }) =>
@@ -569,7 +572,7 @@ function ListRules(props) {
       onlyScheduledChanges: undefined,
     };
 
-    props.history.push(`/rules${stringify(qs, { addQueryPrefix: true })}`);
+    navigate(`/rules${stringify(qs, { addQueryPrefix: true })}`);
   };
 
   const handleDialogError = (error) => {
@@ -1164,31 +1167,32 @@ function ListRules(props) {
   };
 
   const getRowHeight = (index) => {
+    const spacingPx = parseInt(theme.spacing(1), 10);
     const rule = filteredRulesWithScheduledChanges[index];
     const currentRule = rulesWithScheduledChanges.find(
       (r) => r.rule_id === rule.rule_id,
     );
     const hasScheduledChanges = Boolean(rule.scheduledChange);
     // Padding top and bottom included
-    const listPadding = theme.spacing(1);
+    const listPadding = spacingPx;
     const listItemTextMargin = 6;
     const diffRowHeight = remToPx(theme.typography.body2.fontSize) * 1.5;
     // <CardContent /> padding
-    let height = theme.spacing(2);
+    let height = 2 * spacingPx;
 
     // actions row
-    height += buttonHeight + theme.spacing(2);
+    height += buttonHeight + 2 * spacingPx;
 
     if (!hasScheduledChanges || rule.scheduledChange.change_type !== 'insert') {
       height +=
         Math.max(
           // avatar height
-          theme.spacing(4),
+          4 * spacingPx,
           // product:channel header height
           h6TextHeight,
           // revisions icon
-          theme.spacing(3) + 24,
-        ) + theme.spacing(1); // top padding
+          3 * spacingPx + 24,
+        ) + spacingPx; // top padding
 
       // != checks for both null and undefined
       const keys = Object.keys(rule).filter((key) => rule[key] != null);
@@ -1232,7 +1236,7 @@ function ListRules(props) {
 
     if (hasScheduledChanges) {
       // row with the chip label
-      height += Math.max(subtitle1TextHeight(), theme.spacing(3));
+      height += Math.max(subtitle1TextHeight(), 3 * spacingPx);
 
       if (rule.scheduledChange.change_type === 'delete') {
         // row with "all properties will be deleted"
@@ -1251,9 +1255,7 @@ function ListRules(props) {
         // horizontal scroller (rough estimate;
         // sometimes there are no scroller as well)
         height +=
-          diffedProperties.length * diffRowHeight +
-          theme.spacing(1) +
-          theme.spacing(2);
+          diffedProperties.length * diffRowHeight + spacingPx + 2 * spacingPx;
       }
 
       if (
@@ -1261,7 +1263,7 @@ function ListRules(props) {
         rule.scheduledChange.change_type === 'update'
       ) {
         // divider
-        height += theme.spacing(2) + 1;
+        height += 2 * spacingPx + 1;
       }
 
       if (Object.keys(rule.scheduledChange.required_signoffs).length > 0) {
@@ -1274,17 +1276,17 @@ function ListRules(props) {
         const signoffRows = Math.max(requiredRoles, nSignoffs);
 
         // Padding above the summary
-        height += theme.spacing(2);
+        height += 2 * spacingPx;
 
         // The "Requires Signoff From" title and the margin beneath it
-        height += signoffSummarylistSubheaderTextHeight + theme.spacing(0.5);
+        height += signoffSummarylistSubheaderTextHeight + 0.5 * spacingPx;
 
         // Space for however many rows exist.
         height += signoffRows * body2TextHeight();
       }
     } else if (showRewindDiff) {
       // row with the historical changes title
-      height += Math.max(subtitle1TextHeight(), theme.spacing(3));
+      height += Math.max(subtitle1TextHeight(), 3 * spacingPx);
 
       if (!currentRule) {
         // row with "rule was deleted"
@@ -1304,18 +1306,16 @@ function ListRules(props) {
           // horizontal scroller (rough estimate;
           // sometimes there are no scroller as well)
           height +=
-            diffedProperties.length * diffRowHeight +
-            theme.spacing(1) +
-            theme.spacing(2);
+            diffedProperties.length * diffRowHeight + spacingPx + 2 * spacingPx;
         }
       }
 
       // divider
-      height += theme.spacing(2) + 1;
+      height += 2 * spacingPx + 1;
     }
 
     // space below the card (margin)
-    height += theme.spacing(4);
+    height += 4 * spacingPx;
 
     return height;
   };
@@ -1417,8 +1417,8 @@ function ListRules(props) {
       }
     >
       {isLoading && (
-        <Box style={{ textAlign: 'center' }}>
-          <CircularProgress loading />
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress />
         </Box>
       )}
       {error && <ErrorPanel error={error} />}
@@ -1434,23 +1434,22 @@ function ListRules(props) {
               helperText={rewindDateError}
               onDateTimeChange={handleRewindDateTimeChange}
               value={rewindDate}
-              InputProps={
-                rewindDate && {
-                  endAdornment: (
-                    <IconButton
-                      onClick={() => handleRewindDateTimeChange(null)}
-                      disabled={!rewindDate}
-                      style={{ order: 1 }}
-                      color="disabled"
-                    >
-                      <CloseIcon />
-                    </IconButton>
-                  ),
-                }
-              }
-              InputAdornmentProps={{
-                position: 'start',
-                style: { order: 2, marginLeft: 0 },
+              slotProps={{
+                textField: {
+                  InputProps: {
+                    endAdornment: rewindDate && (
+                      <IconButton
+                        onClick={() => handleRewindDateTimeChange(null)}
+                        disabled={!rewindDate}
+                        color="default"
+                        size="small"
+                        sx={{ marginRight: 1 }}
+                      >
+                        <CloseIcon />
+                      </IconButton>
+                    ),
+                  },
+                },
               }}
             />
             <FormControl className={classes.checkbox}>

@@ -1,16 +1,16 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import Box from '@material-ui/core/Box';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Fab from '@material-ui/core/Fab';
-import FormControl from '@material-ui/core/FormControl';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Radio from '@material-ui/core/Radio';
-import RadioGroup from '@material-ui/core/RadioGroup';
-import Tooltip from '@material-ui/core/Tooltip';
-import { makeStyles } from '@material-ui/styles';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Fab from '@mui/material/Fab';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import Tooltip from '@mui/material/Tooltip';
 import PlusIcon from 'mdi-react/PlusIcon';
 import { clone } from 'ramda';
 import React, { Fragment, useEffect, useState } from 'react';
+import { makeStyles } from 'tss-react/mui';
 import Dashboard from '../../../components/Dashboard';
 import DialogAction from '../../../components/DialogAction';
 import ErrorPanel from '../../../components/ErrorPanel';
@@ -21,7 +21,7 @@ import { getScheduledChanges, getUsers } from '../../../services/users';
 import { DIALOG_ACTION_INITIAL_STATE } from '../../../utils/constants';
 import Link from '../../../utils/Link';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   fab: {
     ...theme.mixins.fab,
   },
@@ -32,7 +32,7 @@ const useStyles = makeStyles((theme) => ({
 
 function ListUsers({ auth0 }) {
   const username = auth0.user.email;
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [users, setUsers] = useState({});
   const [usersAction, fetchUsers] = useAction(getUsers);
   const [userScheduledChangesAction, fetchUserScheduledChanges] =
@@ -196,8 +196,8 @@ function ListUsers({ auth0 }) {
   return (
     <Dashboard title="Users">
       {isLoading && (
-        <Box style={{ textAlign: 'center' }}>
-          <CircularProgress loading />
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress />
         </Box>
       )}
       {error && <ErrorPanel error={error} />}

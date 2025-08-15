@@ -7,18 +7,18 @@ const ViewUser = lazy(
   () => import(/* webpackChunkName: 'Users.ViewUser' */ './ViewUser'),
 );
 
-export default (path) => [
+export default () => [
   {
     component: ViewUser,
-    path: `${path}/create`,
+    path: 'create',
     isNewUser: true,
   },
   {
     component: ViewUser,
-    path: `${path}/:username`,
+    path: ':username',
   },
   {
     component: ListUsers,
-    path,
+    path: '',
   },
 ];

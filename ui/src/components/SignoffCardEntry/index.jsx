@@ -1,19 +1,19 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import CardActions from '@material-ui/core/CardActions';
-import CardContent from '@material-ui/core/CardContent';
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/styles';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import Grid from '@mui/material/GridLegacy';
+import Typography from '@mui/material/Typography';
 import ArrowRightIcon from 'mdi-react/ArrowRightIcon';
 import { func } from 'prop-types';
 import React, { Fragment } from 'react';
+import { makeStyles } from 'tss-react/mui';
 import { LABELS } from '../../utils/constants';
 import { signoffEntry } from '../../utils/prop-types';
 import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
 import StatusLabel from '../StatusLabel';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   diff: {
     display: 'flex',
     alignItems: 'center',
@@ -25,7 +25,7 @@ const useStyles = makeStyles((theme) => ({
     marginTop: 0,
   },
   arrowIcon: {
-    margin: `0 ${theme.spacing(1)}px`,
+    margin: `0 ${theme.spacing(1)}`,
   },
   firstColumn: {
     display: 'flex',
@@ -54,7 +54,7 @@ function getStatus(entry) {
 }
 
 function SignoffCardEntry(props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { auth0, entry, name, onCancelDelete, onSignoff, onRevoke } = props;
   const { user } = auth0;
   const status = getStatus(entry);
