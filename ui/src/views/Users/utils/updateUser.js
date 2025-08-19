@@ -54,7 +54,7 @@ export default (params) => {
         });
 
         if (skip) {
-          return;
+          return null;
         }
 
         if (
