@@ -1,7 +1,7 @@
-import { makeStyles } from '@material-ui/styles';
 import { createPatch } from 'diff';
 import React, { useMemo } from 'react';
 import { Diff, Hunk, parseDiff } from 'react-diff-view';
+import { makeStyles } from 'tss-react/mui';
 import 'react-diff-view/style/index.css';
 import { RULE_DIFF_PROPERTIES } from '../../utils/constants';
 import getDiff from '../../utils/diff';
@@ -9,7 +9,7 @@ import getDiffedProperties from '../../utils/getDiffedProperties';
 import { rule } from '../../utils/prop-types';
 import tokenize from './tokenize';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   diff: {
     fontSize: theme.typography.body2.fontSize,
     marginTop: theme.spacing(1),
@@ -25,7 +25,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function DiffRule(props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { firstRule, secondRule } = props;
   const diffedProperties = getDiffedProperties(
     RULE_DIFF_PROPERTIES,

@@ -4,9 +4,9 @@ const ListRoles = lazy(
   () => import(/* webpackChunkName: 'Roles.ListRoles' */ './ListRoles'),
 );
 
-export default (path) => [
+export default () => [
   {
     component: ListRoles,
-    path,
+    path: '',
   },
 ];

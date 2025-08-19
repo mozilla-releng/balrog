@@ -1,21 +1,22 @@
-import Box from '@material-ui/core/Box';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import MenuItem from '@material-ui/core/MenuItem';
-import TextField from '@material-ui/core/TextField';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/styles';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { parse, stringify } from 'qs';
 import React, { Fragment, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { makeStyles } from 'tss-react/mui';
 import Dashboard from '../../../components/Dashboard';
 import ErrorPanel from '../../../components/ErrorPanel';
 import useAction from '../../../hooks/useAction';
 import { getUsers } from '../../../services/users';
 
 const ALL = 'all';
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   title: {
     marginBottom: theme.spacing(3),
   },
@@ -35,9 +36,10 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function ListRoles(props) {
-  const classes = useStyles();
-  const { search } = props.location;
+function ListRoles() {
+  const { classes } = useStyles();
+  const { search } = useLocation();
+  const navigate = useNavigate();
   const query = parse(search.slice(1));
   const [usersAction, fetchUsers] = useAction(getUsers);
   const [roleFilter, setRoleFilter] = useState(ALL);
@@ -85,14 +87,14 @@ function ListRoles(props) {
       role: value !== 'all' ? value : undefined,
     };
 
-    props.history.push(`/roles${stringify(qs, { addQueryPrefix: true })}`);
+    navigate(`/roles${stringify(qs, { addQueryPrefix: true })}`);
   };
 
   return (
     <Dashboard title="Roles">
       {isLoading && (
-        <Box style={{ textAlign: 'center' }}>
-          <CircularProgress loading />
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress />
         </Box>
       )}
       {error && <ErrorPanel error={error} />}

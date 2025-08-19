@@ -1,17 +1,17 @@
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import { makeStyles } from '@material-ui/styles';
+import CircularProgress from '@mui/material/CircularProgress';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 import { bool, func, node, object, oneOfType, string } from 'prop-types';
 import React, { useEffect, useRef, useState } from 'react';
+import { makeStyles } from 'tss-react/mui';
 import tryCatch from '../../utils/tryCatch';
 import Button from '../Button';
 import ErrorPanel from '../ErrorPanel';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   executingActionWrapper: {
     position: 'relative',
   },
@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function DialogAction(props) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [actionExecuting, setActionExecuting] = useState(false);
   const cancelled = useRef(false);
   const {
@@ -86,9 +86,11 @@ function DialogAction(props) {
     <Dialog
       classes={{ paper: classes.paper }}
       open={open}
-      onExited={(...props) => onExited?.(...props)}
       onClose={onClose}
       {...rest}
+      TransitionProps={{
+        onExited: (...props) => onExited?.(...props),
+      }}
     >
       {title && <DialogTitle>{title}</DialogTitle>}
       <DialogContent>

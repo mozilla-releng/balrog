@@ -1,16 +1,16 @@
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import ListSubheader from '@material-ui/core/ListSubheader';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/styles';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import ListSubheader from '@mui/material/ListSubheader';
+import Typography from '@mui/material/Typography';
 import classNames from 'classnames';
 import AccountClockIcon from 'mdi-react/AccountClockIcon';
 import CheckCircleIcon from 'mdi-react/CheckCircleIcon';
 import { object, string } from 'prop-types';
 import React from 'react';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   approval: {
     display: 'flex',
     width: 'max-content',
@@ -50,7 +50,7 @@ function SignoffSummary(props) {
   const { requiredSignoffs, signoffs, className } = props;
   const listOfSignoffs = Object.entries(signoffs);
   const theRequiredSignoffs = Object.entries(requiredSignoffs);
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   return (
     <div className={classNames(classes.listWrapper, className)}>
@@ -107,7 +107,7 @@ function SignoffSummary(props) {
                           <Typography
                             component="p"
                             variant="body2"
-                            style={{ color: 'green', width: 'max-content' }}
+                            sx={{ color: 'green', width: 'max-content' }}
                           >
                             {`${arr[0]}`}
                           </Typography>
@@ -123,7 +123,7 @@ function SignoffSummary(props) {
                           <Typography
                             component="p"
                             variant="body2"
-                            style={{ color: 'darkorange' }}
+                            sx={{ color: 'darkorange' }}
                           >
                             Awaiting approval...
                           </Typography>

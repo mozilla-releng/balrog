@@ -1,15 +1,15 @@
 import { withAuth0 } from '@auth0/auth0-react';
-import Avatar from '@material-ui/core/Avatar';
-import IconButton from '@material-ui/core/IconButton';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import { makeStyles } from '@material-ui/styles';
+import Avatar from '@mui/material/Avatar';
+import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import ContentCopyIcon from 'mdi-react/ContentCopyIcon';
 import LogoutVariantIcon from 'mdi-react/LogoutVariantIcon';
 import React, { Fragment, useState } from 'react';
+import { makeStyles } from 'tss-react/mui';
 import Button from '../Button';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   avatar: {
     height: theme.spacing(6),
     width: theme.spacing(6),
@@ -19,7 +19,7 @@ const useStyles = makeStyles((theme) => ({
 
 function UserMenu(props) {
   const { auth0 } = props;
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -48,6 +48,7 @@ function UserMenu(props) {
           aria-controls="user-menu"
           aria-label="user menu"
           onClick={handleMenuOpen}
+          size="large"
         >
           {auth0.user.picture ? (
             <Avatar alt={auth0.user.nickname} src={auth0.user.picture} />
@@ -69,7 +70,6 @@ function UserMenu(props) {
         id="user-menu"
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
-        getContentAnchorEl={null}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         onClose={handleMenuClose}
       >
