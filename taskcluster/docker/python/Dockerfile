@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 ARG  PYTHON_VERSION
-FROM python:$PYTHON_VERSION
+FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-bookworm
 
 ENV LC_ALL C.UTF-8
 
@@ -13,8 +13,6 @@ RUN mkdir -p /builds && \
     useradd -d /builds/worker -s /bin/bash -m worker -g 1000 -o -u 1000 && \
     mkdir /builds/worker/artifacts && \
     chown worker:worker /builds/worker /builds/worker/artifacts
-
-RUN pip install tox
 
 # %include-run-task
 

@@ -1,41 +1,41 @@
 # WARNING: keep this file in sync with taskcluster/docker/balrog-backend/Dockerfile
+ARG PYTHON_VERSION=3.13
+FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-bookworm-slim AS builder
 
-FROM python:3.13-slim-bookworm
+WORKDIR /app
 
+# default-libmysqlclient-dev is required to use SQLAlchemy with MySQL
+# gcc is needed to compile some python packages
+RUN apt-get -q update \
+    && apt-get -q --yes install g++ default-libmysqlclient-dev gcc pkg-config
+
+COPY pyproject.toml uv.lock README.rst /app
+COPY src/ /app/src/
+RUN uv venv
+RUN uv sync --no-dev --frozen
+
+FROM python:${PYTHON_VERSION}-slim-bookworm
 ENV LC_ALL C.UTF-8
-
 LABEL maintainer="releng@mozilla.com"
 
-# uwsgi needs libpcre3 for routing support to be enabled.
-# default-libmysqlclient-dev is required to use SQLAlchemy with MySQL, which we do in production.
-# xz-utils is needed to compress production database dumps
+# netcat is needed for health checks
+# Some versions of the python:3.8 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
+# mariadb-client is needed to import sample data
+# curl is needed to pull sample data
+# xz-utils is needed to unpack sampled ata
 RUN apt-get -q update \
-    && apt-get -q --yes install libpcre3-dev default-libmysqlclient-dev mariadb-client xz-utils pkg-config \
+    && apt-get -q --yes install netcat-traditional libpcre3 mariadb-client curl xz-utils \
     && apt-get clean
 
 WORKDIR /app
 
-# install the requirements into the container first
-# these rarely change and is more cache friendly
-# ... really speeds up building new containers
-COPY requirements/ /app/requirements/
-RUN apt-get install -q --yes gcc && \
-    pip install --no-deps -r requirements/base.txt && \
-    apt-get -q --yes remove gcc && \
-    apt-get -q --yes autoremove && \
-    apt-get clean && \
-    rm -rf /root/.cache
+COPY --from=builder /app/.venv /app/.venv
 
-# Copying Balrog to /app instead of installing it means that production can run
-# it, and we can bind mount to override it for local development.
-COPY src/ /app/src/
+COPY scripts/ /app/scripts/
 COPY uwsgi/ /app/uwsgi/
-COPY scripts/manage-db.py scripts/run-batch-deletes.sh scripts/run.sh scripts/reset-stage-db.sh scripts/get-prod-db-dump.py /app/scripts/
-COPY MANIFEST.in pyproject.toml setup.py version.json version.txt /app/
+COPY version.json /app/
 
-RUN pip install .
-
-WORKDIR /app
+ENV PATH="/app/.venv/bin:${PATH}"
 
 # Using /bin/bash as the entrypoint works around some volume mount issues on Windows
 # where volume-mounted files do not have execute bits set.

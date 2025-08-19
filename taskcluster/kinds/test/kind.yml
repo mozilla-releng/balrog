@@ -21,14 +21,14 @@ task-defaults:
             using: run-task
             checkout:
                 balrog: {}
-            command: ['tox']
+            command: ['uv', 'run', 'tox']
 
 tasks:
     backend:
         description: balrog backend tests
         run:
             cwd: '{checkout}'
-            command: 'taskcluster/scripts/get-coveralls-token tox'
+            command: 'taskcluster/scripts/get-coveralls-token uv run tox'
         worker:
             env:
                 TOXENV: 'py313,coveralls'

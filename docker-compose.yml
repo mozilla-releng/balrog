@@ -6,7 +6,6 @@ services:
   balrogadmin:
     build:
       context: .
-      dockerfile: Dockerfile.test
       args:
         PYTHON_VERSION: 3.13
     depends_on:
@@ -22,6 +21,7 @@ services:
       - "7070"
     volumes:
       - .:/app
+      - /app/.venv
     environment:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
       - DB_HOST=balrogdb
@@ -61,7 +61,6 @@ services:
   balrogpub:
     build:
       context: .
-      dockerfile: Dockerfile.test
       args:
         PYTHON_VERSION: 3.13
     depends_on:
@@ -76,6 +75,7 @@ services:
       - "9010:9010"
     volumes:
       - .:/app
+      - /app/.venv
     environment:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
       - AUTOGRAPH_URL=http://autograph:8000
@@ -95,14 +95,16 @@ services:
 
   balrogagent:
     build:
-      context: ./agent
+      context: .
+      dockerfile: agent/Dockerfile
       args:
         PYTHON_VERSION: 3.13
     depends_on:
       nginx:
         condition: service_healthy
     volumes:
-      - ./agent:/app
+      - ./agent:/app/agent
+      - /app/.venv
     environment:
       - BALROG_API_ROOT=http://nginx:8011
       - BALROG_USERNAME=balrogagent

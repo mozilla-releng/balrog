@@ -92,7 +92,7 @@ To get the new code in stage you must create a new Release in Github as follows:
 
 3. `Create a new Release on Github <https://github.com/mozilla-releng/balrog/releases>`_. This create new Docker images tagged with your version, and deploys them to stage. It may take upwards of 30 minutes for the deployment to happen. Deployment notifications will show up in #balrog on Slack.
 
-4. Finally, bump the `in-repo version <https://github.com/mozilla-releng/balrog/blob/main/version.txt>`_ to the next available one to ensure the next push gets a new version.
+4. Finally, bump the `in-repo version <https://github.com/mozilla-releng/balrog/blob/main/pyproject.toml>`_ to the next available one to ensure the next push gets a new version.
 
 Once the changes are deployed to stage, you should do some testing to make sure that the new features, fixes, etc. are working properly there. It's a good idea to `watch Sentry for new exceptions <https://sentry.io/organizations/mozilla/projects/>`_ that may show up, and Grafana for any notable changes in the shape of the traffic.
 

@@ -1,24 +1,24 @@
 # WARNING: keep this file in sync with taskcluster/docker/balrog-agent/Dockerfile
-
-FROM python:3.13-slim-bookworm
-
-MAINTAINER jcristau@mozilla.com
-
-ENV LC_ALL C.UTF-8
+ARG PYTHON_VERSION=3.13
+FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-bookworm-slim AS builder
 
 WORKDIR /app
 
-COPY requirements/ /app/requirements/
-RUN pip install -r requirements/base.txt
+COPY pyproject.toml uv.lock README.rst /app/
+COPY agent /app/agent
+RUN uv venv
+RUN uv sync --package=balrogagent --frozen --no-dev
 
-COPY src/ /app/src/
-COPY tests/ /app/tests/
-COPY scripts/ /app/scripts/
-COPY run.sh MANIFEST.in pyproject.toml setup.py version.json /app/
-# test-only stuff
-COPY version.txt /app/
+FROM python:${PYTHON_VERSION}-slim-bookworm
+WORKDIR /app
+ENV LC_ALL C.UTF-8
+LABEL maintainer="releng@mozilla.com"
 
-RUN pip install .
+COPY --from=builder /app/.venv /app/.venv
+
+COPY agent/scripts/ /app/scripts/
+COPY agent/src /app/agent/src
+COPY agent/run.sh /app
 
 # Using /bin/bash as the entrypoint works around some volume mount issues on Windows
 # where volume-mounted files do not have execute bits set.

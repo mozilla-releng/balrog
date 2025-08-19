@@ -8,6 +8,7 @@ Set environment variables for the skopeo push-image command
 
 
 import os
+import tomllib
 
 from taskgraph.transforms.base import TransformSequence
 
@@ -18,8 +19,10 @@ transforms = TransformSequence()
 def set_push_environment(config, jobs):
     """Set the environment variables for the push to docker hub task."""
     for job in jobs:
-        version_file = os.path.join(config.graph_config.vcs_root, "version.txt")
-        version = open(version_file).read().strip()
+        version_file = os.path.join(config.graph_config.vcs_root, "pyproject.toml")
+        with open(version_file, "rb") as fd:
+            data = tomllib.load(fd)
+            version = data["project"]["version"]
 
         env = job["worker"].setdefault("env", {})
         env.update(
