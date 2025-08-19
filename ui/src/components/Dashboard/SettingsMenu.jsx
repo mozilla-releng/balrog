@@ -1,8 +1,8 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import SettingsOutlineIcon from '@mui/icons-material/SettingsOutlined';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import SettingsOutlineIcon from 'mdi-react/SettingsOutlineIcon';
 import React, { Fragment, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { makeStyles } from 'tss-react/mui';
@@ -16,7 +16,7 @@ const useStyles = makeStyles()((theme) => ({
     padding: 0,
     margin: `0 ${theme.spacing(1)}`,
   },
-  settingsIcon: {
+  settingsOutlineIcon: {
     fill: '#fff',
   },
   settingsIconDisabled: {
@@ -49,7 +49,7 @@ function SettingsMenu({ auth0, disabled }) {
           size={24}
           className={
             auth0.user && !disabled
-              ? classes.settingsIcon
+              ? classes.settingsOutlineIcon
               : classes.settingsIconDisabled
           }
         />

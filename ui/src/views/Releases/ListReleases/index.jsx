@@ -1,4 +1,5 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import AddIcon from '@mui/icons-material/Add';
 import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -11,7 +12,6 @@ import RadioGroup from '@mui/material/RadioGroup';
 import { useTheme } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
 import classNames from 'classnames';
-import PlusIcon from 'mdi-react/PlusIcon';
 import { clone } from 'ramda';
 import React, {
   Fragment,
@@ -885,7 +885,7 @@ function ListReleases(props) {
         <Link to="/releases/create/v2">
           <Tooltip title="Add Release">
             <Fab color="primary" className={classes.fab}>
-              <PlusIcon />
+              <AddIcon />
             </Fab>
           </Tooltip>
         </Link>

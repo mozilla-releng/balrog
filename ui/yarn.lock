@@ -4906,11 +4906,6 @@ math-intrinsics@^1.1.0:
   resolved "https://registry.yarnpkg.com/math-intrinsics/-/math-intrinsics-1.1.0.tgz#a0dd74be81e2aa5c2f27e65ce283605ee4e2b7f9"
   integrity sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==
 
-mdi-react@^8.2.0:
-  version "8.4.0"
-  resolved "https://registry.yarnpkg.com/mdi-react/-/mdi-react-8.4.0.tgz#ad7e4ee8e3a57286f30cf6018b1b40b4f53073bc"
-  integrity sha512-qAuZcZL6Kliut4949Mr7GUb+WaiSVBaYQgx06ReUflqB++O9gVjeQ8eTMQbEFF4inzUZv9YyhNTdX9u0B1MinQ==
-
 media-typer@0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/media-typer/-/media-typer-0.3.0.tgz#8710d7af0aa626f8fffa1ce00168545263255748"

@@ -1,9 +1,9 @@
+import CloseIcon from '@mui/icons-material/Close';
+import InfoIcon from '@mui/icons-material/Info';
+import WarningIcon from '@mui/icons-material/Warning';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import AlertIcon from 'mdi-react/AlertIcon';
-import CloseIcon from 'mdi-react/CloseIcon';
-import InformationIcon from 'mdi-react/InformationIcon';
 import { bool, oneOf, string } from 'prop-types';
 import React, { useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
@@ -19,15 +19,15 @@ const useStyles = makeStyles()((theme) => ({
   warning: {
     backgroundColor: theme.palette.warning.dark,
     color: theme.palette.warning.contrastText,
-    '& .mdi-icon': {
-      fill: theme.palette.warning.contrastText,
+    '& .MuiSvgIcon-root': {
+      color: theme.palette.warning.contrastText,
     },
   },
   info: {
     backgroundColor: theme.palette.info.main,
     color: theme.palette.info.contrastText,
-    '& .mdi-icon': {
-      fill: theme.palette.info.contrastText,
+    '& .MuiSvgIcon-root': {
+      color: theme.palette.info.contrastText,
     },
   },
   closeIconDiv: {},
@@ -48,8 +48,8 @@ function MessagePanel(props) {
   const { variant, message, alwaysOpen } = props;
   const [display, setDisplay] = useState(true);
   const variantIcon = {
-    warning: AlertIcon,
-    info: InformationIcon,
+    warning: WarningIcon,
+    info: InfoIcon,
   };
   const Icon = variantIcon[variant];
   const handleClose = () => {

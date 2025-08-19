@@ -1,4 +1,5 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import AddIcon from '@mui/icons-material/Add';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Fab from '@mui/material/Fab';
@@ -7,7 +8,6 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import Tooltip from '@mui/material/Tooltip';
-import PlusIcon from 'mdi-react/PlusIcon';
 import { clone } from 'ramda';
 import React, { Fragment, useEffect, useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
@@ -224,7 +224,7 @@ function ListUsers({ auth0 }) {
                 className={classes.fab}
                 classes={{ root: classes.fab }}
               >
-                <PlusIcon />
+                <AddIcon />
               </Fab>
             </Tooltip>
           </Link>

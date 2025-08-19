@@ -1,12 +1,12 @@
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CloseIcon from '@mui/icons-material/Close';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import InfoIcon from '@mui/icons-material/Info';
+import WarningIcon from '@mui/icons-material/Warning';
 import { amber, green } from '@mui/material/colors';
 import IconButton from '@mui/material/IconButton';
 import MuiSnackbar from '@mui/material/Snackbar';
 import SnackbarContent from '@mui/material/SnackbarContent';
-import AlertCircleIcon from 'mdi-react/AlertCircleIcon';
-import AlertIcon from 'mdi-react/AlertIcon';
-import CheckCircleIcon from 'mdi-react/CheckCircleIcon';
-import CloseIcon from 'mdi-react/CloseIcon';
-import InformationIcon from 'mdi-react/InformationIcon';
 import { func, object, oneOf, string } from 'prop-types';
 import React from 'react';
 import { makeStyles } from 'tss-react/mui';
@@ -14,9 +14,9 @@ import { SNACKBAR_AUTO_HIDE_DURATION } from '../../utils/constants';
 
 const variantIcon = {
   success: CheckCircleIcon,
-  warning: AlertIcon,
-  error: AlertCircleIcon,
-  info: InformationIcon,
+  warning: WarningIcon,
+  error: ErrorOutlineIcon,
+  info: InfoIcon,
 };
 const useStyles = makeStyles()((theme) => ({
   iconButtonRoot: {

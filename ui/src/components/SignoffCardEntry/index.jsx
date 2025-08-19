@@ -1,9 +1,9 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import Grid from '@mui/material/GridLegacy';
 import Typography from '@mui/material/Typography';
-import ArrowRightIcon from 'mdi-react/ArrowRightIcon';
 import { func } from 'prop-types';
 import React, { Fragment } from 'react';
 import { makeStyles } from 'tss-react/mui';
@@ -77,7 +77,7 @@ function SignoffCardEntry(props) {
               </Typography>
               {isScheduled && (
                 <Fragment>
-                  <ArrowRightIcon className={classes.arrowIcon} />
+                  <ArrowForwardIcon className={classes.arrowIcon} />
                   <Typography variant="body2">
                     <em>{signoffsRequiredIntent}</em>
                   </Typography>

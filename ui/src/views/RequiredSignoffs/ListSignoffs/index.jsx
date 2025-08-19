@@ -1,4 +1,5 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import AddIcon from '@mui/icons-material/Add';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
@@ -12,7 +13,6 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { capitalCase } from 'change-case';
 import classNames from 'classnames';
-import PlusIcon from 'mdi-react/PlusIcon';
 import { parse, stringify } from 'qs';
 import { clone, lensPath, view } from 'ramda';
 import React, { Fragment, useEffect, useState } from 'react';
@@ -437,7 +437,7 @@ function ListSignoffs({ auth0 }) {
                 className={classes.fab}
                 classes={{ root: classes.fab }}
               >
-                <PlusIcon />
+                <AddIcon />
               </Fab>
             </Tooltip>
           </Link>

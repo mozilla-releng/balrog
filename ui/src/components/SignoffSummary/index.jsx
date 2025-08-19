@@ -1,11 +1,11 @@
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import ListSubheader from '@mui/material/ListSubheader';
 import Typography from '@mui/material/Typography';
 import classNames from 'classnames';
-import AccountClockIcon from 'mdi-react/AccountClockIcon';
-import CheckCircleIcon from 'mdi-react/CheckCircleIcon';
 import { object, string } from 'prop-types';
 import React from 'react';
 import { makeStyles } from 'tss-react/mui';
@@ -119,7 +119,7 @@ function SignoffSummary(props) {
 
                       return (
                         <div key={no} className={classes.approval}>
-                          <AccountClockIcon color="darkorange" />
+                          <ScheduleIcon color="darkorange" />
                           <Typography
                             component="p"
                             variant="body2"

@@ -1,4 +1,7 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
+import PauseIcon from '@mui/icons-material/Pause';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
@@ -20,9 +23,6 @@ import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import classNames from 'classnames';
 import { addSeconds } from 'date-fns';
-import CloseIcon from 'mdi-react/CloseIcon';
-import PauseIcon from 'mdi-react/PauseIcon';
-import PlusIcon from 'mdi-react/PlusIcon';
 import { parse, stringify } from 'qs';
 import { clone } from 'ramda';
 import React, {
@@ -1578,7 +1578,7 @@ function ListRules(props) {
         >
           <Tooltip title="Add Rule">
             <Fab color="primary" className={classes.fab} disabled={rewindDate}>
-              <PlusIcon />
+              <AddIcon />
             </Fab>
           </Tooltip>
         </Link>
