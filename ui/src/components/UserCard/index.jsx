@@ -1,4 +1,8 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import EditIcon from '@mui/icons-material/Edit';
+import GroupIcon from '@mui/icons-material/Group';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import Card from '@mui/material/Card';
 import CardActionArea from '@mui/material/CardActionArea';
 import CardActions from '@mui/material/CardActions';
@@ -11,10 +15,6 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import classNames from 'classnames';
-import AccountGroupIcon from 'mdi-react/AccountGroupIcon';
-import ArrowRightIcon from 'mdi-react/ArrowRightIcon';
-import KeyVariantIcon from 'mdi-react/KeyVariantIcon';
-import PencilIcon from 'mdi-react/PencilIcon';
 import { arrayOf, func, object, string } from 'prop-types';
 import React, { Fragment } from 'react';
 import { makeStyles } from 'tss-react/mui';
@@ -108,7 +108,7 @@ function User(props) {
             classes={{ action: classes.cardHeaderAction }}
             className={classes.cardHeader}
             title={username}
-            action={<PencilIcon className={classes.pencilIcon} />}
+            action={<EditIcon className={classes.pencilIcon} />}
           />
         </CardActionArea>
       </Link>
@@ -120,7 +120,7 @@ function User(props) {
             {Object.entries(permissions).map(([permission, details]) => (
               <ListItem key={permission} disableGutters>
                 <ListItemIcon>
-                  <KeyVariantIcon />
+                  <VpnKeyIcon />
                 </ListItemIcon>
                 <ListItemText
                   primary={
@@ -141,7 +141,7 @@ function User(props) {
             {roles.length > 0 && (
               <ListItem disableGutters>
                 <ListItemIcon>
-                  <AccountGroupIcon />
+                  <GroupIcon />
                 </ListItemIcon>
                 <ListItemText>holds the {getRolesString(roles)}</ListItemText>
               </ListItem>
@@ -177,7 +177,7 @@ function User(props) {
                         )}
                       </em>
                     </Typography>
-                    <ArrowRightIcon className={classes.arrowRightIcon} />
+                    <ArrowForwardIcon className={classes.arrowRightIcon} />
                   </Fragment>
                 )}
                 <Typography variant="body2" className={classes.permissionText}>

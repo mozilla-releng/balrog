@@ -1,4 +1,8 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import DeleteIcon from '@mui/icons-material/Delete';
+import HistoryIcon from '@mui/icons-material/History';
+import UpdateIcon from '@mui/icons-material/Update';
 import Avatar from '@mui/material/Avatar';
 import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
@@ -16,10 +20,6 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import classNames from 'classnames';
 import { formatDistanceStrict } from 'date-fns';
-import DeleteIcon from 'mdi-react/DeleteIcon';
-import HistoryIcon from 'mdi-react/HistoryIcon';
-import PlusCircleIcon from 'mdi-react/PlusCircleIcon';
-import UpdateIcon from 'mdi-react/UpdateIcon';
 import { bool, func } from 'prop-types';
 import React, { Fragment, useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
@@ -183,11 +183,11 @@ function RuleCard({
       }
 
       case 'insert': {
-        return PlusCircleIcon;
+        return AddCircleIcon;
       }
 
       default: {
-        return PlusCircleIcon;
+        return AddCircleIcon;
       }
     }
   };

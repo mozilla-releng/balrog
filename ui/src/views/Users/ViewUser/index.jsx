@@ -1,3 +1,6 @@
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SaveIcon from '@mui/icons-material/Save';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Fab from '@mui/material/Fab';
@@ -7,9 +10,6 @@ import SpeedDialAction from '@mui/material/SpeedDialAction';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
-import DeleteIcon from 'mdi-react/DeleteIcon';
-import PlusIcon from 'mdi-react/PlusIcon';
 import { bool } from 'prop-types';
 import { clone, defaultTo, propOr } from 'ramda';
 import React, { Fragment, useEffect, useState } from 'react';
@@ -488,7 +488,7 @@ function ViewUser({ isNewUser }) {
                       className={classes.fullWidth}
                       variant="outlined"
                     >
-                      <PlusIcon />
+                      <AddIcon />
                     </Button>
                   </Grid>
                 </Grid>
@@ -507,7 +507,7 @@ function ViewUser({ isNewUser }) {
                       className={classes.fullWidth}
                       variant="outlined"
                     >
-                      <PlusIcon />
+                      <AddIcon />
                     </Button>
                   </Grid>
                 </Grid>
@@ -521,7 +521,7 @@ function ViewUser({ isNewUser }) {
               color="primary"
               className={classes.fab}
             >
-              <ContentSaveIcon />
+              <SaveIcon />
             </Fab>
           </Tooltip>
           {!isNewUser && (

@@ -1,3 +1,4 @@
+import { Link as LinkIcon } from '@mui/icons-material';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import List from '@mui/material/List';
@@ -5,7 +6,6 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
-import LinkIcon from 'mdi-react/LinkIcon';
 import React from 'react';
 import { makeStyles } from 'tss-react/mui';
 import Dashboard from '../../components/Dashboard';

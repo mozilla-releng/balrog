@@ -1,8 +1,8 @@
+import CloseIcon from '@mui/icons-material/Close';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import MuiSpeedDial from '@mui/material/SpeedDial';
 import SpeedDialIcon from '@mui/material/SpeedDialIcon';
 import classNames from 'classnames';
-import CloseIcon from 'mdi-react/CloseIcon';
-import DotsVerticalIcon from 'mdi-react/DotsVerticalIcon';
 import { arrayOf, node, object, oneOfType } from 'prop-types';
 import React, { useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
@@ -23,9 +23,7 @@ function SpeedDial({ children, className, FabProps, ...props }) {
   return (
     <MuiSpeedDial
       ariaLabel="speed-dial"
-      icon={
-        <SpeedDialIcon icon={<DotsVerticalIcon />} openIcon={<CloseIcon />} />
-      }
+      icon={<SpeedDialIcon icon={<MoreVertIcon />} openIcon={<CloseIcon />} />}
       FabProps={{ color: 'secondary', ...FabProps }}
       className={classNames(classes.speedDial, className)}
       onBlur={handleClose}

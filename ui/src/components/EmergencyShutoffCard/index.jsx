@@ -1,10 +1,10 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import WarningIcon from '@mui/icons-material/Warning';
 import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
-import AlertIcon from 'mdi-react/AlertIcon';
 import { func, object } from 'prop-types';
 import React from 'react';
 import { makeStyles } from 'tss-react/mui';
@@ -60,7 +60,7 @@ function EmergencyShutoffCard({
       <CardHeader
         classes={{ avatar: classes.cardHeaderAvatar }}
         className={classes.cardHeader}
-        avatar={<AlertIcon />}
+        avatar={<WarningIcon />}
         title={
           <Typography component="h2" variant="h6">
             {emergencyShutoff.scheduledChange

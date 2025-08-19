@@ -1,4 +1,6 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SaveIcon from '@mui/icons-material/Save';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Fab from '@mui/material/Fab';
@@ -6,8 +8,6 @@ import SpeedDialAction from '@mui/material/SpeedDialAction';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import classNames from 'classnames';
-import ContentSaveIcon from 'mdi-react/ContentSaveIcon';
-import DeleteIcon from 'mdi-react/DeleteIcon';
 import React, { Fragment, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { makeStyles } from 'tss-react/mui';
@@ -325,7 +325,7 @@ function ReleaseV2(props) {
                   }
                   color="primary"
                 >
-                  <ContentSaveIcon />
+                  <SaveIcon />
                 </Fab>
               </div>
             </Tooltip>

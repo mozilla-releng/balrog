@@ -1,4 +1,7 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import HistoryIcon from '@mui/icons-material/History';
+import LinkIcon from '@mui/icons-material/Link';
+import UpdateIcon from '@mui/icons-material/Update';
 import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
@@ -16,9 +19,6 @@ import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { formatDistanceStrict } from 'date-fns';
-import HistoryIcon from 'mdi-react/HistoryIcon';
-import LinkIcon from 'mdi-react/LinkIcon';
-import UpdateIcon from 'mdi-react/UpdateIcon';
 import { func } from 'prop-types';
 import { stringify } from 'qs';
 import React, { Fragment } from 'react';

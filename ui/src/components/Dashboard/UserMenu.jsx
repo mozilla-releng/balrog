@@ -1,10 +1,10 @@
 import { withAuth0 } from '@auth0/auth0-react';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import LogoutIcon from '@mui/icons-material/Logout';
 import Avatar from '@mui/material/Avatar';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import ContentCopyIcon from 'mdi-react/ContentCopyIcon';
-import LogoutVariantIcon from 'mdi-react/LogoutVariantIcon';
 import React, { Fragment, useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
 import Button from '../Button';
@@ -78,7 +78,7 @@ function UserMenu(props) {
           Copy Access Token
         </MenuItem>
         <MenuItem title="Logout" onClick={handleLogoutClick}>
-          <LogoutVariantIcon />
+          <LogoutIcon />
           Logout
         </MenuItem>
       </Menu>

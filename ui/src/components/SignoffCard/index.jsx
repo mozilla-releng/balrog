@@ -1,7 +1,7 @@
+import EditIcon from '@mui/icons-material/Edit';
 import Card from '@mui/material/Card';
 import CardActionArea from '@mui/material/CardActionArea';
 import CardHeader from '@mui/material/CardHeader';
-import PencilIcon from 'mdi-react/PencilIcon';
 import { node, string } from 'prop-types';
 import React from 'react';
 import { makeStyles } from 'tss-react/mui';
@@ -33,7 +33,7 @@ function SignoffCard(props) {
           <CardHeader
             classes={{ action: classes.cardHeaderAction }}
             className={classes.cardHeader}
-            action={<PencilIcon className={classes.linkIcon} />}
+            action={<EditIcon className={classes.linkIcon} />}
             title={title}
           />
         </CardActionArea>
