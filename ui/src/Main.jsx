@@ -27,9 +27,14 @@ function setupAxiosInterceptors(getAccessTokenSilently, getIdTokenClaims) {
       const claims = await getIdTokenClaims();
 
       if (claims) {
-        const accessToken = await getAccessTokenSilently();
+        try {
+          const accessToken = await getAccessTokenSilently();
 
-        result.headers.Authorization = `Bearer ${accessToken}`;
+          result.headers.Authorization = `Bearer ${accessToken}`;
+        } catch {
+          // Do nothing on purpose here. If `getAccessTokenSilently`, it will log the user out but we don't want that error
+          // to bubble out of here as it would be shown to the user as a "are you sure you're connected to the VPN"
+        }
       }
     }
 
