@@ -1,6 +1,6 @@
 # WARNING: keep this file in sync with taskcluster/docker/balrog-backend/Dockerfile
 
-FROM python:3.13-slim
+FROM python:3.13-slim-bookworm
 
 ENV LC_ALL C.UTF-8
 
