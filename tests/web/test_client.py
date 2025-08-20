@@ -2911,3 +2911,16 @@ class ClientTestPinning(ClientTestCommon):
 </update>
 </updates>""",
         )
+
+    def testEmptyPin(self):
+        # An empty pin param is ignored
+        ret = self.client.get("/update/6/b/1.0/30000101000010/p/l/c/a/a/a/a/update.xml?pin=")
+        self.assertUpdateTextEqual(
+            ret,
+            """<?xml version="1.0"?>
+<updates>
+    <update type="minor" version="3.0" extensionVersion="3.0" buildID="30000101000030">
+        <patch type="complete" URL="http://a.com/3" hashFunction="sha512" hashValue="4" size="3"/>
+    </update>
+</updates>""",
+        )

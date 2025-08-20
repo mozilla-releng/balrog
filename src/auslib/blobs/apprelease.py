@@ -234,7 +234,7 @@ class ReleaseBlobBase(XMLBlob):
             return ServeUpdate.No
 
         version_pin = updateQuery.get("pin")
-        if version_pin is not None:
+        if version_pin:
             try:
                 version_pin = PinVersion(version_pin)
             except ValueError:
