@@ -2911,3 +2911,8 @@ class ClientTestPinning(ClientTestCommon):
 </update>
 </updates>""",
         )
+
+    def testEmptyPin(self):
+        # An empty pin param is rejected
+        ret = self.client.get("/update/6/b/1.0/30000101000010/p/l/c/a/a/a/a/update.xml?pin=")
+        self.assertEqual(ret.status_code, 400)
