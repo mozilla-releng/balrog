@@ -361,3 +361,4 @@ parameters:
     description: pin
     required: false
     type: string
+    minLength: 1
