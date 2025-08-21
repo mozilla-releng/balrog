@@ -1608,14 +1608,14 @@ wheels = [
 
 [[package]]
 name = "mozilla-version"
-version = "4.1.0"
+version = "5.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c2/91/a67deea35ec3a0c80bfa0142e72fc779d96544814067e99f39d78d90b754/mozilla_version-4.1.0.tar.gz", hash = "sha256:f32f6f5607c345bb4db0aba0077511b196cba80af70c83cfe606a913a478f7e8", size = 62685, upload-time = "2025-05-02T12:48:19.615Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/be/33/b919abff7b5a0b6e70e15fc6370809f41ca4a44fc8bd25c9b4ec17f2dcd1/mozilla_version-5.0.0.tar.gz", hash = "sha256:70d5422efd8b4635f5410a6c27da360698b78c56ac09da808b99f15d806bed3a", size = 53432, upload-time = "2025-08-19T14:58:59.847Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/83/d9/671361f42a55d8369d29bbb07ada1e884cc079c1e265ab5a826e2091cadb/mozilla_version-4.1.0-py3-none-any.whl", hash = "sha256:816b0cd03456105f49ad8661e47934e66118f84ddae38c4193082f297396a7ed", size = 132224, upload-time = "2025-05-02T12:48:17.819Z" },
+    { url = "https://files.pythonhosted.org/packages/49/05/7017b06db923e5c1d7b793522b80cc23c2c76a5051bce3dea116c5ab140d/mozilla_version-5.0.0-py3-none-any.whl", hash = "sha256:e95dd36e8c35f603e178022072ef70f794162a567dbab0ece8bf2741d3a5721d", size = 41800, upload-time = "2025-08-19T14:58:56.392Z" },
 ]
 
 [[package]]
