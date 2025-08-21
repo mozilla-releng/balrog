@@ -7,7 +7,7 @@ authors = [
     { name = "Mozilla Release Engineering", email = "release+python@mozilla.com" }
 ]
 readme = "README.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.13"
 dependencies = [
     "aiohttp",
     "arrow",
@@ -42,7 +42,6 @@ dependencies = [
 [tool.uv.workspace]
 members = [
     "agent",
-    "client",
 ]
 
 [dependency-groups]
