@@ -19,7 +19,7 @@ def sanity_check_release(parameters):
     in_tree_version = parameters["version"]
     tag_version = tag[1:]
     if in_tree_version != tag_version:
-        raise Exception(f"Version numbers in version.txt ({in_tree_version}) and release tag ({tag_version}) don't match")
+        raise Exception(f"Version numbers in pyproject.toml ({in_tree_version}) and release tag ({tag_version}) don't match")
 
 
 def filter_for_github_release_name(task, parameters):

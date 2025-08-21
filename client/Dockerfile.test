@@ -1,9 +1,0 @@
-ARG PYTHON_VERSION
-
-FROM python:${PYTHON_VERSION}
-
-WORKDIR /app
-
-RUN pip install tox
-
-ENTRYPOINT ["/usr/local/bin/tox", "-e"]

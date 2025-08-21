@@ -18,6 +18,7 @@
 #
 import os
 import sys
+import tomllib
 from os import path
 
 import sphinx_rtd_theme
@@ -63,10 +64,11 @@ author = "Mozilla"
 # built documents.
 #
 # The short X.Y version.
-with open(path.join(here, "..", "..", "version.txt")) as f:
-    v = f.read()
+version_file = path.join(here, "..", "..", "pyproject.toml")
+with open(version_file, 'rb') as fd:
+    data = tomllib.load(fd)
+    version = data['project']['version']
 
-version = v
 # The full version, including alpha/beta/rc tags.
 release = version
 

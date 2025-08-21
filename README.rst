@@ -61,7 +61,7 @@ This will run all unit tests within a Docker container.
 Updating dependencies
 =====================
 
-To update the python dependencies, use `./maintenance/pin.sh`, do not run `pip-compile-multi` manually.
+To update the python dependencies, use `uv lock -U`.
 
 Documentation
 =============
