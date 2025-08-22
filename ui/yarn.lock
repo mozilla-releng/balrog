@@ -1750,7 +1750,7 @@
   dependencies:
     "@babel/runtime" "^7.28.2"
 
-"@mui/utils@^7.2.0", "@mui/utils@^7.3.1":
+"@mui/utils@^7.3.1":
   version "7.3.1"
   resolved "https://registry.yarnpkg.com/@mui/utils/-/utils-7.3.1.tgz#6be110e7a0bb805815873d581abeb1bebc6a2eb9"
   integrity sha512-/31y4wZqVWa0jzMnzo6JPjxwP6xXy4P3+iLbosFg/mJQowL1KIou0LC+lquWW60FKVbKz5ZUWBg2H3jausa0pw==
@@ -1763,25 +1763,25 @@
     react-is "^19.1.1"
 
 "@mui/x-date-pickers@^8.10.0":
-  version "8.10.0"
-  resolved "https://registry.yarnpkg.com/@mui/x-date-pickers/-/x-date-pickers-8.10.0.tgz#f9cc3020a3d3785751e8a0b5162c37ab75ae37d2"
-  integrity sha512-3nY+SS2/JtqcptQodECIyWKsTvPBDAcXKkyW65R4rQUCrnV6tuzriSrzy/FEYqTK0hyXYPIGJhQ6A0FbtQ9AkQ==
+  version "8.10.2"
+  resolved "https://registry.yarnpkg.com/@mui/x-date-pickers/-/x-date-pickers-8.10.2.tgz#911e9856ec3d025b8e361a346ab0758066144133"
+  integrity sha512-eS5t1jUojN/jL2FeJ8gtpCBxIEswUp9kLjM64aJ5LUKrNgM7X9dwsEHyplS+x07kWLiEAhO3nX3mepnS3Z43qg==
   dependencies:
     "@babel/runtime" "^7.28.2"
-    "@mui/utils" "^7.2.0"
-    "@mui/x-internals" "8.10.0"
+    "@mui/utils" "^7.3.1"
+    "@mui/x-internals" "8.10.2"
     "@types/react-transition-group" "^4.4.12"
     clsx "^2.1.1"
     prop-types "^15.8.1"
     react-transition-group "^4.4.5"
 
-"@mui/x-internals@8.10.0":
-  version "8.10.0"
-  resolved "https://registry.yarnpkg.com/@mui/x-internals/-/x-internals-8.10.0.tgz#ecc9d2367ad1125c78d1505ed959b7f5db25713b"
-  integrity sha512-stYhWBeCKfV2/ltAWShZ3ZJ51otbqpMpC+krWWoIsxM8TuvGzwXw5YMU9L2fTb8hRstsiOCQfEzIn12Ii7+N0Q==
+"@mui/x-internals@8.10.2":
+  version "8.10.2"
+  resolved "https://registry.yarnpkg.com/@mui/x-internals/-/x-internals-8.10.2.tgz#5f0e618b5219b30909dc0dea23c68d24f8e60707"
+  integrity sha512-dlC0BQRRBdiWtqn1yDppaHYRUjU3OuPWTxy0UtqxDaJjJf4pfR8ALr243nbxgJAFqvQyWPWyO4A6p9x9eJMJEQ==
   dependencies:
     "@babel/runtime" "^7.28.2"
-    "@mui/utils" "^7.2.0"
+    "@mui/utils" "^7.3.1"
     reselect "^5.1.1"
     use-sync-external-store "^1.5.0"
 
