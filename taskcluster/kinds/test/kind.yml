@@ -64,9 +64,9 @@ tasks:
         run:
             cwd: '{checkout}/client'
         worker:
-            docker-image: {in-tree: 'python3.9'}
+            docker-image: {in-tree: 'python3.11'}
             env:
-                TOXENV: 'py39'
+                TOXENV: 'py311'
 
     lint-client:
       description: balrog client lints

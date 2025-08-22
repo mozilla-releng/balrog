@@ -1,6 +1,6 @@
 [project]
 name = "balrogclient"
-version = "1.4"
+version = "2.0"
 description = "Balrog admin API client"
 license = "MPL-2.0"
 authors = [
@@ -9,7 +9,7 @@ authors = [
 dependencies = [
     "requests",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 
 [dependency-groups]
 dev = [
@@ -34,7 +34,6 @@ packages = ["src/balrogclient"]
 
 [tool.black]
 line-length = 160
-target-version = ["py38"]
 include = '\.(wsgi|pyi?)$'
 exclude = '''
 /(
