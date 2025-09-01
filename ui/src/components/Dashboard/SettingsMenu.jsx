@@ -4,7 +4,7 @@ import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import React, { Fragment, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { makeStyles } from 'tss-react/mui';
 import Link from '../../utils/Link';
 import menuItems from './menuItems';

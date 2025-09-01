@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 import axios from 'axios';
 import { formatDistanceStrict } from 'date-fns';
 import React, { Fragment, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { makeStyles } from 'tss-react/mui';
 import Button from '../../../components/Button';
 import Dashboard from '../../../components/Dashboard';

@@ -3,7 +3,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { bool, node, string } from 'prop-types';
 import React, { Fragment } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { makeStyles } from 'tss-react/mui';
 import { APP_BAR_HEIGHT, CONTENT_MAX_WIDTH } from '../../utils/constants';
 import Link from '../../utils/Link';
