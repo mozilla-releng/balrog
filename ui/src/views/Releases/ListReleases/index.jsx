@@ -21,7 +21,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { makeStyles } from 'tss-react/mui';
 import Dashboard from '../../../components/Dashboard';
 import DialogAction from '../../../components/DialogAction';

@@ -15,7 +15,7 @@ import { stringify } from 'qs';
 import { assocPath, defaultTo, pick } from 'ramda';
 import React, { Fragment, useEffect, useState } from 'react';
 import { NumericFormat } from 'react-number-format';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import { makeStyles } from 'tss-react/mui';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';

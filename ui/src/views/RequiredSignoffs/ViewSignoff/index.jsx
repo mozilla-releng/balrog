@@ -18,7 +18,7 @@ import classNames from 'classnames';
 import { bool } from 'prop-types';
 import React, { Fragment, useEffect, useState } from 'react';
 import { NumericFormat } from 'react-number-format';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { makeStyles } from 'tss-react/mui';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';

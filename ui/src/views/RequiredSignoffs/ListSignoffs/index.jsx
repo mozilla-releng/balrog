@@ -16,7 +16,7 @@ import classNames from 'classnames';
 import { parse, stringify } from 'qs';
 import { clone, lensPath, view } from 'ramda';
 import React, { Fragment, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { makeStyles } from 'tss-react/mui';
 import Dashboard from '../../../components/Dashboard';
 import DialogAction from '../../../components/DialogAction';

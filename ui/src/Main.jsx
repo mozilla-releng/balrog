@@ -1,7 +1,7 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import React, { Suspense, useEffect, useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import Dashboard from './components/Dashboard';
 import ErrorPanel from './components/ErrorPanel';
 import routes from './routes';

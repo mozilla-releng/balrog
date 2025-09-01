@@ -13,7 +13,7 @@ import Typography from '@mui/material/Typography';
 import { bool } from 'prop-types';
 import { clone, defaultTo, propOr } from 'ramda';
 import React, { Fragment, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { makeStyles } from 'tss-react/mui';
 import AutoCompleteText from '../../../components/AutoCompleteText';
 import getSuggestions from '../../../components/AutoCompleteText/getSuggestions';

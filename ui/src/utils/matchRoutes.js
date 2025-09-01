@@ -1,4 +1,4 @@
-import { matchPath } from 'react-router-dom';
+import { matchPath } from 'react-router';
 
 // Returns an array of matched routes.
 const matchRoutes = (path, routes, branch = []) => {

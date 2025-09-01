@@ -1,11 +1,11 @@
 import { bool } from 'prop-types';
 import React, { useState } from 'react';
-import { NavLink, Link as RouterLink } from 'react-router-dom';
+import { NavLink, Link as RouterLink } from 'react-router';
 import routes from '../routes';
 import matchRoutes from './matchRoutes';
 
 /**
- * A react hook which augments `react-router-dom`'s `Link` component
+ * A react hook which augments `react-router`'s `Link` component
  * with pre-fetching capabilities.
  */
 export default function Link({ viewName, nav, to, ...props }) {
@@ -64,7 +64,7 @@ export default function Link({ viewName, nav, to, ...props }) {
 
 Link.propTypes = {
   /**
-   * If true, the `NavLink` component of `react-router-dom` will be used
+   * If true, the `NavLink` component of `react-router` will be used
    * as the main link component.
    */
   nav: bool,
