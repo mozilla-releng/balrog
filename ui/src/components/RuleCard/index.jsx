@@ -338,10 +338,8 @@ function RuleCard({
           action={
             !readOnly ? (
               <Link
-                to={{
-                  pathname: `/rules/${rule.rule_id}/revisions`,
-                  state: { rulesFilter },
-                }}
+                to={`/rules/${rule.rule_id}/revisions`}
+                state={{ rulesFilter }}
               >
                 <Tooltip title="Revisions">
                   <IconButton size="large">
@@ -871,14 +869,12 @@ function RuleCard({
           ) : (
             <Link
               className={classes.link}
-              to={{
-                pathname: rule.rule_id
+              to={
+                rule.rule_id
                   ? `/rules/duplicate/ruleId/${rule.rule_id}`
-                  : `/rules/duplicate/scId/${rule.scheduledChange.sc_id}`,
-                state: {
-                  rulesFilter,
-                },
-              }}
+                  : `/rules/duplicate/scId/${rule.scheduledChange.sc_id}`
+              }
+              state={{ rulesFilter }}
             >
               <Button color="secondary">Duplicate</Button>
             </Link>
@@ -890,14 +886,12 @@ function RuleCard({
           ) : (
             <Link
               className={classes.link}
-              to={{
-                pathname: rule.rule_id
+              to={
+                rule.rule_id
                   ? `/rules/${rule.rule_id}`
-                  : `/rules/create/${rule.scheduledChange.sc_id}`,
-                state: {
-                  rulesFilter,
-                },
-              }}
+                  : `/rules/create/${rule.scheduledChange.sc_id}`
+              }
+              state={{ rulesFilter }}
             >
               <Button color="secondary">Update</Button>
             </Link>
