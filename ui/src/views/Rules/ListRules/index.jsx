@@ -1570,12 +1570,7 @@ function ListRules(props) {
       </Drawer>
       <Snackbar onClose={handleSnackbarClose} {...snackbarState} />
       {!rewindDate && (
-        <Link
-          to={{
-            pathname: '/rules/create',
-            state: { rulesFilter: productChannelQueries },
-          }}
-        >
+        <Link to="/rules/create" state={{ rulesFilter: productChannelQueries }}>
           <Tooltip title="Add Rule">
             <Fab color="primary" className={classes.fab} disabled={rewindDate}>
               <AddIcon />
