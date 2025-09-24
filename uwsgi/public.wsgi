@@ -69,10 +69,17 @@ configure_logging(**logging_kwargs)
 statsd.defaults.PREFIX = "balrog.public"
 
 from auslib.global_state import cache, dbo  # noqa
+from auslib.util.cache import RedisCache
 from auslib.web.public.base import create_app
+from redis import Redis
+
+# opt in for now. this will become the default when it is stable in prod
+if os.environ.get("REDIS_CACHE"):
+  # TODO: pull from env; maybe need user and pass?
+  redis = Redis(host="redis")
+  cache.factory = lambda name, maxsize, timeout: RedisCache(redis, name, maxsize, timeout)
 
 application = create_app().app
-
 if os.environ.get("AUTOGRAPH_URL"):
     application.config["AUTOGRAPH_URL"] = os.environ["AUTOGRAPH_URL"]
     application.config["AUTOGRAPH_KEYID"] = os.environ["AUTOGRAPH_KEYID"]
