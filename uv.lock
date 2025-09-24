@@ -159,6 +159,7 @@ dependencies = [
     { name = "mysqlclient" },
     { name = "pyjwt", extra = ["crypto"] },
     { name = "python-jose" },
+    { name = "redis" },
     { name = "repoze-lru" },
     { name = "requests" },
     { name = "requests-hawk" },
@@ -177,6 +178,7 @@ dev = [
     { name = "black" },
     { name = "coverage" },
     { name = "coveralls" },
+    { name = "fakeredis" },
     { name = "flake8" },
     { name = "flake8-black" },
     { name = "hypothesis" },
@@ -214,6 +216,7 @@ requires-dist = [
     { name = "mysqlclient" },
     { name = "pyjwt", extras = ["crypto"] },
     { name = "python-jose" },
+    { name = "redis" },
     { name = "repoze-lru" },
     { name = "requests" },
     { name = "requests-hawk" },
@@ -232,6 +235,7 @@ dev = [
     { name = "black" },
     { name = "coverage" },
     { name = "coveralls" },
+    { name = "fakeredis" },
     { name = "flake8" },
     { name = "flake8-black" },
     { name = "hypothesis" },
@@ -665,6 +669,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/bb/ff/b4c0dc78fbe20c3e59c0c7334de0c27eb4001a2b2017999af398bf730817/execnet-2.1.1.tar.gz", hash = "sha256:5189b52c6121c24feae288166ab41b32549c7e2348652736540b9e6e7d4e72e3", size = 166524, upload-time = "2024-04-08T09:04:19.245Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/43/09/2aea36ff60d16dd8879bdb2f5b3ee0ba8d08cbbdcdfe870e695ce3784385/execnet-2.1.1-py3-none-any.whl", hash = "sha256:26dee51f1b80cebd6d0ca8e74dd8745419761d3bef34163928cbebbdc4749fdc", size = 40612, upload-time = "2024-04-08T09:04:17.414Z" },
+]
+
+[[package]]
+name = "fakeredis"
+version = "2.31.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "redis" },
+    { name = "sortedcontainers" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/96/1e/27170815a9768d2eaf72e66dfad38047b55ea278df84b539ad0045ca1538/fakeredis-2.31.3.tar.gz", hash = "sha256:76dfb92855f0787a4936a5b4fdb1905c5909ec790e62dff2b8896b412905deb0", size = 170984, upload-time = "2025-09-22T12:24:54.471Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/d6/7cad31e16b7d8343ed7abf5ddb039a063b32a300def1aa487d91b4a5c831/fakeredis-2.31.3-py3-none-any.whl", hash = "sha256:12aa54a3fb00984c18b28956addb91683aaf55b2dc2ef4b09d49bd481032e57a", size = 118398, upload-time = "2025-09-22T12:24:52.751Z" },
 ]
 
 [[package]]
@@ -1483,6 +1500,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/fe/0f/25911a9f080464c59fab9027482f822b86bf0608957a5fcc6eaac85aa515/PyYAML-6.0.2-cp313-cp313-musllinux_1_1_x86_64.whl", hash = "sha256:68ccc6023a3400877818152ad9a1033e3db8625d899c72eacb5a668902e4d652", size = 751597, upload-time = "2024-08-06T20:32:56.985Z" },
     { url = "https://files.pythonhosted.org/packages/14/0d/e2c3b43bbce3cf6bd97c840b46088a3031085179e596d4929729d8d68270/PyYAML-6.0.2-cp313-cp313-win32.whl", hash = "sha256:bc2fa7c6b47d6bc618dd7fb02ef6fdedb1090ec036abab80d4681424b84c1183", size = 140527, upload-time = "2024-08-06T20:33:03.001Z" },
     { url = "https://files.pythonhosted.org/packages/fa/de/02b54f42487e3d3c6efb3f89428677074ca7bf43aae402517bc7cca949f3/PyYAML-6.0.2-cp313-cp313-win_amd64.whl", hash = "sha256:8388ee1976c416731879ac16da0aff3f63b286ffdd57cdeb95f3f2e085687563", size = 156446, upload-time = "2024-08-06T20:33:04.33Z" },
+]
+
+[[package]]
+name = "redis"
+version = "6.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0d/d6/e8b92798a5bd67d659d51a18170e91c16ac3b59738d91894651ee255ed49/redis-6.4.0.tar.gz", hash = "sha256:b01bc7282b8444e28ec36b261df5375183bb47a07eb9c603f284e89cbc5ef010", size = 4647399, upload-time = "2025-08-07T08:10:11.441Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/02/89e2ed7e85db6c93dfa9e8f691c5087df4e3551ab39081a4d7c6d1f90e05/redis-6.4.0-py3-none-any.whl", hash = "sha256:f0544fa9604264e9464cdf4814e7d4830f74b165d52f2a330a760a88dd248b7f", size = 279847, upload-time = "2025-08-07T08:10:09.84Z" },
 ]
 
 [[package]]

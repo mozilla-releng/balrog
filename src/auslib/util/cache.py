@@ -1,4 +1,5 @@
 from copy import deepcopy
+import pickle
 
 from repoze.lru import ExpiringLRUCache
 
@@ -26,6 +27,26 @@ class MaybeCacher(object):
     def __init__(self):
         self.caches = {}
         self._make_copies = False
+        # Ideally, we'd take in the cache class as an argument to this constructor.
+        # Due to the way that everything in Balrog is initialized, this doesn't
+        # work. We also can't use Flask in here for similar reasons, so we can't
+        # pull it from application context. It's for these reasons we need to make
+        # this customizable as a property. If that's all that mattered, we
+        # could just set the property to a class. However, to support Redis we
+        # _also_ need a Redis client passed in. The sanest way to do this is
+        # to allow the caller to provide it in a closure, hence we end up
+        # making this a callable instead of a simple class.
+        self._factory = lambda _, maxsize, timeout: ExpiringLRUCache(maxsize, timeout)
+
+    @property
+    def factory(self):
+        return self._factory
+
+    @factory.setter
+    def factory(self, value):
+        if not callable(value):
+            raise ValueError("factory must be callable!")
+        self._factory = value
 
     @property
     def make_copies(self):
@@ -40,7 +61,8 @@ class MaybeCacher(object):
     def make_cache(self, name, maxsize, timeout):
         if name in self.caches:
             raise Exception()
-        self.caches[name] = ExpiringLRUCache(maxsize, timeout)
+        else:
+            self.caches[name] = self.factory(name, maxsize, timeout)
 
     def reset(self):
         self.caches.clear()
@@ -98,3 +120,48 @@ class MaybeCacher(object):
             return
 
         self.caches[name].invalidate(key)
+
+
+class RedisCache:
+    """A thin wrapper around the redis client to expose a similar interface
+    as ExpiringLRUCache.
+
+    Unlike ExpiringLRUCache, redis does not support non-trivial objects, so
+    objects are pickled before storage and unpickled upon retrieval."""
+
+    def __init__(self, redis, name, maxsize, timeout):
+        self._name = name
+        self._redis = redis
+        self._maxsize = maxsize
+        # redis and repoze calculate expiry slightly differently; a timeout of
+        # 5 seconds with repoze ends up being 6 seconds in redis. this really
+        # doesn't matter...but it's better to be consistent than not, and redis'
+        # behaviour is slightly confusing, so we make this small improvement
+        # since we're wrapping it anyways.
+        self._timeout = timeout - 1
+        self.lookups = 0
+        self.hits = 0
+        self.misses = 0
+
+    def fullkey(self, key):
+        return f"{self._name}-{key}"
+
+    def get(self, key, default=None):
+        self.lookups += 1
+        if value := self._redis.get(self.fullkey(key)):
+            if value == default:
+                self.misses += 1
+            else:
+                self.hits += 1
+            return pickle.loads(value)
+        self.misses += 1
+        return default
+
+    def put(self, key, value):
+        self._redis.setex(self.fullkey(key), self._timeout, pickle.dumps(value))
+
+    def clear(self):
+        self._redis.delete(*self._redis.keys(self._name))
+
+    def invalidate(self, key):
+        self._redis.delete(self.fullkey(key))
