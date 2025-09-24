@@ -2,6 +2,7 @@ import json
 from copy import deepcopy
 from pathlib import Path
 
+import fakeredis
 import pytest
 from hypothesis import settings
 
@@ -11,6 +12,12 @@ from auslib.util.data_structures import deep_dict, infinite_defaultdict
 # Disable hypothesis testing deadlines
 settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
+
+
+@pytest.fixture
+def fake_redis():
+    """Provide a fresh fakeredis instance for each test function."""
+    return fakeredis.FakeRedis()
 
 
 @pytest.fixture(scope="session")

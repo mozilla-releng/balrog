@@ -1,3 +1,5 @@
+import pickle
+import time
 from copy import deepcopy
 
 from repoze.lru import ExpiringLRUCache
@@ -26,6 +28,26 @@ class MaybeCacher(object):
     def __init__(self):
         self.caches = {}
         self._make_copies = False
+        # Ideally, we'd take in the cache class as an argument to this constructor.
+        # Due to the way that everything in Balrog is initialized, this doesn't
+        # work. We also can't use Flask in here for similar reasons, so we can't
+        # pull it from application context. It's for these reasons we need to make
+        # this customizable as a property. If that's all that mattered, we
+        # could just set the property to a class. However, to support Redis we
+        # _also_ need a Redis client passed in. The sanest way to do this is
+        # to allow the caller to provide it in a closure, hence we end up
+        # making this a callable instead of a simple class.
+        self._factory = lambda _, maxsize, timeout: ExpiringLRUCache(maxsize, timeout)
+
+    @property
+    def factory(self):
+        return self._factory
+
+    @factory.setter
+    def factory(self, value):
+        if not callable(value):
+            raise ValueError("factory must be callable!")
+        self._factory = value
 
     @property
     def make_copies(self):
@@ -40,7 +62,8 @@ class MaybeCacher(object):
     def make_cache(self, name, maxsize, timeout):
         if name in self.caches:
             raise Exception()
-        self.caches[name] = ExpiringLRUCache(maxsize, timeout)
+
+        self.caches[name] = self.factory(name, maxsize, timeout)
 
     def reset(self):
         self.caches.clear()
@@ -98,3 +121,108 @@ class MaybeCacher(object):
             return
 
         self.caches[name].invalidate(key)
+
+
+class RedisCache:
+    """A thin wrapper around the redis client to expose a similar interface
+    as ExpiringLRUCache. Unlike ExpiringLRUCache, redis does not support
+    non-trivial objects, so objects are jsonified before storage and parsed
+    upon retrieval.
+
+    This cache can be used on its own, but ideally it is only used through a
+    TwoLayerCache (see below).
+    """
+
+    def __init__(self, redis, name, timeout):
+        self._name = name
+        self._redis = redis
+        # redis and repoze calculate expiry slightly differently; a timeout of
+        # 5 seconds with repoze ends up being 6 seconds in redis. this really
+        # doesn't matter...but it's better to be consistent than not, and redis'
+        # behaviour is slightly confusing, so we make this small improvement
+        # since we're wrapping it anyways.
+        self._timeout = timeout - 1
+        self.lookups = 0
+        self.hits = 0
+        self.misses = 0
+
+    def fullkey(self, key):
+        return f"{self._name}-{key}"
+
+    def get(self, key, default=None):
+        self.lookups += 1
+        value = self._redis.get(self.fullkey(key))
+        if value is not None:
+            self.hits += 1
+            return pickle.loads(value)
+
+        self.misses += 1
+        return default
+
+    def put(self, key, value):
+        # orjson dumps and loads faster than pickle, but we have a need to
+        # support python objects (most notably: Blob instances). Pickle is
+        # not too much slower than orjson, so we stick with that for now.
+        self._redis.setex(self.fullkey(key), self._timeout, pickle.dumps(value))
+
+    def clear(self):
+        self._redis.delete(*self._redis.keys(self._name))
+
+    def invalidate(self, key):
+        self._redis.delete(self.fullkey(key))
+
+    def remaining_timeout(self, key):
+        absolute_timeout = self._redis.expiretime(self.fullkey(key))
+        return absolute_timeout - time.time()
+
+
+class TwoLayerCache:
+    """A cache that wraps both a RedisCache and ExpiringLRUCache. The
+    former is treated as authoritative, while the latter is used to minimize
+    unnecessary fetches from Redis. This design allows caches to be shared
+    across many pods while minimizing the perf impact of having an off-machine
+    cache."""
+
+    def __init__(self, redis, name, maxsize, timeout):
+        self._redis_cache = RedisCache(redis, name, timeout)
+        self._lru_cache = ExpiringLRUCache(maxsize, timeout)
+        self.lookups = 0
+        self.hits = 0
+        self.misses = 0
+
+    def get(self, key, default=None):
+        self.lookups += 1
+        value = self._lru_cache.get(key, default)
+        if value == default:
+            value = self._redis_cache.get(key, default)
+            # ensure the LRU cache timeout matches the one in redis
+            # this is important to ensure that when new pods spin up that
+            # they will not cache keys for longer than redis
+            # this ensures that we don't have to wait for multiple caches
+            # to expire to refresh data.
+            # in practice there will be a very small difference between the
+            # timeouts, because the value we pass to put here is a relative
+            # timeout in seconds, which the lru cache recalculates against
+            # `time.time()`. this small (probably 1s in most cases) difference
+            # is unlikely to be problematic in practice.
+            self._lru_cache.put(key, value, self._redis_cache.remaining_timeout(key))
+            if value == default:
+                self.misses += 1
+            else:
+                self.hits += 1
+        else:
+            self.hits += 1
+
+        return value
+
+    def put(self, key, value):
+        self._redis_cache.put(key, value)
+        self._lru_cache.put(key, value)
+
+    def clear(self):
+        self._redis_cache.clear()
+        self._lru_cache.clear()
+
+    def invalidate(self, key):
+        self._redis_cache.invalidate(key)
+        self._lru_cache.invalidate(key)

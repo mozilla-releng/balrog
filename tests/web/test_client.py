@@ -7,6 +7,7 @@ from contextlib import ExitStack
 from tempfile import mkstemp
 from xml.dom import minidom
 
+import fakeredis
 import mock
 import pytest
 from hypothesis import assume, example, given
@@ -18,6 +19,7 @@ import auslib.web.public.client as client_api
 from auslib.blobs.base import createBlob
 from auslib.errors import BadDataError
 from auslib.global_state import cache, dbo
+from auslib.util.cache import TwoLayerCache
 from auslib.web.public.client import extract_query_version
 
 
@@ -114,6 +116,8 @@ class ClientTestBase(ClientTestCommon):
 
     @pytest.fixture(autouse=True)
     def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, firefox_100_0_build1, timecop_1_0):
+        redis = fakeredis.FakeRedis()
+        cache.factory = lambda name, maxsize, timeout: TwoLayerCache(redis, name, maxsize, timeout)
         cache.reset()
         cache.make_cache("releases", 50, 10)
         cache.make_cache("releases_data_version", 50, 5)
@@ -2254,6 +2258,8 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         self.metadata.create_all(dbo.engine)
         self.app.config["PROPAGATE_EXCEPTIONS"] = False
         self.client = self.app.test_client()
+        redis = fakeredis.FakeRedis()
+        cache.factory = lambda name, maxsize, timeout: TwoLayerCache(redis, name, maxsize, timeout)
 
     def testCacheControlIsSet(self):
         ret = self.client.get("/update/3/c/15.0/1/p/l/a/a/default/a/update.xml")
