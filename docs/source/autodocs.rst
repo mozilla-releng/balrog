@@ -38,14 +38,6 @@ auslib.blobs
     :members:
     :undoc-members:
 
--------------
-auslib.config
--------------
-
-.. automodule:: auslib.config
-    :members:
-    :undoc-members:
-
 ---------
 auslib.db
 ---------
