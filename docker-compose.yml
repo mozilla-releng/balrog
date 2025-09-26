@@ -70,6 +70,8 @@ services:
         condition: service_healthy
       graphite:
         condition: service_started
+      redis:
+        condition: service_started
     command: public
     ports:
       - "9010:9010"
@@ -219,6 +221,12 @@ services:
       - "8125"
     ports:
       - "8050:80"
+
+  redis:
+    image: redis:8-alpine
+    command: redis-server --loglevel warning
+    expose:
+      - "6379"
 
 volumes:
   node_modules:
