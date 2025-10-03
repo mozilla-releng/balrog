@@ -70,6 +70,8 @@ services:
         condition: service_healthy
       graphite:
         condition: service_started
+      redis:
+        condition: service_healthy
     command: public
     ports:
       - "9010:9010"
@@ -87,6 +89,8 @@ services:
       - PORT=9010
       - LOG_FORMAT=plain
       - LOG_LEVEL=WARNING
+      - REDIS_CACHE=1
+      - REDIS_URL=redis://redis:6379
     ulimits:
       nofile:
         soft: 4096
@@ -219,6 +223,14 @@ services:
       - "8125"
     ports:
       - "8050:80"
+
+  redis:
+    image: redis:8-alpine
+    command: redis-server --loglevel warning
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "PING"]
 
 volumes:
   node_modules:

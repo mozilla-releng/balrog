@@ -1,10 +1,12 @@
 import logging
 import unittest
 
+import fakeredis
 import pytest
 
 from auslib.blobs.base import createBlob
-from auslib.global_state import dbo
+from auslib.global_state import cache, dbo
+from auslib.util.cache import TwoLayerCache
 
 
 def setUpModule():
@@ -17,6 +19,8 @@ class CommonTestBase(unittest.TestCase):
 
     @pytest.fixture(autouse=True)
     def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, timecop_1_0):
+        redis = fakeredis.FakeRedis()
+        cache.factory = lambda name, maxsize, timeout: TwoLayerCache(redis, name, maxsize, timeout)
         self.app.config["DEBUG"] = True
         self.public_client = self.app.test_client()
 
