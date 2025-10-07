@@ -1,6 +1,12 @@
 import logging
+import os
+import pickle
+import subprocess
+import sys
+import tempfile
 import unittest
 from collections import OrderedDict
+from copy import deepcopy
 
 import mock
 import pytest
@@ -4001,3 +4007,59 @@ class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):
         additionalPatchAttributes = self.mixin_instance._getAdditionalPatchAttributes(patch)
 
         self.assertEqual(expected_additional_patch_attributes, additionalPatchAttributes)
+
+
+def test_release_blobs_can_log_after_pickling():
+    """Test that log attribute is available after unpickling.
+
+    In earlier iterations of Blob code we set-up the class-level `log` attribute
+    in `__init__`. Doing so meant that if a new process unpickles a Blob before
+    a new instance of that class in constructed, that it would be missing its
+    `log` attribute. This has been fixed; this test serves as a regression test
+    against the same bug being reintroduced."""
+    blob2 = ReleaseBlobV1()
+    pickled_data = pickle.dumps(blob2)
+
+    # Write pickled data to a temporary file
+    with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".pickle") as f:
+        pickle_file = f.name
+        f.write(pickled_data)
+
+    try:
+        # Unpickle in a subprocess - this simulates a fresh process
+        # that imports the class but never instantiates it
+        subprocess_code = f"""
+import pickle
+import sys
+
+# Import the class WITHOUT instantiating it
+from auslib.blobs.apprelease import ReleaseBlobV1
+
+# Load the pickled object
+with open(r'{pickle_file}', 'rb') as f:
+    unpickled = pickle.load(f)
+
+# Try to use the log attribute - this will fail if the bug exists
+try:
+    unpickled.log.debug("Testing from subprocess")
+    print("SUCCESS")
+    sys.exit(0)
+except AttributeError as e:
+    print(f"ERROR: {{e}}")
+    sys.exit(1)
+"""
+        result = subprocess.run([sys.executable, "-c", subprocess_code], capture_output=True, text=True, timeout=10)
+
+        if result.returncode != 0:
+            pytest.fail(f"Unpickled ReleaseBlobV1 in subprocess lacks 'log' attribute.\n" f"stdout: {result.stdout}\n" f"stderr: {result.stderr}")
+    finally:
+        # Clean up the temporary file
+        if os.path.exists(pickle_file):
+            os.unlink(pickle_file)
+
+
+def test_blobs_can_be_deepcopied():
+    """We deepcopy objects that go into the admin app's cache. At one point in
+    time, we had an issue that prevented blobs from being deepcopy'ed. This
+    simple test ensures we don't regress that in the future."""
+    deepcopy(ReleaseBlobV1())

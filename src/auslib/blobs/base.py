@@ -145,15 +145,11 @@ class ServeUpdate(enum.Enum):
 class Blob(dict):
     jsonschema = None
 
-    def __init__(self, *args, **kwargs):
-        super(Blob, self).__init__(self, *args, **kwargs)
-        # Blobs need to be pickable to go into the cache properly. Pickling
-        # extendes to all instance-level attributes, and our Loggers are not
-        # pickleable. Moving them to the class level avoids this issue without
-        # the need for subclasses to worry about instantiating their own
-        # Loggers.
-        logger_name = "{0}.{1}".format(self.__class__.__module__, self.__class__.__name__)
-        self.__class__.log = logging.getLogger(logger_name)
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        logger_name = "{0}.{1}".format(cls.__module__, cls.__name__)
+        cls.log = logging.getLogger(logger_name)
 
     def validate(self, product, allowlistedDomains):
         """Raises a BlobValidationError if the blob is invalid."""
