@@ -6,8 +6,10 @@ services:
   balrogadmin:
     build:
       context: .
+      dockerfile: taskcluster/docker/balrog-backend/Dockerfile
       args:
         PYTHON_VERSION: 3.13
+        SRC: .
     depends_on:
       balrogdb:
         condition: service_healthy
@@ -61,8 +63,10 @@ services:
   balrogpub:
     build:
       context: .
+      dockerfile: taskcluster/docker/balrog-backend/Dockerfile
       args:
         PYTHON_VERSION: 3.13
+        SRC: .
     depends_on:
       balrogdb:
         condition: service_healthy
@@ -100,9 +104,10 @@ services:
   balrogagent:
     build:
       context: .
-      dockerfile: agent/Dockerfile
+      dockerfile: taskcluster/docker/balrog-agent/Dockerfile
       args:
         PYTHON_VERSION: 3.13
+        SRC: .
     depends_on:
       nginx:
         condition: service_healthy
