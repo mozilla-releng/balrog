@@ -41,6 +41,7 @@ const App = () => {
           }}
           leeway={30}
           cacheLocation="localstorage"
+          sessionCheckExpiryDays={7}
         >
           <Main />
         </Auth0Provider>
