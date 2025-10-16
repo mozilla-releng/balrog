@@ -15,7 +15,7 @@ dependencies = [
     "connexion<3",
     "deepmerge",
     "ecdsa",
-    "flask",
+    "flask<3", #https://github.com/mozilla-releng/balrog/issues/3567
     "flask_wtf",
     "gcloud-aio-storage",
     "google-api-core",
