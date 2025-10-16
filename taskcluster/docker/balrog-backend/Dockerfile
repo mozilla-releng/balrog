@@ -1,5 +1,3 @@
-# WARNING: keep this file in sync with the main balrog Dockerfile
-
 ARG PYTHON_VERSION=3.13
 FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-bookworm-slim AS builder
 
@@ -10,12 +8,15 @@ WORKDIR /app
 RUN apt-get -q update \
     && apt-get -q --yes install g++ default-libmysqlclient-dev gcc pkg-config
 
+# Use a variable so we can share the Dockerfile with docker compose
+ARG SRC=topsrcdir
+
 # %include pyproject.toml
 # %include uv.lock
 # %include README.rst
-COPY topsrcdir/pyproject.toml topsrcdir/uv.lock topsrcdir/README.rst /app/
+COPY ${SRC}/pyproject.toml ${SRC}/uv.lock ${SRC}/README.rst /app/
 # %include src
-COPY topsrcdir/src/ /app/src/
+COPY ${SRC}/src/ /app/src/
 
 RUN uv venv
 RUN uv sync --no-dev --frozen
@@ -37,13 +38,13 @@ WORKDIR /app
 
 COPY --from=builder /app/.venv /app/.venv
 # %include src
-COPY topsrcdir/src/ /app/src/
+COPY ${SRC}/src/ /app/src/
 # %include scripts
-COPY topsrcdir/scripts/ /app/scripts/
+COPY ${SRC}/scripts/ /app/scripts/
 # %include uwsgi
-COPY topsrcdir/uwsgi/ /app/uwsgi/
+COPY ${SRC}/uwsgi/ /app/uwsgi/
 # %include version.json
-COPY topsrcdir/version.json /app/
+COPY ${SRC}/version.json /app/
 
 ENV PATH="/app/.venv/bin:${PATH}"
 

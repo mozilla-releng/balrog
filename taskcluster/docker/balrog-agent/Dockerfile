@@ -1,17 +1,18 @@
-# WARNING: keep this file in sync with agent/Dockerfile
-
 ARG PYTHON_VERSION=3.13
 FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-bookworm-slim AS builder
 
 WORKDIR /app
 
+# Use an arg so we can share the Dockerfile with docker compose
+ARG SRC=topsrcdir
+
 # %include pyproject.toml
 # %include uv.lock
 # %include README.rst
-COPY topsrcdir/pyproject.toml topsrcdir/uv.lock topsrcdir/README.rst /app/
+COPY ${SRC}/pyproject.toml ${SRC}/uv.lock ${SRC}/README.rst /app/
 
 # %include agent
-COPY topsrcdir/agent /app/agent
+COPY ${SRC}/agent /app/agent
 
 RUN uv venv
 RUN uv sync --package=balrogagent --frozen --no-dev
@@ -26,9 +27,9 @@ COPY --from=builder /app/.venv /app/.venv
 # %include agent/scripts
 # %include agent/src
 # %include agent/run.sh
-COPY topsrcdir/agent/scripts/ /app/scripts/
-COPY topsrcdir/agent/src /app/agent/src
-COPY topsrcdir/agent/run.sh /app
+COPY ${SRC}/agent/scripts/ /app/scripts/
+COPY ${SRC}/agent/src /app/agent/src
+COPY ${SRC}/agent/run.sh /app
 
 # Using /bin/bash as the entrypoint works around some volume mount issues on Windows
 # where volume-mounted files do not have execute bits set.
