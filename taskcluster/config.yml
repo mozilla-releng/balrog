@@ -16,7 +16,7 @@ workers:
             provisioner: releng-t
             implementation: docker-worker
             os: linux
-            worker-type: linux-gcp
+            worker-type: linux-docker
         images:
             provisioner: releng-{level}
             implementation: docker-worker
