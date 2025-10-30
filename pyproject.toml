@@ -38,6 +38,7 @@ dependencies = [
     "statsd",
     "swagger-spec-validator",
     "uwsgi",
+    "werkzeug<3", # This is a transitive dependency from flask, https://github.com/mozilla-releng/balrog/issues/3567
 ]
 
 [tool.uv.workspace]
