@@ -43,7 +43,7 @@ def populateDB(testdir):
     for f in glob.glob("%s/*.json" % testdir):
         data = json.load(open(f, "r"))
         product = data["name"].split("-")[0]
-        dbo.engine.execute("INSERT INTO releases (name, product, data, data_version) VALUES ('%s', '%s','%s', 1)" % (data["name"], product, json.dumps(data)))
+        dbo.engine.execute("INSERT INTO releases (name, product, data, data_version) VALUES (?, ?, ?, 1)", (data["name"], product, json.dumps(data)))
     # TODO - create a proper importer that walks the snippet store to find hashes ?
 
 
