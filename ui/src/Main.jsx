@@ -18,7 +18,7 @@ function ProtectedRoute({ children, requiresAuth }) {
 }
 
 function setupAxiosInterceptors(getAccessTokenSilently, getIdTokenClaims) {
-  axios.interceptors.request.use(async (config) => {
+  const requestInterceptor = axios.interceptors.request.use(async (config) => {
     const result = config;
 
     if (!config.url.startsWith('http')) {
@@ -41,7 +41,7 @@ function setupAxiosInterceptors(getAccessTokenSilently, getIdTokenClaims) {
     return result;
   });
 
-  axios.interceptors.response.use(
+  const responseInterceptor = axios.interceptors.response.use(
     (response) => response,
     (error) => {
       const errorMsg = error.response
@@ -57,6 +57,11 @@ function setupAxiosInterceptors(getAccessTokenSilently, getIdTokenClaims) {
       throw error;
     },
   );
+
+  return {
+    request: requestInterceptor,
+    response: responseInterceptor,
+  };
 }
 
 function Main() {
@@ -64,8 +69,16 @@ function Main() {
   const [isReady, setReady] = useState(false);
 
   useEffect(() => {
-    setupAxiosInterceptors(getAccessTokenSilently, getIdTokenClaims);
-  }, [getAccessTokenSilently, isLoading]);
+    const interceptors = setupAxiosInterceptors(
+      getAccessTokenSilently,
+      getIdTokenClaims,
+    );
+
+    return () => {
+      axios.interceptors.request.eject(interceptors.request);
+      axios.interceptors.response.eject(interceptors.response);
+    };
+  }, [getAccessTokenSilently, getIdTokenClaims]);
 
   useEffect(() => {
     if (!isReady && !isLoading) {
