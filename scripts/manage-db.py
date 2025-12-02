@@ -104,11 +104,17 @@ def get_active_release_names(trans, source_table="releases_json"):
     # Because Releases are so massive, we only want the actively used ones. Specifically:
     #   - All releases referenced by a Rule or a Active Scheduled Rule Change
     #   - All releases referenced by a Release from the above query
-    query_release_mapping = f"""SELECT DISTINCT releases.* \
-                FROM {source_table} as releases \
-                WHERE EXISTS(SELECT 1 FROM rules WHERE releases.name IN (rules.mapping, rules.fallbackMapping))
-                OR EXISTS(SELECT 1 FROM rules_scheduled_changes WHERE rules_scheduled_changes.complete = 0 AND
-                    releases.name IN (rules_scheduled_changes.base_mapping, rules_scheduled_changes.base_fallbackMapping))
+    query_release_mapping = f"""SELECT DISTINCT releases.*
+                FROM {source_table} as releases
+                INNER JOIN (
+                    SELECT mapping FROM rules WHERE mapping IS NOT NULL
+                    UNION
+                    SELECT fallbackMapping FROM rules WHERE fallbackMapping IS NOT NULL
+                    UNION
+                    SELECT base_mapping FROM rules_scheduled_changes WHERE complete = 0 AND base_mapping IS NOT NULL
+                    UNION
+                    SELECT base_fallbackMapping FROM rules_scheduled_changes WHERE complete = 0 AND base_fallbackMapping IS NOT NULL
+                ) active_names ON releases.name = active_names.mapping
                 """
     result = trans.execute(query_release_mapping).fetchall()
     release_names = set()
