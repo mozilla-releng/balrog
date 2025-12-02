@@ -105,7 +105,7 @@ Pushing to Production
 Pushing the backends live requires some button clicking in Jenkins. For each of
 `balrog-admin-production <https://ops-master.jenkinsv2.prod.mozaws.net/job/gcp-pipelines/job/balrog/job/balrog-admin-production/>`_,
 `balrog-production <https://ops-master.jenkinsv2.prod.mozaws.net/job/gcp-pipelines/job/balrog/job/balrog-production/>`_,
-and `balrog-agent-production <https://ops-master.jenkinsv2.prod.mozaws.net/job/gcp-pipelines/job/balrog/job/balrog-agent-production/>` in Jenkins do the following. (If there are no schema changes, these may be done in parallel. If there are schema changes, see ``Schema Upgrades``):
+and `balrog-agent-production <https://ops-master.jenkinsv2.prod.mozaws.net/job/gcp-pipelines/job/balrog/job/balrog-agent-production/>`_ in Jenkins do the following. (If there are no schema changes, these may be done in parallel. If there are schema changes, see ``Schema Upgrades``):
 
   * Find the ``PROD: DEPLOY`` or ``PROD: PROCEED`` step
   * Click the cell for this step in the topmost row. This should bring up a confirmation dialog as shown below.
