@@ -274,7 +274,19 @@ def get_releases(trans, args=None):
     for ref in rule_mappings:
         rule_mappings_by_name[ref[0]].append(ref)
 
+    all_product_rs = dbo.productRequiredSignoffs.select(transaction=trans)
+    product_rs_by_product = defaultdict(list)
+    for rs in all_product_rs:
+        product_rs_by_product[rs["product"]].append(rs)
+
     product_required_signoffs = {}
+    for product, rs_list in product_rs_by_product.items():
+        role_map = defaultdict(list)
+        for rs in rs_list:
+            role_map[rs["role"]].append(rs)
+        signoffs_required = [max(signoffs, default=None, key=lambda k: k["signoffs_required"]) for signoffs in role_map.values()]
+        product_required_signoffs[product] = serialize_signoff_requirements(signoffs_required)
+
     for row in releases:
         refs = rule_mappings_by_name.get(row["name"], [])
         row["rule_info"] = {str(ref[1]): {"product": ref[2], "channel": ref[3]} for ref in refs}
@@ -282,11 +294,7 @@ def get_releases(trans, args=None):
         row["required_signoffs"] = serialize_signoff_requirements(
             [obj for v in dbo.releases_json.getPotentialRequiredSignoffs([row], transaction=trans).values() for obj in v]
         )
-        if row["product"] not in product_required_signoffs:
-            product_required_signoffs[row["product"]] = serialize_signoff_requirements(
-                dbo.releases_json.getPotentialRequiredSignoffsForProduct(row["product"], transaction=trans)["rs"]
-            )
-        row["product_required_signoffs"] = product_required_signoffs[row["product"]]
+        row["product_required_signoffs"] = product_required_signoffs.get(row["product"], {})
 
     for table in (dbo.releases_json.scheduled_changes, dbo.release_assets.scheduled_changes):
         for sc in table.select(where={"complete": False}, transaction=trans):
