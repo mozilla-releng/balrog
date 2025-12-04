@@ -41,7 +41,7 @@ elif [ $1 == "extract-active-data" ]; then
         exit 1
     fi
     python scripts/manage-db.py -d ${DBURI} extract dump.sql
-    xz -T0 -zc dump.sql > ${OUTPUT_FILE}
+    xz -zc dump.sql > ${OUTPUT_FILE}
 elif [ $1 == "reset-stage-db" ]; then
     if [ -z "${DBURI}" ]; then
         echo "\${DBURI} must be set!"
