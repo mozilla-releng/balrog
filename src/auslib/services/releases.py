@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from collections import defaultdict
 from copy import deepcopy
 
 from aiohttp import ClientError
@@ -265,11 +266,17 @@ def get_releases(trans, args=None):
     releases = dbo.releases_json.select(
         columns=[dbo.releases_json.name, dbo.releases_json.product, dbo.releases_json.data_version, dbo.releases_json.read_only], transaction=trans
     )
+
     j = join(dbo.releases_json.t, dbo.rules.t, ((dbo.releases_json.name == dbo.rules.mapping) | (dbo.releases_json.name == dbo.rules.fallbackMapping)))
     rule_mappings = trans.execute(select([dbo.releases_json.name, dbo.rules.rule_id, dbo.rules.product, dbo.rules.channel]).select_from(j)).fetchall()
+
+    rule_mappings_by_name = defaultdict(list)
+    for ref in rule_mappings:
+        rule_mappings_by_name[ref[0]].append(ref)
+
     product_required_signoffs = {}
     for row in releases:
-        refs = [ref for ref in rule_mappings if ref[0] == row["name"]]
+        refs = rule_mappings_by_name.get(row["name"], [])
         row["rule_info"] = {str(ref[1]): {"product": ref[2], "channel": ref[3]} for ref in refs}
         row["scheduled_changes"] = []
         row["required_signoffs"] = serialize_signoff_requirements(
