@@ -31,6 +31,7 @@ from auslib.util.rulematching import (
     matchSimpleExpression,
     matchVersion,
 )
+from auslib.util.signoffs import get_required_signoffs_for_product_channel
 from auslib.util.statsd import statsd
 from auslib.util.timestamp import getMillisecondTimestamp
 from auslib.util.versions import get_version_class
@@ -1779,12 +1780,9 @@ class Rules(AUSTable):
                 q_map[rs["product"]] = [rs]
 
         for row in rows:
-            potential_required_signoffs[(row.get("product"), row.get("channel"))] = []
-            for rs in q_map.get(row["product"], []) if row.get("product") else q:
-                # Channel supports globbing, so we must take that into account
-                # before deciding whether or not this is a match.
-                if not row.get("channel") or matchRegex(row.get("channel"), rs["channel"]):
-                    potential_required_signoffs[(row.get("product"), row.get("channel"))].append(rs)
+            potential_required_signoffs[(row.get("product"), row.get("channel"))] = get_required_signoffs_for_product_channel(
+                row.get("product"), row.get("channel"), q_map, q
+            )
         return potential_required_signoffs
 
     def _isAlias(self, id_or_alias):
