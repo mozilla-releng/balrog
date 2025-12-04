@@ -10,6 +10,7 @@ from sentry_sdk import capture_exception
 from sqlalchemy import join, select
 
 from auslib.services import releases
+from auslib.util.signoffs import get_required_signoffs_for_product_channel
 from auslib.util.versions import MozillaVersion
 
 from ..blobs.base import createBlob
@@ -287,13 +288,20 @@ def get_releases(trans, args=None):
         signoffs_required = [max(signoffs, default=None, key=lambda k: k["signoffs_required"]) for signoffs in role_map.values()]
         product_required_signoffs[product] = serialize_signoff_requirements(signoffs_required)
 
+    unique_product_channels = {(ref[2], ref[3]) for refs in rule_mappings_by_name.values() for ref in refs}
+    required_signoffs_by_product_channel = {
+        (product, channel): get_required_signoffs_for_product_channel(product, channel, product_rs_by_product, all_product_rs)
+        for product, channel in unique_product_channels
+    }
+
     for row in releases:
         refs = rule_mappings_by_name.get(row["name"], [])
         row["rule_info"] = {str(ref[1]): {"product": ref[2], "channel": ref[3]} for ref in refs}
         row["scheduled_changes"] = []
-        row["required_signoffs"] = serialize_signoff_requirements(
-            [obj for v in dbo.releases_json.getPotentialRequiredSignoffs([row], transaction=trans).values() for obj in v]
-        )
+
+        all_rs = [rs for ref in refs for rs in required_signoffs_by_product_channel.get((ref[2], ref[3]), [])]
+        row["required_signoffs"] = serialize_signoff_requirements(all_rs)
+
         row["product_required_signoffs"] = product_required_signoffs.get(row["product"], {})
 
     for table in (dbo.releases_json.scheduled_changes, dbo.release_assets.scheduled_changes):
