@@ -102,7 +102,6 @@ function ListReleases(props) {
   const [roles, setRoles] = useState([]);
   const [signoffRole, setSignoffRole] = useState('');
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
-  const [matchHighlight, setMatchHighlight] = useState({});
   const [requiredSignoffsForProduct, setRequiredSignoffsForProduct] =
     useState(null);
   const [rules, fetchRules] = useAction(getRules);
@@ -141,13 +140,13 @@ function ListReleases(props) {
     revokeV2Action.error ||
     (roles.length === 1 && signoffAction.error) ||
     (roles.length === 1 && signoffV2Action.error);
-  const filteredReleases = useMemo(() => {
+  const { filteredReleases, matchHighlight } = useMemo(() => {
     if (!releases) {
-      return [];
+      return { filteredReleases: [], matchHighlight: {} };
     }
 
     if (!searchValue) {
-      return releases;
+      return { filteredReleases: releases, matchHighlight: {} };
     }
 
     const values = searchValue.trim().split(' ');
@@ -156,21 +155,20 @@ function ListReleases(props) {
       '',
     );
 
-    return releases.filter((release) => {
+    const filtered = [];
+    const highlights = {};
+
+    releases.forEach((release) => {
       const regex = new RegExp(regexp, 'dgi');
       const matches = regex.exec(release.name);
 
       if (matches) {
-        const toHighlight = matches.indices;
-
-        setMatchHighlight((prevState) => ({
-          ...prevState,
-          [release.name]: toHighlight,
-        }));
+        filtered.push(release);
+        highlights[release.name] = matches.indices;
       }
-
-      return matches;
     });
+
+    return { filteredReleases: filtered, matchHighlight: highlights };
   }, [releases, searchValue]);
   const filteredReleasesCount = filteredReleases.length;
   const handleSignoffRoleChange = ({ target: { value } }) =>
