@@ -545,6 +545,17 @@ function ListRules(props) {
     query.onlyScheduledChanges,
     rewoundRules,
   ]);
+  const rulesById = useMemo(() => {
+    const map = new Map();
+
+    rulesWithScheduledChanges.forEach((rule) => {
+      if (rule.rule_id != null) {
+        map.set(rule.rule_id, rule);
+      }
+    });
+
+    return map;
+  }, [rulesWithScheduledChanges]);
   const handleDateTimePickerError = (error) => {
     setDateTimePickerError(error);
   };
@@ -1169,9 +1180,7 @@ function ListRules(props) {
   const getRowHeight = (index) => {
     const spacingPx = parseInt(theme.spacing(1), 10);
     const rule = filteredRulesWithScheduledChanges[index];
-    const currentRule = rulesWithScheduledChanges.find(
-      (r) => r.rule_id === rule.rule_id,
-    );
+    const currentRule = rulesById.get(rule.rule_id);
     const hasScheduledChanges = Boolean(rule.scheduledChange);
     // Padding top and bottom included
     const listPadding = spacingPx;
@@ -1341,9 +1350,7 @@ function ListRules(props) {
     // if we're in rewind mode, rule is a historical rule, not the current one
     const rule = filteredRulesWithScheduledChanges[index];
     const isSelected = isRuleSelected(rule);
-    const currentRule = rulesWithScheduledChanges.find(
-      (r) => r.rule_id === rule.rule_id,
-    );
+    const currentRule = rulesById.get(rule.rule_id);
 
     return (
       <div
