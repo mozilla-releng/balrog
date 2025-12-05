@@ -1,25 +1,21 @@
-import remToPx from './remToPx';
+export default (theme) => {
+  const { htmlFontSize, h6, body1, body2, subtitle1, button } =
+    theme.typography;
 
-export default (theme) => ({
-  h6TextHeight:
-    remToPx(theme.typography.h6.fontSize) * theme.typography.h6.lineHeight,
-  body1TextHeight: (lines = 1) =>
-    lines *
-    remToPx(theme.typography.body1.fontSize) *
-    theme.typography.body1.lineHeight,
-  body2TextHeight: (lines = 1) =>
-    lines *
-    remToPx(theme.typography.body2.fontSize) *
-    theme.typography.body2.lineHeight,
-  subtitle1TextHeight: (lines = 1) =>
-    lines *
-    remToPx(theme.typography.subtitle1.fontSize) *
-    theme.typography.subtitle1.lineHeight,
-  buttonHeight:
-    remToPx(theme.typography.button.fontSize) *
-      theme.typography.button.lineHeight +
-    6 +
-    6,
-  signoffSummarylistSubheaderTextHeight:
-    remToPx(theme.typography.subtitle1.fontSize) * 1.5,
-});
+  return {
+    h6TextHeight: parseFloat(h6.fontSize) * htmlFontSize * h6.lineHeight,
+    body1TextHeight: (lines = 1) =>
+      lines * parseFloat(body1.fontSize) * htmlFontSize * body1.lineHeight,
+    body2TextHeight: (lines = 1) =>
+      lines * parseFloat(body2.fontSize) * htmlFontSize * body2.lineHeight,
+    subtitle1TextHeight: (lines = 1) =>
+      lines *
+      parseFloat(subtitle1.fontSize) *
+      htmlFontSize *
+      subtitle1.lineHeight,
+    buttonHeight:
+      parseFloat(button.fontSize) * htmlFontSize * button.lineHeight + 12,
+    signoffSummarylistSubheaderTextHeight:
+      parseFloat(subtitle1.fontSize) * htmlFontSize * 1.5,
+  };
+};
