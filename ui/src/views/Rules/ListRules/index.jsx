@@ -82,7 +82,6 @@ import elementsHeight from '../../../utils/elementsHeight';
 import getDiffedProperties from '../../../utils/getDiffedProperties';
 import getFilteredRulesInfo from '../../../utils/getFilteredRulesInfo';
 import Link from '../../../utils/Link';
-import remToPx from '../../../utils/remToPx';
 import { ruleMatchesRequiredSignoff } from '../../../utils/requiredSignoffs';
 import { ruleMatchesChannel } from '../../../utils/rules';
 
@@ -1176,7 +1175,10 @@ function ListRules(props) {
     // Padding top and bottom included
     const listPadding = spacingPx;
     const listItemTextMargin = 6;
-    const diffRowHeight = remToPx(theme.typography.body2.fontSize) * 1.5;
+    const diffRowHeight =
+      parseFloat(theme.typography.body2.fontSize) *
+      theme.typography.htmlFontSize *
+      1.5;
     // <CardContent /> padding
     let height = 2 * spacingPx;
 
