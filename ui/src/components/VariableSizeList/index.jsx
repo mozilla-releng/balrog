@@ -8,7 +8,7 @@ const VariableSizeList = forwardRef((props, ref) => {
   const virtualizer = useWindowVirtualizer({
     count: rowCount,
     estimateSize: rowHeight,
-    overscan: 20,
+    overscan: 5,
     gap: 40,
   });
 
