@@ -1,6 +1,6 @@
 [project]
 name = "balrog"
-version = "3.98"
+version = "3.99"
 description = "Mozilla's Update Server"
 license = "MPL-2.0"
 authors = [
