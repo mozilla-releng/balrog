@@ -3,7 +3,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DateTimePicker as MUIDateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { func, instanceOf } from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 export default function DateTimePicker({
   value,
@@ -24,21 +24,22 @@ export default function DateTimePicker({
     setInternalValue(value);
   }, [value]);
 
-  // disablePast on the input is too eager and will mark the input as invalid when the page loads
-  const minDateTime = disablePast
-    ? (() => {
-        const now = new Date();
-        return new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate(),
-          now.getHours(),
-          now.getMinutes(),
-          0,
-          0,
-        );
-      })()
-    : undefined;
+  // disablePast on the input is too eager and will mark the input as invalid when the page loads.
+  // We memoize minDateTime so it's only calculated once when the component mounts, preventing
+  // already-selected dates from becoming invalid as time passes while the user edits the form.
+  const minDateTime = useMemo(() => {
+    if (!disablePast) return undefined;
+    const now = new Date();
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      now.getHours(),
+      now.getMinutes(),
+      0,
+      0,
+    );
+  }, [disablePast]);
 
   const handleChange = (newValue) => {
     setInternalValue(newValue);
