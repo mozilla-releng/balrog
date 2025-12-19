@@ -1,15 +1,19 @@
 import { withAuth0 } from '@auth0/auth0-react';
 import DeleteIcon from '@mui/icons-material/Delete';
+import PreviewIcon from '@mui/icons-material/Preview';
 import SaveIcon from '@mui/icons-material/Save';
+import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 import Fab from '@mui/material/Fab';
 import Grid from '@mui/material/GridLegacy';
 import MenuItem from '@mui/material/MenuItem';
 import SpeedDialAction from '@mui/material/SpeedDialAction';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
-import classNames from 'classnames';
 import { bool } from 'prop-types';
 import { stringify } from 'qs';
 import { assocPath, defaultTo, pick } from 'ramda';
@@ -22,6 +26,7 @@ import getSuggestions from '../../../components/AutoCompleteText/getSuggestions'
 import Dashboard from '../../../components/Dashboard';
 import DateTimePicker from '../../../components/DateTimePicker';
 import ErrorPanel from '../../../components/ErrorPanel';
+import RuleCard from '../../../components/RuleCard';
 import SpeedDial from '../../../components/SpeedDial';
 import useAction from '../../../hooks/useAction';
 import { getReleaseNames, getReleaseNamesV2 } from '../../../services/releases';
@@ -39,9 +44,11 @@ import {
 import {
   EMPTY_MENU_ITEM_CHAR,
   OBJECT_NAMES,
+  RULE_DIFF_PROPERTIES,
   RULE_PRODUCT_UNSUPPORTED_PROPERTIES,
   SPLIT_WITH_NEWLINES_AND_COMMA_REGEX,
 } from '../../../utils/constants';
+import getDiffedProperties from '../../../utils/getDiffedProperties';
 import { ruleMatchesRequiredSignoff } from '../../../utils/requiredSignoffs';
 
 const initialRule = {
@@ -68,17 +75,6 @@ const initialRule = {
   version: '',
 };
 const useStyles = makeStyles()((theme) => ({
-  fab: {
-    ...theme.mixins.fab,
-  },
-  secondFab: {
-    ...theme.mixins.fab,
-    right: theme.spacing(12),
-  },
-  fabWithTooltip: {
-    height: theme.spacing(7),
-    width: theme.spacing(7),
-  },
   scheduleDiv: {
     display: 'flex',
     alignItems: 'center',
@@ -93,6 +89,13 @@ const useStyles = makeStyles()((theme) => ({
   signoffs: {
     color: 'rgba(0, 0, 0, 0.87)',
   },
+  fabContainer: {
+    position: 'fixed',
+    bottom: theme.spacing(2),
+    right: theme.spacing(2),
+    display: 'flex',
+    gap: theme.spacing(2),
+  },
 }));
 
 function Rule({ isNewRule, auth0 }) {
@@ -102,6 +105,8 @@ function Rule({ isNewRule, auth0 }) {
   const navigate = useNavigate();
   const rulesFilter = state?.rulesFilter ? state.rulesFilter : [];
   const [rule, setRule] = useState(initialRule);
+  const [originalRule, setOriginalRule] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [releaseNames, setReleaseNames] = useState([]);
   const [signoffSummary, setSignoffSummary] = useState('');
   const [products, fetchProducts] = useAction(getProducts);
@@ -343,6 +348,11 @@ function Rule({ isNewRule, auth0 }) {
         fetchReleaseNames(),
         fetchReleaseNamesV2(),
       ]).then(([fetchedRuleResponse, fetchedSCResponse]) => {
+        const r = fetchedRuleResponse.data.data;
+        r.jaws = getOptionalBooleanValue(r.jaws);
+        r.mig64 = getOptionalBooleanValue(r.mig64);
+        setOriginalRule({ ...rule, ...r });
+
         if (fetchedSCResponse.data.data.count > 0) {
           const sc = fetchedSCResponse.data.data.scheduled_changes[0];
 
@@ -355,11 +365,6 @@ function Rule({ isNewRule, auth0 }) {
           });
           setScheduleDate(new Date(sc.when));
         } else {
-          const r = fetchedRuleResponse.data.data;
-
-          r.jaws = getOptionalBooleanValue(r.jaws);
-          r.mig64 = getOptionalBooleanValue(r.mig64);
-
           setRule({
             ...rule,
             ...r,
@@ -785,15 +790,47 @@ function Rule({ isNewRule, auth0 }) {
       )}
       {!isLoading && (
         <Fragment>
-          <Tooltip title={isNewRule && !scId ? 'Create Rule' : 'Update Rule'}>
-            {/* Add <div /> to avoid material-ui error "you are providing
-              a disabled `button` child to the Tooltip component." */}
-            <div
-              className={classNames(classes.fabWithTooltip, {
-                [classes.secondFab]: hasScheduledChange,
-                [classes.fab]: !hasScheduledChange,
-              })}
-            >
+          <Dialog
+            open={previewOpen}
+            onClose={() => setPreviewOpen(false)}
+            maxWidth="md"
+            fullWidth
+          >
+            <DialogTitle>Changes Preview</DialogTitle>
+            <DialogContent>
+              {originalRule && (
+                <RuleCard
+                  rule={originalRule}
+                  currentRule={rule}
+                  diffRules
+                  readOnly
+                />
+              )}
+            </DialogContent>
+          </Dialog>
+          <Box
+            className={classes.fabContainer}
+            sx={{ mr: hasScheduledChange ? 10 : 0 }}
+          >
+            {originalRule && (
+              <Tooltip title="Preview Changes">
+                <Badge
+                  badgeContent={
+                    getDiffedProperties(
+                      RULE_DIFF_PROPERTIES,
+                      originalRule,
+                      rule,
+                    ).length
+                  }
+                  color="secondary"
+                >
+                  <Fab onClick={() => setPreviewOpen(true)} color="default">
+                    <PreviewIcon />
+                  </Fab>
+                </Badge>
+              </Tooltip>
+            )}
+            <Tooltip title={isNewRule && !scId ? 'Create Rule' : 'Update Rule'}>
               <Fab
                 disabled={!auth0.user || actionLoading}
                 onClick={
@@ -803,8 +840,8 @@ function Rule({ isNewRule, auth0 }) {
               >
                 <SaveIcon />
               </Fab>
-            </div>
-          </Tooltip>
+            </Tooltip>
+          </Box>
           {hasScheduledChange && (
             <SpeedDial
               FabProps={{ disabled: !auth0.user || actionLoading }}
