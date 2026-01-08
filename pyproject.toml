@@ -54,7 +54,8 @@ dev = [
     "fakeredis",
     "flake8",
     "flake8-black",
-    "hypothesis",
+    # https://github.com/HypothesisWorks/hypothesis/issues/4638
+    "hypothesis<6.150.0",
     "isort",
     "mock",
     "pytest",
@@ -68,7 +69,7 @@ dev = [
 
 docs = [
     "sphinx",
-    "sphinx_rtd_theme",
+    "sphinx_rtd_theme>=3.1.0rc1",
 ]
 
 [build-system]
