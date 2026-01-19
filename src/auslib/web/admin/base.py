@@ -66,6 +66,7 @@ def create_app():
             #   statsd
             metric = (
                 request.url_rule.endpoint.removeprefix("/v2.")
+                .removeprefix("/.")
                 .removeprefix("auslib_web_admin_views_")
                 .removeprefix("auslib_web_admin_")
                 .removeprefix("auslib_web_common_")

@@ -15,7 +15,7 @@ dependencies = [
     "connexion<3",
     "deepmerge",
     "ecdsa",
-    "flask<3", #https://github.com/mozilla-releng/balrog/issues/3567
+    "flask",
     "flask_wtf",
     "gcloud-aio-storage",
     "google-api-core",
@@ -38,7 +38,6 @@ dependencies = [
     "statsd",
     "swagger-spec-validator",
     "uwsgi",
-    "werkzeug<3", # This is a transitive dependency from flask, https://github.com/mozilla-releng/balrog/issues/3567
 ]
 
 [tool.uv.workspace]

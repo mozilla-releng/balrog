@@ -205,7 +205,6 @@ dependencies = [
     { name = "statsd" },
     { name = "swagger-spec-validator" },
     { name = "uwsgi" },
-    { name = "werkzeug" },
 ]
 
 [package.dev-dependencies]
@@ -240,7 +239,7 @@ requires-dist = [
     { name = "connexion", specifier = "<3" },
     { name = "deepmerge" },
     { name = "ecdsa" },
-    { name = "flask", specifier = "<3" },
+    { name = "flask" },
     { name = "flask-wtf" },
     { name = "gcloud-aio-storage" },
     { name = "google-api-core" },
@@ -263,7 +262,6 @@ requires-dist = [
     { name = "statsd" },
     { name = "swagger-spec-validator" },
     { name = "uwsgi" },
-    { name = "werkzeug", specifier = "<3" },
 ]
 
 [package.metadata.requires-dev]
