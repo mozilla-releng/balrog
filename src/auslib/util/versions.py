@@ -153,6 +153,16 @@ class LooseVersion(Version):
             return 1
 
 
+def FirefoxVPNVersion(version):
+    """
+    Versions of FirefoxVPN are x.y.z, except some old versions that are x.y.
+    """
+    try:
+        return StrictVersion(version)
+    except ValueError:
+        raise BadDataError(f"Invalid app version {version}")
+
+
 class PostModernMozillaVersion(StrictVersion):
     """A version class that supports Firefox versions 5.0 and up, which
     may have "a1" but not "b2" tags in them"""
@@ -242,8 +252,8 @@ def MozillaVersion(version):
                 return ModernMozillaVersion(version)
         else:
             return AncientMozillaVersion(version)
-    except ValueError:
-        raise BadDataError("Version number %s is invalid." % version)
+    except ValueError as e:
+        raise BadDataError(e)
 
 
 def get_version_parts(version):
@@ -281,7 +291,7 @@ def decrement_version(version):
 
 def get_version_class(product):
     if product in ("FirefoxVPN", "Guardian"):
-        return LooseVersion
+        return FirefoxVPNVersion
 
     return MozillaVersion
 
