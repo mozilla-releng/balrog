@@ -204,7 +204,7 @@ services:
 
   # TODO: provide our own config so that we can guarantee the keyid
   autograph:
-    image: mozilla/autograph:latest
+    image: mozilla/autograph:latest@sha256:dff47321255dae6df9cac65f6ab07e923cef4b1a1f1412be786246805ffcaf59
     expose:
       - "8000"
     ports:
@@ -223,14 +223,14 @@ services:
   # visit http://localhost:8050 to view stats
   # see also: https://github.com/graphite-project/docker-graphite-statsd
   graphite:
-    image: graphiteapp/graphite-statsd:latest
+    image: graphiteapp/graphite-statsd:latest@sha256:2d61228771119ddaee2f62d65739d3b5e903de36666e899703e47be1def571fe
     expose:
       - "8125"
     ports:
       - "8050:80"
 
   redis:
-    image: redis:8-alpine
+    image: redis:8-alpine@sha256:0804c395e634e624243387d3c3a9c45fcaca876d313c2c8b52c3fdf9a912dded
     command: redis-server --loglevel warning
     expose:
       - "6379"
