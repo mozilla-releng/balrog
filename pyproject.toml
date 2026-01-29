@@ -34,7 +34,7 @@ dependencies = [
     "setuptools",
     "spec-synthase",
     "sqlalchemy-migrate",
-    "sqlalchemy<2",
+    "sqlalchemy<3",
     "statsd",
     "swagger-spec-validator",
     "uwsgi",
