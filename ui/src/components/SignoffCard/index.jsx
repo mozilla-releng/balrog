@@ -2,7 +2,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import Card from '@mui/material/Card';
 import CardActionArea from '@mui/material/CardActionArea';
 import CardHeader from '@mui/material/CardHeader';
-import { node, string } from 'prop-types';
 import React from 'react';
 import { makeStyles } from 'tss-react/mui';
 import Link from '../../utils/Link';
@@ -42,14 +41,5 @@ function SignoffCard(props) {
     </Card>
   );
 }
-
-SignoffCard.propTypes = {
-  /** A title for the signoff card. */
-  title: string.isRequired,
-  /** A link to navigate when the title is clicked. */
-  to: string.isRequired,
-  /* The content of the signoff card. */
-  children: node.isRequired,
-};
 
 export default SignoffCard;

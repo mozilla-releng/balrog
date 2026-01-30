@@ -14,7 +14,6 @@ import MenuItem from '@mui/material/MenuItem';
 import SpeedDialAction from '@mui/material/SpeedDialAction';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
-import { bool } from 'prop-types';
 import { stringify } from 'qs';
 import { assocPath, defaultTo, pick } from 'ramda';
 import React, { Fragment, useEffect, useState } from 'react';
@@ -861,10 +860,6 @@ function Rule({ isNewRule, auth0 }) {
     </Dashboard>
   );
 }
-
-Rule.propTypes = {
-  isNewRule: bool,
-};
 
 Rule.defaultProps = {
   isNewRule: false,

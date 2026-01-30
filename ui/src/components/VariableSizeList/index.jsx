@@ -1,5 +1,4 @@
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import { number } from 'prop-types';
 import React, { forwardRef, useEffect } from 'react';
 
 const VariableSizeList = forwardRef((props, ref) => {
@@ -49,10 +48,6 @@ const VariableSizeList = forwardRef((props, ref) => {
 });
 
 VariableSizeList.displayName = 'VariableSizeList';
-
-VariableSizeList.propTypes = {
-  scrollToRow: number,
-};
 
 VariableSizeList.defaultProps = {
   scrollToRow: null,

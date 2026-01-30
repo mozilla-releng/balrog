@@ -5,7 +5,6 @@ import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
-import { func, object } from 'prop-types';
 import React from 'react';
 import { makeStyles } from 'tss-react/mui';
 import Button from '../Button';
@@ -131,11 +130,5 @@ function EmergencyShutoffCard({
     </Card>
   );
 }
-
-EmergencyShutoffCard.propTypes = {
-  emergencyShutoff: object,
-  onSignoff: func.isRequired,
-  onRevoke: func.isRequired,
-};
 
 export default withAuth0(EmergencyShutoffCard);

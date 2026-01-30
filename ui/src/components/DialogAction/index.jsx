@@ -4,7 +4,6 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import { bool, func, node, object, oneOfType, string } from 'prop-types';
 import React, { useEffect, useRef, useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
 import tryCatch from '../../utils/tryCatch';
@@ -123,38 +122,6 @@ function DialogAction(props) {
     </Dialog>
   );
 }
-
-DialogAction.propTypes = {
-  /** If true, the Dialog is open. */
-  open: bool.isRequired,
-  /** The title of the Dialog. */
-  title: string,
-  /** The body of the Dialog. */
-  body: node,
-  /** The text content of the executing action button */
-  confirmText: string.isRequired,
-  /** Callback fired when the executing action button is clicked */
-  onSubmit: func.isRequired,
-  /**
-   * Callback fired when the action is complete with
-   * the return value of onSubmit. This function will not
-   * be called if onSubmit throws an error.
-   * */
-  onComplete: func,
-  /** Callback fired when onSubmit throws an error.
-   * The error will be provided in the callback. */
-  onError: func,
-  /** Callback fired when the component requests to be closed. */
-  onClose: func.isRequired,
-  onExited: func,
-  /** Error to display. */
-  error: oneOfType([string, object]),
-  /**
-   * If true, the action is considered destructive (e.g., delete)
-   * and will have the confirmation button filled with red
-   */
-  destructive: bool,
-};
 
 DialogAction.defaultProps = {
   title: '',

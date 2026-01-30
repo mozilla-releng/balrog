@@ -1,7 +1,6 @@
 import Paper from '@mui/material/Paper';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import deepSortObject from 'deep-sort-object';
-import { object, string } from 'prop-types';
 import { clone } from 'ramda';
 import React, { memo, useEffect, useRef, useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
@@ -164,14 +163,6 @@ function DiffRelease(props) {
     )
   );
 }
-
-DiffRelease.propTypes = {
-  firstRelease: object.isRequired,
-  secondRelease: object.isRequired,
-  firstFilename: string.isRequired,
-  secondFilename: string.isRequired,
-  className: string,
-};
 
 DiffRelease.defaultProps = {
   className: null,

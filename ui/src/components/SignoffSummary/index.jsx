@@ -6,7 +6,6 @@ import ListItemText from '@mui/material/ListItemText';
 import ListSubheader from '@mui/material/ListSubheader';
 import Typography from '@mui/material/Typography';
 import classNames from 'classnames';
-import { object, string } from 'prop-types';
 import React from 'react';
 import { makeStyles } from 'tss-react/mui';
 
@@ -140,12 +139,6 @@ function SignoffSummary(props) {
     </div>
   );
 }
-
-SignoffSummary.propTypes = {
-  requiredSignoffs: object.isRequired,
-  signoffs: object.isRequired,
-  className: string,
-};
 
 SignoffSummary.defaultProps = {
   className: null,

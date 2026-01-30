@@ -4,11 +4,9 @@ import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import Grid from '@mui/material/GridLegacy';
 import Typography from '@mui/material/Typography';
-import { func } from 'prop-types';
 import React, { Fragment } from 'react';
 import { makeStyles } from 'tss-react/mui';
 import { LABELS } from '../../utils/constants';
-import { signoffEntry } from '../../utils/prop-types';
 import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
 import StatusLabel from '../StatusLabel';
@@ -121,12 +119,5 @@ function SignoffCardEntry(props) {
     </Fragment>
   );
 }
-
-SignoffCardEntry.propTypes = {
-  entry: signoffEntry.isRequired,
-  onCancelDelete: func.isRequired,
-  onSignoff: func.isRequired,
-  onRevoke: func.isRequired,
-};
 
 export default withAuth0(SignoffCardEntry);

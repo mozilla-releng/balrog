@@ -3,7 +3,6 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import MuiSpeedDial from '@mui/material/SpeedDial';
 import SpeedDialIcon from '@mui/material/SpeedDialIcon';
 import classNames from 'classnames';
-import { arrayOf, node, object, oneOfType } from 'prop-types';
 import React, { useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
 
@@ -39,15 +38,6 @@ function SpeedDial({ children, className, FabProps, ...props }) {
     </MuiSpeedDial>
   );
 }
-
-SpeedDial.propTypes = {
-  /**
-   * A set of `SpeedDialAction`s which will be rendered upon interaction
-   * with the base `SpeedDial` floating action button.
-   */
-  children: oneOfType([arrayOf(node), node]).isRequired,
-  FabProps: object,
-};
 
 SpeedDial.defaultProps = {
   FabProps: {},

@@ -6,7 +6,6 @@ import 'react-diff-view/style/index.css';
 import { RULE_DIFF_PROPERTIES } from '../../utils/constants';
 import getDiff from '../../utils/diff';
 import getDiffedProperties from '../../utils/getDiffedProperties';
-import { rule } from '../../utils/prop-types';
 import tokenize from './tokenize';
 
 const useStyles = makeStyles()((theme) => ({
@@ -71,10 +70,5 @@ function DiffRule(props) {
     </Diff>
   ) : null;
 }
-
-DiffRule.propTypes = {
-  firstRule: rule.isRequired,
-  secondRule: rule.isRequired,
-};
 
 export default DiffRule;

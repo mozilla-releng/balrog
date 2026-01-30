@@ -15,7 +15,6 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import classNames from 'classnames';
-import { arrayOf, func, object, string } from 'prop-types';
 import React, { Fragment } from 'react';
 import { makeStyles } from 'tss-react/mui';
 import { LABELS } from '../../utils/constants';
@@ -220,15 +219,6 @@ function User(props) {
     </Card>
   );
 }
-
-User.propTypes = {
-  username: string.isRequired,
-  roles: arrayOf(object),
-  permissions: object,
-  scheduledPermissions: object,
-  onSignoff: func.isRequired,
-  onRevoke: func.isRequired,
-};
 
 User.defaultProps = {
   roles: [],

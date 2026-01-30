@@ -15,7 +15,6 @@ import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import classNames from 'classnames';
-import { bool } from 'prop-types';
 import React, { Fragment, useEffect, useState } from 'react';
 import { NumericFormat } from 'react-number-format';
 import { useNavigate, useParams } from 'react-router';
@@ -404,11 +403,6 @@ function ViewSignoff({ isNewSignoff }) {
     </Dashboard>
   );
 }
-
-ViewSignoff.propTypes = {
-  // Set to true if user is not updating an existing signoff.
-  isNewSignoff: bool,
-};
 
 ViewSignoff.defaultProps = {
   isNewSignoff: false,

@@ -113,12 +113,6 @@ module.exports = (_, { mode }) => {
                 ],
                 plugins: [
                   '@babel/plugin-syntax-dynamic-import',
-                  [
-                    'transform-react-remove-prop-types',
-                    {
-                      removeImport: true,
-                    },
-                  ],
                   ...(mode === 'development' ? ['react-refresh/babel'] : []),
                 ],
               },
