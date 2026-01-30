@@ -172,14 +172,6 @@ module.exports = (_, { mode }) => {
           test: /\.(ico|png|jpg|jpeg|gif|svg|webp)(\?v=\d+\.\d+\.\d+)?$/,
           type: 'asset/resource',
         },
-        {
-          test: /.worker\.js$/,
-          use: [
-            {
-              loader: 'worker-loader',
-            },
-          ],
-        },
       ],
     },
     optimization: {

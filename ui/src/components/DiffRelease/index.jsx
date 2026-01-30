@@ -10,7 +10,6 @@ import {
   INITIAL_JS_DIFF_SUMMARY,
   NEW_LINES_REGEX,
 } from '../../utils/constants';
-import DiffWorker from './diff.worker';
 
 const useStyles = makeStyles()((theme) => ({
   pre: {
@@ -56,7 +55,7 @@ function DiffRelease(props) {
   const { classes } = useStyles();
   const [releaseLinesDiff, setReleaseDiffLines] = useState([]);
   const [diffSummary, setDiffSummary] = useState(INITIAL_JS_DIFF_SUMMARY);
-  const diffWorker = new DiffWorker();
+  const diffWorker = new Worker(new URL('./diff.worker.js', import.meta.url));
   diffWorker.onmessage = (e) => {
     const releaseDiff = e.data;
     const lines = releaseDiff.split(NEW_LINES_REGEX);
