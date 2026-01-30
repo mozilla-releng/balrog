@@ -35,7 +35,7 @@ const jestBabelOptions = {
       },
     ],
   ],
-  plugins: ['@babel/plugin-syntax-dynamic-import'],
+  plugins: [],
 };
 
 module.exports = createTransformer(jestBabelOptions);
