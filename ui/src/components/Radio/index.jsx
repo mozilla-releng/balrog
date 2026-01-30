@@ -1,6 +1,5 @@
 import { green, red } from '@mui/material/colors';
 import MuiRadio from '@mui/material/Radio';
-import { object, oneOf } from 'prop-types';
 import React from 'react';
 import { makeStyles } from 'tss-react/mui';
 
@@ -29,11 +28,6 @@ const Radio = (props) => {
       {...rest}
     />
   );
-};
-
-Radio.propTypes = {
-  classes: object,
-  variant: oneOf(['red', 'green', 'default']),
 };
 
 Radio.defaultProps = {

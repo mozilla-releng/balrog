@@ -2,7 +2,6 @@ import { renderTimeViewClock } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DateTimePicker as MUIDateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { func, instanceOf } from 'prop-types';
 import React, { useEffect, useMemo, useState } from 'react';
 
 export default function DateTimePicker({
@@ -82,15 +81,3 @@ export default function DateTimePicker({
     </LocalizationProvider>
   );
 }
-
-DateTimePicker.propTypes = {
-  /**
-   * A function to execute when the date or time changes.
-   * Will receive a single argument which will include the date and time.
-   */
-  onDateTimeChange: func.isRequired,
-  /**
-   * The value of the picker. Can be a Date object or null.
-   */
-  value: instanceOf(Date),
-};

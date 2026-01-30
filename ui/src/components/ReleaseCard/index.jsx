@@ -19,13 +19,11 @@ import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { formatDistanceStrict } from 'date-fns';
-import { func } from 'prop-types';
 import { stringify } from 'qs';
 import React, { Fragment } from 'react';
 import { makeStyles } from 'tss-react/mui';
 import highlightMatchedRelease from '../../utils/highlightMatchedRelease';
 import Link from '../../utils/Link';
-import { release } from '../../utils/prop-types';
 import Button from '../Button';
 import SignoffSummary from '../SignoffSummary';
 
@@ -376,13 +374,5 @@ function ReleaseCard(props) {
     </Card>
   );
 }
-
-ReleaseCard.propTypes = {
-  release: release.isRequired,
-  onViewScheduledChangeDiff: func.isRequired,
-  onAccessChange: func, // Required if readOnly is false
-  onSignoff: func, // Required if readOnly is false
-  onRevoke: func, // Required if readOnly is false
-};
 
 export default withAuth0(ReleaseCard);

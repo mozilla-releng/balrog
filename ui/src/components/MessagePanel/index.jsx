@@ -4,7 +4,6 @@ import WarningIcon from '@mui/icons-material/Warning';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import { bool, oneOf, string } from 'prop-types';
 import React, { useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
 
@@ -78,16 +77,6 @@ function MessagePanel(props) {
     </Paper>
   );
 }
-
-MessagePanel.propTypes = {
-  message: string.isRequired,
-  variant: oneOf(['info', 'warning']),
-  /**
-   * If true, the message panel will not have a close icon option to close
-   * the panel
-   */
-  alwaysOpen: bool,
-};
 
 MessagePanel.defaultProps = {
   variant: 'info',

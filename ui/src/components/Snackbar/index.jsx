@@ -7,7 +7,6 @@ import { amber, green } from '@mui/material/colors';
 import IconButton from '@mui/material/IconButton';
 import MuiSnackbar from '@mui/material/Snackbar';
 import SnackbarContent from '@mui/material/SnackbarContent';
-import { func, object, oneOf, string } from 'prop-types';
 import React from 'react';
 import { makeStyles } from 'tss-react/mui';
 import { SNACKBAR_AUTO_HIDE_DURATION } from '../../utils/constants';
@@ -78,17 +77,6 @@ function Snackbar(props) {
     </MuiSnackbar>
   );
 }
-
-Snackbar.propTypes = {
-  /** Applies appropriate coloring to indicate purpose of message. */
-  variant: oneOf(['success', 'info', 'error', 'warning']),
-  /** The message to display. */
-  message: string.isRequired,
-  /** Properties applied to the SnackbarContent element. */
-  snackbarContentProps: object,
-  /** Callback fired when the component requests to be closed. */
-  onClose: func.isRequired,
-};
 
 Snackbar.defaultProps = {
   variant: 'success',

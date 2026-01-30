@@ -1,4 +1,3 @@
-import { bool } from 'prop-types';
 import React, { useState } from 'react';
 import { NavLink, Link as RouterLink } from 'react-router';
 import routes from '../routes';
@@ -60,14 +59,6 @@ export default function Link({ viewName, nav, to, ...props }) {
     />
   );
 }
-
-Link.propTypes = {
-  /**
-   * If true, the `NavLink` component of `react-router` will be used
-   * as the main link component.
-   */
-  nav: bool,
-};
 
 Link.defaultProps = {
   nav: false,

@@ -20,14 +20,12 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import classNames from 'classnames';
 import { formatDistanceStrict } from 'date-fns';
-import { bool, func } from 'prop-types';
 import React, { Fragment, useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
 import { RULE_DIFF_PROPERTIES } from '../../utils/constants';
 import getDiffedProperties from '../../utils/getDiffedProperties';
 import getIndexOfSubStr from '../../utils/getIndexOfSubStr';
 import Link from '../../utils/Link';
-import { rule } from '../../utils/prop-types';
 import Button from '../Button';
 import DiffRule from '../DiffRule';
 import SignoffSummary from '../SignoffSummary';
@@ -926,21 +924,6 @@ function RuleCard({
     </Card>
   );
 }
-
-RuleCard.propTypes = {
-  rule: rule.isRequired,
-  onRuleDelete: func,
-  // If true, the card will hide all buttons.
-  readOnly: bool,
-  // These are required if readOnly is false
-  onSignoff: func,
-  onRevoke: func,
-  // If true, card buttons that trigger a request
-  // navigating to a different view will be disabled
-  actionLoading: bool,
-  // If true, the card will disable all buttons
-  disableActions: bool,
-};
 
 RuleCard.defaultProps = {
   onRuleDelete: Function.prototype,

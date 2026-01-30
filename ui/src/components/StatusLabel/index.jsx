@@ -1,6 +1,5 @@
 import Button from '@mui/material/Button';
 import { sentenceCase } from 'change-case';
-import { string } from 'prop-types';
 import React from 'react';
 import { makeStyles } from 'tss-react/mui';
 import labels from '../../utils/labels';
@@ -50,12 +49,5 @@ function StatusLabel({ state }) {
     </Button>
   );
 }
-
-StatusLabel.propTypes = {
-  /**
-   * A state string.
-   */
-  state: string.isRequired,
-};
 
 export default StatusLabel;

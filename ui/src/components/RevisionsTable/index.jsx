@@ -5,7 +5,6 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { func, node, number } from 'prop-types';
 import React from 'react';
 import { makeStyles } from 'tss-react/mui';
 
@@ -105,11 +104,5 @@ function RevisionsTable(props) {
     </div>
   );
 }
-
-RevisionsTable.propTypes = {
-  rowCount: number.isRequired,
-  rowGetter: func.isRequired,
-  children: node.isRequired,
-};
 
 export default RevisionsTable;

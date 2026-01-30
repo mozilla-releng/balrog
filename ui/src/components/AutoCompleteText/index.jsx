@@ -1,6 +1,5 @@
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
-import { arrayOf, bool, func, object, string } from 'prop-types';
 import React from 'react';
 import { makeStyles } from 'tss-react/mui';
 
@@ -106,23 +105,6 @@ function AutoCompleteText({
     />
   );
 }
-
-AutoCompleteText.propTypes = {
-  // Callback triggered when the value of the text field is changed.
-  onValueChange: func.isRequired,
-  value: string.isRequired,
-  getSuggestions: func,
-  inputProps: object,
-  label: string,
-  required: bool,
-  disabled: bool,
-  // Selected items for when `multi` is set to `true`.
-  selectedItems: arrayOf(string),
-  // Callback triggered when the list of chips change.
-  onSelectedItemsChange: func,
-  // If true, the text field will allow multi text selection
-  multi: bool,
-};
 
 AutoCompleteText.defaultProps = {
   getSuggestions: null,
