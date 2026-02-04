@@ -112,7 +112,7 @@ services:
       - ./agent:/app/agent
       - /app/.venv
     environment:
-      - BALROG_API_ROOT=http://nginx:8011
+      - BALROG_API_ROOT=http://nginx:9012
       - BALROG_USERNAME=balrogagent
       - BALROG_PASSWORD=na
       - TELEMETRY_API_ROOT=abc
@@ -135,7 +135,7 @@ services:
     ports:
       - "9000:9000"
     environment:
-      - BALROG_ROOT_URL=https://localhost:8010
+      - BALROG_ROOT_URL=https://localhost:9011
       - HOST=0.0.0.0
       - PORT=9000
     volumes:
@@ -157,20 +157,20 @@ services:
       balrogadmin:
         condition: service_healthy
     ports:
-      - "8010:8010"
-      - "8011:8011"
+      - "9011:9011"
+      - "9012:9012"
     volumes:
       - ./scripts/nginx.conf:/etc/nginx/conf.d/http_balrog.conf.template
       - ./scripts/server.crt:/etc/nginx/server.crt
       - ./scripts/server.key:/etc/nginx/server.key
       - ./scripts/dhparam.pem:/etc/nginx/dhparam.pem
     environment:
-      - NGINX_PORT=8010
-      - NGINX_BALROG_AGENT_PORT=8011
+      - NGINX_PORT=9011
+      - NGINX_BALROG_AGENT_PORT=9012
       - BALROG_ADMIN_ROOT=http://balrogadmin:7070
     command: /bin/bash -c "envsubst '$$NGINX_PORT $$NGINX_BALROG_AGENT_PORT $$BALROG_ADMIN_ROOT' < /etc/nginx/conf.d/http_balrog.conf.template > /etc/nginx/conf.d/http_balrog.conf && nginx -g 'daemon off;'"
     healthcheck:
-        test: nc -z -v nginx 8010 && nc -z -v nginx 8011
+        test: nc -z -v nginx 9011 && nc -z -v nginx 9012
         interval: 2s
         timeout: 30s
         retries: 50
