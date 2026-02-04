@@ -33,11 +33,8 @@ services:
       - LOG_LEVEL=WARNING
       - INSECURE_SESSION_COOKIE=1
       - LOCALDEV=1
-      - AUTH0_CLIENT_ID=GlZhJQfx52b7MLQ19AjuTJHieiB4oh1j
-      - AUTH0_REDIRECT_URI=https://localhost:8010/login
       - AUTH0_DOMAIN=balrog-localdev.auth0.com
       - AUTH0_AUDIENCE=balrog-localdev
-      - AUTH0_SCOPE=full-user-credentials openid profile email
       - STATSD_HOST=graphite
       # By default, we disable writes to releases history for local development
       # and read existing history from the production bucket.
