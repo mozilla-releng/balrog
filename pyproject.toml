@@ -11,7 +11,7 @@ requires-python = ">=3.13"
 dependencies = [
     "aiohttp",
     "arrow",
-    "auth0-python>=4",
+    "auth0-python>=5",
     "connexion<3",
     "deepmerge",
     "ecdsa",
