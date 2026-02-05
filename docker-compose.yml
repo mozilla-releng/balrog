@@ -131,7 +131,7 @@ services:
 
 
   balrogui:
-    image: node:24@sha256:b2b2184ba9b78c022e1d6a7924ec6fba577adf28f15c9d9c457730cc4ad3807a
+    image: node:24@sha256:1de022d8459f896fff2e7b865823699dc7a8d5567507e8b87b14a7442e07f206
     depends_on:
       balrogadmin:
         condition: service_healthy
@@ -204,7 +204,7 @@ services:
 
   # TODO: provide our own config so that we can guarantee the keyid
   autograph:
-    image: mozilla/autograph:latest@sha256:dff47321255dae6df9cac65f6ab07e923cef4b1a1f1412be786246805ffcaf59
+    image: mozilla/autograph:latest@sha256:ae1aee2b6e10adf8d832769ce013095d775941c1c2735d7da3058a3e750e02d9
     expose:
       - "8000"
     ports:
