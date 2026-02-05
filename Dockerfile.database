@@ -1,4 +1,4 @@
-FROM mysql:8.0-debian@sha256:5284868db9fd4c480d37e8394fb37316ba29b1bdbec31185676faaf42cd82612
+FROM mysql:8.0-debian@sha256:7acd9677ba9d3d1c91a3b2a7999e182ca15919c5f2577184e5c8ce5384867ade
 
 # netcat is used to listen to the ports.
 
