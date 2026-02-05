@@ -9,7 +9,7 @@ from auslib.web.public.base import create_app
 @pytest.fixture(scope="class")
 def app(request):
     redis = fakeredis.FakeRedis()
-    cache.factory = lambda name, maxsize, timeout: TwoLayerCache(redis, name, maxsize, timeout)
+    cache.factory = lambda name, maxsize, timeout, post_load=None: TwoLayerCache(redis, name, maxsize, timeout, post_load)
     connexion_app = create_app()
     app = request.cls.app = connexion_app.app
     app.testing = True
