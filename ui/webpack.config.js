@@ -57,7 +57,7 @@ module.exports = (_, { mode }) => {
       },
       headers: {
         'Content-Security-Policy':
-          "default-src 'none'; script-src 'self' 'unsafe-eval'; img-src 'self' https://*.gravatar.com https://*.githubusercontent.com https://i1.wp.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://localhost:8010 'self' https://balrog-localdev.auth0.com https://www.googleapis.com/; frame-src https://balrog-localdev.auth0.com; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+          "default-src 'none'; script-src 'self' 'unsafe-eval'; img-src 'self' https://*.gravatar.com https://*.githubusercontent.com https://i1.wp.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://localhost:9011 'self' https://balrog-localdev.auth0.com https://www.googleapis.com/; frame-src https://balrog-localdev.auth0.com; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
         'X-Frame-Options': 'SAMEORIGIN',
         'X-Content-Type-Options': 'nosniff',
         'X-XSS-Protection': '1; mode=block',
@@ -180,7 +180,7 @@ module.exports = (_, { mode }) => {
       new webpack.EnvironmentPlugin({
         HOST: DEFAULT_HOST,
         PORT: DEFAULT_PORT,
-        BALROG_ROOT_URL: 'https://localhost:8010',
+        BALROG_ROOT_URL: 'https://localhost:9011',
         AUTH0_CLIENT_ID: 'GlZhJQfx52b7MLQ19AjuTJHieiB4oh1j',
         AUTH0_DOMAIN: 'balrog-localdev.auth0.com',
         AUTH0_AUDIENCE: 'balrog-localdev',

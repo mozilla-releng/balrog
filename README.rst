@@ -36,7 +36,7 @@ Then, run the following command to create and run the necessary containers:
 Once it completes, you should be able to access
 
 - http://localhost:9010 - The public API
-- https://localhost:8010 - The admin API
+- https://localhost:9011 - The admin API
 - https://localhost:9000 - The admin interface
 - http://localhost:8050 - A graphite interface
 
