@@ -202,13 +202,6 @@ if os.environ.get("SENTRY_DSN"):
 # the repo itself
 application.config["VERSION_FILE"] = "/app/version.json"
 
-auth0_config = {
-    "AUTH0_CLIENT_ID": os.environ["AUTH0_CLIENT_ID"],
-    "AUTH0_REDIRECT_URI": os.environ["AUTH0_REDIRECT_URI"],
-    "AUTH0_DOMAIN": os.environ["AUTH0_DOMAIN"],
-    "AUTH0_AUDIENCE": os.environ["AUTH0_AUDIENCE"],
-    "AUTH0_SCOPE": os.environ["AUTH0_SCOPE"],
-}
 application.config["AUTH_DOMAIN"] = os.environ["AUTH0_DOMAIN"]
 application.config["AUTH_AUDIENCE"] = os.environ["AUTH0_AUDIENCE"]
 
