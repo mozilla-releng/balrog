@@ -24,6 +24,7 @@ dependencies = [
     "jsonschema>=4.5.0",
     "mozilla-version",
     "mysqlclient",
+    "orjson",
     "pyjwt[crypto]",
     "python-jose",
     "redis",

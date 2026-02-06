@@ -1,7 +1,7 @@
-import pickle
 import unittest
 
 import mock
+import orjson
 
 from auslib.blobs.base import Blob, createBlob
 from auslib.util.cache import MaybeCacher, RedisCache, TwoLayerCache
@@ -100,7 +100,7 @@ def test_two_layer_cache_redis_hit_populates_lru(fake_redis):
     cache = TwoLayerCache(fake_redis, "test", 5, 30)
 
     # Pre-populate Redis with a value
-    fake_redis.setex("test-test_key", 30, pickle.dumps("redis_value"))
+    fake_redis.setex("v2-test-test_key", 30, orjson.dumps("redis_value"))
 
     # First access should hit Redis
     result1 = cache.get("test_key", "default")
@@ -161,7 +161,7 @@ def test_two_layer_cache_expired_fetches_from_redis(fake_redis):
     cache._lru_cache.clear()
 
     # Put a different value in Redis to test that it's fetched when LRU is empty
-    fake_redis.setex("test-test_key", 30, pickle.dumps("redis_value"))
+    fake_redis.setex("v2-test-test_key", 30, orjson.dumps("redis_value"))
 
     result = cache.get("test_key", "default_value")
 
@@ -297,10 +297,25 @@ def test_two_layer_cache_in_memory_expires_at_same_time_after_reset(fake_redis):
         assert cache._redis_cache.misses == 1  # Expired
 
 
-def test_redis_cache_loads_blobs_correctly(fake_redis, firefox_100_0_build1):
-    """Ensure that blobs comes out of redis as blobs, and not dicts."""
-    cache = RedisCache(fake_redis, "test", 30)
+def test_redis_cache_default_loads(fake_redis):
+    cache = RedisCache(fake_redis, "test", 30, None)
 
-    cache.put("testblob", createBlob(firefox_100_0_build1))
-    cached_blob = cache.get("testblob")
-    assert isinstance(cached_blob, Blob)
+    cache.put("key", {"foo": "bar", "n": 42})
+    result = cache.get("key")
+    assert result == {"foo": "bar", "n": 42}
+
+
+def test_redis_cache_custom_loads(fake_redis, firefox_100_0_build1):
+    def load_blob(s):
+        data = orjson.loads(s)
+        data["blob"] = createBlob(data["blob"])
+        return data
+
+    cache = RedisCache(fake_redis, "test", 30, load_blob)
+
+    blob = createBlob(firefox_100_0_build1)
+    cache.put("testblob", {"data_version": 42, "blob": blob})
+    result = cache.get("testblob")
+    assert result["data_version"] == 42
+    assert isinstance(result["blob"], Blob)
+    assert result["blob"] == blob
