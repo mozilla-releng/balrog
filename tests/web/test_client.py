@@ -117,7 +117,7 @@ class ClientTestBase(ClientTestCommon):
     @pytest.fixture(autouse=True)
     def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, firefox_100_0_build1, timecop_1_0):
         redis = fakeredis.FakeRedis()
-        cache.factory = lambda name, maxsize, timeout: TwoLayerCache(redis, name, maxsize, timeout)
+        cache.factory = lambda name, maxsize, timeout, redis_loads=None: TwoLayerCache(redis, name, maxsize, timeout, redis_loads)
         cache.reset()
         cache.make_cache("releases", 50, 10)
         cache.make_cache("releases_data_version", 50, 5)
@@ -2259,7 +2259,7 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         self.app.config["PROPAGATE_EXCEPTIONS"] = False
         self.client = self.app.test_client()
         redis = fakeredis.FakeRedis()
-        cache.factory = lambda name, maxsize, timeout: TwoLayerCache(redis, name, maxsize, timeout)
+        cache.factory = lambda name, maxsize, timeout, redis_loads=None: TwoLayerCache(redis, name, maxsize, timeout, redis_loads)
 
     def testCacheControlIsSet(self):
         ret = self.client.get("/update/3/c/15.0/1/p/l/a/a/default/a/update.xml")

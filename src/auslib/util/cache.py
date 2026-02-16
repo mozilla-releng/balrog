@@ -1,7 +1,7 @@
-import pickle
 import time
 from copy import deepcopy
 
+import orjson
 from repoze.lru import ExpiringLRUCache
 
 from auslib.util.statsd import statsd
@@ -37,7 +37,7 @@ class MaybeCacher(object):
         # _also_ need a Redis client passed in. The sanest way to do this is
         # to allow the caller to provide it in a closure, hence we end up
         # making this a callable instead of a simple class.
-        self._factory = lambda _, maxsize, timeout: ExpiringLRUCache(maxsize, timeout)
+        self._factory = lambda _, maxsize, timeout, redis_loads=None: ExpiringLRUCache(maxsize, timeout)
 
     @property
     def factory(self):
@@ -59,11 +59,11 @@ class MaybeCacher(object):
             raise TypeError("make_copies must be True or False")
         self._make_copies = value
 
-    def make_cache(self, name, maxsize, timeout):
+    def make_cache(self, name, maxsize, timeout, redis_loads=None):
         if name in self.caches:
             raise Exception()
 
-        self.caches[name] = self.factory(name, maxsize, timeout)
+        self.caches[name] = self.factory(name, maxsize, timeout, redis_loads)
 
     def reset(self):
         self.caches.clear()
@@ -133,9 +133,10 @@ class RedisCache:
     TwoLayerCache (see below).
     """
 
-    def __init__(self, redis, name, timeout):
+    def __init__(self, redis, name, timeout, redis_loads=None):
         self._name = name
         self._redis = redis
+        self._loads = redis_loads or orjson.loads
         # redis and repoze calculate expiry slightly differently; a timeout of
         # 5 seconds with repoze ends up being 6 seconds in redis. this really
         # doesn't matter...but it's better to be consistent than not, and redis'
@@ -147,26 +148,23 @@ class RedisCache:
         self.misses = 0
 
     def fullkey(self, key):
-        return f"{self._name}-{key}"
+        return f"v2-{self._name}-{key}"
 
     def get(self, key, default=None):
         self.lookups += 1
         value = self._redis.get(self.fullkey(key))
         if value is not None:
             self.hits += 1
-            return pickle.loads(value)
+            return self._loads(value)
 
         self.misses += 1
         return default
 
     def put(self, key, value):
-        # orjson dumps and loads faster than pickle, but we have a need to
-        # support python objects (most notably: Blob instances). Pickle is
-        # not too much slower than orjson, so we stick with that for now.
-        self._redis.setex(self.fullkey(key), self._timeout, pickle.dumps(value))
+        self._redis.setex(self.fullkey(key), self._timeout, orjson.dumps(value, option=orjson.OPT_NON_STR_KEYS))
 
     def clear(self):
-        self._redis.delete(*self._redis.keys(self._name))
+        self._redis.delete(*self._redis.keys(f"v2-{self._name}"))
 
     def invalidate(self, key):
         self._redis.delete(self.fullkey(key))
@@ -183,8 +181,8 @@ class TwoLayerCache:
     across many pods while minimizing the perf impact of having an off-machine
     cache."""
 
-    def __init__(self, redis, name, maxsize, timeout):
-        self._redis_cache = RedisCache(redis, name, timeout)
+    def __init__(self, redis, name, maxsize, timeout, redis_loads=None):
+        self._redis_cache = RedisCache(redis, name, timeout, redis_loads)
         self._lru_cache = ExpiringLRUCache(maxsize, timeout)
         self.lookups = 0
         self.hits = 0
