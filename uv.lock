@@ -293,7 +293,7 @@ requires-dist = [
     { name = "requests" },
     { name = "requests-hawk" },
     { name = "sentry-sdk", extras = ["flask"] },
-    { name = "setuptools" },
+    { name = "setuptools", specifier = "<82" },
     { name = "spec-synthase" },
     { name = "sqlalchemy", specifier = "<2" },
     { name = "sqlalchemy-migrate" },
