@@ -10,6 +10,7 @@ readme = "README.rst"
 requires-python = ">=3.13"
 dependencies = [
     "aiohttp",
+    "alembic",
     "arrow",
     "auth0-python>=5",
     "connexion<3",
@@ -31,10 +32,8 @@ dependencies = [
     "requests",
     "requests-hawk",
     "sentry-sdk[flask]",
-    # sqlalchemy-migrate tries to import pkg_resources which doesn't exist anymore after setuptools 82
-    "setuptools<82",
+    "setuptools",
     "spec-synthase",
-    "sqlalchemy-migrate",
     "sqlalchemy<2",
     "statsd",
     "swagger-spec-validator",

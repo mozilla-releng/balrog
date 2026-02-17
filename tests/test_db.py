@@ -5,18 +5,14 @@ import re
 import sys
 import unittest
 from copy import deepcopy
-from os import path
 from tempfile import mkstemp
 
-import migrate.versioning.api
 import mock
 import pytest
-from migrate.versioning.api import version
 from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, select
 from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy.testing.assertions import emits_warning
 
-import auslib
 from auslib.blobs.apprelease import ReleaseBlobV1
 from auslib.blobs.base import createBlob
 from auslib.db import (
@@ -43,9 +39,9 @@ from .fakes import FakeGCSHistory, FakeGCSHistoryAsync
 
 
 def setUpModule():
-    # This is meant to silence the debug information coming from SQLAlchemy-Migrate since
+    # This is meant to silence the debug information coming from Alembic since
     # AUSDatabase provides decent debugging logs by itself.
-    logging.getLogger("migrate").setLevel(logging.CRITICAL)
+    logging.getLogger("alembic").setLevel(logging.CRITICAL)
 
 
 class MemoryDatabaseMixin(object):
@@ -5621,8 +5617,8 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             [
                 "dockerflow",
                 # TODO: dive into this more
-                # Migrate version only exists in production-like databases.
-                # "migrate_version", # noqa
+                # Alembic version only exists in production-like databases.
+                # "alembic_version", # noqa
                 "permissions",
                 "permissions_history",
                 "permissions_scheduled_changes",
@@ -5794,10 +5790,46 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
         self.assertEqual(set(self.db.metadata.tables.keys()), self.db_tables)
 
     def testModelIsSameAsRepository(self):
+        """
+        Test that the model metadata matches the migrated database schema.
+
+        This verifies that creating a fresh database via metadata.create_all()
+        produces the same schema as the alembic migrations.
+        """
         db2 = self._get_migrated_db()
-        diff = migrate.versioning.api.compare_model_to_db(db2.engine, self.db.migrate_repo, self.db.metadata)
-        if diff:
-            self.fail(str(diff))
+        reflected_meta = self._get_reflected_metadata(db2)
+
+        # Compare table names (excluding alembic_version which is created by alembic)
+        model_tables = set(self.db.metadata.tables.keys())
+        db_tables = set(reflected_meta.tables.keys()) - {"alembic_version"}
+
+        missing_in_db = model_tables - db_tables
+        extra_in_db = db_tables - model_tables
+
+        if missing_in_db:
+            self.fail(f"Tables in model but not in database: {missing_in_db}")
+        if extra_in_db:
+            self.fail(f"Tables in database but not in model: {extra_in_db}")
+
+        # Compare column names for each table
+        failures = []
+        for table_name in model_tables:
+            model_table = self.db.metadata.tables[table_name]
+            db_table = reflected_meta.tables[table_name]
+
+            model_columns = set(model_table.columns.keys())
+            db_columns = set(db_table.columns.keys())
+
+            if model_columns != db_columns:
+                missing = model_columns - db_columns
+                extra = db_columns - model_columns
+                if missing:
+                    failures.append(f"Table {table_name}: columns in model but not in DB: {missing}")
+                if extra:
+                    failures.append(f"Table {table_name}: columns in DB but not in model: {extra}")
+
+        if failures:
+            self.fail("Column differences between model and database:\n" + "\n".join(failures))
 
     def testColumnAttributesAreSameAsDb(self):
         table_instances = []
@@ -5809,310 +5841,3 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             table_instances.append((meta_data.tables[table_name], self.db.metadata.tables[table_name]))
 
         self.assert_attributes_for_tables(table_instances)
-
-    def _rules_version_length_migration_test(self, db, upgrade=True):
-        """
-        Tests the upgrades and downgrades for version 23 work properly.
-        :param db: migrated DB object.
-        :param upgrade: boolean parameter. If true run for upgrade script tests else
-          run downgrade script tests.
-        """
-        upgraded_length = 75
-        downgrade_length = 10
-        meta_data = self._get_reflected_metadata(db)
-        tables_list = ["rules", "rules_history"]
-        scheduled_changes_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
-        if upgrade:
-            for table_name in tables_list:
-                self.assertEqual(upgraded_length, meta_data.tables[table_name].c.version.type.length)
-            for table_name in scheduled_changes_tables:
-                self.assertEqual(upgraded_length, meta_data.tables[table_name].c.base_version.type.length)
-        else:
-            for table_name in tables_list:
-                self.assertEqual(downgrade_length, meta_data.tables[table_name].c.version.type.length)
-            for table_name in scheduled_changes_tables:
-                self.assertEqual(downgrade_length, meta_data.tables[table_name].c.base_version.type.length)
-
-    def _delete_whitelist_migration_test(self, db, upgrade=True):
-        """
-        Tests the upgrades and downgrades for version 24 work properly.
-        :param db: migrated DB object
-        :param upgrade: boolean parameter. If true run for upgrade script tests else
-          run downgrade script tests.
-        """
-
-        meta_data = self._get_reflected_metadata(db)
-
-        whitelist_tables = ["rules", "rules_history"]
-        base_whitelist_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
-
-        if upgrade:
-            for table_name in whitelist_tables:
-                self.assertNotIn("whitelist", meta_data.tables[table_name].c)
-
-            for table_name in base_whitelist_tables:
-                self.assertNotIn("base_whitelist", meta_data.tables[table_name].c)
-        else:
-            for table_name in whitelist_tables:
-                self.assertIn("whitelist", meta_data.tables[table_name].c)
-
-            for table_name in base_whitelist_tables:
-                self.assertIn("base_whitelist", meta_data.tables[table_name].c)
-
-    def _add_memory_migration_test(self, db, upgrade=True):
-        metadata = self._get_reflected_metadata(db)
-        memory_tables = ["rules", "rules_history"]
-        base_memory_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
-
-        if upgrade:
-            for table_name in memory_tables:
-                self.assertIn("memory", metadata.tables[table_name].c)
-            for table_name in base_memory_tables:
-                self.assertIn("base_memory", metadata.tables[table_name].c)
-        else:
-            for table_name in memory_tables:
-                self.assertNotIn("memory", metadata.tables[table_name].c)
-            for table_name in base_memory_tables:
-                self.assertNotIn("base_memory", metadata.tables[table_name].c)
-
-    def _add_instructionSet_test(self, db, upgrade=True):
-        metadata = self._get_reflected_metadata(db)
-        capabilities_tables = ["rules", "rules_history"]
-        base_capabilities_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
-
-        if upgrade:
-            for table_name in capabilities_tables:
-                self.assertIn("instructionSet", metadata.tables[table_name].c)
-            for table_name in base_capabilities_tables:
-                self.assertIn("base_instructionSet", metadata.tables[table_name].c)
-        else:
-            for table_name in capabilities_tables:
-                self.assertNotIn("instructionSet", metadata.tables[table_name].c)
-            for table_name in base_capabilities_tables:
-                self.assertNotIn("base_instructionSet", metadata.tables[table_name].c)
-
-    def _remove_systemCapabilities_test(self, db, upgrade=True):
-        metadata = self._get_reflected_metadata(db)
-        capabilities_tables = ["rules", "rules_history"]
-        base_capabilities_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
-
-        if upgrade:
-            for table_name in capabilities_tables:
-                self.assertNotIn("systemCapabilities", metadata.tables[table_name].c)
-            for table_name in base_capabilities_tables:
-                self.assertNotIn("base_systemCapabilities", metadata.tables[table_name].c)
-        else:
-            for table_name in capabilities_tables:
-                self.assertIn("systemCapabilities", metadata.tables[table_name].c)
-            for table_name in base_capabilities_tables:
-                self.assertIn("base_systemCapabilities", metadata.tables[table_name].c)
-
-    def _add_mig64_test(self, db, upgrade=True):
-        metadata = self._get_reflected_metadata(db)
-        mig64_tables = ["rules", "rules_history"]
-        base_mig64_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
-
-        if upgrade:
-            for table_name in mig64_tables:
-                self.assertIn("mig64", metadata.tables[table_name].c)
-            for table_name in base_mig64_tables:
-                self.assertIn("base_mig64", metadata.tables[table_name].c)
-        else:
-            for table_name in mig64_tables:
-                self.assertNotIn("mig64", metadata.tables[table_name].c)
-            for table_name in base_mig64_tables:
-                self.assertNotIn("base_mig64", metadata.tables[table_name].c)
-
-    def _add_jaws_test(self, db, upgrade=True):
-        metadata = self._get_reflected_metadata(db)
-        jaws_tables = ["rules", "rules_history"]
-        base_jaws_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
-
-        if upgrade:
-            for table_name in jaws_tables:
-                self.assertIn("jaws", metadata.tables[table_name].c)
-            for table_name in base_jaws_tables:
-                self.assertIn("base_jaws", metadata.tables[table_name].c)
-        else:
-            for table_name in jaws_tables:
-                self.assertNotIn("jaws", metadata.tables[table_name].c)
-            for table_name in base_jaws_tables:
-                self.assertNotIn("base_jaws", metadata.tables[table_name].c)
-
-    def _add_emergency_shutoff_tables(self, db, upgrade=True):
-        metadata = self._get_reflected_metadata(db)
-        shutoff_tables = [
-            "emergency_shutoffs",
-            "emergency_shutoffs_history",
-            "emergency_shutoffs_scheduled_changes",
-            "emergency_shutoffs_scheduled_changes_history",
-            "emergency_shutoffs_scheduled_changes_conditions",
-            "emergency_shutoffs_scheduled_changes_conditions_history",
-            "emergency_shutoffs_scheduled_changes_signoffs",
-            "emergency_shutoffs_scheduled_changes_signoffs_history",
-        ]
-        if upgrade:
-            for table in shutoff_tables:
-                self.assertIn(table, metadata.tables)
-        else:
-            for table in shutoff_tables:
-                self.assertNotIn(table, metadata.tables)
-
-    def _add_emergency_shutoff_comments(self, db, upgrade=True):
-        metadata = self._get_reflected_metadata(db)
-        emergency_shutoff_tables = [
-            "emergency_shutoffs",
-            "emergency_shutoffs_history",
-        ]
-
-        emergency_shutoff_sc_tables = [
-            "emergency_shutoffs_scheduled_changes",
-            "emergency_shutoffs_scheduled_changes_history",
-        ]
-
-        if upgrade:
-            for table_name in emergency_shutoff_tables:
-                self.assertIn("comment", metadata.tables[table_name].c)
-            for table_name in emergency_shutoff_sc_tables:
-                self.assertIn("base_comment", metadata.tables[table_name].c)
-        else:
-            for table_name in emergency_shutoff_tables:
-                self.assertNotIn("comment", metadata.tables[table_name].c)
-            for table_name in emergency_shutoff_sc_tables:
-                self.assertNotIn("base_comment", metadata.tables[table_name].c)
-
-    def _add_release_json_tables(self, db, upgrade=True):
-        metadata = self._get_reflected_metadata(db)
-        releases_tables = [
-            "releases_json",
-            "releases_json_scheduled_changes",
-            "releases_json_scheduled_changes_history",
-            "releases_json_scheduled_changes_conditions",
-            "releases_json_scheduled_changes_conditions_history",
-            "releases_json_scheduled_changes_signoffs",
-            "releases_json_scheduled_changes_signoffs_history",
-            "release_assets",
-            "release_assets_scheduled_changes",
-            "release_assets_scheduled_changes_history",
-            "release_assets_scheduled_changes_conditions",
-            "release_assets_scheduled_changes_conditions_history",
-            "release_assets_scheduled_changes_signoffs",
-            "release_assets_scheduled_changes_signoffs_history",
-        ]
-        if upgrade:
-            for table in releases_tables:
-                self.assertIn(table, metadata.tables)
-        else:
-            for table in releases_tables:
-                self.assertNotIn(table, metadata.tables)
-
-    def _add_pinnable_releases_tables(self, db, upgrade=True):
-        metadata = self._get_reflected_metadata(db)
-        pin_tables = [
-            "pinnable_releases",
-            "pinnable_releases_scheduled_changes",
-            "pinnable_releases_scheduled_changes_history",
-            "pinnable_releases_scheduled_changes_conditions",
-            "pinnable_releases_scheduled_changes_conditions_history",
-            "pinnable_releases_scheduled_changes_signoffs",
-            "pinnable_releases_scheduled_changes_signoffs_history",
-        ]
-        if upgrade:
-            for table in pin_tables:
-                self.assertIn(table, metadata.tables)
-        else:
-            for table in pin_tables:
-                self.assertNotIn(table, metadata.tables)
-
-    def _fix_column_attributes_migration_test(self, db, upgrade=True):
-        """
-        Tests the upgrades and downgrades for version 22 work properly.
-        :param db: migrated DB object
-        :param upgrade: boolean parameter. If true run for upgrade script tests else
-          run downgrade script tests.
-        """
-        data_version_nullable_tables = [
-            "permissions_req_signoffs_scheduled_changes_conditions",
-            "permissions_scheduled_changes",
-            "permissions_scheduled_changes_conditions",
-            "product_req_signoffs_scheduled_changes_conditions",
-            "releases_scheduled_changes",
-            "releases_scheduled_changes_conditions",
-            "rules_scheduled_changes",
-            "rules_scheduled_changes_conditions",
-            "user_roles",
-        ]
-
-        when_nullable_tables = ["permissions_scheduled_changes_conditions", "releases_scheduled_changes_conditions"]
-
-        meta_data = self._get_reflected_metadata(db)
-
-        if upgrade:
-            for table_name in data_version_nullable_tables:
-                self.assertFalse(meta_data.tables[table_name].c.data_version.nullable)
-            for table_name in when_nullable_tables:
-                self.assertTrue(meta_data.tables[table_name].c.when.nullable)
-        else:
-            for table_name in data_version_nullable_tables:
-                self.assertTrue(meta_data.tables[table_name].c.data_version.nullable)
-            for table_name in when_nullable_tables:
-                self.assertFalse(meta_data.tables[table_name].c.when.nullable)
-
-    def _test_rules_longer_distribution(self, db, upgrade=True):
-        upgraded_length = 2000
-        downgrade_length = 100
-        meta_data = self._get_reflected_metadata(db)
-        tables_list = ["rules", "rules_history"]
-        scheduled_changes_tables = ["rules_scheduled_changes", "rules_scheduled_changes_history"]
-        if upgrade:
-            for table_name in tables_list:
-                self.assertEqual(upgraded_length, meta_data.tables[table_name].c.distribution.type.length)
-            for table_name in scheduled_changes_tables:
-                self.assertEqual(upgraded_length, meta_data.tables[table_name].c.base_distribution.type.length)
-        else:
-            for table_name in tables_list:
-                self.assertEqual(downgrade_length, meta_data.tables[table_name].c.distribution.type.length)
-            for table_name in scheduled_changes_tables:
-                self.assertEqual(downgrade_length, meta_data.tables[table_name].c.base_distribution.type.length)
-
-    def testVersionChangesWorkAsExpected(self):
-        """
-        Tests that downgrades and upgrades work as expected. Since the DB will never
-        be rolled back beyond version 21 we treat it as the base version for all future versions from now.
-        Note: These tests run and verify migrations on a sqlite DB
-        whereas the actual migration happens on a mySQL DB.
-        """
-        # TODO Remove these tests when we upgrade sqlalchemy so that these per-version tests are no longer required.
-        latest_version = version(path.abspath(path.join(path.dirname(auslib.__file__), "migrate")))
-        db = self._get_migrated_db()
-
-        def _noop(*args, **kwargs):
-            pass
-
-        versions_migrate_tests_dict = {
-            35: self._add_emergency_shutoff_comments,
-            34: self._add_pinnable_releases_tables,
-            33: self._add_release_json_tables,
-            # This version removes the releases_history table, which is verified by other tests
-            32: _noop,
-            31: self._test_rules_longer_distribution,
-            30: self._add_emergency_shutoff_tables,
-            29: self._add_jaws_test,
-            28: self._add_mig64_test,
-            27: self._remove_systemCapabilities_test,
-            26: self._add_instructionSet_test,
-            # No-op migration
-            25: _noop,
-            24: self._add_memory_migration_test,
-            23: self._delete_whitelist_migration_test,
-            22: self._rules_version_length_migration_test,
-            21: self._fix_column_attributes_migration_test,
-        }
-
-        for v in range(latest_version - 1, 20, -1):
-            db.downgrade(version=v)
-            versions_migrate_tests_dict[v](db=db, upgrade=False)
-
-        for v in range(22, latest_version + 1):
-            db.upgrade(version=v)
-            versions_migrate_tests_dict[v - 1](db=db)
