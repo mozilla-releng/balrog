@@ -55,7 +55,7 @@ dev = [
     "flake8",
     "flake8-black",
     # https://github.com/HypothesisWorks/hypothesis/issues/4638
-    "hypothesis<6.150.0",
+    "hypothesis<6.151.10",
     "isort",
     "mock",
     "pytest",
