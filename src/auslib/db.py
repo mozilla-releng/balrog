@@ -7,11 +7,12 @@ from collections import defaultdict
 from copy import copy
 from os import path
 
-import migrate.versioning.api
-import migrate.versioning.schema
+import sqlalchemy
 import sqlalchemy.event
 import sqlalchemy.types
 from aiohttp import ClientSession
+from alembic import command
+from alembic.config import Config
 from sqlalchemy import JSON, BigInteger, Boolean, Column, Integer, MetaData, String, Table, Text, create_engine, func, join, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
@@ -2972,7 +2973,7 @@ def my_on_connect(dbapi_con, connection_record):
 
 class AUSDatabase(object):
     engine = None
-    migrate_repo = path.join(path.dirname(__file__), "migrate")
+    alembic_dir = path.join(path.dirname(__file__), "alembic")
 
     def __init__(
         self,
@@ -3046,36 +3047,65 @@ class AUSDatabase(object):
     def getUserRoles(self, *args, **kwargs):
         return self.permissions.getUserRoles(*args, **kwargs)
 
+    def _get_alembic_config(self):
+        """Create and configure an Alembic Config object."""
+        alembic_cfg = Config()
+        alembic_cfg.set_main_option("script_location", self.alembic_dir)
+        alembic_cfg.attributes["connection"] = self.engine
+        alembic_cfg.attributes["target_metadata"] = self.metadata
+        return alembic_cfg
+
+    def _maybe_migrate_from_sqlalchemy_migrate(self):
+        """
+        Detect old migrate_version table and transition to alembic.
+
+        If migrate_version table exists:
+        1. Stamp alembic version to '0001' (initial schema)
+        2. Drop migrate_version table
+        """
+        inspector = sqlalchemy.inspect(self.engine)
+        if "migrate_version" in inspector.get_table_names():
+            self.log.info("Detected migrate_version table, transitioning to alembic")
+            alembic_cfg = self._get_alembic_config()
+            command.stamp(alembic_cfg, "0001")
+            with self.engine.begin() as conn:
+                conn.execute(sqlalchemy.text("DROP TABLE migrate_version"))
+            self.log.info("Transition to alembic complete")
+
     def create(self, version=None):
-        # Migrate's "create" merely declares a database to be under its control,
-        # it doesn't actually create tables or upgrade it. So we need to call it
-        # and then do the upgrade to get to the state we want. We also have to
-        # tell create that we're creating at version 0 of the database, otherwise
-        # upgrade will do nothing!
-        migrate.versioning.schema.ControlledSchema.create(self.engine, self.migrate_repo, 0)
-        self.upgrade(version)
+        """
+        Create all tables using alembic migrations.
+
+        For fresh databases, this runs all alembic migrations to create the schema.
+        """
+        alembic_cfg = self._get_alembic_config()
+        target = version if version else "head"
+        self.log.info(f"Creating database schema via alembic migrations to version: {target}")
+        command.upgrade(alembic_cfg, target)
 
     def upgrade(self, version=None):
-        # This method was taken from Buildbot:
-        # https://github.com/buildbot/buildbot/blob/87108ec4088dc7fd5394ac3c1d0bd3b465300d92/master/buildbot/db/model.py#L455
-        # http://code.google.com/p/sqlalchemy-migrate/issues/detail?id=100
-        # means we cannot use the migrate.versioning.api module.  So these
-        # methods perform similar wrapping functions to what is done by the API
-        # functions, but without disposing of the engine.
-        schema = migrate.versioning.schema.ControlledSchema(self.engine, self.migrate_repo)
-        changeset = schema.changeset(version)
-        for step, change in changeset:
-            self.log.debug("migrating schema version %s -> %d" % (step, step + 1))
-            schema.runchange(step, change, 1)
+        """
+        Upgrade the database to a specific alembic revision.
+
+        First checks for and migrates from sqlalchemy-migrate if needed,
+        then runs alembic upgrade to the specified version (or 'head' if not specified).
+        """
+        self._maybe_migrate_from_sqlalchemy_migrate()
+        alembic_cfg = self._get_alembic_config()
+        target = version if version else "head"
+        self.log.info(f"Upgrading database to alembic version: {target}")
+        command.upgrade(alembic_cfg, target)
 
     def downgrade(self, version):
-        if version < 21:
-            raise ValueError("Cannot downgrade below version 21")
-        schema = migrate.versioning.schema.ControlledSchema(self.engine, self.migrate_repo)
-        changeset = schema.changeset(version)
-        for step, change in changeset:
-            self.log.debug("migrating schema version %s -> %d" % (step, step - 1))
-            schema.runchange(step, change, -1)
+        """
+        Downgrade the database to a specific alembic revision.
+
+        Args:
+            version: The alembic revision to downgrade to (e.g., '0001', or a revision hash)
+        """
+        alembic_cfg = self._get_alembic_config()
+        self.log.info(f"Downgrading database to alembic version: {version}")
+        command.downgrade(alembic_cfg, version)
 
     def reset(self):
         self.engine = None

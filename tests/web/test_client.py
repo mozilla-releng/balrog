@@ -24,8 +24,8 @@ from auslib.web.public.client import extract_query_version
 
 
 def setUpModule():
-    # Silence SQLAlchemy-Migrate's debugging logger
-    logging.getLogger("migrate").setLevel(logging.CRITICAL)
+    # Silence Alembic's debugging logger
+    logging.getLogger("alembic").setLevel(logging.CRITICAL)
 
 
 def validate_cache_stats(lookups, hits, misses, data_version_lookups, data_version_hits, data_version_misses, mocked_incr):

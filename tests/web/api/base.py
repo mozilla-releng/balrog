@@ -10,8 +10,8 @@ from auslib.util.cache import TwoLayerCache
 
 
 def setUpModule():
-    # Silence SQLAlchemy-Migrate's debugging logger
-    logging.getLogger("migrate").setLevel(logging.CRITICAL)
+    # Silence Alembic's debugging logger
+    logging.getLogger("alembic").setLevel(logging.CRITICAL)
 
 
 @pytest.mark.usefixtures("current_db_schema", "app")
