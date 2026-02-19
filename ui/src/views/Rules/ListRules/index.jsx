@@ -751,11 +751,10 @@ function ListRules(props) {
   };
 
   const handleSignoff = async (rule) => {
-    setRequiredRoles(Object.keys(rule.required_signoffs));
-
-    const userRequiredRoles = Object.keys(rule.required_signoffs).filter((r) =>
-      roles.includes(r),
-    );
+    setRequiredRoles(Object.keys(rule.scheduledChange.required_signoffs));
+    const userRequiredRoles = Object.keys(
+      rule.scheduledChange.required_signoffs,
+    ).filter((r) => roles.includes(r));
 
     if (userRequiredRoles.length === 1) {
       const { error, result } = await doSignoff(userRequiredRoles[0], rule);
@@ -1376,9 +1375,10 @@ function ListRules(props) {
           onRuleDelete={handleRuleDelete}
           canSignoff={
             !rewindDate &&
-            rule.required_signoffs &&
-            Object.keys(rule.required_signoffs).filter((r) => roles.includes(r))
-              .length
+            rule.scheduledChange?.required_signoffs &&
+            Object.keys(rule.scheduledChange.required_signoffs).filter((r) =>
+              roles.includes(r),
+            ).length
           }
           onSignoff={() => handleSignoff(rule)}
           onRevoke={() => handleRevoke(rule)}
