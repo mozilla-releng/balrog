@@ -2223,12 +2223,15 @@ class ClientTestEmergencyShutoff(ClientTestBase):
         ret = self.client.get(update_query)
         self.assertUpdatesAreEmpty(ret)
 
-    def testShutoffUpdatesCache(self):
+    @mock.patch("auslib.util.cache.statsd.incr")
+    def testShutoffUpdatesCache(self, mocked_incr):
         # Create the updates_disabled cache for this test
         cache.make_cache("updates_disabled", 10, 100)
         update_query = "/update/3/b/1.0/1/p/l/a/a/a/a/update.xml"
         ret = self.client.get(update_query)
         self.assertUpdateEqual(ret, self.update_xml)
+        self.assertEqual(mocked_incr.call_count, 2)
+        mocked_incr.assert_called_with("updates_disabled.hits")
 
         dbo.emergencyShutoffs.t.insert().execute(product="b", channel="a", data_version=1)
 
@@ -2236,6 +2239,10 @@ class ClientTestEmergencyShutoff(ClientTestBase):
         # updates check has been cached
         ret = self.client.get(update_query)
         self.assertUpdateEqual(ret, self.update_xml)
+        self.assertEqual(mocked_incr.call_count, 4)
+        mocked_incr.assert_has_calls(
+            [mock.call("updates_disabled.misses"), mock.call("updates_disabled.hits"), mock.call("updates_disabled.hits"), mock.call("updates_disabled.hits")]
+        )
 
     def testShutoffUpdatesFallbackChannel(self):
         update_query = "/update/3/b/1.0/1/p/l/a-cck-foo/a/a/a/update.xml"
