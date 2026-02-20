@@ -9,7 +9,6 @@ import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import CardHeader from '@mui/material/CardHeader';
 import Chip from '@mui/material/Chip';
-import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/GridLegacy';
 import IconButton from '@mui/material/IconButton';
@@ -164,8 +163,7 @@ function RuleCard({
   diffRules,
   ...props
 }) {
-  const [open, setOpen] = useState(false);
-  const [seeMore, setSeeMore] = useState('...see more');
+  const [osVersionExpanded, setOsVersionExpanded] = useState(false);
   const { classes } = useStyles();
   const requiresSignoff =
     rule.scheduledChange &&
@@ -214,82 +212,61 @@ function RuleCard({
   const priorityTitle = isScheduledPriorityUpdate
     ? 'Scheduled Priority'
     : 'Priority';
-  const handleTooltipOpen = () => {
-    setOpen(true);
-    setSeeMore('...see less');
-  };
+  const osVersionSplitAmount = 5;
+  const isOsVersionLong = () =>
+    rule.osVersion && rule.osVersion.split(',').length > osVersionSplitAmount;
 
-  const handleTooltipClose = () => {
-    setOpen(false);
-    setSeeMore('...see more');
-  };
-
-  const splitAmount = 5;
-  const isOsVersionLong = () => {
-    if (rule.osVersion) {
-      const osVersionsLength = rule.osVersion.split(',').length;
-
-      if (osVersionsLength > splitAmount) {
-        return true;
-      }
-
-      return false;
-    }
-  };
-
-  const osVersionLimit = () => {
+  const formatOsVersion = () => {
     const allOsVersions = rule.osVersion;
-    const firstIndex = getIndexOfSubStr(allOsVersions, `,`, splitAmount);
-    const osVersionP = (
-      <p
-        style={{
-          display: 'flex',
-          flexFlow: 'column',
-          color: '#ffffff',
-          fontSize: '14px',
-          lineHeight: '16px',
-          margin: '2px 4px',
-        }}
-      >
-        {allOsVersions.split(',').map((item) => (
-          <p key={item} style={{ margin: '2px 0' }}>
-            {item}
-          </p>
-        ))}
-      </p>
-    );
+
+    if (!osVersionExpanded) {
+      const firstIndex = getIndexOfSubStr(
+        allOsVersions,
+        ',',
+        osVersionSplitAmount,
+      );
+
+      return (
+        <>
+          {allOsVersions.substring(0, firstIndex)}
+          <button
+            type="button"
+            style={{
+              color: 'black',
+              backgroundColor: 'transparent',
+              border: 'none',
+              margin: 0,
+              padding: 0,
+              display: 'inline',
+              cursor: 'pointer',
+            }}
+            onClick={() => setOsVersionExpanded(true)}
+          >
+            ...see more
+          </button>
+        </>
+      );
+    }
 
     return (
-      <React.Fragment>
-        {allOsVersions.substring(0, firstIndex)}
-        <ClickAwayListener onClickAway={handleTooltipClose}>
-          <Tooltip
-            title={osVersionP}
-            onClose={handleTooltipClose}
-            open={open}
-            disableFocusListener
-            disableHoverListener
-            disableTouchListener
-            arrow
-          >
-            <button
-              type="button"
-              style={{
-                color: 'black',
-                backgroundColor: 'transparent',
-                border: 'none',
-                margin: 0,
-                padding: 0,
-                display: 'inline-block',
-                cursor: 'pointer',
-              }}
-              onClick={open ? handleTooltipClose : handleTooltipOpen}
-            >
-              {seeMore}
-            </button>
-          </Tooltip>
-        </ClickAwayListener>
-      </React.Fragment>
+      <>
+        {allOsVersions}
+        <button
+          type="button"
+          style={{
+            color: 'black',
+            backgroundColor: 'transparent',
+            border: 'none',
+            margin: 0,
+            padding: 0,
+            display: 'inline',
+            cursor: 'pointer',
+          }}
+          onClick={() => setOsVersionExpanded(false)}
+        >
+          ...see less
+        </button>
+      </>
     );
   };
 
@@ -630,6 +607,9 @@ function RuleCard({
                         component: 'div',
                         className: classes.primaryText,
                       }}
+                      secondaryTypographyProps={{
+                        style: { wordBreak: 'break-all' },
+                      }}
                       primary={
                         <Fragment>
                           {`OS Version${
@@ -642,7 +622,7 @@ function RuleCard({
                         </Fragment>
                       }
                       secondary={
-                        isOsVersionLong() ? osVersionLimit() : rule.osVersion
+                        isOsVersionLong() ? formatOsVersion() : rule.osVersion
                       }
                     />
                   </ListItem>
