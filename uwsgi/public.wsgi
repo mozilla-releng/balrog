@@ -1,4 +1,5 @@
 import logging
+import orjson
 import os
 
 import sentry_sdk
@@ -68,6 +69,8 @@ configure_logging(**logging_kwargs)
 # statsd environment also needs to be set up before importing the application
 statsd.defaults.PREFIX = "balrog.public"
 
+
+from auslib.blobs.base import createBlob
 from auslib.global_state import cache, dbo  # noqa
 from auslib.util.cache import TwoLayerCache
 from auslib.web.public.base import create_app
@@ -79,7 +82,7 @@ if os.environ.get("REDIS_CACHE"):
     if not url:
         raise Exception("REDIS_CACHE enabled but no REDIS_URL given!")
     redis = Redis.from_url(url)
-    cache.factory = lambda name, maxsize, timeout: TwoLayerCache(redis, name, maxsize, timeout)
+    cache.factory = lambda name, maxsize, timeout, redis_loads=None: TwoLayerCache(redis, name, maxsize, timeout, redis_loads)
 
 application = create_app().app
 if os.environ.get("AUTOGRAPH_URL"):
@@ -104,7 +107,14 @@ elif "AUTOGRAPH_URL" in application.config:
     application.config["AUTOGRAPH_GMP_USERNAME"] = application.config["AUTOGRAPH_USERNAME"]
     application.config["AUTOGRAPH_GMP_PASSWORD"] = application.config["AUTOGRAPH_PASSWORD"]
 
-cache.make_cache("blob", 500, 3600)
+
+def _load_blob(s):
+    data = orjson.loads(s)
+    data["blob"] = createBlob(data["blob"])
+    return data
+
+
+cache.make_cache("blob", 500, 3600, _load_blob)
 cache.make_cache("releases", 500, 3600)
 cache.make_cache("releases_data_version", 500, 60)
 cache.make_cache("release_assets", 500, 3600)
