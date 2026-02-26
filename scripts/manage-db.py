@@ -157,7 +157,7 @@ def extract_active_data(trans, url, dump_location="dump.sql"):
 
         # Now extract the data we actually want....
         # We always want all the data from a few tables...
-        run(mysql_data_only_command(host, user, password, db, "dockerflow rules rules_history migrate_version").split(), stdout=dump_file, check=True)
+        run(mysql_data_only_command(host, user, password, db, "dockerflow rules rules_history alembic_version").split(), stdout=dump_file, check=True)
 
         release_names = get_active_release_names(trans)
         extract_releases(release_names, url, dump_file)
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     usage += "  cleanup-dryrun: Show what would be removed if 'cleanup' is run."
     parser = OptionParser(usage=usage)
     parser.add_option("-d", "--db", dest="db", default=None, help="database to manage, in URI format")
-    parser.add_option("--version", dest="version", default=None, type="int", help="Create/upgrade to this specific schema version rather than the latest.")
+    parser.add_option("--version", dest="version", default=None, type="string", help="Create/upgrade to this specific schema version rather than the latest.")
     options, args = parser.parse_args()
 
     if not options.db:
