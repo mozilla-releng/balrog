@@ -181,18 +181,28 @@ class AUSTransaction(object):
 
     :param conn: connection object to perform the transaction on
     :type conn: sqlalchemy.engine.base.Connection
+
+    The connection and transaction are opened lazily on the first call to
+    execute().
     """
 
     def __init__(self, engine):
         self.engine = engine
-        self.conn = self.engine.connect()
-        self.trans = self.conn.begin()
+        self.conn = None
+        self.trans = None
         self.log = logging.getLogger(self.__class__.__name__)
+
+    def _ensure_connection(self):
+        if self.conn is None:
+            self.conn = self.engine.connect()
+            self.trans = self.conn.begin()
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
+        if self.conn is None:
+            return
         try:
             # If something that executed in the context raised an Exception,
             # rollback and re-raise it.
@@ -208,10 +218,11 @@ class AUSTransaction(object):
 
     def close(self):
         # For some reason, sometimes the connection appears to close itself...
-        if not self.conn.closed:
+        if self.conn is not None and not self.conn.closed:
             self.conn.close()
 
     def execute(self, statement):
+        self._ensure_connection()
         try:
             self.log.debug("Attempting to execute %s" % statement)
             return self.conn.execute(statement)
@@ -225,6 +236,8 @@ class AUSTransaction(object):
             raise TransactionError() from exc
 
     def commit(self):
+        if self.trans is None:
+            return
         try:
             self.trans.commit()
         except Exception as exc:
@@ -232,6 +245,8 @@ class AUSTransaction(object):
             raise TransactionError() from exc
 
     def rollback(self):
+        if self.trans is None:
+            return
         self.trans.rollback()
 
 
