@@ -161,10 +161,16 @@ class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
 
     # bug 740360
     def testContextManagerClosesConnection(self):
-        with AUSTransaction(self.metadata.bind.connect()) as trans:
-            self.assertEqual(trans.conn.closed, False, "Connection closed at start of transaction, expected it to be open.")
+        with AUSTransaction(self.metadata.bind) as trans:
+            self.assertIsNone(trans.conn, "Connection should be None before any execute()")
             trans.execute(self.table.insert(values=dict(id=5, foo=41)))
+            self.assertEqual(trans.conn.closed, False, "Connection closed during transaction, expected it to be open.")
         self.assertEqual(trans.conn.closed, True, "Connection not closed after __exit__ is called")
+
+    def testContextManagerNoOpWithoutExecute(self):
+        with AUSTransaction(self.metadata.bind) as trans:
+            pass
+        self.assertIsNone(trans.conn, "Connection should remain None when no queries were executed")
 
 
 class TestAUSTransactionRequiresRealFile(unittest.TestCase, NamedFileDatabaseMixin):
