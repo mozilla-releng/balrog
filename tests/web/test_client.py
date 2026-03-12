@@ -135,15 +135,13 @@ class ClientTestBase(ClientTestCommon):
         self.app.config["VERSION_FILE"] = self.version_file
         self.app.config["CONTENT_SIGNATURE_PRODUCTS"] = ["gmp"]
         with open(self.version_file, "w+") as f:
-            f.write(
-                """
+            f.write("""
 {
   "source":"https://github.com/mozilla-releng/balrog",
   "version":"1.0",
   "commit":"abcdef123456"
 }
-"""
-            )
+""")
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist(self.app.config["ALLOWLISTED_DOMAINS"])
@@ -154,8 +152,7 @@ class ClientTestBase(ClientTestCommon):
             name="b",
             product="b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "b",
     "schema_version": 1,
@@ -186,8 +183,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
 
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="s", update_type="minor", product="s", instructionSet="SSE", data_version=1)
@@ -195,8 +191,7 @@ class ClientTestBase(ClientTestCommon):
             name="s",
             product="s",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "s",
     "schema_version": 1,
@@ -219,16 +214,14 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping="q", update_type="minor", product="q", fallbackMapping="fallback", data_version=1)
         dbo.releases.t.insert().execute(
             name="q",
             product="q",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "q",
     "schema_version": 1,
@@ -251,15 +244,13 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.releases.t.insert().execute(
             name="fallback",
             product="q",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "fallback",
     "schema_version": 1,
@@ -282,8 +273,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(
             rule_id=42024, priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c", distribution="default", data_version=1
@@ -292,8 +282,7 @@ class ClientTestBase(ClientTestCommon):
             name="c",
             product="c",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "c",
     "schema_version": 1,
@@ -316,8 +305,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(
             priority=90,
@@ -332,8 +320,7 @@ class ClientTestBase(ClientTestCommon):
             name="distTest",
             product="distTest",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "distTest",
     "schema_version": 1,
@@ -356,8 +343,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
 
         dbo.rules.t.insert().execute(priority=80, backgroundRate=100, mapping="c2", update_type="minor", product="c", data_version=1)
@@ -365,8 +351,7 @@ class ClientTestBase(ClientTestCommon):
             name="c2",
             product="c",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "c2",
     "schema_version": 1,
@@ -389,16 +374,14 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="d", update_type="minor", product="d", data_version=1)
         dbo.releases.t.insert().execute(
             name="d",
             product="d",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -421,8 +404,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
 
         dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping="e", update_type="minor", product="e", data_version=1)
@@ -430,8 +412,7 @@ class ClientTestBase(ClientTestCommon):
             name="e",
             product="e",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "e",
     "schema_version": 1,
@@ -452,8 +433,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
 
         dbo.rules.t.insert().execute(
@@ -467,8 +447,7 @@ class ClientTestBase(ClientTestCommon):
             name="f",
             product="f",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "f",
     "schema_version": 1,
@@ -491,8 +470,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
 
         dbo.rules.t.insert().execute(priority=200, backgroundRate=100, mapping="gmp", update_type="minor", product="gmp", data_version=1)
@@ -510,36 +488,31 @@ class ClientTestBase(ClientTestCommon):
             name="gmp-with-one-response-product",
             product="gmp-with-one-response-product",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "superblob",
     "schema_version": 4000,
     "products": ["response-a"]
 }
-"""
-            ),
+"""),
         )
         dbo.releases.t.insert().execute(
             name="gmp",
             product="gmp",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "superblob",
     "schema_version": 4000,
     "products": ["response-a", "response-b"]
 }
-"""
-            ),
+"""),
         )
         dbo.releases.t.insert().execute(
             name="response-a",
             product="response-a",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "response-a",
     "schema_version": 1,
@@ -574,15 +547,13 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.releases.t.insert().execute(
             name="response-b",
             product="response-b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "response-b",
     "schema_version": 1,
@@ -604,8 +575,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(
             priority=180, backgroundRate=100, mapping="systemaddons-uninstall", update_type="minor", product="systemaddons-uninstall", data_version=1
@@ -614,24 +584,21 @@ class ClientTestBase(ClientTestCommon):
             name="systemaddons-uninstall",
             product="systemaddons-uninstall",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "fake",
     "schema_version": 5000,
     "hashFunction": "SHA512",
     "uninstall": true
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(priority=180, backgroundRate=100, mapping="systemaddons", update_type="minor", product="systemaddons", data_version=1)
         dbo.releases.t.insert().execute(
             name="systemaddons",
             product="systemaddons",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "fake",
     "schema_version": 5000,
@@ -650,8 +617,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
 
         dbo.rules.t.insert().execute(
@@ -666,8 +632,7 @@ class ClientTestBase(ClientTestCommon):
             name="product_that_should_not_be_updated-1.1",
             product="product_that_should_not_be_updated",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "product_that_should_not_be_updated-1.1",
     "schema_version": 1,
@@ -690,8 +655,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
 
         dbo.rules.t.insert().execute(
@@ -706,8 +670,7 @@ class ClientTestBase(ClientTestCommon):
             name="product_that_should_not_be_updated-2.0",
             product="product_that_should_not_be_updated",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "product_that_should_not_be_updated-2.0",
     "schema_version": 1,
@@ -730,8 +693,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(
             priority=200,
@@ -762,50 +724,43 @@ class ClientTestBase(ClientTestCommon):
             name="superblobaddon-with-one-response-blob",
             product="superblobaddon-with-one-response-blob",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "superblobaddon",
     "schema_version": 4000,
     "blobs": ["responseblob-a"]
 }
-"""
-            ),
+"""),
         )
         dbo.releases.t.insert().execute(
             name="superblobaddon-with-multiple-response-blob",
             product="superblobaddon-with-multiple-response-blob",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "superblobaddon",
     "schema_version": 4000,
     "blobs": ["responseblob-a", "responseblob-b"]
 }
-"""
-            ),
+"""),
         )
         dbo.releases.t.insert().execute(
             name="superblobaddon-with-multiple-response-blob-glob",
             product="superblobaddon-with-multiple-response-blob-glob",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "superblobaddon",
     "schema_version": 4000,
     "blobs": ["responseblob-a", "responseblob-b"]
 }
-"""
-            ),
+"""),
         )
         dbo.releases.t.insert().execute(
             name="responseblob-a",
             product="responseblob-a",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "responseblob-a",
     "schema_version": 5000,
@@ -846,15 +801,13 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.releases.t.insert().execute(
             name="responseblob-b",
             product="responseblob-b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "responseblob-b",
     "schema_version": 5000,
@@ -874,8 +827,7 @@ class ClientTestBase(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(
             priority=100, product="Firefox", channel="release", mapping="Firefox-56.0-build1", backgroundRate=100, update_type="minor", data_version=1
@@ -1865,8 +1817,7 @@ class ClientTestMig64(ClientTestCommon):
             name="a",
             product="a",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "a",
     "schema_version": 1,
@@ -1889,16 +1840,14 @@ class ClientTestMig64(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", mig64=True, data_version=1)
         dbo.releases.t.insert().execute(
             name="b",
             product="b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "b",
     "schema_version": 1,
@@ -1921,16 +1870,14 @@ class ClientTestMig64(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c", mig64=False, data_version=1)
         dbo.releases.t.insert().execute(
             name="c",
             product="c",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "c",
     "schema_version": 1,
@@ -1953,8 +1900,7 @@ class ClientTestMig64(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
 
     def testRuleFalseQueryNull(self):
@@ -2027,8 +1973,7 @@ class ClientTestJaws(ClientTestCommon):
             name="a",
             product="a",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "a",
     "schema_version": 1,
@@ -2051,16 +1996,14 @@ class ClientTestJaws(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", jaws=True, data_version=1)
         dbo.releases.t.insert().execute(
             name="b",
             product="b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "b",
     "schema_version": 1,
@@ -2083,16 +2026,14 @@ class ClientTestJaws(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c", jaws=False, data_version=1)
         dbo.releases.t.insert().execute(
             name="c",
             product="c",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "c",
     "schema_version": 1,
@@ -2115,8 +2056,7 @@ class ClientTestJaws(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
 
     def testRuleFalseQueryNull(self):
@@ -2427,8 +2367,7 @@ class ClientTestCompactXML(ClientTestCommon):
             name="Firefox-mozilla-central-nightly-latest",
             product="b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-latest",
     "schema_version": 1,
@@ -2451,8 +2390,7 @@ class ClientTestCompactXML(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
 
     def testGoodNightly(self):
@@ -2495,8 +2433,7 @@ class ClientTestPinning(ClientTestCommon):
             name="Firefox-mozilla-central-nightly-1",
             product="b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-1",
     "schema_version": 1,
@@ -2519,16 +2456,14 @@ class ClientTestPinning(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.0.", mapping="Firefox-mozilla-central-nightly-2")
         dbo.releases.t.insert().execute(
             name="Firefox-mozilla-central-nightly-2",
             product="b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-2",
     "schema_version": 1,
@@ -2551,16 +2486,14 @@ class ClientTestPinning(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.1.", mapping="Firefox-mozilla-central-nightly-2-1")
         dbo.releases.t.insert().execute(
             name="Firefox-mozilla-central-nightly-2-1",
             product="b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-2-1",
     "schema_version": 1,
@@ -2583,16 +2516,14 @@ class ClientTestPinning(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.2.", mapping="Firefox-mozilla-central-nightly-2-2")
         dbo.releases.t.insert().execute(
             name="Firefox-mozilla-central-nightly-2-2",
             product="b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-2-2",
     "schema_version": 1,
@@ -2615,8 +2546,7 @@ class ClientTestPinning(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.", mapping="Firefox-mozilla-central-nightly-2-3")
         dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.3.", mapping="Firefox-mozilla-central-nightly-2-3")
@@ -2624,8 +2554,7 @@ class ClientTestPinning(ClientTestCommon):
             name="Firefox-mozilla-central-nightly-2-3",
             product="b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-2-3",
     "schema_version": 1,
@@ -2648,8 +2577,7 @@ class ClientTestPinning(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(
             priority=200, backgroundRate=100, mapping="Firefox-mozilla-central-nightly-3", update_type="minor", product="b", data_version=1, version="<3.0"
@@ -2660,8 +2588,7 @@ class ClientTestPinning(ClientTestCommon):
             name="Firefox-mozilla-central-nightly-3",
             product="b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-3",
     "schema_version": 1,
@@ -2684,8 +2611,7 @@ class ClientTestPinning(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="4.", mapping="Firefox-mozilla-central-nightly-4")
         dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="4.0.", mapping="Firefox-mozilla-central-nightly-4")
@@ -2693,8 +2619,7 @@ class ClientTestPinning(ClientTestCommon):
             name="Firefox-mozilla-central-nightly-4",
             product="b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-4",
     "schema_version": 1,
@@ -2717,8 +2642,7 @@ class ClientTestPinning(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(
             priority=90, backgroundRate=100, mapping="Firefox-mozilla-central-nightly-5", update_type="minor", product="b", data_version=1
@@ -2729,8 +2653,7 @@ class ClientTestPinning(ClientTestCommon):
             name="Firefox-mozilla-central-nightly-5",
             product="b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-5",
     "schema_version": 1,
@@ -2753,23 +2676,20 @@ class ClientTestPinning(ClientTestCommon):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.releases.t.insert().execute(
             name="desupport",
             product="b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "desupport",
     "schema_version": 50,
     "detailsUrl": "http://example.com/desupport",
     "displayVersion": "1"
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(
             priority=100, backgroundRate=100, mapping="desupport", update_type="minor", product="b", data_version=1, osVersion="obsolete"
