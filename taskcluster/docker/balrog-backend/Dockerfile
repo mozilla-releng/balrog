@@ -20,7 +20,7 @@ COPY ${SRC}/src/ /app/src/
 RUN uv venv
 RUN uv sync --no-dev --frozen
 
-FROM python:3.13-slim-bookworm@sha256:8092ae2ef67061f9db412458dbdce44dbf16748fb3cae5cdbd020f467a9712d0
+FROM python:3.13-slim-bookworm@sha256:1245b6c39d0b8e49e911c7d07b60cd9ed26016b0e439b6903d5e08730e417553
 ENV LC_ALL C.UTF-8
 LABEL maintainer="releng@mozilla.com"
 
