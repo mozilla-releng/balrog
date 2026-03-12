@@ -50,7 +50,7 @@ members = [
 [dependency-groups]
 dev = [
     # held back due to https://github.com/psf/black/issues/4963
-    "black<26.1.0",
+    "black<26.3.2",
     "coverage",
     "coveralls",
     "fakeredis",
