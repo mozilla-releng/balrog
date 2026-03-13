@@ -6,7 +6,6 @@
 Set environment variables for the skopeo push-image command
 """
 
-
 import os
 import tomllib
 
