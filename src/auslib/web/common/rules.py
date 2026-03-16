@@ -56,5 +56,5 @@ def get_history(rule_id):
     except (ValueError, AssertionError) as msg:
         log.warning("Bad input: %s", msg)
         return problem(
-            400, "Bad Request", "Error occurred when trying to fetch" " Rule's revisions having rule_id {0}".format(rule_id), ext={"exception": str(msg)}
+            400, "Bad Request", "Error occurred when trying to fetch Rule's revisions having rule_id {0}".format(rule_id), ext={"exception": str(msg)}
         )

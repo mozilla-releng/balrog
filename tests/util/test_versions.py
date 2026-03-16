@@ -60,7 +60,7 @@ class TestMozillaVersions(unittest.TestCase):
                 if wanted is BadDataError:
                     continue
                 else:
-                    raise AssertionError(("cmp(%s, %s) " "shouldn't raise BadDataError") % (v1, v2))
+                    raise AssertionError(("cmp(%s, %s) shouldn't raise BadDataError") % (v1, v2))
             self.assertEqual(res, wanted, "cmp(%s, %s) should be %s, got %s" % (v1, v2, wanted, res))
 
     def test_glob(self):

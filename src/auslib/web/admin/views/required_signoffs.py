@@ -150,7 +150,7 @@ def product_get_scheduled_changes():
 @transactionHandler
 def product_create_scheduled_change(sc_rs_product_body, transaction, changed_by):
     if sc_rs_product_body.get("when", None) is None:
-        return problem(400, "Bad Request", "when cannot be set to null when scheduling a new change " "for a Product Required Signoff")
+        return problem(400, "Bad Request", "when cannot be set to null when scheduling a new change for a Product Required Signoff")
     change_type = sc_rs_product_body.get("change_type")
 
     what = {}
@@ -308,7 +308,7 @@ def permissions_get_scheduled_changes():
 @transactionHandler
 def permissions_create_scheduled_change(sc_rs_permission_body, transaction, changed_by):
     if sc_rs_permission_body.get("when", None) is None:
-        return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permissions Required Signoff")
+        return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change for a Permissions Required Signoff")
     change_type = sc_rs_permission_body.get("change_type")
 
     what = {}
@@ -350,7 +350,7 @@ def permissions_update_scheduled_change(sc_id, sc_permission_rs_body, transactio
     if sc_rs_permission:
         change_type = sc_rs_permission[0]["change_type"]
     else:
-        return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for permission required " "signoff found for given sc_id"})
+        return problem(404, "Not Found", "Unknown sc_id", ext={"exception": "No scheduled change for permission required signoff found for given sc_id"})
     what = {}
     for field in sc_permission_rs_body:
         if (
