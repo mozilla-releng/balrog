@@ -13,14 +13,13 @@ requires-python = ">=3.11"
 
 [dependency-groups]
 dev = [
-    "black",
     "coverage",
     "flake8",
-    "flake8-black",
     "isort",
     "pytest",
     "pytest-cov",
     "requests_mock",
+    "ruff",
     "tox",
     "tox-uv",
 ]
@@ -32,26 +31,12 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/balrogclient"]
 
-[tool.black]
+[tool.ruff]
 line-length = 160
-include = '\.(wsgi|pyi?)$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | \.cache
-  | \.cache_py3
-  | _build
-  | buck-out
-  | build
-  | dist
-  | ui
-)/
-'''
+target-version = "py311"
+
+[tool.ruff.format]
+docstring-code-format = true
 
 [tool.isort]
 multi_line_output = 3

@@ -190,7 +190,7 @@ def get_scheduled_changes():
 @transactionHandler
 def create_scheduled_change(sc_rule_body, transaction, changed_by):
     if sc_rule_body.get("when", None) is None:
-        return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Rule")
+        return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change for a Rule")
     if sc_rule_body:
         change_type = sc_rule_body.get("change_type")
     else:
@@ -222,7 +222,7 @@ def create_scheduled_change(sc_rule_body, transaction, changed_by):
                     400,
                     "Bad Request",
                     "Null/Empty Value",
-                    ext={"exception": "%s cannot be set to null/empty " "when scheduling insertion of a new rule" % field},
+                    ext={"exception": "%s cannot be set to null/empty when scheduling insertion of a new rule" % field},
                 )
 
     if change_type in ["update", "insert"]:
@@ -286,7 +286,7 @@ def update_scheduled_change(sc_id, sc_rule_body, transaction, changed_by):
         for field in ["update_type", "backgroundRate", "priority"]:
             if field in what and what.get(field) is None or isinstance(what.get(field), str) and what.get(field).strip() == "":
                 return problem(
-                    400, "Bad Request", "Null/Empty Value", ext={"exception": "%s cannot be set to null " "when scheduling insertion of a new rule" % field}
+                    400, "Bad Request", "Null/Empty Value", ext={"exception": "%s cannot be set to null when scheduling insertion of a new rule" % field}
                 )
 
     if change_type in ["update", "insert"]:
