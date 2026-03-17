@@ -11,8 +11,7 @@ class TestSchema1Blob(unittest.TestCase):
         self.specialForceHosts = ["http://a.com"]
         self.allowlistedDomains = {"a.com": ("gg",), "boring.com": ("gg",)}
         self.blob = GMPBlobV1()
-        self.blob.loadJSON(
-            """
+        self.blob.loadJSON("""
 {
     "name": "fake",
     "schema_version": 1000,
@@ -73,14 +72,12 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
 
     def testValidateHashLength(self):
         blob = GMPBlobV1()
         blob.allowlistedDomains = {"boring.com": ("gg",)}
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
 {
     "name": "validName",
     "schema_version": 1000,
@@ -98,8 +95,7 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         self.assertRaisesRegex(
             ValueError, ("The hashValue length is different from the required length of 128 for sha512"), blob.validate, "gg", self.allowlistedDomains
         )
@@ -262,11 +258,9 @@ class TestSchema1Blob(unittest.TestCase):
         returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected_header = "<addons>"
-        expected = [
-            """
+        expected = ["""
 <addon id="d" URL="http://boring.com/bar" hashFunction="SHA512" hashValue="50" size="20" version="5"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</addons>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -361,8 +355,7 @@ class TestSchema1Blob(unittest.TestCase):
 
     def testContainsForbiddenDomain(self):
         blob = GMPBlobV1()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
 {
     "name": "fake",
     "schema_version": 1000,
@@ -380,14 +373,12 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         self.assertTrue(blob.containsForbiddenDomain("gg", self.allowlistedDomains))
 
     def testContainsForbiddenDomainInMirror(self):
         blob = GMPBlobV1()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
 {
     "name": "fake",
     "schema_version": 1000,
@@ -406,14 +397,12 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         self.assertTrue(blob.containsForbiddenDomain("gg", self.allowlistedDomains))
 
     def testDoesNotContainForbiddenDomain(self):
         blob = GMPBlobV1()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
 {
     "name": "fake",
     "schema_version": 1000,
@@ -431,14 +420,12 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         self.assertFalse(blob.containsForbiddenDomain("gg", self.allowlistedDomains))
 
     def testDoesNotContainForbiddenDomainWithMirror(self):
         blob = GMPBlobV1()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
 {
     "name": "fake",
     "schema_version": 1000,
@@ -457,47 +444,41 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         self.assertFalse(blob.containsForbiddenDomain("gg", self.allowlistedDomains))
 
     def testGMPLayoutEmptyVendor(self):
         # Correct layout with empty vendors
 
         blob = GMPBlobV1()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 1000,
         "hashFunction": "SHA512",
         "vendors": {}
     }
-    """
-        )
+    """)
         blob.validate("gg", self.allowlistedDomains)
 
     def testGMPLayoutNoVendor(self):
         # Incorrect layout with no vendors
 
         blob = GMPBlobV1()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 1000,
         "hashFunction": "SHA512"
     }
-    """
-        )
+    """)
         self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testGMPLayoutTwoPlatforms(self):
         # Correct layout with one vendor and two platforms
 
         blob = GMPBlobV1()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 1000,
@@ -519,16 +500,14 @@ bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcda
             }
         }
     }
-    """
-        )
+    """)
         blob.validate("gg", self.allowlistedDomains)
 
     def testGMPLayoutMissingVersion(self):
         # Incorrect layout with missing version for an vendor name
 
         blob = GMPBlobV1()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 1000,
@@ -549,16 +528,14 @@ bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcda
             }
         }
     }
-    """
-        )
+    """)
         self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testGMPLayoutEmptyPlatforms(self):
         # Correct layout with empty platforms
 
         blob = GMPBlobV1()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 1000,
@@ -570,16 +547,14 @@ bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcda
             }
         }
     }
-    """
-        )
+    """)
         blob.validate("gg", self.allowlistedDomains)
 
     def testGMPLayoutEmptyPlatformName(self):
         # Incorrect layout with empty platform name
 
         blob = GMPBlobV1()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 1000,
@@ -599,16 +574,14 @@ bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcda
             }
         }
     }
-    """
-        )
+    """)
         self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testGMPLayoutNoFilesize(self):
         # Incorrect layout with missing filesize
 
         blob = GMPBlobV1()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 1000,
@@ -629,6 +602,5 @@ bcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcda
             }
         }
     }
-    """
-        )
+    """)
         self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)

@@ -10,8 +10,7 @@ class TestSchema1Blob(unittest.TestCase):
         self.specialForceHosts = ["http://a.com"]
         self.allowlistedDomains = {"a.com": ("gg",), "boring.com": ("gg",)}
         self.blob1 = SystemAddonsBlob()
-        self.blob1.loadJSON(
-            """
+        self.blob1.loadJSON("""
 {
     "name": "fake",
     "schema_version": 5000,
@@ -57,41 +56,34 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         self.blob2 = SystemAddonsBlob()
-        self.blob2.loadJSON(
-            """
+        self.blob2.loadJSON("""
 {
     "name": "fake",
     "schema_version": 5000,
     "hashFunction": "SHA512",
     "uninstall": true
 }
-"""
-        )
+""")
         self.blob3 = SystemAddonsBlob()
-        self.blob3.loadJSON(
-            """
+        self.blob3.loadJSON("""
 {
     "name": "fake",
     "schema_version": 5000,
     "hashFunction": "SHA512",
     "uninstall": false
 }
-"""
-        )
+""")
         self.empty_blob = SystemAddonsBlob()
-        self.empty_blob.loadJSON(
-            """
+        self.empty_blob.loadJSON("""
 {
     "name": "fake",
     "schema_version": 5000,
     "hashFunction": "SHA512",
     "addons": {}
 }
-"""
-        )
+""")
 
     def testXML(self):
         updateQuery = {
@@ -204,8 +196,7 @@ class TestSchema1Blob(unittest.TestCase):
 
     def testContainsForbiddenDomain(self):
         blob = SystemAddonsBlob()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
 {
     "name": "fake",
     "schema_version": 1000,
@@ -223,14 +214,12 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         self.assertTrue(blob.containsForbiddenDomain("gg", self.allowlistedDomains))
 
     def testDoesNotContainForbiddenDomain(self):
         blob = SystemAddonsBlob()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
 {
     "name": "fake",
     "schema_version": 1000,
@@ -248,63 +237,55 @@ class TestSchema1Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         self.assertFalse(blob.containsForbiddenDomain("gg", self.allowlistedDomains))
 
     def testAddonLayoutEmptyAddons(self):
         # Correct layout with empty addons
 
         blob = SystemAddonsBlob()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 5000,
         "hashFunction": "SHA512",
         "addons": {}
     }
-    """
-        )
+    """)
         blob.validate("gg", self.allowlistedDomains)
 
     def testAddonLayoutWithUninstall(self):
         # Correct layout with no addons, and with uninstall
 
         blob = SystemAddonsBlob()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 5000,
         "hashFunction": "SHA512",
         "uninstall": false
     }
-    """
-        )
+    """)
         blob.validate("gg", self.allowlistedDomains)
 
     def testAddonLayoutNoAddonsNoUninstall(self):
         # Incorrect layout with no addons and no uninstall
 
         blob = SystemAddonsBlob()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 5000,
         "hashFunction": "SHA512"
     }
-    """
-        )
+    """)
         self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testAddonLayoutTwoPlatforms(self):
         # Correct layout with one addon and two platforms
 
         blob = SystemAddonsBlob()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 5000,
@@ -325,16 +306,14 @@ class TestSchema1Blob(unittest.TestCase):
             }
         }
     }
-    """
-        )
+    """)
         blob.validate("gg", self.allowlistedDomains)
 
     def testAddonLayoutNoVersion(self):
         # Incorrect layout with missing version for an addon name
 
         blob = SystemAddonsBlob()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 5000,
@@ -354,16 +333,14 @@ class TestSchema1Blob(unittest.TestCase):
             }
         }
     }
-    """
-        )
+    """)
         self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testAddonLayoutEmptyPlatforms(self):
         # Correct layout with empty platforms
 
         blob = SystemAddonsBlob()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 5000,
@@ -375,16 +352,14 @@ class TestSchema1Blob(unittest.TestCase):
             }
         }
     }
-    """
-        )
+    """)
         blob.validate("gg", self.allowlistedDomains)
 
     def testAddonLayoutEmptyPlatformName(self):
         # Incorrect layout with empty platform name
 
         blob = SystemAddonsBlob()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 5000,
@@ -403,16 +378,14 @@ class TestSchema1Blob(unittest.TestCase):
             }
         }
     }
-    """
-        )
+    """)
         self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testAddonLayoutNoFilesize(self):
         # Incorrect layout with missing filesize
 
         blob = SystemAddonsBlob()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "fake",
         "schema_version": 5000,
@@ -432,6 +405,5 @@ class TestSchema1Blob(unittest.TestCase):
             }
         }
     }
-    """
-        )
+    """)
         self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
