@@ -21,7 +21,7 @@ jobs:
       id-token: write
     env:
       BUILD_DIR: build
-      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_PROJECT_ID: ${{ inputs.deploy_env == 'stage' && 'moz-fx-balrog-nonprod' || 'moz-fx-balrog-prod' }}
       WEBSITE_BUCKET: ${{ inputs.deploy_env == 'stage' && 'balrog-stage-admin-static' || 'TBD' }}
       LOAD_BALANCER_NAME: ${{ inputs.deploy_env == 'stage' && 'balrog-stage' || 'TBD' }}
       BALROG_ROOT_URL: ${{ inputs.deploy_env == 'stage' && 'https://admin.stage.balrog.nonprod.webservices.mozgcp.net' || 'https://aus4-admin.mozilla.org' }}
@@ -47,7 +47,7 @@ jobs:
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
         with:
           token_format: "access_token"
-          service_account: balrog-${{ inputs.deploy_env }}-static@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+          service_account: balrog-${{ inputs.deploy_env }}-static@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com
           workload_identity_provider: ${{ vars.GCPV2_GITHUB_WORKLOAD_IDENTITY_PROVIDER }}
 
       - name: install deps
