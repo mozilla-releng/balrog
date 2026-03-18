@@ -1,11 +1,12 @@
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim@sha256:531f855bda2c73cd6ef67d56b733b357cea384185b3022bd09f05e002cd144ca AS builder
+FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim AS builder
 
 WORKDIR /app
 
 # default-libmysqlclient-dev is required to use SQLAlchemy with MySQL
 # gcc is needed to compile some python packages
+# uwsgi needs libpcre for routing support to be enabled
 RUN apt-get -q update \
-    && apt-get -q --yes install g++ default-libmysqlclient-dev gcc pkg-config
+    && apt-get -q --yes install g++ default-libmysqlclient-dev gcc pkg-config libpcre2-dev
 
 # Use a variable so we can share the Dockerfile with docker compose
 ARG SRC=topsrcdir
@@ -20,17 +21,17 @@ COPY ${SRC}/src/ /app/src/
 RUN uv venv
 RUN uv sync --no-dev --frozen
 
-FROM python:3.13-slim-bookworm@sha256:1245b6c39d0b8e49e911c7d07b60cd9ed26016b0e439b6903d5e08730e417553
+FROM python:3.13-slim-trixie
 ENV LC_ALL C.UTF-8
 LABEL maintainer="releng@mozilla.com"
 
 # netcat is needed for health checks
-# Some versions of the python:3.8 Docker image remove libpcre3, which uwsgi needs for routing support to be enabled.
+# libpcre is needed by uwsgi (see above)
 # mariadb-client is needed to import sample data
 # curl is needed to pull sample data
-# xz-utils is needed to unpack sampled ata
+# xz-utils is needed to unpack sample data
 RUN apt-get -q update \
-    && apt-get -q --yes install netcat-traditional libpcre3 mariadb-client curl xz-utils \
+    && apt-get -q --yes install netcat-traditional libpcre2-8-0 mariadb-client curl xz-utils \
     && apt-get clean
 
 WORKDIR /app
