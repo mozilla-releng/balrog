@@ -1,0 +1,60 @@
+name: Build and Deploy Balrog UI
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_env:
+        description: "env to deploy to"
+        required: true
+        type: choice
+        default: stage
+        options:
+          - stage
+          - prod
+
+jobs:
+  ui-deploy:
+    environment: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      BUILD_DIR: build
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      WEBSITE_BUCKET: ${{ inputs.deploy_env == 'stage' && 'balrog-stage-admin-static' || 'TBD' }}
+      LOAD_BALANCER_NAME: ${{ inputs.deploy_env == 'stage' && 'balrog-stage' || 'TBD' }}
+      BALROG_ROOT_URL: ${{ inputs.deploy_env == 'stage' && 'https://admin.stage.balrog.nonprod.webservices.mozgcp.net' || 'https://aus4-admin.mozilla.org' }}
+      AUTH0_CLIENT_ID: ${{ inputs.deploy_env == 'stage' && '43tgBNjaHHhOAPPr10zh2jodVT3t6abD' || 'Qe16eoq0Uz9eSTVDVEO15DGBPCgqoAA2' }}
+      AUTH0_AUDIENCE: ${{ inputs.deploy_env == 'stage' && 'balrog-cloudops-stage' || 'balrog-production' }}
+      AUTH0_REDIRECT_URI: ${{ inputs.deploy_env == 'stage' && 'https://balrog-admin.allizom.org/login' || 'https://balrog.services.mozilla.com/login' }}
+      GCS_NIGHTLY_HISTORY_BUCKET: ${{ inputs.deploy_env == 'stage' && 'https://www.googleapis.com/storage/v1/b/balrog-stage-nightly-history-v1/o' || 'https://www.googleapis.com/storage/v1/b/balrog-prod-nightly-history-v1/o' }}
+      GCS_RELEASES_HISTORY_BUCKET: ${{ inputs.deploy_env == 'stage' && 'https://www.googleapis.com/storage/v1/b/balrog-stage-release-history-v1/o' || 'https://www.googleapis.com/storage/v1/b/balrog-prod-release-history-v1/o' }}
+    defaults:
+      run:
+        working-directory: ./ui
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - id: gcp-auth
+        name: Google authentication
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          token_format: "access_token"
+          service_account: artifact-writer@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+          workload_identity_provider: ${{ vars.GCPV2_GITHUB_WORKLOAD_IDENTITY_PROVIDER }}
+
+      - name: install deps
+        run: yarn install
+
+      - name: build
+        run: yarn build
+
+      - name: deploy
+        run: scripts/deploy-gcp
