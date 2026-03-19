@@ -29,7 +29,7 @@ jobs:
       AUTH0_DOMAIN: auth.mozilla.auth0.com
       AUTH0_CLIENT_ID: ${{ inputs.deploy_env == 'stage' && '43tgBNjaHHhOAPPr10zh2jodVT3t6abD' || 'Qe16eoq0Uz9eSTVDVEO15DGBPCgqoAA2' }}
       AUTH0_AUDIENCE: ${{ inputs.deploy_env == 'stage' && 'balrog-cloudops-stage' || 'balrog-production' }}
-      AUTH0_REDIRECT_URI: ${{ inputs.deploy_env == 'stage' && 'https://balrog-admin.allizom.org/login' || 'https://balrog.services.mozilla.com/login' }}
+      AUTH0_REDIRECT_URI: ${{ inputs.deploy_env == 'stage' && 'https://balrog.allizom.org/login' || 'https://balrog.services.mozilla.com/login' }}
       GCS_NIGHTLY_HISTORY_BUCKET: ${{ inputs.deploy_env == 'stage' && 'https://www.googleapis.com/storage/v1/b/balrog-stage-nightly-history-v1/o' || 'https://www.googleapis.com/storage/v1/b/balrog-prod-nightly-history-v1/o' }}
       GCS_RELEASES_HISTORY_BUCKET: ${{ inputs.deploy_env == 'stage' && 'https://www.googleapis.com/storage/v1/b/balrog-stage-release-history-v1/o' || 'https://www.googleapis.com/storage/v1/b/balrog-prod-release-history-v1/o' }}
     defaults:
