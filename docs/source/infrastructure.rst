@@ -8,21 +8,27 @@ Environments
 
 We have stage and production deployments of Balrog. Here's a quick summary:
 
-+-------------+-----------+---------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
-| Environment | App       | URL                                                     | Deploys                                 | Purpose                                                                       |
-+=============+===========+=========================================================+=========================================+===============================================================================+
-| Production  | Admin API | https://aus4-admin.mozilla.org/                         | Manually, after someone clicks a button | Manage and serve production updates                                           |
-+             +-----------+---------------------------------------------------------+ in Jenkins (details below)              +                                                                               +
-|             | Admin UI  | https://balrog.services.mozilla.com/                    |                                         |                                                                               |
-+             +-----------+---------------------------------------------------------+                                         +                                                                               +
-|             | Public    | https://aus5.mozilla.org/                               |                                         |                                                                               |
-+-------------+-----------+---------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
-| Stage       | Admin API | https://admin-stage.balrog.nonprod.cloudops.mozgcp.net/ | When version tags are created in Github | A place to submit staging Releases and verify new Balrog code with automation |
-+             +-----------+---------------------------------------------------------+                                         +                                                                               +
-|             | Admin UI  | https://balrog-admin-static-stage.stage.mozaws.net/     |                                         |                                                                               |
-+             +-----------+---------------------------------------------------------+                                         +                                                                               +
-|             | Public    | https://aus5.allizom.org/                               |                                         |                                                                               |
-+-------------+-----------+---------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
++-------------+-----------+------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
+| Environment | App       | URL                                                        | Deploys                                 | Purpose                                                                       |
++=============+===========+============================================================+=========================================+===============================================================================+
+| Production  | Admin API | https://aus4-admin.mozilla.org/                            | Manually, after someone clicks a button | Manage and serve production updates                                           |
++             +-----------+------------------------------------------------------------+ in Jenkins (details below)              +                                                                               +
+|             | Admin UI  | https://balrog.services.mozilla.com/                       |                                         |                                                                               |
++             +-----------+------------------------------------------------------------+                                         +                                                                               +
+|             | Public    | https://aus5.mozilla.org/                                  |                                         |                                                                               |
++-------------+-----------+------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
+| Stage       | Admin API | https://admin-stage.balrog.nonprod.cloudops.mozgcp.net/    | When version tags are created in Github | A place to submit staging Releases and verify new Balrog code with automation |
++ (deprecated)+-----------+------------------------------------------------------------+                                         +                                                                               +
+|             | Admin UI  | https://balrog-admin-static-stage.stage.mozaws.net/        |                                         |                                                                               |
++             +-----------+------------------------------------------------------------+                                         +                                                                               +
+|             | Public    | https://aus5.allizom.org/                                  |                                         |                                                                               |
++-------------+-----------+------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
+| MozCloud    | Admin API | https://admin.stage.balrog.nonprod.webservices.mozgcp.net  | When the "Pull and Push Docker Image"   | A place to submit staging Releases and verify new Balrog code with automation |
++ Stage       +-----------+------------------------------------------------------------+ Github Action is run, and a sync is     +                                                                               +
+|             | Admin UI  | https://balrog.allizom.org                                 | performed in ArgoCD                     |                                                                               |
++             +-----------+------------------------------------------------------------+                                         +                                                                               +
+|             | Public    | https://stage.balrog.nonprod.webservices.mozgcp.net        |                                         |                                                                               |
++-------------+-----------+------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
 
 --------------------
 Support & Escalation
