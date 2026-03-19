@@ -25,6 +25,8 @@ jobs:
       WEBSITE_BUCKET: ${{ inputs.deploy_env == 'stage' && 'balrog-stage-admin-static' || 'TBD' }}
       LOAD_BALANCER_NAME: ${{ inputs.deploy_env == 'stage' && 'balrog-stage' || 'TBD' }}
       BALROG_ROOT_URL: ${{ inputs.deploy_env == 'stage' && 'https://admin.stage.balrog.nonprod.webservices.mozgcp.net' || 'https://aus4-admin.mozilla.org' }}
+      # doesn't differ between stage and prod
+      AUTH0_DOMAIN: auth.mozilla.auth0.com
       AUTH0_CLIENT_ID: ${{ inputs.deploy_env == 'stage' && '43tgBNjaHHhOAPPr10zh2jodVT3t6abD' || 'Qe16eoq0Uz9eSTVDVEO15DGBPCgqoAA2' }}
       AUTH0_AUDIENCE: ${{ inputs.deploy_env == 'stage' && 'balrog-cloudops-stage' || 'balrog-production' }}
       AUTH0_REDIRECT_URI: ${{ inputs.deploy_env == 'stage' && 'https://balrog-admin.allizom.org/login' || 'https://balrog.services.mozilla.com/login' }}
