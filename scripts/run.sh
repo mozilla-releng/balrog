@@ -62,8 +62,8 @@ elif [ $1 == "create-local-admin" ]; then
         echo "create-local-admin cannot be used outside of local development"
         exit 1
     fi
-    mysql -h $DB_HOST -u balrogadmin --password=balrogadmin -e "insert into permissions (username, permission, data_version) values (\"${LOCAL_ADMIN}\", \"admin\", 1)" balrog
-    mysql -h $DB_HOST -u balrogadmin --password=balrogadmin -e "insert into user_roles (username, role, data_version) values (\"${LOCAL_ADMIN}\", \"releng\", 1)" balrog
+    mysql --ssl=off -h $DB_HOST -u balrogadmin --password=balrogadmin -e "insert into permissions (username, permission, data_version) values (\"${LOCAL_ADMIN}\", \"admin\", 1)" balrog
+    mysql --ssl=off -h $DB_HOST -u balrogadmin --password=balrogadmin -e "insert into user_roles (username, role, data_version) values (\"${LOCAL_ADMIN}\", \"releng\", 1)" balrog
     exit $?
 elif [ $1 == "sync-to-gcs" ]; then
     if [ -z "${DBURI}" ]; then

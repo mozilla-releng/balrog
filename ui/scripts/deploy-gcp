@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -o errexit -o pipefail
+set -e
+
+test $BUILD_DIR
+test $WEBSITE_BUCKET
+test $GCP_PROJECT_ID
+test $LOAD_BALANCER_NAME
+test $BALROG_ROOT_URL
+test $AUTH0_CLIENT_ID
+test $AUTH0_AUDIENCE
+test $AUTH0_REDIRECT_URI
+test $AUTH0_DOMAIN
+test $GCS_NIGHTLY_HISTORY_BUCKET
+test $GCS_RELEASES_HISTORY_BUCKET
+
+CSP="\"default-src 'none'; script-src 'self'; img-src 'self' https://*.gravatar.com https://*.githubusercontent.com https://i1.wp.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src ${BALROG_ROOT_URL} https://auth.mozilla.auth0.com https://www.googleapis.com/; frame-src https://auth.mozilla.auth0.com; frame-ancestors 'self'; base-uri 'none'; form-action 'none'\""
+
+cp scripts/404.html "${BUILD_DIR}/404.html"
+
+gcloud storage rsync \
+  --cache-control="max-age=300" \
+  --recursive \
+  --delete-unmatched-destination-objects \
+  "${BUILD_DIR}/" \
+  "gs://${WEBSITE_BUCKET}/"
+
+gcloud compute url-maps invalidate-cdn-cache $LOAD_BALANCER_NAME --path "/index.html" --path "/" --global --project $GCP_PROJECT_ID

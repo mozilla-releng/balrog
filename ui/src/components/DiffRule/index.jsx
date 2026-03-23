@@ -12,14 +12,7 @@ const useStyles = makeStyles()((theme) => ({
   diff: {
     fontSize: theme.typography.body2.fontSize,
     marginTop: theme.spacing(1),
-    display: 'block',
     overflowX: 'auto',
-    '& .diff-code': {
-      whiteSpace: 'pre',
-    },
-    '& colgroup': {
-      width: '100%',
-    },
   },
 }));
 

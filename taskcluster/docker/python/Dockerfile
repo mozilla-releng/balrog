@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 ARG  PYTHON_VERSION
-FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-bookworm
+FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-trixie
 
 ENV LC_ALL C.UTF-8
 
