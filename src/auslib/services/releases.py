@@ -728,9 +728,6 @@ def delete_release(name, changed_by, trans):
     # Delete scheduled changes first because the database layer doesn't allow
     # objects with scheduled changes to be deleted.
     if sc_exists(name, trans):
-        # No permissions checks need to be done here because releases that are only
-        # scheduled changes (aka scheduled inserts do not require permission to delete)
-        # Releases that truly exist will have their permissions checked further down
         row = dbo.releases_json.scheduled_changes.select(
             where={"base_name": name, "complete": False},
             columns=[
@@ -743,6 +740,10 @@ def delete_release(name, changed_by, trans):
             row = row[0]
             sc_id = row["sc_id"]
             old_data_version = row["data_version"]
+            product = row["base_product"]
+
+            if not dbo.hasPermission(changed_by, "release", "delete", product, trans):
+                raise PermissionDeniedError(f"{changed_by} is not allowed to delete {product} releases")
 
             dbo.releases_json.scheduled_changes.delete(where={"sc_id": sc_id}, old_data_version=old_data_version, changed_by=changed_by, transaction=trans)
 

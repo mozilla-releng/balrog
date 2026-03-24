@@ -1708,6 +1708,13 @@ def test_delete_release(api):
     assert len(dbo.release_assets.t.select(dbo.release_assets.name).where(dbo.release_assets.name == "Firefox-65.0-build1").execute().fetchall()) == 0
 
 
+@pytest.mark.usefixtures("releases_db")
+def test_delete_scheduled_insert_without_permission(api, mock_verified_userinfo):
+    mock_verified_userinfo("notbob")
+    ret = api.delete("/v2/releases/Firefox-64.0-build1")
+    assert ret.status_code == 403, ret.data
+
+
 @pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
 def test_delete_scheduled_insert(api):
     ret = api.delete("/v2/releases/Firefox-64.0-build1")
