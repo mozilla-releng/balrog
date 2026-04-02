@@ -5715,7 +5715,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             "timetuple",
         )
         cls.property_err_msg = (
-            "Property '{property}' on '{table_name}.{column}' differs between model " "and migration: (model) {model_prop} != (migration) {reflected_prop}"
+            "Property '{property}' on '{table_name}.{column}' differs between model and migration: (model) {model_prop} != (migration) {reflected_prop}"
         )
 
     def setUp(self):

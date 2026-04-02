@@ -49,13 +49,10 @@ members = [
 
 [dependency-groups]
 dev = [
-    # held back due to https://github.com/psf/black/issues/4963
-    "black<26.1.0",
     "coverage",
     "coveralls",
     "fakeredis",
     "flake8",
-    "flake8-black",
     # https://github.com/HypothesisWorks/hypothesis/issues/4638
     "hypothesis<6.150.0",
     "isort",
@@ -65,6 +62,7 @@ dev = [
     "pytest-cov",
     "pytest-responses",
     "pytest-xdist",
+    "ruff",
     "tox",
     "tox-uv",
 ]
@@ -81,27 +79,13 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/auslib"]
 
-[tool.black]
+[tool.ruff]
 line-length = 160
-target-version = ["py38"]
-include = '\.(wsgi|pyi?)$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | \.cache
-  | \.cache_py3
-  | _build
-  | buck-out
-  | build
-  | dist
-  | ui
-)/
-'''
+target-version = "py313"
+extend-exclude = ["ui"]
+
+[tool.ruff.format]
+docstring-code-format = true
 
 [tool.isort]
 multi_line_output = 3

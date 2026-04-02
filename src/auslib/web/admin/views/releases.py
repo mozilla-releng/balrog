@@ -120,7 +120,7 @@ def changeRelease(release, changed_by, transaction, existsCallback, commitCallba
                     log.warning("Bad input: %s", rel)
                     return problem(400, "Bad Request", msg)
                 if "hashFunction" in releaseInfo["data"] and hashFunction and hashFunction != releaseInfo["data"]["hashFunction"]:
-                    msg = "hashFunction '{0}' doesn't match the one on the release " "object ('{1}') for release '{2}'".format(
+                    msg = "hashFunction '{0}' doesn't match the one on the release object ('{1}') for release '{2}'".format(
                         hashFunction, releaseInfo["data"]["hashFunction"], rel
                     )
                     log.warning("Bad input: %s", rel)
@@ -418,7 +418,7 @@ def get_scheduled_changes():
 def create_scheduled_change(sc_release_body, transaction, changed_by):
     what = sc_release_body
     if what.get("when", None) is None:
-        return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Release")
+        return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change for a Release")
     change_type = what.get("change_type")
 
     if change_type == "update":

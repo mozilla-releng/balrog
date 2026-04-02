@@ -43,7 +43,7 @@ def get_user_permission(username, permission, changed_by):
     try:
         perm = dbo.permissions.getUserPermissions(username, changed_by)[permission]
     except KeyError:
-        return problem(404, "Not Found", "Requested user permission" " %s not found for %s" % (permission, username))
+        return problem(404, "Not Found", "Requested user permission %s not found for %s" % (permission, username))
     return jsonify(perm)
 
 
@@ -89,7 +89,7 @@ def ensure_user_permission(username, permission, user_permission_request_body, c
 @transactionHandler
 def update_user_permission(username, permission, user_permission_request_body, changed_by, transaction):
     if not dbo.permissions.getUserPermissions(username, changed_by, transaction=transaction).get(permission):
-        return problem(status=404, title="Not Found", detail="Requested user permission" " %s not found for %s" % (permission, username))
+        return problem(status=404, title="Not Found", detail="Requested user permission %s not found for %s" % (permission, username))
     try:
         # Existing Permission
         if not user_permission_request_body.get("data_version"):
@@ -118,7 +118,7 @@ def update_user_permission(username, permission, user_permission_request_body, c
 @transactionHandler
 def delete_user_permission(username, permission, data_version, changed_by, transaction):
     if not dbo.permissions.getUserPermissions(username, changed_by, transaction=transaction).get(permission):
-        return problem(404, "Not Found", "Requested user permission" " %s not found for %s" % (permission, username))
+        return problem(404, "Not Found", "Requested user permission %s not found for %s" % (permission, username))
     try:
         # For practical purposes, DELETE can't have a request body, which means the Form
         # won't find data where it's expecting it. Instead, we have to tell it to look at
@@ -141,7 +141,7 @@ def get_scheduled_changes():
 @transactionHandler
 def schedule_change(sc_permission_body, transaction, changed_by):
     if sc_permission_body.get("when", None) is None:
-        return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Permission")
+        return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change for a Permission")
     change_type = sc_permission_body.get("change_type")
 
     what = sc_permission_body
@@ -267,7 +267,7 @@ def grant_role(username, role, changed_by, transaction):
 def revoke_role(username, role, data_version, changed_by, transaction):
     roles = [r["role"] for r in dbo.permissions.getUserRoles(username)]
     if role not in roles:
-        return problem(404, "Not Found", "Role not found", ext={"exception": "No role '%s' found for " "username '%s'" % (role, username)})
+        return problem(404, "Not Found", "Role not found", ext={"exception": "No role '%s' found for username '%s'" % (role, username)})
     # query argument i.e. data_version  is also required.
     # All input value validations already defined in swagger specification and carried out by connexion
     dbo.permissions.revokeRole(username, role, changed_by=changed_by, old_data_version=data_version, transaction=transaction)
