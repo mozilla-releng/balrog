@@ -11,20 +11,16 @@ def upgrade(migrate_engine):
 
     # 2) Update the values of change_type depending on base_data_version
 
-    migrate_engine.execute(
-        """
+    migrate_engine.execute("""
         UPDATE rules_scheduled_changes
         SET change_type = "insert"
         WHERE base_data_version is NULL;
-        """
-    )
-    migrate_engine.execute(
-        """
+        """)
+    migrate_engine.execute("""
         UPDATE rules_scheduled_changes
         SET change_type = "update"
         WHERE base_data_version is not NULL;
-        """
-    )
+        """)
 
     # 3) Alter the column and set nullable=False
     change_type.alter(nullable=False)
@@ -32,20 +28,16 @@ def upgrade(migrate_engine):
     change_type = Column("change_type", String(50))
     change_type.create(Table("rules_scheduled_changes_history", metadata, autoload=True))
 
-    migrate_engine.execute(
-        """
+    migrate_engine.execute("""
         UPDATE rules_scheduled_changes_history
         SET change_type = "insert"
         WHERE base_data_version is NULL;
-        """
-    )
-    migrate_engine.execute(
-        """
+        """)
+    migrate_engine.execute("""
         UPDATE rules_scheduled_changes_history
         SET change_type = "update"
         WHERE base_data_version is not NULL;
-        """
-    )
+        """)
     rules_scheduled_changes = Table("rules_scheduled_changes", metadata, autoload=True)
     rules_scheduled_changes.c.base_update_type.alter(nullable=True)
 

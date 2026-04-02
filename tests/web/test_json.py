@@ -47,8 +47,7 @@ def guardian_db():
         name="Guardian-Evil-1.0.0.0",
         product="Guardian",
         data_version=1,
-        data=createBlob(
-            """
+        data=createBlob("""
 {
     "name": "Guardian-Evil-1.0.0.0",
     "product": "Guardian",
@@ -63,8 +62,7 @@ def guardian_db():
         }
     }
 }
-"""
-        ),
+"""),
     )
     dbo.rules.t.insert().execute(
         priority=150,
@@ -90,8 +88,7 @@ def guardian_db():
         name="Guardian-0.5.0.0",
         product="Guardian",
         data_version=1,
-        data=createBlob(
-            """
+        data=createBlob("""
 {
     "name": "Guardian-0.5.0.0",
     "product": "Guardian",
@@ -110,15 +107,13 @@ def guardian_db():
         }
     }
 }
-"""
-        ),
+"""),
     )
     dbo.releases.t.insert().execute(
         name="Guardian-0.6.0.0",
         product="Guardian",
         data_version=1,
-        data=createBlob(
-            """
+        data=createBlob("""
 {
     "name": "Guardian-0.6.0.0",
     "product": "Guardian",
@@ -137,15 +132,13 @@ def guardian_db():
         }
     }
 }
-"""
-        ),
+"""),
     )
     dbo.releases.t.insert().execute(
         name="Guardian-1.0.0.0",
         product="Guardian",
         data_version=1,
-        data=createBlob(
-            """
+        data=createBlob("""
 {
     "name": "Guardian-1.0.0.0",
     "product": "Guardian",
@@ -164,8 +157,7 @@ def guardian_db():
         }
     }
 }
-"""
-        ),
+"""),
     )
     dbo.rules.t.insert().execute(
         priority=120,
@@ -233,8 +225,7 @@ def guardian_db():
         name="b",
         product="b",
         data_version=1,
-        data=createBlob(
-            """
+        data=createBlob("""
 {
     "name": "b",
     "schema_version": 1,
@@ -265,8 +256,7 @@ def guardian_db():
         }
     }
 }
-"""
-        ),
+"""),
     )
 
 

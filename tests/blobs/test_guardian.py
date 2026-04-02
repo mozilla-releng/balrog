@@ -7,8 +7,7 @@ from auslib.blobs.guardian import GuardianBlob
 @pytest.fixture(scope="session")
 def guardianblob():
     blob = GuardianBlob()
-    blob.loadJSON(
-        """
+    blob.loadJSON("""
 {
     "name": "Guardian-1.0.0.0",
     "product": "Guardian",
@@ -27,8 +26,7 @@ def guardianblob():
         }
     }
 }
-"""
-    )
+""")
     return blob
 
 
