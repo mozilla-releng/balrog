@@ -94,19 +94,17 @@ cache.make_cache("users", 1, 300)
 if not os.environ.get("RELEASES_HISTORY_BUCKET") or not os.environ.get("NIGHTLY_HISTORY_BUCKET"):
     log.critical("RELEASES_HISTORY_BUCKET and NIGHTLY_HISTORY_BUCKET must be provided")
     sys.exit(1)
-if not LOCALDEV:
-    if "GOOGLE_APPLICATION_CREDENTIALS" not in os.environ:
-        log.critical("GOOGLE_APPLICATION_CREDENTIALS must be provided!")
-        sys.exit(1)
-
-    if not os.path.exists(os.environ["GOOGLE_APPLICATION_CREDENTIALS"]):
-        log.critical("GOOGLE_APPLICATION_CREDENTIALS provided, but does not exist")
-        sys.exit(1)
 
 if LOCALDEV and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")):
     log.info("Disabling releases_history writes for localdev without google credentials specified")
     buckets = None
 else:
+    # In production, no explicit credentials are provided. Instead, the application
+    # is granted write access to the GCS buckets through a service account managed
+    # by the metadata service. Because of this, there is no possibility of sanity
+    # checking that any particular environment variables are set, credentials present
+    # on disk, etc. - we just need to attempt an upload and see what happens.
+
     # We use this factory instead of creating an instance of Storage here
     # because the async Storage creates an aiohttp.ClientSession upon instantiation,
     # which grabs a reference to the current EventLoop. Because we're using
