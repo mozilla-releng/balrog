@@ -95,7 +95,11 @@ if not os.environ.get("RELEASES_HISTORY_BUCKET") or not os.environ.get("NIGHTLY_
     log.critical("RELEASES_HISTORY_BUCKET and NIGHTLY_HISTORY_BUCKET must be provided")
     sys.exit(1)
 if not LOCALDEV:
-    if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ and not os.path.exists(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")):
+    if "GOOGLE_APPLICATION_CREDENTIALS" not in os.environ:
+        log.critical("GOOGLE_APPLICATION_CREDENTIALS must be provided!")
+        sys.exit(1)
+
+    if not os.path.exists(os.environ["GOOGLE_APPLICATION_CREDENTIALS"]):
         log.critical("GOOGLE_APPLICATION_CREDENTIALS provided, but does not exist")
         sys.exit(1)
 
