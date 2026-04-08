@@ -98,3 +98,10 @@ parameters:
     type: integer
     minimum: 0
     required: true
+
+  pinVersionPathParam:
+    name: version
+    in: path
+    description: Pin version, including the trailing dot (e.g. "102.0.").
+    type: string
+    required: true

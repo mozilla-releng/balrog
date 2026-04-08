@@ -280,6 +280,11 @@ paths:
       operationId: auslib.web.common.pins.get_pin
       produces:
         - application/json
+      parameters:
+        - $ref: '#/parameters/productPathParam'
+        - $ref: '#/parameters/channelPathParam'
+        - $ref: '#/parameters/pinVersionPathParam'
+        - $ref: '#/parameters/pretty'
       responses:
         '200':
           description: Version pinning data.
