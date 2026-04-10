@@ -21,7 +21,7 @@ task-defaults:
             using: run-task
             checkout:
                 balrog: {}
-            command: ['uv', 'run', 'tox']
+            command: ['uv', 'run', '--locked', 'tox']
 
 tasks:
     backend:
