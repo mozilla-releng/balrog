@@ -28,7 +28,7 @@ tasks:
         description: balrog backend tests
         run:
             cwd: '{checkout}'
-            command: 'taskcluster/scripts/get-coveralls-token uv run tox'
+            command: 'taskcluster/scripts/get-coveralls-token uv run --locked tox'
         worker:
             env:
                 TOXENV: 'py313,coveralls'
