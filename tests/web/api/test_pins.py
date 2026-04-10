@@ -31,3 +31,7 @@ class TestPinsPublicAPI(CommonTestBase):
     def test_get_pin_notfound(self):
         resp = self.public_client.get("/api/v1/pins/test_product/test_channel/2.")
         self.assertEqual(resp.status_code, 404)
+
+    def test_get_pin_extra_query_param(self):
+        resp = self.public_client.get("/api/v1/pins/test_product/test_channel/1.?product=test_product")
+        self.assertEqual(resp.status_code, 400)
