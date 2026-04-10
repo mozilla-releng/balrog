@@ -16,7 +16,6 @@ def setUpModule():
 
 @pytest.mark.usefixtures("current_db_schema", "app")
 class CommonTestBase(unittest.TestCase):
-
     @pytest.fixture(autouse=True)
     def setup(self, insert_release, firefox_54_0_1_build1, firefox_56_0_build1, superblob_e8f4a19, hotfix_bug_1548973_1_1_4, timecop_1_0):
         redis = fakeredis.FakeRedis()

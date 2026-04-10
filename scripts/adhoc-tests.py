@@ -79,7 +79,7 @@ class AdhocBalrogTester:
     def version(self, environment, interface):
         url = self.make_url(environment, interface, "__version__")
         version = self.balrog_request("GET", url, headers=self.headers)
-        log.info(f'  {environment}-{interface} version: {version["version"]}')
+        log.info(f"  {environment}-{interface} version: {version['version']}")
 
     def heartbeat(self, environment, interface):
         url = self.make_url(environment, interface, "__heartbeat__")
@@ -92,35 +92,35 @@ class AdhocBalrogTester:
     def admin_releases(self, environment, interface):
         url = self.make_url(environment, interface, "releases")
         releases = self.balrog_request("GET", url, headers=self.headers)
-        log.info(f'  {len(releases["releases"])} releases found')
+        log.info(f"  {len(releases['releases'])} releases found")
         url = self.make_url(environment, interface, "api/releases")
         releases = self.balrog_request("GET", url, headers=self.headers)
-        log.info(f'  {len(releases["releases"])} api/releases found')
+        log.info(f"  {len(releases['releases'])} api/releases found")
         url = self.make_url(environment, interface, "api/v2/releases")
         releases = self.balrog_request("GET", url, headers=self.headers)
-        log.info(f'  {len(releases["releases"])} api/v2/releases found')
+        log.info(f"  {len(releases['releases'])} api/v2/releases found")
         if test_level > 2:
             for r in releases["releases"][-10:]:
-                log.info(f'{r["name"]} ({r["product"]}, {r["data_version"]})')
-                url = self.make_url(environment, interface, f'api/v2/releases/{r["name"]}')
+                log.info(f"{r['name']} ({r['product']}, {r['data_version']})")
+                url = self.make_url(environment, interface, f"api/v2/releases/{r['name']}")
                 self.balrog_request("GET", url, headers=self.headers)
 
     def admin_scheduled_changes(self, environment, interface):
         url = self.make_url(environment, interface, "scheduled_changes/emergency_shutoff")
         resp = self.balrog_request("GET", url, headers=self.headers)
-        log.info(f'  {resp["count"]} scheduled changes')
+        log.info(f"  {resp['count']} scheduled changes")
         url = self.make_url(environment, interface, "scheduled_changes/required_signoffs/permissions")
         resp = self.balrog_request("GET", url, headers=self.headers)
-        log.info(f'  {resp["count"]} scheduled changes')
+        log.info(f"  {resp['count']} scheduled changes")
         url = self.make_url(environment, interface, "scheduled_changes/required_signoffs/product")
         resp = self.balrog_request("GET", url, headers=self.headers)
-        log.info(f'  {resp["count"]} scheduled changes')
+        log.info(f"  {resp['count']} scheduled changes")
         url = self.make_url(environment, interface, "scheduled_changes/releases")
         resp = self.balrog_request("GET", url, headers=self.headers)
-        log.info(f'  {resp["count"]} scheduled changes')
+        log.info(f"  {resp['count']} scheduled changes")
         url = self.make_url(environment, interface, "scheduled_changes/rules")
         resp = self.balrog_request("GET", url, headers=self.headers)
-        log.info(f'  {resp["count"]} scheduled changes')
+        log.info(f"  {resp['count']} scheduled changes")
 
     def public_updates(self, environment, interface):
         # TODO many other interesting and important endpoints
@@ -135,14 +135,14 @@ class AdhocBalrogTester:
     def public_releases(self, environment, interface):
         url = self.make_url(environment, interface, "api/v1/releases")
         releases = self.balrog_request("GET", url, headers=self.headers)
-        log.info(f'  {len(releases["releases"])} api/v1/releases found')
+        log.info(f"  {len(releases['releases'])} api/v1/releases found")
         url = self.make_url(environment, interface, "api/v1/releases?name_prefix=Firefox")
         releases = self.balrog_request("GET", url, headers=self.headers)
         log.info(f'  {len(releases["releases"])} api/v1/releases starting with "Firefox" found')
         if test_level > 2:
             for r in releases["releases"][-10:]:
-                log.info(f'{r["name"]} ({r["product"]}, {r["data_version"]})')
-                url = self.make_url(environment, interface, f'api/v1/releases/{r["name"]}')
+                log.info(f"{r['name']} ({r['product']}, {r['data_version']})")
+                url = self.make_url(environment, interface, f"api/v1/releases/{r['name']}")
                 self.balrog_request("GET", url, headers=self.headers)
 
     def run_tests_admin(self):

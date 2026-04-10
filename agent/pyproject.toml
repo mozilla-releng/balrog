@@ -13,7 +13,6 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "black",
     "coverage",
     "flake8",
     "isort",
@@ -21,6 +20,7 @@ dev = [
     "pytest-asyncio",
     "pytest-cov",
     "pytest-xdist",
+    "ruff",
     "tox",
     "tox-uv",
     "yarl",
@@ -36,27 +36,12 @@ packages = ["src/balrogagent"]
 [project.scripts]
 balrogagent = "balrogagent.cmd:main"
 
-[tool.black]
+[tool.ruff]
 line-length = 160
-target-version = ["py38"]
-include = '\.(wsgi|pyi?)$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | \.cache
-  | \.cache_py3
-  | _build
-  | buck-out
-  | build
-  | dist
-  | ui
-)/
-'''
+target-version = "py313"
+
+[tool.ruff.format]
+docstring-code-format = true
 
 [tool.isort]
 multi_line_output = 3

@@ -46,9 +46,7 @@ def version_validator(field_value):
         try:
             op, operand = get_op(rule_version)
             if is_list_of_versions and op != operator.eq:
-                raise jsonschema.ValidationError(
-                    "Invalid input for %s .Relational Operators are not allowed" " when providing a list of versions." % field_value
-                )
+                raise jsonschema.ValidationError("Invalid input for %s .Relational Operators are not allowed when providing a list of versions." % field_value)
             version = MozillaVersion(operand)
         except jsonschema.ValidationError:
             raise
