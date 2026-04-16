@@ -6092,6 +6092,8 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             pass
 
         versions_migrate_tests_dict = {
+            # MySQL-only migration (removes AUTO_INCREMENT from conditions table sc_id), no-op on SQLite
+            36: _noop,
             35: self._add_emergency_shutoff_comments,
             34: self._add_pinnable_releases_tables,
             33: self._add_release_json_tables,
