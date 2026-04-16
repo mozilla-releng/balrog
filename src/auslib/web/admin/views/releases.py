@@ -417,6 +417,8 @@ def get_scheduled_changes():
 @transactionHandler
 def create_scheduled_change(sc_release_body, transaction, changed_by):
     what = sc_release_body
+    if "sc_id" in what:
+        return problem(400, "Bad Request", "sc_id cannot be set when scheduling a new change")
     if what.get("when", None) is None:
         return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Release")
     change_type = what.get("change_type")

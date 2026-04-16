@@ -2281,6 +2281,22 @@ class TestRuleScheduledChanges(ViewTest):
         self.assertEqual(ret.status_code, 400)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeRejectsScId(self):
+        data = {
+            "when": 1234567,
+            "priority": 120,
+            "backgroundRate": 100,
+            "product": "blah",
+            "channel": "blah",
+            "update_type": "minor",
+            "mapping": "a",
+            "change_type": "insert",
+            "sc_id": 9999,
+        }
+        ret = self._post("/scheduled_changes/rules", data=data)
+        self.assertEqual(ret.status_code, 400, ret.get_data())
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateCompletedScheduleChange(self):
         data = {
             "when": 2000000,

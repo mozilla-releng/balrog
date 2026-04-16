@@ -145,6 +145,8 @@ def schedule_change(sc_permission_body, transaction, changed_by):
     change_type = sc_permission_body.get("change_type")
 
     what = sc_permission_body
+    if "sc_id" in what:
+        return problem(400, "Bad Request", "sc_id cannot be set when scheduling a new change")
     print(what, flush=True)
     if what.get("options", None):
         what["options"] = json.loads(what.get("options"))

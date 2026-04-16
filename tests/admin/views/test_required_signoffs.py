@@ -568,6 +568,12 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         self.assertEqual(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeRejectsScId(self):
+        data = {"when": 400000000, "product": "fake", "channel": "k", "role": "releng", "signoffs_required": 1, "change_type": "insert", "sc_id": 9999}
+        ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
+        self.assertEqual(ret.status_code, 400, ret.get_data())
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledUnknownScheduledChangeID(self):
         data = {"signoffs_required": 1, "data_version": 1, "sc_data_version": 1, "when": 200000000}
         ret = self._post("/scheduled_changes/required_signoffs/product/98765432", data=data)
@@ -1273,6 +1279,12 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
         self.assertEqual(dict(cond[0]), cond_expected)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeRejectsScId(self):
+        data = {"when": 400000000, "product": "foo", "role": "relman", "signoffs_required": 1, "change_type": "insert", "sc_id": 9999}
+        ret = self._post("/scheduled_changes/required_signoffs/permissions", data=data)
+        self.assertEqual(ret.status_code, 400, ret.get_data())
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeExistingRequiredSignoff(self):

@@ -127,6 +127,12 @@ class TestEmergencyShutoff(ViewTest):
         self.assertTrue(sc)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def test_schedule_deletion_rejects_sc_id(self):
+        data = {"when": 4200024, "change_type": "delete", "data_version": 1, "product": "Fennec", "channel": "beta", "sc_id": 9999}
+        ret = self._post("/scheduled_changes/emergency_shutoff", data=data)
+        self.assertEqual(ret.status_code, 400)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def test_update_scheduled_deletion(self):
         data = {"when": 123454321, "sc_data_version": 1}
         ret = self._post("/scheduled_changes/emergency_shutoff/1", data=data)
