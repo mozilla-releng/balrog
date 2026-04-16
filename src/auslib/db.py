@@ -387,6 +387,9 @@ class AUSTable(object):
 
         :rtype: sqlalchemy.sql.express.Insert
         """
+        for col in self.table.c:
+            if col.primary_key and col.autoincrement and isinstance(col.type, Integer) and col.name in columns:
+                raise ValueError("Cannot set autoincrement primary key '%s' on insert" % col.name)
         table_columns = {k: columns[k] for k in columns.keys() if k in self.table.c}
         unconsumed_columns = {k: columns[k] for k in columns.keys() if k not in table_columns}
         return self.t.insert(values=table_columns), unconsumed_columns
