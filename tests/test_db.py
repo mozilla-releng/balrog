@@ -206,7 +206,7 @@ class TestTableMixin(object):
 
         class TestTable(AUSTable):
             def __init__(self, db, metadata):
-                self.table = Table("test", metadata, Column("id", Integer, primary_key=True, autoincrement=True), Column("foo", Integer))
+                self.table = Table("test", metadata, Column("id", Integer, primary_key=True, autoincrement=False), Column("foo", Integer))
                 AUSTable.__init__(self, db, "sqlite", historyClass=HistoryTable)
 
         class TestAutoincrementTable(AUSTable):
@@ -434,12 +434,8 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
         self.assertEqual(ret, [(24, "george", 999, 5, None, None), (25, "george", 1000, 5, 0, 1)])
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
-    def testHistoryUponAutoincrementInsert(self):
-        self.test.insert(changed_by="george", foo=0)
-        # This actual generates history for a row we already have history for
-        # because sqlite just uses max(id)+1 as the next available primary key.
-        # Even if we insert and delete id 4 from the database, we still
-        # get id=4 for the next autoincrement insert.
+    def testHistoryUponInsertWithExistingHistory(self):
+        self.test.insert(changed_by="george", id=4, foo=0)
         ret = self.test.history.t.select().where(self.test.history.id == 4).execute().fetchall()[-2:]
         self.assertEqual(ret, [(24, "george", 999, 4, None, None), (25, "george", 1000, 4, 0, 1)])
 
@@ -6096,6 +6092,8 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             pass
 
         versions_migrate_tests_dict = {
+            # MySQL-only migration (removes AUTO_INCREMENT from conditions table sc_id), no-op on SQLite
+            36: _noop,
             35: self._add_emergency_shutoff_comments,
             34: self._add_pinnable_releases_tables,
             33: self._add_release_json_tables,
