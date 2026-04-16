@@ -747,6 +747,12 @@ class TestPermissionsScheduledChanges(ViewTest):
         self.assertEqual(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeRejectsScId(self):
+        data = {"when": 400000000, "permission": "release", "username": "jill", "change_type": "insert", "sc_id": 9999}
+        ret = self._post("/scheduled_changes/permissions", data=data)
+        self.assertEqual(ret.status_code, 400, ret.get_data())
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeNewPermissionEmptyDictOptions(self):
         data = {"when": 400000000, "permission": "release", "username": "jill", "options": "{}", "change_type": "insert"}
         ret = self._post("/scheduled_changes/permissions", data=data)
