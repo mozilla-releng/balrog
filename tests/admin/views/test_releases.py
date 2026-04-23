@@ -1677,6 +1677,19 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertDictEqual(dict(cond[0]), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
+    def testAddScheduledChangeRejectsScId(self):
+        data = {
+            "when": 5200000000,
+            "name": "q",
+            "data": '{"name": "q", "hashFunction": "sha512", "schema_version": 1}',
+            "product": "q",
+            "change_type": "insert",
+            "sc_id": 9999,
+        }
+        ret = self._post("/scheduled_changes/releases", data=data)
+        self.assertEqual(ret.status_code, 400, ret.get_data())
+
+    @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeUpdateToReadWrite(self):
         data = {"change_type": "update", "name": "z", "when": 4200024, "read_only": False, "data_version": 1}
         resp = self._post("/scheduled_changes/releases", data=data)

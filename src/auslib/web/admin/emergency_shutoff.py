@@ -62,6 +62,8 @@ def schedule_deletion(sc_emergency_shutoff, changed_by, transaction):
     if change_type != "delete":
         return problem(400, "Bad Request", "Invalid or missing change_type")
 
+    if "sc_id" in sc_emergency_shutoff:
+        return problem(400, "Bad Request", "sc_id cannot be set when scheduling a new change")
     return post_scheduled_changes(
         sc_table=dbo.emergencyShutoffs.scheduled_changes, what=sc_emergency_shutoff, transaction=transaction, changed_by=changed_by, change_type=change_type
     )

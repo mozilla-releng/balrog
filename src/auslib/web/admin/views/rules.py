@@ -191,6 +191,8 @@ def get_scheduled_changes():
 def create_scheduled_change(sc_rule_body, transaction, changed_by):
     if sc_rule_body.get("when", None) is None:
         return problem(400, "Bad Request", "'when' cannot be set to null when scheduling a new change " "for a Rule")
+    if "sc_id" in sc_rule_body:
+        return problem(400, "Bad Request", "sc_id cannot be set when scheduling a new change")
     if sc_rule_body:
         change_type = sc_rule_body.get("change_type")
     else:
