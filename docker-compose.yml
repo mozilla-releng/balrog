@@ -128,7 +128,7 @@ services:
 
 
   balrogui:
-    image: node:24@sha256:3a09aa6354567619221ef6c45a5051b671f953f0a1924d1f819ffb236e520e6b
+    image: node:24@sha256:e9891237dfbb1de60ce19e9ff9fac5d73ad9c37da303ad72ff2a425ad1057e71
     depends_on:
       balrogadmin:
         condition: service_healthy
@@ -201,7 +201,7 @@ services:
 
   # TODO: provide our own config so that we can guarantee the keyid
   autograph:
-    image: mozilla/autograph:latest@sha256:26bd613868d69405998d32a13271b1874c9a6c6888f1a2c16c9e7cd409e013ad
+    image: mozilla/autograph:latest@sha256:5978a2d86419dbdb39561750f0de62fd238aedb2cd971060f1dc1c965a82b45e
     expose:
       - "8000"
     ports:
@@ -227,7 +227,7 @@ services:
       - "8050:80"
 
   redis:
-    image: redis:8-alpine@sha256:fd83658b0e40e2164617d262f13c02ca9ee9e1e6b276fd2fa06617e09bd5c780
+    image: redis:8-alpine@sha256:c5e375abb885e6b2021c0377879e4890bf76f9065b8922ffc113f2b226b9fc17
     command: redis-server --loglevel warning
     expose:
       - "6379"
