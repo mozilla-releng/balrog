@@ -96,7 +96,8 @@ def unique_items_only(i):
 # but only generates JSON data with a dict as the top level object.
 useful_dict = st.dictionaries(st.text(), useful_values | st.lists(useful_values, max_size=10, unique_by=unique_items_only), max_size=10)
 useful_list = st.lists(useful_values | useful_dict, max_size=10, unique_by=unique_items_only)
-json = st.dictionaries(st.text(), st.recursive(useful_values, lambda x: useful_list | useful_dict, max_leaves=20), max_size=10)
+json_values = st.recursive(useful_values, lambda x: st.dictionaries(st.text(), x, max_size=10) | useful_list, max_leaves=20)
+json = st.dictionaries(st.text(), json_values)
 
 
 def test_merge_dicts_simple_additions():
@@ -125,7 +126,7 @@ def test_merge_dicts_simple_changes():
 
 # too_slow health checks are repressed because tests can be slow in CI, and we
 # don't want CI failures due to this.
-@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
+@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow, HealthCheck.data_too_large])
 @given(json)
 def test_merge_dicts_join_lists(base):
     to_modify = None
@@ -145,7 +146,7 @@ def test_merge_dicts_join_lists(base):
     assert got == expected
 
 
-@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
+@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow, HealthCheck.data_too_large])
 @given(json)
 def test_merge_dicts_raise_when_both_adding_same_key(base):
     left = deepcopy(base)
@@ -160,7 +161,7 @@ def test_merge_dicts_raise_when_both_adding_same_key(base):
         assert False, "ValueError not raised"
 
 
-@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
+@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow, HealthCheck.data_too_large])
 @given(json)
 def test_merge_dicts_raise_when_both_modifying_same_key(base):
     left = deepcopy(base)
@@ -176,7 +177,7 @@ def test_merge_dicts_raise_when_both_modifying_same_key(base):
         assert False, "ValueError not raised"
 
 
-@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
+@settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow, HealthCheck.data_too_large])
 @given(json)
 def test_merge_dicts_mismatched_types(base):
     assume(len(base) > 0)
