@@ -60,7 +60,7 @@ dev = [
     "hypothesis<6.150.0",
     "isort",
     "mock",
-    "pytest",
+    "pytest>=9",
     "pytest-asyncio",
     "pytest-cov",
     "pytest-responses",
@@ -110,6 +110,15 @@ force_grid_wrap = 0
 use_parentheses = true
 line_length = 160
 
-[tool.pytest.ini_options]
-asyncio_mode="auto"
-asyncio_default_fixture_loop_scope="function"
+[tool.pytest]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+norecursedirs = [".tox", ".git", ".hg", "sandbox", "build"]
+python_files = ["test_*.py"]
+filterwarnings = [
+    "ignore",
+    "error:::auslib",
+    "ignore::ImportWarning:auslib.db",
+    "default::DeprecationWarning:auslib",
+    "default::PendingDeprecationWarning:auslib",
+]

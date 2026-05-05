@@ -324,7 +324,7 @@ dev = [
     { name = "hypothesis", specifier = "<6.150.0" },
     { name = "isort" },
     { name = "mock" },
-    { name = "pytest" },
+    { name = "pytest", specifier = ">=9" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "pytest-responses" },
