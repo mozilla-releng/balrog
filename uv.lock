@@ -321,7 +321,7 @@ dev = [
     { name = "fakeredis" },
     { name = "flake8" },
     { name = "flake8-black" },
-    { name = "hypothesis", specifier = "<6.150.0" },
+    { name = "hypothesis" },
     { name = "isort" },
     { name = "mock" },
     { name = "pytest", specifier = ">=9" },
