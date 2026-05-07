@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim@sha256:3a99382378e1d3d67c6d671cddbfd7a17f3b064db802c3afe9d29406c36a6dc2 AS builder
+FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim@sha256:e4c38c90b787fd96bb53ad8db7199f31343424f3d2e3291d2008b5bc379a138c AS builder
 
 WORKDIR /app
 
