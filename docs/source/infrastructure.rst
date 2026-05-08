@@ -98,7 +98,11 @@ Once Argo has finished updating everything, you should notifications for ``agent
 
 .. image:: deployment-notifications.png
 
-3. Bump the `in-repo version <https://github.com/mozilla-releng/balrog/commit/6067671d6a055de1b399ad32b342f0789fea03fc>`_ to the next available one to ensure the next push gets a new version.
+3. Deploy the UI by running the "Build and Deploy Balrog UI" GitHub action. Be sure to choose "stage" from the dropdown:
+
+.. image:: ui-stage.png
+
+4. Bump the `in-repo version <https://github.com/mozilla-releng/balrog/commit/6067671d6a055de1b399ad32b342f0789fea03fc>`_ to the next available one to ensure the next push gets a new version.
 
 Once the changes are deployed to stage, you should do some testing to make sure that the new features, fixes, etc. are working properly there. It's a good idea to `watch Sentry for new exceptions <https://sentry.io/organizations/mozilla/projects/>`_ that may show up, and Grafana for any notable changes in the shape of the traffic.
 
