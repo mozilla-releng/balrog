@@ -2,5 +2,6 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>mozilla-releng/reps:renovate-preset.json5"
-  ]
+  ],
+  "schedule": ["* 2 1,15 * *"]
 }
