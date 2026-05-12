@@ -39,7 +39,7 @@ jobs:
         run: docker pull mozilla/balrog:${IMAGE_TAG}
 
       - name: Log in to GAR for push
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4
         with:
           registry: ${{ vars.GAR_LOCATION }}-docker.pkg.dev
           username: oauth2accesstoken
