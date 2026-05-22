@@ -23,10 +23,10 @@ const cancelDeleteEmergencyShutoff = (scId, scDataVersion) =>
   });
 
 export {
-  getEmergencyShutoffs,
+  cancelDeleteEmergencyShutoff,
   createEmergencyShutoff,
   deleteEmergencyShutoff,
+  getEmergencyShutoffs,
   getScheduledChanges,
   scheduleDeleteEmergencyShutoff,
-  cancelDeleteEmergencyShutoff,
 };

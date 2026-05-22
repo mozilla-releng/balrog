@@ -80,7 +80,7 @@ const getSupportedActions = (permission) => {
 export {
   getPermissionString,
   getRolesString,
-  supportsProductRestriction,
-  supportsActionRestriction,
   getSupportedActions,
+  supportsActionRestriction,
+  supportsProductRestriction,
 };

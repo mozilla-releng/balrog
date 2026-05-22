@@ -25,8 +25,8 @@ const deleteScheduledChange = (params) => {
 
 // requiredSignoffs factory
 export {
+  deleteScheduledChange,
   getRequiredSignoffs,
   getScheduledChanges,
   updateRequiredSignoff,
-  deleteScheduledChange,
 };
