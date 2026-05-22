@@ -60,13 +60,13 @@ const deleteScheduledPermissionChange = ({ scId, scDataVersion }) =>
   });
 
 export {
-  userExists,
-  getUsers,
-  getUserInfo,
-  getScheduledChanges,
   addRole,
-  removeRole,
   addScheduledPermissionChange,
-  updateScheduledPermissionChange,
   deleteScheduledPermissionChange,
+  getScheduledChanges,
+  getUserInfo,
+  getUsers,
+  removeRole,
+  updateScheduledPermissionChange,
+  userExists,
 };

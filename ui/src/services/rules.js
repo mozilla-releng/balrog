@@ -38,16 +38,16 @@ const deleteScheduledChange = ({ scId, scDataVersion }) =>
 
 // Rules factory
 export {
-  getRules,
+  addScheduledChange,
   deleteRule,
-  getRule,
+  deleteScheduledChange,
   getChannels,
   getProducts,
   getRevisions,
-  getScheduledChanges,
+  getRule,
+  getRules,
   getScheduledChangeByRuleId,
   getScheduledChangeByScId,
-  addScheduledChange,
+  getScheduledChanges,
   updateScheduledChange,
-  deleteScheduledChange,
 };

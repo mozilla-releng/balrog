@@ -509,7 +509,7 @@ function ListRules(props) {
     let filteredRules = clone(rulesWithScheduledChanges);
 
     // Pending signoff switch
-    if (filteredRules && Boolean(query.onlyScheduledChanges)) {
+    if (filteredRules && query.onlyScheduledChanges) {
       filteredRules = filteredRules.filter((rule) => rule.scheduledChange);
     }
 
@@ -1602,10 +1602,9 @@ function ListRules(props) {
           tooltipTitle="Disable Updates"
           onClick={
             !isLoading &&
-            !!username &&
+            username &&
             !filteredProductChannelIsShutoff &&
-            !!productChannelQueries &&
-            !!productChannelQueries[1]
+            productChannelQueries?.[1]
               ? handleDisableUpdates
               : undefined
           }
