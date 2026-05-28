@@ -378,8 +378,13 @@ function ListRules(props) {
       options.push(product);
 
       chs.forEach((channel) => {
-        if (!channel.endsWith('*') && pairExists(product, channel)) {
-          options.push(`${product}${productChannelSeparator}${channel}`);
+        const normalizedChannel = channel.endsWith('*')
+          ? channel.slice(0, -1)
+          : channel;
+        const option = `${product}${productChannelSeparator}${normalizedChannel}`;
+
+        if (!options.includes(option) && pairExists(product, channel)) {
+          options.push(option);
         }
       });
     });
