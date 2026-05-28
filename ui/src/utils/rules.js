@@ -37,4 +37,28 @@ const ruleMatchesChannel = (rule, channel) => {
   return ruleChannelMatches || scChannelMatches;
 };
 
-export { ruleMatchesChannel };
+const buildProductChannelOptions = (products, channels, rules, separator) => {
+  const options = [];
+
+  products.forEach((product) => {
+    options.push(product);
+
+    channels.forEach((channel) => {
+      const normalizedChannel = channel.endsWith('*')
+        ? channel.slice(0, -1)
+        : channel;
+      const option = `${product}${separator}${normalizedChannel}`;
+      const pairExists = rules.some(
+        (rule) => rule.product === product && rule.channel === channel,
+      );
+
+      if (!options.includes(option) && pairExists) {
+        options.push(option);
+      }
+    });
+  });
+
+  return options.sort();
+};
+
+export { buildProductChannelOptions, ruleMatchesChannel };

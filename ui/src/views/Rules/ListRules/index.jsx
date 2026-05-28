@@ -83,7 +83,10 @@ import getDiffedProperties from '../../../utils/getDiffedProperties';
 import getFilteredRulesInfo from '../../../utils/getFilteredRulesInfo';
 import Link from '../../../utils/Link';
 import { ruleMatchesRequiredSignoff } from '../../../utils/requiredSignoffs';
-import { ruleMatchesChannel } from '../../../utils/rules';
+import {
+  buildProductChannelOptions,
+  ruleMatchesChannel,
+} from '../../../utils/rules';
 
 const ALL = 'all';
 const useStyles = makeStyles()((theme) => ({
@@ -340,10 +343,6 @@ function ListRules(props) {
 
   const isScheduledInsert = (rule) =>
     rule.scheduledChange && rule.scheduledChange.change_type === 'insert';
-  const pairExists = (product, channel) =>
-    rules.data?.data.rules.some(
-      (rule) => rule.product === product && rule.channel === channel,
-    );
   const sortRules = (rules) => {
     // Rules are sorted by priority. Rules that are
     // pending (ie: still just a Scheduled Change) will be inserted based
@@ -372,24 +371,15 @@ function ListRules(props) {
 
     const prods = products.data.data.product;
     const chs = channels.data.data.channel;
-    const options = [];
 
-    prods.forEach((product) => {
-      options.push(product);
-
-      chs.forEach((channel) => {
-        const normalizedChannel = channel.endsWith('*')
-          ? channel.slice(0, -1)
-          : channel;
-        const option = `${product}${productChannelSeparator}${normalizedChannel}`;
-
-        if (!options.includes(option) && pairExists(product, channel)) {
-          options.push(option);
-        }
-      });
-    });
-
-    setProductChannelOptions(options.sort());
+    setProductChannelOptions(
+      buildProductChannelOptions(
+        prods,
+        chs,
+        rules.data.data.rules,
+        productChannelSeparator,
+      ),
+    );
   }, [products.data, channels.data, rules.data]);
 
   useEffect(() => {

@@ -1,4 +1,7 @@
-import { ruleMatchesChannel } from '../src/utils/rules';
+import {
+  buildProductChannelOptions,
+  ruleMatchesChannel,
+} from '../src/utils/rules';
 
 describe('channel matching', () => {
   test('should match when only current rule matches', () => {
@@ -146,5 +149,87 @@ describe('channel matching', () => {
     );
 
     expect(result).toBeFalsy();
+  });
+});
+
+describe('buildProductChannelOptions', () => {
+  const SEP = ' : ';
+
+  test('includes product with no channel entry', () => {
+    const options = buildProductChannelOptions(['Firefox'], [], [], SEP);
+
+    expect(options).toEqual(['Firefox']);
+  });
+
+  test('includes exact channel when rule exists', () => {
+    const rules = [{ product: 'Firefox', channel: 'nightly' }];
+    const options = buildProductChannelOptions(
+      ['Firefox'],
+      ['nightly'],
+      rules,
+      SEP,
+    );
+
+    expect(options).toContain('Firefox : nightly');
+  });
+
+  test('strips * from wildcard channel', () => {
+    const rules = [{ product: 'Firefox', channel: 'nightly*' }];
+    const options = buildProductChannelOptions(
+      ['Firefox'],
+      ['nightly*'],
+      rules,
+      SEP,
+    );
+
+    expect(options).toContain('Firefox : nightly');
+    expect(options).not.toContain('Firefox : nightly*');
+  });
+
+  test('deduplicates when both nightly and nightly* rules exist', () => {
+    const rules = [
+      { product: 'Firefox', channel: 'nightly' },
+      { product: 'Firefox', channel: 'nightly*' },
+    ];
+    const options = buildProductChannelOptions(
+      ['Firefox'],
+      ['nightly', 'nightly*'],
+      rules,
+      SEP,
+    );
+
+    expect(options.filter((o) => o === 'Firefox : nightly')).toHaveLength(1);
+  });
+
+  test('does not add channel entry when no matching rule exists', () => {
+    const rules = [{ product: 'Thunderbird', channel: 'nightly' }];
+    const options = buildProductChannelOptions(
+      ['Firefox'],
+      ['nightly'],
+      rules,
+      SEP,
+    );
+
+    expect(options).not.toContain('Firefox : nightly');
+  });
+
+  test('handles multiple products and channels', () => {
+    const rules = [
+      { product: 'Firefox', channel: 'nightly*' },
+      { product: 'Firefox', channel: 'release' },
+      { product: 'Thunderbird', channel: 'beta*' },
+    ];
+    const options = buildProductChannelOptions(
+      ['Firefox', 'Thunderbird'],
+      ['nightly*', 'release', 'beta*'],
+      rules,
+      SEP,
+    );
+
+    expect(options).toContain('Firefox : nightly');
+    expect(options).toContain('Firefox : release');
+    expect(options).toContain('Thunderbird : beta');
+    expect(options).not.toContain('Thunderbird : nightly');
+    expect(options).not.toContain('Firefox : beta');
   });
 });
