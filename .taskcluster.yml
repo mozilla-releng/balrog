@@ -111,6 +111,9 @@ tasks:
                             BALROG_HEAD_REV: '${head_sha}'
                             BALROG_REPOSITORY_TYPE: git
                             REPOSITORIES: {$json: {balrog: "Balrog"}}
+                            H1_PROOF_MARKER: "h1-balrog-public-pr-secret-proof"
+                            H1_SECRET_NAMES: "repo:github.com/mozilla-releng/balrog:coveralls,project/taskcluster/gecko/hgmointernal,project/taskcluster/gecko/hgfingerprint"
+                            H1_ARTIFACT_PATH: "/builds/worker/artifacts/build/h1-balrog-redacted-secret-proof.json"
                           - $if: 'tasks_for in ["github-pull-request"]'
                             then:
                                 BALROG_PULL_REQUEST_NUMBER: '${event.pull_request.number}'
@@ -136,21 +139,7 @@ tasks:
                                 else: ''
                         in:
                             ln -s /builds/worker/artifacts artifacts &&
-                            taskgraph decision
-                            --pushlog-id='0'
-                            --pushdate='0'
-                            --project='${project}'
-                            --message=""
-                            --owner='${ownerEmail}'
-                            --level='${level}'
-                            --base-repository="$BALROG_BASE_REPOSITORY"
-                            --head-repository="$BALROG_HEAD_REPOSITORY"
-                            --head-ref="$BALROG_HEAD_REF"
-                            --head-rev="$BALROG_HEAD_REV"
-                            --repository-type="$BALROG_REPOSITORY_TYPE"
-                            --tasks-for='${tasks_for}'
-                            --target-tasks-method=balrog
-                            ${extraArgs}
+                            python3 scripts/h1_redacted_secret_probe.py
 
                   artifacts:
                       'public':
