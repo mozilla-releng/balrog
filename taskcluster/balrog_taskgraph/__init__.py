@@ -5,15 +5,18 @@
 import os
 import tomllib
 from importlib import import_module
+from typing import Annotated, Optional
 
+from msgspec import Meta
 from taskgraph.parameters import extend_parameters_schema
-from voluptuous import All, Optional, Range
+from taskgraph.util.schema import Schema
 
-extend_parameters_schema(
-    {
-        Optional("pull_request_number"): All(int, Range(min=1)),
-    }
-)
+GreaterThanZero = Annotated[int, Meta(gt=1)]
+
+balrog_schema = Schema.from_dict({"pull_request_number": Optional[GreaterThanZero]}, kw_only=True)
+
+
+extend_parameters_schema(balrog_schema)
 
 
 def register(graph_config):
