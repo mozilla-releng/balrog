@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim@sha256:e4c38c90b787fd96bb53ad8db7199f31343424f3d2e3291d2008b5bc379a138c AS builder
+FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim@sha256:6181d17d152967488408b4ced7b2930cc91c2b39adb7af6fb339965afce3404e AS builder
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ COPY ${SRC}/src/ /app/src/
 RUN uv venv
 RUN uv sync --no-dev --frozen
 
-FROM python:3.13-slim-trixie@sha256:a0779d7c12fc20be6ec6b4ddc901a4fd7657b8a6bc9def9d3fde89ed5efe0a3d
+FROM python:3.13-slim-trixie@sha256:b04b5d7233d2ad9c379e22ea8927cd1378cd15c60d4ef876c065b25ea8fb3bf3
 ENV LC_ALL C.UTF-8
 LABEL maintainer="releng@mozilla.com"
 
