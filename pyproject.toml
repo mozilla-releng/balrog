@@ -33,7 +33,7 @@ dependencies = [
     "requests-hawk",
     "sentry-sdk[flask]",
     # sqlalchemy-migrate tries to import pkg_resources which doesn't exist anymore after setuptools 82
-    "setuptools<82",
+    "setuptools<83",
     "spec-synthase",
     "sqlalchemy-migrate",
     "sqlalchemy<2",
