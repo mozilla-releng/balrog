@@ -3,5 +3,5 @@
   "extends": [
     "github>mozilla-releng/reps:renovate-preset.json5"
   ],
-  "schedule": ["* 2 1,15 * *"]
+  "schedule": ["* * 1,15 * *"]
 }
