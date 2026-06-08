@@ -8,21 +8,21 @@ Environments
 
 We have stage and production deployments of Balrog. Here's a quick summary:
 
-+-------------+-----------+------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
-| Environment | App       | URL                                                        | Deploys                                 | Purpose                                                                       |
-+=============+===========+============================================================+=========================================+===============================================================================+
-| Production  | Admin API | https://aus4-admin.mozilla.org/                            | Manually, after someone clicks a button | Manage and serve production updates                                           |
-+             +-----------+------------------------------------------------------------+ in Jenkins (details below)              +                                                                               +
-|             | Admin UI  | https://balrog.services.mozilla.com/                       |                                         |                                                                               |
-+             +-----------+------------------------------------------------------------+                                         +                                                                               +
-|             | Public    | https://aus5.mozilla.org/                                  |                                         |                                                                               |
-+-------------+-----------+------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
-| MozCloud    | Admin API | https://admin.stage.balrog.nonprod.webservices.mozgcp.net  | When the "Pull and Push Docker Image"   | A place to submit staging Releases and verify new Balrog code with automation |
-+ Stage       +-----------+------------------------------------------------------------+ Github Action is run, and a sync is     +                                                                               +
-|             | Admin UI  | https://balrog.allizom.org                                 | performed in ArgoCD                     |                                                                               |
-+             +-----------+------------------------------------------------------------+                                         +                                                                               +
-|             | Public    | https://stage.balrog.nonprod.webservices.mozgcp.net        |                                         |                                                                               |
-+-------------+-----------+------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
++-------------+-----------+--------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
+| Environment | App       | URL                                                          | Deploys                                 | Purpose                                                                       |
++=============+===========+==============================================================+=========================================+===============================================================================+
+| Production  | Admin API | https://aus4-admin.mozilla.org/, https://aus-api.mozilla.org | When a sync is performed in ArgoCD      | Manage and serve production updates                                           |
++             +-----------+--------------------------------------------------------------+ after a staging deployment.             +                                                                               +
+|             | Admin UI  | https://balrog.mozilla.org/                                  |                                         |                                                                               |
++             +-----------+--------------------------------------------------------------+                                         +                                                                               +
+|             | Public    | https://aus5.mozilla.org/                                    |                                         |                                                                               |
++-------------+-----------+--------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
+| Stage       | Admin API | https://admin.stage.balrog.nonprod.webservices.mozgcp.net    | When the "Pull and Push Docker Image"   | A place to submit staging Releases and verify new Balrog code with automation |
++             +-----------+--------------------------------------------------------------+ Github Action is run, and a sync is     +                                                                               +
+|             | Admin UI  | https://balrog.allizom.org                                   | performed in ArgoCD                     |                                                                               |
++             +-----------+--------------------------------------------------------------+                                         +                                                                               +
+|             | Public    | https://stage.balrog.nonprod.webservices.mozgcp.net          |                                         |                                                                               |
++-------------+-----------+--------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
 
 --------------------
 Support & Escalation
@@ -94,7 +94,7 @@ Once that completes, ArgoCD will begin updating ``stage`` deployments. This will
 
 .. image:: balrog-app-3-dots.png
 
-Once Argo has finished updating everything, you should notifications for ``agent``, ``admin`` and ``app`` in Slack:
+Once Argo has finished updating everything, you should see notifications for ``agent``, ``admin`` and ``app`` in Slack:
 
 .. image:: deployment-notifications.png
 
@@ -112,58 +112,40 @@ Once the changes are deployed to stage, you should do some testing to make sure 
 Pushing to Production
 ~~~~~~~~~~~~~~~~~~~~~
 
-Note: these instructions are for the GCPv1 production environment. When we move to the MozCloud-managed environment this will change (May or June 2026).
+Note: Pushing to production requires that the "Pull and Push Docker Image" for the desired version has already been run (usually as part of the Stage deployment described above). This is required to get ArgoCD into the necessary state for the following instructions to work.
 
-Pushing the backends live requires some button clicking in Jenkins. For each of
-`balrog-admin-production <https://ops-master.jenkinsv2.prod.mozaws.net/job/gcp-pipelines/job/balrog/job/balrog-admin-production/>`_,
-`balrog-production <https://ops-master.jenkinsv2.prod.mozaws.net/job/gcp-pipelines/job/balrog/job/balrog-production/>`_,
-and `balrog-agent-production <https://ops-master.jenkinsv2.prod.mozaws.net/job/gcp-pipelines/job/balrog/job/balrog-agent-production/>`_ in Jenkins do the following. (If there are no schema changes, these may be done in parallel. If there are schema changes, see ``Schema Upgrades``):
+To begin the production deployment process you must "Sync" ``admin``, ``agent``, and ``app`` in ArgoCD. For the former two, the deployment process is complete once this finishes successfully. For the latter, this will only deploy a canary pod, allowing a fraction of requests to be handled by the new release.
 
-  * Find the ``PROD: DEPLOY`` or ``PROD: PROCEED`` step
-  * Click the cell for this step in the topmost row. This should bring up a confirmation dialog as shown below.
-  * Click ``Proceed``
+.. image:: prod-sync.png
 
-.. image:: proceed.png
+Once Argo has finished updating everything, you should see notifications for ``agent`` and ``admin`` in Slack (no notification will be sent for ``app`` until the rollout is promoted later):
 
-After this, there is nothing else to do for ``balrog-admin-production`` nor ``balrog-agent-production``. However, the public app (``balrog-production``) will first deploy a canary (meaning the new code will only be used for a small fraction of requests).
+.. image:: prod-notify1.png
+
+To deploy the new UI to production, run the "Build and Deploy Balrog UI" Github action. Be sure to choose "prod" from the dropdown:
+
+.. image:: ui-prod.png
 
 Before proceeding, you should monitor for changes in load or exceptions for at least a few minutes. Specifically:
+
 - Watch Sentry to see if any new exceptions show up for any of the backend services
-- Watch the Grafana graphs for spikes or dips in any of the charts
+- Watch `the Grafana graphs <https://yardstick.mozilla.org/d/fRuT9IGZfsdfweAA/balrog3a-mozcloud-v2?orgId=1&from=now-1h&to=now&timezone=browser&var-env=prod&var-containers=$__all&var-datasource=adpvtjmrxoc1sb&refresh=30s&editIndex=0>`_ for spikes or dips in any of the charts
 
 If anything notable comes up you should seek an explanation for it before proceeding. If you are unable to explain the issue, consult with someone else and consider rolling back in the meantime.
 
-When you are ready, find the ``PROD: PROMOTE`` cell in Jenkins and click ``Proceed`` to finish with this deployment.
+When you are satisfied that the ``app`` canary is functioning correctly, and no issues have been found, proceed to promote the canary to full rollout with the "Promote-Full" option:
 
-To push new UI to production you must delete and recreate the "production-ui" tag & release on Github to push the new UI to production:
+.. image:: prod-rollout.png
 
-  * On https://github.com/mozilla-releng/balrog/releases/tag/production-ui, click "Delete" (this deletes the Github Release).
-  * On https://github.com/mozilla-releng/balrog/releases/tag/production-ui, click "Delete" (this deletes the Git tag, even though it's the same URL).
-  * On https://github.com/mozilla-releng/balrog/releases/new, create a new `production-ui` Release. This will trigger automation to deploy the new UI.
+Once Argo has finished promoting the rollout, you should see a notification for ``app`` in Slack:
+
+.. image:: prod-notify2.png
+
+You have now fully deployed the new version of Balrog to production!
 
 ~~~~~~~~~
 Rollbacks
 ~~~~~~~~~
-
-______________
-GCPv1 Services
-______________
-
-To rollback the admin, public, and agent backends, do the following for each of ``balrog-admin-production``, ``balrog-production``, and ``balrog-agent-production`` in Jenkins:
-
-  * Click "Build with Parameters" in the menu on the left.
-  * Put the version you want to redeploy in the ``ImageTag`` field. This should be in the form of ``vX.Y``, eg: ``v3.20``.
-  * Click ``Build``
-
-As in this screenshot:
-
-.. image:: redeploy.png
-
-This will begin a deployment as described above. See the ``Pushing to Production`` section above for how to proceed with the production deployment from here.
-
-_________________
-MozCloud Services
-_________________
 
 See https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/1703772181/How+to+Rolling+back+to+a+previous+application+deployment.
 
@@ -171,9 +153,6 @@ __
 UI
 __
 
-If the UI needs a rollback, after deleting the previous production-ui release and tag as above, update the "production-ui" tag to point to the earlier version. Something like (to point to v3.08):
-::
+To revert UI changes, re-run the "Build and Deploy Balrog UI" action, specifying a different ref (preferably the previous release tag):
 
- git tag -d production-ui
- git tag -s production-ui v3.08^{}
- git push origin production-ui
+.. image:: ui-revert.png
