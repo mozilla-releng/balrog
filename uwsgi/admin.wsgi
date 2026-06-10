@@ -71,14 +71,10 @@ log = logging.getLogger(__file__)
 # statsd environment also needs to be set up before importing the application
 statsd.defaults.PREFIX = "balrog.admin"
 
-# temporarily allow admin to run in read-only mode, until MozCloud migration
-# is completed
-allow_read_only = bool(os.environ.get("BALROG_ALLOW_READ_ONLY"))
-
 from auslib.global_state import cache, dbo  # noqa
 from auslib.web.admin.base import create_app
 
-application = create_app(allow_read_only).app
+application = create_app().app
 
 cache.make_copies = True
 # We explicitly don't want a blob_version cache here because it will cause

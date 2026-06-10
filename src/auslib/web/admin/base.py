@@ -46,16 +46,13 @@ def should_time_request():
     return True
 
 
-def create_app(allow_read_only=False):
+def create_app():
     connexion_app = connexion.App(__name__, debug=False, options={"swagger_ui": False})
     connexion_app.add_api(spec, validator_map=validator_map, strict_validation=True)
     connexion_app.add_api(path.join(current_dir, "swagger", "api_v2.yml"), base_path="/v2", strict_validation=True, validate_responses=True)
     flask_app = connexion_app.app
 
-    if allow_read_only:
-        create_dockerflow_endpoints(flask_app, heartbeat_database_fn=lambda dbo: dbo.rules.count())
-    else:
-        create_dockerflow_endpoints(flask_app)
+    create_dockerflow_endpoints(flask_app)
 
     @flask_app.before_request
     def setup_statsd():
