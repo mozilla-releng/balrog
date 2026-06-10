@@ -38,6 +38,7 @@ const App = () => {
             scope: process.env.AUTH0_SCOPE,
           }}
           leeway={30}
+          useRefreshTokens
           cacheLocation="localstorage"
           sessionCheckExpiryDays={7}
         >
