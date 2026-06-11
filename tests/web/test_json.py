@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+import requests
 from mock import mock
 
 import auslib.web.public.helpers
@@ -8,6 +9,7 @@ import auslib.web.public.json
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
 from auslib.blobs.base import createBlob
 from auslib.global_state import dbo
+from auslib.util.autograph import _sign_hash
 from auslib.web.public.base import create_app
 
 
@@ -521,3 +523,36 @@ def testJSONForAppReleaseBlob(client):
     assert ret.status_code < 500
     ret = client.get("/json/2/b/127.0/p/release/default/update.json")
     assert ret.status_code < 500
+
+
+@pytest.mark.usefixtures("guardian_db", "appconfig")
+@pytest.mark.parametrize(
+    "exception,metric",
+    (
+        pytest.param(
+            requests.ConnectionError,
+            "autograph.requests_error",
+            id="requests error",
+        ),
+        pytest.param(
+            Exception,
+            "autograph.unknown_error",
+            id="unknown error",
+        ),
+    ),
+)
+def testSignError(monkeypatch, app, client, responses, exception, metric):
+    monkeypatch.setitem(app.config, "AUTOGRAPH_URL", "https://autograph")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_KEYID", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_USERNAME", "fake")
+    monkeypatch.setitem(app.config, "AUTOGRAPH_PASSWORD", "fake")
+
+    responses.post("https://autograph/sign/hash", body=exception("error"))
+
+    # mocked to get rid of retries
+    with mock.patch("auslib.web.public.helpers.sign_hash", new=_sign_hash):
+        with mock.patch("auslib.web.public.base.statsd.pipeline") as mocked_pipeline:
+            with pytest.raises(exception):
+                client.get("/json/1/Guardian/0.4.0.0/WINNT_x86_64/release/update.json")
+
+            assert mocked_pipeline.mock_calls.count(mock.call().incr(metric)) == 1
