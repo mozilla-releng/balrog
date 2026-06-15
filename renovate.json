@@ -3,5 +3,8 @@
   "extends": [
     "github>mozilla-releng/reps:renovate-preset.json5"
   ],
-  "schedule": ["* * 1,15 * *"]
+  "schedule": ["* * 1,15 * *"],
+  "lockFileMaintenance": {
+    "schedule": ["* * 1,15 * *"]
+  }
 }
