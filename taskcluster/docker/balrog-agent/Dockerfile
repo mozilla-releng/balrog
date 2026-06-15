@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim@sha256:6181d17d152967488408b4ced7b2930cc91c2b39adb7af6fb339965afce3404e AS builder
+FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim@sha256:29b42d1b8d1b38d2240abd2e636bb90b42c72d729e6f9c10983e503184027f78 AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ COPY ${SRC}/agent /app/agent
 RUN uv venv
 RUN uv sync --package=balrogagent --frozen --no-dev
 
-FROM python:3.13-slim-trixie@sha256:b04b5d7233d2ad9c379e22ea8927cd1378cd15c60d4ef876c065b25ea8fb3bf3
+FROM python:3.13-slim-trixie@sha256:c33f0bc4364a6881bed1ec0cc2665e6c53c87a43e774aaeab88e6f17af105e4f
 WORKDIR /app
 ENV LC_ALL C.UTF-8
 LABEL maintainer="releng@mozilla.com"
