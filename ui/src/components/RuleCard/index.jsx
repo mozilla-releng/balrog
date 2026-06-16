@@ -327,6 +327,7 @@ function RuleCard({
         />
       )}
       <CardContent classes={{ root: classes.cardContentRoot }}>
+        {/* biome-ignore lint: lint/complexity/useOptionalChain, which is not necessarily safe to take */}
         {(!rule.scheduledChange ||
           rule.scheduledChange.change_type !== 'insert') && (
           <Grid container>
