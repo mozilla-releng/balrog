@@ -1,3 +1,4 @@
+import inspect
 import logging
 import os
 
@@ -74,13 +75,25 @@ from auslib.global_state import cache, dbo  # noqa
 from auslib.util.cache import TwoLayerCache
 from auslib.web.public.base import create_app
 from redis import Redis
+from redis.retry import Retry
 
 # opt in for now. this will become the default when it is stable in prod
 if os.environ.get("REDIS_CACHE"):
     url = os.environ.get("REDIS_URL")
     if not url:
         raise Exception("REDIS_CACHE enabled but no REDIS_URL given!")
-    redis = Redis.from_url(url)
+    # The Redis() constructor defaults `retry` to a real retry policy, but
+    # Redis.from_url() bypasses that default: it builds the ConnectionPool
+    # itself and the resulting connections fall back to Retry(NoBackoff(), 0),
+    # ie: zero retries. Without this a transient error such as a broken pipe on
+    # a stale pooled connection (issue #3827) propagates straight up and fails
+    # the update request instead of reconnecting and resending. Reuse the
+    # constructor's own default policy so we inherit whatever redis-py considers
+    # sane (and track it across upgrades) rather than hardcoding our own.
+    default_retry = inspect.signature(Redis).parameters["retry"].default
+    if not isinstance(default_retry, Retry) or default_retry.get_retries() < 1:
+        raise Exception(f"Redis constructor default retry is not usable: {default_retry!r}")
+    redis = Redis.from_url(url, retry=default_retry)
     cache.factory = lambda name, maxsize, timeout, post_load=None: TwoLayerCache(redis, name, maxsize, timeout, post_load)
 
 application = create_app().app
