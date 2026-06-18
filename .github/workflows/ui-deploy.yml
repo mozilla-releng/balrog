@@ -29,7 +29,7 @@ jobs:
       GCP_PROJECT_ID: ${{ inputs.deploy_env == 'stage' && 'moz-fx-balrog-nonprod' || 'moz-fx-balrog-prod' }}
       WEBSITE_BUCKET: ${{ inputs.deploy_env == 'stage' && 'balrog-stage-admin-static' || 'balrog-prod-admin-static' }}
       LOAD_BALANCER_NAME: ${{ inputs.deploy_env == 'stage' && 'balrog-stage' || 'balrog-prod' }}
-      BALROG_ROOT_URL: ${{ inputs.deploy_env == 'stage' && 'https://admin.stage.balrog.nonprod.webservices.mozgcp.net' || 'https://aus4-admin.mozilla.org/' }}
+      BALROG_ROOT_URL: ${{ inputs.deploy_env == 'stage' && 'https://admin.stage.balrog.nonprod.webservices.mozgcp.net' || 'https://admin.prod.balrog.prod.webservices.mozgcp.net/' }}
       # doesn't differ between stage and prod
       AUTH0_DOMAIN: auth.mozilla.auth0.com
       AUTH0_CLIENT_ID: ${{ inputs.deploy_env == 'stage' && '43tgBNjaHHhOAPPr10zh2jodVT3t6abD' || 'Qe16eoq0Uz9eSTVDVEO15DGBPCgqoAA2' }}
