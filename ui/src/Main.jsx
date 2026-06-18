@@ -17,16 +17,14 @@ function ProtectedRoute({ children, requiresAuth }) {
   return <Suspense fallback={null}>{children}</Suspense>;
 }
 
-function setupAxiosInterceptors(getAccessTokenSilently, getIdTokenClaims) {
+function setupAxiosInterceptors(getAccessTokenSilently, isAuthenticated) {
   const requestInterceptor = axios.interceptors.request.use(async (config) => {
     const result = config;
 
     if (!config.url.startsWith('http')) {
       result.baseURL = BASE_URL;
 
-      const claims = await getIdTokenClaims();
-
-      if (claims) {
+      if (isAuthenticated) {
         try {
           const accessToken = await getAccessTokenSilently();
 
@@ -65,20 +63,20 @@ function setupAxiosInterceptors(getAccessTokenSilently, getIdTokenClaims) {
 }
 
 function Main() {
-  const { isLoading, getAccessTokenSilently, getIdTokenClaims } = useAuth0();
+  const { isLoading, getAccessTokenSilently, isAuthenticated } = useAuth0();
   const [isReady, setReady] = useState(false);
 
   useEffect(() => {
     const interceptors = setupAxiosInterceptors(
       getAccessTokenSilently,
-      getIdTokenClaims,
+      isAuthenticated,
     );
 
     return () => {
       axios.interceptors.request.eject(interceptors.request);
       axios.interceptors.response.eject(interceptors.response);
     };
-  }, [getAccessTokenSilently, getIdTokenClaims]);
+  }, [getAccessTokenSilently, isAuthenticated]);
 
   useEffect(() => {
     if (!isReady && !isLoading) {
