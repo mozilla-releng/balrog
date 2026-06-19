@@ -383,7 +383,11 @@ def get_release(name, trans, include_sc=True):
         # the time we're serving old release data
         if base_row["data_version"] < base_data_version:
             base_row = get_base_row(name, trans)
-        base_blob = base_row["data"]
+        # Copy the base blob before merging assets into it below. In the public
+        # app base_row["data"] is a shared object handed back to every request.
+        # Merging assets in place would mutate the cached object, corrupting it
+        # for other callers and racing with concurrent readers.
+        base_blob = deepcopy(base_row["data"])
         data_versions["."] = base_row["data_version"]
 
     # same thing here for the assets -- if any of the full asset data versions
