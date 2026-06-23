@@ -60,9 +60,7 @@ Balrog uses the built-in GCP backups. The database in snapshotted nightly, and i
 Deploying Changes
 -----------------
 
-Balrog's infrastructure is managed by the terraform and kubernetes IaC that `lives in the webservices-infra repository <https://github.com/mozilla/webservices-infra/tree/main/balrog>`_ and is owned by the SRE team.
-
-Generally, we deploy Balrog on every 2 weeks, with stage being updated every other Thursday and production deploys happening the following Tuesday.
+Balrog's infrastructure is managed by the terraform and kubernetes IaC that `lives in the webservices-infra repository <https://github.com/mozilla/webservices-infra/tree/main/balrog>`_ and is owned by the CloudEng team.
 
 ~~~~~~~~~~~~~~~
 Schema Upgrades
