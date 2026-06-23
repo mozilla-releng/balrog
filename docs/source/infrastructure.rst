@@ -82,7 +82,7 @@ Deploying to Stage
 
 .. image:: create-release.png
 
-Creating the release will fire some Taskcluster tasks that create and push docker images to Dockerhub. This will kick-off the deployment pipeline in Jenkins. This pipeline is responsible for deploying our production infrastructure. At this point, no actual production deployment is done, but the pipeline will be ready for later.
+Creating the release will fire some Taskcluster tasks that create and push docker images to Dockerhub. Wait for these to complete before proceeding to step 2.
 
 2. Kick-off the deployment pipeline in ArgoCD. This can be done by running the "Pull and Push Docker Image" Github Action like so:
 
