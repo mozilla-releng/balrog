@@ -606,8 +606,16 @@ def set_release(name, blob, product, old_data_versions, when, changed_by, trans)
     current_assets = get_assets(name, trans)
     base_blob, new_assets = split_release(blob, blob["schema_version"])
 
+    # munge the data to get it in a consistent format; current_assets is a dict,
+    # but contains non-blob columns from the database
+    # new_assets is a list of tuples of (path, asset)
+    # `path` is a tuple of the keys used to reach the `asset`, eg:
+    # ("platforms", "linux", "locales", "de") corresponds to
+    # blob["platforms"]["linux"]["locales"]["de"] in a reconstructed full blob
+    current_asset_data = {path: asset["data"] for path, asset in current_assets.items()}
+    new_asset_data = {"." + ".".join(path): asset for path, asset in new_assets}
     # if current == new, we will just be cancelling a scheduled change
-    if current_base_blob != base_blob and current_assets != new_assets and not when and any([v for v in live_on_product_channels.values()]):
+    if (current_base_blob != base_blob or current_asset_data != new_asset_data) and not when and any([v for v in live_on_product_channels.values()]):
         raise SignoffRequiredError("Signoff is required, cannot update Release directly")
 
     seen_assets = set()

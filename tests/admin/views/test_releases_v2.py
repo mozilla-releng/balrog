@@ -1,4 +1,4 @@
-from copy import deepcopy
+from copy import copy, deepcopy
 
 import pytest
 from aiohttp import ClientError
@@ -580,6 +580,43 @@ def test_put_fails_when_signoff_required(api, firefox_56_0_build1):
     firefox_56_0_build1["detailsUrl"] = "https://newurl"
     firefox_56_0_build1["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]["buildID"] = "9999999999999"
     old_data_versions = populate_versions_dict(firefox_56_0_build1)
+    old_data_versions["."] = 1
+
+    ret = api.put("/v2/releases/Firefox-56.0-build1", json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions})
+    assert ret.status_code == 400
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_put_of_only_base_blob_fails_when_signoff_required(api, firefox_56_0_build1):
+    firefox_56_0_build1 = deepcopy(firefox_56_0_build1)
+    firefox_56_0_build1["detailsUrl"] = "https://newurl"
+    old_data_versions = populate_versions_dict(firefox_56_0_build1)
+    old_data_versions["."] = 1
+
+    ret = api.put("/v2/releases/Firefox-56.0-build1", json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions})
+    assert ret.status_code == 400
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_put_of_only_modify_asset_fails_when_signoff_required(api, firefox_56_0_build1):
+    firefox_56_0_build1 = deepcopy(firefox_56_0_build1)
+    # populate this before adding new locale so it doesn't get an entry here
+    old_data_versions = populate_versions_dict(firefox_56_0_build1)
+    firefox_56_0_build1["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]["buildID"] = "9999999999999"
+    old_data_versions["."] = 1
+
+    ret = api.put("/v2/releases/Firefox-56.0-build1", json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions})
+    assert ret.status_code == 400
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_put_of_new_asset_fails_when_signoff_required(api, firefox_56_0_build1):
+    firefox_56_0_build1 = deepcopy(firefox_56_0_build1)
+    # populate this before adding new locale so it doesn't get an entry here
+    old_data_versions = populate_versions_dict(firefox_56_0_build1)
+    firefox_56_0_build1["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["zz"] = copy(
+        firefox_56_0_build1["platforms"]["Darwin_x86_64-gcc3-u-i386-x86_64"]["locales"]["de"]
+    )
     old_data_versions["."] = 1
 
     ret = api.put("/v2/releases/Firefox-56.0-build1", json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions})
