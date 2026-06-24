@@ -61,7 +61,10 @@ def isForbiddenUrl(url, product, allowlistedDomains):
 
 
 def getFallbackChannel(channel):
-    return channel.split("-cck-")[0]
+    fallback = channel.split("-cck-")[0]
+    if channel.endswith("-sysaddon"):
+        fallback += "-sysaddon"
+    return fallback
 
 
 class AUS:
