@@ -40,9 +40,9 @@ Metrics from deployment environments are available in `Grafana/Yardstick <https:
 
 We aggregate exceptions from both the Admin & Public apps to `Sentry <https://sentry.io/organizations/mozilla/projects/>`_.
 
---------
+-----------------------
 Application & HTTP Logs
---------
+-----------------------
 
 Balrog publishes logs to BigQuery which are `available for querying on Google Cloud <https://console.cloud.google.com/bigquery?project=moz-fx-balrog-prod-3fa2>`_. The relevant tables are:
 
@@ -147,9 +147,9 @@ Rollbacks
 
 See https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/1703772181/How+to+Rolling+back+to+a+previous+application+deployment.
 
-__
+^^
 UI
-__
+^^
 
 To revert UI changes, re-run the "Build and Deploy Balrog UI" action, specifying a different ref (preferably the previous release tag):
 
