@@ -37,19 +37,15 @@ def upgrade(migrate_engine):
     metadata.create_all()
 
     # 2) Copy the conditions from the existing Scheduled Changes tables to them.
-    migrate_engine.execute(
-        """INSERT INTO rules_scheduled_changes_conditions
+    migrate_engine.execute("""INSERT INTO rules_scheduled_changes_conditions
 (sc_id, telemetry_product, telemetry_channel, telemetry_uptake, data_version, `when`)
 SELECT sc_id, telemetry_product, telemetry_channel, telemetry_uptake, data_version, `when` from rules_scheduled_changes;
-"""
-    )
-    migrate_engine.execute(
-        """INSERT INTO rules_scheduled_changes_conditions_history
+""")
+    migrate_engine.execute("""INSERT INTO rules_scheduled_changes_conditions_history
 (change_id, changed_by, timestamp, sc_id, telemetry_product, telemetry_channel, telemetry_uptake, data_version, `when`)
 SELECT change_id, changed_by, timestamp, sc_id, telemetry_product, telemetry_channel, telemetry_uptake,
        data_version, `when` from rules_scheduled_changes_history;
-"""
-    )
+""")
 
     # 3) _Then_ drop the conditions columns from the existing Tables.
     rules_scheduled_changes = Table("rules_scheduled_changes", metadata, autoload=True)

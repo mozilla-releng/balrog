@@ -10,8 +10,7 @@ class TestSchema1Blob(unittest.TestCase):
         self.specialForceHosts = ("http://a.com",)
         self.allowlistedDomains = {"a.com": ("b", "c", "e", "b2g", "response-a", "response-b", "s")}
         self.superblob_gmp = SuperBlob()
-        self.superblob_gmp.loadJSON(
-            """
+        self.superblob_gmp.loadJSON("""
 {
     "name": "GMPSuperblob",
     "schema_version": 1000,
@@ -20,11 +19,9 @@ class TestSchema1Blob(unittest.TestCase):
         "d"
     ]
 }
-"""
-        )
+""")
         self.superblob_addon = SuperBlob()
-        self.superblob_addon.loadJSON(
-            """
+        self.superblob_addon.loadJSON("""
 {
     "name": "SystemAddOnsSuperblob",
     "schema_version": 1000,
@@ -33,8 +30,7 @@ class TestSchema1Blob(unittest.TestCase):
         "Pocket-2.0"
     ]
 }
-"""
-        )
+""")
 
     def testGetResponseBlobs(self):
         blob_names_addon = self.superblob_addon.getResponseBlobs()

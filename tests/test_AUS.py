@@ -93,121 +93,121 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
             return (served_mapping, served_fallback, served_pinned, tested)
 
     def testThrottling100(self):
-        (served, _, _, tested) = self.random_aus_test(background_rate=100)
+        served, _, _, tested = self.random_aus_test(background_rate=100)
 
         self.assertEqual(served, 1)
         self.assertEqual(tested, 1)
 
     def testThrottling50(self):
-        (served, _, _, tested) = self.random_aus_test(background_rate=50)
+        served, _, _, tested = self.random_aus_test(background_rate=50)
 
         self.assertEqual(served, 50)
         self.assertEqual(tested, 100)
 
     def testThrottling25(self):
-        (served, _, _, tested) = self.random_aus_test(background_rate=25)
+        served, _, _, tested = self.random_aus_test(background_rate=25)
 
         self.assertEqual(served, 25)
         self.assertEqual(tested, 100)
 
     def testThrottlingZero(self):
-        (served, _, _, tested) = self.random_aus_test(background_rate=0)
+        served, _, _, tested = self.random_aus_test(background_rate=0)
         self.assertEqual(served, 0)
         self.assertEqual(tested, 100)
 
     def testThrottling25WithForcing(self):
-        (served, _, _, tested) = self.random_aus_test(background_rate=25, force=FORCE_MAIN_MAPPING)
+        served, _, _, tested = self.random_aus_test(background_rate=25, force=FORCE_MAIN_MAPPING)
 
         self.assertEqual(served, 1)
         self.assertEqual(tested, 1)
 
     def testThrottling25WithForcingFailure(self):
-        (served, fallback, _, tested) = self.random_aus_test(background_rate=25, force=FORCE_FALLBACK_MAPPING)
+        served, fallback, _, tested = self.random_aus_test(background_rate=25, force=FORCE_FALLBACK_MAPPING)
 
         self.assertEqual(served, 0)
         self.assertEqual(fallback, 0)
         self.assertEqual(tested, 1)
 
     def testThrottling100WithFallback(self):
-        (served_mapping, served_fallback, _, tested) = self.random_aus_test(background_rate=100, fallback=True)
+        served_mapping, served_fallback, _, tested = self.random_aus_test(background_rate=100, fallback=True)
 
         self.assertEqual(served_mapping, 1)
         self.assertEqual(served_fallback, 0)
         self.assertEqual(tested, 1)
 
     def testThrottling50WithFallback(self):
-        (served_mapping, served_fallback, _, tested) = self.random_aus_test(background_rate=50, fallback=True)
+        served_mapping, served_fallback, _, tested = self.random_aus_test(background_rate=50, fallback=True)
 
         self.assertEqual(served_mapping, 50)
         self.assertEqual(served_fallback, 50)
         self.assertEqual(tested, 100)
 
     def testThrottling25WithFallback(self):
-        (served_mapping, served_fallback, _, tested) = self.random_aus_test(background_rate=25, fallback=True)
+        served_mapping, served_fallback, _, tested = self.random_aus_test(background_rate=25, fallback=True)
 
         self.assertEqual(served_mapping, 25)
         self.assertEqual(served_fallback, 75)
         self.assertEqual(tested, 100)
 
     def testThrottlingZeroWithFallback(self):
-        (served_mapping, served_fallback, _, tested) = self.random_aus_test(background_rate=0, fallback=True)
+        served_mapping, served_fallback, _, tested = self.random_aus_test(background_rate=0, fallback=True)
 
         self.assertEqual(served_mapping, 0)
         self.assertEqual(served_fallback, 100)
         self.assertEqual(tested, 100)
 
     def testThrottling25WithForcingAndFallback(self):
-        (served_mapping, served_fallback, _, tested) = self.random_aus_test(background_rate=25, force=FORCE_MAIN_MAPPING, fallback=True)
+        served_mapping, served_fallback, _, tested = self.random_aus_test(background_rate=25, force=FORCE_MAIN_MAPPING, fallback=True)
 
         self.assertEqual(served_mapping, 1)
         self.assertEqual(served_fallback, 0)
         self.assertEqual(tested, 1)
 
     def testThrottling25WithForcingFailureAndFallback(self):
-        (served, fallback, _, tested) = self.random_aus_test(background_rate=25, force=FORCE_FALLBACK_MAPPING, fallback=True)
+        served, fallback, _, tested = self.random_aus_test(background_rate=25, force=FORCE_FALLBACK_MAPPING, fallback=True)
 
         self.assertEqual(served, 0)
         self.assertEqual(fallback, 1)
         self.assertEqual(tested, 1)
 
     def testPinningWithThrottling100(self):
-        (_, _, served_pinned, tested) = self.random_aus_test(background_rate=100, pin=True)
+        _, _, served_pinned, tested = self.random_aus_test(background_rate=100, pin=True)
 
         self.assertEqual(served_pinned, 1)
         self.assertEqual(tested, 1)
 
     def testPinningWithThrottling25WithForcing(self):
-        (_, _, served_pinned, tested) = self.random_aus_test(background_rate=25, force=FORCE_MAIN_MAPPING, pin=True)
+        _, _, served_pinned, tested = self.random_aus_test(background_rate=25, force=FORCE_MAIN_MAPPING, pin=True)
 
         self.assertEqual(served_pinned, 1)
         self.assertEqual(tested, 1)
 
     def testPinningWithThrottling100WithFallback(self):
-        (_, _, served_pinned, tested) = self.random_aus_test(background_rate=100, fallback=True, pin=True)
+        _, _, served_pinned, tested = self.random_aus_test(background_rate=100, fallback=True, pin=True)
 
         self.assertEqual(served_pinned, 1)
         self.assertEqual(tested, 1)
 
     def testPinningWithThrottling25WithFallback(self):
-        (_, _, served_pinned, tested) = self.random_aus_test(background_rate=25, fallback=True, pin=True)
+        _, _, served_pinned, tested = self.random_aus_test(background_rate=25, fallback=True, pin=True)
 
         self.assertEqual(served_pinned, 100)
         self.assertEqual(tested, 100)
 
     def testPinningWithThrottlingZeroWithFallback(self):
-        (_, _, served_pinned, tested) = self.random_aus_test(background_rate=0, fallback=True, pin=True)
+        _, _, served_pinned, tested = self.random_aus_test(background_rate=0, fallback=True, pin=True)
 
         self.assertEqual(served_pinned, 100)
         self.assertEqual(tested, 100)
 
     def testPinningWithThrottling25WithForcingAndFallback(self):
-        (_, _, served_pinned, tested) = self.random_aus_test(background_rate=25, force=FORCE_MAIN_MAPPING, fallback=True, pin=True)
+        _, _, served_pinned, tested = self.random_aus_test(background_rate=25, force=FORCE_MAIN_MAPPING, fallback=True, pin=True)
 
         self.assertEqual(served_pinned, 1)
         self.assertEqual(tested, 1)
 
     def testPinningWithThrottling25WithForcingFailureAndFallback(self):
-        (_, _, served_pinned, tested) = self.random_aus_test(background_rate=25, force=FORCE_FALLBACK_MAPPING, fallback=True, pin=True)
+        _, _, served_pinned, tested = self.random_aus_test(background_rate=25, force=FORCE_FALLBACK_MAPPING, fallback=True, pin=True)
 
         self.assertEqual(served_pinned, 1)
         self.assertEqual(tested, 1)
