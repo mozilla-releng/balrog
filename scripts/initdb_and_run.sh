@@ -1,10 +1,8 @@
-set -x
+set -xe
 
 export LOCAL_DUMP="/app/scripts/prod_db_dump.sql"
 
-mysql --ssl=off -h $DB_HOST -u balrogadmin --password=balrogadmin -e 'show tables;' balrog | grep rules
-rc=$?
-if [ "$rc" -eq 1 ]; then
+if ! mysql --ssl=off -h $DB_HOST -u balrogadmin --password=balrogadmin -e 'show tables;' balrog | grep -q rules; then
     echo "Initializing DB..."
     python scripts/get-prod-db-dump.py
 
