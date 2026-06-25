@@ -4,12 +4,14 @@ build:
   os: "ubuntu-22.04"
   tools:
     python: "3.13"
-  commands:
-    - asdf plugin add uv
-    - asdf install uv latest
-    - asdf global uv latest
-    - uv sync --group=docs --no-dev
-    - uv run -m sphinx -T -b html -d docs/_build/doctrees -D language=en docs/source $READTHEDOCS_OUTPUT/html
+  jobs:
+    install:
+      - uv sync --group docs --no-dev
+
+python:
+   install:
+      - method: uv
+        command: sync
 
 sphinx:
   configuration: docs/source/conf.py
