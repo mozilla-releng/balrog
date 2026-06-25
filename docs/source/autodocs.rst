@@ -142,9 +142,6 @@ auslib.web.admin
     :members:
     :undoc-members:
 
-.. automodule:: auslib.web.admin.views.mapper
-    :members:
-    :undoc-members:
 
 .. automodule:: auslib.web.admin.views.permissions
     :members:
