@@ -54,7 +54,7 @@
     "@babel/core": "7.29.7",
     "@babel/preset-env": "7.29.7",
     "@babel/preset-react": "7.29.7",
-    "@biomejs/biome": "2.5.0",
+    "@biomejs/biome": "2.5.1",
     "@pmmmwh/react-refresh-webpack-plugin": "0.6.2",
     "babel-jest": "30.4.1",
     "babel-loader": "10.1.1",
@@ -64,8 +64,8 @@
     "jest-environment-jsdom": "30.4.1",
     "mini-css-extract-plugin": "2.10.2",
     "react-refresh": "0.18.0",
-    "webpack": "5.107.2",
-    "webpack-cli": "7.0.3",
+    "webpack": "5.108.1",
+    "webpack-cli": "7.1.0",
     "webpack-dev-server": "5.2.5"
   }
 }
