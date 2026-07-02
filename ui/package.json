@@ -51,7 +51,7 @@
     "tss-react": "^4.9.19"
   },
   "devDependencies": {
-    "@babel/core": "7.29.7",
+    "@babel/core": "8.0.1",
     "@babel/preset-env": "7.29.7",
     "@babel/preset-react": "7.29.7",
     "@biomejs/biome": "2.5.1",
