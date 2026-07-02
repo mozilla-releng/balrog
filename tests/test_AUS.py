@@ -21,34 +21,38 @@ class TestAUSThrottlingWithoutFallback(unittest.TestCase):
     def setUp(self):
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        dbo.releases.t.insert().execute(
-            name="b",
-            product="b",
-            data_version=1,
-            data=createBlob({"name": "b", "extv": "2.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}),
-        )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "b",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob({"name": "b", "extv": "2.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}),
+                },
+            )
 
-        dbo.releases.t.insert().execute(
-            name="fallback",
-            product="c",
-            data_version=1,
-            data=createBlob({"name": "fallback", "extv": "2.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}),
-        )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "fallback",
+                    "product": "c",
+                    "data_version": 1,
+                    "data": createBlob({"name": "fallback", "extv": "2.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}),
+                },
+            )
 
-        dbo.releases.t.insert().execute(
-            name="pinned",
-            product="c",
-            data_version=1,
-            data=createBlob({"name": "pinned", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}),
-        )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "pinned",
+                    "product": "c",
+                    "data_version": 1,
+                    "data": createBlob({"name": "pinned", "extv": "1.0", "schema_version": 1, "platforms": {"a": {"buildID": "1", "locales": {"a": {}}}}}),
+                },
+            )
 
-        dbo.pinnable_releases.t.insert().execute(
-            product="bar",
-            version="1.",
-            channel="foo",
-            mapping="pinned",
-            data_version=1,
-        )
+            conn.execute(dbo.pinnable_releases.t.insert(), {"product": "bar", "version": "1.", "channel": "foo", "mapping": "pinned", "data_version": 1})
 
     def tearDown(self):
         dbo.reset()

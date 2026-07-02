@@ -6,9 +6,10 @@ from .base import CommonTestBase
 class TestEmergencyShutoff(CommonTestBase):
     def setUp(self):
         super(TestEmergencyShutoff, self).setUp()
-        dbo.emergencyShutoffs.t.insert().execute(product="Firefox", channel="nightly", data_version=1)
-        dbo.emergencyShutoffs.t.insert().execute(product="Fennec", channel="nightly", data_version=1)
-        dbo.emergencyShutoffs.t.insert().execute(product="Firefox", channel="test", data_version=1)
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.emergencyShutoffs.t.insert(), {"product": "Firefox", "channel": "nightly", "data_version": 1})
+            conn.execute(dbo.emergencyShutoffs.t.insert(), {"product": "Fennec", "channel": "nightly", "data_version": 1})
+            conn.execute(dbo.emergencyShutoffs.t.insert(), {"product": "Firefox", "channel": "test", "data_version": 1})
 
     def test_get_emergency_shutoff_list(self):
         resp = self.public_client.get("/api/v1/emergency_shutoff")
