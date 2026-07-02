@@ -7,13 +7,17 @@ from auslib.global_state import dbo
 def pinning_db(db_schema):
     dbo.setDb("sqlite:///:memory:")
     db_schema.create_all(dbo.engine)
-    dbo.pinnable_releases.t.insert().execute(
-        product="test_product",
-        version="1.",
-        channel="test_channel",
-        mapping="test_mapping",
-        data_version=1,
-    )
+    with dbo.engine.begin() as conn:
+        conn.execute(
+            dbo.pinnable_releases.t.insert(),
+            {
+                "product": "test_product",
+                "version": "1.",
+                "channel": "test_channel",
+                "mapping": "test_mapping",
+                "data_version": 1,
+            },
+        )
 
 
 @pytest.mark.usefixtures("pinning_db")
