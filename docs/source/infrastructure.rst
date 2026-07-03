@@ -84,11 +84,11 @@ Deploying to Stage
 
 Creating the release will fire some Taskcluster tasks that create and push docker images to Dockerhub. Wait for these to complete before proceeding to step 2.
 
-2. Kick-off the deployment pipeline in ArgoCD. This can be done by running the "Pull and Push Docker Image" Github Action like so:
+2. Kick-off the deployment pipeline in ArgoCD. This can be done by running the "Pull and Push Docker Image" `Github Action <https://github.com/mozilla-releng/balrog/actions/workflows/docker-push.yml>`_ like so:
 
 .. image:: run-action.png
 
-Once that completes, ArgoCD will begin updating ``stage`` deployments. This will immediately roll out the new version of ``admin`` and ``agent``, and start the canary rollout process for ``app``. You must also continue the rollout for ``app`` `in ArgoCD <https://webservices.argocd.global.mozgcp.net/applications/argocd-webservices/balrog-stage-us-west1-balrog-app?view=tree&resource=>`_ to ensure all pods are running the new version. To do this, find the ``balrog-app`` rollout, click the 3 dots menu, and then click ``Promote-Full``:
+Once that completes, `ArgoCD <https://webservices.argocd.global.mozgcp.net/applications?proj=balrog-nonprod>_` will begin updating ``stage`` deployments. This will immediately roll out the new version of ``admin`` and ``agent``, and start the canary rollout process for ``app``. You must also continue the rollout for ``app`` `in ArgoCD <https://webservices.argocd.global.mozgcp.net/applications/argocd-webservices/balrog-stage-us-west1-balrog-app?view=tree&resource=>`_ to ensure all pods are running the new version. To do this, find the ``balrog-app`` rollout, click the 3 dots menu, and then click ``Promote-Full``:
 
 .. image:: balrog-app-3-dots.png
 
@@ -96,13 +96,13 @@ Once Argo has finished updating everything, you should see notifications for ``a
 
 .. image:: deployment-notifications.png
 
-3. Deploy the UI by running the "Build and Deploy Balrog UI" GitHub action. Be sure to choose "stage" from the dropdown:
+3. Deploy the UI by running the `"Build and Deploy Balrog UI" GitHub action <https://github.com/mozilla-releng/balrog/actions/workflows/ui-deploy.yml>`_. Be sure to choose "stage" from the dropdown:
 
 .. image:: ui-stage.png
 
 4. Bump the `in-repo version <https://github.com/mozilla-releng/balrog/commit/6067671d6a055de1b399ad32b342f0789fea03fc>`_ to the next available one to ensure the next push gets a new version.
 
-Once the changes are deployed to stage, you should do some testing to make sure that the new features, fixes, etc. are working properly there. It's a good idea to `watch Sentry for new exceptions <https://sentry.io/organizations/mozilla/projects/>`_ that may show up, and Grafana for any notable changes in the shape of the traffic.
+Once the changes are deployed to stage, you should do some testing to make sure that the new features, fixes, etc. are working properly there. It's a good idea to `watch Sentry for new exceptions <https://mozilla.sentry.io/issues/?project=6262499&project=6262501&project=6262502>`_ that may show up, and Grafana for any notable changes in the shape of the traffic.
 
 **Important Note!** Only two-part version numbers (like shown above) are supported by our deployment pipeline.
 
@@ -112,7 +112,7 @@ Pushing to Production
 
 Note: Pushing to production requires that the "Pull and Push Docker Image" for the desired version has already been run (usually as part of the Stage deployment described above). This is required to get ArgoCD into the necessary state for the following instructions to work.
 
-To begin the production deployment process you must "Sync" ``admin``, ``agent``, and ``app`` in ArgoCD. For the former two, the deployment process is complete once this finishes successfully. For the latter, this will only deploy a canary pod, allowing a fraction of requests to be handled by the new release.
+To begin the production deployment process you must "Sync" ``admin``, ``agent``, and ``app`` `in ArgoCD <https://webservices.argocd.global.mozgcp.net/applications?proj=balrog-prod>`_. For the former two, the deployment process is complete once this finishes successfully. For the latter, this will only deploy a canary pod, allowing a fraction of requests to be handled by the new release.
 
 .. image:: prod-sync.png
 
@@ -126,7 +126,7 @@ To deploy the new UI to production, run the "Build and Deploy Balrog UI" Github 
 
 Before proceeding, you should monitor for changes in load or exceptions for at least a few minutes. Specifically:
 
-- Watch Sentry to see if any new exceptions show up for any of the backend services
+- Watch `Sentry <https://mozilla.sentry.io/issues/?project=6262508&project=6262505&project=6262506>`_ to see if any new exceptions show up for any of the backend services
 - Watch `the Grafana graphs <https://yardstick.mozilla.org/d/fRuT9IGZfsdfweAA/balrog3a-mozcloud-v2?orgId=1&from=now-1h&to=now&timezone=browser&var-env=prod&var-containers=$__all&var-datasource=adpvtjmrxoc1sb&refresh=30s&editIndex=0>`_ for spikes or dips in any of the charts
 
 If anything notable comes up you should seek an explanation for it before proceeding. If you are unable to explain the issue, consult with someone else and consider rolling back in the meantime.
