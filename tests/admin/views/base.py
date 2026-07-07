@@ -55,15 +55,13 @@ class ViewTest(unittest.TestCase):
         app.config["M2M_ACCOUNT_MAPPING"] = {}
         app.config["CORS_ORIGINS"] = "*"
         with open(self.version_file, "w+") as f:
-            f.write(
-                """
+            f.write("""
 {
   "source":"https://github.com/mozilla-releng/balrog",
   "version":"1.0",
   "commit":"abcdef123456"
 }
-"""
-            )
+""")
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
 
         self.orig_releases_history = dbo.releases.history
@@ -119,33 +117,28 @@ class ViewTest(unittest.TestCase):
         dbo.releases.t.insert().execute(name="a", product="a", data=createBlob(dict(name="a", hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(name="ab", product="a", data=createBlob(dict(name="ab", hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.history.bucket.blobs["ab/None-456-bob.json"] = FakeBlob("")
-        dbo.releases.history.bucket.blobs["ab/1-456-bob.json"] = FakeBlob(
-            """
+        dbo.releases.history.bucket.blobs["ab/1-456-bob.json"] = FakeBlob("""
 {
     "name": "ab",
     "hashFunction": "sha512",
     "schema_version": 1
 }
-"""
-        )
+""")
         dbo.releases.t.insert().execute(name="b", product="b", data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.history.bucket.blobs["b/None-567-bob.json"] = FakeBlob("")
-        dbo.releases.history.bucket.blobs["b/1-567-bob.json"] = FakeBlob(
-            """
+        dbo.releases.history.bucket.blobs["b/1-567-bob.json"] = FakeBlob("""
 {
     "name": "b",
     "hashFunction": "sha512",
     "schema_version": 1
 }
-"""
-        )
+""")
         dbo.releases.t.insert().execute(name="c", product="c", data=createBlob(dict(name="c", hashFunction="sha512", schema_version=1)), data_version=1)
         dbo.releases.t.insert().execute(
             name="d",
             product="d",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -164,12 +157,10 @@ class ViewTest(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.releases.history.bucket.blobs["d/None-678-bob.json"] = FakeBlob("")
-        dbo.releases.history.bucket.blobs["d/1-678-bob.json"] = FakeBlob(
-            """
+        dbo.releases.history.bucket.blobs["d/1-678-bob.json"] = FakeBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -188,8 +179,7 @@ class ViewTest(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         dbo.rules.t.insert().execute(
             rule_id=1,
             priority=100,

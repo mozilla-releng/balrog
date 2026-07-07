@@ -122,8 +122,7 @@ class TestReleaseBlobV1(unittest.TestCase):
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist(self.allowlistedDomains)
         self.sampleReleaseBlob = ReleaseBlobV1()
-        self.sampleReleaseBlob.loadJSON(
-            """
+        self.sampleReleaseBlob.loadJSON("""
         {
             "name": "j1",
             "schema_version": 1,
@@ -203,8 +202,7 @@ class TestReleaseBlobV1(unittest.TestCase):
                 }
             }
         }
-        """
-        )
+        """)
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlob.getReferencedReleases()
@@ -301,8 +299,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         self.specialForceHosts = ["http://a.com"]
         self.allowlistedDomains = {"boring.com": ("h",)}
         self.blob = ReleaseBlobV1()
-        self.blob.loadJSON(
-            """
+        self.blob.loadJSON("""
     {
     "name": "h",
     "schema_version": 1,
@@ -326,8 +323,7 @@ class TestOldVersionSpecialCases(unittest.TestCase):
             }
         }
     }
-}"""
-        )
+}""")
 
     def testIsValid(self):
         # Raises on error
@@ -353,11 +349,9 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         expected_header = """
 <update type="minor" version="2.0.0.20" buildID="1" detailsURL="http://example.org/details">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -384,11 +378,9 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         expected_header = """
 <update type="minor" version="3.0.9" buildID="1" detailsURL="http://example.org/details">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -415,11 +407,9 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         expected_header = """
 <update type="minor" version="12.0" buildID="1" detailsURL="http://example.org/details">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -446,11 +436,9 @@ class TestOldVersionSpecialCases(unittest.TestCase):
         expected_header = """
 <update type="minor" version="12.0" extensionVersion="3.6" buildID="1" detailsURL="http://example.org/details">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -487,8 +475,7 @@ class TestSpecialQueryParams(unittest.TestCase):
         self.specialForceHosts = ["http://a.com"]
         self.allowlistedDomains = {"a.com": ("h",), "boring.com": ("h",)}
         self.blob = ReleaseBlobV1()
-        self.blob.loadJSON(
-            """
+        self.blob.loadJSON("""
 {
     "name": "h",
     "schema_version": 1,
@@ -520,8 +507,7 @@ class TestSpecialQueryParams(unittest.TestCase):
             }
         }
     }
-}"""
-        )
+}""")
 
     def testSpecialQueryParam(self):
         updateQuery = {
@@ -543,11 +529,9 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://a.com/?foo=a" hashFunction="sha512" hashValue="1" size="1"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -574,11 +558,9 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://a.com/?foo=a&force=1" hashFunction="sha512" hashValue="1" size="1"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -605,11 +587,9 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://a.com/?foo=a&force=-1" hashFunction="sha512" hashValue="1" size="1"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -636,11 +616,9 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -667,11 +645,9 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -698,11 +674,9 @@ class TestSpecialQueryParams(unittest.TestCase):
         expected_header = """
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://boring.com/a" hashFunction="sha512" hashValue="1" size="1"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -723,8 +697,7 @@ class TestSchema2Blob(unittest.TestCase):
             product="j",
             version="39.0",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "j1",
     "schema_version": 2,
@@ -737,12 +710,10 @@ class TestSchema2Blob(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
         self.blobJ2 = ReleaseBlobV2()
-        self.blobJ2.loadJSON(
-            """
+        self.blobJ2.loadJSON("""
 {
     "name": "j2",
     "schema_version": 2,
@@ -779,11 +750,9 @@ class TestSchema2Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         self.blobK = ReleaseBlobV2()
-        self.blobK.loadJSON(
-            """
+        self.blobK.loadJSON("""
 {
     "name": "k",
     "schema_version": 2,
@@ -831,12 +800,10 @@ class TestSchema2Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
 
         self.sampleReleaseBlob = ReleaseBlobV2()
-        self.sampleReleaseBlob.loadJSON(
-            """
+        self.sampleReleaseBlob.loadJSON("""
                 {
                     "name": "SampleBlob",
                     "schema_version": 2,
@@ -916,8 +883,7 @@ class TestSchema2Blob(unittest.TestCase):
                         }
                     }
                 }
-                """
-        )
+                """)
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlob.getReferencedReleases()
@@ -949,11 +915,9 @@ class TestSchema2Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="40.0" appVersion="40.0" platformVersion="40.0" buildID="30">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="34" size="38"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1018,11 +982,9 @@ class TestSchema2Blob(unittest.TestCase):
             'actions="silent" openURL="http://example.org/url/l" notificationURL="http://example.org/notification/l" '
             'alertURL="http://example.org/alert/l">'
         )
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://a.com/complete.mar/o/o" hashFunction="sha512" hashValue="35" size="40"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1053,11 +1015,9 @@ class TestSchema2Blob(unittest.TestCase):
             'showNeverForVersion="true" actions="silent" openURL="http://example.org/url/l2" '
             'notificationURL="http://example.org/notification/l2" alertURL="http://example.org/alert/l2">'
         )
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://a.com/complete.mar/o/o" hashFunction="sha512" hashValue="45" size="50"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1088,8 +1048,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
             product="j",
             version="0.5",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "j1",
     "schema_version": 2,
@@ -1103,12 +1062,10 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
         self.blobJ2 = ReleaseBlobV2()
-        self.blobJ2.loadJSON(
-            """
+        self.blobJ2.loadJSON("""
 {
     "name": "j2",
     "schema_version": 2,
@@ -1138,8 +1095,7 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
 
     def testIsValid(self):
         # Raises on error
@@ -1165,11 +1121,9 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="2" appVersion="2" platformVersion="2" buildID="3">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://a.com/c" hashFunction="sha512" hashValue="6" size="5"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1235,8 +1189,7 @@ class TestSchema3Blob(unittest.TestCase):
             product="f",
             version="22.0",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "f1",
     "schema_version": 3,
@@ -1249,16 +1202,14 @@ class TestSchema3Blob(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.releases.t.insert().execute(
             name="f2",
             product="f",
             version="23.0",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "f2",
     "schema_version": 3,
@@ -1271,12 +1222,10 @@ class TestSchema3Blob(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
         self.blobF3 = ReleaseBlobV3()
-        self.blobF3.loadJSON(
-            """
+        self.blobF3.loadJSON("""
 {
     "name": "f3",
     "schema_version": 3,
@@ -1332,15 +1281,13 @@ class TestSchema3Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         dbo.releases.t.insert().execute(
             name="g1",
             product="g",
             version="23.0",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "g1",
     "schema_version": 3,
@@ -1353,12 +1300,10 @@ class TestSchema3Blob(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
         self.blobG2 = ReleaseBlobV3()
-        self.blobG2.loadJSON(
-            """
+        self.blobG2.loadJSON("""
 {
     "name": "g2",
     "schema_version": 3,
@@ -1412,12 +1357,10 @@ class TestSchema3Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
 
         self.sampleReleaseBlobV3 = ReleaseBlobV3()
-        self.sampleReleaseBlobV3.loadJSON(
-            """
+        self.sampleReleaseBlobV3.loadJSON("""
         {
             "name": "f3",
             "schema_version": 3,
@@ -1479,8 +1422,7 @@ class TestSchema3Blob(unittest.TestCase):
                 }
             }
         }
-        """
-        )
+        """)
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         partial_releases = self.sampleReleaseBlobV3.getReferencedReleases()
@@ -1636,11 +1578,9 @@ class TestSchema3Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://a.com/c2" hashFunction="sha512" hashValue="31" size="30"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1667,11 +1607,9 @@ class TestSchema3Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="25.0" appVersion="25.0" platformVersion="25.0" buildID="29">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://a.com/c2m" hashFunction="sha512" hashValue="33" size="32"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -1777,8 +1715,7 @@ class TestSchema4Blob(unittest.TestCase):
             product="h",
             version="29.0",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "h0",
     "schema_version": 4,
@@ -1791,16 +1728,14 @@ class TestSchema4Blob(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.releases.t.insert().execute(
             name="h1",
             product="h",
             version="30.0",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "h1",
     "schema_version": 4,
@@ -1813,12 +1748,10 @@ class TestSchema4Blob(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
         self.blobH2 = ReleaseBlobV4()
-        self.blobH2.loadJSON(
-            """
+        self.blobH2.loadJSON("""
 {
     "name": "h2",
     "schema_version": 4,
@@ -1886,11 +1819,9 @@ class TestSchema4Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         self.blobH3 = ReleaseBlobV4()
-        self.blobH3.loadJSON(
-            """
+        self.blobH3.loadJSON("""
 {
     "name": "h3",
     "schema_version": 4,
@@ -1964,13 +1895,11 @@ class TestSchema4Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         sample_release_blob_v4 = ReleaseBlobV4()
-        sample_release_blob_v4.loadJSON(
-            """
+        sample_release_blob_v4.loadJSON("""
         {
             "name": "sample",
             "schema_version": 4,
@@ -2044,16 +1973,14 @@ class TestSchema4Blob(unittest.TestCase):
                 }
             }
         }
-        """
-        )
+        """)
         partial_releases = sample_release_blob_v4.getReferencedReleases()
         self.assertTrue(5, len(partial_releases))
         self.assertEqual(sorted(partial_releases), ["h0", "h1", "h2", "h3", "h4"])
 
     def testGetPartialReleaseReferences_Empty_Partials_Case(self):
         sample_release_blob_v4 = ReleaseBlobV4()
-        sample_release_blob_v4.loadJSON(
-            """
+        sample_release_blob_v4.loadJSON("""
             {
                 "name": "h1",
                 "schema_version": 4,
@@ -2066,15 +1993,13 @@ class TestSchema4Blob(unittest.TestCase):
                     }
                 }
             }
-            """
-        )
+            """)
         partial_releases = sample_release_blob_v4.getReferencedReleases()
         self.assertEqual(0, len(partial_releases))
 
     def testGetPartialReleaseReferences_Empty_Locales_Case(self):
         sample_release_blob_v4 = ReleaseBlobV4()
-        sample_release_blob_v4.loadJSON(
-            """
+        sample_release_blob_v4.loadJSON("""
         {
             "name": "sample",
             "schema_version": 4,
@@ -2133,8 +2058,7 @@ class TestSchema4Blob(unittest.TestCase):
                 }
             }
         }
-        """
-        )
+        """)
         partial_releases = sample_release_blob_v4.getReferencedReleases()
         self.assertTrue(4, len(partial_releases))
         self.assertEqual(sorted(partial_releases), ["h0", "h1", "h2", "h3"])
@@ -2263,11 +2187,9 @@ class TestSchema4Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="41" size="40"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -2293,11 +2215,9 @@ class TestSchema4Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://a.com/l-complete" hashFunction="sha512" hashValue="41" size="40"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -2323,11 +2243,9 @@ class TestSchema4Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://a.com/complete-catchall" hashFunction="sha512" hashValue="41" size="40"/>
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -2354,11 +2272,9 @@ class TestSchema4Blob(unittest.TestCase):
         expected_header = """
 <update type="minor" displayVersion="32.0" appVersion="32.0" platformVersion="32.0" buildID="500">
 """
-        expected = [
-            """
+        expected = ["""
 <patch type="complete" URL="http://a.com/complete.mar" hashFunction="sha512" hashValue="410" size="400"/>
-"""
-        ]
+"""]
         expected_footer = "</update>"
         expected = [x.strip() for x in expected]
         self.assertEqual(returned_header.strip(), expected_header.strip())
@@ -2367,8 +2283,7 @@ class TestSchema4Blob(unittest.TestCase):
 
     def testConvertFromV3(self):
         v3Blob = ReleaseBlobV3()
-        v3Blob.loadJSON(
-            """
+        v3Blob.loadJSON("""
 {
     "name": "g2",
     "schema_version": 3,
@@ -2394,8 +2309,7 @@ class TestSchema4Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
 
         v4Blob = ReleaseBlobV4.fromV3(v3Blob)
         # Raises on error
@@ -2415,8 +2329,7 @@ class TestSchema4Blob(unittest.TestCase):
 
     def testConvertFromV3Noop(self):
         v3Blob = ReleaseBlobV3()
-        v3Blob.loadJSON(
-            """
+        v3Blob.loadJSON("""
 {
     "name": "g2",
     "schema_version": 4,
@@ -2449,8 +2362,7 @@ class TestSchema4Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
 
         v4Blob = ReleaseBlobV4.fromV3(v3Blob)
         # Raises on error
@@ -2495,8 +2407,7 @@ class TestSchema5Blob(unittest.TestCase):
             product="h",
             version="30.0",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "h1",
     "schema_version": 5,
@@ -2509,12 +2420,10 @@ class TestSchema5Blob(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
         self.blobH2 = ReleaseBlobV5()
-        self.blobH2.loadJSON(
-            """
+        self.blobH2.loadJSON("""
 {
     "name": "h2",
     "schema_version": 5,
@@ -2576,13 +2485,11 @@ class TestSchema5Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         sample_release_blob_v5 = ReleaseBlobV5()
-        sample_release_blob_v5.loadJSON(
-            """
+        sample_release_blob_v5.loadJSON("""
         {
             "name": "sample",
             "schema_version": 5,
@@ -2644,16 +2551,14 @@ class TestSchema5Blob(unittest.TestCase):
                 }
             }
         }
-        """
-        )
+        """)
         partial_releases = sample_release_blob_v5.getReferencedReleases()
         self.assertTrue(2, len(partial_releases))
         self.assertEqual(sorted(partial_releases), ["h1", "h2"])
 
     def testGetPartialReleaseReferences_Empty_fileUrls_Case(self):
         sample_release_blob_v5 = ReleaseBlobV5()
-        sample_release_blob_v5.loadJSON(
-            """
+        sample_release_blob_v5.loadJSON("""
         {
             "name": "h2",
             "schema_version": 5,
@@ -2735,8 +2640,7 @@ class TestSchema5Blob(unittest.TestCase):
                 }
             }
         }
-        """
-        )
+        """)
         partial_releases = sample_release_blob_v5.getReferencedReleases()
         self.assertTrue(3, len(partial_releases))
         self.assertEqual(sorted(partial_releases), ["h1", "h2", "h3"])
@@ -2795,8 +2699,7 @@ class TestSchema6Blob(unittest.TestCase):
             name="h1",
             product="h",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "h1",
     "schema_version": 6,
@@ -2809,12 +2712,10 @@ class TestSchema6Blob(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
         self.blobH2 = ReleaseBlobV6()
-        self.blobH2.loadJSON(
-            """
+        self.blobH2.loadJSON("""
 {
     "name": "h2",
     "schema_version": 6,
@@ -2873,13 +2774,11 @@ class TestSchema6Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
 
     def testGetPartialReleaseReferences_Happy_Case(self):
         sample_release_blob_v6 = ReleaseBlobV6()
-        sample_release_blob_v6.loadJSON(
-            """
+        sample_release_blob_v6.loadJSON("""
         {
             "name": "h2",
             "schema_version": 6,
@@ -2938,16 +2837,14 @@ class TestSchema6Blob(unittest.TestCase):
                 }
             }
         }
-        """
-        )
+        """)
         partial_releases = sample_release_blob_v6.getReferencedReleases()
         self.assertTrue(2, len(partial_releases))
         self.assertEqual(sorted(partial_releases), ["h1", "h2"])
 
     def testGetPartialReleaseReferences_Empty_Partials_Case(self):
         sample_release_blob_v6 = ReleaseBlobV6()
-        sample_release_blob_v6.loadJSON(
-            """{
+        sample_release_blob_v6.loadJSON("""{
             "name": "h1",
             "schema_version": 6,
             "platforms": {
@@ -2959,8 +2856,7 @@ class TestSchema6Blob(unittest.TestCase):
                 }
             }
         }
-        """
-        )
+        """)
         partial_releases = sample_release_blob_v6.getReferencedReleases()
         self.assertEqual(0, len(partial_releases))
 
@@ -3006,8 +2902,7 @@ class TestSchema6Blob(unittest.TestCase):
 
     def testCheckFailForUnsuportedAttributes(self):
         self.blobH3 = ReleaseBlobV6()
-        self.blobH3.loadJSON(
-            """
+        self.blobH3.loadJSON("""
 {
     "name": "h3",
     "schema_version": 5,
@@ -3069,8 +2964,7 @@ class TestSchema6Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         self.assertRaises(BlobValidationError, self.blobH3.validate, "h", self.allowlistedDomains)
 
 
@@ -3085,8 +2979,7 @@ class TestSchema8Blob(unittest.TestCase):
             name="h1",
             product="h",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "h1",
     "schema_version": 8,
@@ -3099,8 +2992,7 @@ class TestSchema8Blob(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
         self.blobH2 = ReleaseBlobV8()
         self.blobH2.loadJSON(
@@ -3236,8 +3128,7 @@ class TestSchema9Blob(unittest.TestCase):
             name="h1",
             product="h",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "h1",
     "schema_version": 9,
@@ -3253,12 +3144,10 @@ class TestSchema9Blob(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
         self.blobH2 = ReleaseBlobV9()
-        self.blobH2.loadJSON(
-            """
+        self.blobH2.loadJSON("""
 {
     "name": "h2",
     "schema_version": 9,
@@ -3362,8 +3251,7 @@ class TestSchema9Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
 
     def testWithoutActionsByLocale(self):
         updateQuery = {
@@ -3517,8 +3405,7 @@ class TestSchema9Blob(unittest.TestCase):
 
     def testDisableBITS(self):
         blob = ReleaseBlobV9()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
 {
     "name": "bbb",
     "schema_version": 9,
@@ -3571,8 +3458,7 @@ class TestSchema9Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         blob.validate("h", self.allowlistedDomains)
         updateQuery = {
             "product": "b",
@@ -3594,8 +3480,7 @@ class TestSchema9Blob(unittest.TestCase):
 
     def testDisableBITSFalseNotAllowed(self):
         blob = ReleaseBlobV9()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
 {
     "name": "bbb",
     "schema_version": 9,
@@ -3648,14 +3533,12 @@ class TestSchema9Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         self.assertRaises(BlobValidationError, blob.validate, "h", self.allowlistedDomains)
 
     def testDisableBackgroundUpdates(self):
         blob = ReleaseBlobV9()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
 {
     "name": "bbb",
     "schema_version": 9,
@@ -3708,8 +3591,7 @@ class TestSchema9Blob(unittest.TestCase):
         }
     }
 }
-"""
-        )
+""")
         blob.validate("h", self.allowlistedDomains)
         updateQuery = {
             "product": "b",
@@ -3732,8 +3614,7 @@ class TestSchema9Blob(unittest.TestCase):
 
     def testDisableBackgroundUpdatesFalseNotAllowed(self):
         blob = ReleaseBlobV9()
-        blob.loadJSON(
-            """
+        blob.loadJSON("""
     {
         "name": "bbb",
         "schema_version": 9,
@@ -3786,8 +3667,7 @@ class TestSchema9Blob(unittest.TestCase):
             }
         }
     }
-    """
-        )
+    """)
         self.assertRaises(BlobValidationError, blob.validate, "h", self.allowlistedDomains)
 
 
@@ -3876,16 +3756,14 @@ class TestDesupportBlob(unittest.TestCase):
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         self.blob = DesupportBlob()
-        self.blob.loadJSON(
-            """
+        self.blob.loadJSON("""
 {
     "name": "d1",
     "schema_version": 50,
     "detailsUrl": "http://moo.com/%locale%/cow/%version%/%os%",
     "displayVersion": "50.0"
 }
-"""
-        )
+""")
 
     def testDesupport(self):
         updateQuery = {"locale": "<locale>", "version": "<version>", "buildTarget": "Darwin_x86_64-gcc3-u-i386-x86_64"}
@@ -3894,11 +3772,9 @@ class TestDesupportBlob(unittest.TestCase):
         returned_footer = self.blob.getInnerFooterXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
         returned = [x.strip() for x in returned]
         expected_header = ""
-        expected = [
-            """
+        expected = ["""
 <update type="minor" unsupported="true" detailsURL="http://moo.com/<locale>/cow/<version>/Darwin" displayVersion="50.0">
-"""
-        ]
+"""]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
         self.assertEqual(returned_header.strip(), expected_header.strip())
