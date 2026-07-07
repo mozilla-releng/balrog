@@ -6,7 +6,6 @@
 Support run-on-releases option
 """
 
-
 from taskgraph.transforms.base import TransformSequence
 
 transforms = TransformSequence()

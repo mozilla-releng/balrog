@@ -33,8 +33,7 @@ class CommonTestBase(unittest.TestCase):
             name="Fennec.55.0a1",
             product="Fennec",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "Fennec.55.0a1",
     "schema_version": 1,
@@ -65,8 +64,7 @@ class CommonTestBase(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(
             rule_id=2, priority=90, backgroundRate=100, mapping="Firefox.55.0a1", update_type="minor", product="Firefox", instructionSet="SSE", data_version=1
@@ -75,8 +73,7 @@ class CommonTestBase(unittest.TestCase):
             name="Firefox.55.0a1",
             product="Firefox",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "Firefox.55.0a1",
     "schema_version": 1,
@@ -100,8 +97,7 @@ class CommonTestBase(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
         dbo.rules.t.insert().execute(rule_id=3, priority=90, backgroundRate=0, mapping="q", update_type="minor", product="q", data_version=3)
         dbo.rules.history.t.insert().execute(
@@ -114,8 +110,7 @@ class CommonTestBase(unittest.TestCase):
             name="q",
             product="q",
             data_version=2,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "q",
     "schema_version": 1,
@@ -138,8 +133,7 @@ class CommonTestBase(unittest.TestCase):
         }
     }
 }
-"""
-            ),
+"""),
         )
 
         dbo.rules.t.insert().execute(

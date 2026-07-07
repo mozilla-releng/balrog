@@ -17,15 +17,13 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 200)
         self.assertDictEqual(
             ret.get_json(),
-            json.loads(
-                """
+            json.loads("""
 {
     "name": "b",
     "hashFunction": "sha512",
     "schema_version": 1
 }
-"""
-            ),
+"""),
         )
 
     def testGetRelease404(self):
@@ -39,8 +37,7 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = select([dbo.releases.data]).where(dbo.releases.name == "d").execute().fetchone()[0]
         self.assertDictEqual(
             ret,
-            createBlob(
-                """
+            createBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -61,8 +58,7 @@ class TestReleasesAPI_JSON(ViewTest):
         }
     }
 }
-"""
-            ),
+"""),
         )
 
     def testReleasePostUpdateExistingWithoutPermission(self):
@@ -148,8 +144,7 @@ class TestReleasesAPI_JSON(ViewTest):
                 }
             }
         }"""
-        result_blob = createBlob(
-            """
+        result_blob = createBlob("""
         {
             "name": "dd",
             "schema_version": 1,
@@ -183,8 +178,7 @@ class TestReleasesAPI_JSON(ViewTest):
                     }
                 }
             }
-        }"""
-        )
+        }""")
 
         # Testing Put request to add new release
         ret = self._put("/releases/dd", data=dict(blob=ancestor_blob, name="dd", product="dd", data_version=1))
@@ -385,8 +379,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEqual(ret["name"], "e")
         self.assertDictEqual(
             ret["data"],
-            createBlob(
-                """
+            createBlob("""
 {
     "name": "e",
     "hashFunction": "sha512",
@@ -395,8 +388,7 @@ class TestReleasesAPI_JSON(ViewTest):
         "partial": "foo"
     }
 }
-"""
-            ),
+"""),
         )
 
     def testReleasePostCreatesNewReleaseNoAuthentication(self):
@@ -418,8 +410,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEqual(ret["name"], "e")
         self.assertDictEqual(
             ret["data"],
-            createBlob(
-                """
+            createBlob("""
 {
     "name": "e",
     "hashFunction": "sha512",
@@ -428,8 +419,7 @@ class TestReleasesAPI_JSON(ViewTest):
         "complete": "foo"
     }
 }
-"""
-            ),
+"""),
         )
 
     def testReleasePostInvalidKey(self):
@@ -490,8 +480,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=2)), "Data: %s" % ret.get_data())
         ret = select([dbo.releases.data]).where(dbo.releases.name == "ab").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "ab",
     "schema_version": 1,
@@ -510,8 +499,7 @@ class TestReleasesAPI_JSON(ViewTest):
         }
     }
 }
-"""
-        )
+""")
         self.assertDictEqual(ret, expected)
 
         history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ab/")]
@@ -557,8 +545,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=2)), "Data: %s" % ret.get_data())
         ret = select([dbo.releases.data]).where(dbo.releases.name == "ab").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "ab",
     "schema_version": 1,
@@ -577,8 +564,7 @@ class TestReleasesAPI_JSON(ViewTest):
         }
     }
 }
-"""
-        )
+""")
         self.assertDictEqual(ret, expected)
 
         history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ab/")]
@@ -615,8 +601,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=2)), "Data: %s" % ret.get_data())
         ret = select([dbo.releases.data]).where(dbo.releases.name == "e").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "e",
     "schema_version": 1,
@@ -635,8 +620,7 @@ class TestReleasesAPI_JSON(ViewTest):
         }
     }
 }
-"""
-        )
+""")
         self.assertDictEqual(ret, expected)
 
         history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("e/")]
@@ -651,8 +635,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=2)), "Data: %s" % ret.get_data())
         ret = select([dbo.releases.data]).where(dbo.releases.name == "d").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -679,13 +662,11 @@ class TestReleasesAPI_JSON(ViewTest):
         }
     }
 }
-"""
-        )
+""")
         self.assertDictEqual(ret, expected)
 
         history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("d/")]
-        interim_blob = createBlob(
-            """
+        interim_blob = createBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -704,8 +685,7 @@ class TestReleasesAPI_JSON(ViewTest):
         }
     }
 }
-"""
-        )
+""")
         self.assertEqual(len(history_entries), 3)
         self.assertEqual(history_entries[0], "")
         self.assertDictEqual(json.loads(history_entries[2]), expected)
@@ -719,8 +699,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=2)), "Data: %s" % ret.get_data())
         ret = select([dbo.releases.data]).where(dbo.releases.name == "e").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "e",
     "hashFunction": "sha512",
@@ -742,8 +721,7 @@ class TestReleasesAPI_JSON(ViewTest):
         }
     }
 }
-"""
-        )
+""")
         self.assertDictEqual(ret, expected)
 
         history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("e/")]
@@ -758,8 +736,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=2)), "Data: %s" % ret.get_data())
         ret = select([dbo.releases.data]).where(dbo.releases.name == "d").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -793,13 +770,11 @@ class TestReleasesAPI_JSON(ViewTest):
         }
     }
 }
-"""
-        )
+""")
         self.assertDictEqual(ret, expected)
 
         history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("d/")]
-        interim_blob = createBlob(
-            """
+        interim_blob = createBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -818,8 +793,7 @@ class TestReleasesAPI_JSON(ViewTest):
         }
     }
 }
-"""
-        )
+""")
         self.assertEqual(len(history_entries), 3)
         self.assertEqual(history_entries[0], "")
         self.assertDictEqual(json.loads(history_entries[1]), interim_blob)
@@ -832,8 +806,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=2)), "Data: %s" % ret.get_data())
         ret = select([dbo.releases.data]).where(dbo.releases.name == "ab").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "ab",
     "schema_version": 1,
@@ -852,8 +825,7 @@ class TestReleasesAPI_JSON(ViewTest):
         }
     }
 }
-"""
-        )
+""")
         self.assertDictEqual(ret, expected)
 
         history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("ab/")]
@@ -862,8 +834,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertDictEqual(json.loads(history_entries[2]), expected)
 
         ret = select([dbo.releases.data]).where(dbo.releases.name == "b").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "b",
     "schema_version": 1,
@@ -882,8 +853,7 @@ class TestReleasesAPI_JSON(ViewTest):
         }
     }
 }
-"""
-        )
+""")
         self.assertDictEqual(ret, expected)
 
         history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("b/")]
@@ -985,8 +955,7 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEqual(r[0]["product"], "Firefox")
         self.assertDictEqual(
             r[0]["data"],
-            createBlob(
-                """
+            createBlob("""
 {
     "name": "new_release",
     "hashFunction": "sha512",
@@ -1000,8 +969,7 @@ class TestReleasesAPI_JSON(ViewTest):
         }
     }
 }
-"""
-            ),
+"""),
         )
 
     def testNewReleasePutBadInput(self):
@@ -1092,16 +1060,14 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertEqual(r[0]["product"], "Firefox")
         self.assertDictEqual(
             r[0]["data"],
-            createBlob(
-                """
+            createBlob("""
 {
     "name": "d",
     "schema_version": 3,
     "hashFunction": "sha512",
     "actions": "doit"
 }
-"""
-            ),
+"""),
         )
 
     def testGMPReleasePut(self):
@@ -1143,8 +1109,7 @@ cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda
         self.assertEqual(r[0]["product"], "a")
         self.assertDictEqual(
             r[0]["data"],
-            createBlob(
-                """
+            createBlob("""
 {
     "name": "gmprel",
     "schema_version": 1000,
@@ -1166,8 +1131,7 @@ cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda
         }
     }
 }
-"""
-            ),
+"""),
         )
 
     def testGetReleases(self):
@@ -1181,15 +1145,13 @@ cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda
         self.assertStatusCode(ret, 200)
         self.assertDictEqual(
             ret.get_json(),
-            json.loads(
-                """
+            json.loads("""
 {
     "names": [
         "a", "ab", "b", "c", "d"
     ]
 }
-"""
-            ),
+"""),
         )
 
     def testGetReleasesNamePrefix(self):
@@ -1203,8 +1165,7 @@ cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda
 
         self.assertDictEqual(
             ret_data,
-            json.loads(
-                """
+            json.loads("""
 {
     "releases": [
         {"data_version": 1, "name": "a", "product": "a", "read_only": false,
@@ -1222,8 +1183,7 @@ cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda
         {"data_version": 1, "name": "ab", "product": "a", "read_only": false, "rule_ids": [], "rule_info": {}, "required_signoffs": {}}
     ]
 }
-"""
-            ),
+"""),
         )
 
     def testGetReleasesNamePrefixNamesOnly(self):
@@ -1231,13 +1191,11 @@ cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda
         self.assertStatusCode(ret, 200)
         self.assertDictEqual(
             ret.get_json(),
-            json.loads(
-                """
+            json.loads("""
 {
     "names": ["a", "ab"]
 }
-"""
-            ),
+"""),
         )
 
     def testReleasesPost(self):
@@ -1249,8 +1207,7 @@ cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda
         self.assertEqual(ret["name"], "e")
         self.assertDictEqual(
             ret["data"],
-            createBlob(
-                """
+            createBlob("""
 {
     "name": "e",
     "hashFunction": "sha512",
@@ -1259,8 +1216,7 @@ cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda
         "partial": "foo"
     }
 }
-"""
-            ),
+"""),
         )
 
 

@@ -3907,8 +3907,7 @@ class TestReleasesJSON(unittest.TestCase, MemoryDatabaseMixin):
     async def testUpdateCreatesCorrectHistory(self):
         await self.release_assets.async_update(
             where={"name": "Firefox-60.0-build1", "path": ".platforms.Linux_x86_64-gcc3.locales.en-US"},
-            what={
-                "data": """{
+            what={"data": """{
     "appVersion": "60.0",
     "buildID": "20200827144429",
     "completes": [
@@ -3926,8 +3925,7 @@ class TestReleasesJSON(unittest.TestCase, MemoryDatabaseMixin):
             "hashValue": "311324ceacfb8450a948da6b2176a1103d8a4eb716381951fb197b4414097efee9a91c9fd4fbcb797dd1e80fe69b8e2410a945602d5dfd0a5c485a004c52fbda"
         }
     ]
-}"""
-            },
+}"""},
             changed_by="bob",
             old_data_version=1,
         )
@@ -4380,8 +4378,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
             name="a",
             product="a",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "a",
     "schema_version": 1,
@@ -4405,22 +4402,19 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-            ),
+"""),
         )
         self.releases.t.insert().execute(
             name="b",
             product="b",
             data_version=1,
-            data=createBlob(
-                """
+            data=createBlob("""
 {
     "name": "b",
     "hashFunction": "sha512",
     "schema_version": 1
 }
-"""
-            ),
+"""),
         )
         self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
         self.db.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
@@ -4463,8 +4457,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         data = {"complete": {"filesize": 1, "from": "*", "hashValue": "abc"}}
         self.releases.addLocaleToRelease(name="a", product="a", platform="p", locale="c", data=data, old_data_version=1, changed_by="bill")
         ret = select([self.releases.data]).where(self.releases.name == "a").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "a",
     "schema_version": 1,
@@ -4495,16 +4488,14 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
+""")
         self.assertEqual(ret, expected)
 
     def testAddLocaleToReleaseWithAlias(self):
         data = {"complete": {"filesize": 123, "from": "*", "hashValue": "abc"}}
         self.releases.addLocaleToRelease(name="a", product="a", platform="p", locale="c", data=data, old_data_version=1, changed_by="bill", alias=["p4"])
         ret = select([self.releases.data]).where(self.releases.name == "a").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "a",
     "hashFunction": "sha512",
@@ -4538,16 +4529,14 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
+""")
         self.assertEqual(ret, expected)
 
     def testAddLocaleToReleaseOverride(self):
         data = {"complete": {"filesize": 123, "from": "*", "hashValue": "789"}}
         self.releases.addLocaleToRelease(name="a", product="a", platform="p", locale="l", data=data, old_data_version=1, changed_by="bill")
         ret = select([self.releases.data]).where(self.releases.name == "a").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "a",
     "hashFunction": "sha512",
@@ -4571,16 +4560,14 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
+""")
         self.assertEqual(ret, expected)
 
     def testAddLocaleToReleasePlatformsDoesntExist(self):
         data = {"complete": {"filesize": 432, "from": "*", "hashValue": "abc"}}
         self.releases.addLocaleToRelease(name="b", product="b", platform="q", locale="l", data=data, old_data_version=1, changed_by="bill")
         ret = select([self.releases.data]).where(self.releases.name == "b").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "b",
     "hashFunction": "sha512",
@@ -4599,16 +4586,14 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
+""")
         self.assertEqual(ret, expected)
 
     def testAddLocaleToReleaseNoLocales(self):
         data = {"complete": {"filesize": 432, "from": "*", "hashValue": "abc"}}
         self.releases.addLocaleToRelease(name="a", product="a", platform="p3", locale="l", data=data, old_data_version=1, changed_by="bill")
         ret = select([self.releases.data]).where(self.releases.name == "a").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "a",
     "hashFunction": "sha512",
@@ -4641,16 +4626,14 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
+""")
         self.assertEqual(ret, expected)
 
     def testAddLocaleToReleaseSecondPlatform(self):
         data = {"complete": {"filesize": 324, "from": "*", "hashValue": "abc"}}
         self.releases.addLocaleToRelease(name="a", product="a", platform="q", locale="l", data=data, old_data_version=1, changed_by="bill")
         ret = select([self.releases.data]).where(self.releases.name == "a").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "a",
     "hashFunction": "sha512",
@@ -4685,16 +4668,14 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
+""")
         self.assertEqual(ret, expected)
 
     def testAddLocaleToReleaseResolveAlias(self):
         data = {"complete": {"filesize": 444, "from": "*", "hashValue": "abc"}}
         self.releases.addLocaleToRelease(name="a", product="a", platform="p2", locale="j", data=data, old_data_version=1, changed_by="bill")
         ret = select([self.releases.data]).where(self.releases.name == "a").execute().fetchone()[0]
-        expected = createBlob(
-            """
+        expected = createBlob("""
 {
     "name": "a",
     "hashFunction": "sha512",
@@ -4725,8 +4706,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
+""")
         self.assertEqual(ret, expected)
 
     def testAddLocaleWhenReadOnly(self):
@@ -4737,8 +4717,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         )
 
     def testAddMergeableOutdatedData(self):
-        ancestor_blob = createBlob(
-            """
+        ancestor_blob = createBlob("""
 {
     "name": "p",
     "schema_version": 1,
@@ -4762,10 +4741,8 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
-        blob1 = createBlob(
-            """
+""")
+        blob1 = createBlob("""
 {
     "name": "p",
     "schema_version": 1,
@@ -4796,10 +4773,8 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
-        blob2 = createBlob(
-            """
+""")
+        blob2 = createBlob("""
 {
     "name": "p",
     "schema_version": 1,
@@ -4830,10 +4805,8 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
-        result_blob = createBlob(
-            """
+""")
+        result_blob = createBlob("""
 {
     "name": "p",
     "schema_version": 1,
@@ -4871,8 +4844,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
+""")
         with self.db.begin() as trans:
             self.releases.insert(changed_by="bill", name="p", product="z", data=ancestor_blob, transaction=trans)
             self.releases.update({"name": "p"}, {"product": "z", "data": blob1}, changed_by="bill", old_data_version=1, transaction=trans)
@@ -4887,8 +4859,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(json.loads(history_entries[3]), result_blob)
 
     def testAddMergeableWithChangesToList(self):
-        ancestor_blob = createBlob(
-            """
+        ancestor_blob = createBlob("""
 {
     "name": "release4",
     "schema_version": 4,
@@ -4916,10 +4887,8 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
-        blob1 = createBlob(
-            """
+""")
+        blob1 = createBlob("""
 {
     "name": "release4",
     "schema_version": 4,
@@ -4952,10 +4921,8 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
-        blob2 = createBlob(
-            """
+""")
+        blob2 = createBlob("""
 {
     "name": "release4",
     "schema_version": 4,
@@ -4988,10 +4955,8 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
-        result_blob = createBlob(
-            """
+""")
+        result_blob = createBlob("""
 {
     "name": "release4",
     "schema_version": 4,
@@ -5029,8 +4994,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
+""")
         with self.db.begin() as trans:
             self.releases.insert(changed_by="bill", name="release4", product="z", data=ancestor_blob, transaction=trans)
             self.releases.update({"name": "release4"}, {"product": "z", "data": blob1}, changed_by="bill", old_data_version=1, transaction=trans)
@@ -5045,8 +5009,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(json.loads(history_entries[3]), result_blob)
 
     def testAddConflictingOutdatedData(self):
-        ancestor_blob = createBlob(
-            """
+        ancestor_blob = createBlob("""
 {
     "name": "p",
     "schema_version": 1,
@@ -5070,10 +5033,8 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
-        blob1 = createBlob(
-            """
+""")
+        blob1 = createBlob("""
 {
     "name": "p",
     "schema_version": 1,
@@ -5104,10 +5065,8 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
-        blob2 = createBlob(
-            """
+""")
+        blob2 = createBlob("""
 {
     "name": "p",
     "schema_version": 1,
@@ -5138,8 +5097,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
+""")
         with self.db.begin() as trans:
             self.releases.insert(changed_by="bill", name="p", product="z", data=ancestor_blob, transaction=trans)
             self.releases.update({"name": "p"}, {"product": "z", "data": blob1}, changed_by="bill", old_data_version=1, transaction=trans)
@@ -5159,8 +5117,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(json.loads(history_entries[2]), blob1)
 
     def testAddLocaleToReleaseDoesMerging(self):
-        ancestor_blob = createBlob(
-            """
+        ancestor_blob = createBlob("""
 {
     "name": "release4",
     "schema_version": 4,
@@ -5189,10 +5146,8 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
-        result_blob = createBlob(
-            """
+""")
+        result_blob = createBlob("""
 {
     "name": "release4",
     "schema_version": 4,
@@ -5231,8 +5186,7 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         }
     }
 }
-"""
-        )
+""")
         with self.db.begin() as trans:
             self.releases.insert(changed_by="bill", name="release4", product="z", data=ancestor_blob, transaction=trans)
             self.releases.addLocaleToRelease(
