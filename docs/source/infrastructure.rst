@@ -88,7 +88,7 @@ Creating the release will fire some Taskcluster tasks that create and push docke
 
 .. image:: run-action.png
 
-Once that completes, `ArgoCD <https://webservices.argocd.global.mozgcp.net/applications?proj=balrog-nonprod>_` will begin updating ``stage`` deployments. This will immediately roll out the new version of ``admin`` and ``agent``, and start the canary rollout process for ``app``. You must also continue the rollout for ``app`` `in ArgoCD <https://webservices.argocd.global.mozgcp.net/applications/argocd-webservices/balrog-stage-us-west1-balrog-app?view=tree&resource=>`_ to ensure all pods are running the new version. To do this, find the ``balrog-app`` rollout, click the 3 dots menu, and then click ``Promote-Full``:
+Once that completes, `ArgoCD <https://webservices.argocd.global.mozgcp.net/applications?proj=balrog-nonprod>`_ will begin updating ``stage`` deployments automatically `(it usually takes about 5 mins to start after the docker image is pushed)`. This will immediately roll out the new version of ``admin`` and ``agent``, and start the canary rollout process for ``app``. You must also continue the rollout for ``app`` `in ArgoCD <https://webservices.argocd.global.mozgcp.net/applications/argocd-webservices/balrog-stage-us-west1-balrog-app?view=tree&resource=>`_ to ensure all pods are running the new version. To do this, find the ``balrog-app`` rollout, click the 3 dots menu, and then click ``Promote-Full``:
 
 .. image:: balrog-app-3-dots.png
 
