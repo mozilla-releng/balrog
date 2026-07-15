@@ -42,6 +42,9 @@ def create_app():
         # See https://bugzilla.mozilla.org/show_bug.cgi?id=1332829#c4 for background.
         response.headers["Strict-Transport-Security"] = flask_app.config.get("STRICT_TRANSPORT_SECURITY", "max-age=31536000;")
         response.headers["X-Content-Type-Options"] = flask_app.config.get("CONTENT_TYPE_OPTIONS", "nosniff")
+        # setdefault so handlers that set their own Cache-Control (eg: the
+        # Dockerflow endpoints) are not overridden.
+        response.headers.setdefault("Cache-Control", flask_app.cacheControl)
         if re.match("^/ui/", request.path):
             # This enables swagger-ui to dynamically fetch and
             # load the swagger specification JSON file containing API definition and examples.

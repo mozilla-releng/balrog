@@ -350,6 +350,13 @@ def testGuardianResponseV1WithoutSigning(client, version, buildTarget, channel, 
         assert "Content-Signature" not in ret.headers
 
 
+@pytest.mark.usefixtures("appconfig", "guardian_db")
+def testCacheControlIsSet(client):
+    ret = client.get("/json/1/Guardian/0.4.0.0/WINNT_x86_64/release/update.json")
+    assert ret.status_code == 200
+    assert ret.headers.get("Cache-Control") == "public, max-age=90"
+
+
 @pytest.mark.usefixtures("appconfig", "guardian_db", "mock_autograph")
 @pytest.mark.parametrize(
     "forceValue,response",
