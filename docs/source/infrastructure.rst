@@ -8,21 +8,22 @@ Environments
 
 We have stage and production deployments of Balrog. Here's a quick summary:
 
-+-------------+-----------+--------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
-| Environment | App       | URL                                                          | Deploys                                 | Purpose                                                                       |
-+=============+===========+==============================================================+=========================================+===============================================================================+
-| Production  | Admin API | https://aus4-admin.mozilla.org/                              | When a sync is performed in ArgoCD      | Manage and serve production updates                                           |
-+             +-----------+--------------------------------------------------------------+ after a staging deployment.             +                                                                               +
-|             | Admin UI  | https://balrog.mozilla.org/                                  |                                         |                                                                               |
-+             +-----------+--------------------------------------------------------------+                                         +                                                                               +
-|             | Public    | https://aus5.mozilla.org/, https://aus-api.mozilla.org       |                                         |                                                                               |
-+-------------+-----------+--------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
-| Stage       | Admin API | https://admin.stage.balrog.nonprod.webservices.mozgcp.net    | When the "Pull and Push Docker Image"   | A place to submit staging Releases and verify new Balrog code with automation |
-+             +-----------+--------------------------------------------------------------+ Github Action is run, and a sync is     +                                                                               +
-|             | Admin UI  | https://balrog.allizom.org                                   | performed in ArgoCD                     |                                                                               |
-+             +-----------+--------------------------------------------------------------+                                         +                                                                               +
-|             | Public    | https://stage.balrog.nonprod.webservices.mozgcp.net          |                                         |                                                                               |
-+-------------+-----------+--------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
++-------------+-----------+---------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
+| Environment | App       | URL                                                           | Deploys                                 | Purpose                                                                       |
++=============+===========+===============================================================+=========================================+===============================================================================+
+| Production  | Admin API | https://aus4-admin.mozilla.org/                               | When a sync is performed in ArgoCD      | Manage and serve production updates                                           |
++             +-----------+---------------------------------------------------------------+ after a staging deployment.             +                                                                               +
+|             | Admin UI  | https://balrog.mozilla.org/                                   |                                         |                                                                               |
++             +-----------+---------------------------------------------------------------+                                         +                                                                               +
+|             | Public    | https://aus5.mozilla.org/, https://aus-api.mozilla.org        |                                         |                                                                               |
++-------------+-----------+---------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
+| Stage       | Admin API | https://admin.stage.balrog.nonprod.webservices.mozgcp.net     | When the "Pull and Push Docker Image"   | A place to submit staging Releases and verify new Balrog code with automation |
++             +-----------+---------------------------------------------------------------+ Github Action is run, and a sync is     +                                                                               +
+|             | Admin UI  | https://balrog.allizom.org                                    | performed in ArgoCD                     |                                                                               |
++             +-----------+---------------------------------------------------------------+                                         +                                                                               +
+|             | Public    | https://aus5.allizom.org (CDN)                                |                                         |                                                                               |
+|             |           | https://stage.balrog.nonprod.webservices.mozgcp.net (backend) |                                         |                                                                               |
++-------------+-----------+---------------------------------------------------------------+-----------------------------------------+-------------------------------------------------------------------------------+
 
 --------------------
 Support & Escalation
