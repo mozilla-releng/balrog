@@ -2205,9 +2205,15 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
         ret = self.client.get("/update/3/c/15.0/1/p/l/a/a/default/a/update.xml")
         self.assertEqual(ret.headers.get("Cache-Control"), "public, max-age=90")
 
-    def testCacheControlIsNotSetFor404(self):
+    def testCacheControlIsSetFor404(self):
         ret = self.client.get("/whizzybang")
-        self.assertEqual(ret.headers.get("Cache-Control"), None)
+        self.assertEqual(ret.status_code, 404)
+        self.assertEqual(ret.headers.get("Cache-Control"), "public, max-age=90")
+
+    def testCacheControlIsSetForAPI(self):
+        ret = self.client.get("/api/v1/releases")
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.headers.get("Cache-Control"), "public, max-age=90")
 
     def testContentSecurityPolicyIsSet(self):
         ret = self.client.get("/update/3/c/15.0/1/p/l/a/a/default/a/update.xml")
