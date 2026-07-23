@@ -29,7 +29,7 @@
     "@mui/icons-material": "^7.3.1",
     "@mui/material": "^7.3.1",
     "@mui/system": "^7.3.1",
-    "@mui/x-date-pickers": "^8.10.0",
+    "@mui/x-date-pickers": "^9.0.0",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.12",
     "@uiw/codemirror-theme-material": "^4.25.1",
