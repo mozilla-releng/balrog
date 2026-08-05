@@ -2323,6 +2323,11 @@ class ClientTestWithErrorHandlers(ClientTestCommon):
             mocked_incr = mocked_pipeline().incr
             assert mocked_incr.mock_calls.count(mock.call("response.update.500")) == 1
 
+    def testAvastCompatHackOnlyAcceptsAvastKey(self):
+        for key in ("locale", "buildTarget"):
+            ret = self.client.get(f"/update/4/b/1.0/1/p/l/a/a/a/a/1/update.xml?force=1avast?{key}=1")
+            self.assertEqual(ret.status_code, 200, ret.get_data())
+
     def testNonSubstitutedUrlVariablesReturnEmptyUpdate(self):
         request1 = "/update/1/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/update.xml"
         request2 = "/update/2/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/update.xml"

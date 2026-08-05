@@ -93,8 +93,9 @@ def getCleanQueryFromURL(url):
             query["force"] = force_split[0]
 
             avast_parameter = force_split[1]
-            avast_split = avast_parameter.split("=")
-            query[avast_split[0]] = int(avast_split[1])
+            avast_key, avast_value = avast_parameter.split("=", 1)
+            if avast_key == "avast":
+                query[avast_key] = int(avast_value)
         except (IndexError, ValueError):
             pass
 
