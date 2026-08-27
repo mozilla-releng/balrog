@@ -103,6 +103,20 @@ def releases_db(
     insert_release(dict(name="Firefox-empty", schema_version=9, hashFunction="sha512"), "Firefox")
     # Insert a Release into the old table to make sure it doesn't show up in the new API
     dbo.releases.t.insert().execute(name="b", product="b", data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)), data_version=1)
+    # A Release that a live Rule maps to, but that has never been migrated out of the old
+    # table. Writing it through the new API creates its releases_json row for the first
+    # time, which is what the public app will start serving.
+    dbo.releases.t.insert().execute(
+        name="Firefox-legacy-build1",
+        product="Firefox",
+        data=createBlob(dict(name="Firefox-legacy-build1", schema_version=1, hashFunction="sha512")),
+        data_version=1,
+    )
+    dbo.rules.t.insert().execute(
+        rule_id=5, priority=100, product="Firefox", channel="release", mapping="Firefox-legacy-build1", update_type="minor", data_version=1
+    )
+    # Holds release:create for Firefox and no signoff role at all
+    dbo.permissions.t.insert().execute(permission="release", username="mallory", options={"products": ["Firefox"]}, data_version=1)
 
 
 @pytest.mark.usefixtures("releases_db")
@@ -621,6 +635,47 @@ def test_put_of_new_asset_fails_when_signoff_required(api, firefox_56_0_build1):
 
     ret = api.put("/v2/releases/Firefox-56.0-build1", json={"blob": firefox_56_0_build1, "product": "Firefox", "old_data_versions": old_data_versions})
     assert ret.status_code == 400
+
+
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_put_of_legacy_only_release_fails_when_signoff_required(api, firefox_56_0_build1):
+    # A Release that a live Rule maps to requires signoff for its first write through
+    # the new API, even though it has no releases_json row to join against yet.
+    blob = deepcopy(firefox_56_0_build1)
+    blob["name"] = "Firefox-legacy-build1"
+
+    ret = api.put("/v2/releases/Firefox-legacy-build1", json={"blob": blob, "product": "Firefox"})
+    assert ret.status_code == 400, ret.data
+
+
+@pytest.mark.usefixtures("releases_db")
+def test_put_of_legacy_only_release_fails_with_create_permission_only(api, firefox_56_0_build1, mock_verified_userinfo):
+    # Creating the first releases_json row for a mapped-to Release must not be a way to
+    # change what the public app serves with only release:create and no signoffs.
+    mock_verified_userinfo("mallory")
+    blob = deepcopy(firefox_56_0_build1)
+    blob["name"] = "Firefox-legacy-build1"
+
+    ret = api.put("/v2/releases/Firefox-legacy-build1", json={"blob": blob, "product": "Firefox"})
+    assert ret.status_code == 400, ret.data
+    assert not dbo.releases_json.select(where={"name": "Firefox-legacy-build1"})
+
+
+@pytest.mark.usefixtures("releases_db")
+def test_put_of_unwritten_mapped_release_fails_when_signoff_required(api, firefox_56_0_build1, mock_verified_userinfo):
+    # Rule 7 maps to a name that exists in neither release table. Writing it for the
+    # first time is what the public app will serve, so it must require the Rule's
+    # signoffs even though there is no row anywhere to join against.
+    mock_verified_userinfo("mallory")
+    dbo.rules.t.insert().execute(
+        rule_id=7, priority=100, product="Firefox", channel="release", mapping="Firefox-unwritten-build1", update_type="minor", data_version=1
+    )
+    blob = deepcopy(firefox_56_0_build1)
+    blob["name"] = "Firefox-unwritten-build1"
+
+    ret = api.put("/v2/releases/Firefox-unwritten-build1", json={"blob": blob, "product": "Firefox"})
+    assert ret.status_code == 400, ret.data
+    assert not dbo.releases_json.select(where={"name": "Firefox-unwritten-build1"})
 
 
 @pytest.mark.usefixtures("releases_db")

@@ -3882,6 +3882,67 @@ class TestReleasesJSON(unittest.IsolatedAsyncioTestCase, MemoryDatabaseMixin):
     def tearDown(self):
         dbo.reset()
 
+    def testGetPotentialRequiredSignoffsForReleaseWithoutRow(self):
+        # Firefox-legacy-build1 is mapped to by a Rule that requires signoff but has
+        # no row in either release table. Writing it for the first time is what the
+        # public app will start serving, so it must require the same signoffs as an
+        # update to an already-written Release.
+        self.rules.t.insert().execute(
+            rule_id=2,
+            product="Firefox",
+            channel="release",
+            mapping="Firefox-legacy-build1",
+            backgroundRate=100,
+            priority=100,
+            update_type="minor",
+            data_version=1,
+        )
+
+        rs = self.releases.getPotentialRequiredSignoffs([{"name": "Firefox-legacy-build1"}])
+        self.assertEqual([r["role"] for r in rs["Firefox-legacy-build1"]], ["releng"])
+
+    def testGetPotentialRequiredSignoffsForUnmappedRelease(self):
+        rs = self.releases.getPotentialRequiredSignoffs([{"name": "Firefox-not-mapped-build1"}])
+        self.assertEqual([obj for v in rs.values() for obj in v], [])
+
+    def testGetPotentialRequiredSignoffsForAssetOfReleaseWithoutRow(self):
+        self.rules.t.insert().execute(
+            rule_id=2,
+            product="Firefox",
+            channel="release",
+            mapping="Firefox-legacy-build1",
+            backgroundRate=100,
+            priority=100,
+            update_type="minor",
+            data_version=1,
+        )
+
+        rs = self.release_assets.getPotentialRequiredSignoffs([{"name": "Firefox-legacy-build1", "path": ".platforms.Linux_x86_64-gcc3.locales.en-US"}])
+        self.assertEqual([r["role"] for r in rs[("Firefox-legacy-build1", ".platforms.Linux_x86_64-gcc3.locales.en-US")]], ["releng"])
+
+    def testGetPotentialRequiredSignoffsMatchesLegacyTable(self):
+        # Both Release tables must agree on what a given name requires, because the
+        # public app will serve whichever one of them the name ends up in. The Rule
+        # here is on Firefox/release, the one channel with Required Signoffs, so a
+        # regression in either table's lookup shows up as a difference.
+        self.rules.t.insert().execute(
+            rule_id=3,
+            product="Firefox",
+            channel="release",
+            mapping="Firefox-60.0-build1",
+            backgroundRate=100,
+            priority=100,
+            update_type="minor",
+            data_version=1,
+        )
+        for name in ("Firefox-60.0-build1", "Firefox-not-mapped-build1"):
+            new = self.releases.getPotentialRequiredSignoffs([{"name": name}])
+            old = dbo.releases.getPotentialRequiredSignoffs([{"name": name}])
+            self.assertEqual([obj for v in new.values() for obj in v], [obj for v in old.values() for obj in v])
+        # and the mapped one must actually require something, or this proves nothing
+        rs = self.releases.getPotentialRequiredSignoffs([{"name": "Firefox-60.0-build1"}])
+        self.assertEqual([r["role"] for r in rs["Firefox-60.0-build1"]], ["releng"])
+
     @pytest.mark.asyncio
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     async def testInsertCreatesCorrectHistory(self):
