@@ -1816,6 +1816,39 @@ class Rules(AUSTable):
             )
         return potential_required_signoffs
 
+    def getPotentialRequiredSignoffsForReleaseNames(self, names, transaction=None):
+        """Find the Required Signoffs of every Rule that maps to any of the given Release names.
+
+        Releases don't affect live updates on their own, only the product/channel
+        combinations of the Rules pointing at them do. This is keyed purely on the
+        Release name, and deliberately does not join against any Release table. A
+        name may be served out of either the legacy `releases` table or
+        `releases_json` (the public app prefers the latter, and falls back to the
+        former), so anchoring this on the existence of a row in one of them would
+        let a write to the other one bypass signoff entirely.
+        """
+        required_signoffs = defaultdict(list)
+        names = tuple(set(names))
+        if not names:
+            return required_signoffs
+
+        stmt = select([self.mapping, self.fallbackMapping, self.rule_id, self.product, self.channel]).where(
+            self.mapping.in_(names) | self.fallbackMapping.in_(names)
+        )
+        if transaction:
+            rule_info = transaction.execute(stmt).fetchall()
+        else:
+            rule_info = self.getEngine().execute(stmt).fetchall()
+
+        rule_required_signoffs = self.getPotentialRequiredSignoffs([dict(r) for r in rule_info], transaction=transaction)
+
+        for rule in rule_info:
+            rs = rule_required_signoffs[(rule["product"], rule["channel"])]
+            for name in {rule["mapping"], rule["fallbackMapping"]} & set(names):
+                required_signoffs[name].extend(rs)
+
+        return required_signoffs
+
     def _isAlias(self, id_or_alias):
         if re.match("^[a-zA-Z][a-zA-Z0-9-]*$", str(id_or_alias)):
             return True
@@ -2021,33 +2054,13 @@ class Releases(AUSTable):
         )
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        potential_required_signoffs = {}
-        rows = []
-        for row in affected_rows:
-            if not row:
-                continue
-            rows.append(row)
-        info = self.getReleaseInfo(names=[row["name"] for row in rows], transaction=transaction)
         # Releases do not affect live updates on their own, only the
         # product+channel combinations specified in Rules that point
         # to them. We need to find these Rules, and then return _their_
-        # Required Signoffs.
-        if info:
-            relevant_rules = [rule_info for row in info for rule_info in row["rule_info"].values()]
-
-            # get all rs as one query
-            all_rs = self.db.rules.getPotentialRequiredSignoffs(relevant_rules, transaction=transaction)
-
-            for row in info:
-                rs = []
-                potential_required_signoffs[row["name"]] = []
-                for rule in row["rule_info"].values():
-                    _rs = all_rs[(rule["product"], rule["channel"])]
-                    rs.extend(_rs)
-                potential_required_signoffs[row["name"]] = rs
-        else:
-            potential_required_signoffs["rs"] = []
-        return potential_required_signoffs
+        # Required Signoffs. This is looked up by name rather than by joining
+        # against this table, so that a Release requires the same signoffs
+        # whether it lives here or in releases_json.
+        return self.db.rules.getPotentialRequiredSignoffsForReleaseNames([row["name"] for row in affected_rows], transaction=transaction)
 
     def getPotentialRequiredSignoffsForProduct(self, product, transaction=None):
         potential_required_signoffs = {"rs": []}
@@ -2447,26 +2460,12 @@ class ReleasesJSON(AUSTable):
         )
 
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
-        potential_required_signoffs = defaultdict(list)
-
-        for release in affected_rows:
-            stmt = select([self.db.rules.rule_id, self.db.rules.product, self.db.rules.channel]).where(
-                ((self.db.releases_json.name == self.db.rules.mapping) | (self.db.releases_json.name == self.db.rules.fallbackMapping))
-                & (self.db.releases_json.name == release["name"])
-            )
-
-            if transaction:
-                rule_info = transaction.execute(stmt).fetchall()
-            else:
-                rule_info = self.getEngine().execute(stmt).fetchall()
-
-            rule_required_signoffs = self.db.rules.getPotentialRequiredSignoffs([dict(r) for r in rule_info], transaction)
-
-            for rule in rule_info:
-                rs = rule_required_signoffs[(rule["product"], rule["channel"])]
-                potential_required_signoffs[release["name"]].extend(rs)
-
-        return potential_required_signoffs
+        # Looked up by name rather than by joining against this table: a Release
+        # that a Rule maps to may not have been migrated out of the legacy
+        # releases table yet, and creating its first releases_json row makes it
+        # what the public app serves. It must require the same signoffs as any
+        # subsequent modification would.
+        return self.db.rules.getPotentialRequiredSignoffsForReleaseNames([release["name"] for release in affected_rows], transaction=transaction)
 
     def getPotentialRequiredSignoffsForProduct(self, product, transaction=None):
         potential_required_signoffs = {"rs": []}
@@ -2541,23 +2540,13 @@ class ReleaseAssets(AUSTable):
     def getPotentialRequiredSignoffs(self, affected_rows, transaction=None):
         potential_required_signoffs = defaultdict(list)
 
+        # Looked up by name rather than by joining against this table, for the same
+        # reason as ReleasesJSON: the first asset written for a Release must require
+        # the same signoffs as every one after it.
+        by_name = self.db.rules.getPotentialRequiredSignoffsForReleaseNames([release["name"] for release in affected_rows], transaction=transaction)
+
         for release in affected_rows:
-            stmt = select([self.db.rules.rule_id, self.db.rules.product, self.db.rules.channel]).where(
-                ((self.db.release_assets.name == self.db.rules.mapping) | (self.db.release_assets.name == self.db.rules.fallbackMapping))
-                & (self.db.release_assets.name == release["name"])
-                & (self.db.release_assets.path == release["path"])
-            )
-
-            if transaction:
-                rule_info = transaction.execute(stmt).fetchall()
-            else:
-                rule_info = self.getEngine().execute(stmt).fetchall()
-
-            rule_required_signoffs = self.db.rules.getPotentialRequiredSignoffs([dict(r) for r in rule_info], transaction)
-
-            for rule in rule_info:
-                rs = rule_required_signoffs[(rule["product"], rule["channel"])]
-                potential_required_signoffs[(release["name"], release["path"])].extend(rs)
+            potential_required_signoffs[(release["name"], release["path"])].extend(by_name[release["name"]])
 
         return potential_required_signoffs
 
