@@ -2,6 +2,7 @@ import enum
 import json
 import logging
 from os import path
+from xml.sax.saxutils import escape as _xml_escape
 
 import jsonschema
 import yaml
@@ -10,6 +11,21 @@ import yaml
 import auslib.util.jsonschema_validators  # noqa
 from auslib.errors import BlobValidationError
 from auslib.global_state import cache
+
+
+def escapeAttributeValue(value):
+    """Escape a value for safe inclusion in a double-quoted XML attribute.
+
+    Escapes ``&``, ``<``, ``>`` and ``"`` so that free-form or client-derived
+    values (eg. URLs with query strings, or %LOCALE%/%VERSION% substitutions
+    taken from the update request) cannot break out of the attribute they are
+    interpolated into.
+
+    Note: auslib.web.public.client escapes bare ``&`` in the assembled response
+    as a safety net for values that are not run through this function. That pass
+    is entity-aware, so it will not double-escape the ``&amp;`` produced here.
+    """
+    return _xml_escape(str(value), {'"': "&quot;"})
 
 
 def createBlob(data):

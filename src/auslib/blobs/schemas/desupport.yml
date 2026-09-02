@@ -29,4 +29,5 @@
       format: uri
     displayVersion:
       type: string
+      pattern: ^[^"<>&]*$
       description: The displayVersion to return with the update. Generally, the client will show this in the UI. For desupport responses, this is generally set to the last supported version.

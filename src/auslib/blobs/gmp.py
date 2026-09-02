@@ -1,5 +1,5 @@
 from auslib.AUS import isForbiddenUrl
-from auslib.blobs.base import ServeUpdate, XMLBlob
+from auslib.blobs.base import ServeUpdate, XMLBlob, escapeAttributeValue
 from auslib.errors import BadDataError
 from auslib.util.hashes import getHashLen
 
@@ -80,7 +80,7 @@ class GMPBlobV1(XMLBlob):
                 '        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"%s>'
                 % (
                     vendor,
-                    url,
+                    escapeAttributeValue(url),
                     self["hashFunction"],
                     platformData["hashValue"],
                     platformData["filesize"],
@@ -90,7 +90,7 @@ class GMPBlobV1(XMLBlob):
             )
             if mirrorUrls:
                 for mirrorUrl in mirrorUrls:
-                    vendorXML.append('            <mirror URL="%s"/>' % (mirrorUrl))
+                    vendorXML.append('            <mirror URL="%s"/>' % (escapeAttributeValue(mirrorUrl)))
                 vendorXML.append("        </addon>")
 
         return vendorXML

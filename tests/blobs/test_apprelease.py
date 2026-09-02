@@ -559,7 +559,7 @@ class TestSpecialQueryParams(unittest.TestCase):
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/?foo=a&force=1" hashFunction="sha512" hashValue="1" size="1"/>
+<patch type="complete" URL="http://a.com/?foo=a&amp;force=1" hashFunction="sha512" hashValue="1" size="1"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -588,7 +588,7 @@ class TestSpecialQueryParams(unittest.TestCase):
 <update type="minor" version="1.0" extensionVersion="1.0" buildID="1" detailsURL="http://example.org/details" licenseURL="http://example.org/license">
 """
         expected = ["""
-<patch type="complete" URL="http://a.com/?foo=a&force=-1" hashFunction="sha512" hashValue="1" size="1"/>
+<patch type="complete" URL="http://a.com/?foo=a&amp;force=-1" hashFunction="sha512" hashValue="1" size="1"/>
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -3773,7 +3773,7 @@ class TestDesupportBlob(unittest.TestCase):
         returned = [x.strip() for x in returned]
         expected_header = ""
         expected = ["""
-<update type="minor" unsupported="true" detailsURL="http://moo.com/<locale>/cow/<version>/Darwin" displayVersion="50.0">
+<update type="minor" unsupported="true" detailsURL="http://moo.com/&lt;locale&gt;/cow/&lt;version&gt;/Darwin" displayVersion="50.0">
 """]
         expected = [x.strip() for x in expected]
         expected_footer = "</update>"
@@ -3885,3 +3885,85 @@ def test_blobs_can_be_deepcopied():
     time, we had an issue that prevented blobs from being deepcopy'ed. This
     simple test ensures we don't regress that in the future."""
     deepcopy(ReleaseBlobV1())
+
+
+class TestXMLAttributeInjectionHardening(unittest.TestCase):
+    """Regression tests for XML attribute injection via blob values.
+
+    URL/free-form fields are escaped on output (they legitimately contain "&"
+    and, for %LOCALE%-style fields, client-supplied values); constrained fields
+    (versions, hashes) are restricted at the schema level on input.
+    """
+
+    def setUp(self):
+        self.allowlistedDomains = {"a.com": ("h",)}
+
+    def _v9(self, details_url="http://a.com/d", app_version="31.0", hash_value="9", hash_function="sha512"):
+        import json
+
+        return createBlob(
+            json.dumps(
+                {
+                    "name": "n",
+                    "schema_version": 9,
+                    "hashFunction": hash_function,
+                    "appVersion": app_version,
+                    "displayVersion": app_version,
+                    "updateLine": [{"for": {}, "fields": {"detailsURL": details_url, "type": "minor"}}],
+                    "fileUrls": {"*": {"completes": {"*": "http://a.com/c.mar"}}},
+                    "platforms": {"p": {"buildID": 50, "locales": {"l": {"completes": [{"filesize": 1, "from": "*", "hashValue": hash_value}]}}}},
+                }
+            )
+        )
+
+    def _query(self, locale="l"):
+        return {"product": "h", "buildTarget": "p", "locale": locale, "channel": "a", "version": "1.0", "buildID": "1"}
+
+    # ---- output escaping (URL / free-form fields) ----
+
+    def testDetailsURLValueIsEscaped(self):
+        blob = self._v9(details_url='http://a.com/"><injected x="')
+        header = blob.getInnerHeaderXML(self._query(), "minor", self.allowlistedDomains, None)
+        self.assertNotIn("<injected", header)
+        self.assertIn("&lt;injected", header)
+        self.assertIn("&quot;", header)
+
+    def testDesupportReflectedLocaleIsEscaped(self):
+        # DesupportBlob substitutes %LOCALE%/%VERSION%/%OS% straight from the
+        # (client-supplied) update request into detailsURL, so the escaping must
+        # apply after substitution.
+        blob = DesupportBlob(name="d", schema_version=50, detailsUrl="http://a.com/%LOCALE%", displayVersion="50.0")
+        query = {"locale": '"><script>', "version": "1.0", "buildTarget": "p_x"}
+        xml = "".join(blob.getInnerXML(query, "minor", self.allowlistedDomains, None))
+        self.assertNotIn("<script>", xml)
+        self.assertIn("&lt;script&gt;", xml)
+        self.assertIn("&quot;", xml)
+
+    def testAmpersandInUrlEscapedExactlyOnce(self):
+        # The blob layer escapes "&" to "&amp;" once (the response layer's
+        # safety net, exercised by tests/web/test_client.py, is entity-aware and
+        # will not double-escape it).
+        blob = self._v9(details_url="http://a.com/?a=1&b=2")
+        header = blob.getInnerHeaderXML(self._query(), "minor", self.allowlistedDomains, None)
+        self.assertIn("?a=1&amp;b=2", header)
+        self.assertNotIn("&amp;amp;", header)
+
+    # ---- schema restriction (constrained fields) ----
+
+    def testSchemaRejectsInjectionInAppVersion(self):
+        for bad in ['31.0" x', "31<0", "31>0"]:
+            blob = self._v9(app_version=bad)
+            self.assertRaises(Exception, blob.validate, "h", self.allowlistedDomains)
+
+    def testSchemaRejectsInjectionInHashValue(self):
+        for bad in ['9" x', "9<9", "9>9", "9&9"]:
+            blob = self._v9(hash_value=bad)
+            self.assertRaises(Exception, blob.validate, "h", self.allowlistedDomains)
+
+    def testSchemaRejectsUnknownHashFunction(self):
+        for bad in ["md5", 'sha512" x', "sha1"]:
+            blob = self._v9(hash_function=bad)
+            self.assertRaises(Exception, blob.validate, "h", self.allowlistedDomains)
+
+    def testValidBlobStillValidates(self):
+        self._v9().validate("h", self.allowlistedDomains)
