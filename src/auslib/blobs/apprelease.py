@@ -1,7 +1,7 @@
 import itertools
 
 from auslib.AUS import getFallbackChannel, isForbiddenUrl, isSpecialURL
-from auslib.blobs.base import ServeUpdate, XMLBlob, createBlob, escapeAttributeValue
+from auslib.blobs.base import ServeUpdate, XMLBlob, createBlob, renderXMLAttributes
 from auslib.errors import BadDataError, BlobValidationError
 from auslib.global_state import dbo
 from auslib.services import releases
@@ -145,17 +145,16 @@ class ReleaseBlobBase(XMLBlob):
         if isForbiddenUrl(url, updateQuery["product"], allowlistedDomains):
             return None
 
-        patchXML = '        <patch type="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s"' % (
-            patchType,
-            escapeAttributeValue(url),
-            self["hashFunction"],
-            patch["hashValue"],
-            patch["filesize"],
-        )
+        attribute_pairs = [
+            ("type", patchType),
+            ("URL", url),
+            ("hashFunction", self["hashFunction"]),
+            ("hashValue", patch["hashValue"]),
+            ("size", patch["filesize"]),
+        ]
         additionalPatchAttributes = self._getAdditionalPatchAttributes(patch)
-        for attribute in additionalPatchAttributes:
-            patchXML += ' %s="%s"' % (attribute, escapeAttributeValue(additionalPatchAttributes[attribute]))
-        patchXML += "/>"
+        attribute_pairs.extend(additionalPatchAttributes.items())
+        patchXML = "        <patch" + renderXMLAttributes(attribute_pairs) + "/>"
 
         return patchXML
 
@@ -438,16 +437,19 @@ class ReleaseBlobV1(ReleaseBlobBase, SingleUpdateXMLMixin, SeparatedFileUrlsMixi
         extv = self.getExtv(buildTarget, locale)
         buildid = self.getBuildID(buildTarget, locale)
 
-        updateLine = '    <update type="%s" version="%s" extensionVersion="%s" buildID="%s"' % (update_type, appv, extv, buildid)
+        pairs = [
+            ("type", update_type),
+            ("version", appv),
+            ("extensionVersion", extv),
+            ("buildID", buildid),
+        ]
         if "detailsUrl" in self:
-            details = self["detailsUrl"].replace("%LOCALE%", locale)
-            details = details.replace("%locale%", locale)
-            updateLine += ' detailsURL="%s"' % escapeAttributeValue(details)
+            details = self["detailsUrl"].replace("%LOCALE%", locale).replace("%locale%", locale)
+            pairs.append(("detailsURL", details))
         if "licenseUrl" in self:
-            license = self["licenseUrl"].replace("%LOCALE%", locale)
-            license = license.replace("%locale%", locale)
-            updateLine += ' licenseURL="%s"' % escapeAttributeValue(license)
-        updateLine += ">"
+            license = self["licenseUrl"].replace("%LOCALE%", locale).replace("%locale%", locale)
+            pairs.append(("licenseURL", license))
+        updateLine = "    <update" + renderXMLAttributes(pairs) + ">"
 
         return updateLine
 
@@ -505,37 +507,31 @@ class NewStyleVersionsMixin(object):
 
         localeData = self.getLocaleData(buildTarget, locale)
 
-        updateLine = '    <update type="%s" displayVersion="%s" appVersion="%s" platformVersion="%s" buildID="%s"' % (
-            update_type,
-            displayVersion,
-            appVersion,
-            platformVersion,
-            buildid,
-        )
+        pairs = [
+            ("type", update_type),
+            ("displayVersion", displayVersion),
+            ("appVersion", appVersion),
+            ("platformVersion", platformVersion),
+            ("buildID", buildid),
+        ]
         if "detailsUrl" in self:
-            details = self["detailsUrl"].replace("%LOCALE%", locale)
-            details = details.replace("%locale%", locale)
-            updateLine += ' detailsURL="%s"' % escapeAttributeValue(details)
+            details = self["detailsUrl"].replace("%LOCALE%", locale).replace("%locale%", locale)
+            pairs.append(("detailsURL", details))
         if "licenseUrl" in self:
-            license = self["licenseUrl"].replace("%LOCALE%", locale)
-            license = license.replace("%locale%", locale)
-            updateLine += ' licenseURL="%s"' % escapeAttributeValue(license)
+            license = self["licenseUrl"].replace("%LOCALE%", locale).replace("%locale%", locale)
+            pairs.append(("licenseURL", license))
         if localeData.get("isOSUpdate"):
-            updateLine += ' isOSUpdate="true"'
+            pairs.append(("isOSUpdate", "true"))
         for attr in self.optional_:
             if attr in self:
                 if self.interpolable_ and attr in self.interpolable_:
-                    updateLineToAdd = self[attr].replace("%LOCALE%", locale)
-                    updateLineToAdd = updateLineToAdd.replace("%locale%", locale)
-                    updateLine += ' %s="%s"' % (attr, escapeAttributeValue(updateLineToAdd))
+                    # Booleans are rendered lower-cased by renderXMLAttributes;
+                    # strings are sent as stored.
+                    value = self[attr].replace("%LOCALE%", locale).replace("%locale%", locale)
                 else:
-                    # Responses require lower cased version of True/False for
-                    # boolean properties. Strings are sent as stored.
                     value = self[attr]
-                    if isinstance(value, bool):
-                        value = str(value).lower()
-                    updateLine += ' %s="%s"' % (attr, escapeAttributeValue(value))
-        updateLine += ">"
+                pairs.append((attr, value))
+        updateLine = "    <update" + renderXMLAttributes(pairs) + ">"
 
         return updateLine
 
@@ -1028,13 +1024,7 @@ class ReleaseBlobV9(ProofXMLMixin, ReleaseBlobBase, MultipleUpdatesXMLMixin, Uni
                 attrs[attr] = attrs[attr].replace("%LOCALE%", updateQuery["locale"])
                 attrs[attr] = attrs[attr].replace("%locale%", updateQuery["locale"])
 
-        updateLine = "    <update"
-        for key in sorted(attrs.keys()):
-            value = attrs[key]
-            if isinstance(value, bool):
-                value = str(value).lower()
-            updateLine += ' {}="{}"'.format(key, escapeAttributeValue(value))
-        updateLine += ">"
+        updateLine = "    <update" + renderXMLAttributes([(key, attrs[key]) for key in sorted(attrs.keys())]) + ">"
 
         return updateLine
 
@@ -1230,10 +1220,15 @@ class DesupportBlob(XMLBlob):
             .replace("%os%", updateQuery["buildTarget"].split("_")[0])
         )
         xml = []
-        xml.append(
-            '    <update type="%s" unsupported="true" detailsURL="%s" displayVersion="%s">'
-            % (update_type, escapeAttributeValue(tmp_url), self["displayVersion"])
+        attributes = renderXMLAttributes(
+            [
+                ("type", update_type),
+                ("unsupported", "true"),
+                ("detailsURL", tmp_url),
+                ("displayVersion", self["displayVersion"]),
+            ]
         )
+        xml.append("    <update" + attributes + ">")
         return xml
 
     def getInnerFooterXML(self, updateQuery, update_type, allowlistedDomains, specialForceHosts):

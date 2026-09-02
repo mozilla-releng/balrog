@@ -1,5 +1,5 @@
 from auslib.AUS import isForbiddenUrl
-from auslib.blobs.base import ServeUpdate, XMLBlob, escapeAttributeValue
+from auslib.blobs.base import ServeUpdate, XMLBlob, renderXMLAttributes
 from auslib.errors import BadDataError
 
 
@@ -67,10 +67,17 @@ class SystemAddonsBlob(XMLBlob):
             url = platformData["fileUrl"]
             if isForbiddenUrl(url, updateQuery["product"], allowlistedDomains):
                 continue
-            addonXML.append(
-                '        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"/>'
-                % (addon, escapeAttributeValue(url), self["hashFunction"], platformData["hashValue"], platformData["filesize"], addonInfo["version"])
+            attributes = renderXMLAttributes(
+                [
+                    ("id", addon),
+                    ("URL", url),
+                    ("hashFunction", self["hashFunction"]),
+                    ("hashValue", platformData["hashValue"]),
+                    ("size", platformData["filesize"]),
+                    ("version", addonInfo["version"]),
+                ]
             )
+            addonXML.append("        <addon" + attributes + "/>")
 
         return addonXML
 

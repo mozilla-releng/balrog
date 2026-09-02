@@ -28,6 +28,31 @@ def escapeAttributeValue(value):
     return _xml_escape(str(value), {'"': "&quot;"})
 
 
+def renderXMLAttributes(pairs):
+    """Render ``(name, value)`` pairs as XML attributes with every value escaped.
+
+    This is the single place XML attributes are serialised, so a value can never
+    reach a response without going through escapeAttributeValue -- callers build
+    a list of pairs instead of interpolating ``name="%s"`` themselves.
+
+    - Booleans are rendered lower-cased ("true"/"false") as clients expect.
+    - Every pair is rendered; there is no skipping. Callers omit optional
+      attributes by not including them in the list (a None value is rendered as
+      the string "None", preserving long-standing response behaviour).
+    - The returned string begins with a leading space when non-empty, so it can
+      be concatenated directly after a tag name (eg. ``"<update" + ... + ">"``).
+
+    Attribute *names* are not escaped: they are always trusted identifiers in
+    this codebase (hard-coded, or schema-constrained keys), never client input.
+    """
+    out = []
+    for name, value in pairs:
+        if isinstance(value, bool):
+            value = str(value).lower()
+        out.append(' %s="%s"' % (name, escapeAttributeValue(value)))
+    return "".join(out)
+
+
 def createBlob(data):
     """Takes a string form of a blob (eg from DB or API) and converts into an
     actual blob, taking care to notice the schema"""
