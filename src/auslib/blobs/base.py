@@ -2,6 +2,7 @@ import enum
 import json
 import logging
 from os import path
+from xml.sax.saxutils import escape as _xml_escape
 
 import jsonschema
 import yaml
@@ -10,6 +11,46 @@ import yaml
 import auslib.util.jsonschema_validators  # noqa
 from auslib.errors import BlobValidationError
 from auslib.global_state import cache
+
+
+def escapeAttributeValue(value):
+    """Escape a value for safe inclusion in a double-quoted XML attribute.
+
+    Escapes ``&``, ``<``, ``>`` and ``"`` so that free-form or client-derived
+    values (eg. URLs with query strings, or %LOCALE%/%VERSION% substitutions
+    taken from the update request) cannot break out of the attribute they are
+    interpolated into.
+
+    Note: auslib.web.public.client escapes bare ``&`` in the assembled response
+    as a safety net for values that are not run through this function. That pass
+    is entity-aware, so it will not double-escape the ``&amp;`` produced here.
+    """
+    return _xml_escape(str(value), {'"': "&quot;"})
+
+
+def renderXMLAttributes(pairs):
+    """Render ``(name, value)`` pairs as XML attributes with every value escaped.
+
+    This is the single place XML attributes are serialised, so a value can never
+    reach a response without going through escapeAttributeValue -- callers build
+    a list of pairs instead of interpolating ``name="%s"`` themselves.
+
+    - Booleans are rendered lower-cased ("true"/"false") as clients expect.
+    - Every pair is rendered; there is no skipping. Callers omit optional
+      attributes by not including them in the list (a None value is rendered as
+      the string "None", preserving long-standing response behaviour).
+    - The returned string begins with a leading space when non-empty, so it can
+      be concatenated directly after a tag name (eg. ``"<update" + ... + ">"``).
+
+    Attribute *names* are not escaped: they are always trusted identifiers in
+    this codebase (hard-coded, or schema-constrained keys), never client input.
+    """
+    out = []
+    for name, value in pairs:
+        if isinstance(value, bool):
+            value = str(value).lower()
+        out.append(' %s="%s"' % (name, escapeAttributeValue(value)))
+    return "".join(out)
 
 
 def createBlob(data):

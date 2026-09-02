@@ -1,3 +1,4 @@
+import json
 import unittest
 
 from auslib.blobs.gmp import GMPBlobV1
@@ -99,6 +100,52 @@ class TestSchema1Blob(unittest.TestCase):
         self.assertRaisesRegex(
             ValueError, ("The hashValue length is different from the required length of 128 for sha512"), blob.validate, "gg", self.allowlistedDomains
         )
+
+    def _makeBlob(self, vendor="a", version="5", hashFunction="SHA512", hashValue="50" * 64):
+        blob = GMPBlobV1()
+        blob.loadJSON(
+            json.dumps(
+                {
+                    "name": "validName",
+                    "schema_version": 1000,
+                    "hashFunction": hashFunction,
+                    "vendors": {
+                        vendor: {
+                            "version": version,
+                            "platforms": {"default": {"filesize": 20, "hashValue": hashValue, "fileUrl": "http://boring.com/bar"}},
+                        }
+                    },
+                }
+            )
+        )
+        return blob
+
+    def testValidBlobPasses(self):
+        # A sanity check that the helper produces a blob that validates, so the
+        # rejection tests below are meaningful.
+        self._makeBlob().validate("gg", self.allowlistedDomains)
+
+    def testVendorNameRejectsXMLMetacharacters(self):
+        # The vendor name is interpolated verbatim into an XML attribute, so it
+        # must not be allowed to contain characters that break out of it.
+        for vendor in ['a" URL="http://evil.com/x', "a<b", "a>b", "a&b"]:
+            blob = self._makeBlob(vendor=vendor)
+            self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
+
+    def testVersionRejectsXMLMetacharacters(self):
+        for version in ['5" onerror="x', "5<b", "5>b", "5&b"]:
+            blob = self._makeBlob(version=version)
+            self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
+
+    def testHashFunctionRejectsUnknownAndMetacharacters(self):
+        for hashFunction in ["md5", "sha1", 'sha512" x', "sha512<"]:
+            blob = self._makeBlob(hashFunction=hashFunction)
+            self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
+
+    def testHashValueRejectsXMLMetacharacters(self):
+        for hashValue in ['50" x', "50<0", "50>0", "50&0"]:
+            blob = self._makeBlob(hashValue=hashValue)
+            self.assertRaises(Exception, blob.validate, "gg", self.allowlistedDomains)
 
     def testGetVendorsForPlatform(self):
         vendors = set([v for v in self.blob.getVendorsForPlatform("q")])

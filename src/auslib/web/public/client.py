@@ -241,8 +241,7 @@ def construct_response(release, query, update_type, response_blobs, squash_respo
         # In case of superblob Extracting Header form parent release
         xml.append(release.getInnerFooterXML(query, update_type, app.config["ALLOWLISTED_DOMAINS"], app.config["SPECIAL_FORCE_HOSTS"]))
         xml.append(release.getFooterXML())
-        # ensure valid xml by using the right entity for ampersand
-        xml = re.sub("&(?!amp;)", "&amp;", "\n".join(xml))
+        xml = "\n".join(xml)
     else:
         xml = ['<?xml version="1.0"?>']
         xml.append("<updates>")

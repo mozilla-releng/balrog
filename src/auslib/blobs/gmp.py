@@ -1,5 +1,5 @@
 from auslib.AUS import isForbiddenUrl
-from auslib.blobs.base import ServeUpdate, XMLBlob
+from auslib.blobs.base import ServeUpdate, XMLBlob, renderXMLAttributes
 from auslib.errors import BadDataError
 from auslib.util.hashes import getHashLen
 
@@ -76,21 +76,20 @@ class GMPBlobV1(XMLBlob):
                     if isForbiddenUrl(mirrorUrl, updateQuery["product"], allowlistedDomains):
                         continue
                     mirrorUrls.append(mirrorUrl)
-            vendorXML.append(
-                '        <addon id="%s" URL="%s" hashFunction="%s" hashValue="%s" size="%s" version="%s"%s>'
-                % (
-                    vendor,
-                    url,
-                    self["hashFunction"],
-                    platformData["hashValue"],
-                    platformData["filesize"],
-                    vendorInfo["version"],
-                    "" if mirrorUrls else "/",
-                )
+            attributes = renderXMLAttributes(
+                [
+                    ("id", vendor),
+                    ("URL", url),
+                    ("hashFunction", self["hashFunction"]),
+                    ("hashValue", platformData["hashValue"]),
+                    ("size", platformData["filesize"]),
+                    ("version", vendorInfo["version"]),
+                ]
             )
+            vendorXML.append("        <addon" + attributes + (">" if mirrorUrls else "/>"))
             if mirrorUrls:
                 for mirrorUrl in mirrorUrls:
-                    vendorXML.append('            <mirror URL="%s"/>' % (mirrorUrl))
+                    vendorXML.append("            <mirror" + renderXMLAttributes([("URL", mirrorUrl)]) + "/>")
                 vendorXML.append("        </addon>")
 
         return vendorXML
