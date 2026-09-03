@@ -44,6 +44,11 @@ class TestSchema1Blob(unittest.TestCase):
         self.assertEqual(products_gmp, ["c", "d"])
         self.assertIsNone(products_addon)
 
+    def testGetReferencedReleases(self):
+        # Only "blobs" entries are Release names; "products" are resolved through Rules.
+        self.assertEqual(self.superblob_addon.getReferencedReleases(), {"Hello-1.0", "Pocket-2.0"})
+        self.assertEqual(self.superblob_gmp.getReferencedReleases(), set())
+
     def testInnerHeaderXML(self):
         updateQuery = {
             "product": "gg",

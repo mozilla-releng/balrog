@@ -21,6 +21,18 @@ class SuperBlob(XMLBlob):
         """
         return self.get("blobs")
 
+    def getReferencedReleases(self):
+        """
+        :return: The names of the Releases this SuperBlob serves by name (its
+                 systemaddons "blobs" entries). "products" entries are product
+                 names resolved through Rules, not Release names, so they are
+                 intentionally excluded.
+        """
+        blobs = self.get("blobs")
+        if not isinstance(blobs, (list, tuple)):
+            return set()
+        return set(blobs)
+
     def shouldServeUpdate(self, updateQuery):
         # Since a superblob update will always be returned.
         return ServeUpdate.Yes
