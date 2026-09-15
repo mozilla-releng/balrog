@@ -913,6 +913,23 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         self.assertRaises(OutdatedDataError, self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertDeleteDataVersionChanged(self):
+        """Like updates, a scheduled deletion must be rejected if the base row's
+        data version changes between grabbing the row and submitting the change.
+        Otherwise the delete is stored against a stale data_version and fails
+        with OutdatedDataError every time it is enacted."""
+        self.table.update([self.table.fooid == 3], what={"foo": "bb"}, changed_by="bob", old_data_version=2)
+        what = {"fooid": 3, "data_version": 2, "when": 456000, "change_type": "delete"}
+        self.assertRaises(OutdatedDataError, self.sc_table.insert, changed_by="bob", **what)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
+    def testInsertDeleteWithCurrentDataVersion(self):
+        """A scheduled deletion carrying the row's current data_version is accepted."""
+        what = {"fooid": 3, "foo": "c", "data_version": 2, "when": 456000, "change_type": "delete"}
+        sc_id = self.sc_table.insert(changed_by="bob", **what)
+        self.assertEqual(self.sc_table.select(where=[self.sc_table.sc_id == sc_id])[0]["base_data_version"], 2)
+
+    @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertWithoutPermissionOnBaseTable(self):
         what = {"fooid": 5, "bar": "blah", "when": 343000, "change_type": "insert"}
         self.assertRaises(PermissionDeniedError, self.sc_table.insert, changed_by="nancy", **what)

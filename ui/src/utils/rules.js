@@ -61,4 +61,18 @@ const buildProductChannelOptions = (products, channels, rules, separator) => {
   return options.sort();
 };
 
-export { buildProductChannelOptions, ruleMatchesChannel };
+// A pending scheduled *insert* is itself the rule (its own Delete button
+// removes it), so only an update or delete scheduled against an existing rule
+// needs a separate "cancel scheduled change" affordance.
+const canCancelScheduledChange = (rule) =>
+  Boolean(
+    rule.rule_id &&
+      rule.scheduledChange &&
+      rule.scheduledChange.change_type !== 'insert',
+  );
+
+export {
+  buildProductChannelOptions,
+  canCancelScheduledChange,
+  ruleMatchesChannel,
+};
