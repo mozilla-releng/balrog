@@ -1281,6 +1281,18 @@ class ScheduledChangeTable(AUSTable):
                     raise ValueError("Missing primary key column %s. PK values needed for deletion" % (pk))
                 if base_columns[pk] is None:
                     raise ValueError("%s value found to be None. PK value can not be None for deletion" % (pk))
+            # Like updates (below), a delete targets a row that already exists,
+            # so the data_version provided must match the current one. Without
+            # this check a deletion scheduled against a stale row is silently
+            # accepted and then fails with OutdatedDataError on every enact
+            # attempt, because enactChange deletes with the (now-outdated)
+            # base_data_version.
+            current_data_version = self.baseTable.select(columns=(self.baseTable.data_version,), where=base_table_where, transaction=transaction)
+            if not current_data_version:
+                raise ValueError("Cannot create scheduled change with data_version for non-existent row")
+
+            if current_data_version[0]["data_version"] != base_columns.get("data_version"):
+                raise OutdatedDataError("Wrong data_version given for base table, cannot create scheduled change.")
         elif base_columns["change_type"] == "update":
             # For updates, we need to make sure that the baseTable row already
             # exists, and that the data version provided matches the current
