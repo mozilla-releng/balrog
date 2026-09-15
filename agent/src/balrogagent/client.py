@@ -51,6 +51,10 @@ async def request(api_root, path, auth0_secrets, method="GET", data={}, headers=
     async with aiohttp.ClientSession(loop=loop) as client:
         logging.debug("Sending %s request to %s", method, url)
         async with client.request(method, url, data=json.dumps(data), headers=headers) as resp:
-            # Raises on 400 code or higher, we can assume things are good if we make it past this.
+            # Log the response body first: it carries the actual error detail (eg. the admin API's
+            # problem+json "exception" field), which raise_for_status() would otherwise discard,
+            # leaving only a bare status code to debug from.
+            if resp.status >= 400:
+                logging.error("%s request to %s failed with status %s: %s", method, url, resp.status, await resp.text())
             resp.raise_for_status()
             return await resp.json()
