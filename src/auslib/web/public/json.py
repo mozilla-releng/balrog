@@ -5,6 +5,8 @@ from flask import current_app as app
 from flask import g
 
 from auslib.AUS import FORCE_FALLBACK_MAPPING, FORCE_MAIN_MAPPING
+from auslib.blobs.guardian import GuardianBlob
+from auslib.errors import BadDataError
 from auslib.web.public.helpers import AUS, get_aus_metadata_headers, get_content_signature_headers, with_transaction
 
 
@@ -17,6 +19,9 @@ def get_update(transaction, **parameters):
 
     if not release:
         return Response(status=404)
+
+    if not isinstance(release, GuardianBlob):
+        raise BadDataError("Wrong blob type")
 
     with g.statsd.timer("json.make_response"):
         headers = get_aus_metadata_headers(eval_metadata)
