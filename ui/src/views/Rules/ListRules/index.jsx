@@ -822,6 +822,10 @@ function ListRules(props) {
           : `rule ${dialogState.item.rule_id}`
       }.`
     ));
+  const cancelScheduledChangeBody =
+    dialogState.mode === 'cancelSC' && dialogState.item?.scheduledChange
+      ? `This will cancel the scheduled ${dialogState.item.scheduledChange.change_type} of rule ${dialogState.item.rule_id}. The rule itself will not be changed.`
+      : '';
   const handleRuleDelete = (rule) => {
     setDialogState({
       ...dialogState,
@@ -833,6 +837,55 @@ function ListRules(props) {
       mode: 'delete',
       handleComplete: handleDeleteDialogComplete,
       handleSubmit: handleDeleteDialogSubmit,
+    });
+  };
+
+  const handleCancelSCDialogComplete = (result) => {
+    // The rule itself is untouched; just drop the scheduled change from it.
+    setRulesWithScheduledChanges(
+      rulesWithScheduledChanges.map((r) => {
+        if (r.rule_id !== result.rule_id) {
+          return r;
+        }
+
+        const newRule = clone(r);
+
+        delete newRule.scheduledChange;
+
+        return newRule;
+      }),
+    );
+    handleSnackbarOpen({
+      message: `Scheduled change for rule ${result.rule_id} cancelled`,
+    });
+    handleDialogClose();
+  };
+
+  const handleCancelSCDialogSubmit = async () => {
+    const dialogRule = dialogState.item;
+    const { error } = await delSC({
+      scId: dialogRule.scheduledChange.sc_id,
+      scDataVersion: dialogRule.scheduledChange.sc_data_version,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return { rule_id: dialogRule.rule_id };
+  };
+
+  const handleCancelScheduledChange = (rule) => {
+    setDialogState({
+      ...dialogState,
+      open: true,
+      title: 'Cancel Scheduled Change?',
+      confirmText: 'Confirm',
+      destructive: true,
+      item: rule,
+      mode: 'cancelSC',
+      handleComplete: handleCancelSCDialogComplete,
+      handleSubmit: handleCancelSCDialogSubmit,
     });
   };
 
@@ -1151,6 +1204,7 @@ function ListRules(props) {
   const getDialogSubmit = () => {
     const dialogSubmits = {
       delete: handleDeleteDialogSubmit,
+      cancelSC: handleCancelSCDialogSubmit,
       signoff: handleSignoffDialogSubmit,
       disableUpdates: handleDisableUpdatesSubmit,
       signoffEnableUpdates: handleSignoffEnableUpdatesDialogSubmit,
@@ -1162,6 +1216,7 @@ function ListRules(props) {
   const getDialogBody = () => {
     const dialogStates = {
       delete: deleteDialogBody,
+      cancelSC: cancelScheduledChangeBody,
       signoff: signoffDialogBody,
       signoffEnableUpdates: signoffDialogBody,
       disableUpdates: disableUpdatesBody,
@@ -1368,6 +1423,7 @@ function ListRules(props) {
           currentRule={Boolean(rewindDate) && currentRule}
           rulesFilter={productChannelQueries}
           onRuleDelete={handleRuleDelete}
+          onCancelScheduledChange={handleCancelScheduledChange}
           canSignoff={
             !rewindDate &&
             rule.scheduledChange?.required_signoffs &&

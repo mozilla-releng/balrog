@@ -25,6 +25,7 @@ import { RULE_DIFF_PROPERTIES } from '../../utils/constants';
 import getDiffedProperties from '../../utils/getDiffedProperties';
 import getIndexOfSubStr from '../../utils/getIndexOfSubStr';
 import Link from '../../utils/Link';
+import { canCancelScheduledChange } from '../../utils/rules';
 import Button from '../Button';
 import DiffRule from '../DiffRule';
 import SignoffSummary from '../SignoffSummary';
@@ -152,6 +153,7 @@ function RuleCard({
   currentRule,
   rulesFilter,
   onRuleDelete,
+  onCancelScheduledChange,
   canSignoff,
   onSignoff,
   onRevoke,
@@ -882,6 +884,15 @@ function RuleCard({
           >
             Delete
           </Button>
+          {canCancelScheduledChange(rule) && (
+            <Button
+              color="secondary"
+              disabled={disableActions || actionLoading}
+              onClick={() => onCancelScheduledChange(rule)}
+            >
+              Cancel Scheduled Change
+            </Button>
+          )}
           {requiresSignoff &&
             (auth0.user && auth0.user.email in rule.scheduledChange.signoffs ? (
               <Button
@@ -908,6 +919,7 @@ function RuleCard({
 
 RuleCard.defaultProps = {
   onRuleDelete: Function.prototype,
+  onCancelScheduledChange: Function.prototype,
   readOnly: false,
   actionLoading: false,
   disableActions: false,
