@@ -5643,10 +5643,10 @@ react-number-format@^5.4.4:
   resolved "https://registry.yarnpkg.com/react-number-format/-/react-number-format-5.4.5.tgz#5855f2ae4e4153e6231d3a36b635c38be6824c8a"
   integrity sha512-y8O2yHHj3w0aE9XO8d2BCcUOOdQTRSVq+WIuMlLVucAm5XNjJAy+BoOJiuQMldVYVOKTMyvVNfnbl2Oqp+YxGw==
 
-react-refresh@0.18.0:
-  version "0.18.0"
-  resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.18.0.tgz#2dce97f4fe932a4d8142fa1630e475c1729c8062"
-  integrity sha512-QgT5//D3jfjJb6Gsjxv0Slpj23ip+HtOpnNgnb2S5zU3CB26G/IDPGoy4RJB42wzFE46DRsstbW6tKHoKbhAxw==
+react-refresh@0.19.0:
+  version "0.19.0"
+  resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.19.0.tgz#eaaf7b539607359a62f3986e512581d5ce14208d"
+  integrity sha512-5HdstYgoJBbBofjapO5qCPcovECJCBfvjLb+iTcsmqDFVMRdqy0qs7iiInBJTUXmIFc2bjoc5b2HVLp2zRtYhQ==
 
 react-router@^7.8.2:
   version "7.18.4"
