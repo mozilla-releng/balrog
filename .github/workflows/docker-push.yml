@@ -21,7 +21,7 @@ jobs:
       GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
       GAR_REPOSITORY: ${{ vars.GAR_REPOSITORY }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
       - id: gcp-auth
@@ -39,7 +39,7 @@ jobs:
         run: docker pull mozilla/balrog:${IMAGE_TAG}
 
       - name: Log in to GAR for push
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           registry: ${{ vars.GAR_LOCATION }}-docker.pkg.dev
           username: oauth2accesstoken
