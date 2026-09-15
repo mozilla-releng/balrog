@@ -9,7 +9,10 @@ transforms:
     - taskgraph.transforms.task:transforms
 
 task-defaults:
-        run-on-tasks-for: [github-pull-request, github-push]
+        run-on-tasks-for:
+            - github-pull-request
+            - github-pull-request-untrusted
+            - github-push
         attributes:
           code-review: true
         worker-type: test

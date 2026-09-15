@@ -12,15 +12,15 @@ tasks:
           ownerEmail: 'release+balrog-ci@mozilla.com'
           # Github events have this stuff in different places...
           baseRepoUrl:
-              $if: 'tasks_for == "github-pull-request"'
+              $if: 'tasks_for[:19] == "github-pull-request"'
               then: '${event.pull_request.base.repo.html_url}'
               else: '${event.repository.html_url}'
           repoUrl:
-              $if: 'tasks_for == "github-pull-request"'
+              $if: 'tasks_for[:19] == "github-pull-request"'
               then: '${event.pull_request.head.repo.html_url}'
               else: '${event.repository.html_url}'
           head_branch:
-              $if: 'tasks_for == "github-pull-request"'
+              $if: 'tasks_for[:19] == "github-pull-request"'
               then: ${event.pull_request.head.ref}
               else:
                   $if: 'tasks_for == "github-push"'
@@ -30,7 +30,7 @@ tasks:
               $if: 'tasks_for == "github-push"'
               then: '${event.after}'
               else:
-                  $if: 'tasks_for == "github-pull-request"'
+                  $if: 'tasks_for[:19] == "github-pull-request"'
                   then: '${event.pull_request.head.sha}'
                   else: '${event.release.tag_name}'
           releaseAction:
@@ -47,7 +47,7 @@ tasks:
       in:
           $if: >
               (tasks_for == "github-push" && head_branch == "refs/heads/main")
-              || (tasks_for == "github-pull-request" && event.action in ["opened", "reopened", "synchronize"])
+              || (tasks_for[:19] == "github-pull-request" && event.action in ["opened", "reopened", "synchronize"])
               || (tasks_for == "github-release" && releaseAction == "published")
           then:
               taskId: '${ownTaskId}'
@@ -73,28 +73,24 @@ tasks:
                             - "index.${trustDomain}.v2.${project}.revision.${head_sha}.taskgraph.decision"
                         else: []
               scopes:
-                  # `https://` is 8 characters so, ${repoUrl[8:]} is the repository without the protocol.
-                  $if: 'tasks_for == "github-push"'
-                  then:
-                      $let:
-                          short_head_branch:
-                              $if: 'head_branch[:10] == "refs/tags/"'
-                              then: {$eval: 'head_branch[10:]'}
-                              else:
-                                  $if: 'head_branch[:11] == "refs/heads/"'
-                                  then: {$eval: 'head_branch[11:]'}
-                                  else: ${head_branch}
-                      in:
-                          - 'assume:repo:${repoUrl[8:]}:branch:${short_head_branch}'
+                  $switch:
+                      'tasks_for == "github-push"':
+                          # `https://` is 8 characters so, ${repoUrl[8:]} is the repository without the protocol.
+                          $let:
+                              short_head_branch:
+                                  $if: 'head_branch[:10] == "refs/tags/"'
+                                  then: {$eval: 'head_branch[10:]'}
+                                  else:
+                                      $if: 'head_branch[:11] == "refs/heads/"'
+                                      then: {$eval: 'head_branch[11:]'}
+                                      else: ${head_branch}
+                          in:
+                              - 'assume:repo:${repoUrl[8:]}:branch:${short_head_branch}'
 
-                  else:
-                      $if: 'tasks_for == "github-pull-request"'
-                      then:
-                          - 'assume:repo:github.com/${event.pull_request.base.repo.full_name}:pull-request'
-                      else:
-                          $if: 'tasks_for == "github-release"'
-                          then:
-                              - 'assume:repo:${repoUrl[8:]}:release:${releaseAction}'
+                      'tasks_for[:19] == "github-pull-request"':
+                          - 'assume:repo:github.com/${event.pull_request.base.repo.full_name}:${tasks_for[7:]}'
+                      'tasks_for == "github-release"':
+                          - 'assume:repo:${repoUrl[8:]}:release:${releaseAction}'
 
               requires: all-completed
               priority: lowest
@@ -111,7 +107,7 @@ tasks:
                             BALROG_HEAD_REV: '${head_sha}'
                             BALROG_REPOSITORY_TYPE: git
                             REPOSITORIES: {$json: {balrog: "Balrog"}}
-                          - $if: 'tasks_for in ["github-pull-request"]'
+                          - $if: 'tasks_for[:19] == "github-pull-request"'
                             then:
                                 BALROG_PULL_REQUEST_NUMBER: '${event.pull_request.number}'
                   features:

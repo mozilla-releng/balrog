@@ -10,7 +10,10 @@ transforms:
     - taskgraph.transforms.task:transforms
 
 task-defaults:
-        run-on-tasks-for: [github-pull-request, github-push]
+        run-on-tasks-for:
+            - github-pull-request
+            - github-pull-request-untrusted
+            - github-push
         attributes:
             code-review: true
         worker-type: test
@@ -26,14 +29,15 @@ task-defaults:
 tasks:
     backend:
         description: balrog backend tests
+        # coveralls reporting is layered on by the tox transform when the
+        # secret is available (i.e. not on untrusted pull requests).
+        coveralls: true
         run:
             cwd: '{checkout}'
-            command: 'taskcluster/scripts/get-coveralls-token uv run --locked tox'
+            command: 'uv run --locked tox'
         worker:
             env:
-                TOXENV: 'py313,coveralls'
-        scopes:
-            - secrets:get:repo:github.com/mozilla-releng/balrog:coveralls
+                TOXENV: 'py313'
 
     lint-backend:
       description: balrog backend lints
