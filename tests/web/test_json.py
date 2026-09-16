@@ -522,6 +522,41 @@ def testJSONForAppReleaseBlob(client):
     assert ret.status_code < 500
 
 
+@pytest.mark.usefixtures("appconfig", "guardian_db")
+def testJSONForDesupportBlob(client, monkeypatch):
+    # DesupportBlob cannot be served via the JSON API: it only provides an XML
+    # response. Before the explicit blob type check it crashed with an
+    # AttributeError (500) instead of a client error.
+    import auslib.services.releases
+
+    monkeypatch.setattr(
+        auslib.services.releases,
+        "get_release",
+        lambda *args, **kwargs: {
+            "name": "desupport",
+            "blob": createBlob("""
+{
+    "name": "desupport",
+    "schema_version": 50,
+    "detailsUrl": "https://good.com/desupport",
+    "displayVersion": "1.0"
+}
+"""),
+        },
+    )
+    dbo.rules.t.insert().execute(
+        priority=90,
+        backgroundRate=100,
+        mapping="desupport",
+        update_type="minor",
+        product="desupport",
+        channel="release",
+        data_version=1,
+    )
+    ret = client.get("/json/1/desupport/1.0/WINNT_x86_64/release/update.json")
+    assert ret.status_code == 400
+
+
 @pytest.mark.usefixtures("guardian_db", "appconfig")
 @pytest.mark.parametrize(
     "exception,metric",
