@@ -529,14 +529,21 @@ def testJSONForDesupportBlob(client, monkeypatch):
     # AttributeError (500) instead of a client error.
     import auslib.services.releases
 
-    monkeypatch.setattr(auslib.services.releases, "get_release", lambda *args, **kwargs: {"name": "desupport", "blob": createBlob("""
+    monkeypatch.setattr(
+        auslib.services.releases,
+        "get_release",
+        lambda *args, **kwargs: {
+            "name": "desupport",
+            "blob": createBlob("""
 {
     "name": "desupport",
     "schema_version": 50,
     "detailsUrl": "https://good.com/desupport",
     "displayVersion": "1.0"
 }
-""")})
+"""),
+        },
+    )
     dbo.rules.t.insert().execute(
         priority=90,
         backgroundRate=100,
