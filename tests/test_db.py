@@ -3823,7 +3823,7 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
 
 @pytest.mark.usefixtures("current_db_schema")
-class TestReleasesJSON(unittest.TestCase, MemoryDatabaseMixin):
+class TestReleasesJSON(unittest.IsolatedAsyncioTestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         dbo.setDb(self.dburi, releases_history_buckets={"*": "fake"}, async_releases_history_class=FakeGCSHistoryAsync)
