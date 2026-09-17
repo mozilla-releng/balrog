@@ -13,13 +13,13 @@ import sqlalchemy.types
 from aiohttp import ClientSession
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import JSON, BigInteger, Boolean, Column, Integer, MetaData, String, Table, Text, create_engine, func, join, select
+from sqlalchemy import JSON, BigInteger, Boolean, Column, Index, Integer, MetaData, String, Table, Text, create_engine, func, join, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 from sqlalchemy.sql.functions import max as sql_max
 
 from auslib.blobs.base import createBlob, merge_dicts
-from auslib.errors import PermissionDeniedError, ReadOnlyError, SignoffRequiredError
+from auslib.errors import BlobValidationError, PermissionDeniedError, ReadOnlyError, SignoffRequiredError
 from auslib.global_state import cache
 from auslib.util.rulematching import (
     matchBoolean,
@@ -150,6 +150,37 @@ def BlobColumn(impl=Text):
 
     cls.impl = impl
     return cls
+
+
+def _blob_references(data):
+    """The set of Release names a stored blob serves in place of itself.
+
+    Keyed on Blob.getResponseBlobs(), the same method the public app calls to decide
+    which Releases to expand and serve instead of the one a Rule maps to (see
+    auslib.web.public.client.get_update_blob). Those Releases have no Rule of their
+    own, so they must inherit the Required Signoffs of the one delivering them, and
+    keying on the serving method means this index tracks that by construction.
+
+    Deliberately not Blob.getReferencedReleases(), which also reports partial-update
+    sources. A partial's "from" Release is only compared against the incoming update
+    query to decide whether that partial applies; none of its data reaches the
+    response. Editing one can at most move a client between the partial and the
+    complete the referring Release already offers, so it does not need the referrer's
+    signoffs.
+
+    Accepts either a dict (releases_json) or an already-materialized Blob (legacy
+    releases), and returns an empty set for data that can't be parsed into a blob.
+    """
+    if data is None:
+        return set()
+    try:
+        blob = data if hasattr(data, "getResponseBlobs") else createBlob(data)
+    except (BlobValidationError, ValueError, TypeError):
+        return set()
+    served = blob.getResponseBlobs()
+    if not isinstance(served, (list, tuple)):
+        return set()
+    return set(served)
 
 
 def verify_signoffs(potential_required_signoffs, signoffs):
@@ -1817,7 +1848,7 @@ class Rules(AUSTable):
         return potential_required_signoffs
 
     def getPotentialRequiredSignoffsForReleaseNames(self, names, transaction=None):
-        """Find the Required Signoffs of every Rule that maps to any of the given Release names.
+        """Find the Required Signoffs that apply to a write of each of the given Release names.
 
         Releases don't affect live updates on their own, only the product/channel
         combinations of the Rules pointing at them do. This is keyed purely on the
@@ -1826,14 +1857,27 @@ class Rules(AUSTable):
         `releases_json` (the public app prefers the latter, and falls back to the
         former), so anchoring this on the existence of a row in one of them would
         let a write to the other one bypass signoff entirely.
+
+        A Release is also served (without any Rule mapping to its own name) when
+        a SuperBlob that a Rule serves references it by name in its ``blobs`` list.
+        We therefore inherit the Required Signoffs of any such SuperBlob, so that a
+        leaf Release requires the same signoffs as the SuperBlob delivering it.
+
+        ``names`` must be an iterable of Release name strings.
         """
         required_signoffs = defaultdict(list)
-        names = tuple(set(names))
+        names = set(names)
         if not names:
             return required_signoffs
 
+        # {name: {name} | {Releases that serve it by reference, e.g. SuperBlobs}}
+        referencing = self.db.getReferencingReleases(names, transaction=transaction)
+        lookup_names = tuple(set().union(*referencing.values())) if referencing else ()
+        if not lookup_names:
+            return required_signoffs
+
         stmt = select([self.mapping, self.fallbackMapping, self.rule_id, self.product, self.channel]).where(
-            self.mapping.in_(names) | self.fallbackMapping.in_(names)
+            self.mapping.in_(lookup_names) | self.fallbackMapping.in_(lookup_names)
         )
         if transaction:
             rule_info = transaction.execute(stmt).fetchall()
@@ -1842,10 +1886,16 @@ class Rules(AUSTable):
 
         rule_required_signoffs = self.getPotentialRequiredSignoffs([dict(r) for r in rule_info], transaction=transaction)
 
+        lookup_set = set(lookup_names)
+        rs_by_name = defaultdict(list)
         for rule in rule_info:
             rs = rule_required_signoffs[(rule["product"], rule["channel"])]
-            for name in {rule["mapping"], rule["fallbackMapping"]} & set(names):
-                required_signoffs[name].extend(rs)
+            for name in {rule["mapping"], rule["fallbackMapping"]} & lookup_set:
+                rs_by_name[name].extend(rs)
+
+        for name in names:
+            for served_by in referencing[name]:
+                required_signoffs[name].extend(rs_by_name.get(served_by, []))
 
         return required_signoffs
 
@@ -2210,6 +2260,7 @@ class Releases(AUSTable):
         if not dryrun:
             cache.put("blob", columns["name"], {"data_version": 1, "blob": blob})
             cache.put("blob_version", columns["name"], 1)
+            self.db.release_references.update_references(columns["name"], _blob_references(blob), transaction=transaction)
             return ret.inserted_primary_key[0]
 
     def update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
@@ -2298,6 +2349,7 @@ class Releases(AUSTable):
             if not dryrun:
                 cache.put("blob", name, {"data_version": new_data_version, "blob": blob})
                 cache.put("blob_version", name, new_data_version)
+                self.db.release_references.update_references(name, _blob_references(blob), transaction=transaction)
 
     def addLocaleToRelease(self, name, product, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
         """Adds or update's the existing data for a specific platform + locale
@@ -2385,6 +2437,7 @@ class Releases(AUSTable):
         if not dryrun:
             cache.invalidate("blob", release["name"])
             cache.invalidate("blob_version", release["name"])
+            self.db.release_references.delete_references(release["name"], transaction=transaction)
 
     def isReadOnly(self, name, limit=None, transaction=None):
         where = [self.name == name]
@@ -2484,10 +2537,14 @@ class ReleasesJSON(AUSTable):
             potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([columns], transaction=transaction).values() for obj in v]
             verify_signoffs(potential_required_signoffs, signoffs)
 
-        return await super(ReleasesJSON, self).async_insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        ret = await super(ReleasesJSON, self).async_insert(changed_by=changed_by, transaction=transaction, dryrun=dryrun, **columns)
+        if not dryrun:
+            self.db.release_references.update_references(columns["name"], _blob_references(columns.get("data")), transaction=transaction)
+        return ret
 
     async def async_update(self, where, what, changed_by, old_data_version, transaction=None, dryrun=False, signoffs=None):
-        for row in self.select(where=where, transaction=transaction):
+        affected = self.select(where=where, transaction=transaction)
+        for row in affected:
             new_row = row.copy()
             new_row.update(what)
             is_readonly_change = row["data"] == new_row["data"] and "read_only" in what and row["read_only"] != what["read_only"]
@@ -2500,19 +2557,28 @@ class ReleasesJSON(AUSTable):
                     ]
                     verify_signoffs(potential_required_signoffs, signoffs)
 
-        return await super(ReleasesJSON, self).async_update(
+        ret = await super(ReleasesJSON, self).async_update(
             where=where, what=what, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
         )
+        if not dryrun and "data" in what:
+            for row in affected:
+                self.db.release_references.update_references(row["name"], _blob_references(what["data"]), transaction=transaction)
+        return ret
 
     async def async_delete(self, where, changed_by=None, old_data_version=None, transaction=None, dryrun=False, signoffs=None):
+        affected = self.select(where=where, transaction=transaction)
         if not dryrun:
-            for row in self.select(where=where, transaction=transaction):
+            for row in affected:
                 potential_required_signoffs = [obj for v in self.getPotentialRequiredSignoffs([row], transaction=transaction).values() for obj in v]
                 verify_signoffs(potential_required_signoffs, signoffs)
 
-        return await super(ReleasesJSON, self).async_delete(
+        ret = await super(ReleasesJSON, self).async_delete(
             where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
         )
+        if not dryrun:
+            for row in affected:
+                self.db.release_references.delete_references(row["name"], transaction=transaction)
+        return ret
 
 
 class ReleaseAssets(AUSTable):
@@ -2579,6 +2645,60 @@ class ReleaseAssets(AUSTable):
         return await super(ReleaseAssets, self).async_delete(
             where=where, changed_by=changed_by, old_data_version=old_data_version, transaction=transaction, dryrun=dryrun
         )
+
+
+class ReleaseReferences(object):
+    """Reverse index mapping a Release to the Releases it serves in place of itself.
+
+    A systemaddons SuperBlob names its child Releases in its "blobs" list; those
+    children have no Rule of their own but are what actually gets served, so they must
+    inherit the SuperBlob's Required Signoffs. Rather than scanning every Release's
+    blob data to answer "which Releases serve this one", we maintain this index
+    whenever a Release is written and query it directly. It is a derived table: no
+    history, versioning, or scheduled changes.
+
+    Edges come from _blob_references, i.e. Blob.getResponseBlobs(), so only the
+    served-by-reference relation is recorded. That lives in a SuperBlob's top-level
+    "blobs" list and is therefore unaffected by the split between releases_json and
+    release_assets.."""
+
+    def __init__(self, db, metadata):
+        self.db = db
+        self.table = self.t = Table(
+            "release_references",
+            metadata,
+            Column("name", String(100), primary_key=True, nullable=False),
+            Column("referenced", String(100), primary_key=True, nullable=False),
+        )
+        # Lookups are by `referenced` (the reverse direction); the primary key is
+        # led by `name` and so doesn't serve them.
+        Index("release_references_referenced_idx", self.table.c.referenced)
+
+    def _execute(self, statement, transaction):
+        if transaction:
+            return transaction.execute(statement)
+        return self.table.metadata.bind.execute(statement)
+
+    def update_references(self, name, referenced, transaction=None):
+        """Replace the set of Releases that ``name`` references."""
+        self._execute(self.table.delete().where(self.table.c.name == name), transaction)
+        rows = [{"name": name, "referenced": r} for r in {r for r in referenced if r}]
+        if rows:
+            self._execute(self.table.insert().values(rows), transaction)
+
+    def delete_references(self, name, transaction=None):
+        self._execute(self.table.delete().where(self.table.c.name == name), transaction)
+
+    def get_referrers(self, names, transaction=None):
+        """Return {referenced_name: {referrer_name, ...}} for the given names."""
+        result = defaultdict(set)
+        names = tuple(set(names))
+        if not names:
+            return result
+        stmt = select([self.table.c.name, self.table.c.referenced]).where(self.table.c.referenced.in_(names))
+        for row in self._execute(stmt, transaction).fetchall():
+            result[row["referenced"]].add(row["name"])
+        return result
 
 
 class UserRoles(AUSTable):
@@ -3037,6 +3157,7 @@ class AUSDatabase(object):
         self.releasesTable = Releases(self, self.metadata, dialect, releases_history_buckets, releases_history_class)
         self.releasesJSONTable = ReleasesJSON(self, self.metadata, dialect, releases_history_buckets, async_releases_history_class)
         self.releaseAssetsTable = ReleaseAssets(self, self.metadata, dialect, releases_history_buckets, async_releases_history_class)
+        self.releaseReferencesTable = ReleaseReferences(self, self.metadata)
         self.permissionsTable = Permissions(self, self.metadata, dialect)
         self.dockerflowTable = Dockerflow(self, self.metadata, dialect)
         self.productRequiredSignoffsTable = ProductRequiredSignoffsTable(self, self.metadata, dialect)
@@ -3166,6 +3287,10 @@ class AUSDatabase(object):
         return self.releaseAssetsTable
 
     @property
+    def release_references(self):
+        return self.releaseReferencesTable
+
+    @property
     def permissions(self):
         return self.permissionsTable
 
@@ -3188,3 +3313,44 @@ class AUSDatabase(object):
     @property
     def pinnable_releases(self):
         return self.pinnableReleasesTable
+
+    def getReferencingReleases(self, names, transaction=None):
+        """For each name in ``names`` return the set containing the name itself plus
+        every Release that serves it by reference (i.e. a SuperBlob whose ``blobs``
+        list names it), using the release_references index.
+
+        The Required Signoffs of any of those Releases' mapping Rules apply to a write
+        of the referenced Release, so callers union the signoffs found for the whole
+        returned set.
+
+        Only direct referrers are needed, because the serving path never follows more
+        than one hop: evaluate_response_blobs serves the Releases named in a
+        SuperBlob's ``blobs`` list without expanding any SuperBlob it finds among
+        them. A write to a Release can therefore only change what its immediate
+        referrers serve.
+
+        Results are memoized on the transaction, keyed by individual Release name, so
+        a lookup only queries the names it hasn't been asked about before: a single
+        write (e.g. set_release) runs signoff discovery once per Release plus once per
+        asset, all for the same name. A write never changes what references its own
+        target, so caching within the transaction is safe."""
+        names = set(names)
+        if not names:
+            return {}
+
+        # Without a transaction there is nothing to memoize on, so this is a throwaway
+        # dict and every name counts as missing.
+        known = {}
+        if transaction is not None:
+            known = getattr(transaction, "_referencing_release_cache", None)
+            if known is None:
+                known = {}
+                transaction._referencing_release_cache = known
+
+        missing = names - known.keys()
+        if missing:
+            direct = self.release_references.get_referrers(missing, transaction=transaction)
+            for name in missing:
+                known[name] = {name} | direct.get(name, set())
+
+        return {name: known[name] for name in names}
