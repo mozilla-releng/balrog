@@ -661,6 +661,24 @@ def test_put_of_legacy_only_release_fails_with_create_permission_only(api, firef
     assert not dbo.releases_json.select(where={"name": "Firefox-legacy-build1"})
 
 
+@pytest.mark.usefixtures("releases_db", "mock_verified_userinfo")
+def test_put_of_superblob_referenced_leaf_fails_when_signoff_required(api, firefox_56_0_build1):
+    # A leaf Release referenced by a signoff-requiring SuperBlob's "blobs" list has no
+    # Rule of its own, but it is served via the SuperBlob. Writing it directly must
+    # require the SuperBlob's signoffs rather than being a zero-signoff change.
+    dbo.releases_json.t.insert().execute(
+        name="Superblob-test", product="Firefox", data_version=1, data={"name": "Superblob-test", "schema_version": 4000, "blobs": ["leaf-child"]}
+    )
+    dbo.release_references.t.insert().execute(name="Superblob-test", referenced="leaf-child")
+    dbo.rules.t.insert().execute(rule_id=6, priority=100, product="Firefox", channel="release", mapping="Superblob-test", update_type="minor", data_version=1)
+    blob = deepcopy(firefox_56_0_build1)
+    blob["name"] = "leaf-child"
+
+    ret = api.put("/v2/releases/leaf-child", json={"blob": blob, "product": "Firefox"})
+    assert ret.status_code == 400, ret.data
+    assert not dbo.releases_json.select(where={"name": "leaf-child"})
+
+
 @pytest.mark.usefixtures("releases_db")
 def test_put_of_unwritten_mapped_release_fails_when_signoff_required(api, firefox_56_0_build1, mock_verified_userinfo):
     # Rule 7 maps to a name that exists in neither release table. Writing it for the

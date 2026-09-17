@@ -3783,6 +3783,38 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         rules = self._stripNullColumns(rules)
         self.assertEqual(rules, expected)
 
+    def testUpdateMergedWithTipIndexesWhatWasStored(self):
+        # A stale update is merged with the tip before being written, so the index must
+        # describe the merged blob rather than the caller's pre-merge one.
+        self.releases.insert(
+            changed_by="bill",
+            name="Superblob-merge",
+            product="a",
+            data=createBlob({"name": "Superblob-merge", "schema_version": 4000, "blobs": ["leaf-1"]}),
+        )
+        # someone else adds a reference, moving the tip to data_version 2
+        self.releases.update(
+            where={"name": "Superblob-merge"},
+            what={"data": createBlob({"name": "Superblob-merge", "schema_version": 4000, "blobs": ["leaf-1", "leaf-2"]})},
+            changed_by="bill",
+            old_data_version=1,
+        )
+        # our write is based on data_version 1 and changes an unrelated field, so it
+        # merges cleanly and the stored blob keeps leaf-2
+        self.releases.update(
+            where={"name": "Superblob-merge"},
+            what={"data": createBlob({"name": "Superblob-merge", "schema_version": 4000, "blobs": ["leaf-1"], "product": "a"})},
+            changed_by="bill",
+            old_data_version=1,
+        )
+
+        stored = self.releases.getReleaseBlob(name="Superblob-merge")
+        self.assertEqual(set(stored["blobs"]), {"leaf-1", "leaf-2"})
+        self.assertEqual(
+            {k: v for k, v in dbo.release_references.get_referrers(["leaf-1", "leaf-2"]).items()},
+            {"leaf-1": {"Superblob-merge"}, "leaf-2": {"Superblob-merge"}},
+        )
+
     def testGetPotentialRequiredSignoffsForProduct(self):
         release = {"name": "Z", "product": "Z"}
         signoffs_required = self.releases.getPotentialRequiredSignoffsForProduct(release["product"])
@@ -3942,6 +3974,132 @@ class TestReleasesJSON(unittest.IsolatedAsyncioTestCase, MemoryDatabaseMixin):
         # and the mapped one must actually require something, or this proves nothing
         rs = self.releases.getPotentialRequiredSignoffs([{"name": "Firefox-60.0-build1"}])
         self.assertEqual([r["role"] for r in rs["Firefox-60.0-build1"]], ["releng"])
+
+    def testGetPotentialRequiredSignoffsViaReference(self):
+        # A leaf referenced by a signoff-requiring SuperBlob inherits its signoffs,
+        # even though no Rule maps to the leaf's own name.
+        self.rules.t.insert().execute(
+            rule_id=2, product="Firefox", channel="release", mapping="Superblob-parent", backgroundRate=100, priority=100, update_type="minor", data_version=1
+        )
+        dbo.release_references.t.insert().execute(name="Superblob-parent", referenced="leaf-child")
+
+        rs = self.releases.getPotentialRequiredSignoffs([{"name": "leaf-child"}])
+        self.assertEqual([r["role"] for r in rs["leaf-child"]], ["releng"])
+
+    def testGetPotentialRequiredSignoffsUnreferencedLeaf(self):
+        # A leaf that no SuperBlob references inherits nothing.
+        self.rules.t.insert().execute(
+            rule_id=2, product="Firefox", channel="release", mapping="Superblob-parent", backgroundRate=100, priority=100, update_type="minor", data_version=1
+        )
+        dbo.release_references.t.insert().execute(name="Superblob-parent", referenced="other-leaf")
+
+        rs = self.releases.getPotentialRequiredSignoffs([{"name": "leaf-child"}])
+        self.assertEqual([obj for v in rs.values() for obj in v], [])
+
+    @pytest.mark.asyncio
+    async def testPartialSourceIsNotServedAndSoNotIndexed(self):
+        # A partial's "from" Release is only compared against the incoming update query
+        # to decide whether that partial applies; none of its data reaches the response.
+        # Editing it can at most move a client between the partial and the complete the
+        # referring Release already offers, so it must not inherit the referrer's
+        # Required Signoffs. Declared via fileUrls, which lives in the base blob, so
+        # getReferencedReleases() would report it and only getResponseBlobs() will not.
+        await self.releases.async_insert(
+            changed_by="bob",
+            name="Firefox-referrer",
+            product="Firefox",
+            data={
+                "name": "Firefox-referrer",
+                "schema_version": 9,
+                "hashFunction": "sha512",
+                "fileUrls": {"*": {"partials": {"Firefox-partial-source": "http://a/b.mar"}}},
+                "platforms": {},
+            },
+        )
+        self.rules.t.insert().execute(
+            rule_id=2,
+            product="Firefox",
+            channel="release",
+            mapping="Firefox-referrer",
+            backgroundRate=100,
+            priority=100,
+            update_type="minor",
+            data_version=1,
+        )
+        print("DEBUG rows:", dbo.release_references.t.select().execute().fetchall())
+        rs = self.releases.getPotentialRequiredSignoffs([{"name": "Firefox-partial-source"}])
+        print("DEBUG partial-source rs:", {k: [r["role"] for r in v] for k, v in rs.items()})
+        self.assertEqual([obj for v in rs.values() for obj in v], [])
+        rs = self.releases.getPotentialRequiredSignoffs([{"name": "Firefox-referrer"}])
+        self.assertEqual([r["role"] for r in rs["Firefox-referrer"]], ["releng"])
+
+    @pytest.mark.asyncio
+    async def testReadOnlyToggleLeavesReferenceIndexAlone(self):
+        # releases_json.data is nullable and set_read_only updates with no data key at
+        # all, so recomputing references from a missing blob would delete the rows for a
+        # Release whose blob hasn't changed.
+        await self.releases.async_insert(
+            changed_by="bob",
+            name="Superblob-ro",
+            product="Firefox",
+            data={"name": "Superblob-ro", "schema_version": 4000, "blobs": ["leaf-1"]},
+        )
+        self.assertEqual(dbo.release_references.get_referrers(["leaf-1"]), {"leaf-1": {"Superblob-ro"}})
+
+        await self.releases.async_update(where={"name": "Superblob-ro"}, what={"read_only": True}, changed_by="bob", old_data_version=1)
+
+        self.assertEqual(dbo.release_references.get_referrers(["leaf-1"]), {"leaf-1": {"Superblob-ro"}})
+
+    def testReferencingReleasesMemoizesPerName(self):
+        # The memo is keyed by individual name, so an overlapping second lookup only
+        # queries the name it hasn't seen. Keying it by the set of names would re-query
+        # leaf-a here.
+        dbo.release_references.t.insert().execute(name="Superblob-a", referenced="leaf-a")
+        dbo.release_references.t.insert().execute(name="Superblob-b", referenced="leaf-b")
+        queried = []
+        real = dbo.release_references.get_referrers
+
+        def counting(names, transaction=None):
+            queried.append(set(names))
+            return real(names, transaction=transaction)
+
+        dbo.release_references.get_referrers = counting
+        try:
+            with dbo.begin() as trans:
+                first = dbo.getReferencingReleases(["leaf-a"], transaction=trans)
+                second = dbo.getReferencingReleases(["leaf-a", "leaf-b"], transaction=trans)
+        finally:
+            dbo.release_references.get_referrers = real
+
+        self.assertEqual(first, {"leaf-a": {"leaf-a", "Superblob-a"}})
+        self.assertEqual(second, {"leaf-a": {"leaf-a", "Superblob-a"}, "leaf-b": {"leaf-b", "Superblob-b"}})
+        self.assertEqual(queried, [{"leaf-a"}, {"leaf-b"}])
+
+    @pytest.mark.asyncio
+    async def testReferenceIndexMaintainedOnWrite(self):
+        # Writing a SuperBlob through the release table keeps release_references in sync.
+        await self.releases.async_insert(
+            changed_by="bob", name="Superblob-x", product="Firefox", data={"name": "Superblob-x", "schema_version": 4000, "blobs": ["a", "b"]}
+        )
+        refs = dbo.release_references.get_referrers(["a", "b"])
+        self.assertEqual(refs["a"], {"Superblob-x"})
+        self.assertEqual(refs["b"], {"Superblob-x"})
+
+        # An update replaces the previous edges.
+        await self.releases.async_update(
+            where={"name": "Superblob-x"},
+            what={"data": {"name": "Superblob-x", "schema_version": 4000, "blobs": ["b", "c"]}},
+            changed_by="bob",
+            old_data_version=1,
+        )
+        refs = dbo.release_references.get_referrers(["a", "b", "c"])
+        self.assertIsNone(refs.get("a"))
+        self.assertEqual(refs["b"], {"Superblob-x"})
+        self.assertEqual(refs["c"], {"Superblob-x"})
+
+        # A delete removes them.
+        await self.releases.async_delete(where={"name": "Superblob-x"}, changed_by="bob", old_data_version=2)
+        self.assertEqual(dbo.release_references.get_referrers(["b", "c"]), {})
 
     @pytest.mark.asyncio
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
@@ -5723,6 +5881,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
                 "release_assets_scheduled_changes_history",
                 "release_assets_scheduled_changes_signoffs",
                 "release_assets_scheduled_changes_signoffs_history",
+                "release_references",
                 "rules",
                 "rules_history",
                 "rules_scheduled_changes",
@@ -5892,3 +6051,20 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             table_instances.append((meta_data.tables[table_name], self.db.metadata.tables[table_name]))
 
         self.assert_attributes_for_tables(table_instances)
+
+    def testReleaseReferencesBackfill(self):
+        # The 0002 migration must backfill release_references from existing Releases,
+        # so that SuperBlobs already in the database index their children.
+        db = AUSDatabase("sqlite:///" + self.getTempfile())
+        db.upgrade(version="0001")
+        db.releases_json.t.insert().execute(
+            name="Superblob-old",
+            product="Firefox",
+            data_version=1,
+            data={"name": "Superblob-old", "schema_version": 4000, "blobs": ["old-leaf-1", "old-leaf-2"]},
+        )
+        db.upgrade()
+
+        refs = db.release_references.get_referrers(["old-leaf-1", "old-leaf-2"])
+        self.assertEqual(refs["old-leaf-1"], {"Superblob-old"})
+        self.assertEqual(refs["old-leaf-2"], {"Superblob-old"})
