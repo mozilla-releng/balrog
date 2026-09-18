@@ -2257,7 +2257,7 @@ class Releases(AUSTable):
                     tip_release = self.getReleases(name=name, transaction=transaction)[0]
                     tip_blob = tip_release.get("data")
                     try:
-                        what["data"] = createBlob(merge_dicts(ancestor_blob, tip_blob, blob))
+                        blob = what["data"] = createBlob(merge_dicts(ancestor_blob, tip_blob, blob))
                         self.log.warning("Successfully merged release %s at data_version %s with the latest version.", name, old_data_version)
                         # ancestor_change is checked for None a few lines up
                         self.log.warning(

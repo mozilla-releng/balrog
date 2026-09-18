@@ -4229,6 +4229,23 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(cache.hits, hits)
         self.assertEqual(cache.misses, misses)
 
+    def testUpdateMergedWithTipCachesWhatWasStored(self):
+        # A stale update is merged with the tip before being written, and the cache is
+        # populated with the post-merge data_version. Caching the caller's pre-merge
+        # blob therefore defeats the staleness check in getReleaseBlob -- the versions
+        # agree -- so reads keep returning a blob that was never stored.
+        def sb(blobs, **extra):
+            return createBlob({"name": "abc", "schema_version": 4000, "blobs": blobs, **extra})
+
+        self.releases.insert(changed_by="bill", name="abc", product="a", data=sb(["leaf-1"]))
+        self.releases.update(where={"name": "abc"}, what={"data": sb(["leaf-1", "leaf-2"])}, changed_by="bill", old_data_version=1)
+        # based on data_version 1, changing an unrelated field so the merge is clean
+        self.releases.update(where={"name": "abc"}, what={"data": sb(["leaf-1"], product="a")}, changed_by="bill", old_data_version=1)
+
+        stored = self.releases.t.select().where(self.releases.name == "abc").execute().fetchone()["data"]
+        self.assertEqual(sorted(stored["blobs"]), ["leaf-1", "leaf-2"])
+        self.assertEqual(sorted(self.releases.getReleaseBlob(name="abc")["blobs"]), sorted(stored["blobs"]))
+
     def testGetReleaseBlobCaching(self):
         with mock.patch("time.time") as t:
             t.return_value = 0
