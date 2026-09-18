@@ -1198,6 +1198,54 @@ cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda
 """),
         )
 
+    def testReleasePostForDanglingMappedReleaseRequiresSignoff(self):
+        # A Rule can be left pointing at a Release that exists in neither release
+        # table: the nightly cleanup in manage-db.py matches on rules.mapping only, so
+        # a Release that a Rule merely falls back to can be deleted out from under it.
+        # Creating that name for the first time is what the public app will serve, so
+        # it must require the Rule's Required Signoffs rather than none.
+        dbo.rules.t.insert().execute(
+            rule_id=900,
+            priority=100,
+            backgroundRate=100,
+            product="fake",
+            channel="a",
+            mapping="dangling-release",
+            update_type="minor",
+            data_version=1,
+        )
+        data = json.dumps(dict(name="dangling-release", schema_version=1, hashFunction="sha512"))
+
+        ret = self._post("/releases", data=dict(blob=data, name="dangling-release", product="fake"))
+        self.assertStatusCode(ret, 400)
+        self.assertIsNone(dbo.releases.t.select().where(dbo.releases.name == "dangling-release").execute().fetchone())
+
+    def testReleasePostForReleasesJSONOnlyMappedReleaseRequiresSignoff(self):
+        # The name is already live out of releases_json. Creating a legacy-table row
+        # for it must require the same signoffs, not zero because this table has no
+        # row to join against yet.
+        dbo.releases_json.t.insert().execute(
+            name="json-only",
+            product="fake",
+            data_version=1,
+            data={"name": "json-only", "schema_version": 1, "hashFunction": "sha512"},
+        )
+        dbo.rules.t.insert().execute(
+            rule_id=901,
+            priority=100,
+            backgroundRate=100,
+            product="fake",
+            channel="a",
+            mapping="json-only",
+            update_type="minor",
+            data_version=1,
+        )
+        data = json.dumps(dict(name="json-only", schema_version=1, hashFunction="sha512"))
+
+        ret = self._post("/releases", data=dict(blob=data, name="json-only", product="fake"))
+        self.assertStatusCode(ret, 400)
+        self.assertIsNone(dbo.releases.t.select().where(dbo.releases.name == "json-only").execute().fetchone())
+
     def testReleasesPost(self):
         data = json.dumps(dict(bouncerProducts=dict(partial="foo"), name="e", schema_version=1, hashFunction="sha512"))
         ret = self._post("/releases", data=dict(blob=data, name="e", product="e"))
