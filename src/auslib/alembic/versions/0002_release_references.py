@@ -45,15 +45,27 @@ def _backfill(conn, ref_table):
 
 
 def upgrade() -> None:
-    op.create_table(
-        "release_references",
-        sa.Column("name", sa.String(100), primary_key=True, nullable=False),
-        sa.Column("referenced", sa.String(100), primary_key=True, nullable=False),
-    )
-    op.create_index("release_references_referenced_idx", "release_references", ["referenced"])
+    # Idempotent on purpose. MySQL commits DDL implicitly, so an earlier run that
+    # created the table/index and then failed in _backfill leaves them behind without
+    # advancing alembic_version; a retry re-runs this whole function (bug 2065063 /
+    # #3905). IF NOT EXISTS isn't enough on its own: MySQL has no CREATE INDEX IF NOT
+    # EXISTS.
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
+    if not inspector.has_table("release_references"):
+        op.create_table(
+            "release_references",
+            sa.Column("name", sa.String(100), primary_key=True, nullable=False),
+            sa.Column("referenced", sa.String(100), primary_key=True, nullable=False),
+        )
+
+    existing_indexes = {idx["name"] for idx in inspector.get_indexes("release_references")}
+    if "release_references_referenced_idx" not in existing_indexes:
+        op.create_index("release_references_referenced_idx", "release_references", ["referenced"])
 
     ref_table = sa.table("release_references", sa.column("name", sa.String), sa.column("referenced", sa.String))
-    _backfill(op.get_bind(), ref_table)
+    _backfill(bind, ref_table)
 
 
 def downgrade() -> None:
