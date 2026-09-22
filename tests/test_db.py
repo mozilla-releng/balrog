@@ -6063,8 +6063,48 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             data_version=1,
             data={"name": "Superblob-old", "schema_version": 4000, "blobs": ["old-leaf-1", "old-leaf-2"]},
         )
+        # A blob type that doesn't implement getResponseBlobs (a Guardian blob is a
+        # GenericBlob, not an XMLBlob/SuperBlob) must be backfilled without crashing.
+        # Regression test for bug 2065063 / #3905, where the backfill raised
+        # AttributeError: 'GuardianBlob' object has no attribute 'getResponseBlobs'.
+        guardian_data = {
+            "name": "Guardian-old",
+            "product": "Guardian",
+            "schema_version": 10000,
+            "version": "1.0.0.0",
+            "required": True,
+            "hashFunction": "sha512",
+            "platforms": {"WINNT_x86_64": {"fileUrl": "https://a.com/1.0.0.0.msi", "hashValue": "abcdef"}},
+        }
+        db.releases_json.t.insert().execute(name="Guardian-old", product="Guardian", data_version=1, data=guardian_data)
+        # Same blob type living in the legacy releases table, which the backfill also scans.
+        db.releases.t.insert().execute(name="Guardian-legacy", product="Guardian", data_version=1, data=createBlob(guardian_data))
         db.upgrade()
 
         refs = db.release_references.get_referrers(["old-leaf-1", "old-leaf-2"])
         self.assertEqual(refs["old-leaf-1"], {"Superblob-old"})
         self.assertEqual(refs["old-leaf-2"], {"Superblob-old"})
+        # Guardian blobs serve no other Releases, so they contribute no references.
+        self.assertEqual(
+            db.release_references.t.select().where(db.release_references.t.c.name.in_(["Guardian-old", "Guardian-legacy"])).execute().fetchall(), []
+        )
+
+    def testReleaseReferencesBackfillRerunAfterPartialFailure(self):
+        # MySQL commits DDL implicitly, so a 0002 run that created the table + index and
+        # then failed in _backfill leaves them behind at version 0001. The migration must
+        # be re-runnable rather than dying on CREATE TABLE (bug 2065063 / #3905).
+        db = AUSDatabase("sqlite:///" + self.getTempfile())
+        db.upgrade(version="0001")
+        db.releases_json.t.insert().execute(
+            name="Superblob-old",
+            product="Firefox",
+            data_version=1,
+            data={"name": "Superblob-old", "schema_version": 4000, "blobs": ["old-leaf-1"]},
+        )
+        # Recreate the leftover state from the failed run: table + index already exist,
+        # but nothing has been backfilled and alembic_version is still 0001.
+        db.release_references.t.create(db.engine)
+
+        db.upgrade()  # must not raise on the pre-existing table/index
+
+        self.assertEqual(db.release_references.get_referrers(["old-leaf-1"]), {"old-leaf-1": {"Superblob-old"}})
