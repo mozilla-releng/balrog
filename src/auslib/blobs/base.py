@@ -241,6 +241,13 @@ class Blob(dict):
         """
         return set()
 
+    def getResponseBlobs(self):
+        """
+        :return: Usually None. A systemaddons SuperBlob returns the list of Release
+                 names it serves in place of itself (its "blobs" entries).
+        """
+        return None
+
 
 # We should be able to kill this Blob and its subclasses at some point by using
 # GenericBlob, and fully encapsulating the response in getResponse
@@ -250,13 +257,6 @@ class XMLBlob(Blob):
         """
         :return: Usually returns None. If the Blob is a SuperBlob, it returns the list
                 of return products.
-        """
-        return None
-
-    def getResponseBlobs(self):
-        """
-        :return: Usually returns None. It the Blob is a systemaddons superblob, it returns the
-                 list of return blobs
         """
         return None
 
