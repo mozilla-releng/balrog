@@ -22,11 +22,20 @@ branch_labels = None
 depends_on = None
 
 
+def _iter_rows(conn, source, batch_size=50):
+    # Release blobs can be several MB each, so fetching the whole table at once can
+    # exhaust the migration job's memory. Fetch the (small) list of names first, then
+    # the data a few rows at a time.
+    names = [row[0] for row in conn.execute(sa.text(f"SELECT name FROM {source} ORDER BY name"))]
+    query = sa.text(f"SELECT name, data FROM {source} WHERE name IN :names").bindparams(sa.bindparam("names", expanding=True))
+    for i in range(0, len(names), batch_size):
+        yield from conn.execute(query, {"names": names[i : i + batch_size]}).fetchall()
+
+
 def _backfill(conn, ref_table):
     for source in ("releases_json", "releases"):
-        rows = conn.execute(sa.text(f"SELECT name, data FROM {source}")).fetchall()  # noqa: S608 (fixed table names)
         edges = []
-        for name, data in rows:
+        for name, data in _iter_rows(conn, source):
             if data is None:
                 continue
             try:
