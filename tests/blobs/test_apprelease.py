@@ -19,6 +19,7 @@ from auslib.blobs.apprelease import (
     ReleaseBlobV6,
     ReleaseBlobV8,
     ReleaseBlobV9,
+    SeparatedFileUrlsMixin,
     UnifiedFileUrlsMixin,
 )
 from auslib.blobs.base import createBlob
@@ -3847,6 +3848,58 @@ class TestUnifiedFileUrlsMixin(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.mixin_instance._getUrl(updateQuery, patchKey, patch, specialForceHosts)
+
+    def testGetUrlUnknownChannelRaisesBadDataError(self):
+        fileUrls = {"c1": {"completes": {"*": "http://a.com/complete.mar"}}}
+        self.mixin_instance.get = mock.Mock(return_value=fileUrls)
+        updateQuery = {
+            "product": "h",
+            "version": "30.0",
+            "buildID": "10",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c2",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
+            "force": None,
+        }
+        patchKey = "completes"
+        patch = {"from": "*"}
+        specialForceHosts = ["http://a.com"]
+
+        with self.assertRaises(BadDataError):
+            self.mixin_instance._getUrl(updateQuery, patchKey, patch, specialForceHosts)
+
+
+class TestSeparatedFileUrlsMixin(unittest.TestCase):
+    def setUp(self):
+        class DictMixin(SeparatedFileUrlsMixin, dict):
+            pass
+
+        self.mixin_instance = DictMixin(fileUrls={"c1": "http://a.com/%FILENAME%"}, ftpFilenames={"complete": "complete.mar"})
+        self.mixin_instance.getPlatformData = mock.Mock(return_value={"OS_FTP": "os_ftp", "OS_BOUNCER": "os_bouncer"})
+        self.updateQuery = {
+            "product": "h",
+            "version": "30.0",
+            "buildID": "10",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
+            "force": None,
+        }
+
+    def testGetUrlGetsFromChannel(self):
+        url = self.mixin_instance._getUrl(self.updateQuery, "complete", {"from": "*"}, [])
+        self.assertEqual("http://a.com/complete.mar", url)
+
+    def testGetUrlUnknownChannelRaisesBadDataError(self):
+        self.updateQuery["channel"] = "c2"
+        with self.assertRaises(BadDataError):
+            self.mixin_instance._getUrl(self.updateQuery, "complete", {"from": "*"}, [])
 
 
 class TestAdditionalPatchAttributesXMLMixin(unittest.TestCase):

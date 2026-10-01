@@ -300,8 +300,7 @@ class SeparatedFileUrlsMixin(object):
                 try:
                     url = self["fileUrls"][getFallbackChannel(updateQuery["channel"])]
                 except KeyError:
-                    self.log.debug("Couldn't find fileUrl for")
-                    raise
+                    raise BadDataError("Can't find fileUrl for channel '%s'", updateQuery["channel"])
 
             url = url.replace("%LOCALE%", updateQuery["locale"])
             url = url.replace("%OS_FTP%", platformData["OS_FTP"])
@@ -719,6 +718,8 @@ class UnifiedFileUrlsMixin(object):
                 if config_block:
                     url = config_block.get(patchKey, {}).get(from_)
                     break
+            else:
+                raise BadDataError("Can't find fileUrl for channel '%s'", updateQuery["channel"])
 
             # If we still can't find a fileUrl, we cannot fulfill this request.
             if not url:
