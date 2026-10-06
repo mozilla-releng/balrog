@@ -27,7 +27,6 @@ dependencies = [
     "mysqlclient",
     "orjson",
     "pyjwt[crypto]",
-    "python-jose",
     "redis",
     "repoze.lru",
     "requests",

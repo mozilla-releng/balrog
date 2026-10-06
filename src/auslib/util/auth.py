@@ -1,4 +1,4 @@
-import jose.jwt
+import jwt
 import requests
 from auth0.authentication import Users as auth0_Users
 from repoze.lru import lru_cache
@@ -60,8 +60,8 @@ def verified_userinfo(request, auth_domain, auth_audience):
     jwks = get_jwks(auth_domain)
     access_token = get_access_token(request)
     try:
-        unverified_header = jose.jwt.get_unverified_header(access_token)
-    except jose.jwt.JWTError:
+        unverified_header = jwt.get_unverified_header(access_token)
+    except jwt.InvalidTokenError:
         raise AuthError({"code": "invalid_header", "description": "Invalid header. Use an RS256 signed JWT Access Token"}, 401)
     if unverified_header["alg"] == "HS256":
         raise AuthError({"code": "invalid_header", "description": "Invalid header. Use an RS256 signed JWT Access Token"}, 401)
@@ -71,7 +71,9 @@ def verified_userinfo(request, auth_domain, auth_audience):
             rsa_key = {"kty": key["kty"], "kid": key["kid"], "use": key["use"], "n": key["n"], "e": key["e"]}
     if rsa_key:
         try:
-            payload = jose.jwt.decode(access_token, rsa_key, algorithms=["RS256"], audience=auth_audience, issuer="https://{}/".format(auth_domain))
+            payload = jwt.decode(
+                access_token, jwt.PyJWK(rsa_key, algorithm="RS256").key, algorithms=["RS256"], audience=auth_audience, issuer="https://{}/".format(auth_domain)
+            )
             if "gty" in payload:
                 # The gty field being present means it is a machine token
                 # azp in machine tokens is their clientId, which is the closest
@@ -84,10 +86,12 @@ def verified_userinfo(request, auth_domain, auth_audience):
             if not payload.get("email"):
                 raise AuthError({"code": "no_email", "description": "no email address found in access or id tokens"}, 401)
             return payload
-        except jose.jwt.ExpiredSignatureError:
+        except jwt.ExpiredSignatureError:
             raise AuthError({"code": "token_expired", "description": "token is expired"}, 401)
-        except jose.jwt.JWTClaimsError:
+        except (jwt.InvalidAudienceError, jwt.InvalidIssuerError, jwt.ImmatureSignatureError, jwt.InvalidIssuedAtError, jwt.MissingRequiredClaimError):
             raise AuthError({"code": "invalid_claims", "description": "incorrect claims, please check the audience and issuer"}, 401)
+        except jwt.InvalidTokenError:
+            raise AuthError({"code": "invalid_token", "description": "Unable to verify token"}, 401)
         except ValueError:
             raise AuthError({"code": "incomplete_validation", "description": "couldn't find additional userinfo from access token"}, 401)
     else:
