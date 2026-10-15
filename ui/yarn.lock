@@ -2191,12 +2191,21 @@
   dependencies:
     "@sinonjs/commons" "^3.0.1"
 
-"@tanstack/react-table@^8.21.3":
-  version "8.21.3"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-table/-/react-table-8.21.3.tgz#2c38c747a5731c1a07174fda764b9c2b1fb5e91b"
-  integrity sha512-5nNMTSETP4ykGegmVkhjcS8tTLW6Vl4axfEGQN3v0zdHYbK4UfoqfPChclTrJ4EoK9QynqAu9oUf8VEmrpZ5Ww==
+"@tanstack/react-store@^0.11.2":
+  version "0.11.2"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-store/-/react-store-0.11.2.tgz#14f81f98f43b04c34e76d348de3fe8488b3c3939"
+  integrity sha512-oj5O5DmiMWE+ih+SioX2ayC1kbK7d3fpLx0B75fPJr9nY3zU+hoW010yr64qXsY/9fyiLVE2bn5mGNV3owm8RQ==
   dependencies:
-    "@tanstack/table-core" "8.21.3"
+    "@tanstack/store" "0.11.2"
+    use-sync-external-store "^1.6.0"
+
+"@tanstack/react-table@^9.0.0":
+  version "9.3.1"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-table/-/react-table-9.3.1.tgz#7030e813d412f54db6dd34af351774dd1caa929e"
+  integrity sha512-E6Ya5TnY6EaGyZYIUqig/29Lr/gJSAubQkLJFqiWkUl5nRCr0Xr9hvJot+NiRTtG+TzGxHTiqUW3bnLtQxlHug==
+  dependencies:
+    "@tanstack/react-store" "^0.11.2"
+    "@tanstack/table-core" "9.3.1"
 
 "@tanstack/react-virtual@^3.13.12":
   version "3.14.13"
@@ -2205,10 +2214,17 @@
   dependencies:
     "@tanstack/virtual-core" "3.17.11"
 
-"@tanstack/table-core@8.21.3":
-  version "8.21.3"
-  resolved "https://registry.yarnpkg.com/@tanstack/table-core/-/table-core-8.21.3.tgz#2977727d8fc8dfa079112d9f4d4c019110f1732c"
-  integrity sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg==
+"@tanstack/store@0.11.2", "@tanstack/store@^0.11.2":
+  version "0.11.2"
+  resolved "https://registry.yarnpkg.com/@tanstack/store/-/store-0.11.2.tgz#cea02e554a483c7334a64a3ca2c0e4b703ba8531"
+  integrity sha512-sJ4mjol8uQsHV0gOJzzjwXfh2Fwm+Sz0+8deqiTm4jGbMdjzNSW+xZCFm0kUa870uhd8yi+DpKnZb5Kc4apa0Q==
+
+"@tanstack/table-core@9.3.1":
+  version "9.3.1"
+  resolved "https://registry.yarnpkg.com/@tanstack/table-core/-/table-core-9.3.1.tgz#21ea78f0a6dc5fc3a8074c255d5f4841c12f8729"
+  integrity sha512-zQvlxSNi2qGM3L4jh85Z6hqMfdIR5qOfD9KHOU32nuKFJGN0RlJ7UvV1lsPb1fPVhpFYI0VP3jJGxLdLDpTKjQ==
+  dependencies:
+    "@tanstack/store" "^0.11.2"
 
 "@tanstack/virtual-core@3.17.11":
   version "3.17.11"
