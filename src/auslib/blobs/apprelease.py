@@ -755,7 +755,7 @@ class ReleaseBlobV4(ReleaseBlobBase, NewStyleVersionsMixin, MultipleUpdatesXMLMi
     jsonschema = "apprelease-v4.yml"
 
     # for the benefit of get*XML
-    optional_ = ("billboardURL", "showPrompt", "showNeverForVersion", "actions", "openURL", "notificationURL", "alertURL")
+    optional_ = ("billboardURL", "showPrompt", "showNeverForVersion", "actions", "openURL", "notificationURL", "alertURL", "forceBackgroundUpdate")
     # params that can have %LOCALE% interpolated
     interpolable_ = ("billboardURL", "openURL", "notificationURL", "alertURL")
 

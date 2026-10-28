@@ -120,6 +120,11 @@
                 enum:
                   - true
                 description: Whether or not to prevent an update from being downloaded in the background
+              forceBackgroundUpdate:
+                type: boolean
+                enum:
+                  - true
+                description: Whether or not to download and install an update in the background, even if the background update task would otherwise only check for updates. Clients act on the presence of this attribute, so only true is allowed.
     # Top level fileUrls are useful primarily for release style builds,
     # where the URLs are predictable and only vary by locale and platform.
     # It"s worth noting that while we normally serve different channels
