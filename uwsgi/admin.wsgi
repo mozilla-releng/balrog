@@ -21,7 +21,7 @@ LOCALDEV = bool(int(os.environ.get("LOCALDEV", 0)))
 SYSTEM_ACCOUNTS = ["balrogagent", "balrog-ffxbld", "balrog-tbirdbld", "seabld", "balrog-xpibld"]
 DOMAIN_ALLOWLIST = {
     "download.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird", "Pinebuild"),
-    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird", "FirefoxVPN", "Pinebuild", "SystemAddons"),
+    "archive.mozilla.org": ("Firefox", "Fennec", "Devedition", "Thunderbird", "FirefoxVPN", "Pinebuild", "SystemAddons", "TBSystemAddons"),
     "download.cdn.mozilla.net": ("Firefox", "Fennec"),
     "ciscobinary.openh264.org": ("OpenH264",),
     "cdmdownload.adobe.com": ("CDM",),

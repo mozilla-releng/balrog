@@ -23,6 +23,7 @@ DOMAIN_ALLOWLIST = {
         "Thunderbird",
         "FirefoxVPN",
         "SystemAddons",
+        "TBSystemAddons",
     ),
     "download.cdn.mozilla.net": ("Firefox", "Fennec"),
     "ciscobinary.openh264.org": ("OpenH264",),
