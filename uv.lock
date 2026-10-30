@@ -285,7 +285,7 @@ wheels = [
 
 [[package]]
 name = "balrog"
-version = "3.130"
+version = "3.131"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
