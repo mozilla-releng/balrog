@@ -48,7 +48,7 @@ import {
   SPLIT_WITH_NEWLINES_AND_COMMA_REGEX,
 } from '../../../utils/constants';
 import getDiffedProperties from '../../../utils/getDiffedProperties';
-import { ruleMatchesRequiredSignoff } from '../../../utils/requiredSignoffs';
+import { getRequiredSignoffsForRule } from '../../../utils/requiredSignoffs';
 
 const initialRule = {
   alias: '',
@@ -408,42 +408,20 @@ function Rule({ isNewRule, auth0 }) {
     if (!rs || !rule.product) {
       setSignoffSummary(' Nobody');
     } else {
-      const matchingRs = rs.filter((rso) =>
-        ruleMatchesRequiredSignoff(rule, rso),
-      );
+      const rsCount = getRequiredSignoffsForRule(rule, rs);
+      const roles = Object.keys(rsCount);
 
-      if (!matchingRs.length) {
+      if (!roles.length) {
         setSignoffSummary(' Nobody');
       } else {
-        // Count the number of signoffs required from each role
-        const rsCount = [];
-
-        for (let i = 0; i < matchingRs.length; i += 1) {
-          const rs = matchingRs[i];
-          const rsRoleCount = rsCount.find((count) => rs.role in count);
-
-          if (rsRoleCount) {
-            rsRoleCount[rs.role] += rs.signoffs_required;
-          } else {
-            rsCount.push({ [rs.role]: rs.signoffs_required });
-          }
-        }
-
         // Create the signoff summary
-        let rsSummary = '';
+        const rsSummary = roles
+          .map((role) => {
+            const memberStr = rsCount[role] > 1 ? 'members' : 'member';
 
-        for (let i = 0; i < rsCount.length; i += 1) {
-          const rsRole = Object.keys(rsCount[i])[0];
-          const rsRoleCount = Object.values(rsCount[i])[0];
-          const memberStr = rsRoleCount > 1 ? 'members' : 'member';
-          const roleSummary = ` ${rsRoleCount} ${memberStr} of ${rsRole}`;
-
-          if (i === rsCount.length - 1) {
-            rsSummary += `${roleSummary}`;
-          } else {
-            rsSummary += `${roleSummary},`;
-          }
-        }
+            return ` ${rsCount[role]} ${memberStr} of ${role}`;
+          })
+          .join(',');
 
         setSignoffSummary(rsSummary);
       }

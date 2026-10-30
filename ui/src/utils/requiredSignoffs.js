@@ -20,4 +20,19 @@ const ruleMatchesRequiredSignoff = (rule, rs) => {
   return true;
 };
 
-export { ruleMatchesRequiredSignoff };
+// Returns an object mapping each role to the number of signoffs required
+// from it for the given rule. When multiple Required Signoffs match a rule
+// (eg: a rule with no channel), the largest count for each role applies.
+const getRequiredSignoffsForRule = (rule, requiredSignoffs) => {
+  const result = {};
+
+  requiredSignoffs.forEach((rs) => {
+    if (ruleMatchesRequiredSignoff(rule, rs)) {
+      result[rs.role] = Math.max(result[rs.role] || 0, rs.signoffs_required);
+    }
+  });
+
+  return result;
+};
+
+export { getRequiredSignoffsForRule, ruleMatchesRequiredSignoff };
