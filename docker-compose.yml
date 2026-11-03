@@ -128,7 +128,7 @@ services:
 
 
   balrogui:
-    image: node:24@sha256:64af3819f9275802414d7cdc38c27e9d82bd564dec4d4da87d008255d36c63b4
+    image: node:24@sha256:e7add2a490bb17d97b485b8641bd88455fff7839ade0f5eba493c3508124d413
     depends_on:
       balrogadmin:
         condition: service_healthy
@@ -227,7 +227,7 @@ services:
       - "8050:80"
 
   redis:
-    image: redis:8-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0
+    image: redis:8-alpine@sha256:21090af93f8324db2f0f0f4f38a7c60369d47d917e000c3423d89d2ae2883537
     command: redis-server --loglevel warning
     expose:
       - "6379"
