@@ -82,7 +82,7 @@ import elementsHeight from '../../../utils/elementsHeight';
 import getDiffedProperties from '../../../utils/getDiffedProperties';
 import getFilteredRulesInfo from '../../../utils/getFilteredRulesInfo';
 import Link from '../../../utils/Link';
-import { ruleMatchesRequiredSignoff } from '../../../utils/requiredSignoffs';
+import { getRequiredSignoffsForRule } from '../../../utils/requiredSignoffs';
 import {
   buildProductChannelOptions,
   ruleMatchesChannel,
@@ -427,12 +427,10 @@ function ListRules(props) {
           );
         }
 
-        returnedRule.required_signoffs = {};
-        requiredSignoffs.forEach((rs) => {
-          if (ruleMatchesRequiredSignoff(rule, rs)) {
-            returnedRule.required_signoffs[rs.role] = rs.signoffs_required;
-          }
-        });
+        returnedRule.required_signoffs = getRequiredSignoffsForRule(
+          rule,
+          requiredSignoffs,
+        );
 
         return returnedRule;
       });
