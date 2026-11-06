@@ -33,17 +33,18 @@ def populateDB(testdir):
     # assuming we're already in the right directory with a db connection
     # read any rules we already have
     rules = os.path.join(testdir, "rules.sql")
-    if os.path.exists(rules):
-        f = open(rules, "r")
-        for line in f:
-            if line.startswith("#"):
-                continue
-            dbo.engine.execute(line.strip())
-    # and add any json blobs we created painstakingly, converting to compact json
-    for f in glob.glob("%s/*.json" % testdir):
-        data = json.load(open(f, "r"))
-        product = data["name"].split("-")[0]
-        dbo.engine.execute("INSERT INTO releases (name, product, data, data_version) VALUES (?, ?, ?, 1)", (data["name"], product, json.dumps(data)))
+    with dbo.engine.begin() as conn:
+        if os.path.exists(rules):
+            f = open(rules, "r")
+            for line in f:
+                if line.startswith("#"):
+                    continue
+                conn.exec_driver_sql(line.strip())
+        # and add any json blobs we created painstakingly, converting to compact json
+        for f in glob.glob("%s/*.json" % testdir):
+            data = json.load(open(f, "r"))
+            product = data["name"].split("-")[0]
+            conn.exec_driver_sql("INSERT INTO releases (name, product, data, data_version) VALUES (?, ?, ?, 1)", (data["name"], product, json.dumps(data)))
     # TODO - create a proper importer that walks the snippet store to find hashes ?
 
 

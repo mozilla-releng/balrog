@@ -28,17 +28,16 @@ class TestProductRequiredSignoffs(ViewTest):
     def testAddRequiredSignoff(self):
         ret = self._post("/required_signoffs/product", data=dict(product="fake", channel="b", role="releng", signoffs_required=1))
         self.assertStatusCode(ret, 201)
-        rs = (
-            dbo.productRequiredSignoffs.t.select()
-            .where(dbo.productRequiredSignoffs.product == "fake")
-            .where(dbo.productRequiredSignoffs.channel == "b")
-            .where(dbo.productRequiredSignoffs.role == "releng")
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            rs = conn.execute(
+                dbo.productRequiredSignoffs.t.select()
+                .where(dbo.productRequiredSignoffs.product == "fake")
+                .where(dbo.productRequiredSignoffs.channel == "b")
+                .where(dbo.productRequiredSignoffs.role == "releng")
+            ).fetchall()
         self.assertEqual(len(rs), 1)
-        self.assertEqual(rs[0]["signoffs_required"], 1)
-        self.assertEqual(rs[0]["data_version"], 1)
+        self.assertEqual(rs[0]._mapping["signoffs_required"], 1)
+        self.assertEqual(rs[0]._mapping["data_version"], 1)
 
     def testAddRequiredSignoffWithoutEnoughUsersInRole(self):
         ret = self._post("/required_signoffs/product", data=dict(product="fake", channel="b", role="releng", signoffs_required=3))
@@ -154,160 +153,246 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
 
     def setUp(self):
         super(TestProductRequiredSignoffsScheduledChanges, self).setUp()
-        dbo.productRequiredSignoffs.scheduled_changes.t.insert().execute(
-            sc_id=1,
-            scheduled_by="bill",
-            change_type="insert",
-            data_version=1,
-            base_product="fake",
-            base_channel="a",
-            base_role="relman",
-            base_signoffs_required=1,
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
-        dbo.productRequiredSignoffs.scheduled_changes.history.t.insert().execute(
-            change_id=2,
-            changed_by="bill",
-            timestamp=21,
-            sc_id=1,
-            scheduled_by="bill",
-            change_type="insert",
-            data_version=1,
-            base_product="fake",
-            base_channel="a",
-            base_role="relman",
-            base_signoffs_required=1,
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
-        dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(
-            change_id=1, changed_by="bill", timestamp=30, sc_id=1, username="bill"
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(
-            change_id=2, changed_by="bill", timestamp=31, sc_id=1, username="bill", role="releng"
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=100000000, data_version=1)
-        dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
-        dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=2, changed_by="bill", timestamp=21, sc_id=1, when=100000000, data_version=1
-        )
-
-        dbo.productRequiredSignoffs.scheduled_changes.t.insert().execute(
-            sc_id=2,
-            scheduled_by="bill",
-            change_type="update",
-            data_version=1,
-            base_product="fake",
-            base_channel="a",
-            base_role="releng",
-            base_signoffs_required=2,
-            base_data_version=1,
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=40, sc_id=2)
-        dbo.productRequiredSignoffs.scheduled_changes.history.t.insert().execute(
-            change_id=4,
-            changed_by="bill",
-            timestamp=41,
-            sc_id=2,
-            scheduled_by="bill",
-            change_type="update",
-            data_version=1,
-            base_product="fake",
-            base_channel="a",
-            base_role="releng",
-            base_signoffs_required=2,
-            base_data_version=1,
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="bill", role="releng")
-        dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(
-            change_id=3, changed_by="bill", timestamp=60, sc_id=2, username="bill"
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(
-            change_id=4, changed_by="bill", timestamp=61, sc_id=2, username="bill", role="releng"
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.conditions.t.insert().execute(sc_id=2, when=200000000, data_version=1)
-        dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=40, sc_id=2)
-        dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=4, changed_by="bill", timestamp=41, sc_id=2, when=200000000, data_version=1
-        )
-
-        dbo.productRequiredSignoffs.scheduled_changes.t.insert().execute(
-            sc_id=3,
-            scheduled_by="bill",
-            change_type="insert",
-            data_version=2,
-            base_product="fake",
-            base_channel="e",
-            base_role="releng",
-            base_signoffs_required=1,
-            complete=True,
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=80, sc_id=3)
-        dbo.productRequiredSignoffs.scheduled_changes.history.t.insert().execute(
-            change_id=6,
-            changed_by="bill",
-            timestamp=81,
-            sc_id=3,
-            scheduled_by="bill",
-            change_type="insert",
-            data_version=1,
-            base_product="fake",
-            base_channel="e",
-            base_role="releng",
-            base_signoffs_required=2,
-            complete=False,
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.history.t.insert().execute(
-            change_id=7,
-            changed_by="bill",
-            timestamp=100,
-            sc_id=3,
-            scheduled_by="bill",
-            change_type="insert",
-            data_version=2,
-            base_product="fake",
-            base_channel="e",
-            base_role="releng",
-            base_signoffs_required=1,
-            complete=True,
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=300000000, data_version=2)
-        dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=80, sc_id=3)
-        dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=6, changed_by="bill", timestamp=81, sc_id=3, when=300000000, data_version=1
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=7, changed_by="bill", timestamp=100, sc_id=3, when=300000000, data_version=2
-        )
-
-        dbo.productRequiredSignoffs.scheduled_changes.t.insert().execute(
-            sc_id=4, scheduled_by="bill", change_type="delete", data_version=1, base_product="fake", base_channel="j", base_role="releng", base_data_version=1
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.history.t.insert().execute(change_id=8, changed_by="bill", timestamp=200, sc_id=4)
-        dbo.productRequiredSignoffs.scheduled_changes.history.t.insert().execute(
-            change_id=9,
-            changed_by="bill",
-            timestamp=201,
-            sc_id=4,
-            scheduled_by="bill",
-            change_type="delete",
-            data_version=1,
-            base_product="fake",
-            base_channel="j",
-            base_role="releng",
-            base_data_version=1,
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="bill", role="releng")
-        dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(
-            change_id=8, changed_by="bill", timestamp=300, sc_id=1, username="bill"
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(
-            change_id=9, changed_by="bill", timestamp=301, sc_id=1, username="bill", role="releng"
-        )
-        dbo.productRequiredSignoffs.scheduled_changes.conditions.t.insert().execute(sc_id=4, when=400000000, data_version=1)
-        dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(change_id=8, changed_by="bill", timestamp=200, sc_id=4)
-        dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=9, changed_by="bill", timestamp=201, sc_id=4, when=400000000, data_version=1
-        )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 1,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "data_version": 1,
+                    "base_product": "fake",
+                    "base_channel": "a",
+                    "base_role": "relman",
+                    "base_signoffs_required": 1,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.productRequiredSignoffs.scheduled_changes.history.t.insert(), {"change_id": 1, "changed_by": "bill", "timestamp": 20, "sc_id": 1})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 2,
+                    "changed_by": "bill",
+                    "timestamp": 21,
+                    "sc_id": 1,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "data_version": 1,
+                    "base_product": "fake",
+                    "base_channel": "a",
+                    "base_role": "relman",
+                    "base_signoffs_required": 1,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.insert(), {"sc_id": 1, "username": "bill", "role": "releng"})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.insert(),
+                {"change_id": 1, "changed_by": "bill", "timestamp": 30, "sc_id": 1, "username": "bill"},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.insert(),
+                {"change_id": 2, "changed_by": "bill", "timestamp": 31, "sc_id": 1, "username": "bill", "role": "releng"},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.productRequiredSignoffs.scheduled_changes.conditions.t.insert(), {"sc_id": 1, "when": 100000000, "data_version": 1})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert(), {"change_id": 1, "changed_by": "bill", "timestamp": 20, "sc_id": 1}
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 2, "changed_by": "bill", "timestamp": 21, "sc_id": 1, "when": 100000000, "data_version": 1},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 2,
+                    "scheduled_by": "bill",
+                    "change_type": "update",
+                    "data_version": 1,
+                    "base_product": "fake",
+                    "base_channel": "a",
+                    "base_role": "releng",
+                    "base_signoffs_required": 2,
+                    "base_data_version": 1,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.productRequiredSignoffs.scheduled_changes.history.t.insert(), {"change_id": 3, "changed_by": "bill", "timestamp": 40, "sc_id": 2})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 4,
+                    "changed_by": "bill",
+                    "timestamp": 41,
+                    "sc_id": 2,
+                    "scheduled_by": "bill",
+                    "change_type": "update",
+                    "data_version": 1,
+                    "base_product": "fake",
+                    "base_channel": "a",
+                    "base_role": "releng",
+                    "base_signoffs_required": 2,
+                    "base_data_version": 1,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.insert(), {"sc_id": 2, "username": "bill", "role": "releng"})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.insert(),
+                {"change_id": 3, "changed_by": "bill", "timestamp": 60, "sc_id": 2, "username": "bill"},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.insert(),
+                {"change_id": 4, "changed_by": "bill", "timestamp": 61, "sc_id": 2, "username": "bill", "role": "releng"},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.productRequiredSignoffs.scheduled_changes.conditions.t.insert(), {"sc_id": 2, "when": 200000000, "data_version": 1})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert(), {"change_id": 3, "changed_by": "bill", "timestamp": 40, "sc_id": 2}
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 4, "changed_by": "bill", "timestamp": 41, "sc_id": 2, "when": 200000000, "data_version": 1},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 3,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "data_version": 2,
+                    "base_product": "fake",
+                    "base_channel": "e",
+                    "base_role": "releng",
+                    "base_signoffs_required": 1,
+                    "complete": True,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.productRequiredSignoffs.scheduled_changes.history.t.insert(), {"change_id": 5, "changed_by": "bill", "timestamp": 80, "sc_id": 3})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 6,
+                    "changed_by": "bill",
+                    "timestamp": 81,
+                    "sc_id": 3,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "data_version": 1,
+                    "base_product": "fake",
+                    "base_channel": "e",
+                    "base_role": "releng",
+                    "base_signoffs_required": 2,
+                    "complete": False,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 7,
+                    "changed_by": "bill",
+                    "timestamp": 100,
+                    "sc_id": 3,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "data_version": 2,
+                    "base_product": "fake",
+                    "base_channel": "e",
+                    "base_role": "releng",
+                    "base_signoffs_required": 1,
+                    "complete": True,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.productRequiredSignoffs.scheduled_changes.conditions.t.insert(), {"sc_id": 3, "when": 300000000, "data_version": 2})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert(), {"change_id": 5, "changed_by": "bill", "timestamp": 80, "sc_id": 3}
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 6, "changed_by": "bill", "timestamp": 81, "sc_id": 3, "when": 300000000, "data_version": 1},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 7, "changed_by": "bill", "timestamp": 100, "sc_id": 3, "when": 300000000, "data_version": 2},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 4,
+                    "scheduled_by": "bill",
+                    "change_type": "delete",
+                    "data_version": 1,
+                    "base_product": "fake",
+                    "base_channel": "j",
+                    "base_role": "releng",
+                    "base_data_version": 1,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.productRequiredSignoffs.scheduled_changes.history.t.insert(), {"change_id": 8, "changed_by": "bill", "timestamp": 200, "sc_id": 4})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 9,
+                    "changed_by": "bill",
+                    "timestamp": 201,
+                    "sc_id": 4,
+                    "scheduled_by": "bill",
+                    "change_type": "delete",
+                    "data_version": 1,
+                    "base_product": "fake",
+                    "base_channel": "j",
+                    "base_role": "releng",
+                    "base_data_version": 1,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.insert(), {"sc_id": 4, "username": "bill", "role": "releng"})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.insert(),
+                {"change_id": 8, "changed_by": "bill", "timestamp": 300, "sc_id": 1, "username": "bill"},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.insert(),
+                {"change_id": 9, "changed_by": "bill", "timestamp": 301, "sc_id": 1, "username": "bill", "role": "releng"},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.productRequiredSignoffs.scheduled_changes.conditions.t.insert(), {"sc_id": 4, "when": 400000000, "data_version": 1})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 8, "changed_by": "bill", "timestamp": 200, "sc_id": 4},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 9, "changed_by": "bill", "timestamp": 201, "sc_id": 4, "when": 400000000, "data_version": 1},
+            )
 
     def testGetScheduledChanges(self):
         ret = self._get("/scheduled_changes/required_signoffs/product")
@@ -477,9 +562,12 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.get_json(), {"sc_id": 5, "signoffs": {}})
-        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 5,
             "scheduled_by": "bill",
@@ -493,15 +581,13 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": 2,
         }
         self.assertEqual(db_data, expected)
-        cond = (
-            dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()
-            .where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 5)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 5)
+            ).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
-        self.assertEqual(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]._mapping), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeNewRequiredSignoff(self):
@@ -509,9 +595,12 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.get_json(), {"sc_id": 5, "signoffs": {}})
-        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 5,
             "scheduled_by": "bill",
@@ -525,15 +614,13 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": None,
         }
         self.assertEqual(db_data, expected)
-        cond = (
-            dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()
-            .where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 5)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 5)
+            ).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
-        self.assertEqual(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]._mapping), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeDeleteRequiredSignoff(self):
@@ -541,9 +628,12 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/required_signoffs/product", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.get_json(), {"sc_id": 5, "signoffs": {}})
-        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 5)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 5,
             "scheduled_by": "bill",
@@ -557,15 +647,13 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": 2,
         }
         self.assertEqual(db_data, expected)
-        cond = (
-            dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()
-            .where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 5)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 5)
+            ).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
-        self.assertEqual(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]._mapping), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeRejectsScId(self):
@@ -588,10 +676,12 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/required_signoffs/product/2", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {"bill": "releng"}})
-
-        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 2).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 2)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 2,
             "complete": False,
@@ -605,15 +695,13 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": 1,
         }
         self.assertEqual(db_data, expected)
-        cond = (
-            dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()
-            .where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 2)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 2)
+            ).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 2, "data_version": 2, "when": 200000000}
-        self.assertEqual(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]._mapping), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeNewRequiredSignoff(self):
@@ -621,10 +709,12 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/required_signoffs/product/1", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {"bill": "releng"}})
-
-        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 1).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 1)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 1,
             "complete": False,
@@ -638,36 +728,37 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": None,
         }
         self.assertEqual(db_data, expected)
-        cond = (
-            dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()
-            .where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 1)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 1)
+            ).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 1, "data_version": 2, "when": 450000000}
-        self.assertEqual(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]._mapping), cond_expected)
 
     def testDeleteScheduledChange(self):
         ret = self._delete("/scheduled_changes/required_signoffs/product/1", qs={"data_version": 1})
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        got = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 1).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            got = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 1)
+            ).fetchall()
         self.assertEqual(got, [])
-        cond_got = (
-            dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select()
-            .where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 1)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            cond_got = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.conditions.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.conditions.sc_id == 1)
+            ).fetchall()
         self.assertEqual(cond_got, [])
 
     def testEnactScheduledChangeExistingRequiredSignoff(self):
         ret = self._post("/scheduled_changes/required_signoffs/product/2/enact")
         self.assertEqual(ret.status_code, 200, ret.get_data())
-
-        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 2).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 2)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 2,
             "complete": True,
@@ -681,25 +772,25 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": 1,
         }
         self.assertEqual(db_data, expected)
-
-        base_row = (
-            dbo.productRequiredSignoffs.t.select()
-            .where(dbo.productRequiredSignoffs.channel == "a")
-            .where(dbo.productRequiredSignoffs.product == "fake")
-            .where(dbo.productRequiredSignoffs.role == "releng")
-            .execute()
-            .fetchall()[0]
-        )
+        with dbo.engine.connect() as conn:
+            base_row = conn.execute(
+                dbo.productRequiredSignoffs.t.select()
+                .where(dbo.productRequiredSignoffs.channel == "a")
+                .where(dbo.productRequiredSignoffs.product == "fake")
+                .where(dbo.productRequiredSignoffs.role == "releng")
+            ).fetchall()[0]
         base_expected = {"product": "fake", "channel": "a", "role": "releng", "signoffs_required": 2, "data_version": 2}
-        self.assertEqual(dict(base_row), base_expected)
+        self.assertEqual(dict(base_row._mapping), base_expected)
 
     def testEnactScheduledChangeNewRequiredSignoff(self):
         ret = self._post("/scheduled_changes/required_signoffs/product/1/enact")
         self.assertEqual(ret.status_code, 200, ret.get_data())
-
-        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 1).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 1)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 1,
             "complete": True,
@@ -713,25 +804,29 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": None,
         }
         self.assertEqual(db_data, expected)
-
-        base_row = dict(
-            dbo.productRequiredSignoffs.t.select()
-            .where(dbo.productRequiredSignoffs.channel == "a")
-            .where(dbo.productRequiredSignoffs.product == "fake")
-            .where(dbo.productRequiredSignoffs.role == "relman")
-            .execute()
-            .fetchall()[0]
-        )
+        with dbo.engine.connect() as conn:
+            base_row = dict(
+                conn.execute(
+                    dbo.productRequiredSignoffs.t.select()
+                    .where(dbo.productRequiredSignoffs.channel == "a")
+                    .where(dbo.productRequiredSignoffs.product == "fake")
+                    .where(dbo.productRequiredSignoffs.role == "relman")
+                )
+                .fetchall()[0]
+                ._mapping
+            )
         base_expected = {"product": "fake", "channel": "a", "role": "relman", "signoffs_required": 1, "data_version": 1}
         self.assertEqual(dict(base_row), base_expected)
 
     def testEnactScheduledChangeDeleteRequiredSignoff(self):
         ret = self._post("/scheduled_changes/required_signoffs/product/4/enact")
         self.assertEqual(ret.status_code, 200, ret.get_data())
-
-        r = dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 4).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.sc_id == 4)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 4,
             "complete": True,
@@ -745,15 +840,13 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": 1,
         }
         self.assertEqual(db_data, expected)
-
-        base_row = (
-            dbo.productRequiredSignoffs.t.select()
-            .where(dbo.productRequiredSignoffs.channel == "j")
-            .where(dbo.productRequiredSignoffs.product == "fake")
-            .where(dbo.productRequiredSignoffs.role == "releng")
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            base_row = conn.execute(
+                dbo.productRequiredSignoffs.t.select()
+                .where(dbo.productRequiredSignoffs.channel == "j")
+                .where(dbo.productRequiredSignoffs.product == "fake")
+                .where(dbo.productRequiredSignoffs.role == "releng")
+            ).fetchall()
         self.assertEqual(len(base_row), 0)
 
     def testGetScheduledChangeHistoryRevisions(self):
@@ -802,26 +895,24 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
     def testSignoffWithPermission(self):
         ret = self._post("/scheduled_changes/required_signoffs/product/2/signoffs", data=dict(role="relman"), username="bob")
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        r = (
-            dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.select()
-            .where(dbo.productRequiredSignoffs.scheduled_changes.signoffs.sc_id == 2)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.signoffs.sc_id == 2)
+            ).fetchall()
         self.assertEqual(len(r), 2)
-        self.assertEqual(dict(r[0]), {"sc_id": 2, "username": "bill", "role": "releng"})
-        self.assertEqual(dict(r[1]), {"sc_id": 2, "username": "bob", "role": "relman"})
-        r = (
-            dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.select()
-            .where(dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.sc_id == 2)
-            .execute()
-            .fetchall()
-        )
+        self.assertEqual(dict(r[0]._mapping), {"sc_id": 2, "username": "bill", "role": "releng"})
+        self.assertEqual(dict(r[1]._mapping), {"sc_id": 2, "username": "bob", "role": "relman"})
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.t.select().where(
+                    dbo.productRequiredSignoffs.scheduled_changes.signoffs.history.sc_id == 2
+                )
+            ).fetchall()
         self.assertEqual(len(r), 4)
-        self.assertEqual(dict(r[0]), {"change_id": 3, "changed_by": "bill", "timestamp": 60, "sc_id": 2, "username": "bill", "role": None})
-        self.assertEqual(dict(r[1]), {"change_id": 4, "changed_by": "bill", "timestamp": 61, "sc_id": 2, "username": "bill", "role": "releng"})
-        self.assertEqual(dict(r[2]), {"change_id": 10, "changed_by": "bob", "timestamp": 99999, "sc_id": 2, "username": "bob", "role": None})
-        self.assertEqual(dict(r[3]), {"change_id": 11, "changed_by": "bob", "timestamp": 100000, "sc_id": 2, "username": "bob", "role": "relman"})
+        self.assertEqual(dict(r[0]._mapping), {"change_id": 3, "changed_by": "bill", "timestamp": 60, "sc_id": 2, "username": "bill", "role": None})
+        self.assertEqual(dict(r[1]._mapping), {"change_id": 4, "changed_by": "bill", "timestamp": 61, "sc_id": 2, "username": "bill", "role": "releng"})
+        self.assertEqual(dict(r[2]._mapping), {"change_id": 10, "changed_by": "bob", "timestamp": 99999, "sc_id": 2, "username": "bob", "role": None})
+        self.assertEqual(dict(r[3]._mapping), {"change_id": 11, "changed_by": "bob", "timestamp": 100000, "sc_id": 2, "username": "bob", "role": "relman"})
 
     def testSignoffWithoutPermission(self):
         ret = self._post("/scheduled_changes/required_signoffs/product/2/signoffs", data=dict(role="relman"), username="bill")
@@ -830,12 +921,10 @@ class TestProductRequiredSignoffsScheduledChanges(ViewTest):
     def testRevokeSignoff(self):
         ret = self._delete("/scheduled_changes/required_signoffs/product/1/signoffs", username="bill")
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        r = (
-            dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.select()
-            .where(dbo.productRequiredSignoffs.scheduled_changes.signoffs.sc_id == 1)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.productRequiredSignoffs.scheduled_changes.signoffs.t.select().where(dbo.productRequiredSignoffs.scheduled_changes.signoffs.sc_id == 1)
+            ).fetchall()
         self.assertEqual(len(r), 0)
 
 
@@ -856,16 +945,15 @@ class TestPermissionsRequiredSignoffs(ViewTest):
     def testAddRequiredSignoff(self):
         ret = self._post("/required_signoffs/permissions", data=dict(product="super", role="releng", signoffs_required=1))
         self.assertStatusCode(ret, 201)
-        rs = (
-            dbo.permissionsRequiredSignoffs.t.select()
-            .where(dbo.permissionsRequiredSignoffs.product == "super")
-            .where(dbo.permissionsRequiredSignoffs.role == "releng")
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            rs = conn.execute(
+                dbo.permissionsRequiredSignoffs.t.select()
+                .where(dbo.permissionsRequiredSignoffs.product == "super")
+                .where(dbo.permissionsRequiredSignoffs.role == "releng")
+            ).fetchall()
         self.assertEqual(len(rs), 1)
-        self.assertEqual(rs[0]["signoffs_required"], 1)
-        self.assertEqual(rs[0]["data_version"], 1)
+        self.assertEqual(rs[0]._mapping["signoffs_required"], 1)
+        self.assertEqual(rs[0]._mapping["data_version"], 1)
 
     def testAddRequiredSignoffWithoutEnoughUsersInRole(self):
         ret = self._post("/required_signoffs/permissions", data=dict(product="super", role="releng", signoffs_required=3))
@@ -922,139 +1010,248 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
 
     def setUp(self):
         super(TestPermissionsRequiredSignoffsScheduledChanges, self).setUp()
-        dbo.permissionsRequiredSignoffs.scheduled_changes.t.insert().execute(
-            sc_id=1, scheduled_by="bill", change_type="insert", data_version=1, base_product="superfake", base_role="releng", base_signoffs_required=1
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
-        dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert().execute(
-            change_id=2,
-            changed_by="bill",
-            timestamp=21,
-            sc_id=1,
-            scheduled_by="bill",
-            change_type="insert",
-            data_version=1,
-            base_product="superfake",
-            base_role="releng",
-            base_signoffs_required=1,
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bob", role="relman")
-        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(
-            change_id=1, changed_by="bob", timestamp=30, sc_id=1, username="bob"
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(
-            change_id=2, changed_by="bob", timestamp=31, sc_id=1, username="bob", role="relman"
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=100000000, data_version=1)
-        dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=20, sc_id=1)
-        dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=2, changed_by="bill", timestamp=21, sc_id=1, when=100000000, data_version=1
-        )
-
-        dbo.permissionsRequiredSignoffs.scheduled_changes.t.insert().execute(
-            sc_id=2,
-            scheduled_by="bill",
-            change_type="update",
-            data_version=1,
-            base_product="fake",
-            base_role="releng",
-            base_signoffs_required=2,
-            base_data_version=1,
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=40, sc_id=2)
-        dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert().execute(
-            change_id=4,
-            changed_by="bill",
-            timestamp=41,
-            sc_id=2,
-            scheduled_by="bill",
-            change_type="update",
-            data_version=1,
-            base_product="fake",
-            base_role="releng",
-            base_signoffs_required=2,
-            base_data_version=1,
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="bill", role="releng")
-        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(
-            change_id=3, changed_by="bill", timestamp=60, sc_id=2, username="bill"
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(
-            change_id=4, changed_by="bill", timestamp=61, sc_id=2, username="bill", role="releng"
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.insert().execute(sc_id=2, when=200000000, data_version=1)
-        dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=40, sc_id=2)
-        dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=4, changed_by="bill", timestamp=41, sc_id=2, when=200000000, data_version=1
-        )
-
-        dbo.permissionsRequiredSignoffs.scheduled_changes.t.insert().execute(
-            sc_id=3, scheduled_by="bill", change_type="insert", data_version=2, base_product="bar", base_role="releng", base_signoffs_required=1, complete=True
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=80, sc_id=3)
-        dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert().execute(
-            change_id=6,
-            changed_by="bill",
-            timestamp=81,
-            sc_id=3,
-            scheduled_by="bill",
-            change_type="insert",
-            data_version=1,
-            base_product="bar",
-            base_role="releng",
-            base_signoffs_required=2,
-            complete=False,
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert().execute(
-            change_id=7,
-            changed_by="bill",
-            timestamp=100,
-            sc_id=3,
-            scheduled_by="bill",
-            change_type="insert",
-            data_version=2,
-            base_product="bar",
-            base_role="releng",
-            base_signoffs_required=1,
-            complete=True,
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=300000000, data_version=2)
-        dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=80, sc_id=3)
-        dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=6, changed_by="bill", timestamp=81, sc_id=3, when=300000000, data_version=1
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=7, changed_by="bill", timestamp=100, sc_id=3, when=300000000, data_version=2
-        )
-
-        dbo.permissionsRequiredSignoffs.scheduled_changes.t.insert().execute(
-            sc_id=4, scheduled_by="bill", change_type="delete", data_version=1, base_product="blah", base_role="releng", base_data_version=1
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert().execute(change_id=8, changed_by="bill", timestamp=200, sc_id=4)
-        dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert().execute(
-            change_id=9,
-            changed_by="bill",
-            timestamp=201,
-            sc_id=4,
-            scheduled_by="bill",
-            change_type="delete",
-            data_version=1,
-            base_product="blah",
-            base_role="releng",
-            base_data_version=1,
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="bill", role="releng")
-        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(
-            change_id=8, changed_by="bill", timestamp=300, sc_id=1, username="bill"
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert().execute(
-            change_id=9, changed_by="bill", timestamp=301, sc_id=1, username="bill", role="releng"
-        )
-        dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.insert().execute(sc_id=4, when=400000000, data_version=1)
-        dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(change_id=8, changed_by="bill", timestamp=200, sc_id=4)
-        dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=9, changed_by="bill", timestamp=201, sc_id=4, when=400000000, data_version=1
-        )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 1,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "data_version": 1,
+                    "base_product": "superfake",
+                    "base_role": "releng",
+                    "base_signoffs_required": 1,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert(), {"change_id": 1, "changed_by": "bill", "timestamp": 20, "sc_id": 1}
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 2,
+                    "changed_by": "bill",
+                    "timestamp": 21,
+                    "sc_id": 1,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "data_version": 1,
+                    "base_product": "superfake",
+                    "base_role": "releng",
+                    "base_signoffs_required": 1,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.insert(), {"sc_id": 1, "username": "bob", "role": "relman"})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert(),
+                {"change_id": 1, "changed_by": "bob", "timestamp": 30, "sc_id": 1, "username": "bob"},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert(),
+                {"change_id": 2, "changed_by": "bob", "timestamp": 31, "sc_id": 1, "username": "bob", "role": "relman"},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.insert(), {"sc_id": 1, "when": 100000000, "data_version": 1})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 1, "changed_by": "bill", "timestamp": 20, "sc_id": 1},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 2, "changed_by": "bill", "timestamp": 21, "sc_id": 1, "when": 100000000, "data_version": 1},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 2,
+                    "scheduled_by": "bill",
+                    "change_type": "update",
+                    "data_version": 1,
+                    "base_product": "fake",
+                    "base_role": "releng",
+                    "base_signoffs_required": 2,
+                    "base_data_version": 1,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert(), {"change_id": 3, "changed_by": "bill", "timestamp": 40, "sc_id": 2}
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 4,
+                    "changed_by": "bill",
+                    "timestamp": 41,
+                    "sc_id": 2,
+                    "scheduled_by": "bill",
+                    "change_type": "update",
+                    "data_version": 1,
+                    "base_product": "fake",
+                    "base_role": "releng",
+                    "base_signoffs_required": 2,
+                    "base_data_version": 1,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.insert(), {"sc_id": 2, "username": "bill", "role": "releng"})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert(),
+                {"change_id": 3, "changed_by": "bill", "timestamp": 60, "sc_id": 2, "username": "bill"},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert(),
+                {"change_id": 4, "changed_by": "bill", "timestamp": 61, "sc_id": 2, "username": "bill", "role": "releng"},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.insert(), {"sc_id": 2, "when": 200000000, "data_version": 1})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 3, "changed_by": "bill", "timestamp": 40, "sc_id": 2},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 4, "changed_by": "bill", "timestamp": 41, "sc_id": 2, "when": 200000000, "data_version": 1},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 3,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "data_version": 2,
+                    "base_product": "bar",
+                    "base_role": "releng",
+                    "base_signoffs_required": 1,
+                    "complete": True,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert(), {"change_id": 5, "changed_by": "bill", "timestamp": 80, "sc_id": 3}
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 6,
+                    "changed_by": "bill",
+                    "timestamp": 81,
+                    "sc_id": 3,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "data_version": 1,
+                    "base_product": "bar",
+                    "base_role": "releng",
+                    "base_signoffs_required": 2,
+                    "complete": False,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 7,
+                    "changed_by": "bill",
+                    "timestamp": 100,
+                    "sc_id": 3,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "data_version": 2,
+                    "base_product": "bar",
+                    "base_role": "releng",
+                    "base_signoffs_required": 1,
+                    "complete": True,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.insert(), {"sc_id": 3, "when": 300000000, "data_version": 2})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 5, "changed_by": "bill", "timestamp": 80, "sc_id": 3},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 6, "changed_by": "bill", "timestamp": 81, "sc_id": 3, "when": 300000000, "data_version": 1},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 7, "changed_by": "bill", "timestamp": 100, "sc_id": 3, "when": 300000000, "data_version": 2},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 4,
+                    "scheduled_by": "bill",
+                    "change_type": "delete",
+                    "data_version": 1,
+                    "base_product": "blah",
+                    "base_role": "releng",
+                    "base_data_version": 1,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert(), {"change_id": 8, "changed_by": "bill", "timestamp": 200, "sc_id": 4}
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 9,
+                    "changed_by": "bill",
+                    "timestamp": 201,
+                    "sc_id": 4,
+                    "scheduled_by": "bill",
+                    "change_type": "delete",
+                    "data_version": 1,
+                    "base_product": "blah",
+                    "base_role": "releng",
+                    "base_data_version": 1,
+                },
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.insert(), {"sc_id": 4, "username": "bill", "role": "releng"})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert(),
+                {"change_id": 8, "changed_by": "bill", "timestamp": 300, "sc_id": 1, "username": "bill"},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.insert(),
+                {"change_id": 9, "changed_by": "bill", "timestamp": 301, "sc_id": 1, "username": "bill", "role": "releng"},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.insert(), {"sc_id": 4, "when": 400000000, "data_version": 1})
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 8, "changed_by": "bill", "timestamp": 200, "sc_id": 4},
+            )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 9, "changed_by": "bill", "timestamp": 201, "sc_id": 4, "when": 400000000, "data_version": 1},
+            )
 
     def testGetScheduledChanges(self):
         ret = self._get("/scheduled_changes/required_signoffs/permissions")
@@ -1178,14 +1375,12 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/required_signoffs/permissions", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.get_json(), {"sc_id": 5, "signoffs": {"bill": "releng"}})
-        r = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 5)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 5)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 5,
             "scheduled_by": "bill",
@@ -1198,15 +1393,15 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": 2,
         }
         self.assertEqual(db_data, expected)
-        cond = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.sc_id == 5)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.select().where(
+                    dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.sc_id == 5
+                )
+            ).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
-        self.assertEqual(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]._mapping), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeNewRequiredSignoff(self):
@@ -1214,14 +1409,12 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/required_signoffs/permissions", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.get_json(), {"sc_id": 5, "signoffs": {}})
-        r = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 5)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 5)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 5,
             "scheduled_by": "bill",
@@ -1234,15 +1427,15 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": None,
         }
         self.assertEqual(db_data, expected)
-        cond = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.sc_id == 5)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.select().where(
+                    dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.sc_id == 5
+                )
+            ).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
-        self.assertEqual(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]._mapping), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeDeleteRequiredSignoff(self):
@@ -1250,14 +1443,12 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/required_signoffs/permissions", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.get_json(), {"sc_id": 5, "signoffs": {"bill": "releng"}})
-        r = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 5)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 5)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 5,
             "scheduled_by": "bill",
@@ -1270,15 +1461,15 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": 2,
         }
         self.assertEqual(db_data, expected)
-        cond = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.sc_id == 5)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.select().where(
+                    dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.sc_id == 5
+                )
+            ).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 5, "data_version": 1, "when": 400000000}
-        self.assertEqual(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]._mapping), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeRejectsScId(self):
@@ -1292,15 +1483,12 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/required_signoffs/permissions/2", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {"bill": "releng"}})
-
-        r = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 2)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 2)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 2,
             "complete": False,
@@ -1313,15 +1501,15 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": 1,
         }
         self.assertEqual(db_data, expected)
-        cond = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.sc_id == 2)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.select().where(
+                    dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.sc_id == 2
+                )
+            ).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 2, "data_version": 2, "when": 200000000}
-        self.assertEqual(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]._mapping), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeNewRequiredSignoff(self):
@@ -1329,15 +1517,12 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/required_signoffs/permissions/1", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {}})
-
-        r = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 1)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 1)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 1,
             "complete": False,
@@ -1350,46 +1535,41 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": None,
         }
         self.assertEqual(db_data, expected)
-        cond = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.sc_id == 1)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.select().where(
+                    dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.sc_id == 1
+                )
+            ).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 1, "data_version": 2, "when": 450000000}
-        self.assertEqual(dict(cond[0]), cond_expected)
+        self.assertEqual(dict(cond[0]._mapping), cond_expected)
 
     def testDeleteScheduledChange(self):
         ret = self._delete("/scheduled_changes/required_signoffs/permissions/1", qs={"data_version": 1})
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        got = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 1)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            got = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 1)
+            ).fetchall()
         self.assertEqual(got, [])
-        cond_got = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.sc_id == 1)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            cond_got = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.t.select().where(
+                    dbo.permissionsRequiredSignoffs.scheduled_changes.conditions.sc_id == 1
+                )
+            ).fetchall()
         self.assertEqual(cond_got, [])
 
     def testEnactScheduledChangeExistingRequiredSignoff(self):
         ret = self._post("/scheduled_changes/required_signoffs/permissions/2/enact")
         self.assertEqual(ret.status_code, 200, ret.get_data())
-
-        r = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 2)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 2)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 2,
             "complete": True,
@@ -1402,29 +1582,24 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": 1,
         }
         self.assertEqual(db_data, expected)
-
-        base_row = (
-            dbo.permissionsRequiredSignoffs.t.select()
-            .where(dbo.permissionsRequiredSignoffs.product == "fake")
-            .where(dbo.permissionsRequiredSignoffs.role == "releng")
-            .execute()
-            .fetchall()[0]
-        )
+        with dbo.engine.connect() as conn:
+            base_row = conn.execute(
+                dbo.permissionsRequiredSignoffs.t.select()
+                .where(dbo.permissionsRequiredSignoffs.product == "fake")
+                .where(dbo.permissionsRequiredSignoffs.role == "releng")
+            ).fetchall()[0]
         base_expected = {"product": "fake", "role": "releng", "signoffs_required": 2, "data_version": 2}
-        self.assertEqual(dict(base_row), base_expected)
+        self.assertEqual(dict(base_row._mapping), base_expected)
 
     def testEnactScheduledChangeNewRequiredSignoff(self):
         ret = self._post("/scheduled_changes/required_signoffs/permissions/1/enact")
         self.assertEqual(ret.status_code, 200, ret.get_data())
-
-        r = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 1)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 1)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 1,
             "complete": True,
@@ -1437,29 +1612,28 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": None,
         }
         self.assertEqual(db_data, expected)
-
-        base_row = dict(
-            dbo.permissionsRequiredSignoffs.t.select()
-            .where(dbo.permissionsRequiredSignoffs.product == "superfake")
-            .where(dbo.permissionsRequiredSignoffs.role == "releng")
-            .execute()
-            .fetchall()[0]
-        )
+        with dbo.engine.connect() as conn:
+            base_row = dict(
+                conn.execute(
+                    dbo.permissionsRequiredSignoffs.t.select()
+                    .where(dbo.permissionsRequiredSignoffs.product == "superfake")
+                    .where(dbo.permissionsRequiredSignoffs.role == "releng")
+                )
+                .fetchall()[0]
+                ._mapping
+            )
         base_expected = {"product": "superfake", "role": "releng", "signoffs_required": 1, "data_version": 1}
         self.assertEqual(dict(base_row), base_expected)
 
     def testEnactScheduledChangeDeleteRequiredSignoff(self):
         ret = self._post("/scheduled_changes/required_signoffs/permissions/4/enact")
         self.assertEqual(ret.status_code, 200, ret.get_data())
-
-        r = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 4)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.t.select().where(dbo.permissionsRequiredSignoffs.scheduled_changes.sc_id == 4)
+            ).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 4,
             "complete": True,
@@ -1472,14 +1646,12 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
             "base_data_version": 1,
         }
         self.assertEqual(db_data, expected)
-
-        base_row = (
-            dbo.permissionsRequiredSignoffs.t.select()
-            .where(dbo.permissionsRequiredSignoffs.product == "blah")
-            .where(dbo.permissionsRequiredSignoffs.role == "releng")
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            base_row = conn.execute(
+                dbo.permissionsRequiredSignoffs.t.select()
+                .where(dbo.permissionsRequiredSignoffs.product == "blah")
+                .where(dbo.permissionsRequiredSignoffs.role == "releng")
+            ).fetchall()
         self.assertEqual(len(base_row), 0)
 
     def testGetScheduledChangeHistoryRevisions(self):
@@ -1548,26 +1720,26 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
     def testSignoffWithPermission(self):
         ret = self._post("/scheduled_changes/required_signoffs/permissions/2/signoffs", data=dict(role="relman"), username="bob")
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        r = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.sc_id == 2)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.select().where(
+                    dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.sc_id == 2
+                )
+            ).fetchall()
         self.assertEqual(len(r), 2)
-        self.assertEqual(dict(r[0]), {"sc_id": 2, "username": "bill", "role": "releng"})
-        self.assertEqual(dict(r[1]), {"sc_id": 2, "username": "bob", "role": "relman"})
-        r = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.sc_id == 2)
-            .execute()
-            .fetchall()
-        )
+        self.assertEqual(dict(r[0]._mapping), {"sc_id": 2, "username": "bill", "role": "releng"})
+        self.assertEqual(dict(r[1]._mapping), {"sc_id": 2, "username": "bob", "role": "relman"})
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.t.select().where(
+                    dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.history.sc_id == 2
+                )
+            ).fetchall()
         self.assertEqual(len(r), 4)
-        self.assertEqual(dict(r[0]), {"change_id": 3, "changed_by": "bill", "timestamp": 60, "sc_id": 2, "username": "bill", "role": None})
-        self.assertEqual(dict(r[1]), {"change_id": 4, "changed_by": "bill", "timestamp": 61, "sc_id": 2, "username": "bill", "role": "releng"})
-        self.assertEqual(dict(r[2]), {"change_id": 10, "changed_by": "bob", "timestamp": 99999, "sc_id": 2, "username": "bob", "role": None})
-        self.assertEqual(dict(r[3]), {"change_id": 11, "changed_by": "bob", "timestamp": 100000, "sc_id": 2, "username": "bob", "role": "relman"})
+        self.assertEqual(dict(r[0]._mapping), {"change_id": 3, "changed_by": "bill", "timestamp": 60, "sc_id": 2, "username": "bill", "role": None})
+        self.assertEqual(dict(r[1]._mapping), {"change_id": 4, "changed_by": "bill", "timestamp": 61, "sc_id": 2, "username": "bill", "role": "releng"})
+        self.assertEqual(dict(r[2]._mapping), {"change_id": 10, "changed_by": "bob", "timestamp": 99999, "sc_id": 2, "username": "bob", "role": None})
+        self.assertEqual(dict(r[3]._mapping), {"change_id": 11, "changed_by": "bob", "timestamp": 100000, "sc_id": 2, "username": "bob", "role": "relman"})
 
     def testSignoffWithoutPermission(self):
         ret = self._post("/scheduled_changes/required_signoffs/permissions/2/signoffs", data=dict(role="relman"), username="bill")
@@ -1580,10 +1752,10 @@ class TestPermissionsRequiredSignoffsScheduledChanges(ViewTest):
     def testRevokeSignoff(self):
         ret = self._delete("/scheduled_changes/required_signoffs/permissions/1/signoffs", username="bob")
         self.assertEqual(ret.status_code, 200, ret.get_data())
-        r = (
-            dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.select()
-            .where(dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.sc_id == 1)
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.t.select().where(
+                    dbo.permissionsRequiredSignoffs.scheduled_changes.signoffs.sc_id == 1
+                )
+            ).fetchall()
         self.assertEqual(len(r), 0)

@@ -26,14 +26,27 @@ class CommonTestBase(unittest.TestCase):
 
         dbo.setDb("sqlite:///:memory:")
         self.metadata.create_all(dbo.engine)
-        dbo.rules.t.insert().execute(
-            rule_id=1, priority=90, backgroundRate=100, mapping="Fennec.55.0a1", update_type="minor", product="Fennec", data_version=1, alias="moz-releng"
-        )
-        dbo.releases.t.insert().execute(
-            name="Fennec.55.0a1",
-            product="Fennec",
-            data_version=1,
-            data=createBlob("""
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "rule_id": 1,
+                    "priority": 90,
+                    "backgroundRate": 100,
+                    "mapping": "Fennec.55.0a1",
+                    "update_type": "minor",
+                    "product": "Fennec",
+                    "data_version": 1,
+                    "alias": "moz-releng",
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "Fennec.55.0a1",
+                    "product": "Fennec",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "Fennec.55.0a1",
     "schema_version": 1,
@@ -65,15 +78,28 @@ class CommonTestBase(unittest.TestCase):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(
-            rule_id=2, priority=90, backgroundRate=100, mapping="Firefox.55.0a1", update_type="minor", product="Firefox", instructionSet="SSE", data_version=1
-        )
-        dbo.releases.t.insert().execute(
-            name="Firefox.55.0a1",
-            product="Firefox",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "rule_id": 2,
+                    "priority": 90,
+                    "backgroundRate": 100,
+                    "mapping": "Firefox.55.0a1",
+                    "update_type": "minor",
+                    "product": "Firefox",
+                    "instructionSet": "SSE",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "Firefox.55.0a1",
+                    "product": "Firefox",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "Firefox.55.0a1",
     "schema_version": 1,
@@ -98,19 +124,49 @@ class CommonTestBase(unittest.TestCase):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(rule_id=3, priority=90, backgroundRate=0, mapping="q", update_type="minor", product="q", data_version=3)
-        dbo.rules.history.t.insert().execute(
-            change_id=1, changed_by="usr", timestamp=10, rule_id=3, priority=90, backgroundRate=0, mapping="y", update_type="minor", product="y", data_version=2
-        )
-        dbo.rules.history.t.insert().execute(
-            change_id=2, changed_by="usr", timestamp=10, rule_id=3, priority=90, backgroundRate=0, mapping="z", update_type="minor", product="z", data_version=1
-        )
-        dbo.releases.t.insert().execute(
-            name="q",
-            product="q",
-            data_version=2,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {"rule_id": 3, "priority": 90, "backgroundRate": 0, "mapping": "q", "update_type": "minor", "product": "q", "data_version": 3},
+            )
+            conn.execute(
+                dbo.rules.history.t.insert(),
+                {
+                    "change_id": 1,
+                    "changed_by": "usr",
+                    "timestamp": 10,
+                    "rule_id": 3,
+                    "priority": 90,
+                    "backgroundRate": 0,
+                    "mapping": "y",
+                    "update_type": "minor",
+                    "product": "y",
+                    "data_version": 2,
+                },
+            )
+            conn.execute(
+                dbo.rules.history.t.insert(),
+                {
+                    "change_id": 2,
+                    "changed_by": "usr",
+                    "timestamp": 10,
+                    "rule_id": 3,
+                    "priority": 90,
+                    "backgroundRate": 0,
+                    "mapping": "z",
+                    "update_type": "minor",
+                    "product": "z",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "q",
+                    "product": "q",
+                    "data_version": 2,
+                    "data": createBlob("""
 {
     "name": "q",
     "schema_version": 1,
@@ -134,11 +190,22 @@ class CommonTestBase(unittest.TestCase):
     }
 }
 """),
-        )
+                },
+            )
 
-        dbo.rules.t.insert().execute(
-            rule_id=4, priority=90, backgroundRate=100, mapping="Firefox.55.0a1", update_type="minor", product="Firefox", mig64=True, data_version=1
-        )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "rule_id": 4,
+                    "priority": 90,
+                    "backgroundRate": 100,
+                    "mapping": "Firefox.55.0a1",
+                    "update_type": "minor",
+                    "product": "Firefox",
+                    "mig64": True,
+                    "data_version": 1,
+                },
+            )
         insert_release(firefox_54_0_1_build1, "Firefox", history=False)
         insert_release(firefox_56_0_build1, "Firefox", history=False)
         insert_release(superblob_e8f4a19, "SystemAddons", history=False)

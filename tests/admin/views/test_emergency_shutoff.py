@@ -8,25 +8,59 @@ from .base import ViewTest
 class TestEmergencyShutoff(ViewTest):
     def setUp(self):
         super(TestEmergencyShutoff, self).setUp()
-        dbo.emergencyShutoffs.t.insert().execute(product="Firefox", channel="nightly", data_version=1)
-        dbo.emergencyShutoffs.t.insert().execute(product="Firefox", channel="release", data_version=1)
-        dbo.emergencyShutoffs.t.insert().execute(product="Fennec", channel="beta", comment="Fennec panic!()", data_version=1)
-        dbo.emergencyShutoffs.t.insert().execute(product="Thunderbird", channel="nightly", data_version=1)
-        dbo.emergencyShutoffs.scheduled_changes.t.insert().execute(
-            sc_id=1, scheduled_by="bill", change_type="delete", data_version=1, base_product="Firefox", base_channel="nightly", base_data_version=1
-        )
-        dbo.emergencyShutoffs.scheduled_changes.t.insert().execute(
-            sc_id=2, scheduled_by="bill", change_type="delete", data_version=1, base_product="Thunderbird", base_channel="nightly", base_data_version=1
-        )
-        dbo.emergencyShutoffs.scheduled_changes.t.insert().execute(
-            sc_id=3, scheduled_by="bill", change_type="delete", data_version=1, base_product="Firefox", base_channel="release", base_data_version=1
-        )
-        dbo.emergencyShutoffs.scheduled_changes.conditions.t.insert().execute(sc_id=1, data_version=1, when=1000000)
-        dbo.emergencyShutoffs.scheduled_changes.conditions.t.insert().execute(sc_id=2, data_version=1, when=1000000)
-        dbo.emergencyShutoffs.scheduled_changes.conditions.t.insert().execute(sc_id=3, data_version=1, when=1000000)
-        dbo.emergencyShutoffs.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bill", role="releng")
-        dbo.productRequiredSignoffs.t.insert().execute(product="Firefox", channel="nightly", role="releng", signoffs_required=1, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="Firefox", channel="release", role="releng", signoffs_required=1, data_version=1)
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.emergencyShutoffs.t.insert(), {"product": "Firefox", "channel": "nightly", "data_version": 1})
+            conn.execute(dbo.emergencyShutoffs.t.insert(), {"product": "Firefox", "channel": "release", "data_version": 1})
+            conn.execute(dbo.emergencyShutoffs.t.insert(), {"product": "Fennec", "channel": "beta", "comment": "Fennec panic!()", "data_version": 1})
+            conn.execute(dbo.emergencyShutoffs.t.insert(), {"product": "Thunderbird", "channel": "nightly", "data_version": 1})
+            conn.execute(
+                dbo.emergencyShutoffs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 1,
+                    "scheduled_by": "bill",
+                    "change_type": "delete",
+                    "data_version": 1,
+                    "base_product": "Firefox",
+                    "base_channel": "nightly",
+                    "base_data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.emergencyShutoffs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 2,
+                    "scheduled_by": "bill",
+                    "change_type": "delete",
+                    "data_version": 1,
+                    "base_product": "Thunderbird",
+                    "base_channel": "nightly",
+                    "base_data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.emergencyShutoffs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 3,
+                    "scheduled_by": "bill",
+                    "change_type": "delete",
+                    "data_version": 1,
+                    "base_product": "Firefox",
+                    "base_channel": "release",
+                    "base_data_version": 1,
+                },
+            )
+            conn.execute(dbo.emergencyShutoffs.scheduled_changes.conditions.t.insert(), {"sc_id": 1, "data_version": 1, "when": 1000000})
+            conn.execute(dbo.emergencyShutoffs.scheduled_changes.conditions.t.insert(), {"sc_id": 2, "data_version": 1, "when": 1000000})
+            conn.execute(dbo.emergencyShutoffs.scheduled_changes.conditions.t.insert(), {"sc_id": 3, "data_version": 1, "when": 1000000})
+            conn.execute(dbo.emergencyShutoffs.scheduled_changes.signoffs.t.insert(), {"sc_id": 1, "username": "bill", "role": "releng"})
+            conn.execute(
+                dbo.productRequiredSignoffs.t.insert(),
+                {"product": "Firefox", "channel": "nightly", "role": "releng", "signoffs_required": 1, "data_version": 1},
+            )
+            conn.execute(
+                dbo.productRequiredSignoffs.t.insert(),
+                {"product": "Firefox", "channel": "release", "role": "releng", "signoffs_required": 1, "data_version": 1},
+            )
 
     def test_get_emergency_shutoff_list(self):
         resp = self._get("/emergency_shutoff")
@@ -113,17 +147,16 @@ class TestEmergencyShutoff(ViewTest):
         self.assertIn("sc_id", ret.get_json())
         sc_table = dbo.emergencyShutoffs.scheduled_changes
         conditions_table = sc_table.conditions
-        sc = (
-            sc_table.t.select()
-            .where(sc_table.base_product == data["product"])
-            .where(sc_table.base_channel == data["channel"])
-            .where(sc_table.base_data_version == data["data_version"])
-            .where(sc_table.change_type == data["change_type"])
-            .where(conditions_table.sc_id == sc_table.sc_id)
-            .where(conditions_table.when == data["when"])
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            sc = conn.execute(
+                sc_table.t.select()
+                .where(sc_table.base_product == data["product"])
+                .where(sc_table.base_channel == data["channel"])
+                .where(sc_table.base_data_version == data["data_version"])
+                .where(sc_table.change_type == data["change_type"])
+                .where(conditions_table.sc_id == sc_table.sc_id)
+                .where(conditions_table.when == data["when"])
+            ).fetchall()
         self.assertTrue(sc)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
@@ -142,25 +175,25 @@ class TestEmergencyShutoff(ViewTest):
         self.assertEqual(ret_data["new_data_version"], 2)
         sc_table = dbo.emergencyShutoffs.scheduled_changes
         conditions_table = sc_table.conditions
-        sc = (
-            sc_table.t.select()
-            .where(sc_table.base_product == "Firefox")
-            .where(sc_table.base_channel == "nightly")
-            .where(sc_table.base_data_version == 1)
-            .where(sc_table.change_type == "delete")
-            .where(sc_table.data_version == 2)
-            .where(conditions_table.sc_id == sc_table.sc_id)
-            .where(conditions_table.when == data["when"])
-            .execute()
-            .fetchall()
-        )
+        with dbo.engine.connect() as conn:
+            sc = conn.execute(
+                sc_table.t.select()
+                .where(sc_table.base_product == "Firefox")
+                .where(sc_table.base_channel == "nightly")
+                .where(sc_table.base_data_version == 1)
+                .where(sc_table.change_type == "delete")
+                .where(sc_table.data_version == 2)
+                .where(conditions_table.sc_id == sc_table.sc_id)
+                .where(conditions_table.when == data["when"])
+            ).fetchall()
         self.assertTrue(sc)
 
     def test_delete_scheduled_deletion(self):
         resp = self._delete("/scheduled_changes/emergency_shutoff/1", qs={"data_version": 1})
         self.assertStatusCode(resp, 200)
         sc_table = dbo.emergencyShutoffs.scheduled_changes
-        sc = sc_table.t.select().where(sc_table.sc_id == 1).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            sc = conn.execute(sc_table.t.select().where(sc_table.sc_id == 1)).fetchall()
         self.assertFalse(sc)
 
     def test_enact_updates_scheduled_for_reactivation(self):

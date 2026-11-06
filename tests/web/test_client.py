@@ -146,13 +146,19 @@ class ClientTestBase(ClientTestCommon):
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist(self.app.config["ALLOWLISTED_DOMAINS"])
         self.client = self.app.test_client()
-        dbo.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", data_version=1, alias="moz-releng")
-        dbo.releases.t.insert().execute(
-            name="b",
-            product="b",
-            data_version=1,
-            data=createBlob("""
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.permissions.t.insert(), {"permission": "admin", "username": "bill", "data_version": 1})
+            conn.execute(
+                dbo.rules.t.insert(),
+                {"priority": 90, "backgroundRate": 100, "mapping": "b", "update_type": "minor", "product": "b", "data_version": 1, "alias": "moz-releng"},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "b",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "b",
     "schema_version": 1,
@@ -184,14 +190,20 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
+                },
+            )
 
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="s", update_type="minor", product="s", instructionSet="SSE", data_version=1)
-        dbo.releases.t.insert().execute(
-            name="s",
-            product="s",
-            data_version=1,
-            data=createBlob("""
+            conn.execute(
+                dbo.rules.t.insert(),
+                {"priority": 90, "backgroundRate": 100, "mapping": "s", "update_type": "minor", "product": "s", "instructionSet": "SSE", "data_version": 1},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "s",
+                    "product": "s",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "s",
     "schema_version": 1,
@@ -215,13 +227,19 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping="q", update_type="minor", product="q", fallbackMapping="fallback", data_version=1)
-        dbo.releases.t.insert().execute(
-            name="q",
-            product="q",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {"priority": 90, "backgroundRate": 0, "mapping": "q", "update_type": "minor", "product": "q", "fallbackMapping": "fallback", "data_version": 1},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "q",
+                    "product": "q",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "q",
     "schema_version": 1,
@@ -245,12 +263,15 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.releases.t.insert().execute(
-            name="fallback",
-            product="q",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "fallback",
+                    "product": "q",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "fallback",
     "schema_version": 1,
@@ -274,15 +295,28 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(
-            rule_id=42024, priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c", distribution="default", data_version=1
-        )
-        dbo.releases.t.insert().execute(
-            name="c",
-            product="c",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "rule_id": 42024,
+                    "priority": 90,
+                    "backgroundRate": 100,
+                    "mapping": "c",
+                    "update_type": "minor",
+                    "product": "c",
+                    "distribution": "default",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "c",
+                    "product": "c",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "c",
     "schema_version": 1,
@@ -306,21 +340,27 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(
-            priority=90,
-            backgroundRate=100,
-            mapping="distTest",
-            update_type="minor",
-            product="distTest",
-            distribution="mozilla1,mozilla2,mozilla3",
-            data_version=1,
-        )
-        dbo.releases.t.insert().execute(
-            name="distTest",
-            product="distTest",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 90,
+                    "backgroundRate": 100,
+                    "mapping": "distTest",
+                    "update_type": "minor",
+                    "product": "distTest",
+                    "distribution": "mozilla1,mozilla2,mozilla3",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "distTest",
+                    "product": "distTest",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "distTest",
     "schema_version": 1,
@@ -344,14 +384,19 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
+                },
+            )
 
-        dbo.rules.t.insert().execute(priority=80, backgroundRate=100, mapping="c2", update_type="minor", product="c", data_version=1)
-        dbo.releases.t.insert().execute(
-            name="c2",
-            product="c",
-            data_version=1,
-            data=createBlob("""
+            conn.execute(
+                dbo.rules.t.insert(), {"priority": 80, "backgroundRate": 100, "mapping": "c2", "update_type": "minor", "product": "c", "data_version": 1}
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "c2",
+                    "product": "c",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "c2",
     "schema_version": 1,
@@ -375,13 +420,18 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="d", update_type="minor", product="d", data_version=1)
-        dbo.releases.t.insert().execute(
-            name="d",
-            product="d",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(), {"priority": 90, "backgroundRate": 100, "mapping": "d", "update_type": "minor", "product": "d", "data_version": 1}
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "d",
+                    "product": "d",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "d",
     "schema_version": 1,
@@ -405,14 +455,17 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
+                },
+            )
 
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=0, mapping="e", update_type="minor", product="e", data_version=1)
-        dbo.releases.t.insert().execute(
-            name="e",
-            product="e",
-            data_version=1,
-            data=createBlob("""
+            conn.execute(dbo.rules.t.insert(), {"priority": 90, "backgroundRate": 0, "mapping": "e", "update_type": "minor", "product": "e", "data_version": 1})
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "e",
+                    "product": "e",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "e",
     "schema_version": 1,
@@ -434,20 +487,55 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
+                },
+            )
 
-        dbo.rules.t.insert().execute(
-            priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f", channel="a", memory="<=8000", data_version=1
-        )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f", channel="b", memory="9000", data_version=1)
-        dbo.rules.t.insert().execute(
-            priority=90, backgroundRate=100, mapping="f", update_type="minor", product="f", channel="c", memory=">10000", data_version=1
-        )
-        dbo.releases.t.insert().execute(
-            name="f",
-            product="f",
-            data_version=1,
-            data=createBlob("""
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 90,
+                    "backgroundRate": 100,
+                    "mapping": "f",
+                    "update_type": "minor",
+                    "product": "f",
+                    "channel": "a",
+                    "memory": "<=8000",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 90,
+                    "backgroundRate": 100,
+                    "mapping": "f",
+                    "update_type": "minor",
+                    "product": "f",
+                    "channel": "b",
+                    "memory": "9000",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 90,
+                    "backgroundRate": 100,
+                    "mapping": "f",
+                    "update_type": "minor",
+                    "product": "f",
+                    "channel": "c",
+                    "memory": ">10000",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "f",
+                    "product": "f",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "f",
     "schema_version": 1,
@@ -471,48 +559,68 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
+                },
+            )
 
-        dbo.rules.t.insert().execute(priority=200, backgroundRate=100, mapping="gmp", update_type="minor", product="gmp", data_version=1)
-        dbo.rules.t.insert().execute(
-            priority=200,
-            backgroundRate=100,
-            mapping="gmp-with-one-response-product",
-            update_type="minor",
-            product="gmp-with-one-response-product",
-            data_version=1,
-        )
-        dbo.rules.t.insert().execute(priority=190, backgroundRate=100, mapping="response-a", update_type="minor", product="response-a", data_version=1)
-        dbo.rules.t.insert().execute(priority=180, backgroundRate=100, mapping="response-b", update_type="minor", product="response-b", data_version=1)
-        dbo.releases.t.insert().execute(
-            name="gmp-with-one-response-product",
-            product="gmp-with-one-response-product",
-            data_version=1,
-            data=createBlob("""
+            conn.execute(
+                dbo.rules.t.insert(), {"priority": 200, "backgroundRate": 100, "mapping": "gmp", "update_type": "minor", "product": "gmp", "data_version": 1}
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 200,
+                    "backgroundRate": 100,
+                    "mapping": "gmp-with-one-response-product",
+                    "update_type": "minor",
+                    "product": "gmp-with-one-response-product",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {"priority": 190, "backgroundRate": 100, "mapping": "response-a", "update_type": "minor", "product": "response-a", "data_version": 1},
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {"priority": 180, "backgroundRate": 100, "mapping": "response-b", "update_type": "minor", "product": "response-b", "data_version": 1},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "gmp-with-one-response-product",
+                    "product": "gmp-with-one-response-product",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "superblob",
     "schema_version": 4000,
     "products": ["response-a"]
 }
 """),
-        )
-        dbo.releases.t.insert().execute(
-            name="gmp",
-            product="gmp",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "gmp",
+                    "product": "gmp",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "superblob",
     "schema_version": 4000,
     "products": ["response-a", "response-b"]
 }
 """),
-        )
-        dbo.releases.t.insert().execute(
-            name="response-a",
-            product="response-a",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "response-a",
+                    "product": "response-a",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "response-a",
     "schema_version": 1,
@@ -548,12 +656,15 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.releases.t.insert().execute(
-            name="response-b",
-            product="response-b",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "response-b",
+                    "product": "response-b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "response-b",
     "schema_version": 1,
@@ -576,15 +687,26 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(
-            priority=180, backgroundRate=100, mapping="systemaddons-uninstall", update_type="minor", product="systemaddons-uninstall", data_version=1
-        )
-        dbo.releases.t.insert().execute(
-            name="systemaddons-uninstall",
-            product="systemaddons-uninstall",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 180,
+                    "backgroundRate": 100,
+                    "mapping": "systemaddons-uninstall",
+                    "update_type": "minor",
+                    "product": "systemaddons-uninstall",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "systemaddons-uninstall",
+                    "product": "systemaddons-uninstall",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "fake",
     "schema_version": 5000,
@@ -592,13 +714,19 @@ class ClientTestBase(ClientTestCommon):
     "uninstall": true
 }
 """),
-        )
-        dbo.rules.t.insert().execute(priority=180, backgroundRate=100, mapping="systemaddons", update_type="minor", product="systemaddons", data_version=1)
-        dbo.releases.t.insert().execute(
-            name="systemaddons",
-            product="systemaddons",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {"priority": 180, "backgroundRate": 100, "mapping": "systemaddons", "update_type": "minor", "product": "systemaddons", "data_version": 1},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "systemaddons",
+                    "product": "systemaddons",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "fake",
     "schema_version": 5000,
@@ -618,21 +746,27 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
+                },
+            )
 
-        dbo.rules.t.insert().execute(
-            priority=1000,
-            backgroundRate=0,
-            mapping="product_that_should_not_be_updated-1.1",
-            update_type="minor",
-            product="product_that_should_not_be_updated",
-            data_version=1,
-        )
-        dbo.releases.t.insert().execute(
-            name="product_that_should_not_be_updated-1.1",
-            product="product_that_should_not_be_updated",
-            data_version=1,
-            data=createBlob("""
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 1000,
+                    "backgroundRate": 0,
+                    "mapping": "product_that_should_not_be_updated-1.1",
+                    "update_type": "minor",
+                    "product": "product_that_should_not_be_updated",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "product_that_should_not_be_updated-1.1",
+                    "product": "product_that_should_not_be_updated",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "product_that_should_not_be_updated-1.1",
     "schema_version": 1,
@@ -656,21 +790,27 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
+                },
+            )
 
-        dbo.rules.t.insert().execute(
-            priority=90,
-            backgroundRate=100,
-            mapping="product_that_should_not_be_updated-2.0",
-            update_type="minor",
-            product="product_that_should_not_be_updated",
-            data_version=1,
-        )
-        dbo.releases.t.insert().execute(
-            name="product_that_should_not_be_updated-2.0",
-            product="product_that_should_not_be_updated",
-            data_version=1,
-            data=createBlob("""
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 90,
+                    "backgroundRate": 100,
+                    "mapping": "product_that_should_not_be_updated-2.0",
+                    "update_type": "minor",
+                    "product": "product_that_should_not_be_updated",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "product_that_should_not_be_updated-2.0",
+                    "product": "product_that_should_not_be_updated",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "product_that_should_not_be_updated-2.0",
     "schema_version": 1,
@@ -694,73 +834,94 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(
-            priority=200,
-            backgroundRate=100,
-            mapping="superblobaddon-with-multiple-response-blob",
-            update_type="minor",
-            product="superblobaddon-with-multiple-response-blob",
-            data_version=1,
-        )
-        dbo.rules.t.insert().execute(
-            priority=200,
-            backgroundRate=100,
-            mapping="superblobaddon-with-multiple-response-blob-glob",
-            update_type="minor",
-            product="superblobaddon-with-multiple-response-blob-glob",
-            version="99.8.*",
-            data_version=1,
-        )
-        dbo.rules.t.insert().execute(
-            priority=200,
-            backgroundRate=100,
-            mapping="superblobaddon-with-one-response-blob",
-            update_type="minor",
-            product="superblobaddon-with-one-response-blob",
-            data_version=1,
-        )
-        dbo.releases.t.insert().execute(
-            name="superblobaddon-with-one-response-blob",
-            product="superblobaddon-with-one-response-blob",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 200,
+                    "backgroundRate": 100,
+                    "mapping": "superblobaddon-with-multiple-response-blob",
+                    "update_type": "minor",
+                    "product": "superblobaddon-with-multiple-response-blob",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 200,
+                    "backgroundRate": 100,
+                    "mapping": "superblobaddon-with-multiple-response-blob-glob",
+                    "update_type": "minor",
+                    "product": "superblobaddon-with-multiple-response-blob-glob",
+                    "version": "99.8.*",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 200,
+                    "backgroundRate": 100,
+                    "mapping": "superblobaddon-with-one-response-blob",
+                    "update_type": "minor",
+                    "product": "superblobaddon-with-one-response-blob",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "superblobaddon-with-one-response-blob",
+                    "product": "superblobaddon-with-one-response-blob",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "superblobaddon",
     "schema_version": 4000,
     "blobs": ["responseblob-a"]
 }
 """),
-        )
-        dbo.releases.t.insert().execute(
-            name="superblobaddon-with-multiple-response-blob",
-            product="superblobaddon-with-multiple-response-blob",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "superblobaddon-with-multiple-response-blob",
+                    "product": "superblobaddon-with-multiple-response-blob",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "superblobaddon",
     "schema_version": 4000,
     "blobs": ["responseblob-a", "responseblob-b"]
 }
 """),
-        )
-        dbo.releases.t.insert().execute(
-            name="superblobaddon-with-multiple-response-blob-glob",
-            product="superblobaddon-with-multiple-response-blob-glob",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "superblobaddon-with-multiple-response-blob-glob",
+                    "product": "superblobaddon-with-multiple-response-blob-glob",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "superblobaddon",
     "schema_version": 4000,
     "blobs": ["responseblob-a", "responseblob-b"]
 }
 """),
-        )
-        dbo.releases.t.insert().execute(
-            name="responseblob-a",
-            product="responseblob-a",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "responseblob-a",
+                    "product": "responseblob-a",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "responseblob-a",
     "schema_version": 5000,
@@ -802,12 +963,15 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.releases.t.insert().execute(
-            name="responseblob-b",
-            product="responseblob-b",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "responseblob-b",
+                    "product": "responseblob-b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "responseblob-b",
     "schema_version": 5000,
@@ -828,25 +992,47 @@ class ClientTestBase(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(
-            priority=100, product="Firefox", channel="release", mapping="Firefox-56.0-build1", backgroundRate=100, update_type="minor", data_version=1
-        )
-        insert_release(firefox_54_0_1_build1, "Firefox", history=False)
-        insert_release(firefox_56_0_build1, "Firefox", history=False)
-        insert_release(firefox_100_0_build1, "Firefox", history=False)
-        dbo.rules.t.insert().execute(
-            priority=100, product="Firefox", channel="release100", mapping="Firefox-100.0-build1", backgroundRate=100, update_type="minor", data_version=1
-        )
-        dbo.rules.t.insert().execute(
-            priority=300,
-            product="SystemAddons",
-            channel="releasesjson",
-            mapping="Superblob-e8f4a19cfd695bf0eb66a2115313c31cc23a2369c0dc7b736d2f66d9075d7c66",
-            backgroundRate=100,
-            update_type="minor",
-            data_version=1,
-        )
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 100,
+                    "product": "Firefox",
+                    "channel": "release",
+                    "mapping": "Firefox-56.0-build1",
+                    "backgroundRate": 100,
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
+            insert_release(firefox_54_0_1_build1, "Firefox", history=False)
+            insert_release(firefox_56_0_build1, "Firefox", history=False)
+            insert_release(firefox_100_0_build1, "Firefox", history=False)
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 100,
+                    "product": "Firefox",
+                    "channel": "release100",
+                    "mapping": "Firefox-100.0-build1",
+                    "backgroundRate": 100,
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 300,
+                    "product": "SystemAddons",
+                    "channel": "releasesjson",
+                    "mapping": "Superblob-e8f4a19cfd695bf0eb66a2115313c31cc23a2369c0dc7b736d2f66d9075d7c66",
+                    "backgroundRate": 100,
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
         insert_release(superblob_e8f4a19, "SystemAddons", history=False)
         insert_release(hotfix_bug_1548973_1_1_4, "SystemAddons", history=False)
         insert_release(timecop_1_0, "SystemAddons", history=False)
@@ -1812,12 +1998,17 @@ class ClientTestMig64(ClientTestCommon):
         self.metadata.create_all(dbo.engine)
         self.client = self.app.test_client()
         dbo.setDomainAllowlist({"a.com": ("a", "b", "c")})
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a", data_version=1)
-        dbo.releases.t.insert().execute(
-            name="a",
-            product="a",
-            data_version=1,
-            data=createBlob("""
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.rules.t.insert(), {"priority": 90, "backgroundRate": 100, "mapping": "a", "update_type": "minor", "product": "a", "data_version": 1}
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "a",
+                    "product": "a",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "a",
     "schema_version": 1,
@@ -1841,13 +2032,19 @@ class ClientTestMig64(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", mig64=True, data_version=1)
-        dbo.releases.t.insert().execute(
-            name="b",
-            product="b",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {"priority": 90, "backgroundRate": 100, "mapping": "b", "update_type": "minor", "product": "b", "mig64": True, "data_version": 1},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "b",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "b",
     "schema_version": 1,
@@ -1871,13 +2068,19 @@ class ClientTestMig64(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c", mig64=False, data_version=1)
-        dbo.releases.t.insert().execute(
-            name="c",
-            product="c",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {"priority": 90, "backgroundRate": 100, "mapping": "c", "update_type": "minor", "product": "c", "mig64": False, "data_version": 1},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "c",
+                    "product": "c",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "c",
     "schema_version": 1,
@@ -1901,7 +2104,8 @@ class ClientTestMig64(ClientTestCommon):
     }
 }
 """),
-        )
+                },
+            )
 
     def testRuleFalseQueryNull(self):
         ret = self.client.get("/update/3/c/1.0/2/p/l/a/a/a/a/update.xml")
@@ -1968,12 +2172,17 @@ class ClientTestJaws(ClientTestCommon):
         self.metadata.create_all(dbo.engine)
         self.client = self.app.test_client()
         dbo.setDomainAllowlist({"a.com": ("a", "b", "c")})
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="a", update_type="minor", product="a", data_version=1)
-        dbo.releases.t.insert().execute(
-            name="a",
-            product="a",
-            data_version=1,
-            data=createBlob("""
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.rules.t.insert(), {"priority": 90, "backgroundRate": 100, "mapping": "a", "update_type": "minor", "product": "a", "data_version": 1}
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "a",
+                    "product": "a",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "a",
     "schema_version": 1,
@@ -1997,13 +2206,19 @@ class ClientTestJaws(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", jaws=True, data_version=1)
-        dbo.releases.t.insert().execute(
-            name="b",
-            product="b",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {"priority": 90, "backgroundRate": 100, "mapping": "b", "update_type": "minor", "product": "b", "jaws": True, "data_version": 1},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "b",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "b",
     "schema_version": 1,
@@ -2027,13 +2242,19 @@ class ClientTestJaws(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="c", update_type="minor", product="c", jaws=False, data_version=1)
-        dbo.releases.t.insert().execute(
-            name="c",
-            product="c",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {"priority": 90, "backgroundRate": 100, "mapping": "c", "update_type": "minor", "product": "c", "jaws": False, "data_version": 1},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "c",
+                    "product": "c",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "c",
     "schema_version": 1,
@@ -2057,7 +2278,8 @@ class ClientTestJaws(ClientTestCommon):
     }
 }
 """),
-        )
+                },
+            )
 
     def testRuleFalseQueryNull(self):
         ret = self.client.get("/update/6/c/1.0/2/p/l/a/a/a/a/a/update.xml")
@@ -2158,7 +2380,8 @@ class ClientTestEmergencyShutoff(ClientTestBase):
         ret = self.client.get(update_query)
         self.assertUpdateEqual(ret, self.update_xml)
 
-        dbo.emergencyShutoffs.t.insert().execute(product="b", channel="a", data_version=1)
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.emergencyShutoffs.t.insert(), {"product": "b", "channel": "a", "data_version": 1})
 
         ret = self.client.get(update_query)
         self.assertUpdatesAreEmpty(ret)
@@ -2170,7 +2393,8 @@ class ClientTestEmergencyShutoff(ClientTestBase):
         ret = self.client.get(update_query)
         self.assertUpdateEqual(ret, self.update_xml)
 
-        dbo.emergencyShutoffs.t.insert().execute(product="b", channel="a", data_version=1)
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.emergencyShutoffs.t.insert(), {"product": "b", "channel": "a", "data_version": 1})
 
         # We should actually get the same update here since the disabled
         # updates check has been cached
@@ -2182,7 +2406,8 @@ class ClientTestEmergencyShutoff(ClientTestBase):
         ret = self.client.get(update_query)
         self.assertUpdateEqual(ret, self.update_xml)
 
-        dbo.emergencyShutoffs.t.insert().execute(product="b", channel="a", data_version=1)
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.emergencyShutoffs.t.insert(), {"product": "b", "channel": "a", "data_version": 1})
 
         ret = self.client.get(update_query)
         self.assertUpdatesAreEmpty(ret)
@@ -2371,14 +2596,25 @@ class ClientTestCompactXML(ClientTestCommon):
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist({"a.com": ("b",)})
         self.client = self.app.test_client()
-        dbo.rules.t.insert().execute(
-            priority=90, backgroundRate=100, mapping="Firefox-mozilla-central-nightly-latest", update_type="minor", product="b", data_version=1
-        )
-        dbo.releases.t.insert().execute(
-            name="Firefox-mozilla-central-nightly-latest",
-            product="b",
-            data_version=1,
-            data=createBlob("""
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 90,
+                    "backgroundRate": 100,
+                    "mapping": "Firefox-mozilla-central-nightly-latest",
+                    "update_type": "minor",
+                    "product": "b",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "Firefox-mozilla-central-nightly-latest",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-latest",
     "schema_version": 1,
@@ -2402,7 +2638,8 @@ class ClientTestCompactXML(ClientTestCommon):
     }
 }
 """),
-        )
+                },
+            )
 
     def testGoodNightly(self):
         ret = self.client.get("/update/6/b/1.0/20181212121212/p/l/a/a/a/a/a/update.xml")
@@ -2438,13 +2675,22 @@ class ClientTestPinning(ClientTestCommon):
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist({"a.com": ("b",)})
         self.client = self.app.test_client()
-        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="1.", mapping="Firefox-mozilla-central-nightly-1")
-        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="1.0.", mapping="Firefox-mozilla-central-nightly-1")
-        dbo.releases.t.insert().execute(
-            name="Firefox-mozilla-central-nightly-1",
-            product="b",
-            data_version=1,
-            data=createBlob("""
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.pinnable_releases.t.insert(),
+                {"data_version": 1, "product": "b", "channel": "c", "version": "1.", "mapping": "Firefox-mozilla-central-nightly-1"},
+            )
+            conn.execute(
+                dbo.pinnable_releases.t.insert(),
+                {"data_version": 1, "product": "b", "channel": "c", "version": "1.0.", "mapping": "Firefox-mozilla-central-nightly-1"},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "Firefox-mozilla-central-nightly-1",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-1",
     "schema_version": 1,
@@ -2468,13 +2714,19 @@ class ClientTestPinning(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.0.", mapping="Firefox-mozilla-central-nightly-2")
-        dbo.releases.t.insert().execute(
-            name="Firefox-mozilla-central-nightly-2",
-            product="b",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.pinnable_releases.t.insert(),
+                {"data_version": 1, "product": "b", "channel": "c", "version": "2.0.", "mapping": "Firefox-mozilla-central-nightly-2"},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "Firefox-mozilla-central-nightly-2",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-2",
     "schema_version": 1,
@@ -2498,13 +2750,19 @@ class ClientTestPinning(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.1.", mapping="Firefox-mozilla-central-nightly-2-1")
-        dbo.releases.t.insert().execute(
-            name="Firefox-mozilla-central-nightly-2-1",
-            product="b",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.pinnable_releases.t.insert(),
+                {"data_version": 1, "product": "b", "channel": "c", "version": "2.1.", "mapping": "Firefox-mozilla-central-nightly-2-1"},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "Firefox-mozilla-central-nightly-2-1",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-2-1",
     "schema_version": 1,
@@ -2528,13 +2786,19 @@ class ClientTestPinning(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.2.", mapping="Firefox-mozilla-central-nightly-2-2")
-        dbo.releases.t.insert().execute(
-            name="Firefox-mozilla-central-nightly-2-2",
-            product="b",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.pinnable_releases.t.insert(),
+                {"data_version": 1, "product": "b", "channel": "c", "version": "2.2.", "mapping": "Firefox-mozilla-central-nightly-2-2"},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "Firefox-mozilla-central-nightly-2-2",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-2-2",
     "schema_version": 1,
@@ -2558,14 +2822,23 @@ class ClientTestPinning(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.", mapping="Firefox-mozilla-central-nightly-2-3")
-        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="2.3.", mapping="Firefox-mozilla-central-nightly-2-3")
-        dbo.releases.t.insert().execute(
-            name="Firefox-mozilla-central-nightly-2-3",
-            product="b",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.pinnable_releases.t.insert(),
+                {"data_version": 1, "product": "b", "channel": "c", "version": "2.", "mapping": "Firefox-mozilla-central-nightly-2-3"},
+            )
+            conn.execute(
+                dbo.pinnable_releases.t.insert(),
+                {"data_version": 1, "product": "b", "channel": "c", "version": "2.3.", "mapping": "Firefox-mozilla-central-nightly-2-3"},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "Firefox-mozilla-central-nightly-2-3",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-2-3",
     "schema_version": 1,
@@ -2589,17 +2862,35 @@ class ClientTestPinning(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(
-            priority=200, backgroundRate=100, mapping="Firefox-mozilla-central-nightly-3", update_type="minor", product="b", data_version=1, version="<3.0"
-        )
-        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="3.", mapping="Firefox-mozilla-central-nightly-3")
-        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="3.0.", mapping="Firefox-mozilla-central-nightly-3")
-        dbo.releases.t.insert().execute(
-            name="Firefox-mozilla-central-nightly-3",
-            product="b",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 200,
+                    "backgroundRate": 100,
+                    "mapping": "Firefox-mozilla-central-nightly-3",
+                    "update_type": "minor",
+                    "product": "b",
+                    "data_version": 1,
+                    "version": "<3.0",
+                },
+            )
+            conn.execute(
+                dbo.pinnable_releases.t.insert(),
+                {"data_version": 1, "product": "b", "channel": "c", "version": "3.", "mapping": "Firefox-mozilla-central-nightly-3"},
+            )
+            conn.execute(
+                dbo.pinnable_releases.t.insert(),
+                {"data_version": 1, "product": "b", "channel": "c", "version": "3.0.", "mapping": "Firefox-mozilla-central-nightly-3"},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "Firefox-mozilla-central-nightly-3",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-3",
     "schema_version": 1,
@@ -2623,14 +2914,23 @@ class ClientTestPinning(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="4.", mapping="Firefox-mozilla-central-nightly-4")
-        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="4.0.", mapping="Firefox-mozilla-central-nightly-4")
-        dbo.releases.t.insert().execute(
-            name="Firefox-mozilla-central-nightly-4",
-            product="b",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.pinnable_releases.t.insert(),
+                {"data_version": 1, "product": "b", "channel": "c", "version": "4.", "mapping": "Firefox-mozilla-central-nightly-4"},
+            )
+            conn.execute(
+                dbo.pinnable_releases.t.insert(),
+                {"data_version": 1, "product": "b", "channel": "c", "version": "4.0.", "mapping": "Firefox-mozilla-central-nightly-4"},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "Firefox-mozilla-central-nightly-4",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-4",
     "schema_version": 1,
@@ -2654,17 +2954,34 @@ class ClientTestPinning(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.rules.t.insert().execute(
-            priority=90, backgroundRate=100, mapping="Firefox-mozilla-central-nightly-5", update_type="minor", product="b", data_version=1
-        )
-        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="5.", mapping="Firefox-mozilla-central-nightly-5")
-        dbo.pinnable_releases.t.insert().execute(data_version=1, product="b", channel="c", version="5.0.", mapping="Firefox-mozilla-central-nightly-5")
-        dbo.releases.t.insert().execute(
-            name="Firefox-mozilla-central-nightly-5",
-            product="b",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 90,
+                    "backgroundRate": 100,
+                    "mapping": "Firefox-mozilla-central-nightly-5",
+                    "update_type": "minor",
+                    "product": "b",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.pinnable_releases.t.insert(),
+                {"data_version": 1, "product": "b", "channel": "c", "version": "5.", "mapping": "Firefox-mozilla-central-nightly-5"},
+            )
+            conn.execute(
+                dbo.pinnable_releases.t.insert(),
+                {"data_version": 1, "product": "b", "channel": "c", "version": "5.0.", "mapping": "Firefox-mozilla-central-nightly-5"},
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "Firefox-mozilla-central-nightly-5",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "Firefox-mozilla-central-nightly-5",
     "schema_version": 1,
@@ -2688,12 +3005,15 @@ class ClientTestPinning(ClientTestCommon):
     }
 }
 """),
-        )
-        dbo.releases.t.insert().execute(
-            name="desupport",
-            product="b",
-            data_version=1,
-            data=createBlob("""
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "desupport",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob("""
 {
     "name": "desupport",
     "schema_version": 50,
@@ -2701,10 +3021,20 @@ class ClientTestPinning(ClientTestCommon):
     "displayVersion": "1"
 }
 """),
-        )
-        dbo.rules.t.insert().execute(
-            priority=100, backgroundRate=100, mapping="desupport", update_type="minor", product="b", data_version=1, osVersion="obsolete"
-        )
+                },
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "priority": 100,
+                    "backgroundRate": 100,
+                    "mapping": "desupport",
+                    "update_type": "minor",
+                    "product": "b",
+                    "data_version": 1,
+                    "osVersion": "obsolete",
+                },
+            )
 
     def testUnpinnedRecent(self):
         ret = self.client.get("/update/6/b/3.0/30000101000030/p/l/c/a/a/a/a/update.xml")

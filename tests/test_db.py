@@ -9,7 +9,7 @@ from tempfile import mkstemp
 
 import mock
 import pytest
-from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, select
+from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, select, text
 from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy.testing.assertions import emits_warning
 
@@ -77,6 +77,15 @@ class NamedFileDatabaseMixin(object):
         return t
 
 
+class FakeDb:
+    """Stand-in for AUSDatabase used when constructing standalone AUSTable
+    instances in tests that don't need a real database object, but do need
+    something with an `engine` attribute for AUSTable.getEngine()."""
+
+    def __init__(self, engine):
+        self.engine = engine
+
+
 class TestVerifySignoffs(unittest.TestCase):
     def testNoRequiredSignoffs(self):
         verify_signoffs({}, {})
@@ -129,42 +138,45 @@ class TestAUSTransaction(unittest.TestCase, MemoryDatabaseMixin):
     def setUp(self):
         MemoryDatabaseMixin.setUp(self)
         self.engine = create_engine(self.dburi)
-        self.metadata = MetaData(self.engine)
+        self.metadata = MetaData()
         self.table = Table("test", self.metadata, Column("id", Integer, primary_key=True), Column("foo", Integer))
-        self.metadata.create_all()
-        self.table.insert().execute(id=1, foo=33)
-        self.table.insert().execute(id=2, foo=22)
-        self.table.insert().execute(id=3, foo=11)
+        self.metadata.create_all(self.engine)
+        with self.engine.begin() as conn:
+            conn.execute(self.table.insert(), {"id": 1, "foo": 33})
+            conn.execute(self.table.insert(), {"id": 2, "foo": 22})
+            conn.execute(self.table.insert(), {"id": 3, "foo": 11})
 
     def testTransaction(self):
-        trans = AUSTransaction(self.metadata.bind.connect())
-        trans.execute(self.table.insert(values=dict(id=4, foo=55)))
-        trans.execute(self.table.update(values=dict(foo=66)).where(self.table.c.id == 1))
+        trans = AUSTransaction(self.engine)
+        trans.execute(self.table.insert().values(id=4, foo=55))
+        trans.execute(self.table.update().values(foo=66).where(self.table.c.id == 1))
         trans.commit()
-        ret = self.table.select().execute().fetchall()
-        self.assertEqual(ret, [(1, 66), (2, 22), (3, 11), (4, 55)])
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.table.select()).fetchall()
+            self.assertEqual(ret, [(1, 66), (2, 22), (3, 11), (4, 55)])
 
     def testTransactionRaisesOnError(self):
-        trans = AUSTransaction(self.metadata.bind.connect())
+        trans = AUSTransaction(self.engine)
         self.assertRaises(TransactionError, trans.execute, "UPDATE test SET foo=123 WHERE fake=1")
 
     def testRollback(self):
-        trans = AUSTransaction(self.metadata.bind.connect())
-        trans.execute(self.table.update(values=dict(foo=66)).where(self.table.c.id == 1))
+        trans = AUSTransaction(self.engine)
+        trans.execute(self.table.update().values(foo=66).where(self.table.c.id == 1))
         trans.rollback()
-        ret = self.table.select().execute().fetchall()
-        self.assertEqual(ret, [(1, 33), (2, 22), (3, 11)])
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.table.select()).fetchall()
+            self.assertEqual(ret, [(1, 33), (2, 22), (3, 11)])
 
     # bug 740360
     def testContextManagerClosesConnection(self):
-        with AUSTransaction(self.metadata.bind) as trans:
+        with AUSTransaction(self.engine) as trans:
             self.assertIsNone(trans.conn, "Connection should be None before any execute()")
-            trans.execute(self.table.insert(values=dict(id=5, foo=41)))
+            trans.execute(self.table.insert().values(id=5, foo=41))
             self.assertEqual(trans.conn.closed, False, "Connection closed during transaction, expected it to be open.")
         self.assertEqual(trans.conn.closed, True, "Connection not closed after __exit__ is called")
 
     def testContextManagerNoOpWithoutExecute(self):
-        with AUSTransaction(self.metadata.bind) as trans:
+        with AUSTransaction(self.engine) as trans:
             pass
         self.assertIsNone(trans.conn, "Connection should remain None when no queries were executed")
 
@@ -173,32 +185,34 @@ class TestAUSTransactionRequiresRealFile(unittest.TestCase, NamedFileDatabaseMix
     def setUp(self):
         NamedFileDatabaseMixin.setUp(self)
         self.engine = create_engine(self.dburi)
-        self.metadata = MetaData(self.engine)
+        self.metadata = MetaData()
         self.table = Table("test", self.metadata, Column("id", Integer, primary_key=True), Column("foo", Integer))
-        self.metadata.create_all()
-        self.table.insert().execute(id=1, foo=33)
-        self.table.insert().execute(id=2, foo=22)
-        self.table.insert().execute(id=3, foo=11)
+        self.metadata.create_all(self.engine)
+        with self.engine.begin() as conn:
+            conn.execute(self.table.insert(), {"id": 1, "foo": 33})
+            conn.execute(self.table.insert(), {"id": 2, "foo": 22})
+            conn.execute(self.table.insert(), {"id": 3, "foo": 11})
 
     def tearDown(self):
         NamedFileDatabaseMixin.tearDown(self)
 
     def testTransactionNotChangedUntilCommit(self):
-        trans = AUSTransaction(self.metadata.bind.connect())
-        trans.execute(self.table.update(values=dict(foo=66)).where(self.table.c.id == 1))
+        trans = AUSTransaction(self.engine)
+        trans.execute(self.table.update().values(foo=66).where(self.table.c.id == 1))
         # This select() runs in a different connection, so no changes should
         # be visible to it yet
-        ret = self.table.select().execute().fetchall()
-        self.assertEqual(ret, [(1, 33), (2, 22), (3, 11)])
-        trans.commit()
-        ret = self.table.select().execute().fetchall()
-        self.assertEqual(ret, [(1, 66), (2, 22), (3, 11)])
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.table.select()).fetchall()
+            self.assertEqual(ret, [(1, 33), (2, 22), (3, 11)])
+            trans.commit()
+            ret = conn.execute(self.table.select()).fetchall()
+            self.assertEqual(ret, [(1, 66), (2, 22), (3, 11)])
 
 
 class TestTableMixin(object):
     def setUp(self):
         self.engine = create_engine(self.dburi)
-        self.metadata = MetaData(self.engine)
+        self.metadata = MetaData()
 
         class TestTable(AUSTable):
             def __init__(self, db, metadata):
@@ -210,41 +224,42 @@ class TestTableMixin(object):
                 self.table = Table("test-autoincrement", metadata, Column("id", Integer, primary_key=True, autoincrement=True), Column("foo", Integer))
                 AUSTable.__init__(self, db, "sqlite", historyClass=HistoryTable)
 
-        self.test = TestTable("fake", self.metadata)
-        self.testAutoincrement = TestAutoincrementTable("fake", self.metadata)
-        self.metadata.create_all()
-        self.test.t.insert().execute(id=1, foo=33, data_version=4)
-        self.test.t.insert().execute(id=2, foo=22, data_version=5)
-        self.test.t.insert().execute(id=3, foo=11, data_version=6)
-        self.test.history.t.insert().execute(change_id=1, timestamp=9, changed_by="admin", id=1)
-        self.test.history.t.insert().execute(change_id=2, timestamp=10, changed_by="admin", id=1, foo=30, data_version=1)
-        self.test.history.t.insert().execute(change_id=3, timestamp=20, changed_by="admin", id=1, foo=31, data_version=2)
-        self.test.history.t.insert().execute(change_id=4, timestamp=30, changed_by="admin", id=1, foo=32, data_version=3)
-        self.test.history.t.insert().execute(change_id=5, timestamp=40, changed_by="admin", id=1, foo=33, data_version=4)
-        self.test.history.t.insert().execute(change_id=6, timestamp=9, changed_by="admin", id=2)
-        self.test.history.t.insert().execute(change_id=7, timestamp=10, changed_by="admin", id=2, foo=18, data_version=1)
-        self.test.history.t.insert().execute(change_id=8, timestamp=15, changed_by="admin", id=2, foo=19, data_version=2)
-        self.test.history.t.insert().execute(change_id=9, timestamp=20, changed_by="admin", id=2, foo=20, data_version=3)
-        self.test.history.t.insert().execute(change_id=10, timestamp=25, changed_by="admin", id=2, foo=21, data_version=4)
-        self.test.history.t.insert().execute(change_id=11, timestamp=30, changed_by="admin", id=2, foo=22, data_version=5)
-        self.test.history.t.insert().execute(change_id=12, timestamp=22, changed_by="admin", id=3)
-        self.test.history.t.insert().execute(change_id=13, timestamp=23, changed_by="admin", id=3, foo=6, data_version=1)
-        self.test.history.t.insert().execute(change_id=14, timestamp=26, changed_by="admin", id=3, foo=7, data_version=2)
-        self.test.history.t.insert().execute(change_id=15, timestamp=29, changed_by="admin", id=3, foo=8, data_version=3)
-        self.test.history.t.insert().execute(change_id=16, timestamp=32, changed_by="admin", id=3, foo=9, data_version=4)
-        self.test.history.t.insert().execute(change_id=17, timestamp=35, changed_by="admin", id=3, foo=10, data_version=5)
-        self.test.history.t.insert().execute(change_id=18, timestamp=38, changed_by="admin", id=3, foo=11, data_version=6)
-        self.test.history.t.insert().execute(change_id=19, timestamp=19, changed_by="admin", id=4)
-        self.test.history.t.insert().execute(change_id=20, timestamp=20, changed_by="admin", id=4, foo=40, data_version=1)
-        self.test.history.t.insert().execute(change_id=21, timestamp=25, changed_by="admin", id=4, foo=41, data_version=2)
-        self.test.history.t.insert().execute(change_id=22, timestamp=30, changed_by="admin", id=4, foo=42, data_version=3)
-        self.test.history.t.insert().execute(change_id=23, timestamp=35, changed_by="admin", id=4)
+        self.test = TestTable(FakeDb(self.engine), self.metadata)
+        self.testAutoincrement = TestAutoincrementTable(FakeDb(self.engine), self.metadata)
+        self.metadata.create_all(self.engine)
+        with self.engine.begin() as conn:
+            conn.execute(self.test.t.insert(), {"id": 1, "foo": 33, "data_version": 4})
+            conn.execute(self.test.t.insert(), {"id": 2, "foo": 22, "data_version": 5})
+            conn.execute(self.test.t.insert(), {"id": 3, "foo": 11, "data_version": 6})
+            conn.execute(self.test.history.t.insert(), {"change_id": 1, "timestamp": 9, "changed_by": "admin", "id": 1})
+            conn.execute(self.test.history.t.insert(), {"change_id": 2, "timestamp": 10, "changed_by": "admin", "id": 1, "foo": 30, "data_version": 1})
+            conn.execute(self.test.history.t.insert(), {"change_id": 3, "timestamp": 20, "changed_by": "admin", "id": 1, "foo": 31, "data_version": 2})
+            conn.execute(self.test.history.t.insert(), {"change_id": 4, "timestamp": 30, "changed_by": "admin", "id": 1, "foo": 32, "data_version": 3})
+            conn.execute(self.test.history.t.insert(), {"change_id": 5, "timestamp": 40, "changed_by": "admin", "id": 1, "foo": 33, "data_version": 4})
+            conn.execute(self.test.history.t.insert(), {"change_id": 6, "timestamp": 9, "changed_by": "admin", "id": 2})
+            conn.execute(self.test.history.t.insert(), {"change_id": 7, "timestamp": 10, "changed_by": "admin", "id": 2, "foo": 18, "data_version": 1})
+            conn.execute(self.test.history.t.insert(), {"change_id": 8, "timestamp": 15, "changed_by": "admin", "id": 2, "foo": 19, "data_version": 2})
+            conn.execute(self.test.history.t.insert(), {"change_id": 9, "timestamp": 20, "changed_by": "admin", "id": 2, "foo": 20, "data_version": 3})
+            conn.execute(self.test.history.t.insert(), {"change_id": 10, "timestamp": 25, "changed_by": "admin", "id": 2, "foo": 21, "data_version": 4})
+            conn.execute(self.test.history.t.insert(), {"change_id": 11, "timestamp": 30, "changed_by": "admin", "id": 2, "foo": 22, "data_version": 5})
+            conn.execute(self.test.history.t.insert(), {"change_id": 12, "timestamp": 22, "changed_by": "admin", "id": 3})
+            conn.execute(self.test.history.t.insert(), {"change_id": 13, "timestamp": 23, "changed_by": "admin", "id": 3, "foo": 6, "data_version": 1})
+            conn.execute(self.test.history.t.insert(), {"change_id": 14, "timestamp": 26, "changed_by": "admin", "id": 3, "foo": 7, "data_version": 2})
+            conn.execute(self.test.history.t.insert(), {"change_id": 15, "timestamp": 29, "changed_by": "admin", "id": 3, "foo": 8, "data_version": 3})
+            conn.execute(self.test.history.t.insert(), {"change_id": 16, "timestamp": 32, "changed_by": "admin", "id": 3, "foo": 9, "data_version": 4})
+            conn.execute(self.test.history.t.insert(), {"change_id": 17, "timestamp": 35, "changed_by": "admin", "id": 3, "foo": 10, "data_version": 5})
+            conn.execute(self.test.history.t.insert(), {"change_id": 18, "timestamp": 38, "changed_by": "admin", "id": 3, "foo": 11, "data_version": 6})
+            conn.execute(self.test.history.t.insert(), {"change_id": 19, "timestamp": 19, "changed_by": "admin", "id": 4})
+            conn.execute(self.test.history.t.insert(), {"change_id": 20, "timestamp": 20, "changed_by": "admin", "id": 4, "foo": 40, "data_version": 1})
+            conn.execute(self.test.history.t.insert(), {"change_id": 21, "timestamp": 25, "changed_by": "admin", "id": 4, "foo": 41, "data_version": 2})
+            conn.execute(self.test.history.t.insert(), {"change_id": 22, "timestamp": 30, "changed_by": "admin", "id": 4, "foo": 42, "data_version": 3})
+            conn.execute(self.test.history.t.insert(), {"change_id": 23, "timestamp": 35, "changed_by": "admin", "id": 4})
 
 
 class TestMultiplePrimaryTableMixin(object):
     def setUp(self):
         self.engine = create_engine(self.dburi)
-        self.metadata = MetaData(self.engine)
+        self.metadata = MetaData()
 
         class TestTable(AUSTable):
             def __init__(self, db, metadata):
@@ -257,12 +272,13 @@ class TestMultiplePrimaryTableMixin(object):
                 )
                 AUSTable.__init__(self, db, "sqlite", historyClass=HistoryTable)
 
-        self.test = TestTable("fake", self.metadata)
-        self.metadata.create_all()
-        self.test.t.insert().execute(id1=1, id2=1, foo=33, data_version=1)
-        self.test.t.insert().execute(id1=1, id2=2, foo=22, data_version=1)
-        self.test.t.insert().execute(id1=2, id2=1, foo=11, data_version=1)
-        self.test.t.insert().execute(id1=2, id2=2, foo=44, data_version=1)
+        self.test = TestTable(FakeDb(self.engine), self.metadata)
+        self.metadata.create_all(self.engine)
+        with self.engine.begin() as conn:
+            conn.execute(self.test.t.insert(), {"id1": 1, "id2": 1, "foo": 33, "data_version": 1})
+            conn.execute(self.test.t.insert(), {"id1": 1, "id2": 2, "foo": 22, "data_version": 1})
+            conn.execute(self.test.t.insert(), {"id1": 2, "id2": 1, "foo": 11, "data_version": 1})
+            conn.execute(self.test.t.insert(), {"id1": 2, "id2": 2, "foo": 44, "data_version": 1})
 
 
 class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
@@ -300,9 +316,10 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
 
     def testInsert(self):
         self.test.insert(changed_by="bob", id=5, foo=0)
-        ret = self.test.t.select().execute().fetchall()
-        self.assertEqual(len(ret), 4)
-        self.assertEqual(ret[-1], (5, 0, 1))
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.test.t.select()).fetchall()
+            self.assertEqual(len(ret), 4)
+            self.assertEqual(ret[-1], (5, 0, 1))
 
     def testInsertClosesConnectionOnImplicitTransaction(self):
         with mock.patch("sqlalchemy.engine.base.Connection.close") as close:
@@ -320,7 +337,8 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
     def testDelete(self):
         ret = self.test.delete(changed_by="bill", where=[self.test.id == 1, self.test.foo == 33], old_data_version=4)
         self.assertEqual(ret.rowcount, 1)
-        self.assertEqual(len(self.test.t.select().execute().fetchall()), 2)
+        with self.engine.begin() as conn:
+            self.assertEqual(len(conn.execute(self.test.t.select()).fetchall()), 2)
 
     def testDeleteFailsOnVersionMismatch(self):
         self.assertRaises(OutdatedDataError, self.test.delete, changed_by="bill", where=[self.test.id == 3], old_data_version=1)
@@ -333,7 +351,8 @@ class TestAUSTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
     def testUpdate(self):
         ret = self.test.update(changed_by="bob", where=[self.test.id == 1], what=dict(foo=123), old_data_version=4)
         self.assertEqual(ret.rowcount, 1)
-        self.assertEqual(self.test.t.select(self.test.id == 1).execute().fetchone(), (1, 123, 5))
+        with self.engine.begin() as conn:
+            self.assertEqual(conn.execute(self.test.t.select().where(self.test.id == 1)).fetchone(), (1, 123, 5))
 
     def testUpdateFailsOnVersionMismatch(self):
         self.assertRaises(OutdatedDataError, self.test.update, changed_by="bill", where=[self.test.id == 3], what=dict(foo=99), old_data_version=1)
@@ -363,31 +382,34 @@ class TestAUSTableRequiresRealFile(unittest.TestCase, TestTableMixin, NamedFileD
         NamedFileDatabaseMixin.tearDown(self)
 
     def testDeleteWithTransaction(self):
-        trans = AUSTransaction(self.metadata.bind.connect())
+        trans = AUSTransaction(self.engine)
         self.test.delete(changed_by="bill", transaction=trans, where=[self.test.id == 2], old_data_version=5)
-        ret = self.test.t.select().execute().fetchall()
-        self.assertEqual(len(ret), 3)
-        trans.commit()
-        ret = self.test.t.select().execute().fetchall()
-        self.assertEqual(len(ret), 2)
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.test.t.select()).fetchall()
+            self.assertEqual(len(ret), 3)
+            trans.commit()
+            ret = conn.execute(self.test.t.select()).fetchall()
+            self.assertEqual(len(ret), 2)
 
     def testInsertWithTransaction(self):
-        trans = AUSTransaction(self.metadata.bind.connect())
+        trans = AUSTransaction(self.engine)
         self.test.insert(changed_by="bob", transaction=trans, id=5, foo=1)
-        ret = self.test.t.select().execute().fetchall()
-        self.assertEqual(len(ret), 3)
-        trans.commit()
-        ret = self.test.t.select().execute().fetchall()
-        self.assertEqual(ret[-1], (5, 1, 1))
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.test.t.select()).fetchall()
+            self.assertEqual(len(ret), 3)
+            trans.commit()
+            ret = conn.execute(self.test.t.select()).fetchall()
+            self.assertEqual(ret[-1], (5, 1, 1))
 
     def testUpdateWithTransaction(self):
-        trans = AUSTransaction(self.metadata.bind.connect())
+        trans = AUSTransaction(self.engine)
         self.test.update(changed_by="bill", transaction=trans, where=[self.test.id == 1], what=dict(foo=222), old_data_version=4)
-        ret = self.test.t.select(self.test.id == 1).execute().fetchone()
-        self.assertEqual(ret, (1, 33, 4))
-        trans.commit()
-        ret = self.test.t.select(self.test.id == 1).execute().fetchone()
-        self.assertEqual(ret, (1, 222, 5))
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.test.t.select().where(self.test.id == 1)).fetchone()
+            self.assertEqual(ret, (1, 33, 4))
+            trans.commit()
+            ret = conn.execute(self.test.t.select().where(self.test.id == 1)).fetchone()
+            self.assertEqual(ret, (1, 222, 5))
 
 
 # TODO: Find some way of testing this with SQLite, or testing it with some other backend.
@@ -426,33 +448,38 @@ class TestHistoryTable(unittest.TestCase, TestTableMixin, MemoryDatabaseMixin):
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponInsert(self):
         self.test.insert(changed_by="george", id=5, foo=0)
-        ret = self.test.history.t.select().where(self.test.history.id == 5).execute().fetchall()
-        self.assertEqual(ret, [(24, "george", 999, 5, None, None), (25, "george", 1000, 5, 0, 1)])
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.test.history.t.select().where(self.test.history.id == 5)).fetchall()
+            self.assertEqual(ret, [(24, "george", 999, 5, None, None), (25, "george", 1000, 5, 0, 1)])
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponInsertWithExistingHistory(self):
         self.test.insert(changed_by="george", id=4, foo=0)
-        ret = self.test.history.t.select().where(self.test.history.id == 4).execute().fetchall()[-2:]
-        self.assertEqual(ret, [(24, "george", 999, 4, None, None), (25, "george", 1000, 4, 0, 1)])
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.test.history.t.select().where(self.test.history.id == 4)).fetchall()[-2:]
+            self.assertEqual(ret, [(24, "george", 999, 4, None, None), (25, "george", 1000, 4, 0, 1)])
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponDelete(self):
         self.test.delete(changed_by="bobby", where=[self.test.id == 1], old_data_version=4)
-        ret = self.test.history.t.select().where(self.test.history.id == 1).execute().fetchall()[-1]
-        self.assertEqual(ret, (24, "bobby", 1000, 1, None, None))
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.test.history.t.select().where(self.test.history.id == 1)).fetchall()[-1]
+            self.assertEqual(ret, (24, "bobby", 1000, 1, None, None))
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryUponUpdate(self):
         self.test.update(changed_by="heather", where=[self.test.id == 2], what=dict(foo=99), old_data_version=5)
-        ret = self.test.history.t.select().where(self.test.history.id == 2).execute().fetchall()[-1]
-        self.assertEqual(ret, (24, "heather", 1000, 2, 99, 6))
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.test.history.t.select().where(self.test.history.id == 2)).fetchall()[-1]
+            self.assertEqual(ret, (24, "heather", 1000, 2, 99, 6))
 
     @mock.patch("time.time", mock.MagicMock(return_value=1234567890.123456))
     def testHistoryTimestampMaintainsPrecision(self):
         self.test.insert(changed_by="bob", id=5)
-        ret = select([self.test.history.timestamp]).where(self.test.history.id == 5).execute().fetchone()[0]
-        # Insert decrements the timestamp
-        self.assertEqual(ret, 1234567890122)
+        with self.engine.begin() as conn:
+            ret = conn.execute(select(self.test.history.timestamp).where(self.test.history.id == 5)).fetchone()[0]
+            # Insert decrements the timestamp
+            self.assertEqual(ret, 1234567890122)
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testHistoryGetChangeWithChangeID(self):
@@ -563,20 +590,23 @@ class TestMultiplePrimaryHistoryTable(unittest.TestCase, TestMultiplePrimaryTabl
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryHistoryUponInsert(self):
         self.test.insert(changed_by="george", id1=4, id2=5, foo=0)
-        ret = self.test.history.t.select().execute().fetchall()
-        self.assertEqual(ret, [(1, "george", 999, 4, 5, None, None), (2, "george", 1000, 4, 5, 0, 1)])
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.test.history.t.select()).fetchall()
+            self.assertEqual(ret, [(1, "george", 999, 4, 5, None, None), (2, "george", 1000, 4, 5, 0, 1)])
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryHistoryUponDelete(self):
         self.test.delete(changed_by="bobby", where=[self.test.id1 == 1, self.test.id2 == 2], old_data_version=1)
-        ret = self.test.history.t.select().execute().fetchone()
-        self.assertEqual(ret, (1, "bobby", 1000, 1, 2, None, None))
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.test.history.t.select()).fetchone()
+            self.assertEqual(ret, (1, "bobby", 1000, 1, 2, None, None))
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryHistoryUponUpdate(self):
         self.test.update(changed_by="heather", where=[self.test.id1 == 2, self.test.id2 == 1], what=dict(foo=99), old_data_version=1)
-        ret = self.test.history.t.select().execute().fetchone()
-        self.assertEqual(ret, (1, "heather", 1000, 2, 1, 99, 2))
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.test.history.t.select()).fetchone()
+            self.assertEqual(ret, (1, "heather", 1000, 2, 1, 99, 2))
 
     @mock.patch("time.time", mock.MagicMock(return_value=1.0))
     def testMultiplePrimaryKeyHistoryGetChangeWithDataVersion(self):
@@ -645,41 +675,100 @@ class ScheduledChangesTableMixin(object):
 
         self.table = TestTable(self.db, self.metadata)
         self.sc_table = self.table.scheduled_changes
-        self.metadata.create_all()
-        self.table.t.insert().execute(fooid=1, foo="a", data_version=1)
-        self.table.t.insert().execute(fooid=2, foo="b", bar="bb", data_version=2)
-        self.table.t.insert().execute(fooid=3, foo="c", data_version=2)
-        self.table.t.insert().execute(fooid=4, foo="d", data_version=2)
-        self.sc_table.t.insert().execute(
-            sc_id=1, scheduled_by="bob", base_fooid=1, base_foo="aa", base_bar="barbar", base_data_version=1, data_version=1, change_type="update"
-        )
-        self.sc_table.conditions.t.insert().execute(sc_id=1, when=234000, data_version=1)
-        self.sc_table.t.insert().execute(sc_id=2, scheduled_by="bob", base_foo="cc", base_bar="ceecee", data_version=1, change_type="insert")
-        self.sc_table.conditions.t.insert().execute(sc_id=2, when=567000, data_version=1)
-        self.sc_table.t.insert().execute(
-            sc_id=3, scheduled_by="bob", complete=True, base_fooid=2, base_foo="b", base_bar="bb", base_data_version=1, data_version=1, change_type="update"
-        )
-        self.sc_table.conditions.t.insert().execute(sc_id=3, when=1000, data_version=1)
-        self.sc_table.t.insert().execute(
-            sc_id=4, scheduled_by="bob", base_fooid=2, base_foo="dd", base_bar="bb", base_data_version=2, data_version=1, change_type="update"
-        )
-        self.sc_table.conditions.t.insert().execute(sc_id=4, when=333000, data_version=1)
-        self.sc_table.t.insert().execute(
-            sc_id=5, scheduled_by="bob", complete=True, base_fooid=3, base_foo="c", base_bar="bb", base_data_version=1, data_version=1, change_type="update"
-        )
-        self.sc_table.conditions.t.insert().execute(sc_id=5, when=39000, data_version=1)
-        self.sc_table.t.insert().execute(
-            sc_id=6, scheduled_by="bob", complete=False, base_fooid=4, base_foo="d", base_bar=None, base_data_version=2, data_version=1, change_type="delete"
-        )
-        self.sc_table.conditions.t.insert().execute(sc_id=6, when=400000, data_version=1)
-        self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
-        self.db.permissions.t.insert().execute(permission="admin", username="mary", data_version=1)
-        self.db.permissions.t.insert().execute(permission="admin", username="jane", data_version=1)
-        self.db.permissions.t.insert().execute(permission="scheduled_change", username="nancy", options={"actions": ["enact"]}, data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="mary", role="releng", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="mary", role="dev", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="jane", role="dev", data_version=1)
+        self.metadata.create_all(self.engine)
+        with self.engine.begin() as conn:
+            conn.execute(self.table.t.insert(), {"fooid": 1, "foo": "a", "data_version": 1})
+            conn.execute(self.table.t.insert(), {"fooid": 2, "foo": "b", "bar": "bb", "data_version": 2})
+            conn.execute(self.table.t.insert(), {"fooid": 3, "foo": "c", "data_version": 2})
+            conn.execute(self.table.t.insert(), {"fooid": 4, "foo": "d", "data_version": 2})
+            conn.execute(
+                self.sc_table.t.insert(),
+                {
+                    "sc_id": 1,
+                    "scheduled_by": "bob",
+                    "base_fooid": 1,
+                    "base_foo": "aa",
+                    "base_bar": "barbar",
+                    "base_data_version": 1,
+                    "data_version": 1,
+                    "change_type": "update",
+                },
+            )
+            conn.execute(self.sc_table.conditions.t.insert(), {"sc_id": 1, "when": 234000, "data_version": 1})
+            conn.execute(
+                self.sc_table.t.insert(),
+                {"sc_id": 2, "scheduled_by": "bob", "base_foo": "cc", "base_bar": "ceecee", "data_version": 1, "change_type": "insert"},
+            )
+            conn.execute(self.sc_table.conditions.t.insert(), {"sc_id": 2, "when": 567000, "data_version": 1})
+            conn.execute(
+                self.sc_table.t.insert(),
+                {
+                    "sc_id": 3,
+                    "scheduled_by": "bob",
+                    "complete": True,
+                    "base_fooid": 2,
+                    "base_foo": "b",
+                    "base_bar": "bb",
+                    "base_data_version": 1,
+                    "data_version": 1,
+                    "change_type": "update",
+                },
+            )
+            conn.execute(self.sc_table.conditions.t.insert(), {"sc_id": 3, "when": 1000, "data_version": 1})
+            conn.execute(
+                self.sc_table.t.insert(),
+                {
+                    "sc_id": 4,
+                    "scheduled_by": "bob",
+                    "base_fooid": 2,
+                    "base_foo": "dd",
+                    "base_bar": "bb",
+                    "base_data_version": 2,
+                    "data_version": 1,
+                    "change_type": "update",
+                },
+            )
+            conn.execute(self.sc_table.conditions.t.insert(), {"sc_id": 4, "when": 333000, "data_version": 1})
+            conn.execute(
+                self.sc_table.t.insert(),
+                {
+                    "sc_id": 5,
+                    "scheduled_by": "bob",
+                    "complete": True,
+                    "base_fooid": 3,
+                    "base_foo": "c",
+                    "base_bar": "bb",
+                    "base_data_version": 1,
+                    "data_version": 1,
+                    "change_type": "update",
+                },
+            )
+            conn.execute(self.sc_table.conditions.t.insert(), {"sc_id": 5, "when": 39000, "data_version": 1})
+            conn.execute(
+                self.sc_table.t.insert(),
+                {
+                    "sc_id": 6,
+                    "scheduled_by": "bob",
+                    "complete": False,
+                    "base_fooid": 4,
+                    "base_foo": "d",
+                    "base_bar": None,
+                    "base_data_version": 2,
+                    "data_version": 1,
+                    "change_type": "delete",
+                },
+            )
+            conn.execute(self.sc_table.conditions.t.insert(), {"sc_id": 6, "when": 400000, "data_version": 1})
+            conn.execute(self.db.permissions.t.insert(), {"permission": "admin", "username": "bob", "data_version": 1})
+            conn.execute(self.db.permissions.t.insert(), {"permission": "admin", "username": "mary", "data_version": 1})
+            conn.execute(self.db.permissions.t.insert(), {"permission": "admin", "username": "jane", "data_version": 1})
+            conn.execute(
+                self.db.permissions.t.insert(), {"permission": "scheduled_change", "username": "nancy", "options": {"actions": ["enact"]}, "data_version": 1}
+            )
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "bob", "role": "releng", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "mary", "role": "releng", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "mary", "role": "dev", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "jane", "role": "dev", "data_version": 1})
 
 
 class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, MemoryDatabaseMixin):
@@ -776,33 +865,35 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
     def testInsertForExistingRow(self):
         what = {"fooid": 3, "foo": "thing", "bar": "thing2", "data_version": 2, "when": 999000, "change_type": "update"}
         self.sc_table.insert(changed_by="bob", **what)
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 7).execute().fetchall()[0]
-        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 7).execute().fetchall()[0]
-        self.assertEqual(sc_row.scheduled_by, "bob")
-        self.assertEqual(sc_row.change_type, "update")
-        self.assertEqual(sc_row.data_version, 1)
-        self.assertEqual(sc_row.base_fooid, 3)
-        self.assertEqual(sc_row.base_foo, "thing")
-        self.assertEqual(sc_row.base_bar, "thing2")
-        self.assertEqual(sc_row.base_data_version, 2)
-        self.assertEqual(cond_row.when, 999000)
-        self.assertEqual(cond_row.data_version, 1)
+        with self.engine.begin() as conn:
+            sc_row = conn.execute(self.sc_table.t.select().where(self.sc_table.sc_id == 7)).fetchall()[0]
+            cond_row = conn.execute(self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 7)).fetchall()[0]
+            self.assertEqual(sc_row.scheduled_by, "bob")
+            self.assertEqual(sc_row.change_type, "update")
+            self.assertEqual(sc_row.data_version, 1)
+            self.assertEqual(sc_row.base_fooid, 3)
+            self.assertEqual(sc_row.base_foo, "thing")
+            self.assertEqual(sc_row.base_bar, "thing2")
+            self.assertEqual(sc_row.base_data_version, 2)
+            self.assertEqual(cond_row.when, 999000)
+            self.assertEqual(cond_row.data_version, 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertForNewRow(self):
         what = {"foo": "newthing1", "when": 888000, "change_type": "insert"}
         self.sc_table.insert(changed_by="bob", **what)
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 7).execute().fetchall()[0]
-        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 7).execute().fetchall()[0]
-        self.assertEqual(sc_row.scheduled_by, "bob")
-        self.assertEqual(sc_row.change_type, "insert")
-        self.assertEqual(sc_row.data_version, 1)
-        self.assertEqual(sc_row.base_fooid, None)
-        self.assertEqual(sc_row.base_foo, "newthing1")
-        self.assertEqual(sc_row.base_bar, None)
-        self.assertEqual(sc_row.base_data_version, None)
-        self.assertEqual(cond_row.when, 888000)
-        self.assertEqual(cond_row.data_version, 1)
+        with self.engine.begin() as conn:
+            sc_row = conn.execute(self.sc_table.t.select().where(self.sc_table.sc_id == 7)).fetchall()[0]
+            cond_row = conn.execute(self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 7)).fetchall()[0]
+            self.assertEqual(sc_row.scheduled_by, "bob")
+            self.assertEqual(sc_row.change_type, "insert")
+            self.assertEqual(sc_row.data_version, 1)
+            self.assertEqual(sc_row.base_fooid, None)
+            self.assertEqual(sc_row.base_foo, "newthing1")
+            self.assertEqual(sc_row.base_bar, None)
+            self.assertEqual(sc_row.base_data_version, None)
+            self.assertEqual(cond_row.when, 888000)
+            self.assertEqual(cond_row.data_version, 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertRecordSignOffForUserHavingSingleRole(self):
@@ -841,20 +932,21 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
                 return None
 
         table = TestTable2(self.db, self.metadata)
-        self.metadata.create_all()
+        self.metadata.create_all(self.engine)
         what = {"foo_name": "i'm a foo", "foo": "123", "bar": "456", "when": 876000, "change_type": "insert"}
         table.scheduled_changes.insert(changed_by="mary", **what)
-        sc_row = table.scheduled_changes.t.select().where(table.scheduled_changes.sc_id == 1).execute().fetchall()[0]
-        cond_row = table.scheduled_changes.conditions.t.select().where(table.scheduled_changes.conditions.sc_id == 1).execute().fetchall()[0]
-        self.assertEqual(sc_row.scheduled_by, "mary")
-        self.assertEqual(sc_row.change_type, "insert")
-        self.assertEqual(sc_row.data_version, 1)
-        self.assertEqual(sc_row.base_foo_name, "i'm a foo")
-        self.assertEqual(sc_row.base_foo, "123")
-        self.assertEqual(sc_row.base_bar, "456")
-        self.assertEqual(sc_row.base_data_version, None)
-        self.assertEqual(cond_row.when, 876000)
-        self.assertEqual(cond_row.data_version, 1)
+        with self.engine.begin() as conn:
+            sc_row = conn.execute(table.scheduled_changes.t.select().where(table.scheduled_changes.sc_id == 1)).fetchall()[0]
+            cond_row = conn.execute(table.scheduled_changes.conditions.t.select().where(table.scheduled_changes.conditions.sc_id == 1)).fetchall()[0]
+            self.assertEqual(sc_row.scheduled_by, "mary")
+            self.assertEqual(sc_row.change_type, "insert")
+            self.assertEqual(sc_row.data_version, 1)
+            self.assertEqual(sc_row.base_foo_name, "i'm a foo")
+            self.assertEqual(sc_row.base_foo, "123")
+            self.assertEqual(sc_row.base_bar, "456")
+            self.assertEqual(sc_row.base_data_version, None)
+            self.assertEqual(cond_row.when, 876000)
+            self.assertEqual(cond_row.data_version, 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertWithNonNullablePKColumn(self):
@@ -870,7 +962,7 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
                 super(TestTable, self).__init__(db, "sqlite", scheduled_changes=True, historyClass=None, versioned=True)
 
         table = TestTable(self.db, self.metadata)
-        self.metadata.create_all()
+        self.metadata.create_all(self.engine)
         table_sc = table.scheduled_changes
         what = {"baz": "baz", "change_type": "insert", "when": 876000}
         self.assertRaisesRegex(ValueError, "Missing primary key column ", table_sc.insert, changed_by="alice", **what)
@@ -894,8 +986,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
             def getPotentialRequiredSignoffs(self, *args, **kwargs):
                 return None
 
-        table = TestTable2("fake", self.metadata)
-        self.metadata.create_all()
+        table = TestTable2(FakeDb(self.engine), self.metadata)
+        self.metadata.create_all(self.engine)
         what = {"fooid": 2, "when": 4532000, "change_type": "insert"}
         self.assertRaisesRegex(ValueError, "Missing primary key column", table.scheduled_changes.insert, changed_by="bob", **what)
 
@@ -951,10 +1043,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
             pass
 
         self.sc_table.conditions.insert = noop
-        self.sc_table.conditions.t.insert().execute(sc_id=7, when=10000000, data_version=4)
+        with self.engine.begin() as conn:
+            conn.execute(self.sc_table.conditions.t.insert(), {"sc_id": 7, "when": 10000000, "data_version": 4})
 
-        what = {"foo": "newthing1", "when": 888000, "change_type": "insert"}
-        self.assertRaises(MismatchedDataVersionError, self.sc_table.insert, changed_by="bob", **what)
+            what = {"foo": "newthing1", "when": 888000, "change_type": "insert"}
+            self.assertRaises(MismatchedDataVersionError, self.sc_table.insert, changed_by="bob", **what)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testInsertCreateExistingPK(self):
@@ -973,8 +1066,8 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
             def getPotentialRequiredSignoffs(self, *args, **kwargs):
                 return None
 
-        table = TestTable2("fake", self.metadata)
-        self.metadata.create_all()
+        table = TestTable2(FakeDb(self.engine), self.metadata)
+        self.metadata.create_all(self.engine)
         what = {"fooid": 2, "when": 4532000, "change_type": "delete"}
         self.assertRaises(ValueError, table.scheduled_changes.insert, changed_by="bob", **what)
 
@@ -999,91 +1092,94 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         where = [self.sc_table.sc_id == 1]
         what = {"when": 888000, "foo": "bb"}
         self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
-        sc_history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1).execute().fetchall()[0]
-        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 1).execute().fetchall()[0]
-        cond_history_row = self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 1).execute().fetchall()[0]
-        self.assertEqual(sc_row.scheduled_by, "bob")
-        self.assertEqual(sc_row.change_type, "update")
-        self.assertEqual(sc_row.data_version, 2)
-        self.assertEqual(sc_row.base_fooid, 1)
-        self.assertEqual(sc_row.base_foo, "bb")
-        self.assertEqual(sc_row.base_bar, "barbar")
-        self.assertEqual(sc_row.base_data_version, 1)
-        self.assertEqual(sc_history_row.changed_by, "bob")
-        self.assertEqual(sc_history_row.scheduled_by, "bob")
-        self.assertEqual(sc_history_row.change_type, "update")
-        self.assertEqual(sc_history_row.data_version, 2)
-        self.assertEqual(sc_history_row.base_fooid, 1)
-        self.assertEqual(sc_history_row.base_foo, "bb")
-        self.assertEqual(sc_history_row.base_bar, "barbar")
-        self.assertEqual(sc_history_row.base_data_version, 1)
-        self.assertEqual(sc_history_row.change_id, 1)
-        self.assertEqual(cond_row.when, 888000)
-        self.assertEqual(cond_row.data_version, 2)
-        self.assertEqual(cond_history_row.when, 888000)
-        self.assertEqual(cond_history_row.data_version, 2)
-        self.assertEqual(cond_history_row.change_id, 1)
+        with self.engine.begin() as conn:
+            sc_row = conn.execute(self.sc_table.t.select().where(self.sc_table.sc_id == 1)).fetchall()[0]
+            sc_history_row = conn.execute(self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1)).fetchall()[0]
+            cond_row = conn.execute(self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 1)).fetchall()[0]
+            cond_history_row = conn.execute(self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 1)).fetchall()[0]
+            self.assertEqual(sc_row.scheduled_by, "bob")
+            self.assertEqual(sc_row.change_type, "update")
+            self.assertEqual(sc_row.data_version, 2)
+            self.assertEqual(sc_row.base_fooid, 1)
+            self.assertEqual(sc_row.base_foo, "bb")
+            self.assertEqual(sc_row.base_bar, "barbar")
+            self.assertEqual(sc_row.base_data_version, 1)
+            self.assertEqual(sc_history_row.changed_by, "bob")
+            self.assertEqual(sc_history_row.scheduled_by, "bob")
+            self.assertEqual(sc_history_row.change_type, "update")
+            self.assertEqual(sc_history_row.data_version, 2)
+            self.assertEqual(sc_history_row.base_fooid, 1)
+            self.assertEqual(sc_history_row.base_foo, "bb")
+            self.assertEqual(sc_history_row.base_bar, "barbar")
+            self.assertEqual(sc_history_row.base_data_version, 1)
+            self.assertEqual(sc_history_row.change_id, 1)
+            self.assertEqual(cond_row.when, 888000)
+            self.assertEqual(cond_row.data_version, 2)
+            self.assertEqual(cond_history_row.when, 888000)
+            self.assertEqual(cond_history_row.data_version, 2)
+            self.assertEqual(cond_history_row.change_id, 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateChangeIdAndDataVersionStayInSyncWithoutConditionsChange(self):
         where = [self.sc_table.sc_id == 1]
         what = {"foo": "bb"}
         self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
-        sc_history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1).execute().fetchall()[0]
-        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 1).execute().fetchall()[0]
-        cond_history_row = self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 1).execute().fetchall()[0]
-        self.assertEqual(sc_row.scheduled_by, "bob")
-        self.assertEqual(sc_row.change_type, "update")
-        self.assertEqual(sc_row.data_version, 2)
-        self.assertEqual(sc_row.base_fooid, 1)
-        self.assertEqual(sc_row.base_foo, "bb")
-        self.assertEqual(sc_row.base_bar, "barbar")
-        self.assertEqual(sc_row.base_data_version, 1)
-        self.assertEqual(sc_history_row.changed_by, "bob")
-        self.assertEqual(sc_history_row.scheduled_by, "bob")
-        self.assertEqual(sc_history_row.change_type, "update")
-        self.assertEqual(sc_history_row.data_version, 2)
-        self.assertEqual(sc_history_row.base_fooid, 1)
-        self.assertEqual(sc_history_row.base_foo, "bb")
-        self.assertEqual(sc_history_row.base_bar, "barbar")
-        self.assertEqual(sc_history_row.base_data_version, 1)
-        self.assertEqual(sc_history_row.change_id, 1)
-        self.assertEqual(cond_row.when, 234000)
-        self.assertEqual(cond_row.data_version, 2)
-        self.assertEqual(cond_history_row.when, 234000)
-        self.assertEqual(cond_history_row.data_version, 2)
-        self.assertEqual(cond_history_row.change_id, 1)
+        with self.engine.begin() as conn:
+            sc_row = conn.execute(self.sc_table.t.select().where(self.sc_table.sc_id == 1)).fetchall()[0]
+            sc_history_row = conn.execute(self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1)).fetchall()[0]
+            cond_row = conn.execute(self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 1)).fetchall()[0]
+            cond_history_row = conn.execute(self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 1)).fetchall()[0]
+            self.assertEqual(sc_row.scheduled_by, "bob")
+            self.assertEqual(sc_row.change_type, "update")
+            self.assertEqual(sc_row.data_version, 2)
+            self.assertEqual(sc_row.base_fooid, 1)
+            self.assertEqual(sc_row.base_foo, "bb")
+            self.assertEqual(sc_row.base_bar, "barbar")
+            self.assertEqual(sc_row.base_data_version, 1)
+            self.assertEqual(sc_history_row.changed_by, "bob")
+            self.assertEqual(sc_history_row.scheduled_by, "bob")
+            self.assertEqual(sc_history_row.change_type, "update")
+            self.assertEqual(sc_history_row.data_version, 2)
+            self.assertEqual(sc_history_row.base_fooid, 1)
+            self.assertEqual(sc_history_row.base_foo, "bb")
+            self.assertEqual(sc_history_row.base_bar, "barbar")
+            self.assertEqual(sc_history_row.base_data_version, 1)
+            self.assertEqual(sc_history_row.change_id, 1)
+            self.assertEqual(cond_row.when, 234000)
+            self.assertEqual(cond_row.data_version, 2)
+            self.assertEqual(cond_history_row.when, 234000)
+            self.assertEqual(cond_history_row.data_version, 2)
+            self.assertEqual(cond_history_row.change_id, 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateNoChangesSinceCreationWithDict(self):
         where = {"sc_id": 1}
         what = {"when": 888000, "foo": "bb", "data_version": 1, "fooid": 1}
         self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
-        sc_history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1).execute().fetchall()[0]
-        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 1).execute().fetchall()[0]
-        cond_history_row = self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 1).execute().fetchall()[0]
-        self.assertEqual(sc_row.scheduled_by, "bob")
-        self.assertEqual(sc_row.change_type, "update")
-        self.assertEqual(sc_row.data_version, 2)
-        self.assertEqual(sc_row.base_fooid, 1)
-        self.assertEqual(sc_row.base_foo, "bb")
-        self.assertEqual(sc_row.base_bar, "barbar")
-        self.assertEqual(sc_row.base_data_version, 1)
-        self.assertEqual(sc_history_row.changed_by, "bob")
-        self.assertEqual(sc_history_row.scheduled_by, "bob")
-        self.assertEqual(sc_history_row.change_type, "update")
-        self.assertEqual(sc_history_row.data_version, 2)
-        self.assertEqual(sc_history_row.base_fooid, 1)
-        self.assertEqual(sc_history_row.base_foo, "bb")
-        self.assertEqual(sc_history_row.base_bar, "barbar")
-        self.assertEqual(sc_history_row.base_data_version, 1)
-        self.assertEqual(cond_row.when, 888000)
-        self.assertEqual(cond_row.data_version, 2)
-        self.assertEqual(cond_history_row.when, 888000)
-        self.assertEqual(cond_history_row.data_version, 2)
+        with self.engine.begin() as conn:
+            sc_row = conn.execute(self.sc_table.t.select().where(self.sc_table.sc_id == 1)).fetchall()[0]
+            sc_history_row = conn.execute(self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1)).fetchall()[0]
+            cond_row = conn.execute(self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 1)).fetchall()[0]
+            cond_history_row = conn.execute(self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 1)).fetchall()[0]
+            self.assertEqual(sc_row.scheduled_by, "bob")
+            self.assertEqual(sc_row.change_type, "update")
+            self.assertEqual(sc_row.data_version, 2)
+            self.assertEqual(sc_row.base_fooid, 1)
+            self.assertEqual(sc_row.base_foo, "bb")
+            self.assertEqual(sc_row.base_bar, "barbar")
+            self.assertEqual(sc_row.base_data_version, 1)
+            self.assertEqual(sc_history_row.changed_by, "bob")
+            self.assertEqual(sc_history_row.scheduled_by, "bob")
+            self.assertEqual(sc_history_row.change_type, "update")
+            self.assertEqual(sc_history_row.data_version, 2)
+            self.assertEqual(sc_history_row.base_fooid, 1)
+            self.assertEqual(sc_history_row.base_foo, "bb")
+            self.assertEqual(sc_history_row.base_bar, "barbar")
+            self.assertEqual(sc_history_row.base_data_version, 1)
+            self.assertEqual(cond_row.when, 888000)
+            self.assertEqual(cond_row.data_version, 2)
+            self.assertEqual(cond_history_row.when, 888000)
+            self.assertEqual(cond_history_row.data_version, 2)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateWithBadConditions(self):
@@ -1104,10 +1200,11 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
             pass
 
         self.sc_table.conditions.update = noop
-        self.sc_table.conditions.t.update().where(self.sc_table.conditions.sc_id == 1).execute(data_version=4)
-        self.assertRaises(
-            MismatchedDataVersionError, self.sc_table.update, [self.sc_table.sc_id == 1], what={"bar": "bar"}, changed_by="bob", old_data_version=1
-        )
+        with self.engine.begin() as conn:
+            conn.execute(self.sc_table.conditions.t.update().where(self.sc_table.conditions.sc_id == 1), {"data_version": 4})
+            self.assertRaises(
+                MismatchedDataVersionError, self.sc_table.update, [self.sc_table.sc_id == 1], what={"bar": "bar"}, changed_by="bob", old_data_version=1
+            )
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateWithoutPermissionOnBaseTable(self):
@@ -1125,35 +1222,36 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         # scheduled change, so it should simply be updated with the new "bar"
         # value.
         self.table.update([self.table.fooid == 2], what={"bar": "bar"}, changed_by="bob", old_data_version=2)
-        row = self.table.t.select().where(self.table.fooid == 2).execute().fetchall()[0]
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 4).execute().fetchall()[0]
-        sc_history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 4).execute().fetchall()[0]
-        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 4).execute().fetchall()[0]
-        cond_history_row = self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 4).execute().fetchall()[0]
-        self.assertEqual(row.fooid, 2)
-        self.assertEqual(row.foo, "b")
-        self.assertEqual(row.bar, "bar")
-        self.assertEqual(row.data_version, 3)
-        # This should end up with the scheduled changed incorporating our new
-        # value for "foo" as well as the new "bar" value.
-        self.assertEqual(sc_row.scheduled_by, "bob")
-        self.assertEqual(sc_row.data_version, 2)
-        self.assertEqual(sc_row.base_fooid, 2)
-        self.assertEqual(sc_row.base_foo, "dd")
-        self.assertEqual(sc_row.base_bar, "bar")
-        self.assertEqual(sc_row.base_data_version, 3)
-        # ...As well as a new history table entry.
-        self.assertEqual(sc_history_row.changed_by, "bob")
-        self.assertEqual(sc_history_row.scheduled_by, "bob")
-        self.assertEqual(sc_history_row.data_version, 2)
-        self.assertEqual(sc_history_row.base_fooid, 2)
-        self.assertEqual(sc_history_row.base_foo, "dd")
-        self.assertEqual(sc_history_row.base_bar, "bar")
-        self.assertEqual(sc_history_row.base_data_version, 3)
-        self.assertEqual(cond_row.when, 333000)
-        self.assertEqual(cond_row.data_version, 2)
-        self.assertEqual(cond_history_row.when, 333000)
-        self.assertEqual(cond_history_row.data_version, 2)
+        with self.engine.begin() as conn:
+            row = conn.execute(self.table.t.select().where(self.table.fooid == 2)).fetchall()[0]
+            sc_row = conn.execute(self.sc_table.t.select().where(self.sc_table.sc_id == 4)).fetchall()[0]
+            sc_history_row = conn.execute(self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 4)).fetchall()[0]
+            cond_row = conn.execute(self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 4)).fetchall()[0]
+            cond_history_row = conn.execute(self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 4)).fetchall()[0]
+            self.assertEqual(row.fooid, 2)
+            self.assertEqual(row.foo, "b")
+            self.assertEqual(row.bar, "bar")
+            self.assertEqual(row.data_version, 3)
+            # This should end up with the scheduled changed incorporating our new
+            # value for "foo" as well as the new "bar" value.
+            self.assertEqual(sc_row.scheduled_by, "bob")
+            self.assertEqual(sc_row.data_version, 2)
+            self.assertEqual(sc_row.base_fooid, 2)
+            self.assertEqual(sc_row.base_foo, "dd")
+            self.assertEqual(sc_row.base_bar, "bar")
+            self.assertEqual(sc_row.base_data_version, 3)
+            # ...As well as a new history table entry.
+            self.assertEqual(sc_history_row.changed_by, "bob")
+            self.assertEqual(sc_history_row.scheduled_by, "bob")
+            self.assertEqual(sc_history_row.data_version, 2)
+            self.assertEqual(sc_history_row.base_fooid, 2)
+            self.assertEqual(sc_history_row.base_foo, "dd")
+            self.assertEqual(sc_history_row.base_bar, "bar")
+            self.assertEqual(sc_history_row.base_data_version, 3)
+            self.assertEqual(cond_row.when, 333000)
+            self.assertEqual(cond_row.data_version, 2)
+            self.assertEqual(cond_history_row.when, 333000)
+            self.assertEqual(cond_history_row.data_version, 2)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateBaseTableNoConflictChangingToNull(self):
@@ -1162,37 +1260,38 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         # scheduled change, so it should simply be updated with the new "bar"
         # value.
         self.table.update([self.table.fooid == 2], what={"bar": None}, changed_by="bob", old_data_version=2)
-        row = self.table.t.select().where(self.table.fooid == 2).execute().fetchall()[0]
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 4).execute().fetchall()[0]
-        sc_history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 4).execute().fetchall()[0]
-        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 4).execute().fetchall()[0]
-        cond_history_row = self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 4).execute().fetchall()[0]
-        self.assertEqual(row.fooid, 2)
-        self.assertEqual(row.foo, "b")
-        self.assertEqual(row.bar, None)
-        self.assertEqual(row.data_version, 3)
-        # This should end up with the scheduled changed incorporating our new
-        # value for "foo" as well as the new "bar" value.
-        self.assertEqual(sc_row.scheduled_by, "bob")
-        self.assertEqual(sc_row.change_type, "update")
-        self.assertEqual(sc_row.data_version, 2)
-        self.assertEqual(sc_row.base_fooid, 2)
-        self.assertEqual(sc_row.base_foo, "dd")
-        self.assertEqual(sc_row.base_bar, None)
-        self.assertEqual(sc_row.base_data_version, 3)
-        # ...As well as a new history table entry.
-        self.assertEqual(sc_history_row.changed_by, "bob")
-        self.assertEqual(sc_history_row.scheduled_by, "bob")
-        self.assertEqual(sc_history_row.change_type, "update")
-        self.assertEqual(sc_history_row.data_version, 2)
-        self.assertEqual(sc_history_row.base_fooid, 2)
-        self.assertEqual(sc_history_row.base_foo, "dd")
-        self.assertEqual(sc_history_row.base_bar, None)
-        self.assertEqual(sc_history_row.base_data_version, 3)
-        self.assertEqual(cond_row.when, 333000)
-        self.assertEqual(cond_row.data_version, 2)
-        self.assertEqual(cond_history_row.when, 333000)
-        self.assertEqual(cond_history_row.data_version, 2)
+        with self.engine.begin() as conn:
+            row = conn.execute(self.table.t.select().where(self.table.fooid == 2)).fetchall()[0]
+            sc_row = conn.execute(self.sc_table.t.select().where(self.sc_table.sc_id == 4)).fetchall()[0]
+            sc_history_row = conn.execute(self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 4)).fetchall()[0]
+            cond_row = conn.execute(self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 4)).fetchall()[0]
+            cond_history_row = conn.execute(self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 4)).fetchall()[0]
+            self.assertEqual(row.fooid, 2)
+            self.assertEqual(row.foo, "b")
+            self.assertEqual(row.bar, None)
+            self.assertEqual(row.data_version, 3)
+            # This should end up with the scheduled changed incorporating our new
+            # value for "foo" as well as the new "bar" value.
+            self.assertEqual(sc_row.scheduled_by, "bob")
+            self.assertEqual(sc_row.change_type, "update")
+            self.assertEqual(sc_row.data_version, 2)
+            self.assertEqual(sc_row.base_fooid, 2)
+            self.assertEqual(sc_row.base_foo, "dd")
+            self.assertEqual(sc_row.base_bar, None)
+            self.assertEqual(sc_row.base_data_version, 3)
+            # ...As well as a new history table entry.
+            self.assertEqual(sc_history_row.changed_by, "bob")
+            self.assertEqual(sc_history_row.scheduled_by, "bob")
+            self.assertEqual(sc_history_row.change_type, "update")
+            self.assertEqual(sc_history_row.data_version, 2)
+            self.assertEqual(sc_history_row.base_fooid, 2)
+            self.assertEqual(sc_history_row.base_foo, "dd")
+            self.assertEqual(sc_history_row.base_bar, None)
+            self.assertEqual(sc_history_row.base_data_version, 3)
+            self.assertEqual(cond_row.when, 333000)
+            self.assertEqual(cond_row.data_version, 2)
+            self.assertEqual(cond_history_row.when, 333000)
+            self.assertEqual(cond_history_row.data_version, 2)
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testUpdateBaseTableConflictWithRecentChanges(self):
@@ -1205,41 +1304,44 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         where = {"sc_id": 6}
         what = {"when": 800000, "base_foo": "bb", "data_version": 1, "fooid": 1}
         self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 6).execute().fetchall()[0]
-        sc_history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 6).execute().fetchall()[0]
-        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 6).execute().fetchall()[0]
-        cond_history_row = self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 6).execute().fetchall()[0]
-        self.assertEqual(sc_row.scheduled_by, "bob")
-        self.assertEqual(sc_row.change_type, "delete")
-        self.assertEqual(sc_row.data_version, 2)
-        self.assertEqual(sc_row.base_fooid, 1)
-        self.assertEqual(sc_row.base_foo, "bb")
-        self.assertEqual(sc_row.base_data_version, 1)
-        self.assertEqual(sc_history_row.changed_by, "bob")
-        self.assertEqual(sc_history_row.scheduled_by, "bob")
-        self.assertEqual(sc_history_row.change_type, "delete")
-        self.assertEqual(sc_history_row.data_version, 2)
-        self.assertEqual(sc_history_row.base_fooid, 1)
-        self.assertEqual(sc_history_row.base_foo, "bb")
-        self.assertEqual(sc_history_row.base_data_version, 1)
-        self.assertEqual(cond_row.when, 800000)
-        self.assertEqual(cond_row.data_version, 2)
-        self.assertEqual(cond_history_row.when, 800000)
-        self.assertEqual(cond_history_row.data_version, 2)
+        with self.engine.begin() as conn:
+            sc_row = conn.execute(self.sc_table.t.select().where(self.sc_table.sc_id == 6)).fetchall()[0]
+            sc_history_row = conn.execute(self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 6)).fetchall()[0]
+            cond_row = conn.execute(self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 6)).fetchall()[0]
+            cond_history_row = conn.execute(self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 6)).fetchall()[0]
+            self.assertEqual(sc_row.scheduled_by, "bob")
+            self.assertEqual(sc_row.change_type, "delete")
+            self.assertEqual(sc_row.data_version, 2)
+            self.assertEqual(sc_row.base_fooid, 1)
+            self.assertEqual(sc_row.base_foo, "bb")
+            self.assertEqual(sc_row.base_data_version, 1)
+            self.assertEqual(sc_history_row.changed_by, "bob")
+            self.assertEqual(sc_history_row.scheduled_by, "bob")
+            self.assertEqual(sc_history_row.change_type, "delete")
+            self.assertEqual(sc_history_row.data_version, 2)
+            self.assertEqual(sc_history_row.base_fooid, 1)
+            self.assertEqual(sc_history_row.base_foo, "bb")
+            self.assertEqual(sc_history_row.base_data_version, 1)
+            self.assertEqual(cond_row.when, 800000)
+            self.assertEqual(cond_row.data_version, 2)
+            self.assertEqual(cond_history_row.when, 800000)
+            self.assertEqual(cond_history_row.data_version, 2)
 
     def testDeleteChangeForDeleteScheduledChange(self):
         self.sc_table.delete(where=[self.sc_table.sc_id == 6], changed_by="bob", old_data_version=1)
-        ret = self.sc_table.t.select().where(self.sc_table.sc_id == 6).execute().fetchall()
-        self.assertEqual(len(ret), 0)
-        ret = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 6).execute().fetchall()
-        self.assertEqual(len(ret), 0)
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.sc_table.t.select().where(self.sc_table.sc_id == 6)).fetchall()
+            self.assertEqual(len(ret), 0)
+            ret = conn.execute(self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 6)).fetchall()
+            self.assertEqual(len(ret), 0)
 
     def testDeleteChange(self):
         self.sc_table.delete(where=[self.sc_table.sc_id == 2], changed_by="bob", old_data_version=1)
-        ret = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()
-        self.assertEqual(len(ret), 0)
-        ret = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 2).execute().fetchall()
-        self.assertEqual(len(ret), 0)
+        with self.engine.begin() as conn:
+            ret = conn.execute(self.sc_table.t.select().where(self.sc_table.sc_id == 2)).fetchall()
+            self.assertEqual(len(ret), 0)
+            ret = conn.execute(self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 2)).fetchall()
+            self.assertEqual(len(ret), 0)
 
     def testDeleteChangeWithoutPermission(self):
         self.assertRaises(PermissionDeniedError, self.sc_table.delete, where=[self.sc_table.sc_id == 2], changed_by="nicole", old_data_version=1)
@@ -1252,43 +1354,48 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
 
     def testEnactChangeNewRow(self):
         self.table.scheduled_changes.enactChange(2, "nancy")
-        row = self.table.t.select().where(self.table.fooid == 5).execute().fetchall()[0]
-        history_rows = self.table.history.t.select().where(self.table.history.fooid == 5).execute().fetchall()
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()[0]
-        self.assertEqual(row.fooid, 5)
-        self.assertEqual(row.foo, "cc")
-        self.assertEqual(row.bar, "ceecee")
-        self.assertEqual(row.data_version, 1)
-        self.assertEqual(history_rows[0].fooid, 5)
-        self.assertEqual(history_rows[0].foo, None)
-        self.assertEqual(history_rows[0].bar, None)
-        self.assertEqual(history_rows[0].changed_by, "bob")
-        self.assertEqual(history_rows[0].data_version, None)
-        self.assertEqual(history_rows[1].fooid, 5)
-        self.assertEqual(history_rows[1].foo, "cc")
-        self.assertEqual(history_rows[1].bar, "ceecee")
-        self.assertEqual(history_rows[1].changed_by, "bob")
-        self.assertEqual(history_rows[1].data_version, 1)
-        self.assertEqual(sc_row.complete, True)
+        with self.engine.begin() as conn:
+            row = conn.execute(self.table.t.select().where(self.table.fooid == 5)).fetchall()[0]
+            history_rows = conn.execute(self.table.history.t.select().where(self.table.history.fooid == 5)).fetchall()
+            sc_row = conn.execute(self.sc_table.t.select().where(self.sc_table.sc_id == 2)).fetchall()[0]
+            self.assertEqual(row.fooid, 5)
+            self.assertEqual(row.foo, "cc")
+            self.assertEqual(row.bar, "ceecee")
+            self.assertEqual(row.data_version, 1)
+            self.assertEqual(history_rows[0].fooid, 5)
+            self.assertEqual(history_rows[0].foo, None)
+            self.assertEqual(history_rows[0].bar, None)
+            self.assertEqual(history_rows[0].changed_by, "bob")
+            self.assertEqual(history_rows[0].data_version, None)
+            self.assertEqual(history_rows[1].fooid, 5)
+            self.assertEqual(history_rows[1].foo, "cc")
+            self.assertEqual(history_rows[1].bar, "ceecee")
+            self.assertEqual(history_rows[1].changed_by, "bob")
+            self.assertEqual(history_rows[1].data_version, 1)
+            self.assertEqual(sc_row.complete, True)
 
     def testEnactChangeExistingRow(self):
         self.table.scheduled_changes.enactChange(1, "nancy")
-        row = self.table.t.select().where(self.table.fooid == 1).execute().fetchall()[0]
-        history_row = self.table.history.t.select().where(self.table.history.fooid == 1).where(self.table.history.data_version == 2).execute().fetchall()[0]
-        sc_row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
-        self.assertEqual(row.foo, "aa")
-        self.assertEqual(row.bar, "barbar")
-        self.assertEqual(row.data_version, 2)
-        self.assertEqual(history_row.foo, "aa")
-        self.assertEqual(history_row.bar, "barbar")
-        self.assertEqual(history_row.changed_by, "bob")
-        self.assertEqual(history_row.data_version, 2)
-        self.assertEqual(sc_row.complete, True)
+        with self.engine.begin() as conn:
+            row = conn.execute(self.table.t.select().where(self.table.fooid == 1)).fetchall()[0]
+            history_row = conn.execute(
+                self.table.history.t.select().where(self.table.history.fooid == 1).where(self.table.history.data_version == 2)
+            ).fetchall()[0]
+            sc_row = conn.execute(self.sc_table.t.select().where(self.sc_table.sc_id == 1)).fetchall()[0]
+            self.assertEqual(row.foo, "aa")
+            self.assertEqual(row.bar, "barbar")
+            self.assertEqual(row.data_version, 2)
+            self.assertEqual(history_row.foo, "aa")
+            self.assertEqual(history_row.bar, "barbar")
+            self.assertEqual(history_row.changed_by, "bob")
+            self.assertEqual(history_row.data_version, 2)
+            self.assertEqual(sc_row.complete, True)
 
     def testEnactChangeForDeletingExistingRow(self):
         self.table.scheduled_changes.enactChange(6, "nancy")
-        row = self.table.t.select().where(self.table.fooid == 4).execute().fetchall()
-        self.assertEqual(row, [])
+        with self.engine.begin() as conn:
+            row = conn.execute(self.table.t.select().where(self.table.fooid == 4)).fetchall()
+            self.assertEqual(row, [])
 
     def testEnactChangeNoPermissions(self):
         # TODO: May want to add something to permissions api/ui that warns if a user has a scheduled change when changing their permissions
@@ -1300,9 +1407,10 @@ class TestScheduledChangesTable(unittest.TestCase, ScheduledChangesTableMixin, M
         what = {"foo": "bb"}
         self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
         self.table.scheduled_changes.enactChange(2, "nancy")
-        num_history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 2).execute().fetchall()
-        num_cond_history_row = self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 2).execute().fetchall()
-        self.assertEqual(len(num_cond_history_row), len(num_history_row))
+        with self.engine.begin() as conn:
+            num_history_row = conn.execute(self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 2)).fetchall()
+            num_cond_history_row = conn.execute(self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 2)).fetchall()
+            self.assertEqual(len(num_cond_history_row), len(num_history_row))
 
     @mock.patch("time.time", mock.MagicMock(return_value=200))
     def testMergeUpdateWithConflict(self):
@@ -1361,14 +1469,25 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
 
         self.table = TestTable(self.db, self.metadata)
         self.sc_table = self.table.scheduled_changes
-        self.metadata.create_all()
-        self.table.t.insert().execute(fooid=10, foo="h", data_version=1)
-        self.table.t.insert().execute(fooid=11, foo="i", bar="j", data_version=1)
-        self.sc_table.t.insert().execute(
-            sc_id=1, scheduled_by="bob", base_fooid=10, base_foo="h", base_bar="bbb", base_data_version=1, data_version=1, change_type="update"
-        )
-        self.sc_table.conditions.t.insert().execute(sc_id=1, when=87000, data_version=1)
-        self.db.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
+        self.metadata.create_all(self.engine)
+        with self.engine.begin() as conn:
+            conn.execute(self.table.t.insert(), {"fooid": 10, "foo": "h", "data_version": 1})
+            conn.execute(self.table.t.insert(), {"fooid": 11, "foo": "i", "bar": "j", "data_version": 1})
+            conn.execute(
+                self.sc_table.t.insert(),
+                {
+                    "sc_id": 1,
+                    "scheduled_by": "bob",
+                    "base_fooid": 10,
+                    "base_foo": "h",
+                    "base_bar": "bbb",
+                    "base_data_version": 1,
+                    "data_version": 1,
+                    "change_type": "update",
+                },
+            )
+            conn.execute(self.sc_table.conditions.t.insert(), {"sc_id": 1, "when": 87000, "data_version": 1})
+            conn.execute(self.db.permissions.t.insert(), {"permission": "admin", "username": "bob", "data_version": 1})
 
     def testAllTablesCreated(self):
         self.assertTrue(self.table)
@@ -1458,17 +1577,18 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
     def testInsertWithEnabledCondition(self):
         what = {"fooid": 11, "foo": "i", "bar": "jjj", "data_version": 1, "when": 909000, "change_type": "update"}
         self.sc_table.insert(changed_by="bob", **what)
-        row = self.sc_table.t.select().where(self.sc_table.sc_id == 2).execute().fetchall()[0]
-        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 2).execute().fetchall()[0]
-        self.assertEqual(row.scheduled_by, "bob")
-        self.assertEqual(row.change_type, "update")
-        self.assertEqual(row.data_version, 1)
-        self.assertEqual(row.base_fooid, 11)
-        self.assertEqual(row.base_foo, "i")
-        self.assertEqual(row.base_bar, "jjj")
-        self.assertEqual(row.base_data_version, 1)
-        self.assertEqual(cond_row.when, 909000)
-        self.assertEqual(cond_row.data_version, 1)
+        with self.engine.begin() as conn:
+            row = conn.execute(self.sc_table.t.select().where(self.sc_table.sc_id == 2)).fetchall()[0]
+            cond_row = conn.execute(self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 2)).fetchall()[0]
+            self.assertEqual(row.scheduled_by, "bob")
+            self.assertEqual(row.change_type, "update")
+            self.assertEqual(row.data_version, 1)
+            self.assertEqual(row.base_fooid, 11)
+            self.assertEqual(row.base_foo, "i")
+            self.assertEqual(row.base_bar, "jjj")
+            self.assertEqual(row.base_data_version, 1)
+            self.assertEqual(cond_row.when, 909000)
+            self.assertEqual(cond_row.data_version, 1)
 
     def testInsertWithDisabledCondition(self):
         what = {
@@ -1488,30 +1608,31 @@ class TestScheduledChangesWithConfigurableConditions(unittest.TestCase, MemoryDa
         where = [self.sc_table.sc_id == 1]
         what = {"when": 1000300, "bar": "ccc"}
         self.sc_table.update(where, what, changed_by="bob", old_data_version=1)
-        row = self.sc_table.t.select().where(self.sc_table.sc_id == 1).execute().fetchall()[0]
-        cond_row = self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 1).execute().fetchall()[0]
-        history_row = self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1).execute().fetchall()[0]
-        cond_history_row = self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 1).execute().fetchall()[0]
-        self.assertEqual(row.scheduled_by, "bob")
-        self.assertEqual(row.change_type, "update")
-        self.assertEqual(row.data_version, 2)
-        self.assertEqual(row.base_fooid, 10)
-        self.assertEqual(row.base_foo, "h")
-        self.assertEqual(row.base_bar, "ccc")
-        self.assertEqual(row.base_data_version, 1)
-        self.assertEqual(history_row.changed_by, "bob")
-        self.assertEqual(history_row.scheduled_by, "bob")
-        self.assertEqual(history_row.change_type, "update")
-        self.assertEqual(history_row.data_version, 2)
-        self.assertEqual(history_row.base_fooid, 10)
-        self.assertEqual(history_row.base_foo, "h")
-        self.assertEqual(history_row.base_bar, "ccc")
-        self.assertEqual(history_row.base_data_version, 1)
-        self.assertEqual(cond_row.when, 1000300)
-        self.assertEqual(cond_row.data_version, 2)
-        self.assertEqual(cond_history_row.changed_by, "bob")
-        self.assertEqual(cond_history_row.when, 1000300)
-        self.assertEqual(cond_history_row.data_version, 2)
+        with self.engine.begin() as conn:
+            row = conn.execute(self.sc_table.t.select().where(self.sc_table.sc_id == 1)).fetchall()[0]
+            cond_row = conn.execute(self.sc_table.conditions.t.select().where(self.sc_table.conditions.sc_id == 1)).fetchall()[0]
+            history_row = conn.execute(self.sc_table.history.t.select().where(self.sc_table.history.sc_id == 1)).fetchall()[0]
+            cond_history_row = conn.execute(self.sc_table.conditions.history.t.select().where(self.sc_table.conditions.history.sc_id == 1)).fetchall()[0]
+            self.assertEqual(row.scheduled_by, "bob")
+            self.assertEqual(row.change_type, "update")
+            self.assertEqual(row.data_version, 2)
+            self.assertEqual(row.base_fooid, 10)
+            self.assertEqual(row.base_foo, "h")
+            self.assertEqual(row.base_bar, "ccc")
+            self.assertEqual(row.base_data_version, 1)
+            self.assertEqual(history_row.changed_by, "bob")
+            self.assertEqual(history_row.scheduled_by, "bob")
+            self.assertEqual(history_row.change_type, "update")
+            self.assertEqual(history_row.data_version, 2)
+            self.assertEqual(history_row.base_fooid, 10)
+            self.assertEqual(history_row.base_foo, "h")
+            self.assertEqual(history_row.base_bar, "ccc")
+            self.assertEqual(history_row.base_data_version, 1)
+            self.assertEqual(cond_row.when, 1000300)
+            self.assertEqual(cond_row.data_version, 2)
+            self.assertEqual(cond_history_row.changed_by, "bob")
+            self.assertEqual(cond_history_row.when, 1000300)
+            self.assertEqual(cond_history_row.data_version, 2)
 
     def testUpdateChangeToDisabledCondition(self):
         where = [self.sc_table.sc_id == 1]
@@ -1528,15 +1649,16 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.engine = self.db.engine
         self.metadata = self.db.metadata
         self.signoffs = SignoffsTable(self.db, self.metadata, "sqlite", "test_table")
-        self.metadata.create_all()
+        self.metadata.create_all(self.engine)
         self.db.setSystemAccounts(["goodbot"])
-        self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="nancy", role="relman", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="nancy", role="qa", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="janet", role="relman", data_version=1)
-        self.db.permissions.t.insert().execute(permission="admin", username="charlie", data_version=1)
-        self.signoffs.t.insert().execute(sc_id=1, username="nancy", role="relman")
+        with self.engine.begin() as conn:
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "bob", "role": "releng", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "bob", "role": "dev", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "nancy", "role": "relman", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "nancy", "role": "qa", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "janet", "role": "relman", "data_version": 1})
+            conn.execute(self.db.permissions.t.insert(), {"permission": "admin", "username": "charlie", "data_version": 1})
+            conn.execute(self.signoffs.t.insert(), {"sc_id": 1, "username": "nancy", "role": "relman"})
 
     def testSignoffsHasCorrectTablesAndColumns(self):
         columns = [c.name for c in self.signoffs.t.columns]
@@ -1548,8 +1670,9 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
 
     def testSignoffWithPermission(self):
         self.signoffs.insert("bob", sc_id=1, username="bob", role="releng")
-        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "bob").execute().fetchall()
-        self.assertEqual(got, [(1, "bob", "releng")])
+        with self.engine.begin() as conn:
+            got = conn.execute(self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "bob")).fetchall()
+            self.assertEqual(got, [(1, "bob", "releng")])
 
     def testSignoffWithoutPermission(self):
         self.assertRaisesRegex(
@@ -1563,10 +1686,11 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
 
     def testSignoffASecondTimeWithSameRole(self):
         self.signoffs.insert("nancy", sc_id=1, username="nancy", role="relman")
-        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
-        self.assertEqual(got, [(1, "nancy", "relman")])
-        history = self.signoffs.history.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
-        self.assertEqual(len(history), 0)
+        with self.engine.begin() as conn:
+            got = conn.execute(self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy")).fetchall()
+            self.assertEqual(got, [(1, "nancy", "relman")])
+            history = conn.execute(self.signoffs.history.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy")).fetchall()
+            self.assertEqual(len(history), 0)
 
     def testSignoffWithSecondRole(self):
         self.assertRaisesRegex(PermissionDeniedError, "Cannot signoff with a second role", self.signoffs.insert, "nancy", sc_id=1, username="nancy", role="qa")
@@ -1576,18 +1700,21 @@ class TestSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
 
     def testRevokeSignoff(self):
         self.signoffs.delete({"sc_id": 1, "username": "nancy"}, changed_by="nancy")
-        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
-        self.assertEqual(len(got), 0)
+        with self.engine.begin() as conn:
+            got = conn.execute(self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy")).fetchall()
+            self.assertEqual(len(got), 0)
 
     def testRevokeOtherUsersSignoffAsAdmin(self):
         self.signoffs.delete({"sc_id": 1, "username": "nancy"}, changed_by="charlie")
-        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
-        self.assertEqual(len(got), 0)
+        with self.engine.begin() as conn:
+            got = conn.execute(self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy")).fetchall()
+            self.assertEqual(len(got), 0)
 
     def testRevokeOtherUsersSignoffWithSameRole(self):
         self.signoffs.delete({"sc_id": 1, "username": "nancy"}, changed_by="janet")
-        got = self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy").execute().fetchall()
-        self.assertEqual(len(got), 0)
+        with self.engine.begin() as conn:
+            got = conn.execute(self.signoffs.t.select().where(self.signoffs.sc_id == 1).where(self.signoffs.username == "nancy")).fetchall()
+            self.assertEqual(len(got), 0)
 
     def testRevokeOtherUsersSignoffWithoutPermission(self):
         self.assertRaisesRegex(
@@ -1613,86 +1740,101 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
         self.engine = self.db.engine
         self.metadata = self.db.metadata
         self.rs = self.db.productRequiredSignoffs
-        self.metadata.create_all()
-        self.db.permissions.t.insert().execute(username="bill", permission="admin", data_version=1)
-        self.db.permissions.t.insert().execute(username="bob", permission="required_signoff", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="nancy", role="relman", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="nancy", role="qa", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="janet", role="relman", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="janet", role="releng", data_version=1)
-        self.rs.t.insert().execute(product="foo", channel="bar", role="releng", signoffs_required=1, data_version=1)
-        self.rs.t.insert().execute(product="foo", channel="bar", role="relman", signoffs_required=2, data_version=1)
-        self.rs.t.insert().execute(product="apple", channel="orange", role="releng", signoffs_required=2, data_version=1)
-        self.rs.scheduled_changes.t.insert().execute(
-            sc_id=1,
-            scheduled_by="bob",
-            complete=False,
-            change_type="update",
-            data_version=1,
-            base_product="apple",
-            base_channel="orange",
-            base_role="releng",
-            base_signoffs_required=1,
-            base_data_version=1,
-        )
-        self.rs.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=300000, data_version=1)
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bob", role="releng")
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="janet", role="releng")
-        self.rs.scheduled_changes.t.insert().execute(
-            sc_id=2,
-            scheduled_by="bob",
-            complete=False,
-            change_type="delete",
-            data_version=1,
-            base_product="foo",
-            base_channel="bar",
-            base_role="releng",
-            base_data_version=1,
-        )
-        self.rs.scheduled_changes.conditions.t.insert().execute(sc_id=2, when=400000, data_version=1)
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="bob", role="releng")
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="janet", role="relman")
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="nancy", role="relman")
-        self.rs.scheduled_changes.t.insert().execute(
-            sc_id=3,
-            scheduled_by="bob",
-            complete=False,
-            change_type="insert",
-            data_version=1,
-            base_product="foo",
-            base_channel="bar",
-            base_role="qa",
-            base_signoffs_required=1,
-        )
-        self.rs.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=300000, data_version=1)
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="bob", role="releng")
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="janet", role="relman")
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="nancy", role="relman")
-        self.rs.scheduled_changes.t.insert().execute(
-            sc_id=4,
-            scheduled_by="bob",
-            complete=False,
-            change_type="insert",
-            data_version=1,
-            base_product="foo",
-            base_channel="bar",
-            base_role="dev",
-            base_signoffs_required=1,
-        )
-        self.rs.scheduled_changes.conditions.t.insert().execute(sc_id=4, when=300000, data_version=1)
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="bob", role="releng")
+        self.metadata.create_all(self.engine)
+        with self.engine.begin() as conn:
+            conn.execute(self.db.permissions.t.insert(), {"username": "bill", "permission": "admin", "data_version": 1})
+            conn.execute(self.db.permissions.t.insert(), {"username": "bob", "permission": "required_signoff", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "bob", "role": "releng", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "bob", "role": "dev", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "nancy", "role": "relman", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "nancy", "role": "qa", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "janet", "role": "relman", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "janet", "role": "releng", "data_version": 1})
+            conn.execute(self.rs.t.insert(), {"product": "foo", "channel": "bar", "role": "releng", "signoffs_required": 1, "data_version": 1})
+            conn.execute(self.rs.t.insert(), {"product": "foo", "channel": "bar", "role": "relman", "signoffs_required": 2, "data_version": 1})
+            conn.execute(self.rs.t.insert(), {"product": "apple", "channel": "orange", "role": "releng", "signoffs_required": 2, "data_version": 1})
+            conn.execute(
+                self.rs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 1,
+                    "scheduled_by": "bob",
+                    "complete": False,
+                    "change_type": "update",
+                    "data_version": 1,
+                    "base_product": "apple",
+                    "base_channel": "orange",
+                    "base_role": "releng",
+                    "base_signoffs_required": 1,
+                    "base_data_version": 1,
+                },
+            )
+            conn.execute(self.rs.scheduled_changes.conditions.t.insert(), {"sc_id": 1, "when": 300000, "data_version": 1})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 1, "username": "bob", "role": "releng"})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 1, "username": "janet", "role": "releng"})
+            conn.execute(
+                self.rs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 2,
+                    "scheduled_by": "bob",
+                    "complete": False,
+                    "change_type": "delete",
+                    "data_version": 1,
+                    "base_product": "foo",
+                    "base_channel": "bar",
+                    "base_role": "releng",
+                    "base_data_version": 1,
+                },
+            )
+            conn.execute(self.rs.scheduled_changes.conditions.t.insert(), {"sc_id": 2, "when": 400000, "data_version": 1})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 2, "username": "bob", "role": "releng"})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 2, "username": "janet", "role": "relman"})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 2, "username": "nancy", "role": "relman"})
+            conn.execute(
+                self.rs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 3,
+                    "scheduled_by": "bob",
+                    "complete": False,
+                    "change_type": "insert",
+                    "data_version": 1,
+                    "base_product": "foo",
+                    "base_channel": "bar",
+                    "base_role": "qa",
+                    "base_signoffs_required": 1,
+                },
+            )
+            conn.execute(self.rs.scheduled_changes.conditions.t.insert(), {"sc_id": 3, "when": 300000, "data_version": 1})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 3, "username": "bob", "role": "releng"})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 3, "username": "janet", "role": "relman"})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 3, "username": "nancy", "role": "relman"})
+            conn.execute(
+                self.rs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 4,
+                    "scheduled_by": "bob",
+                    "complete": False,
+                    "change_type": "insert",
+                    "data_version": 1,
+                    "base_product": "foo",
+                    "base_channel": "bar",
+                    "base_role": "dev",
+                    "base_signoffs_required": 1,
+                },
+            )
+            conn.execute(self.rs.scheduled_changes.conditions.t.insert(), {"sc_id": 4, "when": 300000, "data_version": 1})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 4, "username": "bob", "role": "releng"})
 
     def testInsertNewRequiredSignoff(self):
         self.rs.insert(changed_by="bill", product="carrot", channel="celery", role="releng", signoffs_required=1)
-        got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
-        self.assertEqual(got, [("carrot", "celery", "releng", 1, 1)])
+        with self.engine.begin() as conn:
+            got = conn.execute(self.rs.t.select().where(self.rs.product == "carrot")).fetchall()
+            self.assertEqual(got, [("carrot", "celery", "releng", 1, 1)])
 
     def testInsertNewRequiredSignoffWithSpecificPermission(self):
         self.rs.insert(changed_by="bob", product="carrot", channel="celery", role="releng", signoffs_required=1)
-        got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
-        self.assertEqual(got, [("carrot", "celery", "releng", 1, 1)])
+        with self.engine.begin() as conn:
+            got = conn.execute(self.rs.t.select().where(self.rs.product == "carrot")).fetchall()
+            self.assertEqual(got, [("carrot", "celery", "releng", 1, 1)])
 
     def testInsertNewRequiredSignoffWithoutPermission(self):
         self.assertRaises(PermissionDeniedError, self.rs.insert, changed_by="chuck", product="carrot", channel="celery", role="releng", signoffs_required=1)
@@ -1731,21 +1873,24 @@ class TestProductRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixin):
 
     def testInsertRequiredSignoffWithScheduledChange(self):
         self.rs.scheduled_changes.enactChange(sc_id=3, enacted_by="bill")
-        got = self.rs.t.select().where(self.rs.product == "foo").where(self.rs.channel == "bar").where(self.rs.role == "qa").execute().fetchall()
-        self.assertEqual(got, [("foo", "bar", "qa", 1, 1)])
+        with self.engine.begin() as conn:
+            got = conn.execute(self.rs.t.select().where(self.rs.product == "foo").where(self.rs.channel == "bar").where(self.rs.role == "qa")).fetchall()
+            self.assertEqual(got, [("foo", "bar", "qa", 1, 1)])
 
     def testInsertRequiredSignoffWithoutEnoughSignoffs(self):
         self.assertRaises(SignoffRequiredError, self.rs.scheduled_changes.enactChange, sc_id=4, enacted_by="bill")
 
     def testUpdateRequiredSignoffWithScheduledChange(self):
         self.rs.scheduled_changes.enactChange(sc_id=1, enacted_by="bill")
-        got = self.rs.t.select().where(self.rs.product == "apple").execute().fetchall()
-        self.assertEqual(got, [("apple", "orange", "releng", 1, 2)])
+        with self.engine.begin() as conn:
+            got = conn.execute(self.rs.t.select().where(self.rs.product == "apple")).fetchall()
+            self.assertEqual(got, [("apple", "orange", "releng", 1, 2)])
 
     def testDeleteRequiredSignoffWithScheduledChange(self):
         self.rs.scheduled_changes.enactChange(sc_id=2, enacted_by="bill")
-        got = self.rs.t.select().where(self.rs.product == "foo").where(self.rs.channel == "bar").where(self.rs.role == "releng").execute().fetchall()
-        self.assertEqual(len(got), 0)
+        with self.engine.begin() as conn:
+            got = conn.execute(self.rs.t.select().where(self.rs.product == "foo").where(self.rs.channel == "bar").where(self.rs.role == "releng")).fetchall()
+            self.assertEqual(len(got), 0)
 
 
 @pytest.mark.usefixtures("current_db_schema")
@@ -1757,56 +1902,82 @@ class TestPermissionsRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixi
         self.engine = self.db.engine
         self.metadata = self.db.metadata
         self.rs = self.db.permissionsRequiredSignoffs
-        self.metadata.create_all()
-        self.db.permissions.t.insert().execute(username="bill", permission="admin", data_version=1)
-        self.db.permissions.t.insert().execute(username="bob", permission="required_signoff", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="nancy", role="relman", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="nancy", role="qa", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="janet", role="relman", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="janet", role="releng", data_version=1)
-        self.rs.t.insert().execute(product="foo", role="releng", signoffs_required=1, data_version=1)
-        self.rs.t.insert().execute(product="foo", role="relman", signoffs_required=2, data_version=1)
-        self.rs.t.insert().execute(product="apple", role="releng", signoffs_required=2, data_version=1)
-        self.rs.scheduled_changes.t.insert().execute(
-            sc_id=1,
-            scheduled_by="bob",
-            complete=False,
-            change_type="update",
-            data_version=1,
-            base_product="apple",
-            base_role="releng",
-            base_signoffs_required=1,
-            base_data_version=1,
-        )
-        self.rs.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=300000, data_version=1)
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="bob", role="releng")
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=1, username="janet", role="releng")
-        self.rs.scheduled_changes.t.insert().execute(
-            sc_id=2, scheduled_by="bob", complete=False, change_type="delete", data_version=1, base_product="foo", base_role="releng", base_data_version=1
-        )
-        self.rs.scheduled_changes.conditions.t.insert().execute(sc_id=2, when=400000, data_version=1)
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="bob", role="releng")
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="janet", role="relman")
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="nancy", role="relman")
-        self.rs.scheduled_changes.t.insert().execute(
-            sc_id=3, scheduled_by="bob", complete=False, change_type="insert", data_version=1, base_product="foo", base_role="qa", base_signoffs_required=1
-        )
-        self.rs.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=300000, data_version=1)
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="bob", role="releng")
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="janet", role="relman")
-        self.rs.scheduled_changes.signoffs.t.insert().execute(sc_id=3, username="nancy", role="relman")
+        self.metadata.create_all(self.engine)
+        with self.engine.begin() as conn:
+            conn.execute(self.db.permissions.t.insert(), {"username": "bill", "permission": "admin", "data_version": 1})
+            conn.execute(self.db.permissions.t.insert(), {"username": "bob", "permission": "required_signoff", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "bob", "role": "releng", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "bob", "role": "dev", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "nancy", "role": "relman", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "nancy", "role": "qa", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "janet", "role": "relman", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "janet", "role": "releng", "data_version": 1})
+            conn.execute(self.rs.t.insert(), {"product": "foo", "role": "releng", "signoffs_required": 1, "data_version": 1})
+            conn.execute(self.rs.t.insert(), {"product": "foo", "role": "relman", "signoffs_required": 2, "data_version": 1})
+            conn.execute(self.rs.t.insert(), {"product": "apple", "role": "releng", "signoffs_required": 2, "data_version": 1})
+            conn.execute(
+                self.rs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 1,
+                    "scheduled_by": "bob",
+                    "complete": False,
+                    "change_type": "update",
+                    "data_version": 1,
+                    "base_product": "apple",
+                    "base_role": "releng",
+                    "base_signoffs_required": 1,
+                    "base_data_version": 1,
+                },
+            )
+            conn.execute(self.rs.scheduled_changes.conditions.t.insert(), {"sc_id": 1, "when": 300000, "data_version": 1})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 1, "username": "bob", "role": "releng"})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 1, "username": "janet", "role": "releng"})
+            conn.execute(
+                self.rs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 2,
+                    "scheduled_by": "bob",
+                    "complete": False,
+                    "change_type": "delete",
+                    "data_version": 1,
+                    "base_product": "foo",
+                    "base_role": "releng",
+                    "base_data_version": 1,
+                },
+            )
+            conn.execute(self.rs.scheduled_changes.conditions.t.insert(), {"sc_id": 2, "when": 400000, "data_version": 1})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 2, "username": "bob", "role": "releng"})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 2, "username": "janet", "role": "relman"})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 2, "username": "nancy", "role": "relman"})
+            conn.execute(
+                self.rs.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 3,
+                    "scheduled_by": "bob",
+                    "complete": False,
+                    "change_type": "insert",
+                    "data_version": 1,
+                    "base_product": "foo",
+                    "base_role": "qa",
+                    "base_signoffs_required": 1,
+                },
+            )
+            conn.execute(self.rs.scheduled_changes.conditions.t.insert(), {"sc_id": 3, "when": 300000, "data_version": 1})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 3, "username": "bob", "role": "releng"})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 3, "username": "janet", "role": "relman"})
+            conn.execute(self.rs.scheduled_changes.signoffs.t.insert(), {"sc_id": 3, "username": "nancy", "role": "relman"})
 
     def testInsertNewRequiredSignoff(self):
         self.rs.insert(changed_by="bill", product="carrot", role="releng", signoffs_required=1)
-        got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
-        self.assertEqual(got, [("carrot", "releng", 1, 1)])
+        with self.engine.begin() as conn:
+            got = conn.execute(self.rs.t.select().where(self.rs.product == "carrot")).fetchall()
+            self.assertEqual(got, [("carrot", "releng", 1, 1)])
 
     def testInsertNewRequiredSignoffWithSpecificPermission(self):
         self.rs.insert(changed_by="bob", product="carrot", role="releng", signoffs_required=1)
-        got = self.rs.t.select().where(self.rs.product == "carrot").execute().fetchall()
-        self.assertEqual(got, [("carrot", "releng", 1, 1)])
+        with self.engine.begin() as conn:
+            got = conn.execute(self.rs.t.select().where(self.rs.product == "carrot")).fetchall()
+            self.assertEqual(got, [("carrot", "releng", 1, 1)])
 
     def testInsertNewRequiredSignoffWithoutPermission(self):
         self.assertRaises(PermissionDeniedError, self.rs.insert, changed_by="chuck", product="carrot", role="releng", signoffs_required=1)
@@ -1839,18 +2010,21 @@ class TestPermissionsRequiredSignoffsTable(unittest.TestCase, MemoryDatabaseMixi
 
     def testInsertRequiredSignoffWithScheduledChange(self):
         self.rs.scheduled_changes.enactChange(sc_id=3, enacted_by="bill")
-        got = self.rs.t.select().where(self.rs.product == "foo").where(self.rs.role == "qa").execute().fetchall()
-        self.assertEqual(got, [("foo", "qa", 1, 1)])
+        with self.engine.begin() as conn:
+            got = conn.execute(self.rs.t.select().where(self.rs.product == "foo").where(self.rs.role == "qa")).fetchall()
+            self.assertEqual(got, [("foo", "qa", 1, 1)])
 
     def testUpdateRequiredSignoffWithScheduledChange(self):
         self.rs.scheduled_changes.enactChange(sc_id=1, enacted_by="bill")
-        got = self.rs.t.select().where(self.rs.product == "apple").execute().fetchall()
-        self.assertEqual(got, [("apple", "releng", 1, 2)])
+        with self.engine.begin() as conn:
+            got = conn.execute(self.rs.t.select().where(self.rs.product == "apple")).fetchall()
+            self.assertEqual(got, [("apple", "releng", 1, 2)])
 
     def testDeleteRequiredSignoffWithScheduledChange(self):
         self.rs.scheduled_changes.enactChange(sc_id=2, enacted_by="bill")
-        got = self.rs.t.select().where(self.rs.product == "foo").where(self.rs.role == "releng").execute().fetchall()
-        self.assertEqual(len(got), 0)
+        with self.engine.begin() as conn:
+            got = conn.execute(self.rs.t.select().where(self.rs.product == "foo").where(self.rs.role == "releng")).fetchall()
+            self.assertEqual(len(got), 0)
 
 
 class RulesTestMixin(object):
@@ -1871,86 +2045,163 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
         self.metadata.create_all(self.db.engine)
+        self.engine = self.db.engine
         self.paths = self.db.rules
-        self.paths.t.insert().execute(
-            rule_id=1, priority=100, version="3.5", buildTarget="d", backgroundRate=100, mapping="c", update_type="z", product="a", channel="a", data_version=1
-        )
-        self.paths.t.insert().execute(
-            rule_id=2, priority=100, version="3.3", buildTarget="d", backgroundRate=100, mapping="b", update_type="z", product="a", channel="a", data_version=1
-        )
-        self.paths.t.insert().execute(
-            rule_id=3, priority=100, version="3.5", buildTarget="a", backgroundRate=100, mapping="a", update_type="z", product="a", data_version=1
-        )
-        self.paths.t.insert().execute(
-            rule_id=4, alias="gandalf", priority=80, buildTarget="d", backgroundRate=100, mapping="a", update_type="z", channel="a", data_version=1
-        )
-        self.paths.t.insert().execute(rule_id=5, priority=80, buildTarget="d", version="3.3", backgroundRate=0, mapping="c", update_type="z", data_version=1)
-        self.paths.t.insert().execute(
-            rule_id=6,
-            alias="radagast",
-            priority=100,
-            buildTarget="d",
-            mapping="a",
-            backgroundRate=100,
-            osVersion="foo 1",
-            update_type="z",
-            product="a",
-            channel="a",
-            data_version=1,
-        )
-        self.paths.t.insert().execute(
-            rule_id=7,
-            priority=100,
-            buildTarget="d",
-            mapping="a",
-            backgroundRate=100,
-            osVersion="foo 2,blah 6,bar && baz",
-            update_type="z",
-            product="a",
-            channel="a",
-            data_version=1,
-        )
-        self.paths.t.insert().execute(
-            rule_id=8,
-            priority=100,
-            buildTarget="e",
-            mapping="d",
-            backgroundRate=100,
-            locale="foo,bar-baz",
-            update_type="z",
-            product="a",
-            channel="a",
-            data_version=1,
-        )
-        self.paths.t.insert().execute(
-            rule_id=9,
-            priority=100,
-            buildTarget="f",
-            mapping="f",
-            backgroundRate=100,
-            instructionSet="S",
-            update_type="z",
-            product="foo",
-            channel="foo*",
-            data_version=1,
-        )
-        self.paths.t.insert().execute(
-            rule_id=10,
-            priority=100,
-            buildTarget="g",
-            mapping="g",
-            fallbackMapping="fallback",
-            backgroundRate=100,
-            update_type="z",
-            product="foo",
-            channel="foo",
-            data_version=1,
-        )
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.paths.t.insert(),
+                {
+                    "rule_id": 1,
+                    "priority": 100,
+                    "version": "3.5",
+                    "buildTarget": "d",
+                    "backgroundRate": 100,
+                    "mapping": "c",
+                    "update_type": "z",
+                    "product": "a",
+                    "channel": "a",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.paths.t.insert(),
+                {
+                    "rule_id": 2,
+                    "priority": 100,
+                    "version": "3.3",
+                    "buildTarget": "d",
+                    "backgroundRate": 100,
+                    "mapping": "b",
+                    "update_type": "z",
+                    "product": "a",
+                    "channel": "a",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.paths.t.insert(),
+                {
+                    "rule_id": 3,
+                    "priority": 100,
+                    "version": "3.5",
+                    "buildTarget": "a",
+                    "backgroundRate": 100,
+                    "mapping": "a",
+                    "update_type": "z",
+                    "product": "a",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.paths.t.insert(),
+                {
+                    "rule_id": 4,
+                    "alias": "gandalf",
+                    "priority": 80,
+                    "buildTarget": "d",
+                    "backgroundRate": 100,
+                    "mapping": "a",
+                    "update_type": "z",
+                    "channel": "a",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.paths.t.insert(),
+                {
+                    "rule_id": 5,
+                    "priority": 80,
+                    "buildTarget": "d",
+                    "version": "3.3",
+                    "backgroundRate": 0,
+                    "mapping": "c",
+                    "update_type": "z",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.paths.t.insert(),
+                {
+                    "rule_id": 6,
+                    "alias": "radagast",
+                    "priority": 100,
+                    "buildTarget": "d",
+                    "mapping": "a",
+                    "backgroundRate": 100,
+                    "osVersion": "foo 1",
+                    "update_type": "z",
+                    "product": "a",
+                    "channel": "a",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.paths.t.insert(),
+                {
+                    "rule_id": 7,
+                    "priority": 100,
+                    "buildTarget": "d",
+                    "mapping": "a",
+                    "backgroundRate": 100,
+                    "osVersion": "foo 2,blah 6,bar && baz",
+                    "update_type": "z",
+                    "product": "a",
+                    "channel": "a",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.paths.t.insert(),
+                {
+                    "rule_id": 8,
+                    "priority": 100,
+                    "buildTarget": "e",
+                    "mapping": "d",
+                    "backgroundRate": 100,
+                    "locale": "foo,bar-baz",
+                    "update_type": "z",
+                    "product": "a",
+                    "channel": "a",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.paths.t.insert(),
+                {
+                    "rule_id": 9,
+                    "priority": 100,
+                    "buildTarget": "f",
+                    "mapping": "f",
+                    "backgroundRate": 100,
+                    "instructionSet": "S",
+                    "update_type": "z",
+                    "product": "foo",
+                    "channel": "foo*",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.paths.t.insert(),
+                {
+                    "rule_id": 10,
+                    "priority": 100,
+                    "buildTarget": "g",
+                    "mapping": "g",
+                    "fallbackMapping": "fallback",
+                    "backgroundRate": 100,
+                    "update_type": "z",
+                    "product": "foo",
+                    "channel": "foo",
+                    "data_version": 1,
+                },
+            )
 
-        self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="bill", role="bar", data_version=1)
-        self.db.permissions.user_roles.t.insert().execute(username="jane", role="bar", data_version=1)
-        self.db.productRequiredSignoffs.t.insert().execute(product="foo", channel="foo", role="bar", signoffs_required=2, data_version=1)
+            conn.execute(self.db.permissions.t.insert(), {"permission": "admin", "username": "bill", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "bill", "role": "bar", "data_version": 1})
+            conn.execute(self.db.permissions.user_roles.t.insert(), {"username": "jane", "role": "bar", "data_version": 1})
+            conn.execute(
+                self.db.productRequiredSignoffs.t.insert(), {"product": "foo", "channel": "foo", "role": "bar", "signoffs_required": 2, "data_version": 1}
+            )
 
     def testAllTablesCreated(self):
         self.assertTrue(self.db.rules)
@@ -2611,13 +2862,14 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
     def testAddRule(self):
         what = dict(backgroundRate=11, mapping="c", update_type="z", priority=60, product="a", channel="a")
         rule_id = self.paths.insert(changed_by="bill", **what)
-        rules = self.paths.t.select().where(self.paths.rule_id == rule_id).execute().fetchall()
-        copy_rule = dict(rules[0].items())
-        rule = self._stripNullColumns([copy_rule])
-        what["rule_id"] = rule_id
-        what["data_version"] = 1
-        what = [what]
-        self.assertEqual(rule, what)
+        with self.engine.begin() as conn:
+            rules = conn.execute(self.paths.t.select().where(self.paths.rule_id == rule_id)).fetchall()
+            copy_rule = dict(rules[0]._mapping)
+            rule = self._stripNullColumns([copy_rule])
+            what["rule_id"] = rule_id
+            what["data_version"] = 1
+            what = [what]
+            self.assertEqual(rule, what)
 
     def testAddRuleThatRequiresSignoff(self):
         what = dict(backgroundRate=11, mapping="c", update_type="z", priority=60, product="foo", channel="foo")
@@ -2632,59 +2884,61 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         self.assertRaises(SignoffRequiredError, self.paths.insert, changed_by="bill", **what)
 
     def testUpdateRule(self):
-        rules = self.paths.t.select().where(self.paths.rule_id == 1).execute().fetchall()
-        what = dict(rules[0].items())
+        with self.engine.begin() as conn:
+            rules = conn.execute(self.paths.t.select().where(self.paths.rule_id == 1)).fetchall()
+            what = dict(rules[0]._mapping)
 
-        what["mapping"] = "d"
-        self.paths.update(where={"rule_id": 1}, what=what, changed_by="bill", old_data_version=1)
+            what["mapping"] = "d"
+            self.paths.update(where={"rule_id": 1}, what=what, changed_by="bill", old_data_version=1)
 
-        rules = self.paths.t.select().where(self.paths.rule_id == 1).execute().fetchall()
-        copy_rule = dict(rules[0].items())
-        rule = self._stripNullColumns([copy_rule])
+            rules = conn.execute(self.paths.t.select().where(self.paths.rule_id == 1)).fetchall()
+            copy_rule = dict(rules[0]._mapping)
+            rule = self._stripNullColumns([copy_rule])
 
-        expected = [
-            dict(
-                rule_id=1,
-                priority=100,
-                backgroundRate=100,
-                version="3.5",
-                buildTarget="d",
-                mapping="d",
-                update_type="z",
-                product="a",
-                channel="a",
-                data_version=2,
-            )
-        ]
-        self.assertEqual(rule, expected)
+            expected = [
+                dict(
+                    rule_id=1,
+                    priority=100,
+                    backgroundRate=100,
+                    version="3.5",
+                    buildTarget="d",
+                    mapping="d",
+                    update_type="z",
+                    product="a",
+                    channel="a",
+                    data_version=2,
+                )
+            ]
+            self.assertEqual(rule, expected)
 
     def testUpdateRuleByAlias(self):
-        rules = self.paths.t.select().where(self.paths.rule_id == 6).execute().fetchall()
-        what = dict(rules[0].items())
+        with self.engine.begin() as conn:
+            rules = conn.execute(self.paths.t.select().where(self.paths.rule_id == 6)).fetchall()
+            what = dict(rules[0]._mapping)
 
-        what["mapping"] = "d"
-        self.paths.update(where={"rule_id": "radagast"}, what=what, changed_by="bill", old_data_version=1)
+            what["mapping"] = "d"
+            self.paths.update(where={"rule_id": "radagast"}, what=what, changed_by="bill", old_data_version=1)
 
-        rules = self.paths.t.select().where(self.paths.rule_id == 6).execute().fetchall()
-        copy_rule = dict(rules[0].items())
-        rule = self._stripNullColumns([copy_rule])
+            rules = conn.execute(self.paths.t.select().where(self.paths.rule_id == 6)).fetchall()
+            copy_rule = dict(rules[0]._mapping)
+            rule = self._stripNullColumns([copy_rule])
 
-        expected = [
-            dict(
-                rule_id=6,
-                alias="radagast",
-                priority=100,
-                backgroundRate=100,
-                buildTarget="d",
-                mapping="d",
-                update_type="z",
-                osVersion="foo 1",
-                product="a",
-                channel="a",
-                data_version=2,
-            )
-        ]
-        self.assertEqual(rule, expected)
+            expected = [
+                dict(
+                    rule_id=6,
+                    alias="radagast",
+                    priority=100,
+                    backgroundRate=100,
+                    buildTarget="d",
+                    mapping="d",
+                    update_type="z",
+                    osVersion="foo 1",
+                    product="a",
+                    channel="a",
+                    data_version=2,
+                )
+            ]
+            self.assertEqual(rule, expected)
 
     def testUpdateRuleThatRequiresSignoff(self):
         self.assertRaises(SignoffRequiredError, self.paths.update, where={"rule_id": 10}, what={"mapping": "g"}, changed_by="bill", old_data_version=1)
@@ -2694,13 +2948,15 @@ class TestRulesSimple(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
 
     def testDeleteRule(self):
         self.paths.delete({"rule_id": 2}, changed_by="bill", old_data_version=1)
-        rule = self.paths.t.select().where(self.paths.rule_id == 2).execute().fetchall()
-        self.assertEqual(rule, [])
+        with self.engine.begin() as conn:
+            rule = conn.execute(self.paths.t.select().where(self.paths.rule_id == 2)).fetchall()
+            self.assertEqual(rule, [])
 
     def testDeleteRuleByAlias(self):
         self.paths.delete({"rule_id": "gandalf"}, changed_by="bill", old_data_version=1)
-        rule = self.paths.t.select().where(self.paths.rule_id == 4).execute().fetchall()
-        self.assertEqual(rule, [])
+        with self.engine.begin() as conn:
+            rule = conn.execute(self.paths.t.select().where(self.paths.rule_id == 4)).fetchall()
+            self.assertEqual(rule, [])
 
     def testDeleteRuleThatRequiresSignoff(self):
         self.assertRaises(SignoffRequiredError, self.paths.delete, {"rule_id": 10}, changed_by="bill", old_data_version=1)
@@ -2718,17 +2974,51 @@ class TestJawsRules(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
         self.metadata.create_all(self.db.engine)
+        self.engine = self.db.engine
         self.rules = self.db.rules
-        self.rules.t.insert().execute(
-            rule_id=1, priority=90, mapping="myes", backgroundRate=100, jaws=True, update_type="z", product="mm", channel="mm", data_version=1
-        )
-        self.rules.t.insert().execute(
-            rule_id=2, priority=100, mapping="mno", backgroundRate=100, jaws=False, update_type="z", product="nn", channel="nn", data_version=1
-        )
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 1,
+                    "priority": 90,
+                    "mapping": "myes",
+                    "backgroundRate": 100,
+                    "jaws": True,
+                    "update_type": "z",
+                    "product": "mm",
+                    "channel": "mm",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 2,
+                    "priority": 100,
+                    "mapping": "mno",
+                    "backgroundRate": 100,
+                    "jaws": False,
+                    "update_type": "z",
+                    "product": "nn",
+                    "channel": "nn",
+                    "data_version": 1,
+                },
+            )
 
-        self.rules.t.insert().execute(
-            rule_id=3, priority=110, mapping="anything", backgroundRate=100, update_type="z", product="oo", channel="oo", data_version=1
-        )
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 3,
+                    "priority": 110,
+                    "mapping": "anything",
+                    "backgroundRate": 100,
+                    "update_type": "z",
+                    "product": "oo",
+                    "channel": "oo",
+                    "data_version": 1,
+                },
+            )
 
     def testRuleFalseQueryFalse(self):
         rules = self.rules.getRulesMatchingQuery(
@@ -2936,17 +3226,51 @@ class TestMig64Rules(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
         self.metadata.create_all(self.db.engine)
+        self.engine = self.db.engine
         self.rules = self.db.rules
-        self.rules.t.insert().execute(
-            rule_id=1, priority=90, mapping="myes", backgroundRate=100, mig64=True, update_type="z", product="mm", channel="mm", data_version=1
-        )
-        self.rules.t.insert().execute(
-            rule_id=2, priority=100, mapping="mno", backgroundRate=100, mig64=False, update_type="z", product="nn", channel="nn", data_version=1
-        )
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 1,
+                    "priority": 90,
+                    "mapping": "myes",
+                    "backgroundRate": 100,
+                    "mig64": True,
+                    "update_type": "z",
+                    "product": "mm",
+                    "channel": "mm",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 2,
+                    "priority": 100,
+                    "mapping": "mno",
+                    "backgroundRate": 100,
+                    "mig64": False,
+                    "update_type": "z",
+                    "product": "nn",
+                    "channel": "nn",
+                    "data_version": 1,
+                },
+            )
 
-        self.rules.t.insert().execute(
-            rule_id=3, priority=110, mapping="anything", backgroundRate=100, update_type="z", product="oo", channel="oo", data_version=1
-        )
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 3,
+                    "priority": 110,
+                    "mapping": "anything",
+                    "backgroundRate": 100,
+                    "update_type": "z",
+                    "product": "oo",
+                    "channel": "oo",
+                    "data_version": 1,
+                },
+            )
 
     def testRuleFalseQueryFalse(self):
         rules = self.rules.getRulesMatchingQuery(
@@ -3154,13 +3478,31 @@ class TestRulesSpecial(unittest.TestCase, RulesTestMixin, MemoryDatabaseMixin):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
         self.metadata.create_all(self.db.engine)
+        self.engine = self.db.engine
         self.rules = self.db.rules
-        self.rules.t.insert().execute(rule_id=1, priority=100, version=">=4.0b1", backgroundRate=100, update_type="z", data_version=1)
-        self.rules.t.insert().execute(rule_id=2, priority=100, channel="release*", backgroundRate=100, update_type="z", data_version=1)
-        self.rules.t.insert().execute(rule_id=3, priority=100, buildID=">=20010101222222", backgroundRate=100, update_type="z", data_version=1)
-        self.rules.t.insert().execute(rule_id=4, priority=90, version="3.0.1,3.0.2,3.0b3", backgroundRate=100, update_type="z", data_version=1)
-        self.rules.t.insert().execute(rule_id=5, priority=80, version="2.0.1,2.0.2,2.0.3", backgroundRate=100, update_type="z", data_version=1)
-        self.rules.t.insert().execute(rule_id=6, priority=70, channel="abc", memory="<=2000", backgroundRate=100, update_type="z", data_version=1)
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.rules.t.insert(), {"rule_id": 1, "priority": 100, "version": ">=4.0b1", "backgroundRate": 100, "update_type": "z", "data_version": 1}
+            )
+            conn.execute(
+                self.rules.t.insert(), {"rule_id": 2, "priority": 100, "channel": "release*", "backgroundRate": 100, "update_type": "z", "data_version": 1}
+            )
+            conn.execute(
+                self.rules.t.insert(),
+                {"rule_id": 3, "priority": 100, "buildID": ">=20010101222222", "backgroundRate": 100, "update_type": "z", "data_version": 1},
+            )
+            conn.execute(
+                self.rules.t.insert(),
+                {"rule_id": 4, "priority": 90, "version": "3.0.1,3.0.2,3.0b3", "backgroundRate": 100, "update_type": "z", "data_version": 1},
+            )
+            conn.execute(
+                self.rules.t.insert(),
+                {"rule_id": 5, "priority": 80, "version": "2.0.1,2.0.2,2.0.3", "backgroundRate": 100, "update_type": "z", "data_version": 1},
+            )
+            conn.execute(
+                self.rules.t.insert(),
+                {"rule_id": 6, "priority": 70, "channel": "abc", "memory": "<=2000", "backgroundRate": 100, "update_type": "z", "data_version": 1},
+            )
 
     def testGetRulesMatchingQueryVersionComparison(self):
         expected = [dict(rule_id=1, priority=100, backgroundRate=100, version=">=4.0b1", update_type="z", data_version=1)]
@@ -3503,31 +3845,73 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         MemoryDatabaseMixin.setUp(self)
         dbo.setDb(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
+        self.engine = dbo.engine
         self.rules = dbo.rules
         self.releases = dbo.releases
         self.permissions = dbo.permissions
-        self.rules.t.insert().execute(rule_id=1, product="b", channel="h", mapping="h", backgroundRate=100, priority=100, update_type="minor", data_version=1)
-        self.rules.t.insert().execute(
-            rule_id=2, product="b", channel="h", mapping="c", fallbackMapping="h", backgroundRate=100, priority=100, update_type="minor", data_version=1
-        )
-        self.rules.t.insert().execute(rule_id=5, priority=100, channel="r*", backgroundRate=100, update_type="z", data_version=1)
-        self.rules.t.insert().execute(rule_id=6, priority=100, channel="r*test*", backgroundRate=100, update_type="z", data_version=1)
-        self.releases.t.insert().execute(name="a", product="a", data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), data_version=1)
-        self.releases.t.insert().execute(name="ab", product="a", data=createBlob(dict(name="ab", schema_version=1, hashFunction="sha512")), data_version=1)
-        self.releases.t.insert().execute(name="b", product="b", data=createBlob(dict(name="b", schema_version=1, hashFunction="sha512")), data_version=1)
-        self.releases.t.insert().execute(name="c", product="c", data=createBlob(dict(name="c", schema_version=1, hashFunction="sha512")), data_version=1)
-        self.releases.t.insert().execute(name="h", product="b", data=createBlob(dict(name="h", schema_version=1, hashFunction="sha512")), data_version=1)
-        self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
-        self.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
-        self.permissions.t.insert().execute(permission="release", username="bob", options=dict(products=["c"]), data_version=1)
-        self.permissions.user_roles.t.insert().execute(username="bill", role="bar", data_version=1)
-        self.permissions.user_roles.t.insert().execute(username="me", role="bar", data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="b", channel="h", role="bar", signoffs_required=2, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="Z", channel="a", role="foo", signoffs_required=1, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="Z", channel="b", role="bar", signoffs_required=2, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="Z", channel="b", role="foo", signoffs_required=2, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="Z", channel="c", role="baz", signoffs_required=1, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="Z", channel="d", role="bar", signoffs_required=4, data_version=1)
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 1,
+                    "product": "b",
+                    "channel": "h",
+                    "mapping": "h",
+                    "backgroundRate": 100,
+                    "priority": 100,
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 2,
+                    "product": "b",
+                    "channel": "h",
+                    "mapping": "c",
+                    "fallbackMapping": "h",
+                    "backgroundRate": 100,
+                    "priority": 100,
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(self.rules.t.insert(), {"rule_id": 5, "priority": 100, "channel": "r*", "backgroundRate": 100, "update_type": "z", "data_version": 1})
+            conn.execute(
+                self.rules.t.insert(), {"rule_id": 6, "priority": 100, "channel": "r*test*", "backgroundRate": 100, "update_type": "z", "data_version": 1}
+            )
+            conn.execute(
+                self.releases.t.insert(),
+                {"name": "a", "product": "a", "data": createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), "data_version": 1},
+            )
+            conn.execute(
+                self.releases.t.insert(),
+                {"name": "ab", "product": "a", "data": createBlob(dict(name="ab", schema_version=1, hashFunction="sha512")), "data_version": 1},
+            )
+            conn.execute(
+                self.releases.t.insert(),
+                {"name": "b", "product": "b", "data": createBlob(dict(name="b", schema_version=1, hashFunction="sha512")), "data_version": 1},
+            )
+            conn.execute(
+                self.releases.t.insert(),
+                {"name": "c", "product": "c", "data": createBlob(dict(name="c", schema_version=1, hashFunction="sha512")), "data_version": 1},
+            )
+            conn.execute(
+                self.releases.t.insert(),
+                {"name": "h", "product": "b", "data": createBlob(dict(name="h", schema_version=1, hashFunction="sha512")), "data_version": 1},
+            )
+            conn.execute(self.permissions.t.insert(), {"permission": "admin", "username": "bill", "data_version": 1})
+            conn.execute(self.permissions.t.insert(), {"permission": "admin", "username": "me", "data_version": 1})
+            conn.execute(self.permissions.t.insert(), {"permission": "release", "username": "bob", "options": dict(products=["c"]), "data_version": 1})
+            conn.execute(self.permissions.user_roles.t.insert(), {"username": "bill", "role": "bar", "data_version": 1})
+            conn.execute(self.permissions.user_roles.t.insert(), {"username": "me", "role": "bar", "data_version": 1})
+            conn.execute(dbo.productRequiredSignoffs.t.insert(), {"product": "b", "channel": "h", "role": "bar", "signoffs_required": 2, "data_version": 1})
+            conn.execute(dbo.productRequiredSignoffs.t.insert(), {"product": "Z", "channel": "a", "role": "foo", "signoffs_required": 1, "data_version": 1})
+            conn.execute(dbo.productRequiredSignoffs.t.insert(), {"product": "Z", "channel": "b", "role": "bar", "signoffs_required": 2, "data_version": 1})
+            conn.execute(dbo.productRequiredSignoffs.t.insert(), {"product": "Z", "channel": "b", "role": "foo", "signoffs_required": 2, "data_version": 1})
+            conn.execute(dbo.productRequiredSignoffs.t.insert(), {"product": "Z", "channel": "c", "role": "baz", "signoffs_required": 1, "data_version": 1})
+            conn.execute(dbo.productRequiredSignoffs.t.insert(), {"product": "Z", "channel": "d", "role": "bar", "signoffs_required": 4, "data_version": 1})
 
     def tearDown(self):
         dbo.reset()
@@ -3593,11 +3977,17 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertEqual(releases, expected)
 
     def testGetReleaseInfoWithFallbackMapping(self):
-        self.releases.t.insert().execute(name="fallback", product="e", data=createBlob(dict(name="e", schema_version=1, hashFunction="sha512")), data_version=1)
-        self.rules.t.insert().execute(rule_id=4, priority=100, fallbackMapping="fallback", version="3.5", update_type="z", data_version=1)
-        releases = self.releases.getReleaseInfo(product="e")
-        expected = [dict(name="fallback", product="e", data_version=1, read_only=False, rule_ids=[4], rule_info={"4": {"product": None, "channel": None}})]
-        self.assertEqual(releases, expected)
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.releases.t.insert(),
+                {"name": "fallback", "product": "e", "data": createBlob(dict(name="e", schema_version=1, hashFunction="sha512")), "data_version": 1},
+            )
+            conn.execute(
+                self.rules.t.insert(), {"rule_id": 4, "priority": 100, "fallbackMapping": "fallback", "version": "3.5", "update_type": "z", "data_version": 1}
+            )
+            releases = self.releases.getReleaseInfo(product="e")
+            expected = [dict(name="fallback", product="e", data_version=1, read_only=False, rule_ids=[4], rule_info={"4": {"product": None, "channel": None}})]
+            self.assertEqual(releases, expected)
 
     def testGetReleaseInfoNoMatch(self):
         releases = self.releases.getReleaseInfo(product="ue")
@@ -3643,28 +4033,60 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
 
     def testDeleteRelease(self):
         self.releases.delete({"name": "a"}, changed_by="bill", old_data_version=1)
-        release = self.releases.t.select().where(self.releases.name == "a").execute().fetchall()
-        self.assertEqual(release, [])
+        with self.engine.begin() as conn:
+            release = conn.execute(self.releases.t.select().where(self.releases.name == "a")).fetchall()
+            self.assertEqual(release, [])
 
     def testDeleteReleaseDontAllowMultiple(self):
         self.assertRaises(ValueError, self.releases.delete, {"product": "a"}, changed_by="bill", old_data_version=1)
 
     def testDeleteWithRuleMapping(self):
-        self.releases.t.insert().execute(name="d", product="d", data=createBlob(dict(name="d", schema_version=1, hashFunction="sha512")), data_version=1)
-        self.rules.t.insert().execute(rule_id=4, priority=100, version="3.5", buildTarget="d", backgroundRate=100, mapping="d", update_type="z", data_version=1)
-        self.assertRaises(ValueError, self.releases.delete, {"name": "d"}, changed_by="me", old_data_version=1)
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.releases.t.insert(),
+                {"name": "d", "product": "d", "data": createBlob(dict(name="d", schema_version=1, hashFunction="sha512")), "data_version": 1},
+            )
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 4,
+                    "priority": 100,
+                    "version": "3.5",
+                    "buildTarget": "d",
+                    "backgroundRate": 100,
+                    "mapping": "d",
+                    "update_type": "z",
+                    "data_version": 1,
+                },
+            )
+            self.assertRaises(ValueError, self.releases.delete, {"name": "d"}, changed_by="me", old_data_version=1)
 
     def testDeleteWithRuleFallbackMapping(self):
-        self.releases.t.insert().execute(name="fallback", product="e", data=createBlob(dict(name="e", schema_version=1, hashFunction="sha512")), data_version=1)
-        self.rules.t.insert().execute(
-            rule_id=4, priority=100, fallbackMapping="fallback", version="3.5", buildTarget="e", backgroundRate=100, update_type="z", data_version=1
-        )
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.releases.t.insert(),
+                {"name": "fallback", "product": "e", "data": createBlob(dict(name="e", schema_version=1, hashFunction="sha512")), "data_version": 1},
+            )
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 4,
+                    "priority": 100,
+                    "fallbackMapping": "fallback",
+                    "version": "3.5",
+                    "buildTarget": "e",
+                    "backgroundRate": 100,
+                    "update_type": "z",
+                    "data_version": 1,
+                },
+            )
 
-        self.assertRaises(ValueError, self.releases.delete, {"name": "fallback"}, changed_by="me", old_data_version=1)
+            self.assertRaises(ValueError, self.releases.delete, {"name": "fallback"}, changed_by="me", old_data_version=1)
 
     def testDeleteReleaseWhenReadOnly(self):
-        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
-        self.assertRaises(ReadOnlyError, self.releases.delete, {"name": "a"}, changed_by="me", old_data_version=2)
+        with self.engine.begin() as conn:
+            conn.execute(self.releases.t.update().values(read_only=True, data_version=2).where(self.releases.name == "a"))
+            self.assertRaises(ReadOnlyError, self.releases.delete, {"name": "a"}, changed_by="me", old_data_version=2)
 
     # Ideally we'd run these, but they end up raising a ValueError because they are mapped to,
     # so we never see a SignoffRequiredError
@@ -3689,8 +4111,9 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertRaises(ValueError, self.releases.update, {"name": "a"}, {"data": newBlob}, "bill", 1)
 
     def testUpdateReleaseChangeReadOnly(self):
-        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
-        self.assertEqual(select([self.releases.read_only]).where(self.releases.name == "a").execute().fetchone()[0], True)
+        with self.engine.begin() as conn:
+            conn.execute(self.releases.t.update().values(read_only=True, data_version=2).where(self.releases.name == "a"))
+            self.assertEqual(conn.execute(select(self.releases.read_only).where(self.releases.name == "a")).fetchone()[0], True)
 
     def testUpdateReleaseNoPermissionToSetReadOnly(self):
         self.assertRaises(PermissionDeniedError, self.releases.update, {"name": "c"}, {"read_only": True}, "bob", 1)
@@ -3704,12 +4127,14 @@ class TestReleases(unittest.TestCase, MemoryDatabaseMixin):
         self.assertRaises(SignoffRequiredError, self.releases.update, {"name": "h"}, {"data": newBlob}, "bill", 1)
 
     def testIsReadOnly(self):
-        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
-        self.assertEqual(self.releases.isReadOnly("a"), True)
+        with self.engine.begin() as conn:
+            conn.execute(self.releases.t.update().values(read_only=True, data_version=2).where(self.releases.name == "a"))
+            self.assertEqual(self.releases.isReadOnly("a"), True)
 
     def testProceedIfNotReadOnly(self):
-        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
-        self.assertRaises(ReadOnlyError, self.releases._proceedIfNotReadOnly, "a")
+        with self.engine.begin() as conn:
+            conn.execute(self.releases.t.update().values(read_only=True, data_version=2).where(self.releases.name == "a"))
+            self.assertRaises(ReadOnlyError, self.releases._proceedIfNotReadOnly, "a")
 
     def testGetRulesMatchingQueryChannelCheckMinLengthGlobbing(self):
         # To ensure length of ruleChannel is >=3
@@ -3860,56 +4285,70 @@ class TestReleasesJSON(unittest.IsolatedAsyncioTestCase, MemoryDatabaseMixin):
         MemoryDatabaseMixin.setUp(self)
         dbo.setDb(self.dburi, releases_history_buckets={"*": "fake"}, async_releases_history_class=FakeGCSHistoryAsync)
         self.metadata.create_all(dbo.engine)
+        self.engine = dbo.engine
         self.rules = dbo.rules
         self.releases = dbo.releases_json
         self.release_assets = dbo.release_assets
-        dbo.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
-        dbo.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="Firefox", channel="release", role="releng", signoffs_required=1, data_version=1)
-        self.rules.t.insert().execute(
-            rule_id=1,
-            product="Firefox",
-            channel="beta",
-            mapping="Firefox-60.0-build1",
-            backgroundRate=100,
-            priority=100,
-            update_type="minor",
-            data_version=1,
-        )
-        self.releases.t.insert().execute(
-            name="Firefox-60.0-build1",
-            product="Firefox",
-            data_version=1,
-            data="""{
-    "name": "Firefox-60.0-build1",
-    "schema_version": 9,
-    "hashFunction": "sha512"
-}""",
-        )
-        self.release_assets.t.insert().execute(
-            name="Firefox-60.0-build1",
-            path=".platforms.Linux_x86_64-gcc3.locales.en-US",
-            data_version=1,
-            data="""{
-    "appVersion": "60.0",
-    "buildID": "20180827144429",
-    "completes": [
-        {
-            "filesize": 42510045,
-            "from": "*",
-            "hashValue": "73c05d2e15a3d33cbbee3b874dbd9a3e3560ddf74b343bad5ff2d55dccd3a7cf9a5a9da5e05eefea8cabdfd186d98ada94804e83c61011f385c4f335a9a50996"
-        }
-    ],
-    "displayVersion": "60.0",
-    "partials": [
-        {
-            "filesize": 18695829,
-            "from": "Firefox-59.0-build3",
-            "hashValue": "311324ceacfb8450a948da6b2176a1103d8a4eb716381951fb197b4414097efee9a91c9fd4fbcb797dd1e80fe69b8e2410a945602d5dfd0a5c485a004c52fbda"
-        }
-    ]
-}""",
-        )
+        with self.engine.begin() as conn:
+            conn.execute(dbo.permissions.t.insert(), {"permission": "admin", "username": "bob", "data_version": 1})
+            conn.execute(dbo.permissions.user_roles.t.insert(), {"username": "bob", "role": "releng", "data_version": 1})
+            conn.execute(
+                dbo.productRequiredSignoffs.t.insert(),
+                {"product": "Firefox", "channel": "release", "role": "releng", "signoffs_required": 1, "data_version": 1},
+            )
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 1,
+                    "product": "Firefox",
+                    "channel": "beta",
+                    "mapping": "Firefox-60.0-build1",
+                    "backgroundRate": 100,
+                    "priority": 100,
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.releases.t.insert(),
+                {
+                    "name": "Firefox-60.0-build1",
+                    "product": "Firefox",
+                    "data_version": 1,
+                    "data": """{
+        "name": "Firefox-60.0-build1",
+        "schema_version": 9,
+        "hashFunction": "sha512"
+    }""",
+                },
+            )
+            conn.execute(
+                self.release_assets.t.insert(),
+                {
+                    "name": "Firefox-60.0-build1",
+                    "path": ".platforms.Linux_x86_64-gcc3.locales.en-US",
+                    "data_version": 1,
+                    "data": """{
+        "appVersion": "60.0",
+        "buildID": "20180827144429",
+        "completes": [
+            {
+                "filesize": 42510045,
+                "from": "*",
+                "hashValue": "73c05d2e15a3d33cbbee3b874dbd9a3e3560ddf74b343bad5ff2d55dccd3a7cf9a5a9da5e05eefea8cabdfd186d98ada94804e83c61011f385c4f335a9a50996"
+            }
+        ],
+        "displayVersion": "60.0",
+        "partials": [
+            {
+                "filesize": 18695829,
+                "from": "Firefox-59.0-build3",
+                "hashValue": "311324ceacfb8450a948da6b2176a1103d8a4eb716381951fb197b4414097efee9a91c9fd4fbcb797dd1e80fe69b8e2410a945602d5dfd0a5c485a004c52fbda"
+            }
+        ]
+    }""",
+                },
+            )
 
     def tearDown(self):
         dbo.reset()
@@ -3919,16 +4358,20 @@ class TestReleasesJSON(unittest.IsolatedAsyncioTestCase, MemoryDatabaseMixin):
         # no row in either release table. Writing it for the first time is what the
         # public app will start serving, so it must require the same signoffs as an
         # update to an already-written Release.
-        self.rules.t.insert().execute(
-            rule_id=2,
-            product="Firefox",
-            channel="release",
-            mapping="Firefox-legacy-build1",
-            backgroundRate=100,
-            priority=100,
-            update_type="minor",
-            data_version=1,
-        )
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 2,
+                    "product": "Firefox",
+                    "channel": "release",
+                    "mapping": "Firefox-legacy-build1",
+                    "backgroundRate": 100,
+                    "priority": 100,
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
 
         rs = self.releases.getPotentialRequiredSignoffs([{"name": "Firefox-legacy-build1"}])
         self.assertEqual([r["role"] for r in rs["Firefox-legacy-build1"]], ["releng"])
@@ -3938,16 +4381,20 @@ class TestReleasesJSON(unittest.IsolatedAsyncioTestCase, MemoryDatabaseMixin):
         self.assertEqual([obj for v in rs.values() for obj in v], [])
 
     def testGetPotentialRequiredSignoffsForAssetOfReleaseWithoutRow(self):
-        self.rules.t.insert().execute(
-            rule_id=2,
-            product="Firefox",
-            channel="release",
-            mapping="Firefox-legacy-build1",
-            backgroundRate=100,
-            priority=100,
-            update_type="minor",
-            data_version=1,
-        )
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 2,
+                    "product": "Firefox",
+                    "channel": "release",
+                    "mapping": "Firefox-legacy-build1",
+                    "backgroundRate": 100,
+                    "priority": 100,
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
 
         rs = self.release_assets.getPotentialRequiredSignoffs([{"name": "Firefox-legacy-build1", "path": ".platforms.Linux_x86_64-gcc3.locales.en-US"}])
         self.assertEqual([r["role"] for r in rs[("Firefox-legacy-build1", ".platforms.Linux_x86_64-gcc3.locales.en-US")]], ["releng"])
@@ -3957,16 +4404,20 @@ class TestReleasesJSON(unittest.IsolatedAsyncioTestCase, MemoryDatabaseMixin):
         # public app will serve whichever one of them the name ends up in. The Rule
         # here is on Firefox/release, the one channel with Required Signoffs, so a
         # regression in either table's lookup shows up as a difference.
-        self.rules.t.insert().execute(
-            rule_id=3,
-            product="Firefox",
-            channel="release",
-            mapping="Firefox-60.0-build1",
-            backgroundRate=100,
-            priority=100,
-            update_type="minor",
-            data_version=1,
-        )
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 3,
+                    "product": "Firefox",
+                    "channel": "release",
+                    "mapping": "Firefox-60.0-build1",
+                    "backgroundRate": 100,
+                    "priority": 100,
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
         for name in ("Firefox-60.0-build1", "Firefox-not-mapped-build1"):
             new = self.releases.getPotentialRequiredSignoffs([{"name": name}])
             old = dbo.releases.getPotentialRequiredSignoffs([{"name": name}])
@@ -3978,20 +4429,42 @@ class TestReleasesJSON(unittest.IsolatedAsyncioTestCase, MemoryDatabaseMixin):
     def testGetPotentialRequiredSignoffsViaReference(self):
         # A leaf referenced by a signoff-requiring SuperBlob inherits its signoffs,
         # even though no Rule maps to the leaf's own name.
-        self.rules.t.insert().execute(
-            rule_id=2, product="Firefox", channel="release", mapping="Superblob-parent", backgroundRate=100, priority=100, update_type="minor", data_version=1
-        )
-        dbo.release_references.t.insert().execute(name="Superblob-parent", referenced="leaf-child")
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 2,
+                    "product": "Firefox",
+                    "channel": "release",
+                    "mapping": "Superblob-parent",
+                    "backgroundRate": 100,
+                    "priority": 100,
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(dbo.release_references.t.insert(), {"name": "Superblob-parent", "referenced": "leaf-child"})
 
         rs = self.releases.getPotentialRequiredSignoffs([{"name": "leaf-child"}])
         self.assertEqual([r["role"] for r in rs["leaf-child"]], ["releng"])
 
     def testGetPotentialRequiredSignoffsUnreferencedLeaf(self):
         # A leaf that no SuperBlob references inherits nothing.
-        self.rules.t.insert().execute(
-            rule_id=2, product="Firefox", channel="release", mapping="Superblob-parent", backgroundRate=100, priority=100, update_type="minor", data_version=1
-        )
-        dbo.release_references.t.insert().execute(name="Superblob-parent", referenced="other-leaf")
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 2,
+                    "product": "Firefox",
+                    "channel": "release",
+                    "mapping": "Superblob-parent",
+                    "backgroundRate": 100,
+                    "priority": 100,
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(dbo.release_references.t.insert(), {"name": "Superblob-parent", "referenced": "other-leaf"})
 
         rs = self.releases.getPotentialRequiredSignoffs([{"name": "leaf-child"}])
         self.assertEqual([obj for v in rs.values() for obj in v], [])
@@ -4016,17 +4489,22 @@ class TestReleasesJSON(unittest.IsolatedAsyncioTestCase, MemoryDatabaseMixin):
                 "platforms": {},
             },
         )
-        self.rules.t.insert().execute(
-            rule_id=2,
-            product="Firefox",
-            channel="release",
-            mapping="Firefox-referrer",
-            backgroundRate=100,
-            priority=100,
-            update_type="minor",
-            data_version=1,
-        )
-        print("DEBUG rows:", dbo.release_references.t.select().execute().fetchall())
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 2,
+                    "product": "Firefox",
+                    "channel": "release",
+                    "mapping": "Firefox-referrer",
+                    "backgroundRate": 100,
+                    "priority": 100,
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
+        with self.engine.connect() as conn:
+            print("DEBUG rows:", conn.execute(dbo.release_references.t.select()).fetchall())
         rs = self.releases.getPotentialRequiredSignoffs([{"name": "Firefox-partial-source"}])
         print("DEBUG partial-source rs:", {k: [r["role"] for r in v] for k, v in rs.items()})
         self.assertEqual([obj for v in rs.values() for obj in v], [])
@@ -4054,8 +4532,9 @@ class TestReleasesJSON(unittest.IsolatedAsyncioTestCase, MemoryDatabaseMixin):
         # The memo is keyed by individual name, so an overlapping second lookup only
         # queries the name it hasn't seen. Keying it by the set of names would re-query
         # leaf-a here.
-        dbo.release_references.t.insert().execute(name="Superblob-a", referenced="leaf-a")
-        dbo.release_references.t.insert().execute(name="Superblob-b", referenced="leaf-b")
+        with self.engine.begin() as conn:
+            conn.execute(dbo.release_references.t.insert(), {"name": "Superblob-a", "referenced": "leaf-a"})
+            conn.execute(dbo.release_references.t.insert(), {"name": "Superblob-b", "referenced": "leaf-b"})
         queried = []
         real = dbo.release_references.get_referrers
 
@@ -4201,10 +4680,48 @@ class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):
         cache.make_cache("rules", 20, 4)
         self.db = AUSDatabase(self.dburi)
         self.metadata.create_all(self.db.engine)
+        self.engine = self.db.engine
         self.rules = self.db.rules
-        self.rules.t.insert().execute(rule_id=1, priority=100, version="3.5", buildTarget="d", backgroundRate=100, mapping="c", update_type="z", data_version=1)
-        self.rules.t.insert().execute(rule_id=2, priority=100, version="3.3", buildTarget="d", backgroundRate=100, mapping="b", update_type="z", data_version=1)
-        self.rules.t.insert().execute(rule_id=3, priority=100, version="3.5", buildTarget="a", backgroundRate=100, mapping="a", update_type="z", data_version=1)
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 1,
+                    "priority": 100,
+                    "version": "3.5",
+                    "buildTarget": "d",
+                    "backgroundRate": 100,
+                    "mapping": "c",
+                    "update_type": "z",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 2,
+                    "priority": 100,
+                    "version": "3.3",
+                    "buildTarget": "d",
+                    "backgroundRate": 100,
+                    "mapping": "b",
+                    "update_type": "z",
+                    "data_version": 1,
+                },
+            )
+            conn.execute(
+                self.rules.t.insert(),
+                {
+                    "rule_id": 3,
+                    "priority": 100,
+                    "version": "3.5",
+                    "buildTarget": "a",
+                    "backgroundRate": 100,
+                    "mapping": "a",
+                    "update_type": "z",
+                    "data_version": 1,
+                },
+            )
 
     def tearDown(self):
         cache.reset()
@@ -4302,9 +4819,35 @@ class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):
 
     def testGetRulesMatchingQueryRefreshesAfterExpiry(self):
         """Ensure that getRulesMatchingQuery picks up changes to the rules table after expiry"""
-        with mock.patch("time.time") as t:
-            t.return_value = 0
-            for i in range(3):
+        with self.engine.begin() as conn:
+            with mock.patch("time.time") as t:
+                t.return_value = 0
+                for i in range(3):
+                    rules = self.rules.getRulesMatchingQuery(
+                        dict(
+                            product="",
+                            version="3.5",
+                            channel="",
+                            buildTarget="a",
+                            buildID="",
+                            locale="",
+                            osVersion="",
+                            distribution="",
+                            distVersion="",
+                            headerArchitecture="",
+                            force=False,
+                            queryVersion=3,
+                        ),
+                        fallbackChannel="",
+                    )
+                    rules = self._stripNullColumns(rules)
+                    expected = [dict(rule_id=3, priority=100, backgroundRate=100, version="3.5", buildTarget="a", mapping="a", update_type="z", data_version=1)]
+                    self.assertEqual(rules, expected)
+
+                    t.return_value += 1
+
+                conn.execute(self.rules.t.update().values(mapping="b").where(self.rules.rule_id == 3))
+
                 rules = self.rules.getRulesMatchingQuery(
                     dict(
                         product="",
@@ -4328,56 +4871,31 @@ class TestRulesCaching(unittest.TestCase, MemoryDatabaseMixin, RulesTestMixin):
 
                 t.return_value += 1
 
-            self.rules.t.update(values=dict(mapping="b")).where(self.rules.rule_id == 3).execute()
+                for i in range(2):
+                    rules = self.rules.getRulesMatchingQuery(
+                        dict(
+                            product="",
+                            version="3.5",
+                            channel="",
+                            buildTarget="a",
+                            buildID="",
+                            locale="",
+                            osVersion="",
+                            distribution="",
+                            distVersion="",
+                            headerArchitecture="",
+                            force=False,
+                            queryVersion=3,
+                        ),
+                        fallbackChannel="",
+                    )
+                    rules = self._stripNullColumns(rules)
+                    expected = [dict(rule_id=3, priority=100, backgroundRate=100, version="3.5", buildTarget="a", mapping="b", update_type="z", data_version=1)]
+                    self.assertEqual(rules, expected)
 
-            rules = self.rules.getRulesMatchingQuery(
-                dict(
-                    product="",
-                    version="3.5",
-                    channel="",
-                    buildTarget="a",
-                    buildID="",
-                    locale="",
-                    osVersion="",
-                    distribution="",
-                    distVersion="",
-                    headerArchitecture="",
-                    force=False,
-                    queryVersion=3,
-                ),
-                fallbackChannel="",
-            )
-            rules = self._stripNullColumns(rules)
-            expected = [dict(rule_id=3, priority=100, backgroundRate=100, version="3.5", buildTarget="a", mapping="a", update_type="z", data_version=1)]
-            self.assertEqual(rules, expected)
+                    t.return_value += 1
 
-            t.return_value += 1
-
-            for i in range(2):
-                rules = self.rules.getRulesMatchingQuery(
-                    dict(
-                        product="",
-                        version="3.5",
-                        channel="",
-                        buildTarget="a",
-                        buildID="",
-                        locale="",
-                        osVersion="",
-                        distribution="",
-                        distVersion="",
-                        headerArchitecture="",
-                        force=False,
-                        queryVersion=3,
-                    ),
-                    fallbackChannel="",
-                )
-                rules = self._stripNullColumns(rules)
-                expected = [dict(rule_id=3, priority=100, backgroundRate=100, version="3.5", buildTarget="a", mapping="b", update_type="z", data_version=1)]
-                self.assertEqual(rules, expected)
-
-                t.return_value += 1
-
-            self._checkCacheStats(cache.caches["rules"], 6, 4, 2)
+                self._checkCacheStats(cache.caches["rules"], 6, 4, 2)
 
     def testGetRulesMatchingQueryWithFunkyQuery(self):
         """Ensure that an unsubstituted query caches properly."""
@@ -4415,6 +4933,7 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
         MemoryDatabaseMixin.setUp(self)
         dbo.setDb(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
+        self.engine = dbo.engine
         cache.reset()
         cache.make_copies = True
         cache.make_cache("blob", 10, 10)
@@ -4422,21 +4941,28 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
         self.rules = dbo.rules
         self.releases = dbo.releases
         self.permissions = dbo.permissions
-        self.releases.t.insert().execute(name="a", product="a", data=createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), data_version=1)
-        self.releases.t.insert().execute(name="b", product="b", data=createBlob(dict(name="b", schema_version=1, hashFunction="sha512")), data_version=1)
-        self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
-        self.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
-        # When we started copying objects that go in or out of the cache we
-        # discovered that Blob objects were not copyable at the time, due to
-        # deepycopy() trying to copy their instance-level "log" attribute.
-        # Unit tests at the time didn't catch this because the logger used
-        # in tests is copyable (whereas one that points at an actual file
-        # stream is not). In order to make sure this doesn't regress, we
-        # override the logging for these tests to make sure the loggers are
-        # configured as they are in production.
-        self.handler = logging.StreamHandler(sys.stderr)
-        logger = logging.getLogger()
-        logger.addHandler(self.handler)
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.releases.t.insert(),
+                {"name": "a", "product": "a", "data": createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), "data_version": 1},
+            )
+            conn.execute(
+                self.releases.t.insert(),
+                {"name": "b", "product": "b", "data": createBlob(dict(name="b", schema_version=1, hashFunction="sha512")), "data_version": 1},
+            )
+            conn.execute(self.permissions.t.insert(), {"permission": "admin", "username": "bill", "data_version": 1})
+            conn.execute(self.permissions.t.insert(), {"permission": "admin", "username": "bob", "data_version": 1})
+            # When we started copying objects that go in or out of the cache we
+            # discovered that Blob objects were not copyable at the time, due to
+            # deepycopy() trying to copy their instance-level "log" attribute.
+            # Unit tests at the time didn't catch this because the logger used
+            # in tests is copyable (whereas one that points at an actual file
+            # stream is not). In order to make sure this doesn't regress, we
+            # override the logging for these tests to make sure the loggers are
+            # configured as they are in production.
+            self.handler = logging.StreamHandler(sys.stderr)
+            logger = logging.getLogger()
+            logger.addHandler(self.handler)
 
     def tearDown(self):
         cache.reset()
@@ -4461,7 +4987,8 @@ class TestBlobCaching(unittest.TestCase, MemoryDatabaseMixin):
         # based on data_version 1, changing an unrelated field so the merge is clean
         self.releases.update(where={"name": "abc"}, what={"data": sb(["leaf-1"], product="a")}, changed_by="bill", old_data_version=1)
 
-        stored = self.releases.t.select().where(self.releases.name == "abc").execute().fetchone()["data"]
+        with self.engine.connect() as conn:
+            stored = conn.execute(self.releases.t.select().where(self.releases.name == "abc")).fetchone()._mapping["data"]
         self.assertEqual(sorted(stored["blobs"]), ["leaf-1", "leaf-2"])
         self.assertEqual(sorted(self.releases.getReleaseBlob(name="abc")["blobs"]), sorted(stored["blobs"]))
 
@@ -4626,57 +5153,66 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(self.db.engine)
+        self.engine = self.db.engine
         self.releases = self.db.releases
-        self.releases.t.insert().execute(
-            name="a",
-            product="a",
-            data_version=1,
-            data=createBlob("""
-{
-    "name": "a",
-    "schema_version": 1,
-    "hashFunction": "sha512",
-    "platforms": {
-        "p": {
-            "locales": {
-                "l": {
-                    "complete": {
-                        "filesize": 1234,
-                        "from": "*",
-                        "hashValue": "def"
+        with self.engine.begin() as conn:
+            conn.execute(
+                self.releases.t.insert(),
+                {
+                    "name": "a",
+                    "product": "a",
+                    "data_version": 1,
+                    "data": createBlob("""
+    {
+        "name": "a",
+        "schema_version": 1,
+        "hashFunction": "sha512",
+        "platforms": {
+            "p": {
+                "locales": {
+                    "l": {
+                        "complete": {
+                            "filesize": 1234,
+                            "from": "*",
+                            "hashValue": "def"
+                        }
                     }
                 }
+            },
+            "p2": {
+                "alias": "p"
+            },
+            "p3": {
             }
-        },
-        "p2": {
-            "alias": "p"
-        },
-        "p3": {
         }
     }
-}
-"""),
-        )
-        self.releases.t.insert().execute(
-            name="b",
-            product="b",
-            data_version=1,
-            data=createBlob("""
-{
-    "name": "b",
-    "hashFunction": "sha512",
-    "schema_version": 1
-}
-"""),
-        )
-        self.db.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
-        self.db.permissions.t.insert().execute(permission="admin", username="me", data_version=1)
+    """),
+                },
+            )
+            conn.execute(
+                self.releases.t.insert(),
+                {
+                    "name": "b",
+                    "product": "b",
+                    "data_version": 1,
+                    "data": createBlob("""
+    {
+        "name": "b",
+        "hashFunction": "sha512",
+        "schema_version": 1
+    }
+    """),
+                },
+            )
+            conn.execute(self.db.permissions.t.insert(), {"permission": "admin", "username": "bill", "data_version": 1})
+            conn.execute(self.db.permissions.t.insert(), {"permission": "admin", "username": "me", "data_version": 1})
 
     def testAddRelease(self):
         blob = ReleaseBlobV1(name="d", hashFunction="sha512")
         self.releases.insert(changed_by="bill", name="d", product="d", data=blob)
         expected = [("d", "d", False, createBlob(dict(name="d", schema_version=1, hashFunction="sha512")), 1)]
-        self.assertEqual(self.releases.t.select().where(self.releases.name == "d").execute().fetchall(), expected)
+        with self.engine.begin() as conn:
+            self.assertEqual(conn.execute(self.releases.t.select().where(self.releases.name == "d")).fetchall(), expected)
 
     @emits_warning()
     def testAddReleaseAlreadyExists(self):
@@ -4687,19 +5223,22 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
         blob = ReleaseBlobV1(name="a", hashFunction="sha512")
         self.releases.update({"name": "a"}, {"product": "z", "data": blob}, "bill", 1)
         expected = [("a", "z", False, createBlob(dict(name="a", schema_version=1, hashFunction="sha512")), 2)]
-        self.assertEqual(self.releases.t.select().where(self.releases.name == "a").execute().fetchall(), expected)
+        with self.engine.begin() as conn:
+            self.assertEqual(conn.execute(self.releases.t.select().where(self.releases.name == "a")).fetchall(), expected)
 
     def testUpdateReleaseWhenReadOnly(self):
         blob = ReleaseBlobV1(name="a", hashFunction="sha512")
         # set release 'a' to read-only
-        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
-        self.assertRaises(ReadOnlyError, self.releases.update, {"name": "a"}, {"product": "z", "data": blob}, "me", 2)
+        with self.engine.begin() as conn:
+            conn.execute(self.releases.t.update().values(read_only=True, data_version=2).where(self.releases.name == "a"))
+            self.assertRaises(ReadOnlyError, self.releases.update, {"name": "a"}, {"product": "z", "data": blob}, "me", 2)
 
     def testUpdateReleaseWithBlob(self):
         blob = ReleaseBlobV1(name="b", schema_version=1, hashFunction="sha512")
         self.releases.update({"name": "b"}, {"product": "z", "data": blob}, "bill", 1)
         expected = [("b", "z", False, createBlob(dict(name="b", schema_version=1, hashFunction="sha512")), 2)]
-        self.assertEqual(self.releases.t.select().where(self.releases.name == "b").execute().fetchall(), expected)
+        with self.engine.begin() as conn:
+            self.assertEqual(conn.execute(self.releases.t.select().where(self.releases.name == "b")).fetchall(), expected)
 
     def testUpdateReleaseInvalidBlob(self):
         blob = ReleaseBlobV1(name="2", hashFunction="sha512")
@@ -4709,265 +5248,281 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
     def testAddLocaleToRelease(self):
         data = {"complete": {"filesize": 1, "from": "*", "hashValue": "abc"}}
         self.releases.addLocaleToRelease(name="a", product="a", platform="p", locale="c", data=data, old_data_version=1, changed_by="bill")
-        ret = select([self.releases.data]).where(self.releases.name == "a").execute().fetchone()[0]
-        expected = createBlob("""
-{
-    "name": "a",
-    "schema_version": 1,
-    "hashFunction": "sha512",
-    "platforms": {
-        "p": {
-            "locales": {
-                "c": {
-                    "complete": {
-                        "filesize": 1,
-                        "from": "*",
-                        "hashValue": "abc"
-                    }
-                },
-                "l": {
-                    "complete": {
-                        "filesize": 1234,
-                        "from": "*",
-                        "hashValue": "def"
+        with self.engine.begin() as conn:
+            ret = conn.execute(select(self.releases.data).where(self.releases.name == "a")).fetchone()[0]
+            expected = createBlob("""
+    {
+        "name": "a",
+        "schema_version": 1,
+        "hashFunction": "sha512",
+        "platforms": {
+            "p": {
+                "locales": {
+                    "c": {
+                        "complete": {
+                            "filesize": 1,
+                            "from": "*",
+                            "hashValue": "abc"
+                        }
+                    },
+                    "l": {
+                        "complete": {
+                            "filesize": 1234,
+                            "from": "*",
+                            "hashValue": "def"
+                        }
                     }
                 }
+            },
+            "p2": {
+                "alias": "p"
+            },
+            "p3": {
             }
-        },
-        "p2": {
-            "alias": "p"
-        },
-        "p3": {
         }
     }
-}
-""")
-        self.assertEqual(ret, expected)
+    """)
+            self.assertEqual(ret, expected)
 
     def testAddLocaleToReleaseWithAlias(self):
         data = {"complete": {"filesize": 123, "from": "*", "hashValue": "abc"}}
         self.releases.addLocaleToRelease(name="a", product="a", platform="p", locale="c", data=data, old_data_version=1, changed_by="bill", alias=["p4"])
-        ret = select([self.releases.data]).where(self.releases.name == "a").execute().fetchone()[0]
-        expected = createBlob("""
-{
-    "name": "a",
-    "hashFunction": "sha512",
-    "schema_version": 1,
-    "platforms": {
-        "p": {
-            "locales": {
-                "c": {
-                    "complete": {
-                        "filesize": 123,
-                        "from": "*",
-                        "hashValue": "abc"
-                    }
-                },
-                "l": {
-                    "complete": {
-                        "filesize": 1234,
-                        "from": "*",
-                        "hashValue": "def"
+        with self.engine.begin() as conn:
+            ret = conn.execute(select(self.releases.data).where(self.releases.name == "a")).fetchone()[0]
+            expected = createBlob("""
+    {
+        "name": "a",
+        "hashFunction": "sha512",
+        "schema_version": 1,
+        "platforms": {
+            "p": {
+                "locales": {
+                    "c": {
+                        "complete": {
+                            "filesize": 123,
+                            "from": "*",
+                            "hashValue": "abc"
+                        }
+                    },
+                    "l": {
+                        "complete": {
+                            "filesize": 1234,
+                            "from": "*",
+                            "hashValue": "def"
+                        }
                     }
                 }
+            },
+            "p2": {
+                "alias": "p"
+            },
+            "p3": {
+            },
+            "p4": {
+                "alias": "p"
             }
-        },
-        "p2": {
-            "alias": "p"
-        },
-        "p3": {
-        },
-        "p4": {
-            "alias": "p"
         }
     }
-}
-""")
-        self.assertEqual(ret, expected)
+    """)
+            self.assertEqual(ret, expected)
 
     def testAddLocaleToReleaseOverride(self):
         data = {"complete": {"filesize": 123, "from": "*", "hashValue": "789"}}
         self.releases.addLocaleToRelease(name="a", product="a", platform="p", locale="l", data=data, old_data_version=1, changed_by="bill")
-        ret = select([self.releases.data]).where(self.releases.name == "a").execute().fetchone()[0]
-        expected = createBlob("""
-{
-    "name": "a",
-    "hashFunction": "sha512",
-    "schema_version": 1,
-    "platforms": {
-        "p": {
-            "locales": {
-                "l": {
-                    "complete": {
-                        "filesize": 123,
-                        "from": "*",
-                        "hashValue": "789"
+        with self.engine.begin() as conn:
+            ret = conn.execute(select(self.releases.data).where(self.releases.name == "a")).fetchone()[0]
+            expected = createBlob("""
+    {
+        "name": "a",
+        "hashFunction": "sha512",
+        "schema_version": 1,
+        "platforms": {
+            "p": {
+                "locales": {
+                    "l": {
+                        "complete": {
+                            "filesize": 123,
+                            "from": "*",
+                            "hashValue": "789"
+                        }
                     }
                 }
+            },
+            "p2": {
+                "alias": "p"
+            },
+            "p3": {
             }
-        },
-        "p2": {
-            "alias": "p"
-        },
-        "p3": {
         }
     }
-}
-""")
-        self.assertEqual(ret, expected)
+    """)
+            self.assertEqual(ret, expected)
 
     def testAddLocaleToReleasePlatformsDoesntExist(self):
         data = {"complete": {"filesize": 432, "from": "*", "hashValue": "abc"}}
         self.releases.addLocaleToRelease(name="b", product="b", platform="q", locale="l", data=data, old_data_version=1, changed_by="bill")
-        ret = select([self.releases.data]).where(self.releases.name == "b").execute().fetchone()[0]
-        expected = createBlob("""
-{
-    "name": "b",
-    "hashFunction": "sha512",
-    "schema_version": 1,
-    "platforms": {
-        "q": {
-            "locales": {
-                "l": {
-                    "complete": {
-                        "filesize": 432,
-                        "from": "*",
-                        "hashValue": "abc"
+        with self.engine.begin() as conn:
+            ret = conn.execute(select(self.releases.data).where(self.releases.name == "b")).fetchone()[0]
+            expected = createBlob("""
+    {
+        "name": "b",
+        "hashFunction": "sha512",
+        "schema_version": 1,
+        "platforms": {
+            "q": {
+                "locales": {
+                    "l": {
+                        "complete": {
+                            "filesize": 432,
+                            "from": "*",
+                            "hashValue": "abc"
+                        }
                     }
                 }
             }
         }
     }
-}
-""")
-        self.assertEqual(ret, expected)
+    """)
+            self.assertEqual(ret, expected)
 
     def testAddLocaleToReleaseNoLocales(self):
         data = {"complete": {"filesize": 432, "from": "*", "hashValue": "abc"}}
         self.releases.addLocaleToRelease(name="a", product="a", platform="p3", locale="l", data=data, old_data_version=1, changed_by="bill")
-        ret = select([self.releases.data]).where(self.releases.name == "a").execute().fetchone()[0]
-        expected = createBlob("""
-{
-    "name": "a",
-    "hashFunction": "sha512",
-    "schema_version": 1,
-    "platforms": {
-        "p": {
-            "locales": {
-                "l": {
-                    "complete": {
-                        "filesize": 1234,
-                        "from": "*",
-                        "hashValue": "def"
+        with self.engine.begin() as conn:
+            ret = conn.execute(select(self.releases.data).where(self.releases.name == "a")).fetchone()[0]
+            expected = createBlob("""
+    {
+        "name": "a",
+        "hashFunction": "sha512",
+        "schema_version": 1,
+        "platforms": {
+            "p": {
+                "locales": {
+                    "l": {
+                        "complete": {
+                            "filesize": 1234,
+                            "from": "*",
+                            "hashValue": "def"
+                        }
                     }
                 }
-            }
-        },
-        "p2": {
-            "alias": "p"
-        },
-        "p3": {
-            "locales": {
-                "l": {
-                    "complete": {
-                        "filesize": 432,
-                        "from": "*",
-                        "hashValue": "abc"
+            },
+            "p2": {
+                "alias": "p"
+            },
+            "p3": {
+                "locales": {
+                    "l": {
+                        "complete": {
+                            "filesize": 432,
+                            "from": "*",
+                            "hashValue": "abc"
+                        }
                     }
                 }
             }
         }
     }
-}
-""")
-        self.assertEqual(ret, expected)
+    """)
+            self.assertEqual(ret, expected)
 
     def testAddLocaleToReleaseSecondPlatform(self):
         data = {"complete": {"filesize": 324, "from": "*", "hashValue": "abc"}}
         self.releases.addLocaleToRelease(name="a", product="a", platform="q", locale="l", data=data, old_data_version=1, changed_by="bill")
-        ret = select([self.releases.data]).where(self.releases.name == "a").execute().fetchone()[0]
-        expected = createBlob("""
-{
-    "name": "a",
-    "hashFunction": "sha512",
-    "schema_version": 1,
-    "platforms": {
-        "p": {
-            "locales": {
-                "l": {
-                    "complete": {
-                        "filesize": 1234,
-                        "from": "*",
-                        "hashValue": "def"
+        with self.engine.begin() as conn:
+            ret = conn.execute(select(self.releases.data).where(self.releases.name == "a")).fetchone()[0]
+            expected = createBlob("""
+    {
+        "name": "a",
+        "hashFunction": "sha512",
+        "schema_version": 1,
+        "platforms": {
+            "p": {
+                "locales": {
+                    "l": {
+                        "complete": {
+                            "filesize": 1234,
+                            "from": "*",
+                            "hashValue": "def"
+                        }
                     }
                 }
-            }
-        },
-        "p2": {
-            "alias": "p"
-        },
-        "p3": {
-        },
-        "q": {
-            "locales": {
-                "l": {
-                    "complete": {
-                        "filesize": 324,
-                        "from": "*",
-                        "hashValue": "abc"
+            },
+            "p2": {
+                "alias": "p"
+            },
+            "p3": {
+            },
+            "q": {
+                "locales": {
+                    "l": {
+                        "complete": {
+                            "filesize": 324,
+                            "from": "*",
+                            "hashValue": "abc"
+                        }
                     }
                 }
             }
         }
     }
-}
-""")
-        self.assertEqual(ret, expected)
+    """)
+            self.assertEqual(ret, expected)
 
     def testAddLocaleToReleaseResolveAlias(self):
         data = {"complete": {"filesize": 444, "from": "*", "hashValue": "abc"}}
         self.releases.addLocaleToRelease(name="a", product="a", platform="p2", locale="j", data=data, old_data_version=1, changed_by="bill")
-        ret = select([self.releases.data]).where(self.releases.name == "a").execute().fetchone()[0]
-        expected = createBlob("""
-{
-    "name": "a",
-    "hashFunction": "sha512",
-    "schema_version": 1,
-    "platforms": {
-        "p": {
-            "locales": {
-                "l": {
-                    "complete": {
-                        "filesize": 1234,
-                        "from": "*",
-                        "hashValue": "def"
-                    }
-                },
-                "j": {
-                    "complete": {
-                        "filesize": 444,
-                        "from": "*",
-                        "hashValue": "abc"
+        with self.engine.begin() as conn:
+            ret = conn.execute(select(self.releases.data).where(self.releases.name == "a")).fetchone()[0]
+            expected = createBlob("""
+    {
+        "name": "a",
+        "hashFunction": "sha512",
+        "schema_version": 1,
+        "platforms": {
+            "p": {
+                "locales": {
+                    "l": {
+                        "complete": {
+                            "filesize": 1234,
+                            "from": "*",
+                            "hashValue": "def"
+                        }
+                    },
+                    "j": {
+                        "complete": {
+                            "filesize": 444,
+                            "from": "*",
+                            "hashValue": "abc"
+                        }
                     }
                 }
+            },
+            "p2": {
+                "alias": "p"
+            },
+            "p3": {
             }
-        },
-        "p2": {
-            "alias": "p"
-        },
-        "p3": {
         }
     }
-}
-""")
-        self.assertEqual(ret, expected)
+    """)
+            self.assertEqual(ret, expected)
 
     def testAddLocaleWhenReadOnly(self):
         data = {"complete": {"filesize": 1, "from": "*", "hashValue": "abc"}}
-        self.releases.t.update(values=dict(read_only=True, data_version=2)).where(self.releases.name == "a").execute()
-        self.assertRaises(
-            ReadOnlyError, self.releases.addLocaleToRelease, name="a", product="a", platform="p", locale="c", data=data, old_data_version=1, changed_by="bill"
-        )
+        with self.engine.begin() as conn:
+            conn.execute(self.releases.t.update().values(read_only=True, data_version=2).where(self.releases.name == "a"))
+            self.assertRaises(
+                ReadOnlyError,
+                self.releases.addLocaleToRelease,
+                name="a",
+                product="a",
+                platform="p",
+                locale="c",
+                data=data,
+                old_data_version=1,
+                changed_by="bill",
+            )
 
     def testAddMergeableOutdatedData(self):
         ancestor_blob = createBlob("""
@@ -5102,14 +5657,15 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
             self.releases.insert(changed_by="bill", name="p", product="z", data=ancestor_blob, transaction=trans)
             self.releases.update({"name": "p"}, {"product": "z", "data": blob1}, changed_by="bill", old_data_version=1, transaction=trans)
             self.releases.update({"name": "p"}, {"product": "z", "data": blob2}, changed_by="bill", old_data_version=1, transaction=trans)
-        ret = select([self.releases.data]).where(self.releases.name == "p").execute().fetchone()[0]
-        self.assertEqual(result_blob, ret)
-        history_entries = [blob.data for name, blob in self.releases.history.bucket.blobs.items() if name.startswith("p")]
-        self.assertEqual(len(history_entries), 4)
-        self.assertEqual(history_entries[0], "")
-        self.assertEqual(json.loads(history_entries[1]), ancestor_blob)
-        self.assertEqual(json.loads(history_entries[2]), blob1)
-        self.assertEqual(json.loads(history_entries[3]), result_blob)
+        with self.engine.begin() as conn:
+            ret = conn.execute(select(self.releases.data).where(self.releases.name == "p")).fetchone()[0]
+            self.assertEqual(result_blob, ret)
+            history_entries = [blob.data for name, blob in self.releases.history.bucket.blobs.items() if name.startswith("p")]
+            self.assertEqual(len(history_entries), 4)
+            self.assertEqual(history_entries[0], "")
+            self.assertEqual(json.loads(history_entries[1]), ancestor_blob)
+            self.assertEqual(json.loads(history_entries[2]), blob1)
+            self.assertEqual(json.loads(history_entries[3]), result_blob)
 
     def testAddMergeableWithChangesToList(self):
         ancestor_blob = createBlob("""
@@ -5252,14 +5808,15 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
             self.releases.insert(changed_by="bill", name="release4", product="z", data=ancestor_blob, transaction=trans)
             self.releases.update({"name": "release4"}, {"product": "z", "data": blob1}, changed_by="bill", old_data_version=1, transaction=trans)
             self.releases.update({"name": "release4"}, {"product": "z", "data": blob2}, changed_by="bill", old_data_version=1, transaction=trans)
-        ret = select([self.releases.data]).where(self.releases.name == "release4").execute().fetchone()[0]
-        self.assertEqual(result_blob, ret)
-        history_entries = [blob.data for name, blob in self.releases.history.bucket.blobs.items() if name.startswith("release4")]
-        self.assertEqual(len(history_entries), 4)
-        self.assertEqual(history_entries[0], "")
-        self.assertEqual(json.loads(history_entries[1]), ancestor_blob)
-        self.assertEqual(json.loads(history_entries[2]), blob1)
-        self.assertEqual(json.loads(history_entries[3]), result_blob)
+        with self.engine.begin() as conn:
+            ret = conn.execute(select(self.releases.data).where(self.releases.name == "release4")).fetchone()[0]
+            self.assertEqual(result_blob, ret)
+            history_entries = [blob.data for name, blob in self.releases.history.bucket.blobs.items() if name.startswith("release4")]
+            self.assertEqual(len(history_entries), 4)
+            self.assertEqual(history_entries[0], "")
+            self.assertEqual(json.loads(history_entries[1]), ancestor_blob)
+            self.assertEqual(json.loads(history_entries[2]), blob1)
+            self.assertEqual(json.loads(history_entries[3]), result_blob)
 
     def testAddConflictingOutdatedData(self):
         ancestor_blob = createBlob("""
@@ -5462,16 +6019,17 @@ class TestReleasesAppReleaseBlobs(unittest.TestCase, MemoryDatabaseMixin):
                 changed_by="bill",
                 transaction=trans,
             )
-        ret = select([self.releases.data]).where(self.releases.name == "release4").execute().fetchone()[0]
-        self.assertEqual(result_blob, ret)
-        history_entries = [blob.data for name, blob in self.releases.history.bucket.blobs.items() if name.startswith("release4")]
-        self.assertEqual(len(history_entries), 4)
-        interim_blob = deepcopy(ancestor_blob)
-        interim_blob["platforms"]["p"]["locales"]["l"] = {"partials": [{"filesize": 567, "from": "release2", "hashValue": "ghi"}]}
-        self.assertEqual(history_entries[0], "")
-        self.assertEqual(json.loads(history_entries[1]), ancestor_blob)
-        self.assertEqual(json.loads(history_entries[2]), interim_blob)
-        self.assertEqual(json.loads(history_entries[3]), result_blob)
+        with self.engine.begin() as conn:
+            ret = conn.execute(select(self.releases.data).where(self.releases.name == "release4")).fetchone()[0]
+            self.assertEqual(result_blob, ret)
+            history_entries = [blob.data for name, blob in self.releases.history.bucket.blobs.items() if name.startswith("release4")]
+            self.assertEqual(len(history_entries), 4)
+            interim_blob = deepcopy(ancestor_blob)
+            interim_blob["platforms"]["p"]["locales"]["l"] = {"partials": [{"filesize": 567, "from": "release2", "hashValue": "ghi"}]}
+            self.assertEqual(history_entries[0], "")
+            self.assertEqual(json.loads(history_entries[1]), ancestor_blob)
+            self.assertEqual(json.loads(history_entries[2]), interim_blob)
+            self.assertEqual(json.loads(history_entries[3]), result_blob)
 
 
 @pytest.mark.usefixtures("current_db_schema")
@@ -5480,29 +6038,37 @@ class TestPinnableReleases(unittest.TestCase, MemoryDatabaseMixin):
         MemoryDatabaseMixin.setUp(self)
         dbo.setDb(self.dburi, releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
-        dbo.releases_json.t.insert().execute(
-            name="Firefox-60.0-build1",
-            product="Firefox",
-            data_version=1,
-            data="""{
-    "name": "Firefox-60.0-build1",
-    "schema_version": 9,
-    "hashFunction": "sha512"
-}""",
-        )
-        dbo.releases_json.t.insert().execute(
-            name="Firefox-60.0-build2",
-            product="Firefox",
-            data_version=1,
-            data="""{
-    "name": "Firefox-60.0-build2",
-    "schema_version": 9,
-    "hashFunction": "sha512"
-}""",
-        )
-        self.pinnable_releases = dbo.pinnable_releases
-        dbo.permissions.t.insert().execute(permission="admin", username="bob", data_version=1)
-        dbo.permissions.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
+        self.engine = dbo.engine
+        with self.engine.begin() as conn:
+            conn.execute(
+                dbo.releases_json.t.insert(),
+                {
+                    "name": "Firefox-60.0-build1",
+                    "product": "Firefox",
+                    "data_version": 1,
+                    "data": """{
+        "name": "Firefox-60.0-build1",
+        "schema_version": 9,
+        "hashFunction": "sha512"
+    }""",
+                },
+            )
+            conn.execute(
+                dbo.releases_json.t.insert(),
+                {
+                    "name": "Firefox-60.0-build2",
+                    "product": "Firefox",
+                    "data_version": 1,
+                    "data": """{
+        "name": "Firefox-60.0-build2",
+        "schema_version": 9,
+        "hashFunction": "sha512"
+    }""",
+                },
+            )
+            self.pinnable_releases = dbo.pinnable_releases
+            conn.execute(dbo.permissions.t.insert(), {"permission": "admin", "username": "bob", "data_version": 1})
+            conn.execute(dbo.permissions.user_roles.t.insert(), {"username": "bob", "role": "releng", "data_version": 1})
 
     def testInsertUpdateAndDeletePinnableRelease(self):
         product = "Firefox"
@@ -5536,8 +6102,9 @@ class TestPinnableReleases(unittest.TestCase, MemoryDatabaseMixin):
             self.assertRaises(ValueError, releases.delete_release, name="Firefox-60.0-build1", changed_by="bob", trans=trans)
         self.assertEqual(dbo.releases_json.count(where=[dbo.releases_json.name == "Firefox-60.0-build1"]), 1)
         self.pinnable_releases.delete(changed_by="bob", where=[self.pinnable_releases.mapping == "Firefox-60.0-build1"], old_data_version=row["data_version"])
-        dbo.releases_json.t.delete().where(dbo.releases_json.name == "Firefox-60.0-build1").execute()
-        self.assertEqual(dbo.releases_json.count(where=[dbo.releases_json.name == "Firefox-60.0-build1"]), 0)
+        with self.engine.begin() as conn:
+            conn.execute(dbo.releases_json.t.delete().where(dbo.releases_json.name == "Firefox-60.0-build1"))
+            self.assertEqual(dbo.releases_json.count(where=[dbo.releases_json.name == "Firefox-60.0-build1"]), 0)
 
 
 @pytest.mark.usefixtures("current_db_schema")
@@ -5546,23 +6113,30 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
         self.metadata.create_all(self.db.engine)
+        self.engine = self.db.engine
         self.permissions = self.db.permissions
         self.user_roles = self.db.permissions.user_roles
-        self.permissions.t.insert().execute(permission="admin", username="bill", data_version=1)
-        self.permissions.t.insert().execute(permission="permission", username="bob", data_version=1)
-        self.permissions.t.insert().execute(permission="permission", username="sean", data_version=1)
-        self.permissions.t.insert().execute(permission="release", username="bob", options=dict(products=["fake"]), data_version=1)
-        self.permissions.t.insert().execute(permission="release", username="janet", options=dict(products=["fake"]), data_version=1)
-        self.permissions.t.insert().execute(permission="rule", username="cathy", data_version=1)
-        self.permissions.t.insert().execute(permission="rule", username="bob", options=dict(actions=["modify"]), data_version=1)
-        self.permissions.t.insert().execute(permission="rule", username="fred", options=dict(products=["foo", "bar"], actions=["modify"]), data_version=1)
-        self.permissions.t.insert().execute(permission="admin", username="george", options=dict(products=["foo"]), data_version=1)
-        self.user_roles.t.insert().execute(username="bob", role="releng", data_version=1)
-        self.user_roles.t.insert().execute(username="bob", role="dev", data_version=1)
-        self.user_roles.t.insert().execute(username="cathy", role="releng", data_version=1)
-        self.user_roles.t.insert().execute(username="janet", role="releng", data_version=1)
-        self.db.productRequiredSignoffs.t.insert().execute(product="foo", channel="bar", role="dev", signoffs_required=1, data_version=1)
-        self.db.permissionsRequiredSignoffs.t.insert().execute(product="foo", role="dev", signoffs_required=1, data_version=2)
+        with self.engine.begin() as conn:
+            conn.execute(self.permissions.t.insert(), {"permission": "admin", "username": "bill", "data_version": 1})
+            conn.execute(self.permissions.t.insert(), {"permission": "permission", "username": "bob", "data_version": 1})
+            conn.execute(self.permissions.t.insert(), {"permission": "permission", "username": "sean", "data_version": 1})
+            conn.execute(self.permissions.t.insert(), {"permission": "release", "username": "bob", "options": dict(products=["fake"]), "data_version": 1})
+            conn.execute(self.permissions.t.insert(), {"permission": "release", "username": "janet", "options": dict(products=["fake"]), "data_version": 1})
+            conn.execute(self.permissions.t.insert(), {"permission": "rule", "username": "cathy", "data_version": 1})
+            conn.execute(self.permissions.t.insert(), {"permission": "rule", "username": "bob", "options": dict(actions=["modify"]), "data_version": 1})
+            conn.execute(
+                self.permissions.t.insert(),
+                {"permission": "rule", "username": "fred", "options": dict(products=["foo", "bar"], actions=["modify"]), "data_version": 1},
+            )
+            conn.execute(self.permissions.t.insert(), {"permission": "admin", "username": "george", "options": dict(products=["foo"]), "data_version": 1})
+            conn.execute(self.user_roles.t.insert(), {"username": "bob", "role": "releng", "data_version": 1})
+            conn.execute(self.user_roles.t.insert(), {"username": "bob", "role": "dev", "data_version": 1})
+            conn.execute(self.user_roles.t.insert(), {"username": "cathy", "role": "releng", "data_version": 1})
+            conn.execute(self.user_roles.t.insert(), {"username": "janet", "role": "releng", "data_version": 1})
+            conn.execute(
+                self.db.productRequiredSignoffs.t.insert(), {"product": "foo", "channel": "bar", "role": "dev", "signoffs_required": 1, "data_version": 1}
+            )
+            conn.execute(self.db.permissionsRequiredSignoffs.t.insert(), {"product": "foo", "role": "dev", "signoffs_required": 1, "data_version": 2})
 
     def testAllTablesCreated(self):
         self.assertTrue(self.db.permissions)
@@ -5592,7 +6166,8 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions.insert("bob", username="cathy", permission="release", options=dict(products=["SeaMonkey"]))
         query = self.permissions.t.select().where(self.permissions.username == "cathy")
         query = query.where(self.permissions.permission == "release")
-        self.assertEqual(query.execute().fetchall(), [("release", "cathy", dict(products=["SeaMonkey"]), 1)])
+        with self.engine.connect() as conn:
+            self.assertEqual(conn.execute(query).fetchall(), [("release", "cathy", dict(products=["SeaMonkey"]), 1)])
 
     def testGrantPermissionsUnknownPermission(self):
         self.assertRaises(ValueError, self.permissions.insert, changed_by="bob", username="bud", permission="bad")
@@ -5608,8 +6183,9 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGrantRoleWithPermission(self):
         self.permissions.grantRole("fred", "relman", "bill")
-        got = self.user_roles.t.select().where(self.user_roles.username == "fred").execute().fetchall()
-        self.assertEqual(got, [("fred", "relman", 1)])
+        with self.engine.begin() as conn:
+            got = conn.execute(self.user_roles.t.select().where(self.user_roles.username == "fred")).fetchall()
+            self.assertEqual(got, [("fred", "relman", 1)])
 
     def testGrantRoleWithoutPermission(self):
         self.assertRaises(PermissionDeniedError, self.permissions.grantRole, username="rory", role="releng", changed_by="cathy")
@@ -5620,11 +6196,12 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testGrantRoleForExistingUser(self):
         self.permissions.grantRole("bob", "relman", "bill")
-        got = self.user_roles.t.select().where(self.user_roles.username == "bob").execute().fetchall()
-        self.assertEqual(len(got), 3)
-        self.assertIn(("bob", "releng", 1), got)
-        self.assertIn(("bob", "dev", 1), got)
-        self.assertIn(("bob", "relman", 1), got)
+        with self.engine.begin() as conn:
+            got = conn.execute(self.user_roles.t.select().where(self.user_roles.username == "bob")).fetchall()
+            self.assertEqual(len(got), 3)
+            self.assertIn(("bob", "releng", 1), got)
+            self.assertIn(("bob", "dev", 1), got)
+            self.assertIn(("bob", "relman", 1), got)
 
     def testGrantRoleToUserWhoDoesntHaveAPermission(self):
         self.assertRaisesRegex(
@@ -5635,7 +6212,8 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
         self.permissions.delete({"username": "bob", "permission": "release"}, changed_by="bill", old_data_version=1)
         query = self.permissions.t.select().where(self.permissions.username == "bob")
         query = query.where(self.permissions.permission == "release")
-        self.assertEqual(len(query.execute().fetchall()), 0)
+        with self.engine.connect() as conn:
+            self.assertEqual(len(conn.execute(query).fetchall()), 0)
 
     def testRevokePermissionThatDoesntSupportProductOption(self):
         self.assertRaises(
@@ -5644,19 +6222,21 @@ class TestPermissions(unittest.TestCase, MemoryDatabaseMixin):
 
     def testRevokeRoleWithPermission(self):
         self.permissions.revokeRole("bob", "releng", "bill", old_data_version=1)
-        got = self.user_roles.t.select().where(self.user_roles.username == "bob").execute().fetchall()
-        self.assertEqual(len(got), 1)
-        self.assertEqual(got[0], ("bob", "dev", 1))
+        with self.engine.begin() as conn:
+            got = conn.execute(self.user_roles.t.select().where(self.user_roles.username == "bob")).fetchall()
+            self.assertEqual(len(got), 1)
+            self.assertEqual(got[0], ("bob", "dev", 1))
 
     def testRevokeRoleWithoutPermission(self):
         self.assertRaises(PermissionDeniedError, self.permissions.revokeRole, username="bob", role="releng", changed_by="kirk", old_data_version=1)
 
     def testRevokingPermissionAlsoRevokeRoles(self):
         self.permissions.delete({"username": "janet", "permission": "release"}, changed_by="bill", old_data_version=1)
-        got = self.db.permissions.t.select().where(self.db.permissions.username == "janet").execute().fetchall()
-        self.assertEqual(len(got), 0)
-        got = self.user_roles.t.select().where(self.user_roles.username == "janet").execute().fetchall()
-        self.assertEqual(len(got), 0)
+        with self.engine.begin() as conn:
+            got = conn.execute(self.db.permissions.t.select().where(self.db.permissions.username == "janet")).fetchall()
+            self.assertEqual(len(got), 0)
+            got = conn.execute(self.user_roles.t.select().where(self.user_roles.username == "janet")).fetchall()
+            self.assertEqual(len(got), 0)
 
     def testRevokePermissionWithProductThatRequiresSignoff(self):
         self.assertRaises(SignoffRequiredError, self.permissions.delete, {"username": "george", "permission": "admin"}, changed_by="bill", old_data_version=1)
@@ -5788,6 +6368,7 @@ class TestDockerflow(unittest.TestCase, MemoryDatabaseMixin):
         MemoryDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
         self.metadata.create_all(self.db.engine)
+        self.engine = self.db.engine
         self.dockerflow = self.db.dockerflow
 
     def testInitAndIncrementValue(self):
@@ -5921,7 +6502,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
     def setUp(self):
         NamedFileDatabaseMixin.setUp(self)
         self.db = AUSDatabase(self.dburi)
-        self.db.metadata.create_all()
+        self.db.metadata.create_all(self.db.engine)
 
     def tearDown(self):
         NamedFileDatabaseMixin.tearDown(self)
@@ -5930,10 +6511,9 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
         """
         Check to see if a column is unique using a Sqlite-specific query.
         """
-        col_engine = col_obj.table.metadata.bind
         table_name = col_obj.table.name
-        res = col_engine.execute("SELECT sql FROM sqlite_master WHERE name = :table_name", table_name=table_name)
-        res = res.fetchone()[0]
+        with self.db.engine.connect() as conn:
+            res = conn.execute(text("SELECT sql FROM sqlite_master WHERE name = :table_name"), {"table_name": table_name}).fetchone()[0]
 
         # Return None instead of False in order to adhere to SQLAlchemy's style: Column.unique returns None
         # if it hasn't been explicitly set.
@@ -5952,8 +6532,7 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
         """
         mt = MetaData()
         engine = create_engine(db.dburi)
-        mt.bind = engine
-        mt.reflect()
+        mt.reflect(engine)
         return mt
 
     def assert_attributes_for_tables(self, tables):
@@ -6057,12 +6636,16 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
         # so that SuperBlobs already in the database index their children.
         db = AUSDatabase("sqlite:///" + self.getTempfile())
         db.upgrade(version="0001")
-        db.releases_json.t.insert().execute(
-            name="Superblob-old",
-            product="Firefox",
-            data_version=1,
-            data={"name": "Superblob-old", "schema_version": 4000, "blobs": ["old-leaf-1", "old-leaf-2"]},
-        )
+        with db.engine.begin() as conn:
+            conn.execute(
+                db.releases_json.t.insert(),
+                {
+                    "name": "Superblob-old",
+                    "product": "Firefox",
+                    "data_version": 1,
+                    "data": {"name": "Superblob-old", "schema_version": 4000, "blobs": ["old-leaf-1", "old-leaf-2"]},
+                },
+            )
         # A blob type that doesn't implement getResponseBlobs (a Guardian blob is a
         # GenericBlob, not an XMLBlob/SuperBlob) must be backfilled without crashing.
         # Regression test for bug 2065063 / #3905, where the backfill raised
@@ -6076,18 +6659,20 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
             "hashFunction": "sha512",
             "platforms": {"WINNT_x86_64": {"fileUrl": "https://a.com/1.0.0.0.msi", "hashValue": "abcdef"}},
         }
-        db.releases_json.t.insert().execute(name="Guardian-old", product="Guardian", data_version=1, data=guardian_data)
+        with db.engine.begin() as conn:
+            conn.execute(db.releases_json.t.insert(), {"name": "Guardian-old", "product": "Guardian", "data_version": 1, "data": guardian_data})
         # Same blob type living in the legacy releases table, which the backfill also scans.
-        db.releases.t.insert().execute(name="Guardian-legacy", product="Guardian", data_version=1, data=createBlob(guardian_data))
+        with db.engine.begin() as conn:
+            conn.execute(db.releases.t.insert(), {"name": "Guardian-legacy", "product": "Guardian", "data_version": 1, "data": createBlob(guardian_data)})
         db.upgrade()
 
         refs = db.release_references.get_referrers(["old-leaf-1", "old-leaf-2"])
         self.assertEqual(refs["old-leaf-1"], {"Superblob-old"})
         self.assertEqual(refs["old-leaf-2"], {"Superblob-old"})
         # Guardian blobs serve no other Releases, so they contribute no references.
-        self.assertEqual(
-            db.release_references.t.select().where(db.release_references.t.c.name.in_(["Guardian-old", "Guardian-legacy"])).execute().fetchall(), []
-        )
+        with db.engine.connect() as conn:
+            rows = conn.execute(db.release_references.t.select().where(db.release_references.t.c.name.in_(["Guardian-old", "Guardian-legacy"]))).fetchall()
+        self.assertEqual(rows, [])
 
     def testReleaseReferencesBackfillRerunAfterPartialFailure(self):
         # MySQL commits DDL implicitly, so a 0002 run that created the table + index and
@@ -6095,12 +6680,16 @@ class TestDBModel(unittest.TestCase, NamedFileDatabaseMixin):
         # be re-runnable rather than dying on CREATE TABLE (bug 2065063 / #3905).
         db = AUSDatabase("sqlite:///" + self.getTempfile())
         db.upgrade(version="0001")
-        db.releases_json.t.insert().execute(
-            name="Superblob-old",
-            product="Firefox",
-            data_version=1,
-            data={"name": "Superblob-old", "schema_version": 4000, "blobs": ["old-leaf-1"]},
-        )
+        with db.engine.begin() as conn:
+            conn.execute(
+                db.releases_json.t.insert(),
+                {
+                    "name": "Superblob-old",
+                    "product": "Firefox",
+                    "data_version": 1,
+                    "data": {"name": "Superblob-old", "schema_version": 4000, "blobs": ["old-leaf-1"]},
+                },
+            )
         # Recreate the leftover state from the failed run: table + index already exist,
         # but nothing has been backfilled and alembic_version is still 0001.
         db.release_references.t.create(db.engine)

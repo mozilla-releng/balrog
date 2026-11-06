@@ -38,28 +38,28 @@ def cleanup_releases(trans, nightly_age, dryrun=True):
     # is being executed.
     query = RELEASES_CLEANUP_CONDITION.format(nightly_age=nightly_age)
     if dryrun:
-        todelete = trans.execute("SELECT name FROM releases" + query).fetchall()
+        todelete = trans.exec_driver_sql("SELECT name FROM releases" + query).fetchall()
         print("Releases rows to be deleted:")
         if todelete:
             print("\n".join(itertools.chain(*todelete)))
         else:
             print("  - None")
     else:
-        trans.execute("DELETE releases FROM releases" + query)
+        trans.exec_driver_sql("DELETE releases FROM releases" + query)
 
 
 def cleanup_releases_json(trans, nightly_age, dryrun=True):
     query = RELEASES_CLEANUP_CONDITION.format(nightly_age=nightly_age)
     if dryrun:
-        todelete = trans.execute("SELECT name FROM releases_json" + query).fetchall()
+        todelete = trans.exec_driver_sql("SELECT name FROM releases_json" + query).fetchall()
         print("Releases JSON rows to be deleted:")
         if todelete:
             print("\n".join(itertools.chain(*todelete)))
         else:
             print("  - None")
     else:
-        trans.execute("DELETE releases_json FROM releases_json" + query)
-        trans.execute("DELETE release_assets FROM release_assets" + query)
+        trans.exec_driver_sql("DELETE releases_json FROM releases_json" + query)
+        trans.exec_driver_sql("DELETE release_assets FROM release_assets" + query)
 
 
 def chunk_list(list_object, n):
@@ -116,12 +116,12 @@ def get_active_release_names(trans, source_table="releases_json"):
                     SELECT base_fallbackMapping FROM rules_scheduled_changes WHERE complete = 0 AND base_fallbackMapping IS NOT NULL
                 ) active_names ON releases.name = active_names.mapping
                 """
-    result = trans.execute(query_release_mapping).fetchall()
+    result = trans.exec_driver_sql(query_release_mapping).fetchall()
     release_names = set()
     for row in result:
         try:
-            release_names.add(str(row["name"]))
-            release_blob = createBlob(row["data"])
+            release_names.add(str(row.name))
+            release_blob = createBlob(row.data)
             release_names.update(release_blob.getReferencedReleases())
         except ValueError:
             continue
@@ -135,7 +135,7 @@ def extract_active_data(trans, url, dump_location="dump.sql"):
 
     Function added in to enhance testing in Balrog's stage environment.
 
-    :param trans: Transaction Object for an SQL connection
+    :param trans: SQLAlchemy Connection with an open transaction
     :param url: Database. eg : mysql://balrogadmin:balrogadmin@balrogdb/balrog
     :param dump_location: location where sqldump file must be created
     """
@@ -218,7 +218,7 @@ if __name__ == "__main__":
     elif action == "downgrade":
         db.downgrade(options.version)
     elif action == "extract":
-        with db.begin() as trans:
+        with db.engine.begin() as trans:
             if len(args) < 2:
                 extract_active_data(trans, options.db)
             else:
@@ -228,7 +228,7 @@ if __name__ == "__main__":
         if len(args) < 2:
             parser.error("need to pass maximum nightly release age")
         nightly_age = int(args[1])
-        with db.begin() as trans:
+        with db.engine.begin() as trans:
             if action == "cleanup":
                 cleanup_releases(trans, nightly_age, dryrun=False)
                 cleanup_releases_json(trans, nightly_age, dryrun=False)

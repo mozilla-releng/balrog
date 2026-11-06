@@ -6,13 +6,17 @@ from .base import CommonTestBase
 class TestPinsPublicAPI(CommonTestBase):
     def setUp(self):
         super(TestPinsPublicAPI, self).setUp()
-        dbo.pinnable_releases.t.insert().execute(
-            product="test_product",
-            version="1.",
-            channel="test_channel",
-            mapping="test_mapping",
-            data_version=1,
-        )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.pinnable_releases.t.insert(),
+                {
+                    "product": "test_product",
+                    "version": "1.",
+                    "channel": "test_channel",
+                    "mapping": "test_mapping",
+                    "data_version": 1,
+                },
+            )
 
     def test_get_pin(self):
         resp = self.public_client.get("/api/v1/pins/test_product/test_channel/1.")
