@@ -37,7 +37,7 @@ If RelEng is unable to correct the issue, or unavailable, it can be escalated to
 Monitoring & Metrics
 --------------------
 
-Metrics from deployment environments are available in `Grafana/Yardstick <https://yardstick.mozilla.org/d/fRuT9IGZk/balrog?orgId=1&from=now-1h&to=now&timezone=browser&var-env=prod&var-containers=$__all&var-datasource=cdq6ttvymu4g0c&refresh=30s>`_ and `the GCP console <https://console.cloud.google.com/home/dashboard?project=moz-fx-balrog-prod-3fa2&folder=&organizationId=>`_.
+Metrics from deployment environments are available in `Grafana/Yardstick <https://yardstick.mozilla.org/d/fRuT9IGZfsdfweAA/balrog3a-mozcloud-v2?orgId=1&from=now-1h&to=now&timezone=utc&var-env=prod&var-containers=$__all&var-datasource=adpvtjmrxoc1sb&refresh=30s>`_ and `the GCP console <https://console.cloud.google.com/home/dashboard?project=moz-fx-balrog-prod>`_. The Kubernetes cluster that runs Balrog is in the separate ``moz-fx-webservices-high-prod`` project.
 
 We aggregate exceptions from both the Admin & Public apps to `Sentry <https://sentry.io/organizations/mozilla/projects/>`_.
 
@@ -45,11 +45,12 @@ We aggregate exceptions from both the Admin & Public apps to `Sentry <https://se
 Application & HTTP Logs
 -----------------------
 
-Balrog publishes logs to BigQuery which are `available for querying on Google Cloud <https://console.cloud.google.com/bigquery?project=moz-fx-balrog-prod-3fa2>`_. The relevant tables are:
+Balrog publishes logs to the ``gke_balrog_prod_log`` BigQuery dataset, which is `available for querying on Google Cloud <https://console.cloud.google.com/bigquery?project=moz-fx-balrog-prod>`_. The relevant tables are:
 
 * requests - This table contains HTTP load balancer logs
 * stdout - This table contains application logs sent to stdout
 * stderr - This table contains application logs sent to stderr
+* events - This table contains Kubernetes events for Balrog's workloads
 
 -------
 Backups
@@ -111,7 +112,7 @@ Once the changes are deployed to stage, you should do some testing to make sure 
 Pushing to Production
 ~~~~~~~~~~~~~~~~~~~~~
 
-Note: Pushing to production requires that the "Pull and Push Docker Image" for the desired version has already been run (usually as part of the Stage deployment described above). This is required to get ArgoCD into the necessary state for the following instructions to work.
+Note: Pushing to production requires that the `"Pull and Push Docker Image" GitHub action <https://github.com/mozilla-releng/balrog/actions/workflows/docker-push.yml>`_ for the desired version has already been run (usually as part of the Stage deployment described above). This is required to get ArgoCD into the necessary state for the following instructions to work.
 
 To begin the production deployment process you must "Sync" ``admin``, ``agent``, and ``app`` `in ArgoCD <https://webservices.argocd.global.mozgcp.net/applications?proj=balrog-prod>`_. For the former two, the deployment process is complete once this finishes successfully. For the latter, this will only deploy a canary pod, allowing a fraction of requests to be handled by the new release.
 
@@ -121,14 +122,14 @@ Once Argo has finished updating everything, you should see notifications for ``a
 
 .. image:: prod-notify1.png
 
-To deploy the new UI to production, run the "Build and Deploy Balrog UI" Github action. Be sure to choose "prod" from the dropdown:
+To deploy the new UI to production, run the `"Build and Deploy Balrog UI" GitHub action <https://github.com/mozilla-releng/balrog/actions/workflows/ui-deploy.yml>`_. Be sure to choose "prod" from the dropdown:
 
 .. image:: ui-prod.png
 
 Before proceeding, you should monitor for changes in load or exceptions for at least a few minutes. Specifically:
 
 - Watch `Sentry <https://mozilla.sentry.io/issues/?project=6262508&project=6262505&project=6262506>`_ to see if any new exceptions show up for any of the backend services
-- Watch `the Grafana graphs <https://yardstick.mozilla.org/d/fRuT9IGZfsdfweAA/balrog3a-mozcloud-v2?orgId=1&from=now-1h&to=now&timezone=browser&var-env=prod&var-containers=$__all&var-datasource=adpvtjmrxoc1sb&refresh=30s&editIndex=0>`_ for spikes or dips in any of the charts
+- Watch `the Grafana graphs <https://yardstick.mozilla.org/d/fRuT9IGZfsdfweAA/balrog3a-mozcloud-v2?orgId=1&from=now-1h&to=now&timezone=utc&var-env=prod&var-containers=$__all&var-datasource=adpvtjmrxoc1sb&refresh=30s>`_ for spikes or dips in any of the charts
 
 If anything notable comes up you should seek an explanation for it before proceeding. If you are unable to explain the issue, consult with someone else and consider rolling back in the meantime.
 
@@ -152,6 +153,6 @@ See https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/1703772181/How+to+Ro
 UI
 ^^
 
-To revert UI changes, re-run the "Build and Deploy Balrog UI" action, specifying a different ref (preferably the previous release tag):
+To revert UI changes, re-run the `"Build and Deploy Balrog UI" GitHub action <https://github.com/mozilla-releng/balrog/actions/workflows/ui-deploy.yml>`_, specifying a different ref (preferably the previous release tag):
 
 .. image:: ui-revert.png
