@@ -46,7 +46,7 @@ def rows_to_dicts(rows):
     (SQLAlchemy rows get confused if you try to serialize them).
     """
     # In Python 3, map returns an iterable instead a list.
-    return [dict(row) for row in rows]
+    return [dict(row._mapping) for row in rows]
 
 
 class AlreadySetupError(Exception):
@@ -277,7 +277,7 @@ class AUSTransaction(object):
             raise TransactionError() from exc
 
     def rollback(self):
-        if self.trans is None:
+        if self.trans is None or not self.trans.is_active:
             return
         self.trans.rollback()
 
@@ -346,7 +346,7 @@ class AUSTable(object):
     # Can't do this in the constructor, because the engine is always
     # unset when we're instantiated
     def getEngine(self):
-        return self.t.metadata.bind
+        return self.db.engine
 
     def _returnRowOrRaise(self, where, columns=None, transaction=None):
         """Return the row matching the where clause supplied. If no rows match or multiple rows match,
@@ -374,9 +374,17 @@ class AUSTable(object):
         """
         if columns:
             table_columns = [(self.t.c[col] if isinstance(col, str) else col) for col in columns]
-            query = select(table_columns, order_by=order_by, limit=limit, offset=offset, distinct=distinct)
+            query = select(*table_columns)
         else:
-            query = self.t.select(order_by=order_by, limit=limit, offset=offset, distinct=distinct)
+            query = self.t.select()
+        if order_by is not None:
+            query = query.order_by(*order_by) if isinstance(order_by, (list, tuple)) else query.order_by(order_by)
+        if limit is not None:
+            query = query.limit(limit)
+        if offset is not None:
+            query = query.offset(offset)
+        if distinct:
+            query = query.distinct()
         if where:
             for cond in where:
                 query = query.where(cond)
@@ -424,7 +432,7 @@ class AUSTable(object):
                 raise ValueError("Cannot set autoincrement primary key '%s' on insert" % col.name)
         table_columns = {k: columns[k] for k in columns.keys() if k in self.table.c}
         unconsumed_columns = {k: columns[k] for k in columns.keys() if k not in table_columns}
-        return self.t.insert(values=table_columns), unconsumed_columns
+        return self.t.insert().values(**table_columns), unconsumed_columns
 
     def _sharedPrepareInsert(self, trans, changed_by, **columns):
         """Prepare an INSERT statement for commit. If this table has versioning enabled,
@@ -669,7 +677,7 @@ class AUSTable(object):
         """
         table_what = {k: what[k] for k in what.keys() if k in self.table.c}
         unconsumed_columns = {k: what[k] for k in what.keys() if k not in table_what}
-        query = self.t.update(values=table_what)
+        query = self.t.update().values(**table_what)
         if where:
             for cond in where:
                 query = query.where(cond)
@@ -818,7 +826,7 @@ class AUSTable(object):
                 return await self._asyncPrepareUpdate(trans, where, what, changed_by, old_data_version)
 
     def count(self, column="*", where=None, transaction=None):
-        count_statement = select(columns=[func.count(column)], from_obj=self.t)
+        count_statement = select(func.count(column)).select_from(self.t)
         if where:
             for cond in where:
                 count_statement = count_statement.where(cond)
@@ -992,7 +1000,7 @@ class HistoryTable(AUSTable):
         # fmt: off
         q = (select(self.table.columns)
              .where(self.change_id.in_(
-                 select([sql_max(self.change_id)])
+                 select(sql_max(self.change_id))
                  .where(self.timestamp <= timestamp)
                  .group_by(*self.base_primary_key)
              )
@@ -1009,7 +1017,7 @@ class HistoryTable(AUSTable):
         # means the row has been deleted.
         non_primary_key_columns = [col.name for col in self.baseTable.t.columns if not col.primary_key]
         for row in result:
-            if any([row[col] for col in non_primary_key_columns]):
+            if any([row._mapping[col] for col in non_primary_key_columns]):
                 rows.append(row)
 
         return rows_to_dicts(rows)
@@ -1446,8 +1454,7 @@ class ScheduledChangeTable(AUSTable):
 
         base_what = self._prefixColumns(base_what)
         base_what["scheduled_by"] = changed_by
-        ret = super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun)
-        sc_id = ret.last_updated_params()["sc_id"]
+        super(ScheduledChangeTable, self).update(where, base_what, changed_by, old_data_version, transaction, dryrun=dryrun)
 
         for sc_id in affected_ids:
             if not self._dataVersionsAreSynced(sc_id, transaction):
@@ -1876,15 +1883,17 @@ class Rules(AUSTable):
         if not lookup_names:
             return required_signoffs
 
-        stmt = select([self.mapping, self.fallbackMapping, self.rule_id, self.product, self.channel]).where(
+        stmt = select(self.mapping, self.fallbackMapping, self.rule_id, self.product, self.channel).where(
             self.mapping.in_(lookup_names) | self.fallbackMapping.in_(lookup_names)
         )
         if transaction:
             rule_info = transaction.execute(stmt).fetchall()
         else:
-            rule_info = self.getEngine().execute(stmt).fetchall()
+            with self.getEngine().connect() as conn:
+                rule_info = conn.execute(stmt).fetchall()
+        rule_info = [dict(r._mapping) for r in rule_info]
 
-        rule_required_signoffs = self.getPotentialRequiredSignoffs([dict(r) for r in rule_info], transaction=transaction)
+        rule_required_signoffs = self.getPotentialRequiredSignoffs(rule_info, transaction=transaction)
 
         lookup_set = set(lookup_names)
         rs_by_name = defaultdict(list)
@@ -2167,14 +2176,13 @@ class Releases(AUSTable):
             )
             if transaction:
                 ref_list = transaction.execute(
-                    select([self.db.releases.name, self.db.rules.rule_id, self.db.rules.product, self.db.rules.channel]).select_from(j)
+                    select(self.db.releases.name, self.db.rules.rule_id, self.db.rules.product, self.db.rules.channel).select_from(j)
                 ).fetchall()
             else:
-                ref_list = (
-                    self.getEngine()
-                    .execute(select([self.db.releases.name, self.db.rules.rule_id, self.db.rules.product, self.db.rules.channel]).select_from(j))
-                    .fetchall()
-                )
+                with self.getEngine().connect() as conn:
+                    ref_list = conn.execute(
+                        select(self.db.releases.name, self.db.rules.rule_id, self.db.rules.product, self.db.rules.channel).select_from(j)
+                    ).fetchall()
 
             for row in rows:
                 refs = [ref for ref in ref_list if ref[0] == row["name"]]
@@ -2676,8 +2684,10 @@ class ReleaseReferences(object):
 
     def _execute(self, statement, transaction):
         if transaction:
-            return transaction.execute(statement)
-        return self.table.metadata.bind.execute(statement)
+            transaction.execute(statement)
+        else:
+            with self.db.engine.begin() as conn:
+                conn.execute(statement)
 
     def update_references(self, name, referenced, transaction=None):
         """Replace the set of Releases that ``name`` references."""
@@ -2695,9 +2705,14 @@ class ReleaseReferences(object):
         names = tuple(set(names))
         if not names:
             return result
-        stmt = select([self.table.c.name, self.table.c.referenced]).where(self.table.c.referenced.in_(names))
-        for row in self._execute(stmt, transaction).fetchall():
-            result[row["referenced"]].add(row["name"])
+        stmt = select(self.table.c.name, self.table.c.referenced).where(self.table.c.referenced.in_(names))
+        if transaction:
+            rows = transaction.execute(stmt).fetchall()
+        else:
+            with self.db.engine.connect() as conn:
+                rows = conn.execute(stmt).fetchall()
+        for row in rows:
+            result[row.referenced].add(row.name)
         return result
 
 
@@ -3164,7 +3179,6 @@ class AUSDatabase(object):
         self.permissionsRequiredSignoffsTable = PermissionsRequiredSignoffsTable(self, self.metadata, dialect)
         self.emergencyShutoffsTable = EmergencyShutoffs(self, self.metadata, dialect)
         self.pinnableReleasesTable = PinnableReleasesTable(self, self.metadata, dialect)
-        self.metadata.bind = self.engine
 
     def setSystemAccounts(self, systemAccounts):
         self.systemAccounts = systemAccounts
@@ -3265,7 +3279,6 @@ class AUSDatabase(object):
 
     def reset(self):
         self.engine = None
-        self.metadata.bind = None
 
     def begin(self):
         return AUSTransaction(self.engine)

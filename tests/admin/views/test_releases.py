@@ -34,7 +34,8 @@ class TestReleasesAPI_JSON(ViewTest):
         data = json.dumps(dict(detailsUrl="blah", fakePartials=True, schema_version=1))
         ret = self._post("/releases/d", data=dict(data=data, product="d", data_version=1))
         self.assertStatusCode(ret, 200)
-        ret = select([dbo.releases.data]).where(dbo.releases.name == "d").execute().fetchone()[0]
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(select(dbo.releases.data).where(dbo.releases.name == "d")).fetchone()[0]
         self.assertDictEqual(
             ret,
             createBlob("""
@@ -183,7 +184,8 @@ class TestReleasesAPI_JSON(ViewTest):
         # Testing Put request to add new release
         ret = self._put("/releases/dd", data=dict(blob=ancestor_blob, name="dd", product="dd", data_version=1))
         self.assertStatusCode(ret, 201)
-        ret = select([dbo.releases.data]).where(dbo.releases.name == "dd").execute().fetchone()[0]
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(select(dbo.releases.data).where(dbo.releases.name == "dd")).fetchone()[0]
         self.assertDictEqual(ret, createBlob(ancestor_blob))
 
         # Updating same release
@@ -196,7 +198,8 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 200)
         self.assertDictEqual(ret.get_json(), dict(new_data_version=3))
 
-        ret = select([dbo.releases.data]).where(dbo.releases.name == "dd").execute().fetchone()[0]
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(select(dbo.releases.data).where(dbo.releases.name == "dd")).fetchone()[0]
         self.assertDictEqual(ret, result_blob)
 
         history_entries = [blob.data for name, blob in dbo.releases.history.bucket.blobs.items() if name.startswith("dd/")]
@@ -282,7 +285,8 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._put("/releases/dd", data=dict(blob=ancestor_blob, name="dd", product="dd", data_version=1))
         self.assertStatusCode(ret, 201)
 
-        ret = select([dbo.releases.data]).where(dbo.releases.name == "dd").execute().fetchone()[0]
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(select(dbo.releases.data).where(dbo.releases.name == "dd")).fetchone()[0]
         self.assertDictEqual(ret, createBlob(ancestor_blob))
 
         # Updating same release
@@ -374,7 +378,8 @@ class TestReleasesAPI_JSON(ViewTest):
         data = json.dumps(dict(bouncerProducts=dict(partial="foo"), name="e", hashFunction="sha512"))
         ret = self._post("/releases/e", data=dict(data=data, product="e", schema_version=1))
         self.assertStatusCode(ret, 201)
-        ret = dbo.releases.t.select().where(dbo.releases.name == "e").execute().fetchone()
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(dbo.releases.t.select().where(dbo.releases.name == "e")).fetchone()._mapping
         self.assertEqual(ret["product"], "e")
         self.assertEqual(ret["name"], "e")
         self.assertDictEqual(
@@ -405,7 +410,8 @@ class TestReleasesAPI_JSON(ViewTest):
         data = json.dumps(dict(bouncerProducts=dict(complete="foo"), name="e", hashFunction="sha512"))
         ret = self._post("/releases/e", data=dict(data=data, product="e", schema_version=2))
         self.assertStatusCode(ret, 201)
-        ret = dbo.releases.t.select().where(dbo.releases.name == "e").execute().fetchone()
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(dbo.releases.t.select().where(dbo.releases.name == "e")).fetchone()._mapping
         self.assertEqual(ret["product"], "e")
         self.assertEqual(ret["name"], "e")
         self.assertDictEqual(
@@ -466,7 +472,8 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 403)
 
     def testDeleteReadOnlyRelease(self):
-        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "d").execute()
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.releases.t.update().values(read_only=True, data_version=2).where(dbo.releases.name == "d"))
         ret = self._delete("/releases/d", username="bill", qs=dict(data_version=2))
         self.assertStatusCode(ret, 403)
 
@@ -479,7 +486,8 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._put("/releases/ab/builds/p/l", data=dict(data=data, product="a", data_version=1, schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=2)), "Data: %s" % ret.get_data())
-        ret = select([dbo.releases.data]).where(dbo.releases.name == "ab").execute().fetchone()[0]
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(select(dbo.releases.data).where(dbo.releases.name == "ab")).fetchone()[0]
         expected = createBlob("""
 {
     "name": "ab",
@@ -544,7 +552,8 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._put("/releases/ab/builds/p/l", username="ashanti", data=dict(data=data, product="a", data_version=1, schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=2)), "Data: %s" % ret.get_data())
-        ret = select([dbo.releases.data]).where(dbo.releases.name == "ab").execute().fetchone()[0]
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(select(dbo.releases.data).where(dbo.releases.name == "ab")).fetchone()[0]
         expected = createBlob("""
 {
     "name": "ab",
@@ -600,7 +609,8 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._put("/releases/e/builds/p/a", data=dict(data=data, product="e", hashFunction="sha512", schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=2)), "Data: %s" % ret.get_data())
-        ret = select([dbo.releases.data]).where(dbo.releases.name == "e").execute().fetchone()[0]
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(select(dbo.releases.data).where(dbo.releases.name == "e")).fetchone()[0]
         expected = createBlob("""
 {
     "name": "e",
@@ -634,7 +644,8 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._put("/releases/d/builds/p/g", data=dict(data=data, product="d", data_version=1, schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=2)), "Data: %s" % ret.get_data())
-        ret = select([dbo.releases.data]).where(dbo.releases.name == "d").execute().fetchone()[0]
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(select(dbo.releases.data).where(dbo.releases.name == "d")).fetchone()[0]
         expected = createBlob("""
 {
     "name": "d",
@@ -698,7 +709,8 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._put("/releases/e/builds/p/a", data=dict(data=data, product="e", alias='["p2"]', schema_version=1, hashFunction="sha512"))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=2)), "Data: %s" % ret.get_data())
-        ret = select([dbo.releases.data]).where(dbo.releases.name == "e").execute().fetchone()[0]
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(select(dbo.releases.data).where(dbo.releases.name == "e")).fetchone()[0]
         expected = createBlob("""
 {
     "name": "e",
@@ -735,7 +747,8 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._put("/releases/d/builds/q/g", data=dict(data=data, product="d", data_version=1, alias='["q2"]', schema_version=1))
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=2)), "Data: %s" % ret.get_data())
-        ret = select([dbo.releases.data]).where(dbo.releases.name == "d").execute().fetchone()[0]
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(select(dbo.releases.data).where(dbo.releases.name == "d")).fetchone()[0]
         expected = createBlob("""
 {
     "name": "d",
@@ -805,7 +818,8 @@ class TestReleasesAPI_JSON(ViewTest):
         ret = self._put("/releases/ab/builds/p/l", data=data)
         self.assertStatusCode(ret, 201)
         self.assertEqual(ret.get_data(as_text=True), json.dumps(dict(new_data_version=2)), "Data: %s" % ret.get_data())
-        ret = select([dbo.releases.data]).where(dbo.releases.name == "ab").execute().fetchone()[0]
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(select(dbo.releases.data).where(dbo.releases.name == "ab")).fetchone()[0]
         expected = createBlob("""
 {
     "name": "ab",
@@ -833,7 +847,8 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertDictEqual(json.loads(history_entries[1]), {"name": "ab", "schema_version": 1, "hashFunction": "sha512"})
         self.assertDictEqual(json.loads(history_entries[2]), expected)
 
-        ret = select([dbo.releases.data]).where(dbo.releases.name == "b").execute().fetchone()[0]
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(select(dbo.releases.data).where(dbo.releases.name == "b")).fetchone()[0]
         expected = createBlob("""
 {
     "name": "b",
@@ -886,7 +901,8 @@ class TestReleasesAPI_JSON(ViewTest):
         self.assertStatusCode(ret, 401)
 
     def testLocalePutReadOnlyRelease(self):
-        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "ab").execute()
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.releases.t.update().values(read_only=True, data_version=2).where(dbo.releases.name == "ab"))
         data = json.dumps({"complete": {"filesize": 435, "from": "*", "hashValue": "abc"}})
         ret = self._put("/releases/ab/builds/p/l", data=dict(data=data, product="a", data_version=1, schema_version=1))
         self.assertStatusCode(ret, 403)
@@ -949,12 +965,13 @@ class TestReleasesAPI_JSON(ViewTest):
         )
 
         self.assertEqual(ret.status_code, 201, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
-        r = dbo.releases.t.select().where(dbo.releases.name == "new_release").execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.t.select().where(dbo.releases.name == "new_release")).fetchall()
         self.assertEqual(len(r), 1)
-        self.assertEqual(r[0]["name"], "new_release")
-        self.assertEqual(r[0]["product"], "Firefox")
+        self.assertEqual(r[0]._mapping["name"], "new_release")
+        self.assertEqual(r[0]._mapping["product"], "Firefox")
         self.assertDictEqual(
-            r[0]["data"],
+            r[0]._mapping["data"],
             createBlob("""
 {
     "name": "new_release",
@@ -1054,12 +1071,13 @@ class TestReleasesAPI_JSON(ViewTest):
             ),
         )
         self.assertEqual(ret.status_code, 200, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
-        r = dbo.releases.t.select().where(dbo.releases.name == "d").execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.t.select().where(dbo.releases.name == "d")).fetchall()
         self.assertEqual(len(r), 1)
-        self.assertEqual(r[0]["name"], "d")
-        self.assertEqual(r[0]["product"], "Firefox")
+        self.assertEqual(r[0]._mapping["name"], "d")
+        self.assertEqual(r[0]._mapping["product"], "Firefox")
         self.assertDictEqual(
-            r[0]["data"],
+            r[0]._mapping["data"],
             createBlob("""
 {
     "name": "d",
@@ -1103,12 +1121,13 @@ cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda
         )
 
         self.assertEqual(ret.status_code, 201, "Status Code: %d, Data: %s" % (ret.status_code, ret.get_data()))
-        r = dbo.releases.t.select().where(dbo.releases.name == "gmprel").execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.t.select().where(dbo.releases.name == "gmprel")).fetchall()
         self.assertEqual(len(r), 1)
-        self.assertEqual(r[0]["name"], "gmprel")
-        self.assertEqual(r[0]["product"], "a")
+        self.assertEqual(r[0]._mapping["name"], "gmprel")
+        self.assertEqual(r[0]._mapping["product"], "a")
         self.assertDictEqual(
-            r[0]["data"],
+            r[0]._mapping["data"],
             createBlob("""
 {
     "name": "gmprel",
@@ -1204,53 +1223,62 @@ cbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbdacbda
         # a Release that a Rule merely falls back to can be deleted out from under it.
         # Creating that name for the first time is what the public app will serve, so
         # it must require the Rule's Required Signoffs rather than none.
-        dbo.rules.t.insert().execute(
-            rule_id=900,
-            priority=100,
-            backgroundRate=100,
-            product="fake",
-            channel="a",
-            mapping="dangling-release",
-            update_type="minor",
-            data_version=1,
-        )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "rule_id": 900,
+                    "priority": 100,
+                    "backgroundRate": 100,
+                    "product": "fake",
+                    "channel": "a",
+                    "mapping": "dangling-release",
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
         data = json.dumps(dict(name="dangling-release", schema_version=1, hashFunction="sha512"))
 
         ret = self._post("/releases", data=dict(blob=data, name="dangling-release", product="fake"))
         self.assertStatusCode(ret, 400)
-        self.assertIsNone(dbo.releases.t.select().where(dbo.releases.name == "dangling-release").execute().fetchone())
+        with dbo.engine.connect() as conn:
+            self.assertIsNone(conn.execute(dbo.releases.t.select().where(dbo.releases.name == "dangling-release")).fetchone())
 
     def testReleasePostForReleasesJSONOnlyMappedReleaseRequiresSignoff(self):
         # The name is already live out of releases_json. Creating a legacy-table row
         # for it must require the same signoffs, not zero because this table has no
         # row to join against yet.
-        dbo.releases_json.t.insert().execute(
-            name="json-only",
-            product="fake",
-            data_version=1,
-            data={"name": "json-only", "schema_version": 1, "hashFunction": "sha512"},
-        )
-        dbo.rules.t.insert().execute(
-            rule_id=901,
-            priority=100,
-            backgroundRate=100,
-            product="fake",
-            channel="a",
-            mapping="json-only",
-            update_type="minor",
-            data_version=1,
-        )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases_json.t.insert(),
+                {"name": "json-only", "product": "fake", "data_version": 1, "data": {"name": "json-only", "schema_version": 1, "hashFunction": "sha512"}},
+            )
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "rule_id": 901,
+                    "priority": 100,
+                    "backgroundRate": 100,
+                    "product": "fake",
+                    "channel": "a",
+                    "mapping": "json-only",
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
         data = json.dumps(dict(name="json-only", schema_version=1, hashFunction="sha512"))
 
         ret = self._post("/releases", data=dict(blob=data, name="json-only", product="fake"))
         self.assertStatusCode(ret, 400)
-        self.assertIsNone(dbo.releases.t.select().where(dbo.releases.name == "json-only").execute().fetchone())
+        with dbo.engine.connect() as conn:
+            self.assertIsNone(conn.execute(dbo.releases.t.select().where(dbo.releases.name == "json-only")).fetchone())
 
     def testReleasesPost(self):
         data = json.dumps(dict(bouncerProducts=dict(partial="foo"), name="e", schema_version=1, hashFunction="sha512"))
         ret = self._post("/releases", data=dict(blob=data, name="e", product="e"))
         self.assertStatusCode(ret, 201)
-        ret = dbo.releases.t.select().where(dbo.releases.name == "e").execute().fetchone()
+        with dbo.engine.connect() as conn:
+            ret = conn.execute(dbo.releases.t.select().where(dbo.releases.name == "e")).fetchone()._mapping
         self.assertEqual(ret["product"], "e")
         self.assertEqual(ret["name"], "e")
         self.assertDictEqual(
@@ -1273,150 +1301,200 @@ class TestReleasesScheduledChanges(ViewTest):
 
     def setUp(self):
         super(TestReleasesScheduledChanges, self).setUp()
-        dbo.releases.scheduled_changes.t.insert().execute(
-            sc_id=1,
-            scheduled_by="bill",
-            change_type="insert",
-            data_version=1,
-            base_name="m",
-            base_product="m",
-            base_data=createBlob(dict(name="m", hashFunction="sha512", schema_version=1)),
-        )
-        dbo.releases.scheduled_changes.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=50, sc_id=1)
-        dbo.releases.scheduled_changes.history.t.insert().execute(
-            change_id=2,
-            changed_by="bill",
-            timestamp=51,
-            sc_id=1,
-            scheduled_by="bill",
-            change_type="insert",
-            data_version=1,
-            base_name="m",
-            base_product="m",
-            base_data=createBlob(dict(name="m", hashFunction="sha512", schema_version=1)),
-        )
-        dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=1, when=4000000000, data_version=1)
-        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=50, sc_id=1)
-        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=2, changed_by="bill", timestamp=51, sc_id=1, when=4000000000, data_version=1
-        )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 1,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "data_version": 1,
+                    "base_name": "m",
+                    "base_product": "m",
+                    "base_data": createBlob(dict(name="m", hashFunction="sha512", schema_version=1)),
+                },
+            )
+            conn.execute(dbo.releases.scheduled_changes.history.t.insert(), {"change_id": 1, "changed_by": "bill", "timestamp": 50, "sc_id": 1})
+            conn.execute(
+                dbo.releases.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 2,
+                    "changed_by": "bill",
+                    "timestamp": 51,
+                    "sc_id": 1,
+                    "scheduled_by": "bill",
+                    "change_type": "insert",
+                    "data_version": 1,
+                    "base_name": "m",
+                    "base_product": "m",
+                    "base_data": createBlob(dict(name="m", hashFunction="sha512", schema_version=1)),
+                },
+            )
+            conn.execute(dbo.releases.scheduled_changes.conditions.t.insert(), {"sc_id": 1, "when": 4000000000, "data_version": 1})
+            conn.execute(dbo.releases.scheduled_changes.conditions.history.t.insert(), {"change_id": 1, "changed_by": "bill", "timestamp": 50, "sc_id": 1})
+            conn.execute(
+                dbo.releases.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 2, "changed_by": "bill", "timestamp": 51, "sc_id": 1, "when": 4000000000, "data_version": 1},
+            )
 
-        dbo.releases.scheduled_changes.t.insert().execute(
-            sc_id=2,
-            scheduled_by="bill",
-            change_type="update",
-            data_version=1,
-            base_name="a",
-            base_product="a",
-            base_data=createBlob(dict(name="a", hashFunction="sha512", schema_version=1, extv="2.0")),
-            base_data_version=1,
-        )
-        dbo.releases.scheduled_changes.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=70, sc_id=2)
-        dbo.releases.scheduled_changes.history.t.insert().execute(
-            change_id=4,
-            changed_by="bill",
-            timestamp=71,
-            sc_id=2,
-            scheduled_by="bill",
-            change_type="update",
-            data_version=1,
-            base_name="a",
-            base_product="a",
-            base_data=createBlob(dict(name="a", hashFunction="sha512", schema_version=1, extv="2.0")),
-            base_data_version=1,
-        )
-        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=2, username="bill", role="releng")
-        dbo.releases.scheduled_changes.signoffs.history.t.insert().execute(change_id=1, changed_by="bill", timestamp=100, sc_id=2, username="bill")
-        dbo.releases.scheduled_changes.signoffs.history.t.insert().execute(
-            change_id=2, changed_by="bill", timestamp=101, sc_id=2, username="bill", role="releng"
-        )
-        dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=2, when=6000000000, data_version=1)
-        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=3, changed_by="bill", timestamp=70, sc_id=2)
-        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=4, changed_by="bill", timestamp=71, sc_id=2, when=6000000000, data_version=1
-        )
+            conn.execute(
+                dbo.releases.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 2,
+                    "scheduled_by": "bill",
+                    "change_type": "update",
+                    "data_version": 1,
+                    "base_name": "a",
+                    "base_product": "a",
+                    "base_data": createBlob(dict(name="a", hashFunction="sha512", schema_version=1, extv="2.0")),
+                    "base_data_version": 1,
+                },
+            )
+            conn.execute(dbo.releases.scheduled_changes.history.t.insert(), {"change_id": 3, "changed_by": "bill", "timestamp": 70, "sc_id": 2})
+            conn.execute(
+                dbo.releases.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 4,
+                    "changed_by": "bill",
+                    "timestamp": 71,
+                    "sc_id": 2,
+                    "scheduled_by": "bill",
+                    "change_type": "update",
+                    "data_version": 1,
+                    "base_name": "a",
+                    "base_product": "a",
+                    "base_data": createBlob(dict(name="a", hashFunction="sha512", schema_version=1, extv="2.0")),
+                    "base_data_version": 1,
+                },
+            )
+            conn.execute(dbo.releases.scheduled_changes.signoffs.t.insert(), {"sc_id": 2, "username": "bill", "role": "releng"})
+            conn.execute(
+                dbo.releases.scheduled_changes.signoffs.history.t.insert(),
+                {"change_id": 1, "changed_by": "bill", "timestamp": 100, "sc_id": 2, "username": "bill"},
+            )
+            conn.execute(
+                dbo.releases.scheduled_changes.signoffs.history.t.insert(),
+                {"change_id": 2, "changed_by": "bill", "timestamp": 101, "sc_id": 2, "username": "bill", "role": "releng"},
+            )
+            conn.execute(dbo.releases.scheduled_changes.conditions.t.insert(), {"sc_id": 2, "when": 6000000000, "data_version": 1})
+            conn.execute(dbo.releases.scheduled_changes.conditions.history.t.insert(), {"change_id": 3, "changed_by": "bill", "timestamp": 70, "sc_id": 2})
+            conn.execute(
+                dbo.releases.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 4, "changed_by": "bill", "timestamp": 71, "sc_id": 2, "when": 6000000000, "data_version": 1},
+            )
 
-        dbo.releases.scheduled_changes.t.insert().execute(
-            sc_id=3,
-            complete=True,
-            scheduled_by="bill",
-            change_type="update",
-            data_version=2,
-            base_name="b",
-            base_product="b",
-            base_data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)),
-            base_data_version=1,
-        )
-        dbo.releases.scheduled_changes.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=6, sc_id=3)
-        dbo.releases.scheduled_changes.history.t.insert().execute(
-            change_id=6,
-            changed_by="bill",
-            timestamp=7,
-            sc_id=3,
-            complete=False,
-            scheduled_by="bill",
-            change_type="update",
-            data_version=1,
-            base_name="b",
-            base_product="b",
-            base_data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)),
-            base_data_version=1,
-        )
-        dbo.releases.scheduled_changes.history.t.insert().execute(
-            change_id=7,
-            changed_by="bill",
-            timestamp=25,
-            sc_id=3,
-            complete=True,
-            change_type="update",
-            scheduled_by="bill",
-            data_version=2,
-            base_name="b",
-            base_product="b",
-            base_data=createBlob(dict(name="b", hashFunction="sha512", schema_version=1)),
-            base_data_version=1,
-        )
-        dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=3, when=10000000, data_version=2)
-        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(change_id=5, changed_by="bill", timestamp=6, sc_id=3)
-        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=6, changed_by="bill", timestamp=7, sc_id=3, when=10000000, data_version=1
-        )
-        dbo.releases.scheduled_changes.conditions.history.t.insert().execute(
-            change_id=7, changed_by="bill", timestamp=25, sc_id=3, when=10000000, data_version=2
-        )
-        dbo.releases.scheduled_changes.t.insert().execute(
-            sc_id=4, complete=False, scheduled_by="bill", change_type="delete", data_version=1, base_name="ab", base_data_version=1
-        )
-        dbo.releases.scheduled_changes.history.t.insert().execute(change_id=8, changed_by="bill", timestamp=25, sc_id=4)
-        dbo.releases.scheduled_changes.history.t.insert().execute(
-            change_id=9,
-            changed_by="bill",
-            timestamp=26,
-            sc_id=4,
-            complete=False,
-            scheduled_by="bill",
-            change_type="delete",
-            data_version=1,
-            base_name="ab",
-            base_data_version=1,
-        )
-        dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=4, when=230000000, data_version=1)
-        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="bill", role="releng")
-        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4, username="ben", role="releng")
+            conn.execute(
+                dbo.releases.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 3,
+                    "complete": True,
+                    "scheduled_by": "bill",
+                    "change_type": "update",
+                    "data_version": 2,
+                    "base_name": "b",
+                    "base_product": "b",
+                    "base_data": createBlob(dict(name="b", hashFunction="sha512", schema_version=1)),
+                    "base_data_version": 1,
+                },
+            )
+            conn.execute(dbo.releases.scheduled_changes.history.t.insert(), {"change_id": 5, "changed_by": "bill", "timestamp": 6, "sc_id": 3})
+            conn.execute(
+                dbo.releases.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 6,
+                    "changed_by": "bill",
+                    "timestamp": 7,
+                    "sc_id": 3,
+                    "complete": False,
+                    "scheduled_by": "bill",
+                    "change_type": "update",
+                    "data_version": 1,
+                    "base_name": "b",
+                    "base_product": "b",
+                    "base_data": createBlob(dict(name="b", hashFunction="sha512", schema_version=1)),
+                    "base_data_version": 1,
+                },
+            )
+            conn.execute(
+                dbo.releases.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 7,
+                    "changed_by": "bill",
+                    "timestamp": 25,
+                    "sc_id": 3,
+                    "complete": True,
+                    "change_type": "update",
+                    "scheduled_by": "bill",
+                    "data_version": 2,
+                    "base_name": "b",
+                    "base_product": "b",
+                    "base_data": createBlob(dict(name="b", hashFunction="sha512", schema_version=1)),
+                    "base_data_version": 1,
+                },
+            )
+            conn.execute(dbo.releases.scheduled_changes.conditions.t.insert(), {"sc_id": 3, "when": 10000000, "data_version": 2})
+            conn.execute(dbo.releases.scheduled_changes.conditions.history.t.insert(), {"change_id": 5, "changed_by": "bill", "timestamp": 6, "sc_id": 3})
+            conn.execute(
+                dbo.releases.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 6, "changed_by": "bill", "timestamp": 7, "sc_id": 3, "when": 10000000, "data_version": 1},
+            )
+            conn.execute(
+                dbo.releases.scheduled_changes.conditions.history.t.insert(),
+                {"change_id": 7, "changed_by": "bill", "timestamp": 25, "sc_id": 3, "when": 10000000, "data_version": 2},
+            )
+            conn.execute(
+                dbo.releases.scheduled_changes.t.insert(),
+                {"sc_id": 4, "complete": False, "scheduled_by": "bill", "change_type": "delete", "data_version": 1, "base_name": "ab", "base_data_version": 1},
+            )
+            conn.execute(dbo.releases.scheduled_changes.history.t.insert(), {"change_id": 8, "changed_by": "bill", "timestamp": 25, "sc_id": 4})
+            conn.execute(
+                dbo.releases.scheduled_changes.history.t.insert(),
+                {
+                    "change_id": 9,
+                    "changed_by": "bill",
+                    "timestamp": 26,
+                    "sc_id": 4,
+                    "complete": False,
+                    "scheduled_by": "bill",
+                    "change_type": "delete",
+                    "data_version": 1,
+                    "base_name": "ab",
+                    "base_data_version": 1,
+                },
+            )
+            conn.execute(dbo.releases.scheduled_changes.conditions.t.insert(), {"sc_id": 4, "when": 230000000, "data_version": 1})
+            conn.execute(dbo.releases.scheduled_changes.signoffs.t.insert(), {"sc_id": 4, "username": "bill", "role": "releng"})
+            conn.execute(dbo.releases.scheduled_changes.signoffs.t.insert(), {"sc_id": 4, "username": "ben", "role": "releng"})
 
-        dbo.releases.t.insert().execute(
-            name="z", product="z", read_only=True, data=createBlob(dict(name="z", hashFunction="sha512", schema_version=1)), data_version=1
-        )
-        dbo.productRequiredSignoffs.t.insert().execute(product="z", channel="z", role="releng", signoffs_required=1, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="z", channel="z", role="relman", signoffs_required=1, data_version=1)
-        dbo.rules.t.insert().execute(rule_id=42, product="z", channel="z", mapping="z", priority=10, data_version=1, update_type="minor")
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "z",
+                    "product": "z",
+                    "read_only": True,
+                    "data": createBlob(dict(name="z", hashFunction="sha512", schema_version=1)),
+                    "data_version": 1,
+                },
+            )
+            conn.execute(dbo.productRequiredSignoffs.t.insert(), {"product": "z", "channel": "z", "role": "releng", "signoffs_required": 1, "data_version": 1})
+            conn.execute(dbo.productRequiredSignoffs.t.insert(), {"product": "z", "channel": "z", "role": "relman", "signoffs_required": 1, "data_version": 1})
+            conn.execute(
+                dbo.rules.t.insert(), {"rule_id": 42, "product": "z", "channel": "z", "mapping": "z", "priority": 10, "data_version": 1, "update_type": "minor"}
+            )
 
-        dbo.releases.t.insert().execute(
-            name="ZA", product="ZA", read_only=True, data=createBlob(dict(name="ZA", hashFunction="sha512", schema_version=1)), data_version=1
-        )
-        dbo.productRequiredSignoffs.t.insert().execute(product="ZA", channel="z", role="releng", signoffs_required=1, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="ZA", channel="w", role="relman", signoffs_required=1, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="ZA", channel="y", role="releng", signoffs_required=2, data_version=1)
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "ZA",
+                    "product": "ZA",
+                    "read_only": True,
+                    "data": createBlob(dict(name="ZA", hashFunction="sha512", schema_version=1)),
+                    "data_version": 1,
+                },
+            )
+            conn.execute(dbo.productRequiredSignoffs.t.insert(), {"product": "ZA", "channel": "z", "role": "releng", "signoffs_required": 1, "data_version": 1})
+            conn.execute(dbo.productRequiredSignoffs.t.insert(), {"product": "ZA", "channel": "w", "role": "relman", "signoffs_required": 1, "data_version": 1})
+            conn.execute(dbo.productRequiredSignoffs.t.insert(), {"product": "ZA", "channel": "y", "role": "releng", "signoffs_required": 2, "data_version": 1})
 
     def testGetScheduledChanges(self):
         ret = self._get("/scheduled_changes/releases")
@@ -1599,9 +1677,10 @@ class TestReleasesScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/releases", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertDictEqual(ret.get_json(), {"sc_id": 5, "signoffs": {}})
-        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 5).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 5)).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 5,
             "scheduled_by": "bill",
@@ -1615,10 +1694,11 @@ class TestReleasesScheduledChanges(ViewTest):
             "base_data_version": 1,
         }
         self.assertDictEqual(db_data, expected)
-        cond = dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 5).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 5)).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 5, "data_version": 1, "when": 2300000000}
-        self.assertDictEqual(dict(cond[0]), cond_expected)
+        self.assertDictEqual(dict(cond[0]._mapping), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeDeleteRelease(self):
@@ -1626,9 +1706,10 @@ class TestReleasesScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/releases", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertDictEqual(ret.get_json(), {"sc_id": 5, "signoffs": {}})
-        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 5).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 5)).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 5,
             "scheduled_by": "bill",
@@ -1642,10 +1723,11 @@ class TestReleasesScheduledChanges(ViewTest):
             "base_data_version": 1,
         }
         self.assertDictEqual(db_data, expected)
-        cond = dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 5).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 5)).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 5, "data_version": 1, "when": 4200000000}
-        self.assertDictEqual(dict(cond[0]), cond_expected)
+        self.assertDictEqual(dict(cond[0]._mapping), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeNewRelease(self):
@@ -1659,9 +1741,10 @@ class TestReleasesScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/releases", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertDictEqual(ret.get_json(), {"sc_id": 5, "signoffs": {}})
-        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 5).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 5)).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 5,
             "scheduled_by": "bill",
@@ -1675,10 +1758,11 @@ class TestReleasesScheduledChanges(ViewTest):
             "base_data_version": None,
         }
         self.assertDictEqual(db_data, expected)
-        cond = dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 5).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 5)).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 5, "data_version": 1, "when": 5200000000}
-        self.assertDictEqual(dict(cond[0]), cond_expected)
+        self.assertDictEqual(dict(cond[0]._mapping), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testAddScheduledChangeRejectsScId(self):
@@ -1700,10 +1784,11 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertStatusCode(resp, 200)
 
         sc_id = resp.json["sc_id"]
-        rows = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == sc_id).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            rows = conn.execute(dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == sc_id)).fetchall()
         self.assertTrue(rows)
 
-        sc = dict(rows[0])
+        sc = dict(rows[0]._mapping)
         self.assertFalse(sc["base_read_only"])
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
@@ -1733,9 +1818,10 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertDictEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {"bill": "releng"}})
 
-        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2)).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 2,
             "complete": False,
@@ -1749,23 +1835,26 @@ class TestReleasesScheduledChanges(ViewTest):
             "base_data_version": 1,
         }
         self.assertDictEqual(db_data, expected)
-        cond = dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 2).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 2)).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 2, "data_version": 2, "when": 78900000000}
-        self.assertDictEqual(dict(cond[0]), cond_expected)
+        self.assertDictEqual(dict(cond[0]._mapping), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeExistingReleaseResetSignOffs(self):
         data = {"name": "ab", "data_version": 1, "sc_data_version": 1, "when": 88900000000, "change_type": "delete"}
-        rows = dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 4).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            rows = conn.execute(dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 4)).fetchall()
         self.assertEqual(len(rows), 2)
         ret = self._post("/scheduled_changes/releases/4", data=data)
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertDictEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {"bill": "releng"}})
 
-        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 4).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 4)).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 4,
             "complete": False,
@@ -1779,7 +1868,8 @@ class TestReleasesScheduledChanges(ViewTest):
             "base_data_version": 1,
         }
         self.assertDictEqual(db_data, expected)
-        rows = dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 4).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            rows = conn.execute(dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 4)).fetchall()
         self.assertEqual(len(rows), 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
@@ -1792,15 +1882,17 @@ class TestReleasesScheduledChanges(ViewTest):
             "when": 78900000000,
             "change_type": "update",
         }
-        rows = dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            rows = conn.execute(dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 2)).fetchall()
         self.assertEqual(len(rows), 1)
         ret = self._post("/scheduled_changes/releases/2", data=data, username="julie")
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertDictEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {"julie": "releng"}})
 
-        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2)).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 2,
             "complete": False,
@@ -1814,7 +1906,8 @@ class TestReleasesScheduledChanges(ViewTest):
             "base_data_version": 1,
         }
         self.assertDictEqual(db_data, expected)
-        rows = dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 2).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            rows = conn.execute(dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 2)).fetchall()
         self.assertEqual(len(rows), 1)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
@@ -1855,9 +1948,10 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertDictEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {}})
 
-        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 1).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 1)).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 1,
             "complete": False,
@@ -1871,10 +1965,11 @@ class TestReleasesScheduledChanges(ViewTest):
             "base_data_version": None,
         }
         self.assertDictEqual(db_data, expected)
-        cond = dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 1).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 1)).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 1, "data_version": 2, "when": 4000000000}
-        self.assertDictEqual(dict(cond[0]), cond_expected)
+        self.assertDictEqual(dict(cond[0]._mapping), cond_expected)
 
     @mock.patch("time.time", mock.MagicMock(return_value=300))
     def testUpdateScheduledChangeNewReleaseChangeName(self):
@@ -1889,9 +1984,10 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertDictEqual(ret.get_json(), {"new_data_version": 2, "signoffs": {}})
 
-        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 1).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 1)).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 1,
             "complete": False,
@@ -1905,18 +2001,21 @@ class TestReleasesScheduledChanges(ViewTest):
             "base_data_version": None,
         }
         self.assertDictEqual(db_data, expected)
-        cond = dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 1).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            cond = conn.execute(dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 1)).fetchall()
         self.assertEqual(len(cond), 1)
         cond_expected = {"sc_id": 1, "data_version": 2, "when": 4000000000}
-        self.assertDictEqual(dict(cond[0]), cond_expected)
+        self.assertDictEqual(dict(cond[0]._mapping), cond_expected)
 
     def testDeleteScheduledChange(self):
         ret = self._delete("/scheduled_changes/releases/2", qs={"data_version": 1})
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.mimetype, "application/json")
-        got = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            got = conn.execute(dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2)).fetchall()
         self.assertEqual(got, [])
-        cond_got = dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 2).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            cond_got = conn.execute(dbo.releases.scheduled_changes.conditions.t.select().where(dbo.releases.scheduled_changes.conditions.sc_id == 2)).fetchall()
         self.assertEqual(cond_got, [])
 
     def testEnactScheduledChangeExistingRelease(self):
@@ -1924,9 +2023,10 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.mimetype, "application/json")
 
-        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 2)).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 2,
             "complete": True,
@@ -1941,7 +2041,8 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         self.assertDictEqual(db_data, expected)
 
-        base_row = dict(dbo.releases.t.select().where(dbo.releases.name == "a").execute().fetchall()[0])
+        with dbo.engine.connect() as conn:
+            base_row = dict(conn.execute(dbo.releases.t.select().where(dbo.releases.name == "a")).fetchall()[0]._mapping)
         base_expected = {
             "name": "a",
             "product": "a",
@@ -1952,30 +2053,36 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertDictEqual(base_row, base_expected)
 
     def testEnactScheduledChangeUpdateReadWrite(self):
-        row_before_enact_change = dbo.releases.t.select().where(dbo.releases.name == "z").execute().fetchall()[0]
-        release_before_enact_change = dict(row_before_enact_change)
+        with dbo.engine.connect() as conn:
+            row_before_enact_change = conn.execute(dbo.releases.t.select().where(dbo.releases.name == "z")).fetchall()[0]
+        release_before_enact_change = dict(row_before_enact_change._mapping)
 
-        dbo.releases.scheduled_changes.t.insert().execute(
-            sc_id=42,
-            scheduled_by="bill",
-            complete=False,
-            change_type="update",
-            base_read_only=False,
-            base_data_version=1,
-            base_name="z",
-            base_product="z",
-            base_data=createBlob(dict(name="z", hashFunction="sha512", schema_version=1)),
-            data_version=1,
-        )
-        dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=42, when=230000000, data_version=1)
-        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=42, username="bill", role="releng")
-        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=42, username="ben", role="relman")
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 42,
+                    "scheduled_by": "bill",
+                    "complete": False,
+                    "change_type": "update",
+                    "base_read_only": False,
+                    "base_data_version": 1,
+                    "base_name": "z",
+                    "base_product": "z",
+                    "base_data": createBlob(dict(name="z", hashFunction="sha512", schema_version=1)),
+                    "data_version": 1,
+                },
+            )
+            conn.execute(dbo.releases.scheduled_changes.conditions.t.insert(), {"sc_id": 42, "when": 230000000, "data_version": 1})
+            conn.execute(dbo.releases.scheduled_changes.signoffs.t.insert(), {"sc_id": 42, "username": "bill", "role": "releng"})
+            conn.execute(dbo.releases.scheduled_changes.signoffs.t.insert(), {"sc_id": 42, "username": "ben", "role": "relman"})
 
         resp = self._post("/scheduled_changes/releases/42/enact")
         self.assertStatusCode(resp, 200)
 
-        row = dbo.releases.t.select().where(dbo.releases.name == "z").execute().fetchall()[0]
-        release = dict(row)
+        with dbo.engine.connect() as conn:
+            row = conn.execute(dbo.releases.t.select().where(dbo.releases.name == "z")).fetchall()[0]
+        release = dict(row._mapping)
 
         self.assertIsNotNone(release["product"])
         self.assertEqual(release["product"], release_before_enact_change["product"])
@@ -1999,47 +2106,57 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEqual(rs["required_signoffs"]["relman"], 1)
 
     def testEnactScheduledChangesUpdateReadWrite_RequiredSignoffsForProduct(self):
-        dbo.releases.scheduled_changes.t.insert().execute(
-            sc_id=4200024,
-            scheduled_by="bill",
-            complete=False,
-            change_type="update",
-            base_read_only=False,
-            base_data_version=1,
-            base_name="ZA",
-            base_product="ZA",
-            base_data=createBlob(dict(name="ZA", hashFunction="sha512", schema_version=1)),
-            data_version=1,
-        )
-        dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=4200024, when=230000000, data_version=1)
-        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4200024, username="bill", role="releng")
-        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4200024, username="julie", role="releng")
-        dbo.releases.scheduled_changes.signoffs.t.insert().execute(sc_id=4200024, username="mary", role="relman")
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 4200024,
+                    "scheduled_by": "bill",
+                    "complete": False,
+                    "change_type": "update",
+                    "base_read_only": False,
+                    "base_data_version": 1,
+                    "base_name": "ZA",
+                    "base_product": "ZA",
+                    "base_data": createBlob(dict(name="ZA", hashFunction="sha512", schema_version=1)),
+                    "data_version": 1,
+                },
+            )
+            conn.execute(dbo.releases.scheduled_changes.conditions.t.insert(), {"sc_id": 4200024, "when": 230000000, "data_version": 1})
+            conn.execute(dbo.releases.scheduled_changes.signoffs.t.insert(), {"sc_id": 4200024, "username": "bill", "role": "releng"})
+            conn.execute(dbo.releases.scheduled_changes.signoffs.t.insert(), {"sc_id": 4200024, "username": "julie", "role": "releng"})
+            conn.execute(dbo.releases.scheduled_changes.signoffs.t.insert(), {"sc_id": 4200024, "username": "mary", "role": "relman"})
 
         resp = self._post("/scheduled_changes/releases/4200024/enact")
         self.assertStatusCode(resp, 200)
-        row = dbo.releases.t.select().where(dbo.releases.name == "ZA").execute().fetchall()[0]
-        release = dict(row)
+        with dbo.engine.connect() as conn:
+            row = conn.execute(dbo.releases.t.select().where(dbo.releases.name == "ZA")).fetchall()[0]
+        release = dict(row._mapping)
         self.assertFalse(release["read_only"])
 
     def testEnactScheduledChangesUpdateReadWrite_RequiredSignoffsForProduct_NoSignoffsGiven(self):
-        dbo.releases.scheduled_changes.t.insert().execute(
-            sc_id=4200024,
-            scheduled_by="bill",
-            complete=False,
-            change_type="update",
-            base_read_only=False,
-            base_data_version=1,
-            base_name="ZA",
-            base_data=createBlob(dict(name="ZA", hashFunction="sha512", schema_version=1)),
-            data_version=1,
-        )
-        dbo.releases.scheduled_changes.conditions.t.insert().execute(sc_id=4200024, when=230000000, data_version=1)
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.scheduled_changes.t.insert(),
+                {
+                    "sc_id": 4200024,
+                    "scheduled_by": "bill",
+                    "complete": False,
+                    "change_type": "update",
+                    "base_read_only": False,
+                    "base_data_version": 1,
+                    "base_name": "ZA",
+                    "base_data": createBlob(dict(name="ZA", hashFunction="sha512", schema_version=1)),
+                    "data_version": 1,
+                },
+            )
+            conn.execute(dbo.releases.scheduled_changes.conditions.t.insert(), {"sc_id": 4200024, "when": 230000000, "data_version": 1})
 
         resp = self._post("/scheduled_changes/releases/4200024/enact")
         self.assertStatusCode(resp, 400)
-        row = dbo.releases.t.select().where(dbo.releases.name == "ZA").execute().fetchall()[0]
-        release = dict(row)
+        with dbo.engine.connect() as conn:
+            row = conn.execute(dbo.releases.t.select().where(dbo.releases.name == "ZA")).fetchall()[0]
+        release = dict(row._mapping)
         self.assertTrue(release["read_only"])
 
     def testEnactScheduledChangeNewRelease(self):
@@ -2047,9 +2164,10 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.mimetype, "application/json")
 
-        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 1).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 1)).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 1,
             "complete": True,
@@ -2064,7 +2182,8 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         self.assertDictEqual(db_data, expected)
 
-        base_row = dict(dbo.releases.t.select().where(dbo.releases.name == "m").execute().fetchall()[0])
+        with dbo.engine.connect() as conn:
+            base_row = dict(conn.execute(dbo.releases.t.select().where(dbo.releases.name == "m")).fetchall()[0]._mapping)
         base_expected = {
             "name": "m",
             "product": "m",
@@ -2079,9 +2198,10 @@ class TestReleasesScheduledChanges(ViewTest):
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.mimetype, "application/json")
 
-        r = dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 4).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.scheduled_changes.t.select().where(dbo.releases.scheduled_changes.sc_id == 4)).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         expected = {
             "sc_id": 4,
             "complete": True,
@@ -2096,7 +2216,8 @@ class TestReleasesScheduledChanges(ViewTest):
         }
         self.assertDictEqual(db_data, expected)
 
-        base_row = dbo.releases.t.select().where(dbo.releases.name == "ab").execute().fetchall()
+        with dbo.engine.connect() as conn:
+            base_row = conn.execute(dbo.releases.t.select().where(dbo.releases.name == "ab")).fetchall()
         self.assertEqual(len(base_row), 0)
 
     def testGetScheduledChangeHistoryRevisions(self):
@@ -2147,14 +2268,18 @@ class TestReleasesScheduledChanges(ViewTest):
         ret = self._post("/scheduled_changes/releases/1/signoffs", data=dict(role="qa"), username="bill")
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.mimetype, "application/json")
-        r = dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 1)).fetchall()
         self.assertEqual(len(r), 1)
-        db_data = dict(r[0])
+        db_data = dict(r[0]._mapping)
         self.assertDictEqual(db_data, {"sc_id": 1, "username": "bill", "role": "qa"})
-        r = dbo.releases.scheduled_changes.signoffs.history.t.select().where(dbo.releases.scheduled_changes.signoffs.history.sc_id == 1).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(
+                dbo.releases.scheduled_changes.signoffs.history.t.select().where(dbo.releases.scheduled_changes.signoffs.history.sc_id == 1)
+            ).fetchall()
         self.assertEqual(len(r), 2)
-        self.assertDictEqual(dict(r[0]), {"change_id": 3, "changed_by": "bill", "timestamp": 99999, "sc_id": 1, "username": "bill", "role": None})
-        self.assertDictEqual(dict(r[1]), {"change_id": 4, "changed_by": "bill", "timestamp": 100000, "sc_id": 1, "username": "bill", "role": "qa"})
+        self.assertDictEqual(dict(r[0]._mapping), {"change_id": 3, "changed_by": "bill", "timestamp": 99999, "sc_id": 1, "username": "bill", "role": None})
+        self.assertDictEqual(dict(r[1]._mapping), {"change_id": 4, "changed_by": "bill", "timestamp": 100000, "sc_id": 1, "username": "bill", "role": "qa"})
 
     def testSignoffWithoutPermission(self):
         ret = self._post("/scheduled_changes/releases/1/signoffs", data=dict(role="relman"), username="bill")
@@ -2170,7 +2295,8 @@ class TestReleasesScheduledChanges(ViewTest):
         ret = self._delete("/scheduled_changes/releases/2/signoffs", username="bill")
         self.assertEqual(ret.status_code, 200, ret.get_data())
         self.assertEqual(ret.mimetype, "application/json")
-        r = dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 1).execute().fetchall()
+        with dbo.engine.connect() as conn:
+            r = conn.execute(dbo.releases.scheduled_changes.signoffs.t.select().where(dbo.releases.scheduled_changes.signoffs.sc_id == 1)).fetchall()
         self.assertEqual(len(r), 0)
 
     def testReleasesScheduledChangeViewDiff(self):
@@ -2197,14 +2323,21 @@ class TestSingleColumn_JSON(ViewTest):
 class TestReadOnlyView(ViewTest):
     def setUp(self):
         super().setUp()
-        dbo.releases.t.insert().execute(name="z", product="z", data=createBlob(dict(name="z", hashFunction="sha512", schema_version=1)), data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="z", channel="z", role="releng", signoffs_required=1, data_version=1)
-        dbo.productRequiredSignoffs.t.insert().execute(product="z", channel="z", role="relman", signoffs_required=1, data_version=1)
-        dbo.rules.t.insert().execute(rule_id=42, product="z", channel="z", mapping="z", priority=10, data_version=1, update_type="minor")
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.t.insert(),
+                {"name": "z", "product": "z", "data": createBlob(dict(name="z", hashFunction="sha512", schema_version=1)), "data_version": 1},
+            )
+            conn.execute(dbo.productRequiredSignoffs.t.insert(), {"product": "z", "channel": "z", "role": "releng", "signoffs_required": 1, "data_version": 1})
+            conn.execute(dbo.productRequiredSignoffs.t.insert(), {"product": "z", "channel": "z", "role": "relman", "signoffs_required": 1, "data_version": 1})
+            conn.execute(
+                dbo.rules.t.insert(), {"rule_id": 42, "product": "z", "channel": "z", "mapping": "z", "priority": 10, "data_version": 1, "update_type": "minor"}
+            )
 
     def testReadOnlyGet(self):
         ret = self._get("/releases/b/read_only")
-        is_read_only = dbo.releases.t.select(dbo.releases.name == "b").execute().first()["read_only"]
+        with dbo.engine.connect() as conn:
+            is_read_only = conn.execute(dbo.releases.t.select().where(dbo.releases.name == "b")).first()._mapping["read_only"]
         self.assertEqual(ret.get_json()["read_only"], is_read_only)
 
     def testReadOnlySetTrueAdmin(self):
@@ -2222,7 +2355,8 @@ class TestReadOnlyView(ViewTest):
         self.assertEqual(read_only, True)
 
     def testReadOnlySetFalseAdmin(self):
-        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "b").execute()
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.releases.t.update().values(read_only=True, data_version=2).where(dbo.releases.name == "b"))
         data = dict(name="b", read_only="", product="b", data_version=2)
         ret = self._put("/releases/b/read_only", username="bill", data=data)
         self.assertStatusCode(ret, 201)
@@ -2230,7 +2364,8 @@ class TestReadOnlyView(ViewTest):
         self.assertEqual(read_only, False)
 
     def testReadOnlyUnsetWithoutPermissionForProduct(self):
-        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "a").execute()
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.releases.t.update().values(read_only=True, data_version=2).where(dbo.releases.name == "a"))
         data = dict(name="b", read_only="", product="b", data_version=2)
         ret = self._put("/releases/b/read_only", username="me", data=data)
         self.assertStatusCode(ret, 403)
@@ -2273,7 +2408,8 @@ class TestReadOnlyView(ViewTest):
         self.assertTrue(read_only)
 
     def testRequireSignoffsToMakeReadWrite(self):
-        dbo.releases.t.update(values=dict(read_only=True, data_version=2)).where(dbo.releases.name == "z").execute()
+        with dbo.engine.begin() as conn:
+            conn.execute(dbo.releases.t.update().values(read_only=True, data_version=2).where(dbo.releases.name == "z"))
         data = dict(name="z", read_only=False, product="z", data_version=2)
         ret = self._put("/releases/z/read_only", username="bill", data=data)
         self.assertStatusCode(ret, 400)
@@ -2298,9 +2434,20 @@ class TestRuleIdsReturned(ViewTest):
         self.assertFalse(rule_id in not_mapped_rel["rule_ids"])
         self.assertFalse(rule_id in not_mapped_rel["rule_info"].keys())
 
-        dbo.rules.t.insert().execute(
-            id=rule_id, priority=100, version="3.5", buildTarget="d", backgroundRate=100, mapping=rel_name, update_type="minor", data_version=1
-        )
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.rules.t.insert(),
+                {
+                    "id": rule_id,
+                    "priority": 100,
+                    "version": "3.5",
+                    "buildTarget": "d",
+                    "backgroundRate": 100,
+                    "mapping": rel_name,
+                    "update_type": "minor",
+                    "data_version": 1,
+                },
+            )
 
         releases = self._get("/releases")
         releases_data = json.loads(releases.data)

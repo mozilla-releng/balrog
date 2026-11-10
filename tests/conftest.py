@@ -52,30 +52,34 @@ def insert_release():
     def do_insert_release(release_data, product, history=True):
         name = release_data["name"]
         base = deep_dict(4, {})
-        for key in release_data:
-            if key != "platforms":
-                base[key] = release_data[key]
-                continue
+        with dbo.engine.begin() as conn:
+            for key in release_data:
+                if key != "platforms":
+                    base[key] = release_data[key]
+                    continue
 
-            for pname, pdata in release_data[key].items():
-                for pkey in pdata:
-                    if pkey != "locales":
-                        base[key][pname][pkey] = pdata[pkey]
-                        continue
+                for pname, pdata in release_data[key].items():
+                    for pkey in pdata:
+                        if pkey != "locales":
+                            base[key][pname][pkey] = pdata[pkey]
+                            continue
 
-                    for lname, ldata in pdata[pkey].items():
-                        path = f".platforms.{pname}.locales.{lname}"
-                        dbo.release_assets.t.insert().execute(name=name, path=path, data=ldata, data_version=1)
-                        if history:
-                            dbo.release_assets.history.bucket.blobs[f"{name}-{path}/None-1-bob.json"] = ""
-                            dbo.release_assets.history.bucket.blobs[f"{name}-{path}/1-2-bob.json"] = ldata
+                        for lname, ldata in pdata[pkey].items():
+                            path = f".platforms.{pname}.locales.{lname}"
+                            conn.execute(dbo.release_assets.t.insert(), {"name": name, "path": path, "data": ldata, "data_version": 1})
+                            if history:
+                                dbo.release_assets.history.bucket.blobs[f"{name}-{path}/None-1-bob.json"] = ""
+                                dbo.release_assets.history.bucket.blobs[f"{name}-{path}/1-2-bob.json"] = ldata
 
-        dbo.releases_json.t.insert().execute(
-            name=name,
-            product=product,
-            data=base,
-            data_version=1,
-        )
+            conn.execute(
+                dbo.releases_json.t.insert(),
+                {
+                    "name": name,
+                    "product": product,
+                    "data": base,
+                    "data_version": 1,
+                },
+            )
         if history:
             dbo.releases_json.history.bucket.blobs[f"{name}/None-1-bob.json"] = ""
             dbo.releases_json.history.bucket.blobs[f"{name}/1-2-bob.json"] = release_data
@@ -87,53 +91,73 @@ def insert_release():
 def insert_release_sc():
     def do_insert_release_sc(release_data, product, change_type="update", signoff_user=None, signoff_role=None):
         base = infinite_defaultdict()
-        for key in release_data:
-            if key != "platforms":
-                base[key] = release_data[key]
-                continue
+        with dbo.engine.begin() as conn:
+            for key in release_data:
+                if key != "platforms":
+                    base[key] = release_data[key]
+                    continue
 
-            for pname, pdata in release_data[key].items():
-                for pkey in pdata:
-                    if pkey != "locales":
-                        base[key][pname][pkey] = pdata[pkey]
-                        continue
-
-                    for lname, ldata in pdata[pkey].items():
-                        if lname != "en-US":
+                for pname, pdata in release_data[key].items():
+                    for pkey in pdata:
+                        if pkey != "locales":
+                            base[key][pname][pkey] = pdata[pkey]
                             continue
 
-                        path = f".platforms.{pname}.locales.{lname}"
-                        data = {}
-                        if change_type != "delete":
-                            data["base_data"] = deepcopy(ldata)
-                            data["base_data"]["buildID"] = "123456789"
-                        ret = dbo.release_assets.scheduled_changes.t.insert().execute(
-                            base_name=release_data["name"],
-                            base_path=path,
-                            base_data_version=1,
-                            data_version=1,
-                            scheduled_by="bob",
-                            change_type=change_type,
-                            **data,
-                        )
-                        dbo.release_assets.scheduled_changes.conditions.t.insert().execute(
-                            sc_id=ret.inserted_primary_key[0], when=2222222222000, data_version=1
-                        )
-                        if signoff_user and signoff_role:
-                            dbo.release_assets.scheduled_changes.signoffs.t.insert().execute(
-                                sc_id=ret.inserted_primary_key[0], username=signoff_user, role=signoff_role
-                            )
+                        for lname, ldata in pdata[pkey].items():
+                            if lname != "en-US":
+                                continue
 
-        data = {}
-        if change_type != "delete":
-            data["base_data"] = deepcopy(base)
-            data["base_data"]["hashFunction"] = "sha1024"
-        ret = dbo.releases_json.scheduled_changes.t.insert().execute(
-            base_name=release_data["name"], base_product=product, base_data_version=1, data_version=1, scheduled_by="bob", change_type=change_type, **data
-        )
-        dbo.releases_json.scheduled_changes.conditions.t.insert().execute(sc_id=ret.inserted_primary_key[0], when=2222222222000, data_version=1)
-        if signoff_user and signoff_role:
-            dbo.releases_json.scheduled_changes.signoffs.t.insert().execute(sc_id=ret.inserted_primary_key[0], username=signoff_user, role=signoff_role)
+                            path = f".platforms.{pname}.locales.{lname}"
+                            data = {}
+                            if change_type != "delete":
+                                data["base_data"] = deepcopy(ldata)
+                                data["base_data"]["buildID"] = "123456789"
+                            ret = conn.execute(
+                                dbo.release_assets.scheduled_changes.t.insert(),
+                                {
+                                    "base_name": release_data["name"],
+                                    "base_path": path,
+                                    "base_data_version": 1,
+                                    "data_version": 1,
+                                    "scheduled_by": "bob",
+                                    "change_type": change_type,
+                                    **data,
+                                },
+                            )
+                            conn.execute(
+                                dbo.release_assets.scheduled_changes.conditions.t.insert(),
+                                {"sc_id": ret.inserted_primary_key[0], "when": 2222222222000, "data_version": 1},
+                            )
+                            if signoff_user and signoff_role:
+                                conn.execute(
+                                    dbo.release_assets.scheduled_changes.signoffs.t.insert(),
+                                    {"sc_id": ret.inserted_primary_key[0], "username": signoff_user, "role": signoff_role},
+                                )
+
+            data = {}
+            if change_type != "delete":
+                data["base_data"] = deepcopy(base)
+                data["base_data"]["hashFunction"] = "sha1024"
+            ret = conn.execute(
+                dbo.releases_json.scheduled_changes.t.insert(),
+                {
+                    "base_name": release_data["name"],
+                    "base_product": product,
+                    "base_data_version": 1,
+                    "data_version": 1,
+                    "scheduled_by": "bob",
+                    "change_type": change_type,
+                    **data,
+                },
+            )
+            conn.execute(
+                dbo.releases_json.scheduled_changes.conditions.t.insert(), {"sc_id": ret.inserted_primary_key[0], "when": 2222222222000, "data_version": 1}
+            )
+            if signoff_user and signoff_role:
+                conn.execute(
+                    dbo.releases_json.scheduled_changes.signoffs.t.insert(),
+                    {"sc_id": ret.inserted_primary_key[0], "username": signoff_user, "role": signoff_role},
+                )
 
     return do_insert_release_sc
 

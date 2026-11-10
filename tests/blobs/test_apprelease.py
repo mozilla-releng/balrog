@@ -693,26 +693,43 @@ class TestSchema2Blob(unittest.TestCase):
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist(self.allowlistedDomains)
-        dbo.releases.t.insert().execute(
-            name="j1",
-            product="j",
-            version="39.0",
-            data_version=1,
-            data=createBlob("""
-{
-    "name": "j1",
-    "schema_version": 2,
-    "platforms": {
-        "p": {
-            "buildID": "28",
-            "locales": {
-                "l": {}
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "j1",
+                    "product": "j",
+                    "version": "39.0",
+                    "data_version": 1,
+                    "data": createBlob("""
+
+    {
+
+        "name": "j1",
+
+        "schema_version": 2,
+
+        "platforms": {
+
+            "p": {
+
+                "buildID": "28",
+
+                "locales": {
+
+                    "l": {}
+
+                }
+
             }
+
         }
+
     }
-}
-"""),
-        )
+
+    """),
+                },
+            )
         self.blobJ2 = ReleaseBlobV2()
         self.blobJ2.loadJSON("""
 {
@@ -1044,27 +1061,45 @@ class TestSchema2BlobNightlyStyle(unittest.TestCase):
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist(self.allowlistedDomains)
-        dbo.releases.t.insert().execute(
-            name="j1",
-            product="j",
-            version="0.5",
-            data_version=1,
-            data=createBlob("""
-{
-    "name": "j1",
-    "schema_version": 2,
-    "platforms": {
-        "p": {
-            "locales": {
-                "l": {
-                    "buildID": "1"
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "j1",
+                    "product": "j",
+                    "version": "0.5",
+                    "data_version": 1,
+                    "data": createBlob("""
+
+    {
+
+        "name": "j1",
+
+        "schema_version": 2,
+
+        "platforms": {
+
+            "p": {
+
+                "locales": {
+
+                    "l": {
+
+                        "buildID": "1"
+
+                    }
+
                 }
+
             }
+
         }
+
     }
-}
-"""),
-        )
+
+    """),
+                },
+            )
         self.blobJ2 = ReleaseBlobV2()
         self.blobJ2.loadJSON("""
 {
@@ -1185,46 +1220,79 @@ class TestSchema3Blob(unittest.TestCase):
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist(self.allowlistedDomains)
-        dbo.releases.t.insert().execute(
-            name="f1",
-            product="f",
-            version="22.0",
-            data_version=1,
-            data=createBlob("""
-{
-    "name": "f1",
-    "schema_version": 3,
-    "platforms": {
-        "p": {
-            "buildID": "5",
-            "locales": {
-                "l": {}
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "f1",
+                    "product": "f",
+                    "version": "22.0",
+                    "data_version": 1,
+                    "data": createBlob("""
+
+    {
+
+        "name": "f1",
+
+        "schema_version": 3,
+
+        "platforms": {
+
+            "p": {
+
+                "buildID": "5",
+
+                "locales": {
+
+                    "l": {}
+
+                }
+
             }
+
         }
+
     }
-}
-"""),
-        )
-        dbo.releases.t.insert().execute(
-            name="f2",
-            product="f",
-            version="23.0",
-            data_version=1,
-            data=createBlob("""
-{
-    "name": "f2",
-    "schema_version": 3,
-    "platforms": {
-        "p": {
-            "buildID": "6",
-            "locales": {
-                "l": {}
+
+    """),
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "f2",
+                    "product": "f",
+                    "version": "23.0",
+                    "data_version": 1,
+                    "data": createBlob("""
+
+    {
+
+        "name": "f2",
+
+        "schema_version": 3,
+
+        "platforms": {
+
+            "p": {
+
+                "buildID": "6",
+
+                "locales": {
+
+                    "l": {}
+
+                }
+
             }
+
         }
+
     }
-}
-"""),
-        )
+
+    """),
+                },
+            )
         self.blobF3 = ReleaseBlobV3()
         self.blobF3.loadJSON("""
 {
@@ -1283,26 +1351,43 @@ class TestSchema3Blob(unittest.TestCase):
     }
 }
 """)
-        dbo.releases.t.insert().execute(
-            name="g1",
-            product="g",
-            version="23.0",
-            data_version=1,
-            data=createBlob("""
-{
-    "name": "g1",
-    "schema_version": 3,
-    "platforms": {
-        "p": {
-            "buildID": "8",
-            "locales": {
-                "l": {}
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "g1",
+                    "product": "g",
+                    "version": "23.0",
+                    "data_version": 1,
+                    "data": createBlob("""
+
+    {
+
+        "name": "g1",
+
+        "schema_version": 3,
+
+        "platforms": {
+
+            "p": {
+
+                "buildID": "8",
+
+                "locales": {
+
+                    "l": {}
+
+                }
+
             }
+
         }
+
     }
-}
-"""),
-        )
+
+    """),
+                },
+            )
         self.blobG2 = ReleaseBlobV3()
         self.blobG2.loadJSON("""
 {
@@ -1711,46 +1796,79 @@ class TestSchema4Blob(unittest.TestCase):
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
         dbo.setDomainAllowlist(self.allowlistedDomains)
-        dbo.releases.t.insert().execute(
-            name="h0",
-            product="h",
-            version="29.0",
-            data_version=1,
-            data=createBlob("""
-{
-    "name": "h0",
-    "schema_version": 4,
-    "platforms": {
-        "p": {
-            "buildID": "5",
-            "locales": {
-                "l": {}
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "h0",
+                    "product": "h",
+                    "version": "29.0",
+                    "data_version": 1,
+                    "data": createBlob("""
+
+    {
+
+        "name": "h0",
+
+        "schema_version": 4,
+
+        "platforms": {
+
+            "p": {
+
+                "buildID": "5",
+
+                "locales": {
+
+                    "l": {}
+
+                }
+
             }
+
         }
+
     }
-}
-"""),
-        )
-        dbo.releases.t.insert().execute(
-            name="h1",
-            product="h",
-            version="30.0",
-            data_version=1,
-            data=createBlob("""
-{
-    "name": "h1",
-    "schema_version": 4,
-    "platforms": {
-        "p": {
-            "buildID": "10",
-            "locales": {
-                "l": {}
+
+    """),
+                },
+            )
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "h1",
+                    "product": "h",
+                    "version": "30.0",
+                    "data_version": 1,
+                    "data": createBlob("""
+
+    {
+
+        "name": "h1",
+
+        "schema_version": 4,
+
+        "platforms": {
+
+            "p": {
+
+                "buildID": "10",
+
+                "locales": {
+
+                    "l": {}
+
+                }
+
             }
+
         }
+
     }
-}
-"""),
-        )
+
+    """),
+                },
+            )
         self.blobH2 = ReleaseBlobV4()
         self.blobH2.loadJSON("""
 {
@@ -2428,26 +2546,43 @@ class TestSchema5Blob(unittest.TestCase):
         self.allowlistedDomains = {"a.com": ("h",)}
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
-        dbo.releases.t.insert().execute(
-            name="h1",
-            product="h",
-            version="30.0",
-            data_version=1,
-            data=createBlob("""
-{
-    "name": "h1",
-    "schema_version": 5,
-    "platforms": {
-        "p": {
-            "buildID": "10",
-            "locales": {
-                "l": {}
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "h1",
+                    "product": "h",
+                    "version": "30.0",
+                    "data_version": 1,
+                    "data": createBlob("""
+
+    {
+
+        "name": "h1",
+
+        "schema_version": 5,
+
+        "platforms": {
+
+            "p": {
+
+                "buildID": "10",
+
+                "locales": {
+
+                    "l": {}
+
+                }
+
             }
+
         }
+
     }
-}
-"""),
-        )
+
+    """),
+                },
+            )
         self.blobH2 = ReleaseBlobV5()
         self.blobH2.loadJSON("""
 {
@@ -2721,25 +2856,42 @@ class TestSchema6Blob(unittest.TestCase):
         self.allowlistedDomains = {"a.com": ("h",)}
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
-        dbo.releases.t.insert().execute(
-            name="h1",
-            product="h",
-            data_version=1,
-            data=createBlob("""
-{
-    "name": "h1",
-    "schema_version": 6,
-    "platforms": {
-        "p": {
-            "buildID": "10",
-            "locales": {
-                "l": {}
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "h1",
+                    "product": "h",
+                    "data_version": 1,
+                    "data": createBlob("""
+
+    {
+
+        "name": "h1",
+
+        "schema_version": 6,
+
+        "platforms": {
+
+            "p": {
+
+                "buildID": "10",
+
+                "locales": {
+
+                    "l": {}
+
+                }
+
             }
+
         }
+
     }
-}
-"""),
-        )
+
+    """),
+                },
+            )
         self.blobH2 = ReleaseBlobV6()
         self.blobH2.loadJSON("""
 {
@@ -3001,25 +3153,42 @@ class TestSchema8Blob(unittest.TestCase):
         self.allowlistedDomains = {"a.com": ("h",)}
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
-        dbo.releases.t.insert().execute(
-            name="h1",
-            product="h",
-            data_version=1,
-            data=createBlob("""
-{
-    "name": "h1",
-    "schema_version": 8,
-    "platforms": {
-        "p": {
-            "buildID": "10",
-            "locales": {
-                "l": {}
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "h1",
+                    "product": "h",
+                    "data_version": 1,
+                    "data": createBlob("""
+
+    {
+
+        "name": "h1",
+
+        "schema_version": 8,
+
+        "platforms": {
+
+            "p": {
+
+                "buildID": "10",
+
+                "locales": {
+
+                    "l": {}
+
+                }
+
             }
+
         }
+
     }
-}
-"""),
-        )
+
+    """),
+                },
+            )
         self.blobH2 = ReleaseBlobV8()
         self.blobH2.loadJSON(
             """
@@ -3150,28 +3319,48 @@ class TestSchema9Blob(unittest.TestCase):
         self.allowlistedDomains = {"a.com": ("h",)}
         dbo.setDb("sqlite:///:memory:", releases_history_buckets={"*": "fake"}, releases_history_class=FakeGCSHistory)
         self.metadata.create_all(dbo.engine)
-        dbo.releases.t.insert().execute(
-            name="h1",
-            product="h",
-            data_version=1,
-            data=createBlob("""
-{
-    "name": "h1",
-    "schema_version": 9,
-    "updateLine": {},
-    "platforms": {
-        "p": {
-            "buildID": "10",
-            "locales": {
-                "de": {},
-                "en-US": {},
-                "l": {}
+        with dbo.engine.begin() as conn:
+            conn.execute(
+                dbo.releases.t.insert(),
+                {
+                    "name": "h1",
+                    "product": "h",
+                    "data_version": 1,
+                    "data": createBlob("""
+
+    {
+
+        "name": "h1",
+
+        "schema_version": 9,
+
+        "updateLine": {},
+
+        "platforms": {
+
+            "p": {
+
+                "buildID": "10",
+
+                "locales": {
+
+                    "de": {},
+
+                    "en-US": {},
+
+                    "l": {}
+
+                }
+
             }
+
         }
+
     }
-}
-"""),
-        )
+
+    """),
+                },
+            )
         self.blobH2 = ReleaseBlobV9()
         self.blobH2.loadJSON("""
 {

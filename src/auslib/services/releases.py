@@ -269,7 +269,7 @@ def get_releases(trans, args=None):
     )
 
     j = join(dbo.releases_json.t, dbo.rules.t, ((dbo.releases_json.name == dbo.rules.mapping) | (dbo.releases_json.name == dbo.rules.fallbackMapping)))
-    rule_mappings = trans.execute(select([dbo.releases_json.name, dbo.rules.rule_id, dbo.rules.product, dbo.rules.channel]).select_from(j)).fetchall()
+    rule_mappings = trans.execute(select(dbo.releases_json.name, dbo.rules.rule_id, dbo.rules.product, dbo.rules.channel).select_from(j)).fetchall()
 
     rule_mappings_by_name = defaultdict(list)
     for ref in rule_mappings:
@@ -773,7 +773,7 @@ def delete_release(name, changed_by, trans):
         product = row["product"]
         old_data_version = row["data_version"]
 
-        stmt = select([dbo.rules.rule_id, dbo.rules.product, dbo.rules.channel]).where(
+        stmt = select(dbo.rules.rule_id, dbo.rules.product, dbo.rules.channel).where(
             ((dbo.releases_json.name == dbo.rules.mapping) | (dbo.releases_json.name == dbo.rules.fallbackMapping)) & (dbo.releases_json.name == name)
         )
         if trans.execute(stmt).fetchall():
@@ -806,11 +806,11 @@ def set_read_only(name, read_only, old_data_version, changed_by, trans):
     use_sc = False
     if read_only is False:
         live_on_product_channels = []
-        stmt = select([dbo.rules.rule_id, dbo.rules.product, dbo.rules.channel]).where(
+        stmt = select(dbo.rules.rule_id, dbo.rules.product, dbo.rules.channel).where(
             ((dbo.releases_json.name == dbo.rules.mapping) | (dbo.releases_json.name == dbo.rules.fallbackMapping)) & (dbo.releases_json.name == name)
         )
         for row in trans.execute(stmt).fetchall():
-            live_on_product_channels.append(dict(row))
+            live_on_product_channels.append(dict(row._mapping))
 
         if live_on_product_channels:
             log.debug(f"{name} is live on {live_on_product_channels}")

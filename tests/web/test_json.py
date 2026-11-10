@@ -45,11 +45,14 @@ def guardian_db():
     dbo.setDb("sqlite:///:memory:")
     dbo.create()
     dbo.metadata.create_all(dbo.engine)
-    dbo.releases.t.insert().execute(
-        name="Guardian-Evil-1.0.0.0",
-        product="Guardian",
-        data_version=1,
-        data=createBlob("""
+    with dbo.engine.begin() as conn:
+        conn.execute(
+            dbo.releases.t.insert(),
+            {
+                "name": "Guardian-Evil-1.0.0.0",
+                "product": "Guardian",
+                "data_version": 1,
+                "data": createBlob("""
 {
     "name": "Guardian-Evil-1.0.0.0",
     "product": "Guardian",
@@ -65,32 +68,41 @@ def guardian_db():
     }
 }
 """),
-    )
-    dbo.rules.t.insert().execute(
-        priority=150,
-        backgroundRate=100,
-        mapping="Guardian-Evil-1.0.0.0",
-        update_type="minor",
-        product="Guardian",
-        channel="release",
-        osVersion="EvilOS",
-        data_version=1,
-        comment="Bogus rule with osVersion set",
-    )
-    dbo.rules.t.insert().execute(
-        priority=150,
-        backgroundRate=100,
-        mapping="Guardian-Evil-1.0.0.0",
-        update_type="minor",
-        product="Guardian",
-        channel="evilrelease",
-        data_version=1,
-    )
-    dbo.releases.t.insert().execute(
-        name="Guardian-0.5.0.0",
-        product="Guardian",
-        data_version=1,
-        data=createBlob("""
+            },
+        )
+        conn.execute(
+            dbo.rules.t.insert(),
+            {
+                "priority": 150,
+                "backgroundRate": 100,
+                "mapping": "Guardian-Evil-1.0.0.0",
+                "update_type": "minor",
+                "product": "Guardian",
+                "channel": "release",
+                "osVersion": "EvilOS",
+                "data_version": 1,
+                "comment": "Bogus rule with osVersion set",
+            },
+        )
+        conn.execute(
+            dbo.rules.t.insert(),
+            {
+                "priority": 150,
+                "backgroundRate": 100,
+                "mapping": "Guardian-Evil-1.0.0.0",
+                "update_type": "minor",
+                "product": "Guardian",
+                "channel": "evilrelease",
+                "data_version": 1,
+            },
+        )
+        conn.execute(
+            dbo.releases.t.insert(),
+            {
+                "name": "Guardian-0.5.0.0",
+                "product": "Guardian",
+                "data_version": 1,
+                "data": createBlob("""
 {
     "name": "Guardian-0.5.0.0",
     "product": "Guardian",
@@ -110,12 +122,15 @@ def guardian_db():
     }
 }
 """),
-    )
-    dbo.releases.t.insert().execute(
-        name="Guardian-0.6.0.0",
-        product="Guardian",
-        data_version=1,
-        data=createBlob("""
+            },
+        )
+        conn.execute(
+            dbo.releases.t.insert(),
+            {
+                "name": "Guardian-0.6.0.0",
+                "product": "Guardian",
+                "data_version": 1,
+                "data": createBlob("""
 {
     "name": "Guardian-0.6.0.0",
     "product": "Guardian",
@@ -135,12 +150,15 @@ def guardian_db():
     }
 }
 """),
-    )
-    dbo.releases.t.insert().execute(
-        name="Guardian-1.0.0.0",
-        product="Guardian",
-        data_version=1,
-        data=createBlob("""
+            },
+        )
+        conn.execute(
+            dbo.releases.t.insert(),
+            {
+                "name": "Guardian-1.0.0.0",
+                "product": "Guardian",
+                "data_version": 1,
+                "data": createBlob("""
 {
     "name": "Guardian-1.0.0.0",
     "product": "Guardian",
@@ -160,74 +178,107 @@ def guardian_db():
     }
 }
 """),
-    )
-    dbo.rules.t.insert().execute(
-        priority=120,
-        backgroundRate=100,
-        mapping="Guardian-0.5.0.0",
-        update_type="minor",
-        product="Guardian",
-        channel="release",
-        version="<0.5.0.0",
-        data_version=1,
-    )
-    dbo.rules.t.insert().execute(
-        priority=110,
-        backgroundRate=100,
-        mapping="Guardian-0.6.0.0",
-        update_type="minor",
-        product="Guardian",
-        osVersion="obsolete",
-        data_version=1,
-    )
-    # fmt: off
-    # to force this on multiple lines
-    dbo.rules.t.insert().execute(
-        priority=100,
-        backgroundRate=100,
-        mapping="Guardian-1.0.0.0",
-        update_type="minor",
-        product="Guardian",
-        channel="release",
-        data_version=1
-    )
-    dbo.rules.t.insert().execute(
-        priority=100,
-        backgroundRate=0,
-        mapping="Guardian-1.0.0.0",
-        fallbackMapping="Guardian-0.5.0.0",
-        update_type="minor",
-        product="Guardian",
-        channel="release-rollout",
-        data_version=1
-    )
-    # fmt: on
-    dbo.rules.t.insert().execute(
-        priority=100,
-        backgroundRate=100,
-        mapping="Guardian-1.0.0.0",
-        update_type="minor",
-        product="Guardian",
-        channel="alpha",
-        osVersion="ignored",
-        buildID="12345",
-        locale="ignored",
-        memory="123",
-        instructionSet="ignored",
-        jaws=True,
-        mig64=False,
-        distribution="ignored",
-        distVersion="ignored",
-        headerArchitecture="ignored",
-        data_version=1,
-    )
-    dbo.rules.t.insert().execute(priority=90, backgroundRate=100, mapping="b", update_type="minor", product="b", data_version=1, alias="moz-releng")
-    dbo.rules.t.insert().execute(priority=91, backgroundRate=100, mapping="b", update_type="minor", product="b", data_version=1, locale="loc", alias="locale")
-    dbo.releases.t.insert().execute(
-        name="b",
-        product="b",
-        data_version=1,
-        data=createBlob("""
+            },
+        )
+        conn.execute(
+            dbo.rules.t.insert(),
+            {
+                "priority": 120,
+                "backgroundRate": 100,
+                "mapping": "Guardian-0.5.0.0",
+                "update_type": "minor",
+                "product": "Guardian",
+                "channel": "release",
+                "version": "<0.5.0.0",
+                "data_version": 1,
+            },
+        )
+        conn.execute(
+            dbo.rules.t.insert(),
+            {
+                "priority": 110,
+                "backgroundRate": 100,
+                "mapping": "Guardian-0.6.0.0",
+                "update_type": "minor",
+                "product": "Guardian",
+                "osVersion": "obsolete",
+                "data_version": 1,
+            },
+        )
+        # fmt: off
+        # to force this on multiple lines
+        conn.execute(
+            dbo.rules.t.insert(),
+            {
+                "priority": 100,
+                "backgroundRate": 100,
+                "mapping": "Guardian-1.0.0.0",
+                "update_type": "minor",
+                "product": "Guardian",
+                "channel": "release",
+                "data_version": 1
+            }
+        )
+        conn.execute(
+            dbo.rules.t.insert(),
+            {
+                "priority": 100,
+                "backgroundRate": 0,
+                "mapping": "Guardian-1.0.0.0",
+                "fallbackMapping": "Guardian-0.5.0.0",
+                "update_type": "minor",
+                "product": "Guardian",
+                "channel": "release-rollout",
+                "data_version": 1
+            }
+        )
+        # fmt: on
+        conn.execute(
+            dbo.rules.t.insert(),
+            {
+                "priority": 100,
+                "backgroundRate": 100,
+                "mapping": "Guardian-1.0.0.0",
+                "update_type": "minor",
+                "product": "Guardian",
+                "channel": "alpha",
+                "osVersion": "ignored",
+                "buildID": "12345",
+                "locale": "ignored",
+                "memory": "123",
+                "instructionSet": "ignored",
+                "jaws": True,
+                "mig64": False,
+                "distribution": "ignored",
+                "distVersion": "ignored",
+                "headerArchitecture": "ignored",
+                "data_version": 1,
+            },
+        )
+        conn.execute(
+            dbo.rules.t.insert(),
+            {"priority": 90, "backgroundRate": 100, "mapping": "b", "update_type": "minor", "product": "b", "data_version": 1, "alias": "moz-releng"},
+        )
+        conn.execute(
+            dbo.rules.t.insert(),
+            {
+                "priority": 91,
+                "backgroundRate": 100,
+                "mapping": "b",
+                "update_type": "minor",
+                "product": "b",
+                "data_version": 1,
+                "locale": "loc",
+                "alias": "locale",
+            },
+        )
+        conn.execute(
+            dbo.releases.t.insert(),
+            {
+                "name": "b",
+                "product": "b",
+                "data_version": 1,
+                "data": createBlob("""
 {
     "name": "b",
     "schema_version": 1,
@@ -259,7 +310,8 @@ def guardian_db():
     }
 }
 """),
-    )
+            },
+        )
 
 
 @pytest.fixture(scope="module")
@@ -544,15 +596,19 @@ def testJSONForDesupportBlob(client, monkeypatch):
 """),
         },
     )
-    dbo.rules.t.insert().execute(
-        priority=90,
-        backgroundRate=100,
-        mapping="desupport",
-        update_type="minor",
-        product="desupport",
-        channel="release",
-        data_version=1,
-    )
+    with dbo.engine.begin() as conn:
+        conn.execute(
+            dbo.rules.t.insert(),
+            {
+                "priority": 90,
+                "backgroundRate": 100,
+                "mapping": "desupport",
+                "update_type": "minor",
+                "product": "desupport",
+                "channel": "release",
+                "data_version": 1,
+            },
+        )
     ret = client.get("/json/1/desupport/1.0/WINNT_x86_64/release/update.json")
     assert ret.status_code == 400
 
