@@ -2395,6 +2395,31 @@ class TestSchema4Blob(unittest.TestCase):
         blob = ReleaseBlobV3(platforms=dict(f=dict(locales=dict(j=updates))))
         self.assertTrue(blob.containsForbiddenDomain("h", self.allowlistedDomains))
 
+    def testForceBackgroundUpdate(self):
+        blob = ReleaseBlobV4(**deepcopy(self.blobH2))
+        blob["forceBackgroundUpdate"] = True
+        blob.validate("h", self.allowlistedDomains)
+        updateQuery = {
+            "product": "h",
+            "version": "25.0",
+            "buildID": "2",
+            "buildTarget": "p",
+            "locale": "l",
+            "channel": "c1",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
+            "force": None,
+        }
+        returned_header = blob.getInnerHeaderXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        expected_header = '<update type="minor" displayVersion="31.0" appVersion="31.0" platformVersion="31.0" buildID="50" forceBackgroundUpdate="true">'
+        self.assertEqual(returned_header.strip(), expected_header)
+
+    def testForceBackgroundUpdateFalseNotAllowed(self):
+        blob = ReleaseBlobV4(**deepcopy(self.blobH2))
+        blob["forceBackgroundUpdate"] = False
+        self.assertRaises(BlobValidationError, blob.validate, "h", self.allowlistedDomains)
+
 
 @pytest.mark.usefixtures("current_db_schema")
 class TestSchema5Blob(unittest.TestCase):
@@ -3628,6 +3653,151 @@ class TestSchema9Blob(unittest.TestCase):
                 "fields": {
                     "detailsURL": "http://example.org/%LOCALE%",
                     "disableBackgroundUpdates": false,
+                    "type": "minor"
+                }
+            }
+        ],
+        "fileUrls": {
+            "*": {
+                "partials": {
+                    "bb": "http://a.com/bb-partial"
+                },
+                "completes": {
+                    "*": "http://a.com/complete"
+                }
+            }
+        },
+        "platforms": {
+            "p": {
+                "buildID": 50,
+                "OS_FTP": "p",
+                "OS_BOUNCER": "p",
+                "locales": {
+                    "en-US": {
+                        "partials": [
+                            {
+                                "filesize": 8,
+                                "from": "h1",
+                                "hashValue": "9"
+                            }
+                        ],
+                        "completes": [
+                            {
+                                "filesize": 40,
+                                "from": "*",
+                                "hashValue": "41"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+    """)
+        self.assertRaises(BlobValidationError, blob.validate, "h", self.allowlistedDomains)
+
+    def testForceBackgroundUpdate(self):
+        blob = ReleaseBlobV9()
+        blob.loadJSON("""
+{
+    "name": "bbb",
+    "schema_version": 9,
+    "hashFunction": "sha512",
+    "appVersion": "68.0",
+    "displayVersion": "68.0",
+    "updateLine": [
+        {
+            "for": {},
+            "fields": {
+                "detailsURL": "http://example.org/%LOCALE%",
+                "type": "minor"
+            }
+        },
+        {
+            "for": {
+                "versions": ["<66.0"]
+            },
+            "fields": {
+                "forceBackgroundUpdate": true
+            }
+        }
+    ],
+    "fileUrls": {
+        "*": {
+            "partials": {
+                "bb": "http://a.com/bb-partial"
+            },
+            "completes": {
+                "*": "http://a.com/complete"
+            }
+        }
+    },
+    "platforms": {
+        "p": {
+            "buildID": 50,
+            "OS_FTP": "p",
+            "OS_BOUNCER": "p",
+            "locales": {
+                "en-US": {
+                    "partials": [
+                        {
+                            "filesize": 8,
+                            "from": "h1",
+                            "hashValue": "9"
+                        }
+                    ],
+                    "completes": [
+                        {
+                            "filesize": 40,
+                            "from": "*",
+                            "hashValue": "41"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+""")
+        blob.validate("h", self.allowlistedDomains)
+        updateQuery = {
+            "product": "b",
+            "buildID": "23",
+            "version": "65.0",
+            "buildTarget": "p",
+            "locale": "en-US",
+            "channel": "release",
+            "osVersion": "a",
+            "distribution": "a",
+            "distVersion": "a",
+            "force": None,
+        }
+        returned_header = blob.getInnerHeaderXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        expected_header = (
+            '<update appVersion="68.0" buildID="50" detailsURL="http://example.org/en-US" displayVersion="68.0" forceBackgroundUpdate="true" type="minor">'
+        )
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+
+        updateQuery["version"] = "67.0"
+        returned_header = blob.getInnerHeaderXML(updateQuery, "minor", self.allowlistedDomains, self.specialForceHosts)
+        expected_header = '<update appVersion="68.0" buildID="50" detailsURL="http://example.org/en-US" displayVersion="68.0" type="minor">'
+        self.assertEqual(returned_header.strip(), expected_header.strip())
+
+    def testForceBackgroundUpdateFalseNotAllowed(self):
+        blob = ReleaseBlobV9()
+        blob.loadJSON("""
+    {
+        "name": "bbb",
+        "schema_version": 9,
+        "hashFunction": "sha512",
+        "appVersion": "68.0",
+        "displayVersion": "68.0",
+        "updateLine": [
+            {
+                "for": {},
+                "fields": {
+                    "detailsURL": "http://example.org/%LOCALE%",
+                    "forceBackgroundUpdate": false,
                     "type": "minor"
                 }
             }
