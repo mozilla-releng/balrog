@@ -1,0 +1,24 @@
+# Keep the build context for docker-compose.yml builds small.
+# (Taskcluster image builds don't use this; their context comes from the
+# `# %include` lines in each Dockerfile.)
+
+.git
+**/.venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.hypothesis
+.tox
+.coverage
+**/*.egg-info
+
+# Not needed by any image; mounted at runtime where used
+ui
+client
+docs
+tests
+
+# Prod DB dump fetched by scripts/initdb_and_run.sh
+scripts/prod_db_dump.sql
+# Written by `run.sh extract-active-data`
+**/dump.sql
