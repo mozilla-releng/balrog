@@ -2,6 +2,9 @@ FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim@sha256:d8a45a30929a5bfedd8b09d6
 
 WORKDIR /app
 
+# Keep the venv outside /app so that bind-mounting source over /app doesn't hide it.
+ENV UV_PROJECT_ENVIRONMENT=/venv
+
 # Use an arg so we can share the Dockerfile with docker compose
 ARG SRC=topsrcdir
 
@@ -13,7 +16,6 @@ COPY ${SRC}/pyproject.toml ${SRC}/uv.lock ${SRC}/README.rst /app/
 # %include agent
 COPY ${SRC}/agent /app/agent
 
-RUN uv venv
 RUN uv sync --package=balrogagent --frozen --no-dev
 
 FROM python:3.13-slim-trixie@sha256:eb43ff125d8d58d7449dcba7d336c23bcac412f526d861db493b9994d8010280
@@ -21,7 +23,7 @@ WORKDIR /app
 ENV LC_ALL C.UTF-8
 LABEL maintainer="releng@mozilla.com"
 
-COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /venv /venv
 
 # %include agent/scripts
 # %include agent/src

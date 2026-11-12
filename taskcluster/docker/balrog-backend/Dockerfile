@@ -2,6 +2,10 @@ FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim@sha256:d8a45a30929a5bfedd8b09d6
 
 WORKDIR /app
 
+# Keep the venv outside /app so that bind-mounting the source tree over /app
+# (as docker-compose.yml does) doesn't hide it.
+ENV UV_PROJECT_ENVIRONMENT=/venv
+
 # default-libmysqlclient-dev is required to use SQLAlchemy with MySQL
 # gcc is needed to compile some python packages
 # uwsgi needs libpcre for routing support to be enabled
@@ -18,7 +22,6 @@ COPY ${SRC}/pyproject.toml ${SRC}/uv.lock ${SRC}/README.rst /app/
 # %include src
 COPY ${SRC}/src/ /app/src/
 
-RUN uv venv
 RUN uv sync --no-dev --frozen
 
 FROM python:3.13-slim-trixie@sha256:eb43ff125d8d58d7449dcba7d336c23bcac412f526d861db493b9994d8010280
@@ -36,7 +39,7 @@ RUN apt-get -q update \
 
 WORKDIR /app
 
-COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /venv /venv
 # %include src
 COPY ${SRC}/src/ /app/src/
 # %include scripts
@@ -46,7 +49,7 @@ COPY ${SRC}/uwsgi/ /app/uwsgi/
 # %include version.json
 COPY ${SRC}/version.json /app/
 
-ENV PATH="/app/.venv/bin:${PATH}"
+ENV PATH="/venv/bin:${PATH}"
 
 # Using /bin/bash as the entrypoint works around some volume mount issues on Windows
 # where volume-mounted files do not have execute bits set.

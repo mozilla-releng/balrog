@@ -23,7 +23,6 @@ services:
       - "7070"
     volumes:
       - .:/app
-      - /app/.venv
     environment:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
       - DB_HOST=balrogdb
@@ -78,7 +77,6 @@ services:
       - "9010:9010"
     volumes:
       - .:/app
-      - /app/.venv
     environment:
       - DBURI=mysql://balrogadmin:balrogadmin@balrogdb/balrog
       - AUTOGRAPH_URL=http://autograph:8000
@@ -110,7 +108,6 @@ services:
         condition: service_healthy
     volumes:
       - ./agent:/app/agent
-      - /app/.venv
     environment:
       - BALROG_API_ROOT=http://nginx:9012
       - BALROG_USERNAME=balrogagent
