@@ -119,7 +119,7 @@ def matchLocale(ruleLocales, queryLocale):
 def matchBuildID(ruleBuildID, queryBuildID):
     """Decides whether a buildID from the rules matches an incoming one.
     If the ruleBuildID is null, we match any queryBuildID. If it's not
-    null, we must either match exactly, or match with a caparison
+    null, we must either match exactly, or match with a comparison
     operator."""
     if ruleBuildID is None:
         return True
