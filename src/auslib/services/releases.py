@@ -827,7 +827,7 @@ def set_read_only(name, read_only, old_data_version, changed_by, trans):
 
     permission = "unset" if read_only else "set"
     if not dbo.hasPermission(changed_by, "release_read_only", permission, product, trans):
-        raise PermissionDeniedError(f"{changed_by} is not allow to {permission} read_only for {product} releeases")
+        raise PermissionDeniedError(f"{changed_by} is not allow to {permission} read_only for {product} releases")
 
     if use_sc:
         data = dbo.releases_json.select(where={"name": name}, columns=[dbo.releases_json.data], transaction=trans)[0]["data"]

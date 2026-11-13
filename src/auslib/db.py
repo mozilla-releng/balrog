@@ -2362,7 +2362,7 @@ class Releases(AUSTable):
     def addLocaleToRelease(self, name, product, platform, locale, data, old_data_version, changed_by, transaction=None, alias=None):
         """Adds or update's the existing data for a specific platform + locale
         combination, in the release identified by 'name'. The data is
-        validated before commiting it, and a ValueError is raised if it is
+        validated before committing it, and a ValueError is raised if it is
         invalid.
         """
         self._proceedIfNotReadOnly(name, transaction=transaction)
