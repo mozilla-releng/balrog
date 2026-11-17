@@ -2,7 +2,7 @@ import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import React, { forwardRef, useEffect } from 'react';
 
 const VariableSizeList = forwardRef((props, ref) => {
-  const { scrollToRow, Row, rowCount, rowHeight } = props;
+  const { scrollToRow, renderRow, rowCount, rowHeight } = props;
 
   const virtualizer = useWindowVirtualizer({
     count: rowCount,
@@ -28,8 +28,8 @@ const VariableSizeList = forwardRef((props, ref) => {
       }}
     >
       {items.map((virtualRow) => (
-        <Row
-          index={virtualRow.index}
+        <div
+          data-index={virtualRow.index}
           key={virtualRow.key}
           ref={virtualizer.measureElement}
           style={{
@@ -41,7 +41,9 @@ const VariableSizeList = forwardRef((props, ref) => {
               virtualRow.start - virtualizer.options.scrollMargin
             }px)`,
           }}
-        />
+        >
+          {renderRow(virtualRow.index)}
+        </div>
       ))}
     </div>
   );
