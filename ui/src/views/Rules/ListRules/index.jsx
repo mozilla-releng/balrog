@@ -25,14 +25,7 @@ import classNames from 'classnames';
 import { addSeconds } from 'date-fns';
 import { parse, stringify } from 'qs';
 import { clone } from 'ramda';
-import React, {
-  Fragment,
-  forwardRef,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { makeStyles } from 'tss-react/mui';
 import Dashboard from '../../../components/Dashboard';
@@ -1395,50 +1388,43 @@ function ListRules(props) {
     }
   };
 
-  const Row = forwardRef(({ index, style }, ref) => {
+  const renderRow = (index) => {
     // if we're in rewind mode, rule is a historical rule, not the current one
     const rule = filteredRulesWithScheduledChanges[index];
     const isSelected = isRuleSelected(rule);
     const currentRule = rulesById.get(rule.rule_id);
 
     return (
-      <div
-        data-index={index}
-        ref={ref}
+      <RuleCard
+        className={classNames(classes.card, {
+          [classes.ruleCardSelected]: isSelected,
+        })}
         key={
           rule.rule_id
             ? rule.rule_id
             : Object.values(rule.scheduledChange).join('-')
         }
-        style={style}
-      >
-        <RuleCard
-          className={classNames(classes.card, {
-            [classes.ruleCardSelected]: isSelected,
-          })}
-          key={rule.rule_id}
-          rule={rule}
-          currentRule={Boolean(rewindDate) && currentRule}
-          rulesFilter={productChannelQueries}
-          onRuleDelete={handleRuleDelete}
-          onCancelScheduledChange={handleCancelScheduledChange}
-          canSignoff={
-            !rewindDate &&
-            rule.scheduledChange?.required_signoffs &&
-            Object.keys(rule.scheduledChange.required_signoffs).filter((r) =>
-              roles.includes(r),
-            ).length
-          }
-          onSignoff={() => handleSignoff(rule)}
-          onRevoke={() => handleRevoke(rule)}
-          onViewReleaseClick={handleViewRelease}
-          diffRules={showRewindDiff}
-          disableActions={!props.auth0.user || Boolean(rewindDate)}
-          actionLoading={isActionLoading}
-        />
-      </div>
+        rule={rule}
+        currentRule={Boolean(rewindDate) && currentRule}
+        rulesFilter={productChannelQueries}
+        onRuleDelete={handleRuleDelete}
+        onCancelScheduledChange={handleCancelScheduledChange}
+        canSignoff={
+          !rewindDate &&
+          rule.scheduledChange?.required_signoffs &&
+          Object.keys(rule.scheduledChange.required_signoffs).filter((r) =>
+            roles.includes(r),
+          ).length
+        }
+        onSignoff={() => handleSignoff(rule)}
+        onRevoke={() => handleRevoke(rule)}
+        onViewReleaseClick={handleViewRelease}
+        diffRules={showRewindDiff}
+        disableActions={!props.auth0.user || Boolean(rewindDate)}
+        actionLoading={isActionLoading}
+      />
     );
-  });
+  };
 
   useEffect(() => {
     if (filteredRulesCount) {
@@ -1571,7 +1557,7 @@ function ListRules(props) {
               <Fragment>
                 <VariableSizeList
                   ref={ruleListRef}
-                  Row={Row}
+                  renderRow={renderRow}
                   scrollToRow={scrollToRow}
                   rowHeight={getRowHeight}
                   rowCount={filteredRulesCount}

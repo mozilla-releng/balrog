@@ -13,14 +13,7 @@ import { useTheme } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
 import classNames from 'classnames';
 import { clone } from 'ramda';
-import React, {
-  Fragment,
-  forwardRef,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 import { makeStyles } from 'tss-react/mui';
 import Dashboard from '../../../components/Dashboard';
@@ -710,28 +703,26 @@ function ListReleases(props) {
     }
   };
 
-  const Row = forwardRef(({ index, style }, ref) => {
+  const renderRow = (index) => {
     const release = filteredReleases[index];
     const isSelected = Boolean(hash && hash.replace('#', '') === release.name);
 
     return (
-      <div style={style} data-index={index} ref={ref}>
-        <ReleaseCard
-          className={classNames(classes.releaseCard, {
-            [classes.releaseCardSelected]: isSelected,
-          })}
-          release={release}
-          rules={releaseRules.rules ? releaseRules.rules : []}
-          releaseHighlight={matchHighlight?.[release.name]}
-          onAccessChange={handleAccessChange}
-          onReleaseDelete={handleDelete}
-          onViewScheduledChangeDiff={handleViewScheduledChangeDiff}
-          onSignoff={() => handleSignoff(release)}
-          onRevoke={() => handleRevoke(release)}
-        />
-      </div>
+      <ReleaseCard
+        className={classNames(classes.releaseCard, {
+          [classes.releaseCardSelected]: isSelected,
+        })}
+        release={release}
+        rules={releaseRules.rules ? releaseRules.rules : []}
+        releaseHighlight={matchHighlight?.[release.name]}
+        onAccessChange={handleAccessChange}
+        onReleaseDelete={handleDelete}
+        onViewScheduledChangeDiff={handleViewScheduledChangeDiff}
+        onSignoff={() => handleSignoff(release)}
+        onRevoke={() => handleRevoke(release)}
+      />
     );
-  });
+  };
 
   const getRowHeight = (index) => {
     const spacingPx = parseInt(theme.spacing(1), 10);
@@ -846,7 +837,7 @@ function ListReleases(props) {
       {!isLoading && filteredReleases && (
         <VariableSizeList
           ref={releaseListRef}
-          Row={Row}
+          renderRow={renderRow}
           scrollToRow={scrollToRow}
           rowHeight={getRowHeight}
           rowCount={filteredReleasesCount}
