@@ -1,8 +1,11 @@
 import {
+  columnSizingFeature,
+  columnVisibilityFeature,
+  createSortedRowModel,
   flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
+  rowSortingFeature,
+  tableFeatures,
+  useTable,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import React from 'react';
@@ -22,16 +25,24 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
+// columnSizingFeature provides header.getSize() and columnVisibilityFeature
+// provides row.getVisibleCells().
+const features = tableFeatures({
+  columnSizingFeature,
+  columnVisibilityFeature,
+  rowSortingFeature,
+  sortedRowModel: createSortedRowModel(),
+});
+
 function RevisionsTable(props) {
   const { classes } = useStyles();
   const { data, columns } = props;
   const parentRef = React.useRef(null);
 
-  const table = useReactTable({
+  const table = useTable({
+    features,
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     debugTable: true,
   });
   const { rows } = table.getRowModel();
