@@ -11,7 +11,7 @@ describe('searching through a string', () => {
     expect(index).toEqual(13);
   });
 
-  test('shoud return -1 when substring does not exist in string', () => {
+  test('should return -1 when substring does not exist in string', () => {
     const subStr = 'fail';
     const index = getIndexOfSubStr(word, subStr, noOfOccurrences);
 
