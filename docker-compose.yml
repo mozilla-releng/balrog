@@ -185,7 +185,7 @@ services:
     logging:
       driver: none
     healthcheck:
-        test: nc -z -v balrogdb 3306
+        test: mysqladmin ping -h 127.0.0.1 --silent
         interval: 2s
         timeout: 30s
         retries: 50
