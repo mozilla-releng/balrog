@@ -3158,7 +3158,10 @@ class AUSDatabase(object):
             raise AlreadySetupError()
         self.dburi = dburi
         self.metadata = MetaData()
-        engine_kwargs = {"pool_recycle": 60}
+        # pool_pre_ping makes us notice connections that were dropped server-side
+        # (e.g. a Cloud SQL failover or blue-green switchover) and reconnect
+        # transparently instead of erroring on the next query.
+        engine_kwargs = {"pool_recycle": 60, "pool_pre_ping": True}
         if dburi.startswith("sqlite"):
             # connexion 3.x runs the flask app in a thread, so we need to share the db connection
             from sqlalchemy.pool import StaticPool
