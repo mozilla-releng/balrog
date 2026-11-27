@@ -74,7 +74,7 @@ Following tables show columns according to different Categories:
   |                        | distribution       | The partner distributions names that the         | Exact string match or           | "default", "yahoo" or      |
   |                        |                    | application must send in order for the rule to   | comma separated list of         | "mozilla1, mozilla2"       |
   |                        |                    | match or "default" if the application is not a   | distributions to do an exact    |                            |
-  |                        |                    | partner build. A comma separated list may be     | match on                        |                            | 
+  |                        |                    | partner build. A comma separated list may be     | match on                        |                            |
   |                        |                    | used to list multiple distributions              |                                 |                            |
   |                        +--------------------+--------------------------------------------------+---------------------------------+----------------------------+
   |                        | distVersion        | The version of the partner distribution of the   | Exact string match only         | "default" or               |
@@ -153,7 +153,7 @@ Most of the Matchable database fields are present as distinct parts of the updat
 
 There are a few special cases to consider:
 
--   systemCapabilities contains comma separated data and breaks down into multple database columns (instructionSet, memory, jaws)
+-   systemCapabilities contains comma separated data and breaks down into multiple database columns (instructionSet, memory, jaws)
 
 -   headerArchitecture is extracted from the User-Agent header
 
@@ -327,7 +327,7 @@ If a change affects more than one product and channel combination, *all* affecte
 Permissions Required Signoffs
 *****************************
 
-Changes to the Permissions table may also require signoff. These Required Signoffs are specified by product, which most Permissions support as an option. Changing a Permission that affects the named product wil require the signoffs from the Roles specified in this table. Changing a Permission that does not specify a product will require signoff the signoffs from *all* Roles specified in this table, because such Permissions grant access to all products. This includes the "admin" Permission and "permission" Permission, which are often used without a product specified.
+Changes to the Permissions table may also require signoff. These Required Signoffs are specified by product, which most Permissions support as an option. Changing a Permission that affects the named product will require the signoffs from the Roles specified in this table. Changing a Permission that does not specify a product will require signoff the signoffs from *all* Roles specified in this table, because such Permissions grant access to all products. This includes the "admin" Permission and "permission" Permission, which are often used without a product specified.
 
 
 --------------
@@ -353,4 +353,4 @@ Some tables (Rules, Releases, and Permissions) support having changes to them sc
 
 The primary Scheduled Changes table stores the desired new version of the object and the user who scheduled it. The Conditions table stores information about when to enact the Scheduled Change. Finally, the Signoffs table stores information about who (if anybody) has signed off on the Scheduled Change. All of these tables have their own History tables too.
 
-Permissions for Scheduled Changes are inherited from their asociated base table. Eg: to scheduled a change to a Rule, you must have permission to modify that Rule directly. No special permission is required on top of that.
+Permissions for Scheduled Changes are inherited from their associated base table. Eg: to scheduled a change to a Rule, you must have permission to modify that Rule directly. No special permission is required on top of that.

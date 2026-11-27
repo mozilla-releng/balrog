@@ -267,7 +267,7 @@ parameters:
   changeIdParam:
     name: change_id
     in: query
-    description: The change_id value to filter hsitory by.
+    description: The change_id value to filter history by.
     type: integer
     x-nullable: true
     required: false
@@ -307,7 +307,7 @@ parameters:
   channelParam:
     name: channel
     in: query
-    description: channel stirng for filtering history.
+    description: channel string for filtering history.
     type: string
     format: ascii
     x-nullable: true
@@ -348,7 +348,7 @@ responses:
   # Hence no minLimit: 1 , no maxLimit on new_data_version.
   # Example: when attempting assign an already existing role to a user.
   modifiedDataVersion:
-    description: "Created or Updated exisiting object."
+    description: "Created or Updated existing object."
     schema:
       type: object
       required:
@@ -815,7 +815,7 @@ paths:
         - $ref: '#/parameters/releaseParam'
         - name: release_read_only_body
           in: body
-          description: Read Only Release modify Request paramaters
+          description: Read Only Release modify Request parameters
           required: true
           schema:
             allOf:
@@ -4218,7 +4218,7 @@ definitions:
 
   SCUptake:
     title: Schedule Change Uptake
-    description: scheduled change telemtry parameters
+    description: scheduled change telemetry parameters
     type: object
     properties:
       telemetry_product:
@@ -4392,7 +4392,7 @@ definitions:
 
   UserPermissionsModel:
     title: User Permissions
-    description: "Model of user's permissions with all details of avaliable options and actions for the rule,release,required signoff and permission of user is assigned"
+    description: "Model of user's permissions with all details of available options and actions for the rule,release,required signoff and permission of user is assigned"
     type: object
     allOf:
       - required:
