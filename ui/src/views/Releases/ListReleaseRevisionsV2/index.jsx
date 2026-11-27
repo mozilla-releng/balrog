@@ -49,18 +49,26 @@ function ListReleaseRevisionsV2(_props) {
   const [fetchedRevisions, fetchRevisions] = useAction(getRevisions);
   const [fetchedRevisionData, fetchRevisionData] = useAction(axios.get);
   const [drawerState, setDrawerState] = useState({ open: false, item: {} });
-  const [leftRadioCheckedIndex, setLeftRadioCheckedIndex] = useState(1);
+  const [leftRadioCheckedIndex, setLeftRadioCheckedIndex] = useState(null);
   const [leftRevisionData, setLeftRevisionData] = useState(null);
   const [rightRevisionData, setRightRevisionData] = useState(null);
   const [rightRadioCheckedIndex, setRightRadioCheckedIndex] = useState(0);
   const error = fetchedRevisions.error || fetchedRevisionData.error;
   const isLoading = fetchedRevisions.loading;
-  // The most recent revision for each part of the Release
-  // and a list of all of the older revisions (of which
-  // there may be many for each part of the Release).
-  const [latestRevisions, olderRevisions] = fetchedRevisions.data
+  // The most recent revision for each part of the Release, and a list
+  // of all of the revisions (of which there may be many for each part
+  // of the Release), both newest first.
+  const [latestRevisions, partRevisions] = fetchedRevisions.data
     ? fetchedRevisions.data
     : [[], []];
+  // A revision can only be diffed against the current version of the
+  // same part of the Release, so the latest revision of each part has
+  // nothing to compare against.
+  const isLatestRevision = (revision) => latestRevisions.includes(revision);
+  const selectedRevision =
+    leftRadioCheckedIndex !== null
+      ? partRevisions[leftRadioCheckedIndex - 1]
+      : null;
   // This is a bit of a hack to make sure the very first listed
   // revision will show the entire Release instead of just the
   // part of it that changed most recently.
@@ -78,16 +86,18 @@ function ListReleaseRevisionsV2(_props) {
           data_url: `/v2/releases/${releaseName}`,
         }
       : {};
-  const prettyPath =
-    olderRevisions.length > 0
-      ? olderRevisions[leftRadioCheckedIndex - 1].path
-        ? olderRevisions[leftRadioCheckedIndex - 1].path
-        : 'Base'
-      : '';
+  const prettyPath = selectedRevision ? selectedRevision.path || 'Base' : '';
 
   useEffect(() => {
     fetchRevisions(releaseName, 2);
   }, [releaseName]);
+
+  // Default to comparing the newest revision that isn't current.
+  useEffect(() => {
+    const index = partRevisions.findIndex((r) => !isLatestRevision(r));
+
+    setLeftRadioCheckedIndex(index === -1 ? null : index + 1);
+  }, [fetchedRevisions.data]);
 
   const handleLeftRadioChange = ({ target: { value } }) => {
     setLeftRadioCheckedIndex(Number(value));
@@ -125,21 +135,22 @@ function ListReleaseRevisionsV2(_props) {
   };
 
   useEffect(() => {
-    const olderRevision = olderRevisions[leftRadioCheckedIndex - 1];
+    setLeftRevisionData(null);
+    setRightRevisionData(null);
 
-    if (olderRevision) {
+    if (selectedRevision && !isLatestRevision(selectedRevision)) {
       // The left revision is always a part of the Release
       // that we can retrieve from GCS.
-      axios.get(olderRevision.data_url).then((result) => {
+      axios.get(selectedRevision.data_url).then((result) => {
         setLeftRevisionData(result.data || {});
       });
 
       // In order to display a useful diff, we need the right revision
       // to be the most recent version of the same part of the Release,
-      // which we can find by looking for the older revisions path in
+      // which we can find by looking for the selected revision's path in
       // `latestRevisions`.
       const latestRevision = latestRevisions.find(
-        (r) => r.path === olderRevision.path,
+        (r) => r.path === selectedRevision.path,
       );
 
       if (latestRevision) {
@@ -152,14 +163,8 @@ function ListReleaseRevisionsV2(_props) {
         });
       }
     }
-  }, [
-    leftRadioCheckedIndex,
-    fetchedRevisions.data,
-    olderRevisions,
-    latestRevisions,
-  ]);
+  }, [leftRadioCheckedIndex, fetchedRevisions.data]);
 
-  const olderRevisionsCount = olderRevisions.length;
   const columnWidth = CONTENT_MAX_WIDTH / 4;
 
   const columns = React.useMemo(() => [
@@ -186,7 +191,7 @@ function ListReleaseRevisionsV2(_props) {
           <Radio
             variant="red"
             value={row.index}
-            disabled={row.index === 0}
+            disabled={row.index === 0 || isLatestRevision(row.original)}
             checked={leftRadioCheckedIndex === row.index}
             onChange={handleLeftRadioChange}
           />
@@ -219,7 +224,7 @@ function ListReleaseRevisionsV2(_props) {
     },
   ]);
 
-  const revisions = [currentRevision].concat(olderRevisions);
+  const revisions = [currentRevision].concat(partRevisions);
 
   return (
     <Dashboard title={`Release ${releaseName} Revisions`}>
@@ -229,18 +234,16 @@ function ListReleaseRevisionsV2(_props) {
           <CircularProgress />
         </Box>
       )}
-      {!isLoading && olderRevisions.length === 1 && (
+      {!isLoading && fetchedRevisions.data && partRevisions.length === 0 && (
         <Typography>{releaseName} has no revisions</Typography>
       )}
-      {!isLoading && olderRevisionsCount > 1 && (
+      {!isLoading && partRevisions.length > 0 && (
         <Fragment>
           <RevisionsTable data={revisions} columns={columns} />
-          {leftRevisionData && rightRevisionData && (
+          {selectedRevision && leftRevisionData && rightRevisionData && (
             <DiffRelease
               className={classes.jsDiff}
-              firstFilename={`Revision Version ${
-                olderRevisions[leftRadioCheckedIndex - 1].data_version
-              } for ${prettyPath}`}
+              firstFilename={`Revision Version ${selectedRevision.data_version} for ${prettyPath}`}
               secondFilename="Current Version"
               firstRelease={leftRevisionData || {}}
               secondRelease={rightRevisionData || {}}
