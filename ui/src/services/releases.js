@@ -79,7 +79,7 @@ const getRevisions = (name, apiVersion) => {
       }
 
       // descending sort, so newer versions appear first
-      return releases.sort((a, b) => a.data_version < b.data_version);
+      return releases.sort((a, b) => b.data_version - a.data_version);
     }
 
     return getReleases(`${bucket}?prefix=${name}/&delimeter=/`);
@@ -88,8 +88,7 @@ const getRevisions = (name, apiVersion) => {
   // Version 2 API Releases have 1 prefix per Release (${name})
   // but must be grouped by whatever the string prior to "/" is.
   // The combination of the latest entry from each group adds
-  // up to be the "current" version of the Release, while the older
-  // revisions are outdated versions.
+  // up to be the "current" version of the Release.
 
   function parseRevisions(rawRevisions) {
     const revisions = [];
@@ -145,14 +144,17 @@ const getRevisions = (name, apiVersion) => {
     const revisions = [];
 
     Object.values(revisionsByPath).forEach((pathRevisions) => {
-      pathRevisions.sort((a, b) => a.timestamp > b.timestamp);
-      // Split up the most recent revision for each path, and the
-      // the remaining revisions.
-      latestEntries.push(pathRevisions.pop());
+      latestEntries.push(
+        pathRevisions.reduce((latest, r) =>
+          r.timestamp > latest.timestamp ? r : latest,
+        ),
+      );
       revisions.push(...pathRevisions);
     });
 
-    revisions.sort((a, b) => a.timestamp < b.timestamp);
+    // descending sort, so newer revisions appear first
+    latestEntries.sort((a, b) => b.timestamp - a.timestamp);
+    revisions.sort((a, b) => b.timestamp - a.timestamp);
 
     return [latestEntries, revisions];
   }
