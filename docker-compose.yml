@@ -121,7 +121,7 @@ services:
 
 
   balrogui:
-    image: node:24@sha256:9d266751ca3d7fdbe651c878ffd5ad0a42fed49a18c283509267c97f025b7496
+    image: node:26@sha256:f8e5d4bb28fa55c74f1345166a082a10b7c68f22304350c1ce0d18358ae94996
     depends_on:
       balrogadmin:
         condition: service_healthy
